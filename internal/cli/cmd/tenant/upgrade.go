@@ -16,12 +16,13 @@ package tenant
 import (
 	"errors"
 
+	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/types"
+
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 	"github.com/oceanbase/ob-operator/internal/clients"
-	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 // NewUpgradeCmd upgrade obtenant

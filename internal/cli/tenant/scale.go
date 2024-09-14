@@ -17,6 +17,12 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	"k8s.io/apimachinery/pkg/api/resource"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
+
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/cli/generic"
@@ -24,11 +30,6 @@ import (
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	param "github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	"k8s.io/apimachinery/pkg/api/resource"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 type ScaleOptions struct {

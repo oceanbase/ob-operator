@@ -16,11 +16,12 @@ package tenant
 import (
 	"sort"
 
+	"github.com/spf13/cobra"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 	"github.com/oceanbase/ob-operator/internal/clients"
-	"github.com/spf13/cobra"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // NewListCmd list all ob tenants

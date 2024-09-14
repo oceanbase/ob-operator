@@ -14,11 +14,12 @@ See the Mulan PSL v2 for more details.
 package tenant
 
 import (
+	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/types"
+
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 	"github.com/oceanbase/ob-operator/internal/clients"
-	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 // NewDeleteCmd delete ob tenant

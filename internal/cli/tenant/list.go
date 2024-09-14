@@ -14,8 +14,9 @@ See the Mulan PSL v2 for more details.
 package tenant
 
 import (
-	"github.com/oceanbase/ob-operator/internal/cli/generic"
 	"github.com/spf13/cobra"
+
+	"github.com/oceanbase/ob-operator/internal/cli/generic"
 )
 
 type ListOptions struct {

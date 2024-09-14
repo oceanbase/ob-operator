@@ -16,12 +16,13 @@ package tenant
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/types"
+
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
-	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 // NewSwitchOverCmd switchover two tenants

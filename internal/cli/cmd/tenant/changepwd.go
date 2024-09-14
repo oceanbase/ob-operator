@@ -16,12 +16,13 @@ package tenant
 import (
 	"fmt"
 
+	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/types"
+
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
-	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 // NewChangePwdCmd changes password of an obtenant
@@ -51,7 +52,7 @@ func NewChangePwdCmd() *cobra.Command {
 			if obtenant.Status.Status != tenantstatus.Running {
 				logger.Fatalln(fmt.Errorf("Obtenant status invalid, Status:%s", obtenant.Status.Status))
 			}
-			if err := tenant.GenerateNewPwd(o, cmd.Context()); err != nil {
+			if err := tenant.GenerateNewPwd(cmd.Context(), o); err != nil {
 				logger.Fatalln(err)
 			} else {
 				logger.Println("New password generated success")

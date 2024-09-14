@@ -17,16 +17,17 @@ import (
 	"context"
 	"errors"
 
+	"github.com/spf13/cobra"
+	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
+
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/cli/generic"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
-	"github.com/spf13/cobra"
-	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 type ChangePwdOptions struct {
@@ -60,8 +61,7 @@ func GetChangePwdOperation(o *ChangePwdOptions) *v1alpha1.OBTenantOperation {
 }
 
 // GenerateNewPwd generate new password for obtenant
-func GenerateNewPwd(o *ChangePwdOptions, ctx context.Context) error {
-	// create new secret
+func GenerateNewPwd(ctx context.Context, o *ChangePwdOptions) error {
 	k8sclient := client.GetClient()
 	o.RootSecretName = o.Name + "-root-" + rand.String(6)
 	_, err := k8sclient.ClientSet.CoreV1().Secrets(o.Namespace).Create(ctx, &corev1.Secret{

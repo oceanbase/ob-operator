@@ -20,6 +20,15 @@ import (
 	"math"
 	"strings"
 
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	corev1 "k8s.io/api/core/v1"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/rand"
+
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -30,14 +39,6 @@ import (
 	param "github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	corev1 "k8s.io/api/core/v1"
-	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 func NewCreateOptions() *CreateOptions {
@@ -439,6 +440,6 @@ func (o *CreateOptions) AddRestoreFlags(cmd *cobra.Command) {
 	restoreFlags.StringVar(&o.Source.Restore.OSSAccessID, "oss-access-id", "", "The oss access id of restore")
 	restoreFlags.StringVar(&o.Source.Restore.OSSAccessKey, "oss-access-key", "", "The oss access key of restore")
 	restoreFlags.BoolVar(&o.Source.Restore.Until.Unlimited, "until-unlimited", true, "time limited for restore")
-	restoreFlags.StringVar(&o.Timestamp, "until-timestap", "", "timestamp for obtenant restore")
+	restoreFlags.StringVar(&o.Timestamp, "until-timestamp", "", "timestamp for obtenant restore")
 	cmd.Flags().AddFlagSet(restoreFlags)
 }

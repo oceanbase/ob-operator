@@ -14,9 +14,10 @@ See the Mulan PSL v2 for more details.
 package tenant
 
 import (
+	"github.com/spf13/cobra"
+
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
-	"github.com/spf13/cobra"
 )
 
 // NewCreateCmd create an ob tenant

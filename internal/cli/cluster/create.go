@@ -308,7 +308,7 @@ func (o *CreateOptions) AddZoneFlags(cmd *cobra.Command) {
 // AddBaseFlags adds the base flags to the command.
 func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags := cmd.Flags()
-	baseFlags.StringVar(&o.ClusterName, "cluster-name", "", "Cluster name, if not specifed, use resource name in k8s instead")
+	baseFlags.StringVar(&o.ClusterName, "cluster-name", "", "Cluster name, if not specified, use resource name in k8s instead")
 	baseFlags.StringVar(&o.Namespace, "namespace", "default", "The namespace of the cluster")
 	baseFlags.Int64Var(&o.ClusterId, "id", 0, "The id of the cluster")
 	baseFlags.StringVarP(&o.RootPassword, "root-password", "p", "", "The root password of the cluster")
