@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~!@#%^&*_-+=|(){}[]:;,.?/`$\"<>"
+	characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~#%^&*_-+=|(){}[]:;,.?/\"<>"
 	factor     = 4294901759
 )
 

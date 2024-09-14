@@ -27,11 +27,14 @@ func NewCmd() *cobra.Command {
 	}
 	cmd.AddCommand(NewCreateCmd())
 	cmd.AddCommand(NewDeleteCmd())
+	cmd.AddCommand(NewUpdateCmd())
+	cmd.AddCommand(NewScaleCmd())
 	cmd.AddCommand(NewListCmd())
-	cmd.AddCommand(NewChangePwdCmd())
 	cmd.AddCommand(NewUpgradeCmd())
+	cmd.AddCommand(NewChangePwdCmd())
 	cmd.AddCommand(NewSwitchOverCmd())
 	cmd.AddCommand(NewActivateCmd())
 	cmd.AddCommand(NewShowCmd())
+	cmd.AddCommand(NewReplayLogCmd())
 	return cmd
 }

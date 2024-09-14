@@ -51,7 +51,7 @@ func NewSwitchOverCmd() *cobra.Command {
 			if obtenant.Status.Status != tenantstatus.Running {
 				logger.Fatalln(fmt.Errorf("Obtenant status invalid, Status:%s", obtenant.Status.Status))
 			}
-			if obtenant.Status.Source == nil || obtenant.Status.Source.Tenant == nil {
+			if obtenant.Spec.Source == nil || obtenant.Spec.Source.Tenant == nil {
 				logger.Fatalf("Obtenant %s has no primary tenant", o.StandbyTenant)
 			}
 			op := tenant.GetSwitchOverOperation(o)

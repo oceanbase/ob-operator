@@ -157,7 +157,7 @@ func (o *ScaleOptions) Validate() error {
 		o.ScaleType = "addZones"
 	}
 	if trueCount > 1 {
-		return fmt.Errorf("Only one type of scale is allower at a time")
+		return fmt.Errorf("Only one type of scale is allowed at a time")
 	}
 	if trueCount == 0 {
 		return fmt.Errorf("No scale type specified")

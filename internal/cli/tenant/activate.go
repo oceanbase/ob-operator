@@ -25,6 +25,7 @@ import (
 
 type ActivateOptions struct {
 	generic.ResourceOptions
+	force bool
 }
 
 func NewActivateOptions() *ActivateOptions {
@@ -43,6 +44,7 @@ func GetActivateOperation(o *ActivateOptions) *v1alpha1.OBTenantOperation {
 			Failover: &v1alpha1.OBTenantOpFailoverSpec{
 				StandbyTenant: o.Name,
 			},
+			Force: o.force,
 		},
 	}
 	return activateOp
@@ -51,4 +53,5 @@ func GetActivateOperation(o *ActivateOptions) *v1alpha1.OBTenantOperation {
 // AddFlags add basic flags for tenant management
 func (o *ActivateOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob tenant")
+	cmd.Flags().BoolVarP(&o.force, "force", "f", false, "force operation")
 }

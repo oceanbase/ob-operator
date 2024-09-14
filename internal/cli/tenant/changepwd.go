@@ -33,6 +33,7 @@ type ChangePwdOptions struct {
 	generic.ResourceOptions
 	Password       string `json:"password" binding:"required"`
 	RootSecretName string `json:"rootSecretName" binding:"required"`
+	force          bool
 }
 
 func NewChangePwdOptions() *ChangePwdOptions {
@@ -52,6 +53,7 @@ func GetChangePwdOperation(o *ChangePwdOptions) *v1alpha1.OBTenantOperation {
 				Tenant:    o.Name,
 				SecretRef: o.RootSecretName,
 			},
+			Force: o.force,
 		},
 	}
 	return changePwdOp
@@ -87,4 +89,5 @@ func (o *ChangePwdOptions) Validate() error {
 func (o *ChangePwdOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob tenant")
 	cmd.Flags().StringVarP(&o.Password, "password", "p", "", "new password of ob tenant")
+	cmd.Flags().BoolVarP(&o.force, "force", "f", false, "force operation")
 }

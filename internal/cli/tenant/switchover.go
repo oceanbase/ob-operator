@@ -25,6 +25,7 @@ import (
 
 type SwitchOverOptions struct {
 	generic.ResourceOptions
+	force         bool
 	PrimaryTenant string
 	StandbyTenant string
 }
@@ -52,6 +53,7 @@ func GetSwitchOverOperation(o *SwitchOverOptions) *v1alpha1.OBTenantOperation {
 				PrimaryTenant: o.StandbyTenant,
 				StandbyTenant: o.PrimaryTenant,
 			},
+			Force: o.force,
 		},
 	}
 	return switchOverOp
@@ -60,4 +62,5 @@ func GetSwitchOverOperation(o *SwitchOverOptions) *v1alpha1.OBTenantOperation {
 // AddFlags add basic flags for tenant management
 func (o *SwitchOverOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob tenant")
+	cmd.Flags().BoolVarP(&o.force, "force", "f", false, "force operation")
 }

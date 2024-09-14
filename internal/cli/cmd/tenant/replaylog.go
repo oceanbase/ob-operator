@@ -25,25 +25,19 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// NewActivateCmd activates a standby obtenant
-func NewActivateCmd() *cobra.Command {
-	o := tenant.NewActivateOptions()
+// NewReplayLogCmd replay log of an ob tenant
+func NewReplayLogCmd() *cobra.Command {
+	o := tenant.NewReplayLogOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:     "activate <standby_tenant_name>",
-		Short:   "Activate a standby tenant",
-		PreRunE: o.Parse,
+		Use:     "replaylog <tenant_name>",
+		Short:   "replay log of an ob tenant",
 		Args:    cobra.ExactArgs(1),
+		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := o.Complete(); err != nil {
-				logger.Fatalln(err)
-			}
-			if err := o.Validate(); err != nil {
-				logger.Fatalln(err)
-			}
 			nn := types.NamespacedName{
-				Name:      o.Name,
 				Namespace: o.Namespace,
+				Name:      o.Name,
 			}
 			obtenant, err := clients.GetOBTenant(cmd.Context(), nn)
 			if err != nil {
@@ -52,15 +46,15 @@ func NewActivateCmd() *cobra.Command {
 			if obtenant.Status.Status != tenantstatus.Running {
 				logger.Fatalln(fmt.Errorf("Obtenant status invalid, Status:%s", obtenant.Status.Status))
 			}
-			if obtenant.Spec.TenantRole == apiconst.TenantRolePrimary {
-				logger.Fatalf("Obtenant %s is already PRIMARY", o.Name)
+			if obtenant.Status.TenantRole != apiconst.TenantRoleStandby {
+				logger.Fatalln(fmt.Errorf("The tenant is not standby tenant"))
 			}
-			op := tenant.GetActivateOperation(o)
+			op := tenant.GetReplayLogOperation(o)
 			_, err = clients.CreateOBTenantOperation(cmd.Context(), op)
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create activate operation for tenant %s success", o.Name)
+			logger.Printf("Create replay log operation of tenant %s success", o.Name)
 		},
 	}
 	o.AddFlags(cmd)
