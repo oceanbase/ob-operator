@@ -42,7 +42,7 @@ func NewListCmd() *cobra.Command {
 				return obtenantList.Items[i].Name < obtenantList.Items[j].Name
 			})
 			if len(obtenantList.Items) == 0 {
-				logger.Println("No ob tenants found")
+				logger.Println("No OBTenants found")
 				return
 			}
 			tbLog.Println("NAMESPACE \t NAME \t CLUSTERNAME \t TENANTNAME \t TENANTROLE \t CREATETIME \t STATUS")

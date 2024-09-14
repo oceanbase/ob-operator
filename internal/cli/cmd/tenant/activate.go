@@ -14,8 +14,6 @@ See the Mulan PSL v2 for more details.
 package tenant
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -23,7 +21,6 @@ import (
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 	"github.com/oceanbase/ob-operator/internal/clients"
-	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 )
 
 // NewActivateCmd activates a standby obtenant
@@ -50,15 +47,14 @@ func NewActivateCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			if obtenant.Status.Status != tenantstatus.Running {
-				logger.Fatalln(fmt.Errorf("Obtenant status invalid, Status:%s", obtenant.Status.Status))
+			if err := cmdUtil.CheckTenantStatus(obtenant); err != nil {
+				logger.Fatalln(err)
 			}
 			if obtenant.Spec.TenantRole == apiconst.TenantRolePrimary {
 				logger.Fatalf("Obtenant %s is already PRIMARY", o.Name)
 			}
 			op := tenant.GetActivateOperation(o)
-			_, err = clients.CreateOBTenantOperation(cmd.Context(), op)
-			if err != nil {
+			if _, err = clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
 			logger.Printf("Create activate operation for tenant %s success", o.Name)

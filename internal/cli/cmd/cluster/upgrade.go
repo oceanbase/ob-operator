@@ -14,14 +14,11 @@ See the Mulan PSL v2 for more details.
 package cluster
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/clients"
-	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 )
 
 // NewUpgradeCmd upgrade obclusters
@@ -42,12 +39,11 @@ func NewUpgradeCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			if obcluster.Status.Status != clusterstatus.Running {
-				logger.Fatalln(fmt.Errorf("Obcluster status invalid, Status:%s", obcluster.Status.Status))
+			if err := cmdUtil.CheckClusterStatus(obcluster); err != nil {
+				logger.Fatalln(err)
 			}
 			op := cluster.GetUpgradeOperation(o)
-			_, err = clients.CreateOBClusterOperation(cmd.Context(), op)
-			if err != nil {
+			if _, err = clients.CreateOBClusterOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
 			logger.Printf("Create upgrade operation for obcluster %s success", op.Spec.OBCluster)

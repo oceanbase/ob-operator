@@ -14,15 +14,12 @@ See the Mulan PSL v2 for more details.
 package tenant
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/types"
 
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 	"github.com/oceanbase/ob-operator/internal/clients"
-	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 )
 
 // NewScaleCmd scale an obtenant
@@ -44,8 +41,8 @@ func NewScaleCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			if obtenant.Status.Status != tenantstatus.Running {
-				logger.Fatalln(fmt.Errorf("Obtenant status invalid, Status:%s", obtenant.Status.Status))
+			if err := cmdUtil.CheckTenantStatus(obtenant); err != nil {
+				logger.Fatalln(err)
 			}
 			o.OldResourcePools = obtenant.Spec.Pools
 			if err := o.Validate(); err != nil {
@@ -55,8 +52,7 @@ func NewScaleCmd() *cobra.Command {
 				logger.Fatalln(err)
 			}
 			op := tenant.GetScaleOperation(o)
-			_, err = clients.CreateOBTenantOperation(cmd.Context(), op)
-			if err != nil {
+			if _, err = clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
 			logger.Printf("Create scale operation for obtenant %s success", o.Name)

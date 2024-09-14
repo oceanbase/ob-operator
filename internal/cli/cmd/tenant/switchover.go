@@ -14,7 +14,7 @@ See the Mulan PSL v2 for more details.
 package tenant
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/types"
@@ -22,7 +22,6 @@ import (
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 	"github.com/oceanbase/ob-operator/internal/clients"
-	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 )
 
 // NewSwitchOverCmd switchover two tenants
@@ -45,19 +44,32 @@ func NewSwitchOverCmd() *cobra.Command {
 				Name:      o.StandbyTenant,
 				Namespace: o.Namespace,
 			}
-			obtenant, err := clients.GetOBTenant(cmd.Context(), nn)
+			standbyTenant, err := clients.GetOBTenant(cmd.Context(), nn)
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			if obtenant.Status.Status != tenantstatus.Running {
-				logger.Fatalln(fmt.Errorf("Obtenant status invalid, Status:%s", obtenant.Status.Status))
+			if err := cmdUtil.CheckTenantStatus(standbyTenant); err != nil {
+				logger.Fatalln(err)
 			}
-			if obtenant.Spec.Source == nil || obtenant.Spec.Source.Tenant == nil {
+			if standbyTenant.Spec.Source == nil || standbyTenant.Spec.Source.Tenant == nil {
 				logger.Fatalf("Obtenant %s has no primary tenant", o.StandbyTenant)
 			}
-			op := tenant.GetSwitchOverOperation(o)
-			_, err = clients.CreateOBTenantOperation(cmd.Context(), op)
+			nn = types.NamespacedName{
+				Name:      o.PrimaryTenant,
+				Namespace: o.Namespace,
+			}
+			primaryTenant, err := clients.GetOBTenant(cmd.Context(), nn)
 			if err != nil {
+				logger.Fatalln(err)
+			}
+			if err := cmdUtil.CheckTenantStatus(primaryTenant); err != nil {
+				logger.Fatalln(err)
+			}
+			if primaryTenant.Spec.TenantRole != "PRIMARY" {
+				logger.Fatalln(errors.New("The tenant is not primary tenant"))
+			}
+			op := tenant.GetSwitchOverOperation(o)
+			if _, err = clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
 			logger.Printf("Create switchover operation for primary tenant %s and standby tenant %s success", o.PrimaryTenant, o.StandbyTenant)
