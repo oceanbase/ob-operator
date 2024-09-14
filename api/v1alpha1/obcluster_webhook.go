@@ -316,9 +316,9 @@ func (r *OBCluster) validateMutation() error {
 
 	for i := range r.Spec.Topology {
 		topo := &r.Spec.Topology[i]
-		if topo.K8sCluster != "" {
-			if err := validateK8sClusterCredential(topo.K8sCluster); err != nil {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology").Index(i).Child("k8sCluster"), topo.K8sCluster, err.Error()))
+		if topo.K8sClusterCredential != "" {
+			if err := validateK8sClusterCredential(topo.K8sClusterCredential); err != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology").Index(i).Child("k8sCluster"), topo.K8sClusterCredential, err.Error()))
 			}
 		}
 	}

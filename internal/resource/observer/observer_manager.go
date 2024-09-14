@@ -182,7 +182,7 @@ func (m *OBServerManager) CheckAndUpdateFinalizers() error {
 			if err != nil {
 				m.Logger.Error(err, "failed to clean resources in worker k8s cluster",
 					"observer", m.OBServer.Name,
-					"k8sCluster", m.OBServer.Spec.K8sCluster,
+					"k8sCluster", m.OBServer.Spec.K8sClusterCredential,
 				)
 			}
 		}

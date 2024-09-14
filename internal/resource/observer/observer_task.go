@@ -561,13 +561,13 @@ func CheckAndCreateNs(m *OBServerManager) tasktypes.TaskError {
 		err := m.K8sResClient.Get(m.Ctx, types.NamespacedName{Name: m.OBServer.Namespace}, ns)
 		if err != nil {
 			if kubeerrors.IsNotFound(err) {
-				m.Logger.Info("Create namespace", "namespace", m.OBServer.Namespace, "k8sCluster", m.OBServer.Spec.K8sCluster)
+				m.Logger.Info("Create namespace", "namespace", m.OBServer.Namespace, "k8sCluster", m.OBServer.Spec.K8sClusterCredential)
 				err = m.K8sResClient.Create(m.Ctx, ns)
 				if err != nil {
-					return errors.Wrapf(err, "Failed to create namespace %s with k8s credential %s", m.OBServer.Namespace, m.OBServer.Spec.K8sCluster)
+					return errors.Wrapf(err, "Failed to create namespace %s with k8s credential %s", m.OBServer.Namespace, m.OBServer.Spec.K8sClusterCredential)
 				}
 			} else {
-				return errors.Wrapf(err, "Failed to get namespace %s with k8s credential %s", m.OBServer.Namespace, m.OBServer.Spec.K8sCluster)
+				return errors.Wrapf(err, "Failed to get namespace %s with k8s credential %s", m.OBServer.Namespace, m.OBServer.Spec.K8sClusterCredential)
 			}
 		}
 	}

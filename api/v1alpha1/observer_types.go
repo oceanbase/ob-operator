@@ -43,8 +43,8 @@ type OBServerSpec struct {
 	MonitorTemplate  *apitypes.MonitorTemplate  `json:"monitorTemplate,omitempty"`
 	BackupVolume     *apitypes.BackupVolumeSpec `json:"backupVolume,omitempty"`
 	//+kubebuilder:default=default
-	ServiceAccount string `json:"serviceAccount,omitempty"`
-	K8sCluster     string `json:"k8sCluster,omitempty"`
+	ServiceAccount       string `json:"serviceAccount,omitempty"`
+	K8sClusterCredential string `json:"k8sClusterCredential,omitempty"`
 }
 
 // OBServerStatus defines the observed state of OBServer
@@ -119,5 +119,5 @@ func (s *OBServer) SupportStaticIP() bool {
 }
 
 func (s *OBServer) InMasterK8s() bool {
-	return s.Spec.K8sCluster == ""
+	return s.Spec.K8sClusterCredential == ""
 }
