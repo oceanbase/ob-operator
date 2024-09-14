@@ -319,7 +319,7 @@ func (m *OBServerManager) getVarsReplacer(obcluster *v1alpha1.OBCluster) *string
 	replacePairs := []string{
 		"${observer-name}", m.OBServer.Name,
 		"${obzone-name}", m.OBServer.Labels[oceanbaseconst.LabelRefOBZone],
-		"${obcluster-name}", m.OBServer.Labels[oceanbaseconst.LabelRefOBZone],
+		"${obcluster-name}", m.OBServer.Labels[oceanbaseconst.LabelRefOBCluster],
 	}
 
 	if obcluster != nil {
