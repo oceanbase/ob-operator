@@ -39,7 +39,7 @@ func NewUpdateOptions() *UpdateOptions {
 	return &UpdateOptions{}
 }
 
-func GetUpdateOperations(o *UpdateOptions) *v1alpha1.OBTenantOperation {
+func GetUpdateOperation(o *UpdateOptions) *v1alpha1.OBTenantOperation {
 	updateOp := &v1alpha1.OBTenantOperation{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      o.Name + "-update-" + rand.String(6),
@@ -47,7 +47,6 @@ func GetUpdateOperations(o *UpdateOptions) *v1alpha1.OBTenantOperation {
 			Labels:    map[string]string{oceanbaseconst.LabelRefOBTenantOp: o.Name},
 		},
 		Spec: v1alpha1.OBTenantOperationSpec{
-			Type:         apiconst.TenantOpSetCharset,
 			TargetTenant: &o.Name,
 			Force:        o.force,
 		},
@@ -55,10 +54,13 @@ func GetUpdateOperations(o *UpdateOptions) *v1alpha1.OBTenantOperation {
 	switch o.UpdateType {
 	case "charset":
 		updateOp.Spec.Charset = o.Charset
+		updateOp.Spec.Type = apiconst.TenantOpSetCharset
 	case "connect-while-list":
 		updateOp.Spec.ConnectWhiteList = o.ConnectWhiteList
+		updateOp.Spec.Type = apiconst.TenantOpSetConnectWhiteList
 	case "unit-number":
 		updateOp.Spec.UnitNumber = o.UnitNumber
+		updateOp.Spec.Type = apiconst.TenantOpSetUnitNumber
 	}
 	return updateOp
 }

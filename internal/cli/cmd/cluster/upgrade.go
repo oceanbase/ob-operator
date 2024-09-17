@@ -30,6 +30,7 @@ func NewUpgradeCmd() *cobra.Command {
 		Short:   "Upgrade ob cluster",
 		Long:    "Upgrade ob cluster, please specify the new image",
 		Args:    cobra.ExactArgs(1),
+		Aliases: []string{"ug"},
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := o.Validate(); err != nil {

@@ -75,5 +75,5 @@ func (o *ReplayLogOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "The namespace of OBTenant")
 	cmd.Flags().BoolVarP(&o.force, "force", "f", false, "force operation")
 	cmd.Flags().StringVar(&o.RestoreUntilOptions.Timestamp, "timestamp", "", "timestamp for obtenant restore,example: 2024-02-23 17:47:00")
-	cmd.Flags().BoolVar(&o.RestoreUntilOptions.Unlimited, "unlimited", false, "time limit for obtenant restore")
+	cmd.Flags().BoolVar(&o.RestoreUntilOptions.Unlimited, "unlimited", true, "time limit for obtenant restore")
 }

@@ -59,9 +59,9 @@ func NewShowCmd() *cobra.Command {
 				sort.Slice(obtenantOperation.Items, func(i, j int) bool {
 					return obtenantOperation.Items[i].Name < obtenantOperation.Items[j].Name
 				})
-				tbLog.Println("OPERATION TYPE \t STATUS")
+				tbLog.Println("OPERATION TYPE \t STATUS \t CREATETIME")
 				for _, op := range obtenantOperation.Items {
-					tbLog.Printf("%s \t %s \n", op.Spec.Type, op.Status.Status)
+					tbLog.Printf("%s \t %s \t %s\n", op.Spec.Type, op.Status.Status, op.CreationTimestamp)
 				}
 			}
 			if err = tbw.Flush(); err != nil {

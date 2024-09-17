@@ -61,9 +61,9 @@ func NewShowCmd() *cobra.Command {
 				sort.Slice(obclusterOperation.Items, func(i, j int) bool {
 					return obclusterOperation.Items[i].Name < obclusterOperation.Items[j].Name
 				})
-				tbLog.Println("Operation Type \t TTLDays \t Status")
+				tbLog.Println("OPERATION TYPE \t TTLDAYS \t STATUS \t CREATETIME")
 				for _, op := range obclusterOperation.Items {
-					tbLog.Printf("%s \t %d \t  %s \n", op.Spec.Type, op.Spec.TTLDays, op.Status.Status)
+					tbLog.Printf("%s \t %d \t  %s \t %s\n", op.Spec.Type, op.Spec.TTLDays, op.Status.Status, op.CreationTimestamp)
 				}
 			}
 			if err = tbw.Flush(); err != nil {

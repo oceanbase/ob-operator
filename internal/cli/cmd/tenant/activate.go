@@ -31,6 +31,7 @@ func NewActivateCmd() *cobra.Command {
 		Use:     "activate <standby_tenant_name>",
 		Short:   "Activate a standby tenant",
 		PreRunE: o.Parse,
+		Aliases: []string{"a"},
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := o.Complete(); err != nil {
@@ -50,7 +51,7 @@ func NewActivateCmd() *cobra.Command {
 			if err := cmdUtil.CheckTenantStatus(obtenant); err != nil {
 				logger.Fatalln(err)
 			}
-			if obtenant.Spec.TenantRole == apiconst.TenantRolePrimary {
+			if obtenant.Status.TenantRole == apiconst.TenantRolePrimary {
 				logger.Fatalf("Obtenant %s is already PRIMARY", o.Name)
 			}
 			op := tenant.GetActivateOperation(o)

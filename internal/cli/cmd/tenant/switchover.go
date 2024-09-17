@@ -65,7 +65,7 @@ func NewSwitchOverCmd() *cobra.Command {
 			if err := cmdUtil.CheckTenantStatus(primaryTenant); err != nil {
 				logger.Fatalln(err)
 			}
-			if primaryTenant.Spec.TenantRole != "PRIMARY" {
+			if primaryTenant.Status.TenantRole != "PRIMARY" {
 				logger.Fatalln(errors.New("The tenant is not primary tenant"))
 			}
 			op := tenant.GetSwitchOverOperation(o)

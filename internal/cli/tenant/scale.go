@@ -234,9 +234,9 @@ func (o *ScaleOptions) parseUnitConfig() (*v1alpha1.UnitConfig, error) {
 // AddFlags for scale options
 func (o *ScaleOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of OBTenant")
-	cmd.Flags().IntVar(&o.Replica, "replica", 1, "replica of each local zone")
+	cmd.Flags().IntVarP(&o.Replica, "replica", "r", 1, "replica of each local zone")
 	cmd.Flags().StringToStringVar(&o.ZonePriority, "priority", nil, "zone priority config of OBTenant")
-	cmd.Flags().BoolVar(&o.force, "force", false, "force operation")
+	cmd.Flags().BoolVarP(&o.force, "force", "f", false, "force operation")
 	o.AddUnitFlags(cmd)
 }
 

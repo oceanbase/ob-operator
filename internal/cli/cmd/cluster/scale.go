@@ -28,7 +28,9 @@ func NewScaleCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "scale <cluster_name>",
 		Args:    cobra.ExactArgs(1),
-		Short:   "Scale ob cluster, support add/adjust/delete of zones",
+		Aliases: []string{"sa"},
+		Short:   "Scale ob cluster",
+		Long:    `Scale ob cluster, support add/adjust/delete of zones.`,
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
 			obcluster, err := clients.GetOBCluster(cmd.Context(), o.Namespace, o.Name)

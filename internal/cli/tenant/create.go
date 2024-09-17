@@ -96,9 +96,9 @@ func (o *CreateOptions) Parse(_ *cobra.Command, args []string) error {
 }
 
 func (o *CreateOptions) Complete() error {
-	if o.TenantName == "" {
-		o.TenantName = o.Name
-	}
+	// if o.TenantName == "" {
+	// 	o.TenantName = o.Name
+	// }
 	if o.RootPassword == "" {
 		o.RootPassword = utils.GenerateRandomPassword(8, 32)
 	}
@@ -114,6 +114,9 @@ func (o *CreateOptions) Validate() error {
 	}
 	if o.ClusterName == "" {
 		return errors.New("cluster name not specified")
+	}
+	if o.TenantName == "" {
+		return errors.New("tenant name not specified")
 	}
 	if !utils.CheckResourceName(o.Name) {
 		return fmt.Errorf("invalid resource name in k8s: %s", o.Name)
@@ -399,7 +402,7 @@ func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 // AddBaseFlags add base flags
 func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags := cmd.Flags()
-	baseFlags.StringVar(&o.TenantName, "tenant-name", "", "Tenant name, if not specified, use name in k8s instead")
+	baseFlags.StringVarP(&o.TenantName, "tenant-name", "n", "", "Tenant name, if not specified, use name in k8s instead")
 	baseFlags.StringVar(&o.ClusterName, "cluster-name", "", "The cluster name tenant belonged to in k8s")
 	baseFlags.StringVar(&o.Namespace, "namespace", "default", "The namespace of the tenant")
 	baseFlags.StringVarP(&o.RootPassword, "root-password", "p", "", "The root password of the cluster")
@@ -434,9 +437,9 @@ func (o *CreateOptions) AddRestoreFlags(cmd *cobra.Command) {
 	restoreFlags := pflag.NewFlagSet("restore", pflag.ContinueOnError)
 	restoreFlags.BoolVarP(&o.Restore, "restore", "r", false, "Restore from backup files")
 	restoreFlags.StringVar(&o.RestoreType, "type", "oss", "The type of restore source")
-	restoreFlags.StringVar(&o.Source.Restore.ArchiveSource, "archive-source", "oss://operator-backup-data/backup-t1?host=oss-cn-hangzhou.aliyuncs.com", "The archive source of restore")
+	restoreFlags.StringVar(&o.Source.Restore.ArchiveSource, "archive-source", "oss://operator-backup-data/backup-demo_tenant?host=oss-cn-hangzhou.aliyuncs.com", "The archive source of restore")
 	restoreFlags.StringVar(&o.Source.Restore.BakEncryptionPassword, "bak-encryption-password", "", "The backup encryption password of obtenant")
-	restoreFlags.StringVar(&o.Source.Restore.BakDataSource, "bak-data-source", "oss://operator-backup-data/backup-t1?host=oss-cn-hangzhou.aliyuncs.com", "The bak data source of restore")
+	restoreFlags.StringVar(&o.Source.Restore.BakDataSource, "bak-data-source", "oss://operator-backup-data/backup-demo_tenant?host=oss-cn-hangzhou.aliyuncs.com", "The bak data source of restore")
 	restoreFlags.StringVar(&o.Source.Restore.OSSAccessID, "oss-access-id", "", "The oss access id of restore")
 	restoreFlags.StringVar(&o.Source.Restore.OSSAccessKey, "oss-access-key", "", "The oss access key of restore")
 	restoreFlags.BoolVar(&o.Source.Restore.Until.Unlimited, "until-unlimited", true, "time limited for restore")

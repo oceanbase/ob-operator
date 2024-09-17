@@ -29,8 +29,9 @@ func NewScaleCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "scale <tenant_name>",
 		Short:   "Scale ob tenant",
-		Long:    "Scale ob tenant, support add/adjust/delete of pools",
+		Long:    `Scale ob tenant, support add/adjust/delete of pools.`,
 		Args:    cobra.ExactArgs(1),
+		Aliases: []string{"sa"},
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
 			nn := types.NamespacedName{

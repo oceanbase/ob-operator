@@ -30,6 +30,7 @@ func NewUpdateCmd() *cobra.Command {
 		Short:   "Update ob cluster",
 		Long:    "Update ob cluster, support cpu/memory/storage",
 		Args:    cobra.ExactArgs(1),
+		Aliases: []string{"ud"},
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := o.Validate(); err != nil {

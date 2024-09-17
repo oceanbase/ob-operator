@@ -28,7 +28,7 @@ func NewChangePwdCmd() *cobra.Command {
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "changepwd <tenant_name> --password=<password>",
-		Short:   "Change password of ob tenant",
+		Short:   "Change password of an ob tenant",
 		PreRunE: o.Parse,
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
