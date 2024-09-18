@@ -10,14 +10,14 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /mutate-oceanbase-oceanbase-com-v1alpha2-k8sclustercredential
+      path: /mutate-k8s-oceanbase-com-v1alpha1-k8sclustercredential
   failurePolicy: Fail
   name: mk8sclustercredential.kb.io
   rules:
   - apiGroups:
-    - oceanbase.oceanbase.com
+    - k8s.oceanbase.com
     apiVersions:
-    - v1alpha2
+    - v1alpha1
     operations:
     - CREATE
     - UPDATE
@@ -156,14 +156,14 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
-      path: /validate-oceanbase-oceanbase-com-v1alpha2-k8sclustercredential
+      path: /validate-k8s-oceanbase-com-v1alpha1-k8sclustercredential
   failurePolicy: Fail
   name: vk8sclustercredential.kb.io
   rules:
   - apiGroups:
-    - oceanbase.oceanbase.com
+    - k8s.oceanbase.com
     apiVersions:
-    - v1alpha2
+    - v1alpha1
     operations:
     - CREATE
     - UPDATE

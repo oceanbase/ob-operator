@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha2
+package k8sv1alpha1
 
 import (
 	"context"
@@ -40,7 +40,7 @@ func (r *K8sClusterCredential) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-//+kubebuilder:webhook:path=/mutate-oceanbase-oceanbase-com-v1alpha2-k8sclustercredential,mutating=true,failurePolicy=fail,sideEffects=None,groups=oceanbase.oceanbase.com,resources=k8sclustercredentials,verbs=create;update,versions=v1alpha2,name=mk8sclustercredential.kb.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/mutate-k8s-oceanbase-com-v1alpha1-k8sclustercredential,mutating=true,failurePolicy=fail,sideEffects=None,groups=k8s.oceanbase.com,resources=k8sclustercredentials,verbs=create;update,versions=v1alpha1,name=mk8sclustercredential.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Defaulter = &K8sClusterCredential{}
 
@@ -55,7 +55,7 @@ func (r *K8sClusterCredential) Default() {
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-oceanbase-oceanbase-com-v1alpha2-k8sclustercredential,mutating=false,failurePolicy=fail,sideEffects=None,groups=oceanbase.oceanbase.com,resources=k8sclustercredentials,verbs=create;update,versions=v1alpha2,name=vk8sclustercredential.kb.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/validate-k8s-oceanbase-com-v1alpha1-k8sclustercredential,mutating=false,failurePolicy=fail,sideEffects=None,groups=k8s.oceanbase.com,resources=k8sclustercredentials,verbs=create;update,versions=v1alpha1,name=vk8sclustercredential.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &K8sClusterCredential{}
 

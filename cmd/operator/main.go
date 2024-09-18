@@ -34,8 +34,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	"github.com/oceanbase/ob-operator/api/k8sv1alpha1"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	"github.com/oceanbase/ob-operator/api/v1alpha2"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/controller"
@@ -56,7 +56,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(v1alpha1.AddToScheme(scheme))
-	utilruntime.Must(v1alpha2.AddToScheme(scheme))
+	utilruntime.Must(k8sv1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -248,7 +248,7 @@ func main() {
 			setupLog.Error(err, "unable to create webhook", "webhook", "OBClusterOperation")
 			os.Exit(1)
 		}
-		if err = (&v1alpha2.K8sClusterCredential{}).SetupWebhookWithManager(mgr); err != nil {
+		if err = (&k8sv1alpha1.K8sClusterCredential{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "K8sClusterCredential")
 			os.Exit(1)
 		}

@@ -20,7 +20,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	ctrlruntime "sigs.k8s.io/controller-runtime/pkg/client"
 
-	"github.com/oceanbase/ob-operator/api/v1alpha2"
+	"github.com/oceanbase/ob-operator/api/k8sv1alpha1"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	k8sclient "github.com/oceanbase/ob-operator/pkg/k8s/client"
@@ -34,7 +34,7 @@ type cacheEntry struct {
 var K8sClientCache sync.Map
 
 func GetCachedCtrlRuntimeClientFromK8sCluster(ctx context.Context, k8sCluster string) (ctrlruntime.Client, error) {
-	creds := &v1alpha2.K8sClusterCredentialList{}
+	creds := &k8sv1alpha1.K8sClusterCredentialList{}
 	err := clients.K8sClusterCredentialClient.List(ctx, "", creds, metav1.ListOptions{
 		LabelSelector: oceanbaseconst.LabelK8sCluster + "=" + k8sCluster,
 	})
@@ -59,7 +59,7 @@ func GetCachedCtrlRuntimeClientFromCredName(ctx context.Context, credentialName 
 	return GetCachedCtrlRuntimeClient(ctx, cred)
 }
 
-func GetCachedCtrlRuntimeClient(_ context.Context, cred *v1alpha2.K8sClusterCredential) (ctrlruntime.Client, error) {
+func GetCachedCtrlRuntimeClient(_ context.Context, cred *k8sv1alpha1.K8sClusterCredential) (ctrlruntime.Client, error) {
 	if client, ok := K8sClientCache.Load(cred.Name); ok {
 		entry := client.(cacheEntry)
 		if entry.LatestGeneration >= cred.Generation {
