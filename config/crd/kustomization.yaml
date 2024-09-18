@@ -13,7 +13,7 @@ resources:
 - bases/oceanbase.oceanbase.com_obtenantoperations.yaml
 - bases/oceanbase.oceanbase.com_obresourcerescues.yaml
 - bases/oceanbase.oceanbase.com_obclusteroperations.yaml
-- bases/oceanbase.oceanbase.com_k8sclustercredentials.yaml
+- bases/k8s.oceanbase.com_k8sclustercredentials.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
