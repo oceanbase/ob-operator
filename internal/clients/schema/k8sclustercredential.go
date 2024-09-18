@@ -20,9 +20,9 @@ const (
 )
 
 var (
-	K8sClusterCredentialRes = schema.GroupVersionResource{
-		Group:    Group,
-		Version:  VersionV1Alpha2,
+	K8sClusterCredentialGVR = schema.GroupVersionResource{
+		Group:    K8sGroup,
+		Version:  K8sGroupVersion,
 		Resource: K8sClusterCredentialResource,
 	}
 )

@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	OBServerRes = schema.GroupVersionResource{
+	OBServerGVR = schema.GroupVersionResource{
 		Group:    OBServerGroup,
 		Version:  OBServerVersion,
 		Resource: OBServerResource,

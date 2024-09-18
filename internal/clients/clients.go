@@ -20,10 +20,10 @@ import (
 )
 
 var (
-	ClusterClient          = client.NewDynamicResourceClient[*v1alpha1.OBCluster](schema.OBClusterRes, schema.OBClusterKind)
-	ZoneClient             = client.NewDynamicResourceClient[*v1alpha1.OBZone](schema.OBZoneRes, schema.OBZoneKind)
-	ServerClient           = client.NewDynamicResourceClient[*v1alpha1.OBServer](schema.OBServerRes, schema.OBServerKind)
-	TenantClient           = client.NewDynamicResourceClient[*v1alpha1.OBTenant](schema.OBTenantRes, schema.OBTenantKind)
+	ClusterClient          = client.NewDynamicResourceClient[*v1alpha1.OBCluster](schema.OBClusterGVR, schema.OBClusterKind)
+	ZoneClient             = client.NewDynamicResourceClient[*v1alpha1.OBZone](schema.OBZoneGVR, schema.OBZoneKind)
+	ServerClient           = client.NewDynamicResourceClient[*v1alpha1.OBServer](schema.OBServerGVR, schema.OBServerKind)
+	TenantClient           = client.NewDynamicResourceClient[*v1alpha1.OBTenant](schema.OBTenantGVR, schema.OBTenantKind)
 	BackupJobClient        = client.NewDynamicResourceClient[*v1alpha1.OBTenantBackup](schema.OBTenantBackupGVR, schema.OBTenantBackupKind)
 	OperationClient        = client.NewDynamicResourceClient[*v1alpha1.OBTenantOperation](schema.OBTenantOperationGVR, schema.OBTenantOperationKind)
 	BackupPolicyClient     = client.NewDynamicResourceClient[*v1alpha1.OBTenantBackupPolicy](schema.OBTenantBackupPolicyGVR, schema.OBTenantBackupPolicyKind)
@@ -31,5 +31,5 @@ var (
 	RestoreJobClient       = client.NewDynamicResourceClient[*v1alpha1.OBTenantRestore](schema.OBTenantRestoreGVR, schema.OBTenantRestoreKind)
 	ClusterOperationClient = client.NewDynamicResourceClient[*v1alpha1.OBClusterOperation](schema.OBClusterOperationGVR, schema.OBClusterOperationKind)
 
-	K8sClusterCredentialClient = client.NewDynamicResourceClient[*k8sv1alpha1.K8sClusterCredential](schema.K8sClusterCredentialRes, schema.K8sClusterCredentialKind)
+	K8sClusterCredentialClient = client.NewDynamicResourceClient[*k8sv1alpha1.K8sClusterCredential](schema.K8sClusterCredentialGVR, schema.K8sClusterCredentialKind)
 )
