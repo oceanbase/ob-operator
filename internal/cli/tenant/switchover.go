@@ -51,8 +51,8 @@ func GetSwitchOverOperation(o *SwitchOverOptions) *v1alpha1.OBTenantOperation {
 		Spec: v1alpha1.OBTenantOperationSpec{
 			Type: apiconst.TenantOpSwitchover,
 			Switchover: &v1alpha1.OBTenantOpSwitchoverSpec{
-				PrimaryTenant: o.StandbyTenant,
-				StandbyTenant: o.PrimaryTenant,
+				PrimaryTenant: o.PrimaryTenant,
+				StandbyTenant: o.StandbyTenant,
 			},
 			Force: o.force,
 		},

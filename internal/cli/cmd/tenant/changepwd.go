@@ -32,17 +32,13 @@ func NewChangePwdCmd() *cobra.Command {
 		PreRunE: o.Parse,
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := o.Complete(); err != nil {
-				logger.Fatalln(err)
-			}
 			if err := o.Validate(); err != nil {
 				logger.Fatalln(err)
 			}
-			nn := types.NamespacedName{
+			obtenant, err := clients.GetOBTenant(cmd.Context(), types.NamespacedName{
 				Name:      o.Name,
 				Namespace: o.Namespace,
-			}
-			obtenant, err := clients.GetOBTenant(cmd.Context(), nn)
+			})
 			if err != nil {
 				logger.Fatalln(err)
 			}

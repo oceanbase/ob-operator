@@ -47,7 +47,7 @@ func NewListCmd() *cobra.Command {
 			}
 			tbLog.Println("NAMESPACE \t NAME \t CLUSTERNAME \t TENANTNAME \t TENANTROLE \t CREATETIME \t STATUS")
 			for _, tenant := range obtenantList.Items {
-				tbLog.Printf("%s \t %s \t %s \t %s \t %s \t %s \t %s\n", tenant.Namespace, tenant.ObjectMeta.Name, tenant.Spec.ClusterName, tenant.Spec.TenantName, tenant.Spec.TenantRole, tenant.CreationTimestamp, tenant.Status.Status)
+				tbLog.Printf("%s \t %s \t %s \t %s \t %s \t %s \t %s\n", tenant.Namespace, tenant.ObjectMeta.Name, tenant.Spec.ClusterName, tenant.Spec.TenantName, tenant.Status.TenantRole, tenant.CreationTimestamp, tenant.Status.Status)
 			}
 			if err := tbw.Flush(); err != nil {
 				logger.Fatalln(err)

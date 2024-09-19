@@ -33,11 +33,10 @@ func NewDeleteCmd() *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
-			nn := types.NamespacedName{
+			err := clients.DeleteOBTenant(cmd.Context(), types.NamespacedName{
 				Namespace: o.Namespace,
 				Name:      o.Name,
-			}
-			err := clients.DeleteOBTenant(cmd.Context(), nn)
+			})
 			if err != nil {
 				logger.Fatalln(err)
 			}

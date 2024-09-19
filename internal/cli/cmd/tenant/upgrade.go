@@ -37,14 +37,10 @@ func NewUpgradeCmd() *cobra.Command {
 			if err := o.Validate(); err != nil {
 				logger.Fatalln(err)
 			}
-			if err := o.Complete(); err != nil {
-				logger.Fatalln(err)
-			}
-			nn := types.NamespacedName{
+			obtenant, err := clients.GetOBTenant(cmd.Context(), types.NamespacedName{
 				Name:      o.Name,
 				Namespace: o.Namespace,
-			}
-			obtenant, err := clients.GetOBTenant(cmd.Context(), nn)
+			})
 			if err != nil {
 				logger.Fatalln(err)
 			}

@@ -85,10 +85,13 @@ func (o *CreateOptions) Parse(_ *cobra.Command, args []string) error {
 	}
 	o.Pools = pools
 	o.Name = args[0]
-	if o.From != "" {
+	if o.CheckFlagChanged("from") {
 		o.Source.Tenant = &o.From
 		o.TenantRole = "STANDBY"
+	} else {
+		o.TenantRole = "PRIMARY"
 	}
+	// create empty standby tenant
 	if !o.Restore {
 		o.Source.Restore = nil
 	}
@@ -96,9 +99,6 @@ func (o *CreateOptions) Parse(_ *cobra.Command, args []string) error {
 }
 
 func (o *CreateOptions) Complete() error {
-	// if o.TenantName == "" {
-	// 	o.TenantName = o.Name
-	// }
 	if o.RootPassword == "" {
 		o.RootPassword = utils.GenerateRandomPassword(8, 32)
 	}
@@ -126,6 +126,15 @@ func (o *CreateOptions) Validate() error {
 	}
 	if o.Source != nil && o.Source.Tenant != nil && o.TenantRole == "PRIMARY" {
 		return fmt.Errorf("invalid tenant role")
+	}
+	if o.Restore && o.RestoreType != "OSS" && o.RestoreType != "NFS" {
+		return errors.New("Restore Type not supported")
+	}
+	if o.Restore && o.RestoreType == "OSS" && o.Source.Restore.OSSAccessKey == "" {
+		return errors.New("oss access key not specified")
+	}
+	if o.Restore && o.RestoreType == "NFS" && o.Source.Restore.BakEncryptionPassword == "" {
+		return errors.New("back encryption password not specified")
 	}
 	return nil
 }
@@ -403,13 +412,12 @@ func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags := cmd.Flags()
 	baseFlags.StringVarP(&o.TenantName, "tenant-name", "n", "", "Tenant name, if not specified, use name in k8s instead")
-	baseFlags.StringVar(&o.ClusterName, "cluster-name", "", "The cluster name tenant belonged to in k8s")
+	baseFlags.StringVar(&o.ClusterName, "cluster", "", "The cluster name tenant belonged to in k8s")
 	baseFlags.StringVar(&o.Namespace, "namespace", "default", "The namespace of the tenant")
 	baseFlags.StringVarP(&o.RootPassword, "root-password", "p", "", "The root password of the cluster")
 	baseFlags.StringVar(&o.Charset, "charset", "utf8mb4", "The charset using in ob tenant")
 	baseFlags.StringVar(&o.ConnectWhiteList, "connect-white-list", "%", "The connect white list using in ob tenant")
 	baseFlags.StringVar(&o.From, "from", "", "restore from data source")
-	baseFlags.StringVar(&o.TenantRole, "role", "PRIMARY", "The role of tenant")
 }
 
 // AddPoolFlags add pool-related flags
@@ -436,10 +444,10 @@ func (o *CreateOptions) AddUnitFlags(cmd *cobra.Command) {
 func (o *CreateOptions) AddRestoreFlags(cmd *cobra.Command) {
 	restoreFlags := pflag.NewFlagSet("restore", pflag.ContinueOnError)
 	restoreFlags.BoolVarP(&o.Restore, "restore", "r", false, "Restore from backup files")
-	restoreFlags.StringVar(&o.RestoreType, "type", "oss", "The type of restore source")
-	restoreFlags.StringVar(&o.Source.Restore.ArchiveSource, "archive-source", "oss://operator-backup-data/backup-demo_tenant?host=oss-cn-hangzhou.aliyuncs.com", "The archive source of restore")
+	restoreFlags.StringVar(&o.RestoreType, "type", "OSS", "The type of restore source, support OSS or NFS")
+	restoreFlags.StringVar(&o.Source.Restore.ArchiveSource, "archive-source", "demo_tenant/log_archive_custom", "The archive source of restore")
 	restoreFlags.StringVar(&o.Source.Restore.BakEncryptionPassword, "bak-encryption-password", "", "The backup encryption password of obtenant")
-	restoreFlags.StringVar(&o.Source.Restore.BakDataSource, "bak-data-source", "oss://operator-backup-data/backup-demo_tenant?host=oss-cn-hangzhou.aliyuncs.com", "The bak data source of restore")
+	restoreFlags.StringVar(&o.Source.Restore.BakDataSource, "bak-data-source", "demo_tenant/data_backup_custom_enc", "The bak data source of restore")
 	restoreFlags.StringVar(&o.Source.Restore.OSSAccessID, "oss-access-id", "", "The oss access id of restore")
 	restoreFlags.StringVar(&o.Source.Restore.OSSAccessKey, "oss-access-key", "", "The oss access key of restore")
 	restoreFlags.BoolVar(&o.Source.Restore.Until.Unlimited, "until-unlimited", true, "time limited for restore")

@@ -15,13 +15,15 @@ package util
 
 import (
 	"fmt"
+	"strings"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 )
 
-// CheckTenantStatus check running status of obtenant
+// CheckTenantStatus checks running status of obtenant
 func CheckTenantStatus(tenant *v1alpha1.OBTenant) error {
 	if tenant.Status.Status != tenantstatus.Running {
 		return fmt.Errorf("Obtenant status invalid, Status:%s", tenant.Status.Status)
@@ -29,10 +31,26 @@ func CheckTenantStatus(tenant *v1alpha1.OBTenant) error {
 	return nil
 }
 
-// CheckClusterStatus check running status of obcluster
+// CheckClusterStatus checks running status of obcluster
 func CheckClusterStatus(cluster *v1alpha1.OBCluster) error {
 	if cluster.Status.Status != clusterstatus.Running {
 		return fmt.Errorf("Obcluster status invalid, Status:%s", cluster.Status.Status)
+	}
+	return nil
+}
+
+// CheckPrimaryTenant checks primary tenant for a standbytenant
+func CheckPrimaryTenant(standbytenant *v1alpha1.OBTenant) error {
+	if standbytenant.Spec.Source == nil || standbytenant.Spec.Source.Tenant == nil {
+		return fmt.Errorf("Obtenant %s has no primary tenant", standbytenant.Name)
+	}
+	return nil
+}
+
+// CheckTenantRole checks tenant role
+func CheckTenantRole(tenant *v1alpha1.OBTenant, role apitypes.TenantRole) error {
+	if tenant.Status.TenantRole != apitypes.TenantRole(strings.ToUpper(string(role))) {
+		return fmt.Errorf("The tenant is not %s tenant", string(role))
 	}
 	return nil
 }

@@ -35,11 +35,10 @@ func NewShowCmd() *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
-			nn := types.NamespacedName{
+			obtenant, err := clients.GetOBTenant(cmd.Context(), types.NamespacedName{
 				Namespace: o.Namespace,
 				Name:      o.Name,
-			}
-			obtenant, err := clients.GetOBTenant(cmd.Context(), nn)
+			})
 			if err != nil {
 				logger.Fatalln(err)
 			}
@@ -47,8 +46,8 @@ func NewShowCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			tbLog.Println("TENANTNAME \t CLUSTERNAME \t STATUS")
-			tbLog.Printf("%s \t %s \t %s \n\n", obtenant.Spec.TenantName, obtenant.Spec.ClusterName, obtenant.Status.Status)
+			tbLog.Println("TENANTNAME \t CLUSTERNAME \t TENANTROLE \t STATUS")
+			tbLog.Printf("%s \t %s \t %s \t %s \n\n", obtenant.Spec.TenantName, obtenant.Spec.ClusterName, obtenant.Status.TenantRole, obtenant.Status.Status)
 			if len(obtenant.Status.Pools) > 0 {
 				tbLog.Println("ZONELIST \t UNITNUM \t PRIORITY")
 				for _, pool := range obtenant.Status.Pools {
@@ -63,6 +62,8 @@ func NewShowCmd() *cobra.Command {
 				for _, op := range obtenantOperation.Items {
 					tbLog.Printf("%s \t %s \t %s\n", op.Spec.Type, op.Status.Status, op.CreationTimestamp)
 				}
+			} else {
+				logger.Printf("No OBTenantOperations found in %s", obtenant.Spec.TenantName)
 			}
 			if err = tbw.Flush(); err != nil {
 				logger.Fatalln(err)

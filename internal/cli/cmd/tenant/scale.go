@@ -29,23 +29,23 @@ func NewScaleCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "scale <tenant_name>",
 		Short:   "Scale ob tenant",
-		Long:    `Scale ob tenant, support add/adjust/delete of pools.`,
+		Long:    `Scale ob tenant, support unit-number/unit config of zones.`,
 		Args:    cobra.ExactArgs(1),
 		Aliases: []string{"sa"},
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
-			nn := types.NamespacedName{
+			obtenant, err := clients.GetOBTenant(cmd.Context(), types.NamespacedName{
 				Name:      o.Name,
 				Namespace: o.Namespace,
-			}
-			obtenant, err := clients.GetOBTenant(cmd.Context(), nn)
+			})
 			if err != nil {
 				logger.Fatalln(err)
 			}
 			if err := cmdUtil.CheckTenantStatus(obtenant); err != nil {
 				logger.Fatalln(err)
+			} else {
+				o.OldResourcePools = obtenant.Spec.Pools
 			}
-			o.OldResourcePools = obtenant.Spec.Pools
 			if err := o.Validate(); err != nil {
 				logger.Fatalln(err)
 			}

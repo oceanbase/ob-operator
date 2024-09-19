@@ -23,7 +23,7 @@ func NewCmd() *cobra.Command {
 		Use:     "tenant",
 		Aliases: []string{"t"},
 		Short:   "Command for tenant management",
-		Long:    `Command for tenant management, such as Create, Update, Delete, Switchover.`,
+		Long:    `Command for tenant management, such as Create, Update, Delete, Switchover, Activate, Replaylog.`,
 	}
 	cmd.AddCommand(NewCreateCmd())
 	cmd.AddCommand(NewDeleteCmd())

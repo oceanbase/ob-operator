@@ -14,11 +14,10 @@ See the Mulan PSL v2 for more details.
 package tenant
 
 import (
-	"errors"
-
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/types"
 
+	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 	"github.com/oceanbase/ob-operator/internal/clients"
@@ -34,42 +33,37 @@ func NewSwitchOverCmd() *cobra.Command {
 		PreRunE: o.Parse,
 		Args:    cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := o.Complete(); err != nil {
-				logger.Fatalln(err)
-			}
 			if err := o.Validate(); err != nil {
 				logger.Fatalln(err)
 			}
-			nn := types.NamespacedName{
+			standbyTenant, err := clients.GetOBTenant(cmd.Context(), types.NamespacedName{
 				Name:      o.StandbyTenant,
 				Namespace: o.Namespace,
-			}
-			standbyTenant, err := clients.GetOBTenant(cmd.Context(), nn)
+			})
 			if err != nil {
 				logger.Fatalln(err)
 			}
 			if err := cmdUtil.CheckTenantStatus(standbyTenant); err != nil {
 				logger.Fatalln(err)
 			}
-			if standbyTenant.Spec.Source == nil || standbyTenant.Spec.Source.Tenant == nil {
-				logger.Fatalf("Obtenant %s has no primary tenant", o.StandbyTenant)
+			if err := cmdUtil.CheckPrimaryTenant(standbyTenant); err != nil {
+				logger.Fatalln(err)
 			}
-			nn = types.NamespacedName{
+			primaryTenant, err := clients.GetOBTenant(cmd.Context(), types.NamespacedName{
 				Name:      o.PrimaryTenant,
 				Namespace: o.Namespace,
-			}
-			primaryTenant, err := clients.GetOBTenant(cmd.Context(), nn)
+			})
 			if err != nil {
 				logger.Fatalln(err)
 			}
 			if err := cmdUtil.CheckTenantStatus(primaryTenant); err != nil {
 				logger.Fatalln(err)
 			}
-			if primaryTenant.Status.TenantRole != "PRIMARY" {
-				logger.Fatalln(errors.New("The tenant is not primary tenant"))
+			if err := cmdUtil.CheckTenantRole(primaryTenant, apiconst.TenantRolePrimary); err != nil {
+				logger.Fatalln(err)
 			}
 			op := tenant.GetSwitchOverOperation(o)
-			if _, err = clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {
+			if _, err := clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
 			logger.Printf("Create switchover operation for primary tenant %s and standby tenant %s success", o.PrimaryTenant, o.StandbyTenant)

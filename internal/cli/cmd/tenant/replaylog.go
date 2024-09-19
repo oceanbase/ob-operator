@@ -14,8 +14,6 @@ See the Mulan PSL v2 for more details.
 package tenant
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/types"
 
@@ -32,23 +30,22 @@ func NewReplayLogCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "replaylog <tenant_name>",
 		Short:   "replay log of an ob tenant",
-		Aliases: []string{"r"},
+		Aliases: []string{"r", "rl"},
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
-			nn := types.NamespacedName{
+			obtenant, err := clients.GetOBTenant(cmd.Context(), types.NamespacedName{
 				Namespace: o.Namespace,
 				Name:      o.Name,
-			}
-			obtenant, err := clients.GetOBTenant(cmd.Context(), nn)
+			})
 			if err != nil {
 				logger.Fatalln(err)
 			}
 			if err := cmdUtil.CheckTenantStatus(obtenant); err != nil {
 				logger.Fatalln(err)
 			}
-			if obtenant.Status.TenantRole != apiconst.TenantRoleStandby {
-				logger.Fatalln(fmt.Errorf("The tenant is not standby tenant"))
+			if err := cmdUtil.CheckTenantRole(obtenant, apiconst.TenantRoleStandby); err != nil {
+				logger.Fatalln(err)
 			}
 			op := tenant.GetReplayLogOperation(o)
 			if _, err = clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {

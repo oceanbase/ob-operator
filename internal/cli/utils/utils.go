@@ -16,14 +16,18 @@ package utils
 import (
 	"crypto/rand"
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/resource"
 	k8srand "k8s.io/apimachinery/pkg/util/rand"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 
@@ -206,6 +210,42 @@ func GenerateRandomPassword(minLength int, maxLength int) string {
 		return GenerateRandomPassword(minLength, maxLength)
 	}
 	return sb.String()
+}
+
+// ParseUnitConfig parse param.UnitConfig to v1alpha1.UnitConfig
+func ParseUnitConfig(unitConfig *param.UnitConfig) (*v1alpha1.UnitConfig, error) {
+	cpuCount, err := resource.ParseQuantity(unitConfig.CPUCount)
+	if err != nil {
+		return nil, oberr.NewBadRequest("invalid cpu count: " + err.Error())
+	}
+	memorySize, err := resource.ParseQuantity(unitConfig.MemorySize)
+	if err != nil {
+		return nil, oberr.NewBadRequest("invalid memory size: " + err.Error())
+	}
+	logDiskSize, err := resource.ParseQuantity(unitConfig.LogDiskSize)
+	if err != nil {
+		return nil, oberr.NewBadRequest("invalid log disk size: " + err.Error())
+	}
+	var maxIops, minIops int
+	if unitConfig.MaxIops > math.MaxInt32 {
+		maxIops = math.MaxInt32
+	} else {
+		maxIops = int(unitConfig.MaxIops)
+	}
+	if unitConfig.MinIops > math.MaxInt32 {
+		minIops = math.MaxInt32
+	} else {
+		minIops = int(unitConfig.MinIops)
+	}
+	return &v1alpha1.UnitConfig{
+		MaxCPU:      cpuCount,
+		MemorySize:  memorySize,
+		MinCPU:      cpuCount,
+		LogDiskSize: logDiskSize,
+		MaxIops:     maxIops,
+		MinIops:     minIops,
+		IopsWeight:  unitConfig.IopsWeight,
+	}, nil
 }
 
 // GenerateUUID returns uuid

@@ -29,26 +29,27 @@ func NewUpdateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "update <tenant_name>",
 		Short:   "Update ob tenant",
-		Long:    "Update ob tenant, support unitNumber/charset/connectWhiteList",
+		Long:    "Update ob tenant, support unitNumber/charset/connectWhiteList/priority of zones",
 		Args:    cobra.ExactArgs(1),
 		Aliases: []string{"ud"},
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := o.Validate(); err != nil {
-				logger.Fatalln(err)
-			}
-			if err := o.Complete(); err != nil {
-				logger.Fatalln(err)
-			}
-			nn := types.NamespacedName{
+			obtenant, err := clients.GetOBTenant(cmd.Context(), types.NamespacedName{
 				Name:      o.Name,
 				Namespace: o.Namespace,
-			}
-			obtenant, err := clients.GetOBTenant(cmd.Context(), nn)
+			})
 			if err != nil {
 				logger.Fatalln(err)
 			}
 			if err := cmdUtil.CheckTenantStatus(obtenant); err != nil {
+				logger.Fatalln(err)
+			} else {
+				o.OldResourcePools = obtenant.Spec.Pools
+			}
+			if err := o.Validate(); err != nil {
+				logger.Fatalln(err)
+			}
+			if err := o.Complete(); err != nil {
 				logger.Fatalln(err)
 			}
 			op := tenant.GetUpdateOperation(o)
