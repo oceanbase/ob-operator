@@ -59,7 +59,7 @@ func NewUpdateOptions() *UpdateOptions {
 func (o *UpdateOptions) Parse(cmd *cobra.Command, args []string) error {
 	o.Name = args[0]
 	o.Cmd = cmd
-	if o.CheckFlagChanged("priority") {
+	if o.CheckIfFlagChanged("priority") {
 		pools, err := utils.MapZonesToPools(o.ZonePriority)
 		if err != nil {
 			return err
@@ -142,13 +142,13 @@ func (o *UpdateOptions) Validate() error {
 			o.UpdateType = name
 		}
 	}
-	if o.CheckFlagChanged("charset") {
+	if o.CheckIfFlagChanged("charset") {
 		updateTypeMap("charset")
 	}
-	if o.CheckFlagChanged("connect-white-list") {
+	if o.CheckIfFlagChanged("connect-white-list") {
 		updateTypeMap("connect-white-list")
 	}
-	if o.CheckFlagChanged("priority") && o.Pools != nil {
+	if o.CheckIfFlagChanged("priority") && o.Pools != nil {
 		found := false
 		for _, pool := range o.Pools {
 			for _, obpool := range o.OldResourcePools {

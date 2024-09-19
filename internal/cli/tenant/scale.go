@@ -95,11 +95,11 @@ func (o *ScaleOptions) Complete() error {
 func (o *ScaleOptions) Validate() error {
 	typeCount := 0
 	unitFlags := []string{"max-iops", "min-iops", "iops-weight", "cpu-count", "memory-size", "log-disk-size"}
-	if o.CheckFlagsChanged(unitFlags) {
+	if o.CheckIfFlagChanged(unitFlags...) {
 		o.ScaleType = "unit-config"
 		typeCount++
 	}
-	if o.CheckFlagChanged("unit-number") {
+	if o.CheckIfFlagChanged("unit-number") {
 		o.ScaleType = "unit-number"
 		typeCount++
 	}

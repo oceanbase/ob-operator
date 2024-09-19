@@ -85,7 +85,7 @@ func (o *CreateOptions) Parse(_ *cobra.Command, args []string) error {
 	}
 	o.Pools = pools
 	o.Name = args[0]
-	if o.CheckFlagChanged("from") {
+	if o.CheckIfFlagChanged("from") {
 		o.Source.Tenant = &o.From
 		o.TenantRole = "STANDBY"
 	} else {

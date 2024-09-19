@@ -62,20 +62,12 @@ func (o *ResourceOptions) CreateResourcePoolSpec(pool param.ResourcePoolSpec, un
 	}
 }
 
-// CheckFlagsChanged checks if flag in flags has changed
-func (o *ResourceOptions) CheckFlagsChanged(flags []string) bool {
+// CheckIfFlagChanged checks if flags has changed
+func (o *ResourceOptions) CheckIfFlagChanged(flags ...string) bool {
 	for _, flagName := range flags {
 		if flag := o.Cmd.Flags().Lookup(flagName); flag != nil && flag.Changed {
 			return true
 		}
-	}
-	return false
-}
-
-// CheckFlagChanged checks if flag has changed
-func (o *ResourceOptions) CheckFlagChanged(flagName string) bool {
-	if flag := o.Cmd.Flags().Lookup(flagName); flag != nil && flag.Changed {
-		return true
 	}
 	return false
 }
