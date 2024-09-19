@@ -139,7 +139,7 @@ func (o *ScaleOptions) Validate() error {
 		if !found {
 			typeAdd = true
 		}
-		if typeDelete && zoneNum-deleteNum < maxDeleteNum {
+		if typeDelete && deleteNum > maxDeleteNum {
 			return fmt.Errorf("Obcluster has %d Zones, can only delete %d zones", zoneNum, maxDeleteNum)
 		}
 	}

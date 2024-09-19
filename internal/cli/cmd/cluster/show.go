@@ -65,6 +65,8 @@ func NewShowCmd() *cobra.Command {
 				for _, op := range obclusterOperation.Items {
 					tbLog.Printf("%s \t %d \t  %s \t %s\n", op.Spec.Type, op.Spec.TTLDays, op.Status.Status, op.CreationTimestamp)
 				}
+			} else {
+				logger.Printf("No OBClusterOperations found in %s", obcluster.Spec.ClusterName)
 			}
 			if err = tbw.Flush(); err != nil {
 				logger.Fatalln(err)

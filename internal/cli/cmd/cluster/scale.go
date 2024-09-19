@@ -39,8 +39,9 @@ func NewScaleCmd() *cobra.Command {
 			}
 			if err := cmdUtil.CheckClusterStatus(obcluster); err != nil {
 				logger.Fatalln(err)
+			} else {
+				o.OldTopology = obcluster.Spec.Topology
 			}
-			o.OldTopology = obcluster.Spec.Topology
 			if err := o.Validate(); err != nil {
 				logger.Fatalln(err)
 			}
