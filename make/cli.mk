@@ -26,11 +26,3 @@ cli-dep-install: # Install oceanbase-cli deps
 .PHONY : cli-run
 cli-run: ## Run oceanbase-cli in dev mode
 	go run -p 4 ./cmd/cli/main.go
-
-.PHONY: cli-docker-build
-cli-docker-build: cli-bindata-gen ## build oceanbase-cli image
-	docker build -t ${CLI_IMG} -f build/Dockerfile.cli .
-
-.PHONY: cli-docker-push
-cli-docker-push: ## push oceanbase-cli image
-	docker push ${CLI_IMG}
