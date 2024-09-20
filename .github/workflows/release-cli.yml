@@ -33,11 +33,6 @@ jobs:
       - name: Build binary 
         run: make cli-build
 
-      - name: Create zip package
-        run: |
-          cd bin/
-          zip ${{ env.BinaryName }}-${{ env.tagName }}.zip ${{ env.BinaryName }}
-
       - name: Create release
         uses: actions/create-release@v1
         env: 
@@ -58,12 +53,3 @@ jobs:
           asset_name: ${{env.BinaryName}}
           asset_content_type: application/octet-stream
   
-      - name: Upload zip package
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/${{ env.BinaryName }}-${{ env.tagName }}.zip
-          asset_name: ${{ env.BinaryName }}-${{ env.tagName }}.zip
-          asset_content_type: application/zip

@@ -2,11 +2,21 @@
 
 PROJECT=oceanbase-cli
 CLI_VERSION ?= 0.1.0
-CLI_IMG ?= quay.io/oceanbase/oceanbase-cli:${CLI_VERSION}
+ARCH :=$(shell uname -m)
+GOOS := $(shell uname -s | tr LD ld)
 
-CLI_BUILD := GO11MODULE=ON CGO_ENABLED=0 GOOS=linux go build
+# Set GOARCH based on the detected architecture
+ifeq ($(ARCH),x86_64)
+    GOARCH ?= amd64
+else
+    GOARCH ?= arm64
+endif
+
+CLI_BUILD := GO11MODULE=ON CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build
+
 .PHONY: cli-build
 cli-build: cli-bindata-gen cli-dep-install # Build oceanbase-cli
+	@echo "Building $(PROJECT) for $(GOOS)/$(GOARCH)..."
 	$(CLI_BUILD) -o bin/obocli cmd/cli/main.go
 
 .PHONY: cli-bindata-gen
