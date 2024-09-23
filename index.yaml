@@ -157,7 +157,7 @@ entries:
     appVersion: 0.3.1
     created: "2024-09-06T09:13:07.406734696Z"
     description: A Helm chart for OceanBase dashboard
-    digest: 7198213fbe59bb5e8d91b65216364715d26de755eb1da20462841d84e523a794
+    digest: de3f05dd20e9432407bca21b7bb4f209be1b1a4551954d46c17817c262a0d155
     name: oceanbase-dashboard
     type: application
     urls:
