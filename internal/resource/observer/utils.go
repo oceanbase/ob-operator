@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package observer
 
 import (
+	stderrs "errors"
 	"fmt"
 	"strings"
 
@@ -69,7 +70,7 @@ func (m *OBServerManager) generateNamespacedName(name string) types.NamespacedNa
 func (m *OBServerManager) getPod() (*corev1.Pod, error) {
 	// this label always exists
 	pod := &corev1.Pod{}
-	err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), pod)
+	err := m.K8sResClient.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), pod)
 	if err != nil {
 		return nil, errors.Wrap(err, "get pod")
 	}
@@ -78,7 +79,7 @@ func (m *OBServerManager) getPod() (*corev1.Pod, error) {
 
 func (m *OBServerManager) getSvc() (*corev1.Service, error) {
 	svc := &corev1.Service{}
-	err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), svc)
+	err := m.K8sResClient.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), svc)
 	if err != nil {
 		return nil, errors.Wrap(err, "get svc")
 	}
@@ -140,7 +141,7 @@ func (m *OBServerManager) setRecoveryStatus() {
 
 func (m *OBServerManager) getPVCs() (*corev1.PersistentVolumeClaimList, error) {
 	pvcs := &corev1.PersistentVolumeClaimList{}
-	err := m.Client.List(m.Ctx, pvcs, client.InNamespace(m.OBServer.Namespace), client.MatchingLabels{oceanbaseconst.LabelRefUID: m.OBServer.Labels[oceanbaseconst.LabelRefUID]})
+	err := m.K8sResClient.List(m.Ctx, pvcs, client.InNamespace(m.OBServer.Namespace), client.MatchingLabels{oceanbaseconst.LabelRefUID: m.OBServer.Labels[oceanbaseconst.LabelRefUID]})
 	if err != nil {
 		return nil, errors.Wrap(err, "list pvc")
 	}
@@ -287,7 +288,47 @@ func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.
 		ServiceAccountName: m.OBServer.Spec.ServiceAccount,
 		SchedulerName:      resourceutils.GetSchedulerName(m.OBServer.Spec.OBServerTemplate.PodFields),
 	}
+	podFields := m.OBServer.Spec.OBServerTemplate.PodFields
+	if podFields != nil {
+		if podFields.PriorityClassName != nil && *podFields.PriorityClassName != "" {
+			podSpec.PriorityClassName = *podFields.PriorityClassName
+		}
+		if podFields.RuntimeClassName != nil && *podFields.RuntimeClassName != "" {
+			podSpec.RuntimeClassName = podFields.RuntimeClassName
+		}
+		if podFields.PreemptionPolicy != nil && *podFields.PreemptionPolicy != "" {
+			podSpec.PreemptionPolicy = podFields.PreemptionPolicy
+		}
+		if podFields.Priority != nil {
+			podSpec.Priority = podFields.Priority
+		}
+		if podFields.SecurityContext != nil {
+			podSpec.SecurityContext = podFields.SecurityContext
+		}
+		if podFields.DNSPolicy != nil && *podFields.DNSPolicy != "" {
+			podSpec.DNSPolicy = *podFields.DNSPolicy
+		}
+		if podFields.ServiceAccountName != nil && *podFields.ServiceAccountName != "" {
+			podSpec.ServiceAccountName = *podFields.ServiceAccountName
+		}
+	}
 	return podSpec
+}
+
+func (m *OBServerManager) getVarsReplacer(obcluster *v1alpha1.OBCluster) *strings.Replacer {
+	replacePairs := []string{
+		"${observer-name}", m.OBServer.Name,
+		"${obzone-name}", m.OBServer.Labels[oceanbaseconst.LabelRefOBZone],
+		"${obcluster-name}", m.OBServer.Labels[oceanbaseconst.LabelRefOBCluster],
+	}
+
+	if obcluster != nil {
+		replacePairs = append(replacePairs,
+			"${obcluster-cluster-name}", obcluster.Spec.ClusterName,
+			"${obcluster-cluster-id}", fmt.Sprint(obcluster.Spec.ClusterId),
+		)
+	}
+	return strings.NewReplacer(replacePairs...)
 }
 
 func (m *OBServerManager) createMonitorContainer(obcluster *v1alpha1.OBCluster) corev1.Container {
@@ -589,4 +630,47 @@ func (m *OBServerManager) getOceanbaseOperationManager() (*operation.OceanbaseOp
 		return nil, errors.Wrap(err, "Get obcluster from K8s")
 	}
 	return resourceutils.GetSysOperationClient(m.Client, m.Logger, obcluster)
+}
+
+func (m *OBServerManager) cleanWorkerK8sResource() error {
+	var errs error
+
+	// delete svc
+	svc, err := m.getSvc()
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			m.Logger.Info("Svc not found")
+		} else {
+			errs = stderrs.Join(errs, errors.Wrap(err, "Failed to get svc"))
+		}
+	} else {
+		if err := m.K8sResClient.Delete(m.Ctx, svc); err != nil {
+			errs = stderrs.Join(errs, errors.Wrap(err, "Failed to delete svc"))
+		}
+	}
+
+	// delete pod
+	pod, err := m.getPod()
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			m.Logger.Info("Pod not found")
+		} else {
+			errs = stderrs.Join(errs, errors.Wrap(err, "Failed to get pod"))
+		}
+	} else {
+		if err := m.K8sResClient.Delete(m.Ctx, pod); err != nil {
+			errs = stderrs.Join(errs, errors.Wrap(err, "Failed to delete pod"))
+		}
+	}
+
+	// delete pvc
+	pvc := &corev1.PersistentVolumeClaim{}
+	if err := m.K8sResClient.DeleteAllOf(m.Ctx, pvc,
+		client.InNamespace(m.OBServer.Namespace),
+		client.MatchingLabels{oceanbaseconst.LabelRefUID: m.OBServer.Labels[oceanbaseconst.LabelRefUID]},
+	); err != nil {
+		errs = stderrs.Join(errs, errors.Wrap(err, "Failed to delete pvc"))
+	}
+
+	return errs
 }

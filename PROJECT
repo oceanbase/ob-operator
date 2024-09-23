@@ -139,4 +139,16 @@ resources:
     defaulting: true
     validation: true
     webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: false
+  domain: oceanbase.com
+  group: k8s
+  kind: K8sClusterCredential
+  path: github.com/oceanbase/ob-operator/api/v1alpha2
+  version: v1alpha1
+  webhooks:
+    defaulting: true
+    validation: true
+    webhookVersion: v1
 version: "3"

@@ -13,6 +13,7 @@ resources:
 - bases/oceanbase.oceanbase.com_obtenantoperations.yaml
 - bases/oceanbase.oceanbase.com_obresourcerescues.yaml
 - bases/oceanbase.oceanbase.com_obclusteroperations.yaml
+- bases/k8s.oceanbase.com_k8sclustercredentials.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
 patchesStrategicMerge:
@@ -29,6 +30,7 @@ patchesStrategicMerge:
 - patches/webhook_in_obtenantoperations.yaml
 - patches/webhook_in_obresourcerescues.yaml
 - patches/webhook_in_obclusteroperations.yaml
+- patches/webhook_in_k8sclustercredentials.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.
@@ -44,6 +46,7 @@ patchesStrategicMerge:
 - patches/cainjection_in_obtenantoperations.yaml
 - patches/cainjection_in_obresourcerescues.yaml
 - patches/cainjection_in_obclusteroperations.yaml
+- patches/cainjection_in_k8sclustercredentials.yaml
 #+kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.

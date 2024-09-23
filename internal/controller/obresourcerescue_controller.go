@@ -46,10 +46,6 @@ type OBResourceRescueReconciler struct {
 	Recorder telemetry.Recorder
 }
 
-//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obresourcerescues,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obresourcerescues/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obresourcerescues/finalizers,verbs=update
-
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.15.0/pkg/reconcile
 func (r *OBResourceRescueReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {

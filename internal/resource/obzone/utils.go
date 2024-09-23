@@ -175,17 +175,25 @@ func (m *OBZoneManager) createOneOBServer(serverName string) (*v1alpha1.OBServer
 			Labels:          labels,
 		},
 		Spec: v1alpha1.OBServerSpec{
-			ClusterName:      m.OBZone.Spec.ClusterName,
-			ClusterId:        m.OBZone.Spec.ClusterId,
-			Zone:             m.OBZone.Spec.Topology.Zone,
-			NodeSelector:     m.OBZone.Spec.Topology.NodeSelector,
-			Affinity:         m.OBZone.Spec.Topology.Affinity,
-			Tolerations:      m.OBZone.Spec.Topology.Tolerations,
-			OBServerTemplate: m.OBZone.Spec.OBServerTemplate,
-			MonitorTemplate:  m.OBZone.Spec.MonitorTemplate,
-			BackupVolume:     m.OBZone.Spec.BackupVolume,
-			ServiceAccount:   m.OBZone.Spec.ServiceAccount,
+			ClusterName:          m.OBZone.Spec.ClusterName,
+			ClusterId:            m.OBZone.Spec.ClusterId,
+			Zone:                 m.OBZone.Spec.Topology.Zone,
+			NodeSelector:         m.OBZone.Spec.Topology.NodeSelector,
+			Affinity:             m.OBZone.Spec.Topology.Affinity,
+			Tolerations:          m.OBZone.Spec.Topology.Tolerations,
+			OBServerTemplate:     m.OBZone.Spec.OBServerTemplate,
+			MonitorTemplate:      m.OBZone.Spec.MonitorTemplate,
+			BackupVolume:         m.OBZone.Spec.BackupVolume,
+			ServiceAccount:       m.OBZone.Spec.ServiceAccount,
+			K8sClusterCredential: m.OBZone.Spec.Topology.K8sClusterCredential,
 		},
+	}
+	zoneTopo := m.OBZone.Spec.Topology
+	if zoneTopo.OBServerTemplate != nil {
+		observer.Spec.OBServerTemplate = zoneTopo.OBServerTemplate
+	}
+	if zoneTopo.MonitorTemplate != nil {
+		observer.Spec.MonitorTemplate = zoneTopo.MonitorTemplate
 	}
 	observer.ObjectMeta.Annotations = make(map[string]string)
 	if independentVolumeAnnoExist {

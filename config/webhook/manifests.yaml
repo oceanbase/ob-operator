@@ -10,6 +10,26 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /mutate-k8s-oceanbase-com-v1alpha1-k8sclustercredential
+  failurePolicy: Fail
+  name: mk8sclustercredential.kb.io
+  rules:
+  - apiGroups:
+    - k8s.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - k8sclustercredentials
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /mutate-oceanbase-oceanbase-com-v1alpha1-obcluster
   failurePolicy: Fail
   name: mobcluster.kb.io
@@ -130,6 +150,26 @@ kind: ValidatingWebhookConfiguration
 metadata:
   name: validating-webhook-configuration
 webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /validate-k8s-oceanbase-com-v1alpha1-k8sclustercredential
+  failurePolicy: Fail
+  name: vk8sclustercredential.kb.io
+  rules:
+  - apiGroups:
+    - k8s.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - k8sclustercredentials
+  sideEffects: None
 - admissionReviewVersions:
   - v1
   clientConfig:

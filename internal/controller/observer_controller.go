@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/clientcache"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	resobserver "github.com/oceanbase/ob-operator/internal/resource/observer"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
@@ -43,18 +44,6 @@ type OBServerReconciler struct {
 	Scheme   *runtime.Scheme
 	Recorder record.EventRecorder
 }
-
-// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=observers,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=observers/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=observers/finalizers,verbs=update
-// +kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core,resources=pods/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=core,resources=pods/finalizers,verbs=update
-// +kubebuilder:rbac:groups=core,resources=persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core,resources=persistentvolumeclaims/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=core,resources=persistentvolumes,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=core,resources=persistentvolumes/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -80,11 +69,21 @@ func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	// create observer manager
 	observerManager := &resobserver.OBServerManager{
-		Ctx:      ctx,
-		OBServer: observer,
-		Client:   r.Client,
-		Logger:   &logger,
-		Recorder: telemetry.NewRecorder(ctx, r.Recorder),
+		Ctx:          ctx,
+		OBServer:     observer,
+		Client:       r.Client,
+		Logger:       &logger,
+		Recorder:     telemetry.NewRecorder(ctx, r.Recorder),
+		K8sResClient: r.Client,
+	}
+
+	if observer.Spec.K8sClusterCredential != "" {
+		resClient, err := clientcache.GetCachedCtrlRuntimeClientFromCredName(ctx, observer.Spec.K8sClusterCredential)
+		if err != nil {
+			logger.Error(err, "Failed to get get client from k8s cluster "+observer.Spec.K8sClusterCredential)
+			return ctrl.Result{}, err
+		}
+		observerManager.K8sResClient = resClient
 	}
 
 	// execute finalizers
