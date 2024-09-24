@@ -21,9 +21,9 @@ then you can visit the dashboard on http://$YOUR_SERVER_IP:18081 (Take 18081 as 
 2. For security reason, it is recommended to use a service to access the dashboard. By default the oceanbase-dashboard helm chart creates a service of type NodePort.
    You can use the following command to get the nodePort of the dashboard service:
 
-  > export SERVICE_PORT_PORT=$(kubectl get -n {{ .Release.Namespace }} secret/oceanbase-dashboard-{{ .Release.Name }} -o jsonpath="{.spec.ports[?(@.name=='dashboard-backend')].nodePort}")
+  > export SERVICE_NODE_PORT=$(kubectl get -n {{ .Release.Namespace }} service/oceanbase-dashboard-{{ .Release.Name }} -o jsonpath="{.spec.ports[?(@.name=='dashboard-backend')].nodePort}")
 
-then you can visit the dashboard on http://$YOUR_SERVER_IP:$SERVICE_PORT_PORT
+then you can visit the dashboard on http://$YOUR_SERVER_IP:$SERVICE_NODE_PORT
 
 3. Login the dashboard with the following default account. 
    For users that log in for the first time, it is required to reset the password.
