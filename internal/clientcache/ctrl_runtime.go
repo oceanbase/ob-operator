@@ -24,27 +24,30 @@ import (
 	k8sclient "github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
-type cacheEntry struct {
+type ctrlRuntimeEntry struct {
 	LatestGeneration int64
 	Client           ctrlruntime.Client
 }
 
-var K8sClientCache sync.Map
+var ctrlRuntimeCache sync.Map
 
-func GetCachedCtrlRuntimeClientFromK8sName(ctx context.Context, k8sClusterName string) (ctrlruntime.Client, error) {
+func GetCtrlRuntimeClientFromK8sName(ctx context.Context, k8sClusterName string) (ctrlruntime.Client, error) {
 	k8sCluster, err := clients.K8sClusterClient.Get(ctx, "", k8sClusterName, metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get k8s cluster credential")
 	}
 
-	if client, ok := K8sClientCache.Load(k8sCluster.Name); ok {
-		entry := client.(cacheEntry)
+	if client, ok := ctrlRuntimeCache.Load(k8sCluster.Name); ok {
+		entry := client.(ctrlRuntimeEntry)
 		if entry.LatestGeneration >= k8sCluster.Generation {
 			return entry.Client, nil
 		}
 	}
-
-	config, err := k8sclient.GetConfigFromBytes([]byte(k8sCluster.Spec.KubeConfig))
+	kubeConfig, err := k8sCluster.DecodeKubeConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to decode kubeconfig")
+	}
+	config, err := k8sclient.GetConfigFromBytes(kubeConfig)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get config from kubeconfig field of %s", k8sCluster.Name)
 	}
@@ -52,6 +55,6 @@ func GetCachedCtrlRuntimeClientFromK8sName(ctx context.Context, k8sClusterName s
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create k8s client")
 	}
-	K8sClientCache.Store(k8sCluster.Name, cacheEntry{LatestGeneration: k8sCluster.Generation, Client: client})
+	ctrlRuntimeCache.Store(k8sCluster.Name, ctrlRuntimeEntry{LatestGeneration: k8sCluster.Generation, Client: client})
 	return client, nil
 }

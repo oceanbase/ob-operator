@@ -331,7 +331,7 @@ func RestartOBServers(m *OBClusterOperationManager) tasktypes.TaskError {
 		clt := m.Client
 		if !observer.InMasterK8s() {
 			m.Logger.Info("OBServer not in master k8s cluster", "observer", observer.Name)
-			clt, err = clientcache.GetCachedCtrlRuntimeClientFromK8sName(m.Ctx, observer.Spec.K8sCluster)
+			clt, err = clientcache.GetCtrlRuntimeClientFromK8sName(m.Ctx, observer.Spec.K8sCluster)
 			if err != nil {
 				m.Logger.Error(err, "Failed to get client", "observer", observer.Name, "k8sCluster", observer.Spec.K8sCluster)
 				return err

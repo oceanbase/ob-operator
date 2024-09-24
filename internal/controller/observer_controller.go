@@ -78,7 +78,7 @@ func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	}
 
 	if observer.Spec.K8sCluster != "" {
-		resClient, err := clientcache.GetCachedCtrlRuntimeClientFromK8sName(ctx, observer.Spec.K8sCluster)
+		resClient, err := clientcache.GetCtrlRuntimeClientFromK8sName(ctx, observer.Spec.K8sCluster)
 		if err != nil {
 			logger.Error(err, "Failed to get get client from k8s cluster "+observer.Spec.K8sCluster)
 			return ctrl.Result{}, err

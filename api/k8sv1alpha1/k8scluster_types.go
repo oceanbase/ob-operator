@@ -17,6 +17,8 @@ limitations under the License.
 package k8sv1alpha1
 
 import (
+	"encoding/base64"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -27,8 +29,9 @@ import (
 type K8sClusterSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Name       string `json:"name"`
-	KubeConfig string `json:"kubeConfig"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	KubeConfig  string `json:"kubeConfig"`
 }
 
 // K8sClusterStatus defines the observed state of K8sCluster
@@ -48,6 +51,21 @@ type K8sCluster struct {
 
 	Spec   K8sClusterSpec   `json:"spec,omitempty"`
 	Status K8sClusterStatus `json:"status,omitempty"`
+}
+
+// EncodeKubeConfig returns base64 encoded kubeconfig
+func (s *K8sCluster) EncodeKubeConfig() string {
+	base64Str := base64.StdEncoding.EncodeToString([]byte(s.Spec.KubeConfig))
+	return base64Str
+}
+
+// DecodeKubeConfig returns kubeconfig from base64 encoded kubeconfig
+func (s *K8sCluster) DecodeKubeConfig() ([]byte, error) {
+	kubeConfig, err := base64.StdEncoding.DecodeString(s.Spec.KubeConfig)
+	if err != nil {
+		return nil, err
+	}
+	return kubeConfig, nil
 }
 
 //+kubebuilder:object:root=true

@@ -46,6 +46,7 @@ var _ webhook.Defaulter = &K8sCluster{}
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (r *K8sCluster) Default() {
 	k8sclusterlog.Info("default", "name", r.Name)
+	r.Spec.KubeConfig = r.EncodeKubeConfig()
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
@@ -54,7 +55,11 @@ func (r *K8sCluster) Default() {
 var _ webhook.Validator = &K8sCluster{}
 
 func (r *K8sCluster) validateMutation() (admission.Warnings, error) {
-	config, err := k8sclient.GetConfigFromBytes([]byte(r.Spec.KubeConfig))
+	kubeConfig, err := r.DecodeKubeConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to decode kubeconfig")
+	}
+	config, err := k8sclient.GetConfigFromBytes(kubeConfig)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get config from kubeconfig field of %s", r.Name)
 	}
