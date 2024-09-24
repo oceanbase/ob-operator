@@ -178,7 +178,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - oceanbase.oceanbase.com
+  - k8s.oceanbase.com
   resources:
   - k8sclustercredentials
   verbs:
@@ -190,13 +190,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - oceanbase.oceanbase.com
+  - k8s.oceanbase.com
   resources:
   - k8sclustercredentials/finalizers
   verbs:
   - update
 - apiGroups:
-  - oceanbase.oceanbase.com
+  - k8s.oceanbase.com
   resources:
   - k8sclustercredentials/status
   verbs:
