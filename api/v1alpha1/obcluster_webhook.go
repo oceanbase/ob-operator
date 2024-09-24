@@ -36,7 +36,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	"github.com/oceanbase/ob-operator/api/k8sv1alpha1"
+	k8sv1alpha1 "github.com/oceanbase/ob-operator/api/k8sv1alpha1"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"

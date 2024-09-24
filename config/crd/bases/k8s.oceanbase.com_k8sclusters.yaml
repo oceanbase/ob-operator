@@ -16,7 +16,18 @@ spec:
     singular: k8scluster
   scope: Cluster
   versions:
-  - name: k8sv1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .spec.name
+      name: ClusterName
+      type: string
+    - jsonPath: .spec.description
+      name: Description
+      priority: 1
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: K8sCluster is the Schema for the k8sclusters API
@@ -41,6 +52,8 @@ spec:
           spec:
             description: K8sClusterSpec defines the desired state of K8sCluster
             properties:
+              description:
+                type: string
               kubeConfig:
                 type: string
               name:

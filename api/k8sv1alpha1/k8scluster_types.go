@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package k8sv1alpha1
+package v1alpha1
 
 import (
 	"encoding/base64"
@@ -43,6 +43,9 @@ type K8sClusterStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:resource:scope=Cluster,shortName=kc
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+//+kubebuilder:printcolumn:name="ClusterName",type="string",JSONPath=".spec.name"
+//+kubebuilder:printcolumn:name="Description",type="string",JSONPath=".spec.description",priority=1
 
 // K8sCluster is the Schema for the k8sclusters API
 type K8sCluster struct {

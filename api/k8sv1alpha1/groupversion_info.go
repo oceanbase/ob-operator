@@ -14,10 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package v1alpha2 contains API Schema definitions for the oceanbase v1alpha2 API group
 // +kubebuilder:object:generate=true
 // +groupName=k8s.oceanbase.com
-package k8sv1alpha1
+
+package v1alpha1
+
+// TIPS: kubebuilder will generate YAML manifests with the same API version as the package name.
+// So, the API version is still v1alpha1.
+// You need to give this package an alias when importing it to avoid conflicts with the original v1alpha1 package.
 
 import (
 	"k8s.io/apimachinery/pkg/runtime/schema"

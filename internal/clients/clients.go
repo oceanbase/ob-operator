@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package clients
 
 import (
-	"github.com/oceanbase/ob-operator/api/k8sv1alpha1"
+	k8sv1alpha1 "github.com/oceanbase/ob-operator/api/k8sv1alpha1"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/clients/schema"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
