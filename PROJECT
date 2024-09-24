@@ -141,11 +141,11 @@ resources:
     webhookVersion: v1
 - api:
     crdVersion: v1
-    namespaced: false
+  controller: true
   domain: oceanbase.com
   group: k8s
-  kind: K8sClusterCredential
-  path: github.com/oceanbase/ob-operator/api/v1alpha2
+  kind: K8sCluster
+  path: github.com/oceanbase/ob-operator/api/k8sv1alpha1
   version: v1alpha1
   webhooks:
     defaulting: true

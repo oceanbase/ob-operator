@@ -21,7 +21,7 @@ type OBZoneTopology struct {
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 	Replica      int                 `json:"replica"`
 
-	K8sClusterCredential string            `json:"k8sClusterCredential,omitempty"`
-	OBServerTemplate     *OBServerTemplate `json:"observer,omitempty"`
-	MonitorTemplate      *MonitorTemplate  `json:"monitor,omitempty"`
+	K8sCluster       string            `json:"k8sCluster,omitempty"`
+	OBServerTemplate *OBServerTemplate `json:"observer,omitempty"`
+	MonitorTemplate  *MonitorTemplate  `json:"monitor,omitempty"`
 }

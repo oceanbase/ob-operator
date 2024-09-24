@@ -316,9 +316,9 @@ func (r *OBCluster) validateMutation() error {
 
 	for i := range r.Spec.Topology {
 		topo := &r.Spec.Topology[i]
-		if topo.K8sClusterCredential != "" {
-			if err := validateK8sClusterCredential(topo.K8sClusterCredential); err != nil {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology").Index(i).Child("k8sCluster"), topo.K8sClusterCredential, err.Error()))
+		if topo.K8sCluster != "" {
+			if err := validateK8sCluster(topo.K8sCluster); err != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("topology").Index(i).Child("k8sCluster"), topo.K8sCluster, err.Error()))
 			}
 		}
 	}
@@ -510,10 +510,10 @@ func validateStorageClassAllowExpansion(storageClassName string) error {
 	return nil
 }
 
-func validateK8sClusterCredential(credName string) error {
-	cred := &k8sv1alpha1.K8sClusterCredential{}
+func validateK8sCluster(k8sCluster string) error {
+	cred := &k8sv1alpha1.K8sCluster{}
 	return clt.Get(context.Background(), types.NamespacedName{
 		Namespace: "",
-		Name:      credName,
+		Name:      k8sCluster,
 	}, cred)
 }

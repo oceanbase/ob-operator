@@ -27,39 +27,33 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	k8sclient "github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
 // log is for logging in this package.
-var k8sclustercredentiallog = logf.Log.WithName("k8sclustercredential-resource")
+var k8sclusterlog = logf.Log.WithName("k8scluster-resource")
 
-func (r *K8sClusterCredential) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (r *K8sCluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
 }
 
-//+kubebuilder:webhook:path=/mutate-k8s-oceanbase-com-v1alpha1-k8sclustercredential,mutating=true,failurePolicy=fail,sideEffects=None,groups=k8s.oceanbase.com,resources=k8sclustercredentials,verbs=create;update,versions=v1alpha1,name=mk8sclustercredential.kb.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/mutate-k8s-oceanbase-com-v1alpha1-k8scluster,mutating=true,failurePolicy=fail,sideEffects=None,groups=k8s.oceanbase.com,resources=k8sclusters,verbs=create;update,versions=v1alpha1,name=mk8scluster.kb.io,admissionReviewVersions=v1
 
-var _ webhook.Defaulter = &K8sClusterCredential{}
+var _ webhook.Defaulter = &K8sCluster{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *K8sClusterCredential) Default() {
-	k8sclustercredentiallog.Info("default", "name", r.Name)
-
-	if r.Labels == nil {
-		r.Labels = make(map[string]string)
-	}
-	r.Labels[oceanbaseconst.LabelK8sCluster] = r.Spec.K8sCluster
+func (r *K8sCluster) Default() {
+	k8sclusterlog.Info("default", "name", r.Name)
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-k8s-oceanbase-com-v1alpha1-k8sclustercredential,mutating=false,failurePolicy=fail,sideEffects=None,groups=k8s.oceanbase.com,resources=k8sclustercredentials,verbs=create;update,versions=v1alpha1,name=vk8sclustercredential.kb.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/validate-k8s-oceanbase-com-v1alpha1-k8scluster,mutating=false,failurePolicy=fail,sideEffects=None,groups=k8s.oceanbase.com,resources=k8sclusters,verbs=create;update,versions=v1alpha1,name=vk8scluster.kb.io,admissionReviewVersions=v1
 
-var _ webhook.Validator = &K8sClusterCredential{}
+var _ webhook.Validator = &K8sCluster{}
 
-func (r *K8sClusterCredential) validateMutation() (admission.Warnings, error) {
+func (r *K8sCluster) validateMutation() (admission.Warnings, error) {
 	config, err := k8sclient.GetConfigFromBytes([]byte(r.Spec.KubeConfig))
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to get config from kubeconfig field of %s", r.Name)
@@ -77,20 +71,20 @@ func (r *K8sClusterCredential) validateMutation() (admission.Warnings, error) {
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *K8sClusterCredential) ValidateCreate() (admission.Warnings, error) {
-	k8sclustercredentiallog.Info("validate create", "name", r.Name)
+func (r *K8sCluster) ValidateCreate() (admission.Warnings, error) {
+	k8sclusterlog.Info("validate create", "name", r.Name)
 	return r.validateMutation()
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *K8sClusterCredential) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
-	k8sclustercredentiallog.Info("validate update", "name", r.Name)
+func (r *K8sCluster) ValidateUpdate(_ runtime.Object) (admission.Warnings, error) {
+	k8sclusterlog.Info("validate update", "name", r.Name)
 	return r.validateMutation()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *K8sClusterCredential) ValidateDelete() (admission.Warnings, error) {
-	k8sclustercredentiallog.Info("validate delete", "name", r.Name)
+func (r *K8sCluster) ValidateDelete() (admission.Warnings, error) {
+	k8sclusterlog.Info("validate delete", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil, nil

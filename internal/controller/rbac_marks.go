@@ -87,6 +87,10 @@ package controller
 // +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obzones/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obzones/finalizers,verbs=update
 
-// +kubebuilder:rbac:groups=k8s.oceanbase.com,resources=k8sclustercredentials,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=k8s.oceanbase.com,resources=k8sclustercredentials/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=k8s.oceanbase.com,resources=k8sclustercredentials/finalizers,verbs=update
+/**
+**  [GROUP] k8s.oceanbase.com
+**/
+
+//+kubebuilder:rbac:groups=k8s.oceanbase.com,resources=k8sclusters,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=k8s.oceanbase.com,resources=k8sclusters/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=k8s.oceanbase.com,resources=k8sclusters/finalizers,verbs=update

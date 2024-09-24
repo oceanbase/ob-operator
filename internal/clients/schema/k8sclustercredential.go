@@ -15,14 +15,14 @@ package schema
 import "k8s.io/apimachinery/pkg/runtime/schema"
 
 const (
-	K8sClusterCredentialKind     = "K8sClusterCredential"
-	K8sClusterCredentialResource = "k8sclustercredentials"
+	K8sClusterKind     = "K8sCluster"
+	K8sClusterResource = "k8sclusters"
 )
 
 var (
-	K8sClusterCredentialGVR = schema.GroupVersionResource{
+	K8sClusterGVR = schema.GroupVersionResource{
 		Group:    K8sGroup,
 		Version:  K8sGroupVersion,
-		Resource: K8sClusterCredentialResource,
+		Resource: K8sClusterResource,
 	}
 )

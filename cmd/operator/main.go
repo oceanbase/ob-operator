@@ -223,6 +223,13 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "OBClusterOperation")
 		os.Exit(1)
 	}
+	if err = (&controller.K8sClusterReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "K8sCluster")
+		os.Exit(1)
+	}
 	if os.Getenv("DISABLE_WEBHOOKS") != "true" {
 		if err = (&v1alpha1.OBTenantBackupPolicy{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "Unable to create webhook", "webhook", "OBTenantBackupPolicy")
@@ -248,8 +255,8 @@ func main() {
 			setupLog.Error(err, "unable to create webhook", "webhook", "OBClusterOperation")
 			os.Exit(1)
 		}
-		if err = (&k8sv1alpha1.K8sClusterCredential{}).SetupWebhookWithManager(mgr); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "K8sClusterCredential")
+		if err = (&k8sv1alpha1.K8sCluster{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "K8sCluster")
 			os.Exit(1)
 		}
 	}

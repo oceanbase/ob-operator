@@ -180,7 +180,7 @@ rules:
 - apiGroups:
   - k8s.oceanbase.com
   resources:
-  - k8sclustercredentials
+  - k8sclusters
   verbs:
   - create
   - delete
@@ -192,13 +192,13 @@ rules:
 - apiGroups:
   - k8s.oceanbase.com
   resources:
-  - k8sclustercredentials/finalizers
+  - k8sclusters/finalizers
   verbs:
   - update
 - apiGroups:
   - k8s.oceanbase.com
   resources:
-  - k8sclustercredentials/status
+  - k8sclusters/status
   verbs:
   - get
   - patch

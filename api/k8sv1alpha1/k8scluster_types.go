@@ -23,42 +23,42 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// K8sClusterCredentialSpec defines the desired state of K8sClusterCredential
-type K8sClusterCredentialSpec struct {
+// K8sClusterSpec defines the desired state of K8sCluster
+type K8sClusterSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	K8sCluster string `json:"k8sCluster"`
+	Name       string `json:"name"`
 	KubeConfig string `json:"kubeConfig"`
 }
 
-// K8sClusterCredentialStatus defines the observed state of K8sClusterCredential
-type K8sClusterCredentialStatus struct {
+// K8sClusterStatus defines the observed state of K8sCluster
+type K8sClusterStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
 
-// +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
-// +kubebuilder:resource:scope=Cluster,shortName=kcc
+//+kubebuilder:object:root=true
+//+kubebuilder:subresource:status
+//+kubebuilder:resource:scope=Cluster,shortName=kc
 
-// K8sClusterCredential is the Schema for the k8sclustercredentials API
-type K8sClusterCredential struct {
+// K8sCluster is the Schema for the k8sclusters API
+type K8sCluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   K8sClusterCredentialSpec   `json:"spec,omitempty"`
-	Status K8sClusterCredentialStatus `json:"status,omitempty"`
+	Spec   K8sClusterSpec   `json:"spec,omitempty"`
+	Status K8sClusterStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// K8sClusterCredentialList contains a list of K8sClusterCredential
-type K8sClusterCredentialList struct {
+// K8sClusterList contains a list of K8sCluster
+type K8sClusterList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []K8sClusterCredential `json:"items"`
+	Items           []K8sCluster `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&K8sClusterCredential{}, &K8sClusterCredentialList{})
+	SchemeBuilder.Register(&K8sCluster{}, &K8sClusterList{})
 }

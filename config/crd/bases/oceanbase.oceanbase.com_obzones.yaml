@@ -2958,7 +2958,7 @@ spec:
                             type: array
                         type: object
                     type: object
-                  k8sClusterCredential:
+                  k8sCluster:
                     type: string
                   monitor:
                     properties:

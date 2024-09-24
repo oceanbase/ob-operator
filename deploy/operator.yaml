@@ -17,7 +17,7 @@ metadata:
   annotations:
     cert-manager.io/inject-ca-from: oceanbase-system/oceanbase-serving-cert
     controller-gen.kubebuilder.io/version: v0.15.0
-  name: k8sclustercredentials.k8s.oceanbase.com
+  name: k8sclusters.k8s.oceanbase.com
 spec:
   conversion:
     strategy: Webhook
@@ -31,19 +31,18 @@ spec:
       - v1
   group: k8s.oceanbase.com
   names:
-    kind: K8sClusterCredential
-    listKind: K8sClusterCredentialList
-    plural: k8sclustercredentials
+    kind: K8sCluster
+    listKind: K8sClusterList
+    plural: k8sclusters
     shortNames:
-    - kcc
-    singular: k8sclustercredential
+    - kc
+    singular: k8scluster
   scope: Cluster
   versions:
   - name: k8sv1alpha1
     schema:
       openAPIV3Schema:
-        description: K8sClusterCredential is the Schema for the k8sclustercredentials
-          API
+        description: K8sCluster is the Schema for the k8sclusters API
         properties:
           apiVersion:
             description: |-
@@ -63,22 +62,21 @@ spec:
           metadata:
             type: object
           spec:
-            description: K8sClusterCredentialSpec defines the desired state of K8sClusterCredential
+            description: K8sClusterSpec defines the desired state of K8sCluster
             properties:
-              k8sCluster:
+              kubeConfig:
+                type: string
+              name:
                 description: |-
                   INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
                   Important: Run "make" to regenerate code after modifying this file
                 type: string
-              kubeConfig:
-                type: string
             required:
-            - k8sCluster
             - kubeConfig
+            - name
             type: object
           status:
-            description: K8sClusterCredentialStatus defines the observed state of
-              K8sClusterCredential
+            description: K8sClusterStatus defines the observed state of K8sCluster
             type: object
         type: object
     served: true
@@ -1053,7 +1051,7 @@ spec:
                               type: array
                           type: object
                       type: object
-                    k8sClusterCredential:
+                    k8sCluster:
                       type: string
                     monitor:
                       properties:
@@ -6229,7 +6227,7 @@ spec:
                                       type: array
                                   type: object
                               type: object
-                            k8sClusterCredential:
+                            k8sCluster:
                               type: string
                             monitor:
                               properties:
@@ -9735,7 +9733,7 @@ spec:
                               type: array
                           type: object
                       type: object
-                    k8sClusterCredential:
+                    k8sCluster:
                       type: string
                     monitor:
                       properties:
@@ -13099,7 +13097,7 @@ spec:
                 type: integer
               clusterName:
                 type: string
-              k8sClusterCredential:
+              k8sCluster:
                 type: string
               monitorTemplate:
                 properties:
@@ -20153,7 +20151,7 @@ spec:
                             type: array
                         type: object
                     type: object
-                  k8sClusterCredential:
+                  k8sCluster:
                     type: string
                   monitor:
                     properties:
@@ -20832,9 +20830,9 @@ rules:
   - patch
   - update
 - apiGroups:
-  - oceanbase.oceanbase.com
+  - k8s.oceanbase.com
   resources:
-  - k8sclustercredentials
+  - k8sclusters
   verbs:
   - create
   - delete
@@ -20844,15 +20842,15 @@ rules:
   - update
   - watch
 - apiGroups:
-  - oceanbase.oceanbase.com
+  - k8s.oceanbase.com
   resources:
-  - k8sclustercredentials/finalizers
+  - k8sclusters/finalizers
   verbs:
   - update
 - apiGroups:
-  - oceanbase.oceanbase.com
+  - k8s.oceanbase.com
   resources:
-  - k8sclustercredentials/status
+  - k8sclusters/status
   verbs:
   - get
   - patch
@@ -21502,9 +21500,9 @@ webhooks:
     service:
       name: oceanbase-webhook-service
       namespace: oceanbase-system
-      path: /mutate-k8s-oceanbase-com-v1alpha1-k8sclustercredential
+      path: /mutate-k8s-oceanbase-com-v1alpha1-k8scluster
   failurePolicy: Fail
-  name: mk8sclustercredential.kb.io
+  name: mk8scluster.kb.io
   rules:
   - apiGroups:
     - k8s.oceanbase.com
@@ -21514,7 +21512,7 @@ webhooks:
     - CREATE
     - UPDATE
     resources:
-    - k8sclustercredentials
+    - k8sclusters
   sideEffects: None
 - admissionReviewVersions:
   - v1
@@ -21657,9 +21655,9 @@ webhooks:
     service:
       name: oceanbase-webhook-service
       namespace: oceanbase-system
-      path: /validate-k8s-oceanbase-com-v1alpha1-k8sclustercredential
+      path: /validate-k8s-oceanbase-com-v1alpha1-k8scluster
   failurePolicy: Fail
-  name: vk8sclustercredential.kb.io
+  name: vk8scluster.kb.io
   rules:
   - apiGroups:
     - k8s.oceanbase.com
@@ -21669,7 +21667,7 @@ webhooks:
     - CREATE
     - UPDATE
     resources:
-    - k8sclustercredentials
+    - k8sclusters
   sideEffects: None
 - admissionReviewVersions:
   - v1
