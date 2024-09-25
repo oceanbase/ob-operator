@@ -32,6 +32,6 @@ func init() {
 	taskMap.Register(tRollingUpdateOBZones, RollingUpdateOBZones)
 	taskMap.Register(tCheckEnvironment, CheckEnvironment)
 	taskMap.Register(tAnnotateOBCluster, AnnotateOBCluster)
-	taskMap.Register(tAdjustParameters, AdjustParameters)
 	taskMap.Register(tOptimizeClusterByScenario, OptimizeClusterByScenario)
+	taskMap.Register(tAdjustParameters, AdjustParameters)
 }

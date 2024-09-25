@@ -112,7 +112,7 @@ func GetOBClusterOperations(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 
 func ListAllOBClusters(ctx context.Context) (*v1alpha1.OBClusterList, error) {
 	client := client.GetClient()
-	obj, err := client.DynamicClient.Resource(schema.OBClusterRes).List(ctx, metav1.ListOptions{})
+	obj, err := client.DynamicClient.Resource(schema.OBClusterGVR).List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func ListAllOBClusters(ctx context.Context) (*v1alpha1.OBClusterList, error) {
 func ListOBZonesOfOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluster) (*v1alpha1.OBZoneList, error) {
 	client := client.GetClient()
 	var obzoneList v1alpha1.OBZoneList
-	obj, err := client.DynamicClient.Resource(schema.OBZoneRes).Namespace(obcluster.Namespace).List(ctx, metav1.ListOptions{
+	obj, err := client.DynamicClient.Resource(schema.OBZoneGVR).Namespace(obcluster.Namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", oceanbaseconst.LabelRefOBCluster, obcluster.Name),
 	})
 	if err != nil {
@@ -143,7 +143,7 @@ func ListOBZonesOfOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 func ListOBServersOfOBZone(ctx context.Context, obzone *v1alpha1.OBZone) (*v1alpha1.OBServerList, error) {
 	client := client.GetClient()
 	var observerList v1alpha1.OBServerList
-	obj, err := client.DynamicClient.Resource(schema.OBServerRes).Namespace(obzone.Namespace).List(ctx, metav1.ListOptions{
+	obj, err := client.DynamicClient.Resource(schema.OBServerGVR).Namespace(obzone.Namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", oceanbaseconst.LabelRefOBZone, obzone.Name),
 	})
 	if err != nil {

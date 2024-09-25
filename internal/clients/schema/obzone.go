@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	OBZoneRes = schema.GroupVersionResource{
+	OBZoneGVR = schema.GroupVersionResource{
 		Group:    OBZoneGroup,
 		Version:  OBZoneVersion,
 		Resource: OBZoneResource,

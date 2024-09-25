@@ -34,6 +34,6 @@ const (
 	tRollingUpdateOBZones       ttypes.TaskName = "rolling update obzones"
 	tCheckEnvironment           ttypes.TaskName = "check environment"
 	tAnnotateOBCluster          ttypes.TaskName = "annotate obcluster"
-	tAdjustParameters           ttypes.TaskName = "adjust parameters"
 	tOptimizeClusterByScenario  ttypes.TaskName = "optimize cluster by scenario"
+	tAdjustParameters           ttypes.TaskName = "adjust parameters"
 )

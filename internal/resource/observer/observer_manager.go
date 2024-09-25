@@ -43,6 +43,8 @@ type OBServerManager struct {
 	Client   client.Client
 	Recorder telemetry.Recorder
 	Logger   *logr.Logger
+
+	K8sResClient client.Client
 }
 
 func (m *OBServerManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
@@ -98,7 +100,7 @@ func (m *OBServerManager) UpdateStatus() error {
 				mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
 				if modeAnnoExist && mode == oceanbaseconst.ModeService {
 					svc := &corev1.Service{}
-					err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), svc)
+					err := m.K8sResClient.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), svc)
 					if err != nil {
 						m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Get svc failed")
 					} else {
@@ -175,6 +177,15 @@ func (m *OBServerManager) CheckAndUpdateFinalizers() error {
 		finalizerFinished = m.OBServer.Status.Status == serverstatus.FinalizerFinished
 	}
 	if finalizerFinished {
+		if !m.OBServer.InMasterK8s() {
+			err = m.cleanWorkerK8sResource()
+			if err != nil {
+				m.Logger.Error(err, "failed to clean resources in worker k8s cluster",
+					"observer", m.OBServer.Name,
+					"k8sCluster", m.OBServer.Spec.K8sCluster,
+				)
+			}
+		}
 		m.Logger.Info("Finalizer finished")
 		m.OBServer.ObjectMeta.Finalizers = make([]string, 0)
 		err := m.Client.Update(m.Ctx, m.OBServer)
