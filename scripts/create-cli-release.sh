@@ -79,8 +79,8 @@ function create_release {
         # create github releases
         gh release create "$git_tag" \
             --title "$git_tag" \
-            --draft \ 
-            "${additional_release_artifacts_arg[@]}"
+            --notes "$git_tag" \
+            --draft \ "${additional_release_artifacts_arg[@]}"
 
         return
     fi
@@ -88,6 +88,7 @@ function create_release {
     # create github releases
     gh release create "$git_tag" \
         --title "$git_tag" \
+        --notes "$git_tag" \
         --draft
 }
 
