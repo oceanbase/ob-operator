@@ -74,14 +74,13 @@ function create_release {
         build_binary "$version" "$release_artifact_dir"
 
         # additional_release_artifacts_arg+="$release_artifact_dir/*"
-
         additional_release_artifacts_arg=("$release_artifact_dir"/*)
 
         # create github releases
         gh release create "$git_tag" \
             --title "$git_tag" \
             --draft \ 
-        "${additional_release_artifacts_arg[@]}"
+            "${additional_release_artifacts_arg[@]}"
 
         return
     fi
