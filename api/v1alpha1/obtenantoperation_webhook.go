@@ -261,10 +261,6 @@ func (r *OBTenantOperation) validateMutation() error {
 		if r.Spec.ConnectWhiteList == "" {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("connectWhiteList"), "connectWhiteList is required"))
 		}
-	case constants.TenantOpSetCharset:
-		if r.Spec.Charset == "" {
-			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("charset"), "charset is required"))
-		}
 	case constants.TenantOpAddResourcePools:
 		if len(r.Spec.AddResourcePools) == 0 {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("addResourcePools"), "addResourcePools is required"))
