@@ -22,11 +22,9 @@ function build_binary {
     release_dir=$2
     echo "build release artifacts to $release_dir"
 
-    # create tmp dir for make binaries
+    # Create tmp dir for make binaries
     mkdir -p "output"
 
-    # build date in ISO8601 format
-    build_date=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
     # Note: windows not supported yet
     platforms=("linux" "darwin")
     arch_list=("amd64" "arm64")
@@ -34,18 +32,17 @@ function build_binary {
         for arch in "${arch_list[@]}"; do
             echo "Building $os-$arch"
             make cli-build GOOS=$os GOARCH=$arch BUILD_DIR=output/
-            #  GO11MODULE=ON CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build
             if [ $? -ne 0 ]; then
                 echo "Build failed for $os-$arch"
                 exit 1
             fi
-            # compress as tar.gz format
+            # Compress as tar.gz format
             tar cvfz "${release_dir}/${binary_name}_${version}_${os}_${arch}.tar.gz" -C output $binary_name
             rm output/$binary_name
         done
     done
 
-    # create checksum.txt
+    # Create checksum.txt
     pushd "${release_dir}"
     for release in *; do
         echo "generate checksum: $release"
@@ -62,20 +59,19 @@ function create_release {
     # This is expected to match $module.
     module=${git_tag%-*}
 
-    # Take is the version of cli
+    # This is the version of cli
     version=${git_tag##*-}
 
     additional_release_artifacts_arg=""
 
-    # Build cli binaries for all platforms
+    # Build cli binaries for all supported platforms
     if [[ "$module" == "cli" ]]; then
         release_artifact_dir=$(mktemp -d)
         build_binary "$version" "$release_artifact_dir"
 
-        # additional_release_artifacts_arg+="$release_artifact_dir/*"
         additional_release_artifacts_arg=("$release_artifact_dir"/*)
 
-        # create github releases
+        # Create github releases
         gh release create "$git_tag" \
             --title "$git_tag" \
             --notes "$git_tag" \
@@ -84,11 +80,10 @@ function create_release {
         return
     fi
 
-    # create github releases
+    # Create github releases
     gh release create "$git_tag" \
         --title "$git_tag" \
         --draft
 }
 
-## create release
 create_release "$git_tag"
