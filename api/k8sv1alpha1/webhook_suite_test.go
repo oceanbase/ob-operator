@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package k8sv1alpha1
+package v1alpha1
 
 import (
 	"context"
@@ -99,7 +99,7 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-	err = (&K8sClusterCredential{}).SetupWebhookWithManager(mgr)
+	err = (&K8sCluster{}).SetupWebhookWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:webhook
