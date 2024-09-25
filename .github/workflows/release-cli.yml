@@ -30,26 +30,8 @@ jobs:
       - name: go mod vendor 
         run: go mod vendor
 
-      - name: Build binary 
-        run: make cli-build
-
-      - name: Create release
-        uses: actions/create-release@v1
-        env: 
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ env.tagName }}
-          release_name: Release ${{ env.tagName }}
-          draft: false
-          prerelease: false
-
-      - name: Upload binary
-        uses: actions/upload-release-asset@v1
+      - run: ./releasing/create-cli-release.sh "${tag}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./bin/${{ env.BinaryName }}
-          asset_name: ${{env.BinaryName}}
-          asset_content_type: application/octet-stream
+          tag: ${{ github.ref_name }}
   
