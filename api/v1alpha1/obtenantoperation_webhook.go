@@ -69,7 +69,7 @@ func (r *OBTenantOperation) Default() {
 	} else if r.Spec.Type == constants.TenantOpSwitchover && r.Spec.Switchover != nil {
 		targetTenantName = r.Spec.Switchover.PrimaryTenant
 		secondaryTenantName = r.Spec.Switchover.StandbyTenant
-	} else if (r.Spec.Type == constants.TenantOpUpgrade || r.Spec.Type == constants.TenantOpReplayLog) && r.Spec.TargetTenant != nil {
+	} else if r.Spec.TargetTenant != nil {
 		targetTenantName = *r.Spec.TargetTenant
 	}
 	references := r.GetOwnerReferences()
