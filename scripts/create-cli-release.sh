@@ -72,7 +72,9 @@ function create_release {
     if [[ "$module" == "cli" ]]; then
         release_artifact_dir=$(mktemp -d)
         build_binary "$version" "$release_artifact_dir"
+
         # additional_release_artifacts_arg+="$release_artifact_dir/*"
+
         additional_release_artifacts_arg=("$release_artifact_dir"/*)
 
         # create github releases
@@ -80,14 +82,14 @@ function create_release {
             --title "$git_tag" \
             --draft \ 
         "${additional_release_artifacts_arg[@]}"
+
+        return
     fi
 
     # create github releases
     gh release create "$git_tag" \
         --title "$git_tag" \
         --draft
-
-    return
 }
 
 ## create release
