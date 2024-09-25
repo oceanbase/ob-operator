@@ -11,12 +11,11 @@ fi
 
 git_tag=$1
 echo "release tag: $git_tag"
-project="obocli"
-binary_name="obocli"
 
 # Build the release binaries for every OS/arch combination.
 # It builds compressed artifacts on $release_dir.
 function build_binary {
+    binary_name="obocli"
     echo "build $binary_name binaries"
     version=$1
 
@@ -80,7 +79,7 @@ function create_release {
         gh release create "$git_tag" \
             --title "$git_tag" \
             --notes "$git_tag" \
-            --draft \ "${additional_release_artifacts_arg[@]}"
+            --draft "${additional_release_artifacts_arg[@]}"
 
         return
     fi
@@ -88,7 +87,6 @@ function create_release {
     # create github releases
     gh release create "$git_tag" \
         --title "$git_tag" \
-        --notes "$git_tag" \
         --draft
 }
 
