@@ -30,7 +30,7 @@ jobs:
       - name: go mod vendor 
         run: go mod vendor
 
-      - run: ./releasing/create-cli-release.sh "${tag}"
+      - run: ./scripts/create-cli-release.sh "${tag}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           tag: ${{ github.ref_name }}
