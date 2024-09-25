@@ -13,6 +13,8 @@ See the Mulan PSL v2 for more details.
 package obtenantoperation
 
 import (
+	"time"
+
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
@@ -87,6 +89,7 @@ func (m *ObTenantOperationManager) waitForOBTenantToBeStatus(waitSeconds int, ma
 		return errors.New("target tenant is nil")
 	}
 	for i := 0; i < waitSeconds; i++ {
+		time.Sleep(time.Second)
 		tenant := &v1alpha1.OBTenant{}
 		err := m.Client.Get(m.Ctx, types.NamespacedName{
 			Namespace: m.Resource.Namespace,
