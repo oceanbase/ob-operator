@@ -89,7 +89,6 @@ func (m *ObTenantOperationManager) waitForOBTenantToBeStatus(waitSeconds int, ma
 		return errors.New("target tenant is nil")
 	}
 	for i := 0; i < waitSeconds; i++ {
-		time.Sleep(time.Second)
 		tenant := &v1alpha1.OBTenant{}
 		err := m.Client.Get(m.Ctx, types.NamespacedName{
 			Namespace: m.Resource.Namespace,
@@ -101,6 +100,7 @@ func (m *ObTenantOperationManager) waitForOBTenantToBeStatus(waitSeconds int, ma
 		if matcher(tenant) {
 			return nil
 		}
+		time.Sleep(time.Second)
 	}
 	return errors.Errorf("wait for tenant %s to be in desired status timeout", m.Resource.Name)
 }
