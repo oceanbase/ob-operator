@@ -18,8 +18,6 @@ CLI_BUILD := GO11MODULE=ON CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build
 # build dir for obocli 
 BUILD_DIR?=bin/
 
-BUILD_FLAG      := -p $(PROCESSOR)
-GOBUILD := GO11MODULE=ON CGO_ENABLED=0 GOOS=linux go build $(BUILD_FLAG)
 .PHONY: cli-build
 cli-build: cli-dep-install cli-bindata-gen # Build oceanbase-cli
 	@echo "Building $(BINARY_NAME) for $(GOOS)/$(GOARCH)..."
