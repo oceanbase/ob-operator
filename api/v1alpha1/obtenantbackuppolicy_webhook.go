@@ -293,7 +293,7 @@ func validateScheduleFormat(schedule string, fldPath *field.Path) *field.Error {
 	return nil
 }
 
-func (r *OBTenantBackupPolicy) validateDestination(cluster *OBCluster, dest *apitypes.BackupDestination, fieldName string) *field.Error {
+func (r *OBTenantBackupPolicy) validateDestination(cluster *OBCluster, dest *apitypes.BackupDestination, fieldName string) error {
 	if dest.Type == constants.BackupDestTypeNFS && cluster.Spec.BackupVolume == nil {
 		return field.Invalid(field.NewPath("spec").Child("backupVolume"), cluster.Spec.BackupVolume, "backupVolume of obcluster is required when backing up data to NFS")
 	}

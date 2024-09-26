@@ -69,7 +69,7 @@ func (r *OBTenantOperation) Default() {
 	} else if r.Spec.Type == constants.TenantOpSwitchover && r.Spec.Switchover != nil {
 		targetTenantName = r.Spec.Switchover.PrimaryTenant
 		secondaryTenantName = r.Spec.Switchover.StandbyTenant
-	} else if (r.Spec.Type == constants.TenantOpUpgrade || r.Spec.Type == constants.TenantOpReplayLog) && r.Spec.TargetTenant != nil {
+	} else if r.Spec.TargetTenant != nil {
 		targetTenantName = *r.Spec.TargetTenant
 	}
 	references := r.GetOwnerReferences()
@@ -260,10 +260,6 @@ func (r *OBTenantOperation) validateMutation() error {
 	case constants.TenantOpSetConnectWhiteList:
 		if r.Spec.ConnectWhiteList == "" {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("connectWhiteList"), "connectWhiteList is required"))
-		}
-	case constants.TenantOpSetCharset:
-		if r.Spec.Charset == "" {
-			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("charset"), "charset is required"))
 		}
 	case constants.TenantOpAddResourcePools:
 		if len(r.Spec.AddResourcePools) == 0 {
