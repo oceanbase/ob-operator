@@ -304,44 +304,46 @@ func (r *OBTenantBackupPolicy) validateDestination(cluster *OBCluster, dest *api
 	if !pattern.MatchString(dest.Path) {
 		return field.Invalid(field.NewPath("spec").Child(fieldName).Child("destination"), dest.Path, "invalid backup destination path, the path format should be "+pattern.String())
 	}
-	if dest.Type != constants.BackupDestTypeNFS && dest.OSSAccessSecret == "" {
-		return field.Invalid(field.NewPath("spec").Child(fieldName).Child("destination"), dest.OSSAccessSecret, "OSSAccessSecret is required when backing up data to OSS, COS or S3")
-	}
-	secret := &v1.Secret{}
-	err := bakClt.Get(context.Background(), types.NamespacedName{
-		Namespace: r.GetNamespace(),
-		Name:      dest.OSSAccessSecret,
-	}, secret)
-	fieldPath := field.NewPath("spec").Child(fieldName).Child("destination").Child("ossAccessSecret")
-	if err != nil {
-		if apierrors.IsNotFound(err) {
-			return field.Invalid(fieldPath, dest.OSSAccessSecret, "Given OSSAccessSecret not found")
+	if dest.Type != constants.BackupDestTypeNFS {
+		if dest.OSSAccessSecret == "" {
+			return field.Invalid(field.NewPath("spec").Child(fieldName).Child("destination"), dest.OSSAccessSecret, "OSSAccessSecret is required when backing up data to OSS, COS or S3")
 		}
-		return field.InternalError(fieldPath, err)
-	}
-	// All the following types need accessId and accessKey
-	switch dest.Type {
-	case
-		constants.BackupDestTypeCOS,
-		constants.BackupDestTypeOSS,
-		constants.BackupDestTypeS3,
-		constants.BackupDestTypeS3Compatible:
-		if _, ok := secret.Data["accessId"]; !ok {
-			return field.Invalid(fieldPath, dest.OSSAccessSecret, "accessId field not found in given OSSAccessSecret")
+		secret := &v1.Secret{}
+		err := bakClt.Get(context.Background(), types.NamespacedName{
+			Namespace: r.GetNamespace(),
+			Name:      dest.OSSAccessSecret,
+		}, secret)
+		fieldPath := field.NewPath("spec").Child(fieldName).Child("destination").Child("ossAccessSecret")
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return field.Invalid(fieldPath, dest.OSSAccessSecret, "Given OSSAccessSecret not found")
+			}
+			return field.InternalError(fieldPath, err)
 		}
-		if _, ok := secret.Data["accessKey"]; !ok {
-			return field.Invalid(fieldPath, dest.OSSAccessSecret, "accessKey field not found in given OSSAccessSecret")
+		// All the following types need accessId and accessKey
+		switch dest.Type {
+		case
+			constants.BackupDestTypeCOS,
+			constants.BackupDestTypeOSS,
+			constants.BackupDestTypeS3,
+			constants.BackupDestTypeS3Compatible:
+			if _, ok := secret.Data["accessId"]; !ok {
+				return field.Invalid(fieldPath, dest.OSSAccessSecret, "accessId field not found in given OSSAccessSecret")
+			}
+			if _, ok := secret.Data["accessKey"]; !ok {
+				return field.Invalid(fieldPath, dest.OSSAccessSecret, "accessKey field not found in given OSSAccessSecret")
+			}
 		}
-	}
-	// The following types need additional fields
-	switch dest.Type {
-	case constants.BackupDestTypeCOS:
-		if _, ok := secret.Data["appId"]; !ok {
-			return field.Invalid(fieldPath, dest.OSSAccessSecret, "appId field not found in given OSSAccessSecret")
-		}
-	case constants.BackupDestTypeS3:
-		if _, ok := secret.Data["s3Region"]; !ok {
-			return field.Invalid(fieldPath, dest.OSSAccessSecret, "s3Region field not found in given OSSAccessSecret")
+		// The following types need additional fields
+		switch dest.Type {
+		case constants.BackupDestTypeCOS:
+			if _, ok := secret.Data["appId"]; !ok {
+				return field.Invalid(fieldPath, dest.OSSAccessSecret, "appId field not found in given OSSAccessSecret")
+			}
+		case constants.BackupDestTypeS3:
+			if _, ok := secret.Data["s3Region"]; !ok {
+				return field.Invalid(fieldPath, dest.OSSAccessSecret, "s3Region field not found in given OSSAccessSecret")
+			}
 		}
 	}
 	return nil
