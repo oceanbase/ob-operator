@@ -25,8 +25,9 @@ func NewCmd() *cobra.Command {
 	o := install.NewInstallOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:   "install <component>",
-		Short: "Command for ob-operator and components installation",
+		Use:     "install <component>",
+		Aliases: []string{"i"},
+		Short:   "Command for ob-operator and components installation",
 		Long: `Command for ob-operator and components installation.
 
 Currently support:

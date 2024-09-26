@@ -32,14 +32,14 @@ import (
 
 type UpdateOptions struct {
 	generic.ResourceOptions
+	// flags for cli
 	force            bool
 	Pools            []param.ResourcePoolSpec `json:"pools" binding:"required"`
 	ConnectWhiteList string                   `json:"connectWhiteList,omitempty"`
-	Charset          string                   `json:"charset,omitempty"`
 	ZonePriority     map[string]string        `json:"zonePriority"`
 	UpdateType       string                   `json:"updateType"`
 	UnitConfig       *param.UnitConfig        `json:"unitConfig" binding:"required"`
-	// Operation config
+	// DS for Operation config
 	OldResourcePools    []v1alpha1.ResourcePoolSpec `json:"oldResourcePools,omitempty"`
 	ModifyResourcePools []v1alpha1.ResourcePoolSpec `json:"modifyResourcePools,omitempty"`
 	AddResourcePools    []v1alpha1.ResourcePoolSpec `json:"addResourcePools,omitempty"`
@@ -112,9 +112,6 @@ func GetUpdateOperation(o *UpdateOptions) *v1alpha1.OBTenantOperation {
 		},
 	}
 	switch o.UpdateType {
-	case "charset":
-		updateOp.Spec.Charset = o.Charset
-		updateOp.Spec.Type = apiconst.TenantOpSetCharset
 	case "connect-white-list":
 		updateOp.Spec.ConnectWhiteList = o.ConnectWhiteList
 		updateOp.Spec.Type = apiconst.TenantOpSetConnectWhiteList
@@ -141,9 +138,6 @@ func (o *UpdateOptions) Validate() error {
 			typeMap[name] = true
 			o.UpdateType = name
 		}
-	}
-	if o.CheckIfFlagChanged("charset") {
-		updateTypeMap("charset")
 	}
 	if o.CheckIfFlagChanged("connect-white-list") {
 		updateTypeMap("connect-white-list")
@@ -186,7 +180,6 @@ func (o *UpdateOptions) Validate() error {
 // AddFlags add basic flags for tenant management
 func (o *UpdateOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "The namespace of OBTenant")
-	cmd.Flags().StringVar(&o.Charset, "charset", "", "The charset using in ob tenant")
 	cmd.Flags().StringVar(&o.ConnectWhiteList, "connect-white-list", "", "The connect white list using in ob tenant")
 	cmd.Flags().StringToStringVar(&o.ZonePriority, "priority", nil, "zone priority config of OBTenant")
 	cmd.Flags().BoolVarP(&o.force, "force", "f", false, "force operation")
