@@ -13,8 +13,6 @@ on:
       - "*_release"
     paths:
       - '**/*.go'
-    tags:
-      - "*"
 
 env:
   GO_VERSION: "1.22"
