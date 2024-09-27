@@ -4,7 +4,7 @@
 source setup.sh
 source util.sh
 source env.sh
-#source case_p2_v211/env_vars.sh
+#source case_p2_Resource/env_vars.sh
  
 # prepare create related resources to create obcluster
 prepare() {
@@ -175,7 +175,7 @@ check_pvc() {
 }
 
 export_to_file() {
-    local output_file="case_p2_v211/env_vars.sh"
+    local output_file="case_p2_Resource/env_vars.sh"
     cat <<EOF > "$output_file"
 export PASSWORD="$PASSWORD"
 export SUFFIX="$SUFFIX"

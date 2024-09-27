@@ -4,7 +4,7 @@
 source setup.sh
 source util.sh
 source env.sh
-source case_p3_v212/env_vars.sh
+source case_p3_AdvancedConfig/env_vars.sh
  
 # prepare create related resources to create obcluster
 prepare() {
@@ -16,7 +16,7 @@ prepare() {
 # clean up delete everything by deleting the entire namespace
 cleanup() {
     kubectl delete namespace $NAMESPACE
-    rm -rf case_p3_v212/env_vars.sh
+    rm -rf case_p3_AdvancedConfig/env_vars.sh
 }
  
 run() {
