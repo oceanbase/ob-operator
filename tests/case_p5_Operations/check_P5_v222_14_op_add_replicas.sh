@@ -4,7 +4,7 @@
 source setup.sh
 source util.sh
 source env.sh
-source case_p5_v222/env_vars.sh
+source case_p5_Operations/env_vars.sh
  
 # clean up delete everything by deleting the entire namespace
 cleanup() {
@@ -122,7 +122,7 @@ check_operation() {
 }
 
 export_to_file() {
-    local output_file="case_p5_v222/env_vars.sh"
+    local output_file="case_p5_Operations/env_vars.sh"
     cat <<EOF > "$output_file"
 export PASSWORD="$PASSWORD"
 export SUFFIX="$SUFFIX"

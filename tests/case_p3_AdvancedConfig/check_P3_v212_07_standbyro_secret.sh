@@ -4,7 +4,7 @@
 source setup.sh
 source util.sh
 source env.sh
-source case_p3_v212/env_vars.sh
+source case_p3_AdvancedConfig/env_vars.sh
 
 # clean up delete everything by deleting the entire namespace
 cleanup() {
