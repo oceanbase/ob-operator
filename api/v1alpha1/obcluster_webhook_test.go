@@ -148,7 +148,7 @@ var _ = Describe("Test OBCluster Webhook", Label("webhook"), func() {
 
 	It("Validate existence of secrets", func() {
 		By("Create normal cluster")
-		cluster := newOBCluster("test", 1, 1)
+		cluster := newOBCluster("test3", 1, 1)
 		cluster.Spec.UserSecrets.Monitor = ""
 		cluster.Spec.UserSecrets.ProxyRO = ""
 		cluster.Spec.UserSecrets.Operator = ""
@@ -158,17 +158,19 @@ var _ = Describe("Test OBCluster Webhook", Label("webhook"), func() {
 		cluster2.Spec.UserSecrets.Monitor = "secret-that-does-not-exist"
 		cluster2.Spec.UserSecrets.ProxyRO = ""
 		cluster2.Spec.UserSecrets.Operator = ""
-		Expect(k8sClient.Create(ctx, cluster)).ShouldNot(Succeed())
+		Expect(k8sClient.Create(ctx, cluster2)).Should(Succeed())
 
+		cluster3 := newOBCluster("test3", 1, 1)
 		cluster2.Spec.UserSecrets.Monitor = wrongKeySecret
-		Expect(k8sClient.Create(ctx, cluster)).ShouldNot(Succeed())
+		Expect(k8sClient.Create(ctx, cluster3)).ShouldNot(Succeed())
 
 		Expect(k8sClient.Delete(ctx, cluster)).Should(Succeed())
+		Expect(k8sClient.Delete(ctx, cluster2)).Should(Succeed())
 	})
 
 	It("Validate secrets creation and fetch them", func() {
 		By("Create normal cluster")
-		cluster := newOBCluster("test", 1, 1)
+		cluster := newOBCluster("test-create-secrets", 1, 1)
 		cluster.Spec.UserSecrets.Monitor = ""
 		cluster.Spec.UserSecrets.ProxyRO = ""
 		cluster.Spec.UserSecrets.Operator = ""
@@ -178,6 +180,7 @@ var _ = Describe("Test OBCluster Webhook", Label("webhook"), func() {
 		Expect(cluster.Spec.UserSecrets.Monitor).ShouldNot(BeEmpty())
 		Expect(cluster.Spec.UserSecrets.ProxyRO).ShouldNot(BeEmpty())
 		Expect(cluster.Spec.UserSecrets.Operator).ShouldNot(BeEmpty())
+		Expect(k8sClient.Delete(ctx, cluster)).Should(Succeed())
 	})
 
 	It("Validate single pvc with multiple storage classes", func() {

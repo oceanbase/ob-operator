@@ -88,5 +88,7 @@ func init() {
 }
 
 func (c *OBCluster) SupportStaticIP() bool {
-	return c.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] == "true"
+	return c.Annotations[oceanbaseconst.AnnotationsSupportStaticIP] == "true" ||
+		c.Annotations[oceanbaseconst.AnnotationsMode] == oceanbaseconst.ModeService ||
+		c.Annotations[oceanbaseconst.AnnotationsMode] == oceanbaseconst.ModeStandalone
 }
