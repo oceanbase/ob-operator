@@ -43,7 +43,7 @@ func (o *ResourceOptions) Complete() error {
 // Validate the params in options
 func (o *ResourceOptions) Validate() error {
 	if o.Namespace == "" {
-		return errors.New("namespace not specified")
+		return errors.New("namespace is not specified")
 	}
 	return nil
 }

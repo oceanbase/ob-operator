@@ -62,7 +62,7 @@ func GetReplayLogOperation(o *ReplayLogOptions) *v1alpha1.OBTenantOperation {
 
 func (o *ReplayLogOptions) Validate() error {
 	if o.Namespace == "" {
-		return errors.New("namespace not specified")
+		return errors.New("namespace is not specified")
 	}
 	if !o.Unlimited && o.Timestamp != "" {
 		return errors.New("timestamp is required if the restore is limited")

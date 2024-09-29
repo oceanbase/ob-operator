@@ -110,13 +110,13 @@ func (o *CreateOptions) Complete() error {
 
 func (o *CreateOptions) Validate() error {
 	if o.Namespace == "" {
-		return errors.New("namespace not specified")
+		return errors.New("namespace is not specified")
 	}
 	if o.ClusterName == "" {
-		return errors.New("cluster name not specified")
+		return errors.New("cluster name is not specified")
 	}
 	if o.TenantName == "" {
-		return errors.New("tenant name not specified")
+		return errors.New("tenant name is not specified")
 	}
 	if !utils.CheckResourceName(o.Name) {
 		return fmt.Errorf("invalid resource name in k8s: %s", o.Name)

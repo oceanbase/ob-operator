@@ -81,7 +81,7 @@ func GenerateNewPwd(ctx context.Context, o *ChangePwdOptions) error {
 
 func (o *ChangePwdOptions) Validate() error {
 	if o.Password == "" {
-		return errors.New("Password can not be none")
+		return errors.New("Password can not be empty")
 	}
 	return nil
 }

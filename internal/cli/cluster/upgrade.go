@@ -54,7 +54,7 @@ func GetUpgradeOperation(o *UpgradeOptions) *v1alpha1.OBClusterOperation {
 
 func (o *UpgradeOptions) Validate() error {
 	if o.Image == "" {
-		return errors.New("image is required")
+		return errors.New("image is not specified")
 	}
 	return nil
 }

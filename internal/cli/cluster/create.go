@@ -63,7 +63,7 @@ func NewCreateOptions() *CreateOptions {
 
 func (o *CreateOptions) Validate() error {
 	if o.Namespace == "" {
-		return errors.New("namespace not specified")
+		return errors.New("namespace is not specified")
 	}
 	if !utils.CheckPassword(o.RootPassword) {
 		return fmt.Errorf("Password is not secure, must contain at least 2 uppercase and lowercase letters, numbers and special characters")
