@@ -25,7 +25,7 @@ import (
 )
 
 type ActivateOptions struct {
-	generic.ResourceOptions
+	generic.ResourceOption
 	force bool
 }
 
@@ -53,6 +53,6 @@ func GetActivateOperation(o *ActivateOptions) *v1alpha1.OBTenantOperation {
 
 // AddFlags add basic flags for tenant management
 func (o *ActivateOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob tenant")
-	cmd.Flags().BoolVarP(&o.force, "force", "f", false, "force operation")
+	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, "default", "namespace of ob tenant")
+	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, "f", false, "force operation")
 }

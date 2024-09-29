@@ -55,7 +55,7 @@ func NewCreateOptions() *CreateOptions {
 }
 
 type CreateOptions struct {
-	generic.ResourceOptions
+	generic.ResourceOption
 	ClusterName      string `json:"obcluster" binding:"required"`
 	TenantName       string `json:"tenantName" binding:"required"`
 	UnitNumber       int    `json:"unitNum" binding:"required"`
@@ -87,9 +87,9 @@ func (o *CreateOptions) Parse(_ *cobra.Command, args []string) error {
 	o.Name = args[0]
 	if o.CheckIfFlagChanged("from") {
 		o.Source.Tenant = &o.From
-		o.TenantRole = "STANDBY"
+		o.TenantRole = string(apiconst.TenantRolePrimary)
 	} else {
-		o.TenantRole = "PRIMARY"
+		o.TenantRole = string(apiconst.TenantRoleStandby)
 	}
 	// create empty standby tenant
 	if !o.Restore {
@@ -411,46 +411,46 @@ func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 // AddBaseFlags add base flags
 func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags := cmd.Flags()
-	baseFlags.StringVarP(&o.TenantName, "tenant-name", "n", "", "Tenant name, if not specified, use name in k8s instead")
-	baseFlags.StringVar(&o.ClusterName, "cluster", "", "The cluster name tenant belonged to in k8s")
-	baseFlags.StringVar(&o.Namespace, "namespace", "default", "The namespace of the tenant")
-	baseFlags.StringVarP(&o.RootPassword, "root-password", "p", "", "The root password of the cluster")
-	baseFlags.StringVar(&o.Charset, "charset", "utf8mb4", "The charset using in ob tenant")
-	baseFlags.StringVar(&o.ConnectWhiteList, "connect-white-list", "%", "The connect white list using in ob tenant")
-	baseFlags.StringVar(&o.From, "from", "", "restore from data source")
+	baseFlags.StringVarP(&o.TenantName, FLAG_TENANT_NAME, "n", "", "Tenant name, if not specified, use name in k8s instead")
+	baseFlags.StringVar(&o.ClusterName, FLAG_CLUSTER_NAME, "", "The cluster name tenant belonged to in k8s")
+	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, "default", "The namespace of the tenant")
+	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOTPASSWD, "p", "", "The root password of the cluster")
+	baseFlags.StringVar(&o.Charset, FLAG_CHARSET, "utf8mb4", "The charset using in ob tenant")
+	baseFlags.StringVar(&o.ConnectWhiteList, FLAG_CONNECT_WHITE_LIST, "%", "The connect white list using in ob tenant")
+	baseFlags.StringVar(&o.From, FLAG_FROM, "", "restore from data source")
 }
 
 // AddPoolFlags add pool-related flags
 func (o *CreateOptions) AddPoolFlags(cmd *cobra.Command) {
-	poolFlags := pflag.NewFlagSet("zone", pflag.ContinueOnError)
-	poolFlags.StringToStringVar(&o.ZonePriority, "priority", map[string]string{"z1": "1"}, "The zones of the tenant in the format 'Zone=Priority', multiple values can be provided separated by commas")
+	poolFlags := pflag.NewFlagSet(FLAGSET_ZONE, pflag.ContinueOnError)
+	poolFlags.StringToStringVar(&o.ZonePriority, FLAG_ZONE_PRIORITY, map[string]string{"z1": "1"}, "The zones of the tenant in the format 'Zone=Priority', multiple values can be provided separated by commas")
 	cmd.Flags().AddFlagSet(poolFlags)
 }
 
 // AddUnitFlags add unit-resource-related flags
 func (o *CreateOptions) AddUnitFlags(cmd *cobra.Command) {
-	unitFlags := pflag.NewFlagSet("unit", pflag.ContinueOnError)
-	unitFlags.IntVar(&o.UnitNumber, "unit-number", 1, "unit number of the OBTenant")
-	unitFlags.Int64Var(&o.UnitConfig.MaxIops, "max-iops", 1024, "The max iops of unit")
-	unitFlags.Int64Var(&o.UnitConfig.MinIops, "min-iops", 1024, "The min iops of unit")
-	unitFlags.IntVar(&o.UnitConfig.IopsWeight, "iops-weight", 1, "The iops weight of unit")
-	unitFlags.StringVar(&o.UnitConfig.CPUCount, "cpu-count", "1", "The cpu count of unit")
-	unitFlags.StringVar(&o.UnitConfig.MemorySize, "memory-size", "2Gi", "The memory size of unit")
-	unitFlags.StringVar(&o.UnitConfig.LogDiskSize, "log-disk-size", "4Gi", "The log disk size of unit")
+	unitFlags := pflag.NewFlagSet(FLAGSET_UNIT, pflag.ContinueOnError)
+	unitFlags.IntVar(&o.UnitNumber, FLAG_UNIT_NUMBER, 1, "unit number of the OBTenant")
+	unitFlags.Int64Var(&o.UnitConfig.MaxIops, FLAG_MAX_IOPS, 1024, "The max iops of unit")
+	unitFlags.Int64Var(&o.UnitConfig.MinIops, FLAG_MIN_IOPS, 1024, "The min iops of unit")
+	unitFlags.IntVar(&o.UnitConfig.IopsWeight, FLAG_IOPS_WEIGHT, 1, "The iops weight of unit")
+	unitFlags.StringVar(&o.UnitConfig.CPUCount, FLAG_CPU_COUNT, "1", "The cpu count of unit")
+	unitFlags.StringVar(&o.UnitConfig.MemorySize, FLAG_MEMORY_SIZE, "2Gi", "The memory size of unit")
+	unitFlags.StringVar(&o.UnitConfig.LogDiskSize, FLAG_LOG_DISK_SIZE, "4Gi", "The log disk size of unit")
 	cmd.Flags().AddFlagSet(unitFlags)
 }
 
 // AddRestoreFlags add restore flags
 func (o *CreateOptions) AddRestoreFlags(cmd *cobra.Command) {
-	restoreFlags := pflag.NewFlagSet("restore", pflag.ContinueOnError)
-	restoreFlags.BoolVarP(&o.Restore, "restore", "r", false, "Restore from backup files")
-	restoreFlags.StringVar(&o.RestoreType, "type", "OSS", "The type of restore source, support OSS or NFS")
-	restoreFlags.StringVar(&o.Source.Restore.ArchiveSource, "archive-source", "demo_tenant/log_archive_custom", "The archive source of restore")
-	restoreFlags.StringVar(&o.Source.Restore.BakEncryptionPassword, "bak-encryption-password", "", "The backup encryption password of obtenant")
-	restoreFlags.StringVar(&o.Source.Restore.BakDataSource, "bak-data-source", "demo_tenant/data_backup_custom_enc", "The bak data source of restore")
-	restoreFlags.StringVar(&o.Source.Restore.OSSAccessID, "oss-access-id", "", "The oss access id of restore")
-	restoreFlags.StringVar(&o.Source.Restore.OSSAccessKey, "oss-access-key", "", "The oss access key of restore")
-	restoreFlags.BoolVar(&o.Source.Restore.Until.Unlimited, "until-unlimited", true, "time limited for restore")
-	restoreFlags.StringVar(&o.Timestamp, "until-timestamp", "", "timestamp for obtenant restore")
+	restoreFlags := pflag.NewFlagSet(FLAGSET_RESTORE, pflag.ContinueOnError)
+	restoreFlags.BoolVarP(&o.Restore, FLAG_RESTORE, "r", false, "Restore from backup files")
+	restoreFlags.StringVar(&o.RestoreType, FLAG_RESTORE_TYPE, "OSS", "The type of restore source, support OSS or NFS")
+	restoreFlags.StringVar(&o.Source.Restore.ArchiveSource, FLAG_ARCHIVE_SOURCE, "demo_tenant/log_archive_custom", "The archive source of restore")
+	restoreFlags.StringVar(&o.Source.Restore.BakEncryptionPassword, FLAG_BAK_ENCRYPTION_PASS, "", "The backup encryption password of obtenant")
+	restoreFlags.StringVar(&o.Source.Restore.BakDataSource, FLAG_BAK_DATA_SOURCE, "demo_tenant/data_backup_custom_enc", "The bak data source of restore")
+	restoreFlags.StringVar(&o.Source.Restore.OSSAccessID, FLAG_OSS_ACCESS_ID, "", "The oss access id of restore")
+	restoreFlags.StringVar(&o.Source.Restore.OSSAccessKey, FLAG_OSS_ACCESS_KEY, "", "The oss access key of restore")
+	restoreFlags.BoolVar(&o.Source.Restore.Until.Unlimited, FLAG_UNLIMITED, true, "time limited for restore")
+	restoreFlags.StringVar(&o.Timestamp, FLAG_UNTIL_TIMESTAMP, "", "timestamp for obtenant restore")
 	cmd.Flags().AddFlagSet(restoreFlags)
 }

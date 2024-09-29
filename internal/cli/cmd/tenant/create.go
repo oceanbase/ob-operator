@@ -25,7 +25,7 @@ func NewCreateCmd() *cobra.Command {
 	o := tenant.NewCreateOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:     "create <tenant_name> --cluster=<cluster_name> ",
+		Use:     "create <tenant_name> --cluster=<cluster_name>",
 		Short:   "Create ob tenant",
 		Aliases: []string{"c"},
 		PreRunE: o.Parse,

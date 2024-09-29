@@ -20,7 +20,7 @@ import (
 )
 
 type ListOptions struct {
-	generic.ResourceOptions
+	generic.ResourceOption
 	ClusterName string
 }
 
@@ -30,5 +30,5 @@ func NewListOptions() *ListOptions {
 
 func (o *ListOptions) AddFlags(cmd *cobra.Command) {
 	// These flags are used for further list options, but not used yet.
-	cmd.Flags().StringVar(&o.ClusterName, "cluster-name", "", "The cluster name tenant belonged to in k8s")
+	cmd.Flags().StringVar(&o.ClusterName, FLAG_CLUSTER_NAME, "", "The cluster name tenant belonged to in k8s")
 }

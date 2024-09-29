@@ -20,7 +20,7 @@ import (
 )
 
 type ShowOptions struct {
-	generic.ResourceOptions
+	generic.ResourceOption
 }
 
 func NewShowOptions() *ShowOptions {
@@ -29,5 +29,5 @@ func NewShowOptions() *ShowOptions {
 
 // AddFlags add basic flags for cluster management
 func (o *ShowOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob cluster")
+	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, "default", "namespace of ob cluster")
 }

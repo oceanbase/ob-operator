@@ -15,7 +15,6 @@ package util
 
 import (
 	"fmt"
-	"strings"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -49,7 +48,7 @@ func CheckPrimaryTenant(standbytenant *v1alpha1.OBTenant) error {
 
 // CheckTenantRole checks tenant role
 func CheckTenantRole(tenant *v1alpha1.OBTenant, role apitypes.TenantRole) error {
-	if tenant.Status.TenantRole != apitypes.TenantRole(strings.ToUpper(string(role))) {
+	if tenant.Status.TenantRole != role {
 		return fmt.Errorf("The tenant is not %s tenant", string(role))
 	}
 	return nil

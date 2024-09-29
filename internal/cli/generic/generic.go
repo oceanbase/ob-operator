@@ -17,53 +17,36 @@ import (
 	"errors"
 
 	"github.com/spf13/cobra"
-
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 )
 
-type ResourceOptions struct {
+type ResourceOption struct {
 	Name      string
 	Namespace string
 	Cmd       *cobra.Command
 }
 
 // Parse the args in obocli
-func (o *ResourceOptions) Parse(cmd *cobra.Command, args []string) error {
+func (o *ResourceOption) Parse(cmd *cobra.Command, args []string) error {
 	o.Name = args[0]
 	o.Cmd = cmd
 	return nil
 }
 
-// Complete the unset params in options
-func (o *ResourceOptions) Complete() error {
+// Complete the unset params in option
+func (o *ResourceOption) Complete() error {
 	return nil
 }
 
-// Validate the params in options
-func (o *ResourceOptions) Validate() error {
+// Validate the params in option
+func (o *ResourceOption) Validate() error {
 	if o.Namespace == "" {
 		return errors.New("namespace is not specified")
 	}
 	return nil
 }
 
-// CreateResourcePoolSpec Creates ResourcePoolSpec for tenant scale and update
-func (o *ResourceOptions) CreateResourcePoolSpec(pool param.ResourcePoolSpec, unitConfig *v1alpha1.UnitConfig) *v1alpha1.ResourcePoolSpec {
-	return &v1alpha1.ResourcePoolSpec{
-		Zone:     pool.Zone,
-		Priority: pool.Priority,
-		Type: &v1alpha1.LocalityType{
-			Name:     o.Name,
-			Replica:  1,
-			IsActive: true,
-		},
-		UnitConfig: unitConfig,
-	}
-}
-
 // CheckIfFlagChanged checks if flags has changed
-func (o *ResourceOptions) CheckIfFlagChanged(flags ...string) bool {
+func (o *ResourceOption) CheckIfFlagChanged(flags ...string) bool {
 	for _, flagName := range flags {
 		if flag := o.Cmd.Flags().Lookup(flagName); flag != nil && flag.Changed {
 			return true

@@ -30,7 +30,7 @@ import (
 )
 
 type ScaleOptions struct {
-	generic.ResourceOptions
+	generic.ResourceOption
 	Zones             map[string]string            `json:"zones"`
 	Topology          []param.ZoneTopology         `json:"topology"`
 	OldTopology       []apitypes.OBZoneTopology    `json:"oldTopology"`
@@ -167,6 +167,6 @@ func (o *ScaleOptions) Validate() error {
 
 // Add Flags for scale options
 func (o *ScaleOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob cluster")
-	cmd.Flags().StringToStringVar(&o.Zones, "zones", nil, "zone of ob cluster")
+	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, "default", "namespace of ob cluster")
+	cmd.Flags().StringToStringVar(&o.Zones, FLAG_ZONES, nil, "zone of ob cluster")
 }

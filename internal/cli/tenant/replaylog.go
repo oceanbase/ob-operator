@@ -27,7 +27,7 @@ import (
 )
 
 type ReplayLogOptions struct {
-	generic.ResourceOptions
+	generic.ResourceOption
 	RestoreUntilOptions
 	force bool
 }
@@ -72,8 +72,8 @@ func (o *ReplayLogOptions) Validate() error {
 
 // AddFlags add basic flags for tenant management
 func (o *ReplayLogOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "The namespace of OBTenant")
-	cmd.Flags().BoolVarP(&o.force, "force", "f", false, "force operation")
-	cmd.Flags().StringVar(&o.RestoreUntilOptions.Timestamp, "timestamp", "", "timestamp for obtenant restore,example: 2024-02-23 17:47:00")
-	cmd.Flags().BoolVar(&o.RestoreUntilOptions.Unlimited, "unlimited", true, "time limit for obtenant restore")
+	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, "default", "The namespace of OBTenant")
+	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, "f", false, "force operation")
+	cmd.Flags().StringVar(&o.RestoreUntilOptions.Timestamp, FLAG_UNTIL_TIMESTAMP, "", "timestamp for obtenant restore,example: 2024-02-23 17:47:00")
+	cmd.Flags().BoolVar(&o.RestoreUntilOptions.Unlimited, FLAG_UNLIMITED, true, "time limit for obtenant restore")
 }
