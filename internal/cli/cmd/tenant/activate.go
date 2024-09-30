@@ -31,7 +31,6 @@ func NewActivateCmd() *cobra.Command {
 		Use:     "activate <standby_tenant_name>",
 		Short:   "Activate a standby tenant",
 		PreRunE: o.Parse,
-		Aliases: []string{"a", "at"},
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := o.Validate(); err != nil {

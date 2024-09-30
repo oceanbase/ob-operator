@@ -31,7 +31,6 @@ func NewScaleCmd() *cobra.Command {
 		Short:   "Scale ob tenant",
 		Long:    `Scale ob tenant, support unit-number/unit config of zones.`,
 		Args:    cobra.ExactArgs(1),
-		Aliases: []string{"sa"},
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
 			obtenant, err := clients.GetOBTenant(cmd.Context(), types.NamespacedName{
