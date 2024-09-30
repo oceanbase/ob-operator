@@ -24,6 +24,7 @@ import (
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/cli/generic"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
@@ -31,7 +32,7 @@ import (
 )
 
 type UpdateOptions struct {
-	ResourceOptions
+	generic.ResourceOption
 	Resource     common.ResourceSpec             `json:"resource"`
 	Storage      *param.OBServerStorageSpec      `json:"storage"`
 	UpdateType   string                          `json:"updateType"`
@@ -44,8 +45,8 @@ func NewUpdateOptions() *UpdateOptions {
 	}
 }
 
-// GetUpdateOperations creates update opertaions
-func GetUpdateOperations(o *UpdateOptions) *v1alpha1.OBClusterOperation {
+// GetUpdateOperation creates update opertaions
+func GetUpdateOperation(o *UpdateOptions) *v1alpha1.OBClusterOperation {
 	updateOp := &v1alpha1.OBClusterOperation{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      o.Name + "-update-" + rand.String(6),
@@ -127,13 +128,13 @@ func (o *UpdateOptions) Complete() error {
 
 // AddFlags for update options
 func (o *UpdateOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob cluster")
-	cmd.Flags().Int64Var(&o.Resource.Cpu, "cpu", 0, "The cpu of the observer")
-	cmd.Flags().Int64Var(&o.Resource.MemoryGB, "memory", 0, "The memory of the observer")
-	cmd.Flags().StringVar(&o.Storage.Data.StorageClass, "data-storage-class", "", "The storage class of the data storage")
-	cmd.Flags().StringVar(&o.Storage.RedoLog.StorageClass, "redo-log-storage-class", "", "The storage class of the redo log storage")
-	cmd.Flags().StringVar(&o.Storage.Log.StorageClass, "log-storage-class", "", "The storage class of the log storage")
-	cmd.Flags().Int64Var(&o.Storage.Data.SizeGB, "data-storage-size", 0, "The size of the data storage")
-	cmd.Flags().Int64Var(&o.Storage.RedoLog.SizeGB, "redo-log-storage-size", 0, "The size of the redo log storage")
-	cmd.Flags().Int64Var(&o.Storage.Log.SizeGB, "log-storage-size", 0, "The size of the log storage")
+	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, "default", "namespace of ob cluster")
+	cmd.Flags().Int64Var(&o.Resource.Cpu, FLAG_OBSERVER_CPU, 0, "The cpu of the observer")
+	cmd.Flags().Int64Var(&o.Resource.MemoryGB, FLAG_MONITOR_MEMORY, 0, "The memory of the observer")
+	cmd.Flags().StringVar(&o.Storage.Data.StorageClass, FLAG_DATA_STORAGE_CLASS, "", "The storage class of the data storage")
+	cmd.Flags().StringVar(&o.Storage.RedoLog.StorageClass, FLAG_REDO_LOG_STORAGE_CLASS, "", "The storage class of the redo log storage")
+	cmd.Flags().StringVar(&o.Storage.Log.StorageClass, FLAG_LOG_STORAGE_CLASS, "", "The storage class of the log storage")
+	cmd.Flags().Int64Var(&o.Storage.Data.SizeGB, FLAG_DATA_STORAGE_SIZE, 0, "The size of the data storage")
+	cmd.Flags().Int64Var(&o.Storage.RedoLog.SizeGB, FLAG_REDO_LOG_STORAGE_SIZE, 0, "The size of the redo log storage")
+	cmd.Flags().Int64Var(&o.Storage.Log.SizeGB, FLAG_LOG_STORAGE_SIZE, 0, "The size of the log storage")
 }

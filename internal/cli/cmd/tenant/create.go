@@ -11,27 +11,25 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package cluster
+package tenant
 
 import (
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
-	"github.com/oceanbase/ob-operator/internal/clients"
+	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 )
 
-// NewCreateCmd create an ob cluster
+// NewCreateCmd create an ob tenant
 func NewCreateCmd() *cobra.Command {
-	o := cluster.NewCreateOptions()
+	o := tenant.NewCreateOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:     "create <cluster_name>",
-		Short:   "Create ob cluster",
+		Use:     "create <tenant_name> --cluster=<cluster_name>",
+		Short:   "Create ob tenant",
 		Aliases: []string{"c"},
-		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
+		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := o.Complete(); err != nil {
 				logger.Fatalln(err)
@@ -39,16 +37,12 @@ func NewCreateCmd() *cobra.Command {
 			if err := o.Validate(); err != nil {
 				logger.Fatalln(err)
 			}
-			obcluster := cluster.CreateOBClusterInstance(o)
-			if err := clients.CreateSecretsForOBCluster(cmd.Context(), obcluster, o.RootPassword); err != nil {
-				logger.Fatalln(errors.Wrap(err, "Create secrets for obcluster"))
-			}
-			_, err := clients.CreateOBCluster(cmd.Context(), obcluster)
+			obtenant, err := tenant.CreateOBTenant(cmd.Context(), o)
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create obcluster instance: %s", o.ClusterName)
-			logger.Printf("Run `echo $(kubectl get secret %s -o jsonpath='{.data.password}'|base64 --decode)` to get the secrets", obcluster.Spec.UserSecrets.Root)
+			logger.Printf("Create obtenant instance: %s", o.TenantName)
+			logger.Printf("Run `echo $(kubectl get secret %s -o jsonpath='{.data.password}'|base64 --decode)` to get the secrets", obtenant.Spec.Credentials.Root)
 		},
 	}
 	o.AddFlags(cmd)

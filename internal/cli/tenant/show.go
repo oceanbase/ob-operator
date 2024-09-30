@@ -11,26 +11,23 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package util
+package tenant
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
+
+	"github.com/oceanbase/ob-operator/internal/cli/generic"
 )
 
-// PrintFlagValues is used for debugging
-func PrintFlagValues(cmd *cobra.Command) {
-	_ = cmd.ParseFlags(nil)
+type ShowOptions struct {
+	generic.ResourceOption
+}
 
-	flags := cmd.NonInheritedFlags()
-	flags.VisitAll(func(f *pflag.Flag) {
-		fmt.Printf("%s : %v\n", f.Name, f.Value.String())
-	})
+func NewShowOptions() *ShowOptions {
+	return &ShowOptions{}
+}
 
-	inheritedFlags := cmd.InheritedFlags()
-	inheritedFlags.VisitAll(func(f *pflag.Flag) {
-		fmt.Printf("%s : %v\n", f.Name, f.Value.String())
-	})
+// AddFlags add basic flags for tenant management
+func (o *ShowOptions) AddFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, "default", "namespace of ob cluster")
 }

@@ -20,6 +20,7 @@ const (
 	LabelJobName         = "job-name"
 	LabelRefBackupPolicy = "ref-backuppolicy"
 	LabelRefOBClusterOp  = "ref-obclusterop"
+	LabelRefOBTenantOp   = "ref-obtenantop"
 )
 
 const (

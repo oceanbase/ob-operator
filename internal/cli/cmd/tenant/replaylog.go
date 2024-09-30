@@ -11,47 +11,47 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package cluster
+package tenant
 
 import (
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/types"
 
-	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
+	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
-// NewScaleCmd scale zones in ob cluster
-func NewScaleCmd() *cobra.Command {
-	o := cluster.NewScaleOptions()
+// NewReplayLogCmd replay log of an ob tenant
+func NewReplayLogCmd() *cobra.Command {
+	o := tenant.NewReplayLogOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:     "scale <cluster_name>",
+		Use:     "replaylog <tenant_name>",
+		Short:   "replay log of an ob tenant",
+		Aliases: []string{"r", "rl"},
 		Args:    cobra.ExactArgs(1),
-		Short:   "Scale ob cluster",
-		Long:    `Scale ob cluster, support add/adjust/delete of zones.`,
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
-			obcluster, err := clients.GetOBCluster(cmd.Context(), o.Namespace, o.Name)
+			obtenant, err := clients.GetOBTenant(cmd.Context(), types.NamespacedName{
+				Namespace: o.Namespace,
+				Name:      o.Name,
+			})
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			if err := cmdUtil.CheckClusterStatus(obcluster); err != nil {
-				logger.Fatalln(err)
-			} else {
-				o.OldTopology = obcluster.Spec.Topology
-			}
-			if err := o.Validate(); err != nil {
+			if err := cmdUtil.CheckTenantStatus(obtenant); err != nil {
 				logger.Fatalln(err)
 			}
-			if err := o.Complete(); err != nil {
+			if err := cmdUtil.CheckTenantRole(obtenant, apiconst.TenantRoleStandby); err != nil {
 				logger.Fatalln(err)
 			}
-			op := cluster.GetScaleOperation(o)
-			if _, err = clients.CreateOBClusterOperation(cmd.Context(), op); err != nil {
+			op := tenant.GetReplayLogOperation(o)
+			if _, err = clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create scale operation for obcluster %s successfully", op.Spec.OBCluster)
+			logger.Printf("Create replay log operation of tenant %s successfully", o.Name)
 		},
 	}
 	o.AddFlags(cmd)

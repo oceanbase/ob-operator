@@ -11,35 +11,40 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package cluster
+package tenant
 
 import (
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/types"
 
-	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
-// NewScaleCmd scale zones in ob cluster
-func NewScaleCmd() *cobra.Command {
-	o := cluster.NewScaleOptions()
+// NewUpdateCmd update an obtenant
+func NewUpdateCmd() *cobra.Command {
+	o := tenant.NewUpdateOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:     "scale <cluster_name>",
+		Use:     "update <tenant_name>",
+		Short:   "Update ob tenant",
+		Long:    "Update ob tenant, support unitNumber/connectWhiteList/priority of zones",
 		Args:    cobra.ExactArgs(1),
-		Short:   "Scale ob cluster",
-		Long:    `Scale ob cluster, support add/adjust/delete of zones.`,
+		Aliases: []string{"ud"},
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
-			obcluster, err := clients.GetOBCluster(cmd.Context(), o.Namespace, o.Name)
+			obtenant, err := clients.GetOBTenant(cmd.Context(), types.NamespacedName{
+				Name:      o.Name,
+				Namespace: o.Namespace,
+			})
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			if err := cmdUtil.CheckClusterStatus(obcluster); err != nil {
+			if err := cmdUtil.CheckTenantStatus(obtenant); err != nil {
 				logger.Fatalln(err)
 			} else {
-				o.OldTopology = obcluster.Spec.Topology
+				o.OldResourcePools = obtenant.Spec.Pools
 			}
 			if err := o.Validate(); err != nil {
 				logger.Fatalln(err)
@@ -47,11 +52,11 @@ func NewScaleCmd() *cobra.Command {
 			if err := o.Complete(); err != nil {
 				logger.Fatalln(err)
 			}
-			op := cluster.GetScaleOperation(o)
-			if _, err = clients.CreateOBClusterOperation(cmd.Context(), op); err != nil {
+			op := tenant.GetUpdateOperation(o)
+			if _, err = clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create scale operation for obcluster %s successfully", op.Spec.OBCluster)
+			logger.Printf("Create update operation for obtenant %s successfully", o.Name)
 		},
 	}
 	o.AddFlags(cmd)

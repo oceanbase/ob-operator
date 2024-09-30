@@ -13,10 +13,21 @@ See the Mulan PSL v2 for more details.
 */
 package cluster
 
+import (
+	"github.com/spf13/cobra"
+
+	"github.com/oceanbase/ob-operator/internal/cli/generic"
+)
+
 type ShowOptions struct {
-	ResourceOptions
+	generic.ResourceOption
 }
 
 func NewShowOptions() *ShowOptions {
 	return &ShowOptions{}
+}
+
+// AddFlags add basic flags for cluster management
+func (o *ShowOptions) AddFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, "default", "namespace of ob cluster")
 }
