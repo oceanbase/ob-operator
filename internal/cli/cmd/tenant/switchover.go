@@ -66,7 +66,7 @@ func NewSwitchOverCmd() *cobra.Command {
 			if _, err := clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create switchover operation for primary tenant %s and standby tenant %s success", o.PrimaryTenant, o.StandbyTenant)
+			logger.Printf("Create switchover operation for primary tenant %s and standby tenant %s successfully", o.PrimaryTenant, o.StandbyTenant)
 		},
 	}
 	o.AddFlags(cmd)

@@ -36,7 +36,7 @@ func NewDeleteCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Delete ob cluster %s success", o.Name)
+			logger.Printf("Delete ob cluster %s successfully", o.Name)
 		},
 	}
 	o.AddFlags(cmd)

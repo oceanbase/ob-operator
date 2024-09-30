@@ -55,7 +55,7 @@ func NewScaleCmd() *cobra.Command {
 			if _, err = clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create scale operation for obtenant %s success", o.Name)
+			logger.Printf("Create scale operation for obtenant %s successfully", o.Name)
 		},
 	}
 	o.AddFlags(cmd)

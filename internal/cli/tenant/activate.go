@@ -36,7 +36,7 @@ func NewActivateOptions() *ActivateOptions {
 func GetActivateOperation(o *ActivateOptions) *v1alpha1.OBTenantOperation {
 	activateOp := &v1alpha1.OBTenantOperation{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      o.Name + "-change-role-" + rand.String(6),
+			Name:      o.Name + "-activate-" + rand.String(6),
 			Namespace: o.Namespace,
 			Labels:    map[string]string{oceanbaseconst.LabelRefOBTenantOp: o.Name},
 		},

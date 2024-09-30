@@ -53,7 +53,7 @@ func NewActivateCmd() *cobra.Command {
 			if _, err = clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create activate operation for tenant %s success", o.Name)
+			logger.Printf("Create activate operation for tenant %s successfully", o.Name)
 		},
 	}
 	o.AddFlags(cmd)

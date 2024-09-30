@@ -44,7 +44,7 @@ func (o *SwitchOverOptions) Parse(_ *cobra.Command, args []string) error {
 func GetSwitchOverOperation(o *SwitchOverOptions) *v1alpha1.OBTenantOperation {
 	switchOverOp := &v1alpha1.OBTenantOperation{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      o.PrimaryTenant + "-change-role-" + rand.String(6),
+			Name:      o.PrimaryTenant + "-switchover-" + rand.String(6),
 			Namespace: o.Namespace,
 			Labels:    map[string]string{oceanbaseconst.LabelRefOBTenantOp: o.PrimaryTenant},
 		},

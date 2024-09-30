@@ -47,7 +47,7 @@ func NewUpgradeCmd() *cobra.Command {
 			if _, err = clients.CreateOBClusterOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create upgrade operation for obcluster %s success", op.Spec.OBCluster)
+			logger.Printf("Create upgrade operation for obcluster %s successfully", op.Spec.OBCluster)
 		},
 	}
 	o.AddFlags(cmd)

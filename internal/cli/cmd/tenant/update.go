@@ -29,7 +29,7 @@ func NewUpdateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "update <tenant_name>",
 		Short:   "Update ob tenant",
-		Long:    "Update ob tenant, support unitNumber/charset/connectWhiteList/priority of zones",
+		Long:    "Update ob tenant, support unitNumber/connectWhiteList/priority of zones",
 		Args:    cobra.ExactArgs(1),
 		Aliases: []string{"ud"},
 		PreRunE: o.Parse,
@@ -56,7 +56,7 @@ func NewUpdateCmd() *cobra.Command {
 			if _, err = clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create update operation for obtenant %s success", o.Name)
+			logger.Printf("Create update operation for obtenant %s successfully", o.Name)
 		},
 	}
 	o.AddFlags(cmd)

@@ -42,7 +42,7 @@ func NewShowCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			obtenantOperation, err := clients.GetOBTenantOperations(cmd.Context(), obtenant)
+			obtenantOperationList, err := clients.GetOBTenantOperations(cmd.Context(), obtenant)
 			if err != nil {
 				logger.Fatalln(err)
 			}
@@ -54,12 +54,12 @@ func NewShowCmd() *cobra.Command {
 					tbLog.Printf("%s \t %d \t %d\n\n", pool.ZoneList, pool.UnitNumber, pool.Priority)
 				}
 			}
-			if len(obtenantOperation.Items) > 0 {
-				sort.Slice(obtenantOperation.Items, func(i, j int) bool {
-					return obtenantOperation.Items[i].Name < obtenantOperation.Items[j].Name
+			if len(obtenantOperationList.Items) > 0 {
+				sort.Slice(obtenantOperationList.Items, func(i, j int) bool {
+					return obtenantOperationList.Items[i].Name < obtenantOperationList.Items[j].Name
 				})
 				tbLog.Println("OPERATION TYPE \t STATUS \t CREATETIME")
-				for _, op := range obtenantOperation.Items {
+				for _, op := range obtenantOperationList.Items {
 					tbLog.Printf("%s \t %s \t %s\n", op.Spec.Type, op.Status.Status, op.CreationTimestamp)
 				}
 			} else {

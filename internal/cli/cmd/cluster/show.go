@@ -38,7 +38,7 @@ func NewShowCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			obclusterOperation, err := clients.GetOBClusterOperations(cmd.Context(), obcluster)
+			obclusterOperationList, err := clients.GetOBClusterOperations(cmd.Context(), obcluster)
 			if err != nil {
 				logger.Fatalln(err)
 			}
@@ -57,12 +57,12 @@ func NewShowCmd() *cobra.Command {
 				}
 			}
 
-			if len(obclusterOperation.Items) > 0 {
-				sort.Slice(obclusterOperation.Items, func(i, j int) bool {
-					return obclusterOperation.Items[i].Name < obclusterOperation.Items[j].Name
+			if len(obclusterOperationList.Items) > 0 {
+				sort.Slice(obclusterOperationList.Items, func(i, j int) bool {
+					return obclusterOperationList.Items[i].Name < obclusterOperationList.Items[j].Name
 				})
 				tbLog.Println("OPERATION TYPE \t TTLDAYS \t STATUS \t CREATETIME")
-				for _, op := range obclusterOperation.Items {
+				for _, op := range obclusterOperationList.Items {
 					tbLog.Printf("%s \t %d \t  %s \t %s\n", op.Spec.Type, op.Spec.TTLDays, op.Status.Status, op.CreationTimestamp)
 				}
 			} else {

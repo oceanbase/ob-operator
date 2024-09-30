@@ -40,7 +40,7 @@ func NewDeleteCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Delete ob tenant %s success", o.Name)
+			logger.Printf("Delete ob tenant %s successfully", o.Name)
 		},
 	}
 	o.AddFlags(cmd)
