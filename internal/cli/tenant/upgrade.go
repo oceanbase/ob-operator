@@ -51,6 +51,6 @@ func GetUpgradeOperation(o *UpgradeOptions) *v1alpha1.OBTenantOperation {
 
 // AddFlags add basic flags for tenant management
 func (o *UpgradeOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, "default", "The namespace of the tenant")
-	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, "f", false, "force operation")
+	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the tenant")
+	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, "f", DEFAULT_FORCE_FLAG, "force operation")
 }

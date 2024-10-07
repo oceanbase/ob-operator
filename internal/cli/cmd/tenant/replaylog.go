@@ -51,7 +51,7 @@ func NewReplayLogCmd() *cobra.Command {
 			if _, err = clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create replay log operation of tenant %s successfully", o.Name)
+			logger.Printf("Create replay log operation of OBTenant %s successfully", o.Name)
 		},
 	}
 	o.AddFlags(cmd)

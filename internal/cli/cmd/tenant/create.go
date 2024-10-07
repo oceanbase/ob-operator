@@ -26,7 +26,7 @@ func NewCreateCmd() *cobra.Command {
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "create <tenant_name> --cluster=<cluster_name>",
-		Short:   "Create ob tenant",
+		Short:   "Create an ob tenant",
 		Aliases: []string{"c"},
 		PreRunE: o.Parse,
 		Args:    cobra.ExactArgs(1),
@@ -41,7 +41,7 @@ func NewCreateCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create obtenant instance: %s", o.TenantName)
+			logger.Printf("Create OBTenant instance: %s", o.TenantName)
 			logger.Printf("Run `echo $(kubectl get secret %s -o jsonpath='{.data.password}'|base64 --decode)` to get the secrets", obtenant.Spec.Credentials.Root)
 		},
 	}

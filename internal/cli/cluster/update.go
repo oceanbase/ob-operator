@@ -128,7 +128,7 @@ func (o *UpdateOptions) Complete() error {
 
 // AddFlags for update options
 func (o *UpdateOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, "default", "namespace of ob cluster")
+	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "namespace of ob cluster")
 	cmd.Flags().Int64Var(&o.Resource.Cpu, FLAG_OBSERVER_CPU, 0, "The cpu of the observer")
 	cmd.Flags().Int64Var(&o.Resource.MemoryGB, FLAG_MONITOR_MEMORY, 0, "The memory of the observer")
 	cmd.Flags().StringVar(&o.Storage.Data.StorageClass, FLAG_DATA_STORAGE_CLASS, "", "The storage class of the data storage")

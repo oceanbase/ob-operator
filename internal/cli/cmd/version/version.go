@@ -23,9 +23,9 @@ func NewCmd() *cobra.Command {
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:   "version",
-		Short: "Print the version number of oceanbase cli",
+		Short: "Print the version number of OceanBase Cli",
 		Run: func(cmd *cobra.Command, args []string) {
-			logger.Println("Oceanbase cli Version:0.0.1")
+			logger.Println("OceanBase Cli Version: 0.0.1")
 		},
 	}
 	return cmd

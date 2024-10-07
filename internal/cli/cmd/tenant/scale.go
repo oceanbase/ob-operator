@@ -28,8 +28,8 @@ func NewScaleCmd() *cobra.Command {
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "scale <tenant_name>",
-		Short:   "Scale ob tenant",
-		Long:    `Scale ob tenant, support unit-number/unit config of zones.`,
+		Short:   "Scale an ob tenant",
+		Long:    `Scale an ob tenant, support unit-number/unit config of zones.`,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -55,7 +55,7 @@ func NewScaleCmd() *cobra.Command {
 			if _, err = clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create scale operation for obtenant %s successfully", o.Name)
+			logger.Printf("Create scale operation for OBTenant %s successfully", o.Name)
 		},
 	}
 	o.AddFlags(cmd)

@@ -28,8 +28,8 @@ func NewScaleCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "scale <cluster_name>",
 		Args:    cobra.ExactArgs(1),
-		Short:   "Scale ob cluster",
-		Long:    `Scale ob cluster, support add/adjust/delete of zones.`,
+		Short:   "Scale an ob cluster",
+		Long:    `Scale an ob cluster, support add/adjust/delete of zones.`,
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
 			obcluster, err := clients.GetOBCluster(cmd.Context(), o.Namespace, o.Name)
@@ -51,7 +51,7 @@ func NewScaleCmd() *cobra.Command {
 			if _, err = clients.CreateOBClusterOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create scale operation for obcluster %s successfully", op.Spec.OBCluster)
+			logger.Printf("Create scale operation for OBCluster %s successfully", op.Spec.OBCluster)
 		},
 	}
 	o.AddFlags(cmd)

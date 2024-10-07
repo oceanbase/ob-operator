@@ -13,8 +13,9 @@ See the Mulan PSL v2 for more details.
 */
 package cluster
 
+// Flags and FlagSets for cluster management
 const (
-	// Flagsets for cluster
+	// FlagSets for cluster
 	FLAGSET_ZONE          = "zone"
 	FLAGSET_OBSERVER      = "observer"
 	FLAGSET_MONITOR       = "monitor"
@@ -53,4 +54,28 @@ const (
 
 	// Flags for parameter-related options
 	FLAG_PARAMETERS = "parameters"
+)
+
+// Default values for cluster management
+const (
+	DEFAULT_NAMESPACE              = "default"
+	DEFAULT_ID                     = 0
+	DEFAULT_CPU_NUM                = 2
+	DEFAULT_OBSERVER_IMAGE         = "oceanbase/oceanbase-cloud-native:4.2.1.6-106000012024042515"
+	DEFAULT_OBSERVER_CPU           = 2
+	DEFAULT_OBSERVER_MEMORY        = 10
+	DEFAULT_DATA_STORAGE_CLASS     = "local-path"
+	DEFAULT_REDO_LOG_STORAGE_CLASS = "local-path"
+	DEFAULT_LOG_STORAGE_CLASS      = "local-path"
+	DEFAULT_DATA_STORAGE_SIZE      = 50
+	DEFAULT_REDO_LOG_STORAGE_SIZE  = 50
+	DEFAULT_LOG_STORAGE_SIZE       = 20
+	DEFAULT_MONITOR_IMAGE          = "oceanbase/obagent:4.2.1-100000092023101717"
+	DEFAULT_MONITOR_CPU            = 1
+	DEFAULT_MONITOR_MEMORY         = 1
+	DEFAULT_BACKUP_ADDRESS         = "local-path"
+	DEFAULT_BACKUP_PATH            = "/opt/nfs"
+	// Default parameters
+	DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY = "2147483648"
+	DEFAULT_SYSTEM_MEMORY                 = "1G"
 )

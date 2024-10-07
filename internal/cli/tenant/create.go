@@ -413,10 +413,10 @@ func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags := cmd.Flags()
 	baseFlags.StringVarP(&o.TenantName, FLAG_TENANT_NAME, "n", "", "Tenant name, if not specified, use name in k8s instead")
 	baseFlags.StringVar(&o.ClusterName, FLAG_CLUSTER_NAME, "", "The cluster name tenant belonged to in k8s")
-	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, "default", "The namespace of the tenant")
+	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the tenant")
 	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOTPASSWD, "p", "", "The root password of the cluster")
-	baseFlags.StringVar(&o.Charset, FLAG_CHARSET, "utf8mb4", "The charset using in ob tenant")
-	baseFlags.StringVar(&o.ConnectWhiteList, FLAG_CONNECT_WHITE_LIST, "%", "The connect white list using in ob tenant")
+	baseFlags.StringVar(&o.Charset, FLAG_CHARSET, DEFAULT_CHARSET, "The charset using in ob tenant")
+	baseFlags.StringVar(&o.ConnectWhiteList, FLAG_CONNECT_WHITE_LIST, DEFAULT_CONNECT_WHITE_LIST, "The connect white list using in ob tenant")
 	baseFlags.StringVar(&o.From, FLAG_FROM, "", "restore from data source")
 }
 
@@ -430,27 +430,27 @@ func (o *CreateOptions) AddPoolFlags(cmd *cobra.Command) {
 // AddUnitFlags add unit-resource-related flags
 func (o *CreateOptions) AddUnitFlags(cmd *cobra.Command) {
 	unitFlags := pflag.NewFlagSet(FLAGSET_UNIT, pflag.ContinueOnError)
-	unitFlags.IntVar(&o.UnitNumber, FLAG_UNIT_NUMBER, 1, "unit number of the OBTenant")
-	unitFlags.Int64Var(&o.UnitConfig.MaxIops, FLAG_MAX_IOPS, 1024, "The max iops of unit")
-	unitFlags.Int64Var(&o.UnitConfig.MinIops, FLAG_MIN_IOPS, 1024, "The min iops of unit")
-	unitFlags.IntVar(&o.UnitConfig.IopsWeight, FLAG_IOPS_WEIGHT, 1, "The iops weight of unit")
-	unitFlags.StringVar(&o.UnitConfig.CPUCount, FLAG_CPU_COUNT, "1", "The cpu count of unit")
-	unitFlags.StringVar(&o.UnitConfig.MemorySize, FLAG_MEMORY_SIZE, "2Gi", "The memory size of unit")
-	unitFlags.StringVar(&o.UnitConfig.LogDiskSize, FLAG_LOG_DISK_SIZE, "4Gi", "The log disk size of unit")
+	unitFlags.IntVar(&o.UnitNumber, FLAG_UNIT_NUMBER, DEFAULT_UNIT_NUMBER, "unit number of the OBTenant")
+	unitFlags.Int64Var(&o.UnitConfig.MaxIops, FLAG_MAX_IOPS, DEFAULT_MAX_IOPS, "The max iops of unit")
+	unitFlags.Int64Var(&o.UnitConfig.MinIops, FLAG_MIN_IOPS, DEFAULT_MIN_IOPS, "The min iops of unit")
+	unitFlags.IntVar(&o.UnitConfig.IopsWeight, FLAG_IOPS_WEIGHT, DEFAULT_IOPS_WEIGHT, "The iops weight of unit")
+	unitFlags.StringVar(&o.UnitConfig.CPUCount, FLAG_CPU_COUNT, DEFAULT_CPU_COUNT, "The cpu count of unit")
+	unitFlags.StringVar(&o.UnitConfig.MemorySize, FLAG_MEMORY_SIZE, DEFAULT_MEMORY_SIZE, "The memory size of unit")
+	unitFlags.StringVar(&o.UnitConfig.LogDiskSize, FLAG_LOG_DISK_SIZE, DEFAULT_LOG_DISK_SIZE, "The log disk size of unit")
 	cmd.Flags().AddFlagSet(unitFlags)
 }
 
 // AddRestoreFlags add restore flags
 func (o *CreateOptions) AddRestoreFlags(cmd *cobra.Command) {
 	restoreFlags := pflag.NewFlagSet(FLAGSET_RESTORE, pflag.ContinueOnError)
-	restoreFlags.BoolVarP(&o.Restore, FLAG_RESTORE, "r", false, "Restore from backup files")
-	restoreFlags.StringVar(&o.RestoreType, FLAG_RESTORE_TYPE, "OSS", "The type of restore source, support OSS or NFS")
-	restoreFlags.StringVar(&o.Source.Restore.ArchiveSource, FLAG_ARCHIVE_SOURCE, "demo_tenant/log_archive_custom", "The archive source of restore")
+	restoreFlags.BoolVarP(&o.Restore, FLAG_RESTORE, "r", DEFAULT_RESTORE_FLAG, "Restore from backup files")
+	restoreFlags.StringVar(&o.RestoreType, FLAG_RESTORE_TYPE, DEFAULT_RESTORE_TYPE, "The type of restore source, support OSS or NFS")
+	restoreFlags.StringVar(&o.Source.Restore.ArchiveSource, FLAG_ARCHIVE_SOURCE, DEFAULT_ARCHIVE_SOURCE, "The archive source of restore")
 	restoreFlags.StringVar(&o.Source.Restore.BakEncryptionPassword, FLAG_BAK_ENCRYPTION_PASS, "", "The backup encryption password of obtenant")
-	restoreFlags.StringVar(&o.Source.Restore.BakDataSource, FLAG_BAK_DATA_SOURCE, "demo_tenant/data_backup_custom_enc", "The bak data source of restore")
+	restoreFlags.StringVar(&o.Source.Restore.BakDataSource, FLAG_BAK_DATA_SOURCE, DEFAULT_BAK_DATA_SOURCE, "The bak data source of restore")
 	restoreFlags.StringVar(&o.Source.Restore.OSSAccessID, FLAG_OSS_ACCESS_ID, "", "The oss access id of restore")
 	restoreFlags.StringVar(&o.Source.Restore.OSSAccessKey, FLAG_OSS_ACCESS_KEY, "", "The oss access key of restore")
-	restoreFlags.BoolVar(&o.Source.Restore.Until.Unlimited, FLAG_UNLIMITED, true, "time limited for restore")
+	restoreFlags.BoolVar(&o.Source.Restore.Until.Unlimited, FLAG_UNLIMITED, DEFAULT_UNLIMITED_FLAG, "time limited for restore")
 	restoreFlags.StringVar(&o.Timestamp, FLAG_UNTIL_TIMESTAMP, "", "timestamp for obtenant restore")
 	cmd.Flags().AddFlagSet(restoreFlags)
 }

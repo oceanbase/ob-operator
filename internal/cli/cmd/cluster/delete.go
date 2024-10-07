@@ -27,7 +27,7 @@ func NewDeleteCmd() *cobra.Command {
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "delete <cluster_name>",
-		Short:   "Delete ob cluster",
+		Short:   "Delete an ob cluster",
 		Aliases: []string{"d"},
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
@@ -36,7 +36,7 @@ func NewDeleteCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Delete ob cluster %s successfully", o.Name)
+			logger.Printf("Delete OBCluster %s successfully", o.Name)
 		},
 	}
 	o.AddFlags(cmd)

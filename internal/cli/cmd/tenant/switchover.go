@@ -29,7 +29,7 @@ func NewSwitchOverCmd() *cobra.Command {
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "switchover <primary_tenant_name> <standby_tenant_name>",
-		Short:   "Switchover of primary tenant and standby tenant",
+		Short:   "Switchover of primary ob tenant and standby ob tenant",
 		PreRunE: o.Parse,
 		Args:    cobra.ExactArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {

@@ -27,8 +27,8 @@ func NewUpdateCmd() *cobra.Command {
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "update <cluster_name>",
-		Short:   "Update ob cluster",
-		Long:    "Update ob cluster, support cpu/memory/storage",
+		Short:   "Update an ob cluster",
+		Long:    "Update an ob cluster, support cpu/memory/storage",
 		Args:    cobra.ExactArgs(1),
 		Aliases: []string{"ud"},
 		PreRunE: o.Parse,
@@ -50,7 +50,7 @@ func NewUpdateCmd() *cobra.Command {
 			if _, err = clients.CreateOBClusterOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create update operation for obcluster %s successfully", op.Spec.OBCluster)
+			logger.Printf("Create update operation for OBCluster %s successfully", op.Spec.OBCluster)
 		},
 	}
 	o.AddFlags(cmd)

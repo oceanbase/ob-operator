@@ -54,7 +54,7 @@ func NewChangePwdCmd() *cobra.Command {
 			if _, err = clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create changepwd operation for obtenant %s successfully", o.Name)
+			logger.Printf("Create change password operation for OBTenant %s successfully", o.Name)
 		},
 	}
 	o.AddFlags(cmd)

@@ -29,7 +29,7 @@ func NewActivateCmd() *cobra.Command {
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "activate <standby_tenant_name>",
-		Short:   "Activate a standby tenant",
+		Short:   "Activate a standby ob tenant",
 		PreRunE: o.Parse,
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -47,13 +47,13 @@ func NewActivateCmd() *cobra.Command {
 				logger.Fatalln(err)
 			}
 			if obtenant.Status.TenantRole == apiconst.TenantRolePrimary {
-				logger.Fatalf("Obtenant %s is already PRIMARY", o.Name)
+				logger.Fatalf("OBTenant %s is already PRIMARY", o.Name)
 			}
 			op := tenant.GetActivateOperation(o)
 			if _, err = clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create activate operation for tenant %s successfully", o.Name)
+			logger.Printf("Create activate operation for OBTenant %s successfully", o.Name)
 		},
 	}
 	o.AddFlags(cmd)

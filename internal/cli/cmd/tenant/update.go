@@ -28,8 +28,8 @@ func NewUpdateCmd() *cobra.Command {
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "update <tenant_name>",
-		Short:   "Update ob tenant",
-		Long:    "Update ob tenant, support unitNumber/connectWhiteList/priority of zones",
+		Short:   "Update an ob tenant",
+		Long:    "Update an ob tenant, support unitNumber/connectWhiteList/priority of zones",
 		Args:    cobra.ExactArgs(1),
 		Aliases: []string{"ud"},
 		PreRunE: o.Parse,

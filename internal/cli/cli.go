@@ -27,8 +27,8 @@ import (
 func NewCliCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "obocli",
-		Short: "OceanBase Operator CLI",
-		Long:  "OceanBase Operator CLI tool to manage OceanBase clusters, tenants, and backups.",
+		Short: "OceanBase Operator Cli",
+		Long:  "OceanBase Operator Cli tool to manage OceanBase clusters, tenants, and backups.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if cmd.Flags().Changed("version") {
 				versionCmd := version.NewCmd()

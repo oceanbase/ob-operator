@@ -25,7 +25,7 @@ import (
 // CheckTenantStatus checks running status of obtenant
 func CheckTenantStatus(tenant *v1alpha1.OBTenant) error {
 	if tenant.Status.Status != tenantstatus.Running {
-		return fmt.Errorf("Obtenant status invalid, Status:%s", tenant.Status.Status)
+		return fmt.Errorf("OBTenant status invalid, Status:%s", tenant.Status.Status)
 	}
 	return nil
 }
@@ -33,7 +33,7 @@ func CheckTenantStatus(tenant *v1alpha1.OBTenant) error {
 // CheckClusterStatus checks running status of obcluster
 func CheckClusterStatus(cluster *v1alpha1.OBCluster) error {
 	if cluster.Status.Status != clusterstatus.Running {
-		return fmt.Errorf("Obcluster status invalid, Status:%s", cluster.Status.Status)
+		return fmt.Errorf("OBCluster status invalid, Status:%s", cluster.Status.Status)
 	}
 	return nil
 }
@@ -41,7 +41,7 @@ func CheckClusterStatus(cluster *v1alpha1.OBCluster) error {
 // CheckPrimaryTenant checks primary tenant for a standbytenant
 func CheckPrimaryTenant(standbytenant *v1alpha1.OBTenant) error {
 	if standbytenant.Spec.Source == nil || standbytenant.Spec.Source.Tenant == nil {
-		return fmt.Errorf("Obtenant %s has no primary tenant", standbytenant.Name)
+		return fmt.Errorf("OBTenant %s has no primary tenant", standbytenant.Name)
 	}
 	return nil
 }
@@ -49,7 +49,7 @@ func CheckPrimaryTenant(standbytenant *v1alpha1.OBTenant) error {
 // CheckTenantRole checks tenant role
 func CheckTenantRole(tenant *v1alpha1.OBTenant, role apitypes.TenantRole) error {
 	if tenant.Status.TenantRole != role {
-		return fmt.Errorf("The tenant is not %s tenant", string(role))
+		return fmt.Errorf("Tenant is not %s tenant", string(role))
 	}
 	return nil
 }
