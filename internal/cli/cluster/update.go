@@ -64,15 +64,15 @@ func GetUpdateOperation(o *UpdateOptions) *v1alpha1.OBClusterOperation {
 
 func (o *UpdateOptions) Validate() error {
 	updateTypeCount := 0
-	if o.Resource.Cpu != 0 || o.Resource.MemoryGB != 0 {
+	if o.CheckIfFlagChanged(FLAG_OBSERVER_CPU, FLAG_OBSERVER_MEMORY) {
 		updateTypeCount++
 		o.UpdateType = "resource"
 	}
-	if o.Storage.Data.StorageClass != "" || o.Storage.Log.StorageClass != "" || o.Storage.RedoLog.StorageClass != "" {
+	if o.CheckIfFlagChanged(FLAG_DATA_STORAGE_CLASS, FLAG_LOG_STORAGE_CLASS, FLAG_REDO_LOG_STORAGE_CLASS) {
 		updateTypeCount++
 		o.UpdateType = "modifyStorageClass"
 	}
-	if o.Storage.Data.SizeGB != 0 || o.Storage.Log.SizeGB != 0 || o.Storage.RedoLog.SizeGB != 0 {
+	if o.CheckIfFlagChanged(FLAG_DATA_STORAGE_SIZE, FLAG_LOG_STORAGE_SIZE, FLAG_REDO_LOG_STORAGE_SIZE) {
 		updateTypeCount++
 		o.UpdateType = "expandStorageSize"
 	}
@@ -129,12 +129,12 @@ func (o *UpdateOptions) Complete() error {
 // AddFlags for update options
 func (o *UpdateOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "namespace of ob cluster")
-	cmd.Flags().Int64Var(&o.Resource.Cpu, FLAG_OBSERVER_CPU, 0, "The cpu of the observer")
-	cmd.Flags().Int64Var(&o.Resource.MemoryGB, FLAG_MONITOR_MEMORY, 0, "The memory of the observer")
+	cmd.Flags().Int64Var(&o.Resource.Cpu, FLAG_OBSERVER_CPU, DEFAULT_OBSERVER_CPU, "The cpu of the observer")
+	cmd.Flags().Int64Var(&o.Resource.MemoryGB, FLAG_OBSERVER_MEMORY, DEFAULT_OBSERVER_MEMORY, "The memory of the observer")
 	cmd.Flags().StringVar(&o.Storage.Data.StorageClass, FLAG_DATA_STORAGE_CLASS, "", "The storage class of the data storage")
 	cmd.Flags().StringVar(&o.Storage.RedoLog.StorageClass, FLAG_REDO_LOG_STORAGE_CLASS, "", "The storage class of the redo log storage")
 	cmd.Flags().StringVar(&o.Storage.Log.StorageClass, FLAG_LOG_STORAGE_CLASS, "", "The storage class of the log storage")
-	cmd.Flags().Int64Var(&o.Storage.Data.SizeGB, FLAG_DATA_STORAGE_SIZE, 0, "The size of the data storage")
-	cmd.Flags().Int64Var(&o.Storage.RedoLog.SizeGB, FLAG_REDO_LOG_STORAGE_SIZE, 0, "The size of the redo log storage")
-	cmd.Flags().Int64Var(&o.Storage.Log.SizeGB, FLAG_LOG_STORAGE_SIZE, 0, "The size of the log storage")
+	cmd.Flags().Int64Var(&o.Storage.Data.SizeGB, FLAG_DATA_STORAGE_SIZE, DEFAULT_DATA_STORAGE_SIZE, "The size of the data storage")
+	cmd.Flags().Int64Var(&o.Storage.RedoLog.SizeGB, FLAG_REDO_LOG_STORAGE_SIZE, DEFAULT_REDO_LOG_STORAGE_SIZE, "The size of the redo log storage")
+	cmd.Flags().Int64Var(&o.Storage.Log.SizeGB, FLAG_LOG_STORAGE_SIZE, DEFAULT_LOG_STORAGE_SIZE, "The size of the log storage")
 }

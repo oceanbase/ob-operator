@@ -51,7 +51,7 @@ func NewUpgradeCmd() *cobra.Command {
 			if _, err = clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create upgrade operation for obtenant %s successfully", o.Name)
+			logger.Printf("Create upgrade operation for OBTenant %s successfully", o.Name)
 		},
 	}
 	o.AddFlags(cmd)

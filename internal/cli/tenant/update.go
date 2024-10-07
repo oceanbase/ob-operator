@@ -59,7 +59,7 @@ func NewUpdateOptions() *UpdateOptions {
 func (o *UpdateOptions) Parse(cmd *cobra.Command, args []string) error {
 	o.Name = args[0]
 	o.Cmd = cmd
-	if o.CheckIfFlagChanged("priority") {
+	if o.CheckIfFlagChanged(FLAG_ZONE_PRIORITY) {
 		pools, err := utils.MapZonesToPools(o.ZonePriority)
 		if err != nil {
 			return err
