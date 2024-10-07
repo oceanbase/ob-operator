@@ -27,8 +27,8 @@ func NewUpgradeCmd() *cobra.Command {
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "upgrade <cluster_name>",
-		Short:   "Upgrade an OBCluster",
-		Long:    "Upgrade an OBCluster, please specify the new image",
+		Short:   "Upgrade an ob cluster",
+		Long:    "Upgrade an ob cluster, please specify the new image",
 		Args:    cobra.ExactArgs(1),
 		Aliases: []string{"ug"},
 		PreRunE: o.Parse,
