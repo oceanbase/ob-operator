@@ -57,6 +57,7 @@ const (
 
 // Default values for tenant management
 const (
+	// Default values for int and string flags
 	DEFAULT_NAMESPACE          = "default"
 	DEFAULT_CHARSET            = "utf8mb4"
 	DEFAULT_CONNECT_WHITE_LIST = "%"
@@ -70,7 +71,8 @@ const (
 	DEFAULT_RESTORE_TYPE       = "OSS"
 	DEFAULT_ARCHIVE_SOURCE     = "demo_tenant/log_archive_custom"
 	DEFAULT_BAK_DATA_SOURCE    = "demo_tenant/data_backup_custom_enc"
-	// default bool flags
+
+	// Default values for bool flags
 	DEFAULT_UNLIMITED_FLAG = true
 	DEFAULT_FORCE_FLAG     = false
 	DEFAULT_RESTORE_FLAG   = false

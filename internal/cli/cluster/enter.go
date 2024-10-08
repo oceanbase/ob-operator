@@ -58,6 +58,7 @@ const (
 
 // Default values for cluster management
 const (
+	// Default values for int and string flags
 	DEFAULT_NAMESPACE              = "default"
 	DEFAULT_ID                     = 0
 	DEFAULT_CPU_NUM                = 2
@@ -75,7 +76,8 @@ const (
 	DEFAULT_MONITOR_MEMORY         = 1
 	DEFAULT_BACKUP_ADDRESS         = "local-path"
 	DEFAULT_BACKUP_PATH            = "/opt/nfs"
-	// Default parameters
+
+	// Default values for Parameter flag
 	DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY = "2147483648"
 	DEFAULT_SYSTEM_MEMORY                 = "1G"
 )

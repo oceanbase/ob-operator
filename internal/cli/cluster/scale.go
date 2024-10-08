@@ -140,7 +140,7 @@ func (o *ScaleOptions) Validate() error {
 			typeAdd = true
 		}
 		if typeDelete && deleteNum > maxDeleteNum {
-			return fmt.Errorf("Obcluster has %d Zones, can only delete %d zones", zoneNum, maxDeleteNum)
+			return fmt.Errorf("Ob cluster has %d Zones, can only delete %d zones", zoneNum, maxDeleteNum)
 		}
 	}
 	trueCount := 0

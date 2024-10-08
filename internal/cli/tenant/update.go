@@ -56,6 +56,7 @@ func NewUpdateOptions() *UpdateOptions {
 		UnitConfig:          &param.UnitConfig{},
 	}
 }
+
 func (o *UpdateOptions) Parse(cmd *cobra.Command, args []string) error {
 	o.Name = args[0]
 	o.Cmd = cmd
