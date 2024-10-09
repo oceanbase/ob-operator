@@ -56,10 +56,11 @@ func NewUpdateOptions() *UpdateOptions {
 		UnitConfig:          &param.UnitConfig{},
 	}
 }
+
 func (o *UpdateOptions) Parse(cmd *cobra.Command, args []string) error {
 	o.Name = args[0]
 	o.Cmd = cmd
-	if o.CheckIfFlagChanged("priority") {
+	if o.CheckIfFlagChanged(FLAG_ZONE_PRIORITY) {
 		pools, err := utils.MapZonesToPools(o.ZonePriority)
 		if err != nil {
 			return err
@@ -193,21 +194,21 @@ func (o *UpdateOptions) Validate() error {
 
 // AddFlags add basic flags for tenant management
 func (o *UpdateOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, "default", "The namespace of OBTenant")
+	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of OBTenant")
 	cmd.Flags().StringVar(&o.ConnectWhiteList, FLAG_CONNECT_WHITE_LIST, "", "The connect white list using in ob tenant")
 	cmd.Flags().StringToStringVar(&o.ZonePriority, FLAG_ZONE_PRIORITY, nil, "zone priority config of OBTenant")
-	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, "f", false, "force operation")
+	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, "f", DEFAULT_FORCE_FLAG, "force operation")
 	o.AddUnitFlags(cmd)
 }
 
 // AddUnitFlags add unit-resource-related flags
 func (o *UpdateOptions) AddUnitFlags(cmd *cobra.Command) {
 	unitFlags := pflag.NewFlagSet(FLAGSET_UNIT, pflag.ContinueOnError)
-	unitFlags.Int64Var(&o.UnitConfig.MaxIops, FLAG_MAX_IOPS, 1024, "The max iops of unit")
-	unitFlags.Int64Var(&o.UnitConfig.MinIops, FLAG_MIN_IOPS, 1024, "The min iops of unit")
-	unitFlags.IntVar(&o.UnitConfig.IopsWeight, FLAG_IOPS_WEIGHT, 1, "The iops weight of unit")
-	unitFlags.StringVar(&o.UnitConfig.CPUCount, FLAG_CPU_COUNT, "1", "The cpu count of unit")
-	unitFlags.StringVar(&o.UnitConfig.MemorySize, FLAG_MEMORY_SIZE, "2Gi", "The memory size of unit")
-	unitFlags.StringVar(&o.UnitConfig.LogDiskSize, FLAG_LOG_DISK_SIZE, "4Gi", "The log disk size of unit")
+	unitFlags.Int64Var(&o.UnitConfig.MaxIops, FLAG_MAX_IOPS, DEFAULT_MAX_IOPS, "The max iops of unit")
+	unitFlags.Int64Var(&o.UnitConfig.MinIops, FLAG_MIN_IOPS, DEFAULT_MIN_IOPS, "The min iops of unit")
+	unitFlags.IntVar(&o.UnitConfig.IopsWeight, FLAG_IOPS_WEIGHT, DEFAULT_IOPS_WEIGHT, "The iops weight of unit")
+	unitFlags.StringVar(&o.UnitConfig.CPUCount, FLAG_CPU_COUNT, DEFAULT_CPU_COUNT, "The cpu count of unit")
+	unitFlags.StringVar(&o.UnitConfig.MemorySize, FLAG_MEMORY_SIZE, DEFAULT_MEMORY_SIZE, "The memory size of unit")
+	unitFlags.StringVar(&o.UnitConfig.LogDiskSize, FLAG_LOG_DISK_SIZE, DEFAULT_LOG_DISK_SIZE, "The log disk size of unit")
 	cmd.Flags().AddFlagSet(unitFlags)
 }

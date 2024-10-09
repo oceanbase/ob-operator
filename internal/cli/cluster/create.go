@@ -309,8 +309,8 @@ func (o *CreateOptions) AddZoneFlags(cmd *cobra.Command) {
 func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags := cmd.Flags()
 	baseFlags.StringVarP(&o.ClusterName, FLAG_CLUSTER_NAME, "n", "", "Cluster name, if not specified, use resource name in k8s instead")
-	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, "default", "The namespace of the cluster")
-	baseFlags.Int64Var(&o.ClusterId, FLAG_CLUSTER_ID, 0, "The id of the cluster")
+	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the cluster")
+	baseFlags.Int64Var(&o.ClusterId, FLAG_CLUSTER_ID, DEFAULT_ID, "The id of the cluster")
 	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOTPASSWD, "p", "", "The root password of the cluster")
 	baseFlags.StringVar(&o.Mode, FLAG_MODE, "", "The mode of the cluster")
 }
@@ -318,38 +318,38 @@ func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 // AddObserverFlags adds the observer-related flags to the command.
 func (o *CreateOptions) AddObserverFlags(cmd *cobra.Command) {
 	observerFlags := pflag.NewFlagSet(FLAGSET_OBSERVER, pflag.ContinueOnError)
-	observerFlags.StringVar(&o.OBServer.Image, FLAG_OBSERVER_IMAGE, "oceanbase/oceanbase-cloud-native:4.2.1.6-106000012024042515", "The image of the observer")
-	observerFlags.Int64Var(&o.OBServer.Resource.Cpu, FLAG_OBSERVER_CPU, 2, "The cpu of the observer")
-	observerFlags.Int64Var(&o.OBServer.Resource.MemoryGB, FLAG_MONITOR_MEMORY, 10, "The memory of the observer")
-	observerFlags.StringVar(&o.OBServer.Storage.Data.StorageClass, FLAG_DATA_STORAGE_CLASS, "local-path", "The storage class of the data storage")
-	observerFlags.StringVar(&o.OBServer.Storage.RedoLog.StorageClass, FLAG_REDO_LOG_STORAGE_CLASS, "local-path", "The storage class of the redo log storage")
-	observerFlags.StringVar(&o.OBServer.Storage.Log.StorageClass, FLAG_LOG_STORAGE_CLASS, "local-path", "The storage class of the log storage")
-	observerFlags.Int64Var(&o.OBServer.Storage.Data.SizeGB, FLAG_DATA_STORAGE_SIZE, 50, "The size of the data storage")
-	observerFlags.Int64Var(&o.OBServer.Storage.RedoLog.SizeGB, FLAG_REDO_LOG_STORAGE_SIZE, 50, "The size of the redo log storage")
-	observerFlags.Int64Var(&o.OBServer.Storage.Log.SizeGB, FLAG_LOG_STORAGE_SIZE, 20, "The size of the log storage")
+	observerFlags.StringVar(&o.OBServer.Image, FLAG_OBSERVER_IMAGE, DEFAULT_OBSERVER_IMAGE, "The image of the observer")
+	observerFlags.Int64Var(&o.OBServer.Resource.Cpu, FLAG_OBSERVER_CPU, DEFAULT_CPU_NUM, "The cpu of the observer")
+	observerFlags.Int64Var(&o.OBServer.Resource.MemoryGB, FLAG_MONITOR_MEMORY, DEFAULT_MONITOR_MEMORY, "The memory of the observer")
+	observerFlags.StringVar(&o.OBServer.Storage.Data.StorageClass, FLAG_DATA_STORAGE_CLASS, DEFAULT_DATA_STORAGE_CLASS, "The storage class of the data storage")
+	observerFlags.StringVar(&o.OBServer.Storage.RedoLog.StorageClass, FLAG_REDO_LOG_STORAGE_CLASS, DEFAULT_REDO_LOG_STORAGE_CLASS, "The storage class of the redo log storage")
+	observerFlags.StringVar(&o.OBServer.Storage.Log.StorageClass, FLAG_LOG_STORAGE_CLASS, DEFAULT_LOG_STORAGE_CLASS, "The storage class of the log storage")
+	observerFlags.Int64Var(&o.OBServer.Storage.Data.SizeGB, FLAG_DATA_STORAGE_SIZE, DEFAULT_DATA_STORAGE_SIZE, "The size of the data storage")
+	observerFlags.Int64Var(&o.OBServer.Storage.RedoLog.SizeGB, FLAG_REDO_LOG_STORAGE_SIZE, DEFAULT_REDO_LOG_STORAGE_SIZE, "The size of the redo log storage")
+	observerFlags.Int64Var(&o.OBServer.Storage.Log.SizeGB, FLAG_LOG_STORAGE_SIZE, DEFAULT_LOG_STORAGE_SIZE, "The size of the log storage")
 	cmd.Flags().AddFlagSet(observerFlags)
 }
 
 // AddMonitorFlags adds the monitor-related flags to the command.
 func (o *CreateOptions) AddMonitorFlags(cmd *cobra.Command) {
 	monitorFlags := pflag.NewFlagSet(FLAGSET_MONITOR, pflag.ContinueOnError)
-	monitorFlags.StringVar(&o.Monitor.Image, FLAG_MONITOR_IMAGE, "oceanbase/obagent:4.2.1-100000092023101717", "The image of the monitor")
-	monitorFlags.Int64Var(&o.Monitor.Resource.Cpu, FLAG_MONITOR_CPU, 1, "The cpu of the monitor")
-	monitorFlags.Int64Var(&o.Monitor.Resource.MemoryGB, FLAG_MONITOR_MEMORY, 1, "The memory of the monitor")
+	monitorFlags.StringVar(&o.Monitor.Image, FLAG_MONITOR_IMAGE, DEFAULT_MONITOR_IMAGE, "The image of the monitor")
+	monitorFlags.Int64Var(&o.Monitor.Resource.Cpu, FLAG_MONITOR_CPU, DEFAULT_MONITOR_CPU, "The cpu of the monitor")
+	monitorFlags.Int64Var(&o.Monitor.Resource.MemoryGB, FLAG_MONITOR_MEMORY, DEFAULT_MONITOR_MEMORY, "The memory of the monitor")
 	cmd.Flags().AddFlagSet(monitorFlags)
 }
 
 // AddBackupVolumeFlags adds the backup-volume-related flags to the command.
 func (o *CreateOptions) AddBackupVolumeFlags(cmd *cobra.Command) {
 	backupVolumeFlags := pflag.NewFlagSet(FLAGSET_BACKUP_VOLUME, pflag.ContinueOnError)
-	backupVolumeFlags.StringVar(&o.BackupVolume.Address, FLAG_BACKUP_ADDRESS, "local-path", "The storage class of the backup storage")
-	backupVolumeFlags.StringVar(&o.BackupVolume.Path, FLAG_BACKUP_PATH, "/opt/nfs", "The size of the backup storage")
+	backupVolumeFlags.StringVar(&o.BackupVolume.Address, FLAG_BACKUP_ADDRESS, DEFAULT_BACKUP_ADDRESS, "The storage class of the backup storage")
+	backupVolumeFlags.StringVar(&o.BackupVolume.Path, FLAG_BACKUP_PATH, DEFAULT_BACKUP_PATH, "The size of the backup storage")
 	cmd.Flags().AddFlagSet(backupVolumeFlags)
 }
 
 // AddParameterFlags adds the parameter-related flags, e.g. __min_full_resource_pool_memory, to the command
 func (o *CreateOptions) AddParameterFlags(cmd *cobra.Command) {
 	parameterFlags := pflag.NewFlagSet(FLAGSET_PARAMETERS, pflag.ContinueOnError)
-	parameterFlags.StringToStringVar(&o.KvParameters, FLAG_PARAMETERS, map[string]string{"__min_full_resource_pool_memory": "2147483648", "system_memory": "1G"}, "Other parameter settings in obcluster, e.g., __min_full_resource_pool_memory")
+	parameterFlags.StringToStringVar(&o.KvParameters, FLAG_PARAMETERS, map[string]string{"__min_full_resource_pool_memory": DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY, "system_memory": DEFAULT_SYSTEM_MEMORY}, "Other parameter settings in OBCluster, e.g., __min_full_resource_pool_memory")
 	cmd.Flags().AddFlagSet(parameterFlags)
 }

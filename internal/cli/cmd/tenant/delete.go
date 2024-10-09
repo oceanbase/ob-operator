@@ -28,7 +28,7 @@ func NewDeleteCmd() *cobra.Command {
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "delete <tenant_name>",
-		Short:   "Delete ob tenant",
+		Short:   "Delete an ob tenant",
 		Aliases: []string{"d"},
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
@@ -40,7 +40,7 @@ func NewDeleteCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Delete ob tenant %s successfully", o.Name)
+			logger.Printf("Delete OBTenant %s successfully", o.Name)
 		},
 	}
 	o.AddFlags(cmd)

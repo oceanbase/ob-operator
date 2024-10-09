@@ -13,8 +13,9 @@ See the Mulan PSL v2 for more details.
 */
 package tenant
 
+// Flags and FlagSets for tenant management
 const (
-	// Flagsets for tenant
+	// FlagSets for tenant
 	FLAGSET_UNIT    = "unit"
 	FLAGSET_RESTORE = "restore"
 	FLAGSET_ZONE    = "zone"
@@ -52,4 +53,27 @@ const (
 	FLAG_UNLIMITED           = "unlimited"
 	FLAG_UNTIL_TIMESTAMP     = "until-timestamp"
 	FLAG_PASSWD              = "password"
+)
+
+// Default values for tenant management
+const (
+	// Default values for int and string flags
+	DEFAULT_NAMESPACE          = "default"
+	DEFAULT_CHARSET            = "utf8mb4"
+	DEFAULT_CONNECT_WHITE_LIST = "%"
+	DEFAULT_UNIT_NUMBER        = 1
+	DEFAULT_MAX_IOPS           = 1024
+	DEFAULT_MIN_IOPS           = 1024
+	DEFAULT_IOPS_WEIGHT        = 1
+	DEFAULT_CPU_COUNT          = "1"
+	DEFAULT_MEMORY_SIZE        = "2Gi"
+	DEFAULT_LOG_DISK_SIZE      = "4Gi"
+	DEFAULT_RESTORE_TYPE       = "OSS"
+	DEFAULT_ARCHIVE_SOURCE     = "demo_tenant/log_archive_custom"
+	DEFAULT_BAK_DATA_SOURCE    = "demo_tenant/data_backup_custom_enc"
+
+	// Default values for bool flags
+	DEFAULT_UNLIMITED_FLAG = true
+	DEFAULT_FORCE_FLAG     = false
+	DEFAULT_RESTORE_FLAG   = false
 )

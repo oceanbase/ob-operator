@@ -28,8 +28,8 @@ func NewUpgradeCmd() *cobra.Command {
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "upgrade <tenant_name>",
-		Short:   "Upgrade ob tenant to compatible version to the cluster",
-		Long:    `Upgrade ob tenant to higher version, suitable for restoring low-version backup data to a high-version cluster.`,
+		Short:   "Upgrade an ob tenant to compatible version to the ob cluster",
+		Long:    `Upgrade an ob tenant to higher version, suitable for restoring low-version backup data to a high-version ob cluster.`,
 		Args:    cobra.ExactArgs(1),
 		Aliases: []string{"ug"},
 		PreRunE: o.Parse,
@@ -51,7 +51,7 @@ func NewUpgradeCmd() *cobra.Command {
 			if _, err = clients.CreateOBTenantOperation(cmd.Context(), op); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create upgrade operation for obtenant %s successfully", o.Name)
+			logger.Printf("Create upgrade operation for OBTenant %s successfully", o.Name)
 		},
 	}
 	o.AddFlags(cmd)

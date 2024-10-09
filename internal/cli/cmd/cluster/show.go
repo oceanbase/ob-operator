@@ -30,7 +30,7 @@ func NewShowCmd() *cobra.Command {
 	tbw, tbLog := cmdUtil.GetTableLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "show <cluster_name>",
-		Short:   "Show overview of ob cluster",
+		Short:   "Show overview of an ob cluster",
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {

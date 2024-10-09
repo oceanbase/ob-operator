@@ -32,6 +32,7 @@ func NewListCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "list",
 		Short:   "List ob tenants",
+		Long:    `List ob tenants.`,
 		Aliases: []string{"ls", "l"},
 		Run: func(cmd *cobra.Command, args []string) {
 			obtenantList, err := clients.ListAllOBTenants(cmd.Context(), o.Namespace, v1.ListOptions{})

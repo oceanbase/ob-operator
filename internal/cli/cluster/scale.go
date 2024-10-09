@@ -140,7 +140,7 @@ func (o *ScaleOptions) Validate() error {
 			typeAdd = true
 		}
 		if typeDelete && deleteNum > maxDeleteNum {
-			return fmt.Errorf("Obcluster has %d Zones, can only delete %d zones", zoneNum, maxDeleteNum)
+			return fmt.Errorf("Ob cluster has %d Zones, can only delete %d zones", zoneNum, maxDeleteNum)
 		}
 	}
 	trueCount := 0
@@ -167,6 +167,6 @@ func (o *ScaleOptions) Validate() error {
 
 // Add Flags for scale options
 func (o *ScaleOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, "default", "namespace of ob cluster")
+	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "namespace of ob cluster")
 	cmd.Flags().StringToStringVar(&o.Zones, FLAG_ZONES, nil, "zone of ob cluster")
 }
