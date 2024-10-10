@@ -34,12 +34,12 @@ var (
 
 // defaultVersionTemplate is the default template for displaying version information.
 const defaultVersionTemplate = `
-OceanBase Operatore Cli:
+OceanBase Operator Cli:
  Version:    {{.Version}}
- OS/Arch:	{{.OS}}/{{.Arch}}
+ OS/Arch:	   {{.OS}}/{{.Arch}}
  Go Version: {{.GoVersion}}
  Git Commit: {{.CommitHash}}
- Build Time: {{.BuildTime}}
+ Build:      {{.BuildTime}}
 `
 
 // VersionInfo stores the version information.
@@ -52,6 +52,7 @@ type VersionInfo struct {
 	BuildTime  string
 }
 
+// NewCmd returns the version command.
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
@@ -73,7 +74,7 @@ func reformatTime(buildTime string) string {
 
 // printCliInfo prints the version information of OceanBase Cli.
 func printCliInfo() error {
-	t := tabwriter.NewWriter(os.Stdout, 10, 1, 1, ' ', 0)
+	t := tabwriter.NewWriter(os.Stdout, 10, 3, 1, ' ', 0)
 	tmpl, err := template.New("version").Parse(defaultVersionTemplate)
 	data := &VersionInfo{
 		Version:    Version,
