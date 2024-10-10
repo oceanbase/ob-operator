@@ -30,7 +30,6 @@ func NewReplayLogCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "replaylog <tenant_name>",
 		Short:   "replay log of an ob tenant",
-		Aliases: []string{"r", "rl"},
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {

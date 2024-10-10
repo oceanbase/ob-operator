@@ -27,10 +27,9 @@ func NewListCmd() *cobra.Command {
 	tbw, tbLog := cmdUtil.GetTableLoggerInstance()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:     "list",
-		Short:   "List ob clusters",
-		Long:    `List ob clusters.`,
-		Aliases: []string{"ls", "l"},
+		Use:   "list",
+		Short: "List ob clusters",
+		Long:  `List ob clusters.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			obclusterList, err := clients.ListAllOBClusters(cmd.Context())
 			if err != nil {

@@ -20,10 +20,9 @@ import (
 // NewCmd is command for cluster management
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "cluster <subcommand>",
-		Aliases: []string{"c"},
-		Short:   "Command for OBCluster's management",
-		Long:    `Command for OBCluster's management, such as Create, UpGrade, Delete, Scale, Show.`,
+		Use:   "cluster <subcommand>",
+		Short: "Command for OBCluster's management",
+		Long:  `Command for OBCluster's management, such as Create, UpGrade, Delete, Scale, Show.`,
 	}
 	cmd.AddCommand(NewCreateCmd())
 	cmd.AddCommand(NewDeleteCmd())
