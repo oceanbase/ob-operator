@@ -14,19 +14,83 @@ See the Mulan PSL v2 for more details.
 package version
 
 import (
-	"github.com/spf13/cobra"
+	"os"
+	"runtime"
+	"text/tabwriter"
+	"text/template"
+	"time"
 
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/spf13/cobra"
 )
 
+// Injected by build script
+var (
+	OS         = ""
+	Arch       = ""
+	Version    = ""
+	CommitHash = ""
+	BuildTime  = ""
+)
+
+// defaultVersionTemplate is the default template for displaying version information.
+const defaultVersionTemplate = `
+OceanBase Operatore Cli:
+ Version:    {{.Version}}
+ OS/Arch:	{{.OS}}/{{.Arch}}
+ Go Version: {{.GoVersion}}
+ Git Commit: {{.CommitHash}}
+ Build Time: {{.BuildTime}}
+`
+
+// VersionInfo stores the version information.
+type VersionInfo struct {
+	Version    string
+	OS         string
+	Arch       string
+	GoVersion  string
+	CommitHash string
+	BuildTime  string
+}
+
 func NewCmd() *cobra.Command {
-	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Print the version number of OceanBase Cli",
-		Run: func(cmd *cobra.Command, args []string) {
-			logger.Println("OceanBase Cli Version: 0.0.1")
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return printCliInfo()
 		},
 	}
 	return cmd
+}
+
+func reformatTime(buildTime string) string {
+	t, err := time.Parse("20060102150405", buildTime)
+	if err != nil {
+		return buildTime
+	}
+	return t.Format("2006-01-02 15:04:05")
+}
+
+// printCliInfo prints the version information of OceanBase Cli.
+func printCliInfo() error {
+	t := tabwriter.NewWriter(os.Stdout, 10, 1, 1, ' ', 0)
+	tmpl, err := template.New("version").Parse(defaultVersionTemplate)
+	data := &VersionInfo{
+		Version:    Version,
+		OS:         runtime.GOOS,
+		Arch:       runtime.GOARCH,
+		GoVersion:  runtime.Version(),
+		CommitHash: CommitHash,
+		BuildTime:  reformatTime(BuildTime),
+	}
+	if err != nil {
+		return err
+	}
+	if err := tmpl.Execute(t, data); err != nil {
+		return err
+	}
+	if _, err := t.Write([]byte("\n")); err != nil {
+		return err
+	}
+	return t.Flush()
 }

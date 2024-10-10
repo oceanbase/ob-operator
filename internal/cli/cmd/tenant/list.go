@@ -30,9 +30,9 @@ func NewListCmd() *cobra.Command {
 	tbw, tbLog := cmdUtil.GetTableLoggerInstance()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:     "list",
-		Short:   "List ob tenants",
-		Long:    `List ob tenants.`,
+		Use:   "list",
+		Short: "List ob tenants",
+		Long:  `List ob tenants.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			obtenantList, err := clients.ListAllOBTenants(cmd.Context(), o.Namespace, v1.ListOptions{})
 			if err != nil {
