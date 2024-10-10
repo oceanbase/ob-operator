@@ -27,7 +27,6 @@ func NewCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "create <tenant_name> --cluster=<cluster_name>",
 		Short:   "Create an ob tenant",
-		Aliases: []string{"c"},
 		PreRunE: o.Parse,
 		Args:    cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {

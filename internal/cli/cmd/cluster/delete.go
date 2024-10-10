@@ -28,7 +28,6 @@ func NewDeleteCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "delete <cluster_name>",
 		Short:   "Delete an ob cluster",
-		Aliases: []string{"d"},
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {

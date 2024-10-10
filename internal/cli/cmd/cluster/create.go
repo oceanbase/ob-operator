@@ -29,7 +29,6 @@ func NewCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "create <cluster_name>",
 		Short:   "Create an ob cluster",
-		Aliases: []string{"c"},
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {

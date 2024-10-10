@@ -31,7 +31,6 @@ func NewUpdateCmd() *cobra.Command {
 		Short:   "Update an ob tenant",
 		Long:    "Update an ob tenant, support unitNumber/connectWhiteList/priority of zones",
 		Args:    cobra.ExactArgs(1),
-		Aliases: []string{"ud"},
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
 			obtenant, err := clients.GetOBTenant(cmd.Context(), types.NamespacedName{

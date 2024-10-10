@@ -20,10 +20,9 @@ import (
 // NewCmd is command for tenant management
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "tenant",
-		Aliases: []string{"t"},
-		Short:   "Command for OBTenant's management",
-		Long:    `Command for OBTenant's management, such as Create, Update, Delete, Switchover, Activate, Replaylog.`,
+		Use:   "tenant",
+		Short: "Command for OBTenant's management",
+		Long:  `Command for OBTenant's management, such as Create, Update, Delete, Switchover, Activate, Replaylog.`,
 	}
 	cmd.AddCommand(NewCreateCmd())
 	cmd.AddCommand(NewDeleteCmd())
