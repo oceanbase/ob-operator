@@ -4,11 +4,11 @@
 
 ### 新增特性
 
-1. 支持删除特定的 OBServer
-2. 支持根据场景设置优化 OceanBase 集群的系统参数和变量
-3. 支持跨 K8s 集群调度 OceanBase 集群
-4. 支持将大部分 K8s 内置的 Pod 字段设置到 OBServer 中
-5. 支持设置腾讯云 COS、AWS s3 以及 s3 兼容的对象存储服务作为数据备份的介质
+1. 支持跨 K8s 集群调度 OceanBase 集群
+2. 支持设置腾讯云 COS、AWS s3 以及 s3 兼容的对象存储服务作为数据备份的介质
+3. 支持删除特定的 OBServer
+4. 支持根据场景设置优化 OceanBase 集群的系统参数和变量
+5. 支持将大部分 K8s 内置的 Pod 字段设置到 OBServer 中
 
 ### 缺陷修复
 

@@ -4,11 +4,11 @@
 
 ### New Features
 
-1. Support for deleting specific OBServer.
-2. Support for optimizing parameters and variables by scenario.
-3. Support for scheduling OceanBase cluster across multiple K8s clusters.
-4. Support for setting most of native fields of Pods to OBServer.
-5. Support for backing up to Tencent COS, AWS s3 and s3 compatible storage.
+1. Support for scheduling OceanBase cluster across multiple K8s clusters.
+2. Support for backing up to Tencent COS, AWS s3 and s3 compatible storage.
+3. Support for deleting specific OBServer.
+4. Support for optimizing parameters and variables by scenario.
+5. Support for setting most of native fields of Pods to OBServer.
 
 ### Bug fixes
 
