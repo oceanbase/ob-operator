@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.3.0 (Release on 2024.10.14)
+
+### New Features
+
+1. Support for deleting specific OBServer.
+2. Support for optimizing parameters and variables by scenario.
+3. Support for scheduling OceanBase cluster across multiple K8s clusters.
+4. Support for setting most of native fields of Pods to OBServer.
+5. Support for backing up to Tencent COS, AWS s3 and s3 compatible storage.
+
+### Bug fixes
+
+1. Fixed the issue that it get stuck when a 2-2-2 cluster rolling replace its OBServer pods.
+
+### Optimization
+
+1. Supplement several new types of `OBTenantOperation` to perform common operations like creating or deleting resource pools, setting unit number and so on.
+
 ## 2.2.2 (Release on 2024.06.18)
 
 ### New Features
