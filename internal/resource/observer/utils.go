@@ -664,21 +664,12 @@ func (m *OBServerManager) cleanWorkerK8sResource() error {
 	}
 
 	// delete pvc
-	pvcList, err := m.getPVCs()
-	if err != nil {
-		if kubeerrors.IsNotFound(err) {
-			m.Logger.Info("PVC not found")
-		} else {
-			errs = stderrs.Join(errs, errors.Wrap(err, "Failed to get pvcs"))
-		}
-	} else {
-		for _, pvc := range pvcList.Items {
-			if err := m.K8sResClient.Delete(m.Ctx, &pvc); err != nil {
-				errs = stderrs.Join(errs, errors.Wrapf(err, "Failed to delete pvc %s", pvc.Name))
-			} else {
-				m.Logger.Info("Delete pvc successfully", "pvc", pvc.Name)
-			}
-		}
+	pvc := &corev1.PersistentVolumeClaim{}
+	if err := m.K8sResClient.DeleteAllOf(m.Ctx, pvc,
+		client.InNamespace(m.OBServer.Namespace),
+		client.MatchingLabels{oceanbaseconst.LabelRefUID: m.OBServer.Labels[oceanbaseconst.LabelRefUID]},
+	); err != nil {
+		errs = stderrs.Join(errs, errors.Wrap(err, "Failed to delete pvc"))
 	}
 
 	return errs

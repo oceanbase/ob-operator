@@ -114,8 +114,10 @@ func CreateOBServerPod(m *OBServerManager) tasktypes.TaskError {
 	annotations := m.generateStaticIpAnnotation()
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
 	observerPodSpec := m.createOBPodSpec(obcluster)
-	originLabels := m.OBServer.Labels
-	originLabels[oceanbaseconst.LabelOBServerUID] = string(m.OBServer.UID)
+	podLabels := m.OBServer.Labels
+	podLabels[oceanbaseconst.LabelRefUID] = string(m.OBServer.UID)
+	podLabels[oceanbaseconst.LabelOBServerUID] = string(m.OBServer.UID) // For compatibility with old version
+	podLabels[oceanbaseconst.LabelRefOBServer] = string(m.OBServer.Name)
 
 	podFields := m.OBServer.Spec.OBServerTemplate.PodFields
 	if podFields != nil {
@@ -127,8 +129,8 @@ func CreateOBServerPod(m *OBServerManager) tasktypes.TaskError {
 			observerPodSpec.Subdomain = varsReplacer.Replace(*podFields.Subdomain)
 		}
 		for k := range podFields.Labels {
-			if _, exist := originLabels[k]; !exist {
-				originLabels[k] = varsReplacer.Replace(podFields.Labels[k])
+			if _, exist := podLabels[k]; !exist {
+				podLabels[k] = varsReplacer.Replace(podFields.Labels[k])
 			}
 		}
 		for k := range podFields.Annotations {
@@ -144,7 +146,7 @@ func CreateOBServerPod(m *OBServerManager) tasktypes.TaskError {
 			Name:            m.OBServer.Name,
 			Namespace:       m.OBServer.Namespace,
 			OwnerReferences: ownerReferenceList,
-			Labels:          originLabels,
+			Labels:          podLabels,
 			Annotations:     annotations,
 		},
 		Spec: observerPodSpec,
@@ -171,6 +173,10 @@ func CreateOBServerPVC(m *OBServerManager) tasktypes.TaskError {
 		ownerReferenceList = append(ownerReferenceList, ownerReference)
 	}
 	singlePvcAnnoVal, singlePvcExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSinglePVC)
+	pvcLabels := m.OBServer.Labels
+	pvcLabels[oceanbaseconst.LabelRefUID] = string(m.OBServer.UID)
+	pvcLabels[oceanbaseconst.LabelRefOBServer] = string(m.OBServer.Name)
+
 	if singlePvcExist && singlePvcAnnoVal == "true" {
 		sumQuantity := resource.Quantity{}
 		sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size)
@@ -185,7 +191,7 @@ func CreateOBServerPVC(m *OBServerManager) tasktypes.TaskError {
 				Name:            m.OBServer.Name,
 				Namespace:       m.OBServer.Namespace,
 				OwnerReferences: ownerReferenceList,
-				Labels:          m.OBServer.Labels,
+				Labels:          pvcLabels,
 			},
 			Spec: m.generatePVCSpec(storageSpec),
 		}
@@ -198,7 +204,7 @@ func CreateOBServerPVC(m *OBServerManager) tasktypes.TaskError {
 			Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix),
 			Namespace:       m.OBServer.Namespace,
 			OwnerReferences: ownerReferenceList,
-			Labels:          m.OBServer.Labels,
+			Labels:          pvcLabels,
 		}
 		pvc := &corev1.PersistentVolumeClaim{
 			ObjectMeta: objectMeta,
@@ -213,7 +219,7 @@ func CreateOBServerPVC(m *OBServerManager) tasktypes.TaskError {
 			Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix),
 			Namespace:       m.OBServer.Namespace,
 			OwnerReferences: ownerReferenceList,
-			Labels:          m.OBServer.Labels,
+			Labels:          pvcLabels,
 		}
 		pvc = &corev1.PersistentVolumeClaim{
 			ObjectMeta: objectMeta,
@@ -228,7 +234,7 @@ func CreateOBServerPVC(m *OBServerManager) tasktypes.TaskError {
 			Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix),
 			Namespace:       m.OBServer.Namespace,
 			OwnerReferences: ownerReferenceList,
-			Labels:          m.OBServer.Labels,
+			Labels:          pvcLabels,
 		}
 		pvc = &corev1.PersistentVolumeClaim{
 			ObjectMeta: objectMeta,
@@ -516,11 +522,14 @@ func CreateOBServerSvc(m *OBServerManager) tasktypes.TaskError {
 	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist && mode == oceanbaseconst.ModeService {
 		m.Logger.Info("Create observer service")
+		svcLabels := m.OBServer.Labels
+		svcLabels[oceanbaseconst.LabelRefUID] = string(m.OBServer.UID)
+		svcLabels[oceanbaseconst.LabelRefOBServer] = string(m.OBServer.Name)
 		svc := &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      m.OBServer.Name,
 				Namespace: m.OBServer.Namespace,
-				Labels:    m.OBServer.Labels,
+				Labels:    svcLabels,
 				OwnerReferences: []metav1.OwnerReference{{
 					APIVersion: m.OBServer.APIVersion,
 					Kind:       m.OBServer.Kind,
