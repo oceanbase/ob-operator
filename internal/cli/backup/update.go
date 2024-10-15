@@ -18,6 +18,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/generic"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	"github.com/spf13/cobra"
@@ -43,6 +44,13 @@ func UpdateTenantBackupPolicy(ctx context.Context, o *UpdateOptions) error {
 	nn := types.NamespacedName{
 		Name:      o.Name,
 		Namespace: o.Namespace,
+	}
+	obtenant, err := clients.GetOBTenant(ctx, nn)
+	if err != nil {
+		return err
+	}
+	if err := util.CheckTenantStatus(obtenant); err != nil {
+		return err
 	}
 	policy, err := clients.GetTenantBackupPolicy(ctx, nn)
 	if err != nil {
@@ -87,7 +95,7 @@ func (o *UpdateOptions) Validate() error {
 	if o.PieceIntervalDays == 0 {
 		return errors.New("pieceIntervalDays can not be zero")
 	}
-	if !checkCrontabSyntax(o.FullCrontab) {
+	if o.FullCrontab != "" && !checkCrontabSyntax(o.FullCrontab) {
 		return errors.New("Invalid full backup schedule")
 	}
 	if o.IncrementalCrontab != "" && !checkCrontabSyntax(o.IncrementalCrontab) {
@@ -110,7 +118,6 @@ func (o *UpdateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags.IntVar(&o.JobKeepDays, FLAG_JOB_KEEP_DAYS, DEFAULT_JOB_KEEP_DAYS, "The number of days to keep the backup job")
 	baseFlags.IntVar(&o.RecoveryDays, FLAG_RECOVERY_DAYS, DEFAULT_RECOVERY_DAYS, "The number of days to keep the backup recovery")
 	baseFlags.IntVar(&o.PieceIntervalDays, FLAG_PIECE_INTERVAL_DAYS, DEFAULT_PIECE_INTERVAL_DAYS, "The number of days to switch the backup piece")
-	baseFlags.StringVar(&o.Status, FLAG_STATUS, DEFAULT_STATUS, "The status of the backup policy, supporting RUNNING and PAUSED")
 }
 
 // AddScheduleFlags adds the schedule-related flags for the create command

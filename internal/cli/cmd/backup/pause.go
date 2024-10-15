@@ -19,27 +19,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewUpdateCmd update backup policy of the ob tenant
-func NewUpdateCmd() *cobra.Command {
-	o := backup.NewUpdateOptions()
+// NewPauseCmd pause backup policy of the ob tenant
+func NewPauseCmd() *cobra.Command {
+	o := backup.NewPauseOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:     "update <tenant_name>",
-		Short:   "Update backup policy of the specified ob tenant",
-		Long:    `Update backup policy of the specified ob tenant`,
+		Use:     "pause <tenant_name>",
+		Short:   "pause backup policy of the specified ob tenant",
+		Long:    `pause backup policy of the specified ob tenant`,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := o.Complete(); err != nil {
+			if err := backup.UpdateTenantBackupPolicy(cmd.Context(), &o.UpdateOptions); err != nil {
 				logger.Fatalln(err)
 			}
-			if err := o.Validate(); err != nil {
-				logger.Fatalln(err)
-			}
-			if err := backup.UpdateTenantBackupPolicy(cmd.Context(), o); err != nil {
-				logger.Fatalln(err)
-			}
-			logger.Println("update backup policy of the specified ob tenant")
+			logger.Println("pause backup policy of the specified ob tenant")
 		},
 	}
 	o.AddFlags(cmd)

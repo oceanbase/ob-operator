@@ -15,18 +15,19 @@ package backup
 
 import "github.com/spf13/cobra"
 
-// NewCmd is command for backup policy management
-func NewCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "backup <subcommand>",
-		Short: "Command for backup policy management",
-		Long:  `Command for backup policy management, such as create, list, delete`,
+type PauseOptions struct {
+	UpdateOptions
+}
+
+func NewPauseOptions() *PauseOptions {
+	return &PauseOptions{
+		UpdateOptions: UpdateOptions{
+			Status: "PAUSE",
+		},
 	}
-	cmd.AddCommand(NewCreateCmd())
-	cmd.AddCommand(NewListCmd())
-	cmd.AddCommand(NewDeleteCmd())
-	cmd.AddCommand(NewUpdateCmd())
-	cmd.AddCommand(NewPauseCmd())
-	cmd.AddCommand(NewResumeCmd())
-	return cmd
+}
+
+func (o *PauseOptions) AddFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&o.Name, FLAG_NAME, "", "The name of the tenant")
+	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the tenant")
 }
