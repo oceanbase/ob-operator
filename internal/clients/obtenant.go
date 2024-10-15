@@ -99,6 +99,15 @@ func DeleteTenantBackupPolicy(ctx context.Context, nn types.NamespacedName) erro
 	return BackupPolicyClient.Delete(ctx, nn.Namespace, nn.Name, metav1.DeleteOptions{})
 }
 
+func ListAllTenantBackupPolicies(ctx context.Context, ns string, listOptions metav1.ListOptions) (*v1alpha1.OBTenantBackupPolicyList, error) {
+	list := &v1alpha1.OBTenantBackupPolicyList{}
+	err := BackupPolicyClient.List(ctx, ns, list, listOptions)
+	if err != nil {
+		return nil, errors.Wrap(err, "List all tenant backup policies")
+	}
+	return list, nil
+}
+
 func ForceDeleteTenantBackupPolicy(ctx context.Context, nn types.NamespacedName) error {
 	_, err := RescueClient.Create(ctx, &v1alpha1.OBResourceRescue{
 		ObjectMeta: metav1.ObjectMeta{
