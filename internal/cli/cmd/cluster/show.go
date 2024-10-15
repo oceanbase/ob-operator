@@ -30,7 +30,7 @@ func NewShowCmd() *cobra.Command {
 	tbw, tbLog := cmdUtil.GetTableLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "show <cluster_name>",
-		Short:   "show overview of ob cluster",
+		Short:   "Show overview of an ob cluster",
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -38,33 +38,35 @@ func NewShowCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			obclusterOperation, err := clients.GetOBClusterOperations(cmd.Context(), obcluster)
+			obclusterOperationList, err := clients.GetOBClusterOperations(cmd.Context(), obcluster)
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			tbLog.Println("Cluster ID \t Name \t Status \t Image")
+			tbLog.Println("ClUSTER ID \t NAME \t STATUS \t IMAGE")
 			tbLog.Printf("%d \t %s \t %s \t %s \n\n", obcluster.Spec.ClusterId, obcluster.Spec.ClusterName, obcluster.Status.Status, obcluster.Status.Image)
 			if len(obcluster.Status.OBZoneStatus) > 0 {
-				tbLog.Println("Zone \t Status")
+				tbLog.Println("ZONE \t STATUS")
 				for _, zone := range obcluster.Status.OBZoneStatus {
 					tbLog.Printf("%s \t %s \n\n", zone.Zone, zone.Status)
 				}
 			}
 			if len(obcluster.Status.Parameters) > 0 {
-				tbLog.Println("Key \t Value")
+				tbLog.Println("KEY \t VALUE")
 				for _, Parameter := range obcluster.Status.Parameters {
 					tbLog.Printf("%s \t %s \n\n", Parameter.Name, Parameter.Value)
 				}
 			}
 
-			if len(obclusterOperation.Items) > 0 {
-				sort.Slice(obclusterOperation.Items, func(i, j int) bool {
-					return obclusterOperation.Items[i].Name < obclusterOperation.Items[j].Name
+			if len(obclusterOperationList.Items) > 0 {
+				sort.Slice(obclusterOperationList.Items, func(i, j int) bool {
+					return obclusterOperationList.Items[i].Name < obclusterOperationList.Items[j].Name
 				})
-				tbLog.Println("Operation Type \t TTLDays \t Status")
-				for _, op := range obclusterOperation.Items {
-					tbLog.Printf("%s \t %d \t  %s \n", op.Spec.Type, op.Spec.TTLDays, op.Status.Status)
+				tbLog.Println("OPERATION TYPE \t TTLDAYS \t STATUS \t CREATETIME")
+				for _, op := range obclusterOperationList.Items {
+					tbLog.Printf("%s \t %d \t  %s \t %s\n", op.Spec.Type, op.Spec.TTLDays, op.Status.Status, op.CreationTimestamp)
 				}
+			} else {
+				logger.Printf("No OBClusterOperations found in %s", obcluster.Spec.ClusterName)
 			}
 			if err = tbw.Flush(); err != nil {
 				logger.Fatalln(err)

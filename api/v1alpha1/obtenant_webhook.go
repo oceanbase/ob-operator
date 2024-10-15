@@ -109,14 +109,20 @@ func (r *OBTenant) ValidateCreate() (admission.Warnings, error) {
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *OBTenant) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	_ = old
+	oldTenant, ok := old.(*OBTenant)
+	if !ok {
+		return nil, apierrors.NewBadRequest("Invalid old object")
+	}
 	if r.Status.Status == tenantstatus.Running {
 		switch {
-		case r.Spec.ClusterName != old.(*OBTenant).Spec.ClusterName:
+		case r.Spec.ClusterName != oldTenant.Spec.ClusterName:
 			return nil, apierrors.NewBadRequest("Cannot change clusterName when tenant is running")
-		case r.Spec.TenantName != old.(*OBTenant).Spec.TenantName:
+		case r.Spec.TenantName != oldTenant.Spec.TenantName:
 			return nil, apierrors.NewBadRequest("Cannot change tenantName when tenant is running")
 		}
+	}
+	if r.Spec.Charset != oldTenant.Spec.Charset {
+		return nil, apierrors.NewBadRequest("Cannot change charset of tenant")
 	}
 	return nil, r.validateMutation()
 }

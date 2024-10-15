@@ -16,15 +16,18 @@ package utils
 import (
 	"crypto/rand"
 	"fmt"
-	"log"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	"k8s.io/apimachinery/pkg/api/resource"
 	k8srand "k8s.io/apimachinery/pkg/util/rand"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 
@@ -32,7 +35,7 @@ import (
 )
 
 const (
-	characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~!@#%^&*_-+=|(){}[]:;,.?/`$\"<>"
+	characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~#%^&*_-+|(){}[]:;,.?/\""
 	factor     = 4294901759
 )
 
@@ -45,27 +48,23 @@ func GenerateUserSecrets(clusterName string, clusterId int64) *apitypes.OBUserSe
 	}
 }
 
-// GenerateClusterId generated random cluster id
-func GenerateClusterId() int64 {
-	clusterId := time.Now().Unix() % factor
-	if clusterId != 0 {
-		return clusterId
+// GenerateClusterID generated random cluster ID
+func GenerateClusterID() int64 {
+	clusterID := time.Now().Unix() % factor
+	if clusterID != 0 {
+		return clusterID
 	}
-	return GenerateClusterId()
+	return GenerateClusterID()
 }
 
+// CheckResourceName checks resource name in k8s
 func CheckResourceName(name string) bool {
 	regex := `[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*`
-
-	re, err := regexp.Compile(regex)
-	if err != nil {
-		log.Println("Error compiling regex:", err)
-		return false
-	}
-
+	re := regexp.MustCompile(regex)
 	return re.MatchString(name)
 }
 
+// CheckPassword checks password when creating cluster
 func CheckPassword(password string) bool {
 	var (
 		countUppercase   int
@@ -97,10 +96,17 @@ func CheckPassword(password string) bool {
 	return countUppercase >= 2 && countLowercase >= 2 && countNumber >= 2 && countSpecialChar >= 2
 }
 
+// CheckTenantName check Tenant name when creating tenant
+func CheckTenantName(name string) bool {
+	regex := `^[_a-zA-Z][^-]*$`
+	re := regexp.MustCompile(regex)
+	return re.MatchString(name)
+}
+
 // MapZonesToTopology map --zones to zoneTopology
 func MapZonesToTopology(zones map[string]string) ([]param.ZoneTopology, error) {
 	if zones == nil {
-		return nil, fmt.Errorf("Zone value is required") // 无效的zone信息
+		return nil, fmt.Errorf("Zone replica is required")
 	}
 	topology := make([]param.ZoneTopology, 0)
 	for zoneName, replicaStr := range zones {
@@ -117,6 +123,38 @@ func MapZonesToTopology(zones map[string]string) ([]param.ZoneTopology, error) {
 		})
 	}
 	return topology, nil
+}
+
+// MapZonesToPools map --zones to []resourcePool
+func MapZonesToPools(zones map[string]string) ([]param.ResourcePoolSpec, error) {
+	if zones == nil {
+		return nil, fmt.Errorf("Zone priority is required")
+	}
+	resourcePool := make([]param.ResourcePoolSpec, 0)
+	for zoneName, priorityStr := range zones {
+		priority, err := strconv.Atoi(priorityStr)
+		if err != nil {
+			return nil, fmt.Errorf("invalid value for zone %s: %s", zoneName, priorityStr)
+		}
+		resourcePool = append(resourcePool, param.ResourcePoolSpec{
+			Zone:     zoneName,
+			Priority: priority,
+			Type:     "Full",
+		})
+	}
+	return resourcePool, nil
+}
+
+// MapParameters map --parameters to parameters
+func MapParameters(parameters map[string]string) ([]common.KVPair, error) {
+	kvMap := make([]common.KVPair, 0)
+	for k, v := range parameters {
+		kvMap = append(kvMap, common.KVPair{
+			Key:   k,
+			Value: v,
+		})
+	}
+	return kvMap, nil
 }
 
 // GenerateRandomPassword generated random password in range [minLength,maxLength]
@@ -162,6 +200,42 @@ func GenerateRandomPassword(minLength int, maxLength int) string {
 		return GenerateRandomPassword(minLength, maxLength)
 	}
 	return sb.String()
+}
+
+// ParseUnitConfig parse param.UnitConfig to v1alpha1.UnitConfig
+func ParseUnitConfig(unitConfig *param.UnitConfig) (*v1alpha1.UnitConfig, error) {
+	cpuCount, err := resource.ParseQuantity(unitConfig.CPUCount)
+	if err != nil {
+		return nil, oberr.NewBadRequest("invalid cpu count: " + err.Error())
+	}
+	memorySize, err := resource.ParseQuantity(unitConfig.MemorySize)
+	if err != nil {
+		return nil, oberr.NewBadRequest("invalid memory size: " + err.Error())
+	}
+	logDiskSize, err := resource.ParseQuantity(unitConfig.LogDiskSize)
+	if err != nil {
+		return nil, oberr.NewBadRequest("invalid log disk size: " + err.Error())
+	}
+	var maxIops, minIops int
+	if unitConfig.MaxIops > math.MaxInt32 {
+		maxIops = math.MaxInt32
+	} else {
+		maxIops = int(unitConfig.MaxIops)
+	}
+	if unitConfig.MinIops > math.MaxInt32 {
+		minIops = math.MaxInt32
+	} else {
+		minIops = int(unitConfig.MinIops)
+	}
+	return &v1alpha1.UnitConfig{
+		MaxCPU:      cpuCount,
+		MemorySize:  memorySize,
+		MinCPU:      cpuCount,
+		LogDiskSize: logDiskSize,
+		MaxIops:     maxIops,
+		MinIops:     minIops,
+		IopsWeight:  unitConfig.IopsWeight,
+	}, nil
 }
 
 // GenerateUUID returns uuid

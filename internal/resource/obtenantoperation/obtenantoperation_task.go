@@ -361,8 +361,6 @@ func UpdateOBTenantResource(m *ObTenantOperationManager) tasktypes.TaskError {
 		obtenant.Spec.UnitNumber = m.Resource.Spec.UnitNumber
 	case constants.TenantOpSetConnectWhiteList:
 		obtenant.Spec.ConnectWhiteList = m.Resource.Spec.ConnectWhiteList
-	case constants.TenantOpSetCharset:
-		obtenant.Spec.Charset = m.Resource.Spec.Charset
 	case constants.TenantOpAddResourcePools:
 		for _, pool := range m.Resource.Spec.AddResourcePools {
 			obtenant.Spec.Pools = append(obtenant.Spec.Pools, pool)

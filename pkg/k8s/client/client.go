@@ -14,15 +14,13 @@ package client
 
 import (
 	"os"
-	"path/filepath"
 	"sync"
 
+	"github.com/pkg/errors"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/metadata"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
 )
 
 type Client struct {
@@ -52,60 +50,43 @@ func GetClient() *Client {
 	return client
 }
 
-func MustGetConfigInCluster() *rest.Config {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		panic(err.Error())
-	}
-	return config
-}
-
-func MustGetConfigOutsideCluster() *rest.Config {
-	// var kubeconfig *string
-	// if home := homedir.HomeDir(); home != "" {
-	// 	fmt.Println("home:", home)
-	// 	kubeconfig = flag.String("kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-	// } else {
-	// 	kubeconfig = flag.String("kubeconfig", "", "absolute path to the kubeconfig file")
-	// }
-	// flag.Parse()
-
-	var configPath string
-	configPathEnv, exist := os.LookupEnv("KUBECONFIG")
-	if exist && configPathEnv != "" {
-		configPath = configPathEnv
-	} else {
-		home := homedir.HomeDir()
-		configPath = filepath.Join(home, ".kube", "config")
-	}
-	config, err := clientcmd.BuildConfigFromFlags("", configPath)
-	if err != nil {
-		panic(err.Error())
-	}
-	return config
-}
-
 func MustGetClient(config *rest.Config) *Client {
+	client, err := getClientFromConfig(config)
+	if err != nil {
+		panic(err.Error())
+	}
+	return client
+}
+
+func (c *Client) GetConfig() *rest.Config {
+	return c.config
+}
+
+func getClientFromConfig(config *rest.Config) (*Client, error) {
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		panic(err.Error())
+		return nil, errors.Wrap(err, "failed to create clientset")
 	}
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
-		panic(err.Error())
+		return nil, errors.Wrap(err, "failed to create dynamic client")
 	}
 	metaClient, err := metadata.NewForConfig(config)
 	if err != nil {
-		panic(err.Error())
+		return nil, errors.Wrap(err, "failed to create meta client")
 	}
 	return &Client{
 		ClientSet:     clientset,
 		DynamicClient: dynamicClient,
 		MetaClient:    metaClient,
 		config:        config,
-	}
+	}, nil
 }
 
-func (c *Client) GetConfig() *rest.Config {
-	return c.config
+func GetClientFromBytes(kubeconfig []byte) (*Client, error) {
+	config, err := GetConfigFromBytes(kubeconfig)
+	if err != nil {
+		return nil, err
+	}
+	return getClientFromConfig(config)
 }

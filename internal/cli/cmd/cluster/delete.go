@@ -21,14 +21,13 @@ import (
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
-// NewDeleteCmd delete ob clusters
+// NewDeleteCmd delete ob cluster
 func NewDeleteCmd() *cobra.Command {
 	o := cluster.NewDeleteOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "delete <cluster_name>",
-		Short:   "Delete ob cluster",
-		Aliases: []string{"d"},
+		Short:   "Delete an ob cluster",
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -36,7 +35,7 @@ func NewDeleteCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Delete ob cluster %s success", o.Name)
+			logger.Printf("Delete OBCluster %s successfully", o.Name)
 		},
 	}
 	o.AddFlags(cmd)

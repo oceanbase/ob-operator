@@ -4,7 +4,7 @@
 source setup.sh
 source util.sh
 source env.sh
-source case_p2_v211/env_211_vars.sh
+source case_p2_Resource/env_211_vars.sh
  
 # prepare create related resources to create obcluster
 prepare() {
@@ -46,7 +46,7 @@ prepare() {
 # clean up delete everything by deleting the entire namespace
 cleanup() {
     kubectl delete namespace $NAMESPACE
-    rm -rf case_p2_v211/env_211_vars.sh
+    rm -rf case_p2_Resource/env_211_vars.sh
 }
 
 run() {
@@ -175,7 +175,7 @@ check_operation() {
 }
 
 export_to_file() {
-    local output_file="case_p2_v211/env_211_vars.sh"
+    local output_file="case_p2_Resource/env_211_vars.sh"
     cat <<EOF > "$output_file"
 export PASSWORD="$PASSWORD"
 export SUFFIX="$SUFFIX"

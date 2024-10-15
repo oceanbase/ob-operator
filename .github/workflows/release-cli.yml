@@ -1,0 +1,37 @@
+name: release cli
+
+on: 
+  push:
+    tags: 
+      - "cli-[0-9]+.[0-9]+.[0-9]+"
+
+env:
+  tagName: ${{ github.ref_name }}
+  GO_VERSION : "1.22"
+  BinaryName: "obocli"
+
+jobs:
+  release-oceanbase-cli:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set Version variables
+        id: set_version_vars
+        run: |
+          echo "version=$(echo $tagName | grep -P '(\d*\.\d*\.\d*)' --only-matching)" >> $GITHUB_OUTPUT
+
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }} # The Go version to download (if necessary) and use.
+
+      - name: go mod vendor 
+        run: go mod vendor
+
+      - run: ./scripts/create-cli-release.sh "${tag}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ env.tagName }}
+  

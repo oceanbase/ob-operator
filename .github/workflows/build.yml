@@ -38,3 +38,7 @@ jobs:
       
       - name: go build oceanbase-dashboard
         run: go build -o bin/oceanbase-dashboard cmd/dashboard/main.go
+        
+      - name: go build oceanbase-cli
+        run: go build -o bin/obocli cmd/cli/main.go
+        

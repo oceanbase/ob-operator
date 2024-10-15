@@ -23,7 +23,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/rule"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/silence"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/job"
-	"github.com/oceanbase/ob-operator/pkg/errors"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
@@ -63,7 +62,7 @@ func ListAlerts(ctx *gin.Context) ([]alert.Alert, error) {
 // @Router /api/v1/alarm/alert/diagnose [POST]
 // @Security ApiKeyAuth
 func DiagnoseAlert(_ *gin.Context) (*job.Job, error) {
-	return nil, errors.NewNotImplemented("")
+	return nil, httpErr.NewNotImplemented("")
 }
 
 // @ID ListSilencers

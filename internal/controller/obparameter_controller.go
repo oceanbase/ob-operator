@@ -39,10 +39,6 @@ type OBParameterReconciler struct {
 	Recorder record.EventRecorder
 }
 
-// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obparameters,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obparameters/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obparameters/finalizers,verbs=update
-
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by

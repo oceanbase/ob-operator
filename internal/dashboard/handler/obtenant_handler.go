@@ -32,7 +32,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
-	"github.com/oceanbase/ob-operator/pkg/errors"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
@@ -834,7 +833,7 @@ func ListOBTenantRelatedEvents(c *gin.Context) ([]response.K8sEvent, error) {
 // @Router /api/v1/obtenants/{namespace}/{name}/users [GET]
 // @Security ApiKeyAuth
 func ListOBTenantUsers(_ *gin.Context) ([]string, error) {
-	return nil, errors.NewNotImplemented("")
+	return nil, httpErr.NewNotImplemented("")
 }
 
 // @ID ListOBTenantDatabases
@@ -852,5 +851,5 @@ func ListOBTenantUsers(_ *gin.Context) ([]string, error) {
 // @Router /api/v1/obtenants/{namespace}/{name}/databases [GET]
 // @Security ApiKeyAuth
 func ListOBTenantDatabases(_ *gin.Context) ([]string, error) {
-	return nil, errors.NewNotImplemented("")
+	return nil, httpErr.NewNotImplemented("")
 }

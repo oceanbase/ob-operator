@@ -27,10 +27,9 @@ func NewListCmd() *cobra.Command {
 	tbw, tbLog := cmdUtil.GetTableLoggerInstance()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:     "list",
-		Short:   "List ob clusters",
-		Long:    `List ob clusters.`,
-		Aliases: []string{"ls", "l"},
+		Use:   "list",
+		Short: "List ob clusters",
+		Long:  `List ob clusters.`,
 		Run: func(cmd *cobra.Command, args []string) {
 			obclusterList, err := clients.ListAllOBClusters(cmd.Context())
 			if err != nil {
@@ -40,10 +39,10 @@ func NewListCmd() *cobra.Command {
 				return obclusterList.Items[i].Name < obclusterList.Items[j].Name
 			})
 			if len(obclusterList.Items) == 0 {
-				logger.Println("No clusters found")
+				logger.Println("No OBClusters found")
 				return
 			}
-			tbLog.Println("Namespace \t Name \t Create Time \t Status")
+			tbLog.Println("NAMESPACE \t NAME \t CREATE TIME \t STATUS")
 			for _, cluster := range obclusterList.Items {
 				tbLog.Printf("%s \t %s \t %s \t %s\n", cluster.Namespace, cluster.Name, cluster.CreationTimestamp, cluster.Status.Status)
 			}
