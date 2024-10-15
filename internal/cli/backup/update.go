@@ -21,21 +21,18 @@ import (
 	"github.com/oceanbase/ob-operator/internal/cli/generic"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/types"
 )
 
 type UpdateOptions struct {
 	generic.ResourceOption
-	ScheduleType       string `json:"scheduleType" example:"Weekly"`
 	JobKeepDays        int    `json:"jobKeepDays,omitempty" example:"5"`
 	RecoveryDays       int    `json:"recoveryDays,omitempty" example:"3"`
 	PieceIntervalDays  int    `json:"pieceIntervalDays,omitempty" example:"1"`
 	IncrementalCrontab string `json:"incremental,omitempty"`
 	FullCrontab        string `json:"full,omitempty"`
-	// Description: HH:MM
-	// Example: 04:00
-	ScheduleTime string `json:"scheduleTime" example:"04:00"`
-	Status       string `json:"status,omitempty"`
+	Status             string `json:"status,omitempty"`
 }
 
 func NewUpdateOptions() *UpdateOptions {
@@ -65,8 +62,10 @@ func UpdateTenantBackupPolicy(ctx context.Context, o *UpdateOptions) error {
 	} else if strings.ToUpper(o.Status) == "RUNNING" {
 		policy.Spec.Suspend = false
 	}
-	if o.FullCrontab != "" || o.IncrementalCrontab != "" {
+	if o.IncrementalCrontab != "" {
 		policy.Spec.DataBackup.IncrementalCrontab = o.IncrementalCrontab
+	}
+	if o.FullCrontab != "" {
 		policy.Spec.DataBackup.FullCrontab = o.FullCrontab
 	}
 	if _, err := clients.UpdateTenantBackupPolicy(ctx, policy); err != nil {
@@ -76,6 +75,9 @@ func UpdateTenantBackupPolicy(ctx context.Context, o *UpdateOptions) error {
 }
 
 func (o *UpdateOptions) Validate() error {
+	if o.Namespace == "" {
+		return errors.New("namespace can not be empty")
+	}
 	if o.JobKeepDays == 0 {
 		return errors.New("jobKeepDays can not be zero")
 	}
@@ -85,14 +87,36 @@ func (o *UpdateOptions) Validate() error {
 	if o.PieceIntervalDays == 0 {
 		return errors.New("pieceIntervalDays can not be zero")
 	}
+	if !checkCrontabSyntax(o.FullCrontab) {
+		return errors.New("Invalid full backup schedule")
+	}
+	if o.IncrementalCrontab != "" && !checkCrontabSyntax(o.IncrementalCrontab) {
+		return errors.New("Invalid incremental backup schedule")
+	}
 	return nil
 }
 
 // AddFlags add basic flags for tenant management
 func (o *UpdateOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Name, FLAG_NAME, "", "The name of the ob tenant")
-	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the ob tenant")
-	cmd.Flags().IntVar(&o.JobKeepDays, FLAG_JOB_KEEP_DAYS, DEFAULT_JOB_KEEP_DAYS, "The number of days to keep the backup job")
-	cmd.Flags().IntVar(&o.RecoveryDays, FLAG_RECOVERY_DAYS, DEFAULT_RECOVERY_DAYS, "The number of days to keep the backup recovery")
-	cmd.Flags().IntVar(&o.PieceIntervalDays, FLAG_PIECE_INTERVAL_DAYS, DEFAULT_PIECE_INTERVAL_DAYS, "The number of days to switch the backup piece")
+	o.AddBaseFlags(cmd)
+	o.AddScheduleFlags(cmd)
+}
+
+// AddBaseFlags adds the base flags for the create command
+func (o *UpdateOptions) AddBaseFlags(cmd *cobra.Command) {
+	baseFlags := cmd.Flags()
+	baseFlags.StringVar(&o.Name, FLAG_NAME, "", "The name of the ob tenant")
+	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the ob tenant")
+	baseFlags.IntVar(&o.JobKeepDays, FLAG_JOB_KEEP_DAYS, DEFAULT_JOB_KEEP_DAYS, "The number of days to keep the backup job")
+	baseFlags.IntVar(&o.RecoveryDays, FLAG_RECOVERY_DAYS, DEFAULT_RECOVERY_DAYS, "The number of days to keep the backup recovery")
+	baseFlags.IntVar(&o.PieceIntervalDays, FLAG_PIECE_INTERVAL_DAYS, DEFAULT_PIECE_INTERVAL_DAYS, "The number of days to switch the backup piece")
+	baseFlags.StringVar(&o.Status, FLAG_STATUS, DEFAULT_STATUS, "The status of the backup policy, supporting RUNNING and PAUSED")
+}
+
+// AddScheduleFlags adds the schedule-related flags for the create command
+func (o *UpdateOptions) AddScheduleFlags(cmd *cobra.Command) {
+	scheduleFlags := pflag.NewFlagSet(FLAGSET_SCHEDULE, pflag.ContinueOnError)
+	scheduleFlags.StringVar(&o.IncrementalCrontab, FLAG_INCREMENTAL, "", "The incremental backup schedule, crontab format, e.g. 0 0 * * 1,2,3")
+	scheduleFlags.StringVar(&o.FullCrontab, FLAG_FULL, "", "The full backup schedule, crontab format, e.g. 0 0 * * 4,5")
+	cmd.Flags().AddFlagSet(scheduleFlags)
 }

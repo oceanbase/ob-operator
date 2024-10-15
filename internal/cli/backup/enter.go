@@ -32,6 +32,7 @@ const (
 	FLAG_SCHEDULE_TIME       = "schedule-time"
 	FLAG_INCREMENTAL         = "inc"
 	FLAG_FULL                = "full"
+	FLAG_STATUS              = "status"
 )
 
 // Default values for backup policy management
@@ -42,6 +43,7 @@ const (
 	DEFAULT_RECOVERY_DAYS       = 30
 	DEFAULT_PIECE_INTERVAL_DAYS = 1
 	DEFAULT_DEST_TYPE           = "NFS"
-	DEFAULT_SECHDULE_TYPE       = "weekly"
+	DEFAULT_SCHEDULE_TYPE       = "weekly"
 	DEFAULT_BACKUP_TYPE         = "full"
+	DEFAULT_STATUS              = "RUNNING"
 )
