@@ -319,8 +319,8 @@ func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 func (o *CreateOptions) AddObserverFlags(cmd *cobra.Command) {
 	observerFlags := pflag.NewFlagSet(FLAGSET_OBSERVER, pflag.ContinueOnError)
 	observerFlags.StringVar(&o.OBServer.Image, FLAG_OBSERVER_IMAGE, DEFAULT_OBSERVER_IMAGE, "The image of the observer")
-	observerFlags.Int64Var(&o.OBServer.Resource.Cpu, FLAG_OBSERVER_CPU, DEFAULT_CPU_NUM, "The cpu of the observer")
-	observerFlags.Int64Var(&o.OBServer.Resource.MemoryGB, FLAG_MONITOR_MEMORY, DEFAULT_MONITOR_MEMORY, "The memory of the observer")
+	observerFlags.Int64Var(&o.OBServer.Resource.Cpu, FLAG_OBSERVER_CPU, DEFAULT_OBSERVER_CPU, "The cpu of the observer")
+	observerFlags.Int64Var(&o.OBServer.Resource.MemoryGB, FLAG_OBSERVER_MEMORY, DEFAULT_OBSERVER_MEMORY, "The memory of the observer")
 	observerFlags.StringVar(&o.OBServer.Storage.Data.StorageClass, FLAG_DATA_STORAGE_CLASS, DEFAULT_DATA_STORAGE_CLASS, "The storage class of the data storage")
 	observerFlags.StringVar(&o.OBServer.Storage.RedoLog.StorageClass, FLAG_REDO_LOG_STORAGE_CLASS, DEFAULT_REDO_LOG_STORAGE_CLASS, "The storage class of the redo log storage")
 	observerFlags.StringVar(&o.OBServer.Storage.Log.StorageClass, FLAG_LOG_STORAGE_CLASS, DEFAULT_LOG_STORAGE_CLASS, "The storage class of the log storage")
@@ -350,6 +350,6 @@ func (o *CreateOptions) AddBackupVolumeFlags(cmd *cobra.Command) {
 // AddParameterFlags adds the parameter-related flags, e.g. __min_full_resource_pool_memory, to the command
 func (o *CreateOptions) AddParameterFlags(cmd *cobra.Command) {
 	parameterFlags := pflag.NewFlagSet(FLAGSET_PARAMETERS, pflag.ContinueOnError)
-	parameterFlags.StringToStringVar(&o.KvParameters, FLAG_PARAMETERS, map[string]string{"__min_full_resource_pool_memory": DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY, "system_memory": DEFAULT_SYSTEM_MEMORY}, "Other parameter settings in OBCluster, e.g., __min_full_resource_pool_memory")
+	parameterFlags.StringToStringVar(&o.KvParameters, FLAG_PARAMETERS, map[string]string{"__min_full_resource_pool_memory": DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY, "system_memory": DEFAULT_MIN_SYSTEM_MEMORY}, "Other parameter settings in OBCluster, e.g., __min_full_resource_pool_memory")
 	cmd.Flags().AddFlagSet(parameterFlags)
 }
