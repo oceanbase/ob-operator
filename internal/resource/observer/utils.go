@@ -664,7 +664,6 @@ func (m *OBServerManager) cleanWorkerK8sResource() error {
 	}
 
 	// delete pvc
-	m.getPVCs()
 	pvc := &corev1.PersistentVolumeClaim{}
 	if err := m.K8sResClient.DeleteAllOf(m.Ctx, pvc,
 		client.InNamespace(m.OBServer.Namespace),
