@@ -35,6 +35,11 @@ test-all: manifests generate fmt vet envtest ## Run all tests including long-run
 	go run github.com/onsi/ginkgo/v2/ginkgo -r --covermode=atomic --coverprofile=cover.profile --cpuprofile=cpu.profile --memprofile=mem.profile --cover \
 	--output-dir=testreports --keep-going --json-report=report.json --label-filter='$(CASE_LABEL_FILTERS)' --skip-package './distribution'
 
+.PHONY: test-webhooks
+test-webhooks: ## Test the webhooks
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" \
+	go run github.com/onsi/ginkgo/v2/ginkgo ./api/...
+
 REPORT_PORT ?= 8480
 
 .PHONY: unit-coverage
