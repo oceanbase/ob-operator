@@ -86,16 +86,14 @@ func (o *CreateOptions) Parse(cmd *cobra.Command, args []string) error {
 	o.Pools = pools
 	o.Name = args[0]
 	o.Cmd = cmd
-	// if `from` is specified, it is a standby tenant
+	o.TenantRole = string(apiconst.TenantRolePrimary)
 	if o.CheckIfFlagChanged("from") {
 		o.Source.Tenant = &o.From
-		o.TenantRole = string(apiconst.TenantRoleStandby)
-	} else {
-		o.TenantRole = string(apiconst.TenantRolePrimary)
-	}
-	// if `restore` is specified, it is a restore tenant, else it is a empty standby tenant
-	if !o.Restore {
-		o.Source.Restore = nil
+		// If flag `restore` is specified, restore a tenant, otherwise create an empty standby tenant.
+		if !o.Restore {
+			o.TenantRole = string(apiconst.TenantRoleStandby)
+			o.Source.Restore = nil
+		}
 	}
 	return nil
 }
