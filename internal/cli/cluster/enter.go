@@ -73,8 +73,6 @@ const (
 	DEFAULT_MONITOR_IMAGE          = "oceanbase/obagent:4.2.1-100000092023101717"
 	DEFAULT_MONITOR_CPU            = 1
 	DEFAULT_MONITOR_MEMORY         = 1
-	DEFAULT_BACKUP_ADDRESS         = "local-path"
-	DEFAULT_BACKUP_PATH            = "/opt/nfs"
 
 	// Default values for Parameter flag
 	DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY = "2147483648"

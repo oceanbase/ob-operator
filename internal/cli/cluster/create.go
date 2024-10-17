@@ -55,9 +55,10 @@ func NewCreateOptions() *CreateOptions {
 		OBServer: &param.OBServerSpec{
 			Storage: &param.OBServerStorageSpec{},
 		},
-		Parameters: make([]modelcommon.KVPair, 0),
-		Zones:      make(map[string]string),
-		Topology:   make([]param.ZoneTopology, 0),
+		BackupVolume: &param.NFSVolumeSpec{},
+		Parameters:   make([]modelcommon.KVPair, 0),
+		Zones:        make(map[string]string),
+		Topology:     make([]param.ZoneTopology, 0),
 	}
 }
 
@@ -75,13 +76,19 @@ func (o *CreateOptions) Validate() error {
 }
 
 func (o *CreateOptions) Parse(_ *cobra.Command, args []string) error {
+	// Parse the zone topology
 	topology, err := utils.MapZonesToTopology(o.Zones)
 	if err != nil {
 		return err
 	}
+	// Parse the parameters
 	parameters, err := utils.MapParameters(o.KvParameters)
 	if err != nil {
 		return err
+	}
+	// Parse the BackupVolume related flags
+	if o.BackupVolume.Address == "" || o.BackupVolume.Path == "" {
+		o.BackupVolume = nil
 	}
 	o.Parameters = parameters
 	o.Topology = topology
@@ -256,7 +263,7 @@ func buildMonitorTemplate(monitorSpec *param.MonitorSpec) *apitypes.MonitorTempl
 	return monitorTemplate
 }
 
-// Create an OBClusterInstance
+// CreateOBClusterInstance creates an OBClusterInstance
 func CreateOBClusterInstance(param *CreateOptions) *v1alpha1.OBCluster {
 	observerTemplate := buildOBServerTemplate(param.OBServer)
 	monitorTemplate := buildMonitorTemplate(param.Monitor)
@@ -296,6 +303,7 @@ func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 	o.AddObserverFlags(cmd)
 	o.AddZoneFlags(cmd)
 	o.AddParameterFlags(cmd)
+	o.AddBackupVolumeFlags(cmd)
 }
 
 // AddZoneFlags adds the zone-related flags to the command.
@@ -342,8 +350,8 @@ func (o *CreateOptions) AddMonitorFlags(cmd *cobra.Command) {
 // AddBackupVolumeFlags adds the backup-volume-related flags to the command.
 func (o *CreateOptions) AddBackupVolumeFlags(cmd *cobra.Command) {
 	backupVolumeFlags := pflag.NewFlagSet(FLAGSET_BACKUP_VOLUME, pflag.ContinueOnError)
-	backupVolumeFlags.StringVar(&o.BackupVolume.Address, FLAG_BACKUP_ADDRESS, DEFAULT_BACKUP_ADDRESS, "The storage class of the backup storage")
-	backupVolumeFlags.StringVar(&o.BackupVolume.Path, FLAG_BACKUP_PATH, DEFAULT_BACKUP_PATH, "The size of the backup storage")
+	backupVolumeFlags.StringVar(&o.BackupVolume.Address, FLAG_BACKUP_ADDRESS, "", "The storage class of the backup storage")
+	backupVolumeFlags.StringVar(&o.BackupVolume.Path, FLAG_BACKUP_PATH, "", "The size of the backup storage")
 	cmd.Flags().AddFlagSet(backupVolumeFlags)
 }
 
