@@ -18,21 +18,30 @@ const (
 	// Flagsets
 	FLAGSET_DAYS_FIELD = "days-field-flags"
 	FLAGSET_SCHEDULE   = "schedule-flags"
+	FLAGSET_ACCESS     = "access-flags"
 
-	// Flags
-	FLAG_NAMESPACE           = "namespace"
-	FLAG_NAME                = "name"
-	FLAG_SCHEDULE_TYPE       = "schedule-type"
-	FLAG_DEST_TYPE           = "dest-type"
-	FLAG_ARCHIVE_PATH        = "archive-path"
-	FLAG_BAK_DATA_PATH       = "bak-data-path"
+	// Base flags
+	FLAG_NAMESPACE     = "namespace"
+	FLAG_NAME          = "name"
+	FLAG_SCHEDULE_TYPE = "schedule-type"
+	FLAG_DEST_TYPE     = "dest-type"
+	FLAG_ARCHIVE_PATH  = "archive-path"
+	FLAG_BAK_DATA_PATH = "bak-data-path"
+	FLAG_STATUS        = "status"
+
+	// Day field flags
 	FLAG_JOB_KEEP_DAYS       = "job-keep-days"
 	FLAG_RECOVERY_DAYS       = "recovery-days"
 	FLAG_PIECE_INTERVAL_DAYS = "piece-interval-days"
 	FLAG_SCHEDULE_TIME       = "schedule-time"
-	FLAG_INCREMENTAL         = "inc"
-	FLAG_FULL                = "full"
-	FLAG_STATUS              = "status"
+
+	// Schedule flags
+	FLAG_INCREMENTAL = "inc"
+	FLAG_FULL        = "full"
+	// Access flags
+	FLAG_OSS_ACCESS_ID           = "oss-access-id"
+	FLAG_OSS_ACCESS_KEY          = "oss-access-key"
+	FLAG_BAK_ENCRYPTION_PASSWORD = "bak-encryption-password"
 )
 
 // Default values for backup policy management

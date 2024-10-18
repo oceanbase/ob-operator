@@ -14,9 +14,10 @@ See the Mulan PSL v2 for more details.
 package backup
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/oceanbase/ob-operator/internal/cli/backup"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
-	"github.com/spf13/cobra"
 )
 
 // NewPauseCmd pause backup policy of the ob tenant
@@ -33,7 +34,7 @@ func NewPauseCmd() *cobra.Command {
 			if err := backup.UpdateTenantBackupPolicy(cmd.Context(), &o.UpdateOptions); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Println("pause backup policy of the specified ob tenant")
+			logger.Printf("Pause backup policy for OBTenant %s successfully", o.Name)
 		},
 	}
 	o.AddFlags(cmd)

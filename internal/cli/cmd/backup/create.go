@@ -14,9 +14,10 @@ See the Mulan PSL v2 for more details.
 package backup
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/oceanbase/ob-operator/internal/cli/backup"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
-	"github.com/spf13/cobra"
 )
 
 // NewCreateCmd create an new backup policy
@@ -40,7 +41,7 @@ func NewCreateCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create Backup policy for OBTenant %s created successfully\n", obBackupPolicy.Name)
+			logger.Printf("Create Backup policy %s for OBTenant %s successfully\n", obBackupPolicy.Name, o.Name)
 		},
 	}
 	o.AddFlags(cmd)

@@ -18,12 +18,13 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/oceanbase/ob-operator/internal/cli/cmd/util"
-	"github.com/oceanbase/ob-operator/internal/cli/generic"
-	"github.com/oceanbase/ob-operator/internal/clients"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/generic"
+	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
 type UpdateOptions struct {
@@ -55,6 +56,9 @@ func UpdateTenantBackupPolicy(ctx context.Context, o *UpdateOptions) error {
 	policy, err := clients.GetTenantBackupPolicy(ctx, nn)
 	if err != nil {
 		return err
+	}
+	if policy == nil {
+		return errors.New("tenant backup policy not found")
 	}
 	if o.JobKeepDays != 0 {
 		policy.Spec.JobKeepWindow = numberToDay(o.JobKeepDays)

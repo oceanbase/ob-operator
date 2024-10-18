@@ -22,7 +22,7 @@ type PauseOptions struct {
 func NewPauseOptions() *PauseOptions {
 	return &PauseOptions{
 		UpdateOptions: UpdateOptions{
-			Status: "PAUSE",
+			Status: "PAUSED",
 		},
 	}
 }

@@ -18,9 +18,9 @@ import "github.com/spf13/cobra"
 // NewCmd is command for backup policy management
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "backup <subcommand>",
+		Use:   "backup-policy <subcommand>",
 		Short: "Command for backup policy management",
-		Long:  `Command for backup policy management, such as create, list, delete`,
+		Long:  `Command for backup policy management, such as create, list, delete, pause, resume, update`,
 	}
 	cmd.AddCommand(NewCreateCmd())
 	cmd.AddCommand(NewListCmd())

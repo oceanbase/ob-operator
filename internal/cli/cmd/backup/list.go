@@ -16,11 +16,12 @@ package backup
 import (
 	"sort"
 
+	"github.com/spf13/cobra"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/oceanbase/ob-operator/internal/cli/backup"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/clients"
-	"github.com/spf13/cobra"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // NewListCmd list all backup policies
@@ -44,9 +45,9 @@ func NewListCmd() *cobra.Command {
 				logger.Println("No backup policies found")
 				return
 			}
-			tbLog.Println("NAMESPACE \t POLICYNAME \t TENANTNAME \t JOBKEEP \t SUSPEND \t CREATETIME \t NEXTFULL \t NEXTINCREMENTAL \t STATUS")
-			for _, policy := range obBackupPolicyList.Items {
-				tbLog.Printf("%s \t %s \t %s \t %s \t %t \t %s \t %s \t %s \t %s\n", policy.Namespace, policy.Name, policy.Spec.TenantName, policy.Spec.JobKeepWindow, policy.Spec.Suspend, policy.CreationTimestamp, policy.Status.NextFull, policy.Status.NextIncremental, policy.Status.Status)
+			tbLog.Println("NAMESPACE \t POLICYNAME \t STATUS \t TENANTNAME \t NEXTFULL \t NEXTINCREMENTAL \t FULLCRONTAB \t INCREMENTALCRONTAB \t")
+			for _, obBackupPolicy := range obBackupPolicyList.Items {
+				tbLog.Printf("%s \t %s \t %s \t %s \t %s \t %s \t %s \t %s \n", obBackupPolicy.Namespace, obBackupPolicy.Name, obBackupPolicy.Status.Status, obBackupPolicy.Spec.TenantName, obBackupPolicy.Status.NextFull, obBackupPolicy.Status.NextIncremental, obBackupPolicy.Spec.DataBackup.FullCrontab, obBackupPolicy.Spec.DataBackup.IncrementalCrontab)
 			}
 			if err := tbw.Flush(); err != nil {
 				logger.Fatalln(err)

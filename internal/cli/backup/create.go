@@ -18,20 +18,32 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/robfig/cron/v3"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	corev1 "k8s.io/api/core/v1"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/rand"
+
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/generic"
 	"github.com/oceanbase/ob-operator/internal/clients"
-	"github.com/robfig/cron/v3"
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
 type CreateOptions struct {
 	generic.ResourceOption
+	BackupPolicyBase
+	OSSAccessID           string `json:"ossAccessId,omitempty" example:"encryptedPassword"`
+	OSSAccessKey          string `json:"ossAccessKey,omitempty" example:"encryptedPassword"`
+	BakEncryptionPassword string `json:"bakEncryptionPassword,omitempty" example:"encryptedPassword"`
+}
+type BackupPolicyBase struct {
 	DestType           string `json:"destType" binding:"required"`
 	ArchivePath        string `json:"archivePath" binding:"required"`
 	BakDataPath        string `json:"bakDataPath" binding:"required"`
@@ -41,6 +53,7 @@ type CreateOptions struct {
 	RecoveryDays       int    `json:"recoveryDays,omitempty" example:"3"`
 }
 
+// checkCrontabSyntax checks the syntax of the crontab
 func checkCrontabSyntax(crontab string) bool {
 	if _, err := cron.ParseStandard(crontab); err != nil {
 		return false
@@ -105,6 +118,48 @@ func CreateTenantBackupPolicy(ctx context.Context, o *CreateOptions) (*v1alpha1.
 	if err != nil {
 		return nil, err
 	}
+	if o.DestType == "OSS" && o.OSSAccessID != "" && o.OSSAccessKey != "" {
+		ossSecretName := nn.Name + "-backup-oss-secret-" + rand.String(6)
+		backupPolicy.Spec.LogArchive.Destination.OSSAccessSecret = ossSecretName
+		backupPolicy.Spec.DataBackup.Destination.OSSAccessSecret = ossSecretName
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      ossSecretName,
+				Namespace: nn.Namespace,
+			},
+			StringData: map[string]string{
+				"accessId":  o.OSSAccessID,
+				"accessKey": o.OSSAccessKey,
+			},
+		}
+		_, err := client.GetClient().ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, secret, metav1.CreateOptions{})
+		if err != nil {
+			return nil, err
+		}
+	}
+	if o.BakEncryptionPassword != "" {
+		encryptionSecretName := nn.Name + "-backup-encryption-secret-" + rand.String(6)
+		backupPolicy.Spec.DataBackup.EncryptionSecret = encryptionSecretName
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      encryptionSecretName,
+				Namespace: nn.Namespace,
+			},
+			StringData: map[string]string{
+				"password": o.BakEncryptionPassword,
+			},
+		}
+		_, err := client.GetClient().ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, secret, metav1.CreateOptions{})
+		if err != nil {
+			return nil, err
+		}
+	}
+	// set labels for backup policy
+	backupPolicy.Labels = map[string]string{
+		oceanbaseconst.LabelTenantName:      o.Name,
+		oceanbaseconst.LabelRefUID:          string(tenant.GetObjectMeta().GetUID()),
+		oceanbaseconst.LabelRefBackupPolicy: o.Name + "-backup-policy",
+	}
 	policy, err := clients.CreateTenantBackupPolicy(ctx, backupPolicy)
 	if err != nil {
 		return nil, err
@@ -152,6 +207,7 @@ func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 	o.AddBaseFlags(cmd)
 	o.AddDaysFieldFlags(cmd)
 	o.AddScheduleFlags(cmd)
+	o.AddAccessFlags(cmd)
 }
 
 // AddBaseFlags adds the base flags for the create command
@@ -178,4 +234,13 @@ func (o *CreateOptions) AddScheduleFlags(cmd *cobra.Command) {
 	scheduleFlags.StringVar(&o.IncrementalCrontab, FLAG_INCREMENTAL, "", "The incremental backup schedule, crontab format, e.g. 0 0 * * 1,2,3")
 	scheduleFlags.StringVar(&o.FullCrontab, FLAG_FULL, "", "The full backup schedule, crontab format, e.g. 0 0 * * 4,5")
 	cmd.Flags().AddFlagSet(scheduleFlags)
+}
+
+// AddAccessFlags adds the access-related flags for the create command
+func (o *CreateOptions) AddAccessFlags(cmd *cobra.Command) {
+	accessFlags := pflag.NewFlagSet(FLAGSET_ACCESS, pflag.ContinueOnError)
+	accessFlags.StringVar(&o.OSSAccessID, FLAG_OSS_ACCESS_ID, "", "The OSS access id for OSS destination")
+	accessFlags.StringVar(&o.OSSAccessKey, FLAG_OSS_ACCESS_KEY, "", "The OSS access key for OSS destination")
+	accessFlags.StringVar(&o.BakEncryptionPassword, FLAG_BAK_ENCRYPTION_PASSWORD, "", "The backup encryption password")
+	cmd.Flags().AddFlagSet(accessFlags)
 }

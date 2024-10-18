@@ -14,11 +14,12 @@ See the Mulan PSL v2 for more details.
 package backup
 
 import (
+	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/types"
+
 	"github.com/oceanbase/ob-operator/internal/cli/backup"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/clients"
-	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 // NewDeleteCmd delete backup policy
@@ -34,12 +35,12 @@ func NewDeleteCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			err := clients.DeleteTenantBackupPolicy(cmd.Context(), types.NamespacedName{
 				Namespace: o.Namespace,
-				Name:      o.Name,
+				Name:      o.Name + "-backup-policy",
 			})
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Delete backup policy for ob tenant %s successfully", o.Name)
+			logger.Printf("Delete backup policy for OBTenant %s successfully", o.Name)
 		},
 	}
 	o.AddFlags(cmd)
