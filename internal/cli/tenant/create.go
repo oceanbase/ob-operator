@@ -78,22 +78,22 @@ type CreateOptions struct {
 	Timestamp    string            `json:"timestamp"`
 }
 
-func (o *CreateOptions) Parse(_ *cobra.Command, args []string) error {
+func (o *CreateOptions) Parse(cmd *cobra.Command, args []string) error {
 	pools, err := utils.MapZonesToPools(o.ZonePriority)
 	if err != nil {
 		return err
 	}
 	o.Pools = pools
 	o.Name = args[0]
+	o.Cmd = cmd
+	o.TenantRole = string(apiconst.TenantRolePrimary)
 	if o.CheckIfFlagChanged("from") {
 		o.Source.Tenant = &o.From
-		o.TenantRole = string(apiconst.TenantRolePrimary)
-	} else {
-		o.TenantRole = string(apiconst.TenantRoleStandby)
-	}
-	// create empty standby tenant
-	if !o.Restore {
-		o.Source.Restore = nil
+		// If flag `restore` is specified, restore a tenant, otherwise create an empty standby tenant.
+		if !o.Restore {
+			o.TenantRole = string(apiconst.TenantRoleStandby)
+			o.Source.Restore = nil
+		}
 	}
 	return nil
 }
@@ -162,7 +162,7 @@ func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, 
 		if strings.Contains(*p.Source.Tenant, "/") {
 			splits := strings.Split(*p.Source.Tenant, "/")
 			if len(splits) != 2 {
-				return nil, oberr.NewBadRequest("invalid tenant name")
+				return nil, fmt.Errorf("invalid tenant name")
 			}
 			ns, tenantCR = splits[0], splits[1]
 		}
@@ -172,21 +172,21 @@ func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, 
 		})
 		if err != nil {
 			if kubeerrors.IsNotFound(err) {
-				return nil, oberr.NewBadRequest("primary tenant not found")
+				return nil, fmt.Errorf("primary tenant not found")
 			}
-			return nil, oberr.NewInternal(err.Error())
+			return nil, fmt.Errorf(err.Error())
 		}
 		if existing.Status.TenantRole != apiconst.TenantRolePrimary {
-			return nil, oberr.NewBadRequest("the target tenant is not primary tenant")
+			return nil, fmt.Errorf("the target tenant is not primary tenant")
 		}
 		// Match root password
 		rootSecret, err := k8sclient.ClientSet.CoreV1().Secrets(existing.Namespace).Get(ctx, existing.Status.Credentials.Root, v1.GetOptions{})
 		if err != nil {
-			return nil, oberr.NewInternal(err.Error())
+			return nil, fmt.Errorf(err.Error())
 		}
 		if pwd, ok := rootSecret.Data["password"]; ok {
 			if p.RootPassword != string(pwd) {
-				return nil, oberr.NewBadRequest("root password not match")
+				return nil, fmt.Errorf("root password not match")
 			}
 			if t.Spec.Credentials.Root != "" {
 				err = createPasswordSecret(ctx, types.NamespacedName{
@@ -194,7 +194,7 @@ func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, 
 					Name:      t.Spec.Credentials.Root,
 				}, p.RootPassword)
 				if err != nil {
-					return nil, oberr.NewInternal(err.Error())
+					return nil, fmt.Errorf(err.Error())
 				}
 			}
 		}
@@ -414,8 +414,8 @@ func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags.StringVarP(&o.TenantName, FLAG_TENANT_NAME, "n", "", "Tenant name, if not specified, use name in k8s instead")
 	baseFlags.StringVar(&o.ClusterName, FLAG_CLUSTER_NAME, "", "The cluster name tenant belonged to in k8s")
 	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the tenant")
-	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOTPASSWD, "p", "", "The root password of the cluster")
-	baseFlags.StringVar(&o.Charset, FLAG_CHARSET, DEFAULT_CHARSET, "The charset using in ob tenant")
+	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOTPASSWD, "p", "", "The root password of the primary tenant, if not specified, generate a random password")
+	baseFlags.StringVarP(&o.Charset, FLAG_CHARSET, "c", DEFAULT_CHARSET, "The charset using in ob tenant")
 	baseFlags.StringVar(&o.ConnectWhiteList, FLAG_CONNECT_WHITE_LIST, DEFAULT_CONNECT_WHITE_LIST, "The connect white list using in ob tenant")
 	baseFlags.StringVar(&o.From, FLAG_FROM, "", "restore from data source")
 }

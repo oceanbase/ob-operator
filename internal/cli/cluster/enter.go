@@ -61,8 +61,7 @@ const (
 	// Default values for int and string flags
 	DEFAULT_NAMESPACE              = "default"
 	DEFAULT_ID                     = 0
-	DEFAULT_CPU_NUM                = 2
-	DEFAULT_OBSERVER_IMAGE         = "oceanbase/oceanbase-cloud-native:4.2.1.6-106000012024042515"
+	DEFAULT_OBSERVER_IMAGE         = "quay.io/oceanbase/oceanbase-cloud-native:4.2.1.6-106000012024042515"
 	DEFAULT_OBSERVER_CPU           = 2
 	DEFAULT_OBSERVER_MEMORY        = 10
 	DEFAULT_DATA_STORAGE_CLASS     = "local-path"
@@ -74,10 +73,8 @@ const (
 	DEFAULT_MONITOR_IMAGE          = "oceanbase/obagent:4.2.1-100000092023101717"
 	DEFAULT_MONITOR_CPU            = 1
 	DEFAULT_MONITOR_MEMORY         = 1
-	DEFAULT_BACKUP_ADDRESS         = "local-path"
-	DEFAULT_BACKUP_PATH            = "/opt/nfs"
 
 	// Default values for Parameter flag
 	DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY = "2147483648"
-	DEFAULT_SYSTEM_MEMORY                 = "1G"
+	DEFAULT_MIN_SYSTEM_MEMORY             = "1G"
 )

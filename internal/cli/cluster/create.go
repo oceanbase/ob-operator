@@ -55,9 +55,10 @@ func NewCreateOptions() *CreateOptions {
 		OBServer: &param.OBServerSpec{
 			Storage: &param.OBServerStorageSpec{},
 		},
-		Parameters: make([]modelcommon.KVPair, 0),
-		Zones:      make(map[string]string),
-		Topology:   make([]param.ZoneTopology, 0),
+		BackupVolume: &param.NFSVolumeSpec{},
+		Parameters:   make([]modelcommon.KVPair, 0),
+		Zones:        make(map[string]string),
+		Topology:     make([]param.ZoneTopology, 0),
 	}
 }
 
@@ -75,13 +76,19 @@ func (o *CreateOptions) Validate() error {
 }
 
 func (o *CreateOptions) Parse(_ *cobra.Command, args []string) error {
+	// Parse the zone topology
 	topology, err := utils.MapZonesToTopology(o.Zones)
 	if err != nil {
 		return err
 	}
+	// Parse the parameters
 	parameters, err := utils.MapParameters(o.KvParameters)
 	if err != nil {
 		return err
+	}
+	// Parse the BackupVolume related flags
+	if o.BackupVolume.Address == "" || o.BackupVolume.Path == "" {
+		o.BackupVolume = nil
 	}
 	o.Parameters = parameters
 	o.Topology = topology
@@ -256,7 +263,7 @@ func buildMonitorTemplate(monitorSpec *param.MonitorSpec) *apitypes.MonitorTempl
 	return monitorTemplate
 }
 
-// Create an OBClusterInstance
+// CreateOBClusterInstance creates an OBClusterInstance
 func CreateOBClusterInstance(param *CreateOptions) *v1alpha1.OBCluster {
 	observerTemplate := buildOBServerTemplate(param.OBServer)
 	monitorTemplate := buildMonitorTemplate(param.Monitor)
@@ -296,6 +303,7 @@ func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 	o.AddObserverFlags(cmd)
 	o.AddZoneFlags(cmd)
 	o.AddParameterFlags(cmd)
+	o.AddBackupVolumeFlags(cmd)
 }
 
 // AddZoneFlags adds the zone-related flags to the command.
@@ -319,8 +327,8 @@ func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 func (o *CreateOptions) AddObserverFlags(cmd *cobra.Command) {
 	observerFlags := pflag.NewFlagSet(FLAGSET_OBSERVER, pflag.ContinueOnError)
 	observerFlags.StringVar(&o.OBServer.Image, FLAG_OBSERVER_IMAGE, DEFAULT_OBSERVER_IMAGE, "The image of the observer")
-	observerFlags.Int64Var(&o.OBServer.Resource.Cpu, FLAG_OBSERVER_CPU, DEFAULT_CPU_NUM, "The cpu of the observer")
-	observerFlags.Int64Var(&o.OBServer.Resource.MemoryGB, FLAG_MONITOR_MEMORY, DEFAULT_MONITOR_MEMORY, "The memory of the observer")
+	observerFlags.Int64Var(&o.OBServer.Resource.Cpu, FLAG_OBSERVER_CPU, DEFAULT_OBSERVER_CPU, "The cpu of the observer")
+	observerFlags.Int64Var(&o.OBServer.Resource.MemoryGB, FLAG_OBSERVER_MEMORY, DEFAULT_OBSERVER_MEMORY, "The memory of the observer")
 	observerFlags.StringVar(&o.OBServer.Storage.Data.StorageClass, FLAG_DATA_STORAGE_CLASS, DEFAULT_DATA_STORAGE_CLASS, "The storage class of the data storage")
 	observerFlags.StringVar(&o.OBServer.Storage.RedoLog.StorageClass, FLAG_REDO_LOG_STORAGE_CLASS, DEFAULT_REDO_LOG_STORAGE_CLASS, "The storage class of the redo log storage")
 	observerFlags.StringVar(&o.OBServer.Storage.Log.StorageClass, FLAG_LOG_STORAGE_CLASS, DEFAULT_LOG_STORAGE_CLASS, "The storage class of the log storage")
@@ -342,14 +350,14 @@ func (o *CreateOptions) AddMonitorFlags(cmd *cobra.Command) {
 // AddBackupVolumeFlags adds the backup-volume-related flags to the command.
 func (o *CreateOptions) AddBackupVolumeFlags(cmd *cobra.Command) {
 	backupVolumeFlags := pflag.NewFlagSet(FLAGSET_BACKUP_VOLUME, pflag.ContinueOnError)
-	backupVolumeFlags.StringVar(&o.BackupVolume.Address, FLAG_BACKUP_ADDRESS, DEFAULT_BACKUP_ADDRESS, "The storage class of the backup storage")
-	backupVolumeFlags.StringVar(&o.BackupVolume.Path, FLAG_BACKUP_PATH, DEFAULT_BACKUP_PATH, "The size of the backup storage")
+	backupVolumeFlags.StringVar(&o.BackupVolume.Address, FLAG_BACKUP_ADDRESS, "", "The storage class of the backup storage")
+	backupVolumeFlags.StringVar(&o.BackupVolume.Path, FLAG_BACKUP_PATH, "", "The size of the backup storage")
 	cmd.Flags().AddFlagSet(backupVolumeFlags)
 }
 
 // AddParameterFlags adds the parameter-related flags, e.g. __min_full_resource_pool_memory, to the command
 func (o *CreateOptions) AddParameterFlags(cmd *cobra.Command) {
 	parameterFlags := pflag.NewFlagSet(FLAGSET_PARAMETERS, pflag.ContinueOnError)
-	parameterFlags.StringToStringVar(&o.KvParameters, FLAG_PARAMETERS, map[string]string{"__min_full_resource_pool_memory": DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY, "system_memory": DEFAULT_SYSTEM_MEMORY}, "Other parameter settings in OBCluster, e.g., __min_full_resource_pool_memory")
+	parameterFlags.StringToStringVar(&o.KvParameters, FLAG_PARAMETERS, map[string]string{"__min_full_resource_pool_memory": DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY, "system_memory": DEFAULT_MIN_SYSTEM_MEMORY}, "Other parameter settings in OBCluster, e.g., __min_full_resource_pool_memory")
 	cmd.Flags().AddFlagSet(parameterFlags)
 }
