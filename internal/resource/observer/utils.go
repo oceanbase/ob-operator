@@ -663,6 +663,11 @@ func (m *OBServerManager) cleanWorkerK8sResource() error {
 		}
 	}
 
+	if val, exist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsIndependentPVCLifecycle); exist && val == "true" {
+		m.Logger.Info("Independent PVC lifecycle, skip deleting pvc")
+		return errs
+	}
+
 	// delete pvc
 	pvc := &corev1.PersistentVolumeClaim{}
 	if err := m.K8sResClient.DeleteAllOf(m.Ctx, pvc,
