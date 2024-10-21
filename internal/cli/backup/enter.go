@@ -38,10 +38,14 @@ const (
 	// Schedule flags
 	FLAG_INCREMENTAL = "inc"
 	FLAG_FULL        = "full"
+
 	// Access flags
 	FLAG_OSS_ACCESS_ID           = "oss-access-id"
 	FLAG_OSS_ACCESS_KEY          = "oss-access-key"
 	FLAG_BAK_ENCRYPTION_PASSWORD = "bak-encryption-password"
+
+	// Force flag
+	FLAG_FORCE = "force"
 )
 
 // Default values for backup policy management
@@ -55,4 +59,5 @@ const (
 	DEFAULT_SCHEDULE_TYPE       = "weekly"
 	DEFAULT_BACKUP_TYPE         = "full"
 	DEFAULT_STATUS              = "RUNNING"
+	DEFAULT_FORCE               = false
 )

@@ -75,21 +75,18 @@ func buildBackupPolicyApiType(nn types.NamespacedName, obcluster string, p *Crea
 		JobKeepWindow: numberToDay(p.JobKeepDays),
 		LogArchive: v1alpha1.LogArchiveConfig{
 			Destination: apitypes.BackupDestination{
-				Path:            p.ArchivePath,
-				Type:            apitypes.BackupDestType(p.DestType),
-				OSSAccessSecret: "",
+				Path: p.ArchivePath,
+				Type: apitypes.BackupDestType(p.DestType),
 			},
 			SwitchPieceInterval: "1d",
 		},
 		DataBackup: v1alpha1.DataBackupConfig{
 			Destination: apitypes.BackupDestination{
-				Path:            p.BakDataPath,
-				Type:            apitypes.BackupDestType(p.DestType),
-				OSSAccessSecret: "",
+				Path: p.BakDataPath,
+				Type: apitypes.BackupDestType(p.DestType),
 			},
 			FullCrontab:        p.FullCrontab,
 			IncrementalCrontab: p.IncrementalCrontab,
-			EncryptionSecret:   "",
 		},
 		DataClean: v1alpha1.CleanPolicy{
 			RecoveryWindow: numberToDay(p.RecoveryDays),
@@ -113,6 +110,10 @@ func CreateTenantBackupPolicy(ctx context.Context, o *CreateOptions) (*v1alpha1.
 	// check tenant status
 	if err := util.CheckTenantStatus(tenant); err != nil {
 		return nil, err
+	}
+	// Check if backup policy already exists
+	if backupPolicy, _ := clients.GetTenantBackupPolicy(ctx, nn); backupPolicy != nil {
+		return nil, errors.New("Backup policy already exists")
 	}
 	backupPolicy, err := buildBackupPolicyApiType(nn, tenant.Spec.ClusterName, o)
 	if err != nil {
@@ -154,11 +155,17 @@ func CreateTenantBackupPolicy(ctx context.Context, o *CreateOptions) (*v1alpha1.
 			return nil, err
 		}
 	}
+	blockOwnerDeletion := true
+	backupPolicy.SetOwnerReferences([]metav1.OwnerReference{{
+		APIVersion:         tenant.APIVersion,
+		Kind:               tenant.Kind,
+		Name:               tenant.GetObjectMeta().GetName(),
+		UID:                tenant.GetObjectMeta().GetUID(),
+		BlockOwnerDeletion: &blockOwnerDeletion,
+	}})
 	// set labels for backup policy
 	backupPolicy.Labels = map[string]string{
-		oceanbaseconst.LabelTenantName:      o.Name,
-		oceanbaseconst.LabelRefUID:          string(tenant.GetObjectMeta().GetUID()),
-		oceanbaseconst.LabelRefBackupPolicy: o.Name + "-backup-policy",
+		oceanbaseconst.LabelRefOBServer: string(tenant.Spec.ClusterName),
 	}
 	policy, err := clients.CreateTenantBackupPolicy(ctx, backupPolicy)
 	if err != nil {
