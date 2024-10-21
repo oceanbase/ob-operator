@@ -17,12 +17,13 @@ import (
 	"context"
 	"strings"
 
+	"github.com/spf13/cobra"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/cli/generic"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
-	"github.com/spf13/cobra"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type ShowOptions struct {
