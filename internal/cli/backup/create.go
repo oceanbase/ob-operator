@@ -107,7 +107,7 @@ func CreateTenantBackupPolicy(ctx context.Context, o *CreateOptions) (*v1alpha1.
 		}
 		return nil, err
 	}
-	// check tenant status
+	// Check tenant status
 	if err := util.CheckTenantStatus(tenant); err != nil {
 		return nil, err
 	}
@@ -155,6 +155,7 @@ func CreateTenantBackupPolicy(ctx context.Context, o *CreateOptions) (*v1alpha1.
 			return nil, err
 		}
 	}
+	// Set OwnerReference for backup policy
 	blockOwnerDeletion := true
 	backupPolicy.SetOwnerReferences([]metav1.OwnerReference{{
 		APIVersion:         tenant.APIVersion,
@@ -163,9 +164,11 @@ func CreateTenantBackupPolicy(ctx context.Context, o *CreateOptions) (*v1alpha1.
 		UID:                tenant.GetObjectMeta().GetUID(),
 		BlockOwnerDeletion: &blockOwnerDeletion,
 	}})
-	// set labels for backup policy
+	// Set labels for backup policy
 	backupPolicy.Labels = map[string]string{
-		oceanbaseconst.LabelRefOBServer: string(tenant.Spec.ClusterName),
+		oceanbaseconst.LabelRefOBCluster: string(tenant.Spec.ClusterName),
+		oceanbaseconst.LabelTenantName:   o.Name,
+		oceanbaseconst.LabelRefUID:       string(tenant.GetObjectMeta().GetUID()),
 	}
 	policy, err := clients.CreateTenantBackupPolicy(ctx, backupPolicy)
 	if err != nil {
