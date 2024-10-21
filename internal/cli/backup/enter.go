@@ -46,6 +46,10 @@ const (
 
 	// Force flag
 	FLAG_FORCE = "force"
+	// Job type flag for show command
+	FLAG_JOB_TYPE = "job-type"
+	// Limit flag for show command
+	FLAG_LIMIT = "limit"
 )
 
 // Default values for backup policy management
@@ -60,4 +64,6 @@ const (
 	DEFAULT_BACKUP_TYPE         = "full"
 	DEFAULT_STATUS              = "RUNNING"
 	DEFAULT_FORCE               = false
+	DEFAULT_JOBTYPE             = "ALL"
+	DEFAULT_LIMIT               = 0
 )
