@@ -62,8 +62,8 @@ func NewShowCmd() *cobra.Command {
 				})
 			}
 			for _, job := range backupJobList.Items {
-				tbLog.Println("JOBNAME \t STATUS \t STARTTIME \t ENDTIME \t")
-				tbLog.Printf("%s \t %s \t %s \t %s \n", job.Name, job.Status.Status, job.Status.StartedAt, job.Status.EndedAt)
+				tbLog.Println("JOBNAME \t STATUS \t TYPE \t STARTAT \t ENDAT \t")
+				tbLog.Printf("%s \t %s \t %s \t %s \t %s \n", job.Name, job.Status.Status, job.Spec.Type, job.Status.StartedAt, job.Status.EndedAt)
 			}
 			if err = tbw.Flush(); err != nil {
 				logger.Fatalln(err)
