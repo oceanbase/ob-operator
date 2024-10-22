@@ -11,23 +11,23 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package tenant
+package backup
 
-import (
-	"github.com/spf13/cobra"
+import "github.com/spf13/cobra"
 
-	"github.com/oceanbase/ob-operator/internal/cli/generic"
-)
-
-type ListOptions struct {
-	generic.ResourceOption
-	ClusterName string
+type PauseOptions struct {
+	UpdateOptions
 }
 
-func NewListOptions() *ListOptions {
-	return &ListOptions{}
+func NewPauseOptions() *PauseOptions {
+	return &PauseOptions{
+		UpdateOptions: UpdateOptions{
+			Status: "PAUSED",
+		},
+	}
 }
 
-func (o *ListOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace tenant belonged to in k8s, if not set, use the default namespace")
+func (o *PauseOptions) AddFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&o.Name, FLAG_NAME, "", "The name of the tenant")
+	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the tenant")
 }
