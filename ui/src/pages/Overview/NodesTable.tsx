@@ -59,7 +59,9 @@ const columns: ColumnsType<DataType> = [
     dataIndex: 'roles',
     key: 'roles',
     width: 120,
-    render: (val) => <CustomTooltip text={val} width={100} />,
+    render: (val) => {
+      return val.length !== 0 ? <CustomTooltip text={val} width={100} /> : '-';
+    },
   },
   {
     title: intl.formatMessage({
@@ -96,6 +98,7 @@ const columns: ColumnsType<DataType> = [
     dataIndex: 'externalIP',
     key: 'externalIP',
     width: 120,
+    render: (text) => <span>{text || '-'}</span>,
   },
   {
     title: intl.formatMessage({
