@@ -107,6 +107,7 @@ const columns: ColumnsType<DataType> = [
     dataIndex: 'reason',
     key: 'reason',
     width: 160,
+    render: (text) => <span>{text || '-'}</span>,
   },
   {
     title: intl.formatMessage({
