@@ -228,6 +228,9 @@ export default function ConfigDrawer({
                   <Col span={12}>
                     <CustomFormItem name={[name, 'key']}>
                       <Select
+                        showSearch
+                        allowClear
+                        optionFilterProp="selectLabel"
                         placeholder={intl.formatMessage({
                           id: 'src.pages.OBProxy.Detail.Overview.8A75D872',
                           defaultMessage: '请选择',
