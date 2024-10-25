@@ -210,6 +210,8 @@ var _ = AfterSuite(func() {
 	By("Clean auxiliary resources")
 	cancel()
 	By("tearing down the test environment")
-	err := testEnv.Stop()
-	Expect(err).NotTo(HaveOccurred())
+	if testEnv != nil {
+		err := testEnv.Stop()
+		Expect(err).NotTo(HaveOccurred())
+	}
 })

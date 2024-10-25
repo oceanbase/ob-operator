@@ -11,13 +11,13 @@ This folder contains configuration files to deploy OceanBase and OpenStack on Ku
 1. Deploy cert-manager
 Deploy the cert-manager using the following command. Ensure all pods are running before proceeding to the next step:
 ```
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.2_release/deploy/cert-manager.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.0_release/deploy/cert-manager.yaml
 
 ```
 2. deploy ob-operator
 Deploy the ob-operator using the command below. Wait until all pods are running:
 ```
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.2_release/deploy/cert-manager.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.0_release/deploy/cert-manager.yaml
 ```
 3. create secret
 Create secret using the following command

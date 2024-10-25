@@ -141,7 +141,7 @@ func (m *OBServerManager) setRecoveryStatus() {
 
 func (m *OBServerManager) getPVCs() (*corev1.PersistentVolumeClaimList, error) {
 	pvcs := &corev1.PersistentVolumeClaimList{}
-	err := m.K8sResClient.List(m.Ctx, pvcs, client.InNamespace(m.OBServer.Namespace), client.MatchingLabels{oceanbaseconst.LabelRefUID: m.OBServer.Labels[oceanbaseconst.LabelRefUID]})
+	err := m.K8sResClient.List(m.Ctx, pvcs, client.InNamespace(m.OBServer.Namespace), client.MatchingLabels{oceanbaseconst.LabelRefUID: string(m.OBServer.UID)})
 	if err != nil {
 		return nil, errors.Wrap(err, "list pvc")
 	}
@@ -663,11 +663,16 @@ func (m *OBServerManager) cleanWorkerK8sResource() error {
 		}
 	}
 
+	if val, exist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsIndependentPVCLifecycle); exist && val == "true" {
+		m.Logger.Info("Independent PVC lifecycle, skip deleting pvc")
+		return errs
+	}
+
 	// delete pvc
 	pvc := &corev1.PersistentVolumeClaim{}
 	if err := m.K8sResClient.DeleteAllOf(m.Ctx, pvc,
 		client.InNamespace(m.OBServer.Namespace),
-		client.MatchingLabels{oceanbaseconst.LabelRefUID: m.OBServer.Labels[oceanbaseconst.LabelRefUID]},
+		client.MatchingLabels{oceanbaseconst.LabelRefUID: string(m.OBServer.UID)},
 	); err != nil {
 		errs = stderrs.Join(errs, errors.Wrap(err, "Failed to delete pvc"))
 	}

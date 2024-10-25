@@ -29,6 +29,5 @@ func NewListOptions() *ListOptions {
 }
 
 func (o *ListOptions) AddFlags(cmd *cobra.Command) {
-	// These flags are used for further list options, but not used yet.
-	cmd.Flags().StringVar(&o.ClusterName, FLAG_CLUSTER_NAME, "", "The cluster name tenant belonged to in k8s")
+	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace tenant belonged to in k8s, if not set, use the default namespace")
 }
