@@ -1,6 +1,7 @@
 import IconTip from '@/components/IconTip';
-import { OBPROXY_COLOR_MAP } from '@/constants';
+import { OBPROXY_STATUS_LIST } from '@/constants';
 import { intl } from '@/utils/intl';
+import { findByValue } from '@oceanbase/util';
 import { Card, Descriptions, Tag } from 'antd';
 
 interface BasicInfoProps {
@@ -25,6 +26,7 @@ export default function BasicInfo({
   status,
   style,
 }: BasicInfoProps) {
+  const statusItem = findByValue(OBPROXY_STATUS_LIST, status);
   return (
     <Card
       style={style}
@@ -93,7 +95,7 @@ export default function BasicInfo({
           })}
         >
           {status ? (
-            <Tag color={OBPROXY_COLOR_MAP.get(status)}>{status}</Tag>
+            <Tag color={statusItem.badgeStatus}>{statusItem.label}</Tag>
           ) : (
             '-'
           )}

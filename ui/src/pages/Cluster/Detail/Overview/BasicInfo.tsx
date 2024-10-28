@@ -1,9 +1,9 @@
-import { COLOR_MAP, MODE_MAP } from '@/constants';
+import { MODE_MAP, STATUS_LIST } from '@/constants';
 import { floorToTwoDecimalPlaces } from '@/utils/helper';
 import { intl } from '@/utils/intl';
+import { findByValue } from '@oceanbase/util';
 import { Card, Descriptions, Switch, Tag, Typography } from 'antd';
 import { useState } from 'react';
-
 import styles from './index.less';
 
 const { Text } = Typography;
@@ -86,6 +86,9 @@ export default function BasicInfo({
       ]
     : [];
 
+  const statusItem = findByValue(STATUS_LIST, status);
+  const statusDetailItem = findByValue(STATUS_LIST, statusDetail);
+
   return (
     <Card
       style={style}
@@ -143,16 +146,16 @@ export default function BasicInfo({
             defaultMessage: '集群状态',
           })}
         >
-          <Tag color={COLOR_MAP.get(status)}>
-            {status === 'operating' ? (
+          <Tag color={statusItem.badgeStatus}>
+            {statusItem === 'operating' ? (
               <Text
-                style={{ maxWidth: 120, color: '#d48806', fontSize: 12 }}
+                style={{ maxWidth: 110, color: '#d48806', fontSize: 12 }}
                 ellipsis={{ tooltip: `${status}/${statusDetail}` }}
               >
-                {status}/{statusDetail}
+                {statusItem.label}/{statusDetailItem.label}
               </Text>
             ) : (
-              status
+              statusItem.label
             )}
           </Tag>
         </Descriptions.Item>

@@ -15,17 +15,7 @@ import type { DefaultOptionType, SelectProps } from 'antd/es/select';
 
 //Unify status constants and colors
 const STATUS = ['running', 'deleting', 'operating'];
-const COLOR_MAP = new Map([
-  ['running', 'geekblue'],
-  ['deleting', 'volcano'],
-  ['operating', 'gold'],
-  ['creating', 'blue'],
-  ['failed', 'red'],
-]);
-const OBPROXY_COLOR_MAP = new Map([
-  ['Running', 'geekblue'],
-  ['Pending', 'gold'],
-]);
+
 const CLUSTER_IMG_MAP = new Map([
   ['running', clusterRunning],
   ['deleting', clusterOperating],
@@ -350,7 +340,6 @@ export {
   CHECK_STORAGE_INTERVAL,
   CLUSTER_IMG_MAP,
   CLUSTER_INFO_CONFIG,
-  COLOR_MAP,
   DEFAULT_QUERY_RANGE,
   LABELNAME_REG,
   LEVER_OPTIONS_ALARM,
@@ -359,7 +348,6 @@ export {
   MIN_RESOURCE_CONFIG,
   MODE_MAP,
   OBJECT_OPTIONS_ALARM,
-  OBPROXY_COLOR_MAP,
   POINT_NUMBER,
   REFRESH_CLUSTER_TIME,
   REFRESH_FREQUENCY,
@@ -379,3 +367,109 @@ export {
   ZONE_IMG_MAP,
   getMinResource,
 };
+
+export const STATUS_LIST = [
+  {
+    label: intl.formatMessage({
+      id: 'src.constants.NormalOperation',
+      defaultMessage: '正常运行',
+    }),
+    value: 'running',
+    badgeStatus: 'geekblue',
+  },
+
+  {
+    label: intl.formatMessage({
+      id: 'src.constants.Creating',
+      defaultMessage: '创建中',
+    }),
+
+    value: 'creating',
+    badgeStatus: 'processing',
+  },
+
+  {
+    label: intl.formatMessage({
+      id: 'src.constants.Deleting',
+      defaultMessage: '删除中',
+    }),
+
+    value: 'deleting',
+    badgeStatus: 'volcano',
+  },
+
+  {
+    label: intl.formatMessage({
+      id: 'src.constants.Unavailable',
+      defaultMessage: '不可用',
+    }),
+
+    value: 'failed',
+    badgeStatus: 'error',
+  },
+
+  {
+    label: intl.formatMessage({
+      id: 'osrc.constants.Recovering',
+      defaultMessage: '运维中',
+    }),
+    value: 'operating',
+    badgeStatus: 'gold',
+  },
+];
+
+export const OBPROXY_STATUS_LIST = [
+  {
+    label: intl.formatMessage({
+      id: 'src.constants.NormalOperation',
+      defaultMessage: '正常运行',
+    }),
+    value: 'Running',
+    badgeStatus: 'geekblue',
+  },
+  {
+    label: intl.formatMessage({
+      id: 'src.constants.Pending',
+      defaultMessage: '等待中',
+    }),
+    value: 'Pending',
+    badgeStatus: 'gold',
+  },
+];
+
+export const NODESTABLE_STATUS_LIST = [
+  {
+    label: intl.formatMessage({
+      id: 'src.constants.NormalOperation',
+      defaultMessage: '正常运行',
+    }),
+    value: 'ready',
+    badgeStatus: 'success',
+  },
+  {
+    label: intl.formatMessage({
+      id: 'src.constants.Warning',
+      defaultMessage: '警告',
+    }),
+    value: 'not ready',
+    badgeStatus: 'warning',
+  },
+];
+export const EVENTSTABLE_STATUS_LIST = [
+  {
+    label: intl.formatMessage({
+      id: 'src.constants.NormalOperation',
+      defaultMessage: '正常运行',
+    }),
+    value: 'Normal',
+    badgeStatus: 'default',
+  },
+  {
+    label: intl.formatMessage({
+      id: 'src.constants.Warning',
+      defaultMessage: '警告',
+    }),
+    value: 'Warning',
+    badgeStatus: 'warning',
+  },
+];
