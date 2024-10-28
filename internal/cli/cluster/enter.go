@@ -23,11 +23,12 @@ const (
 	FLAGSET_PARAMETERS    = "parameters"
 
 	// Flags for all the commands in cluster management
-	FLAG_CLUSTER_NAME = "cluster-name"
-	FLAG_NAMESPACE    = "namespace"
-	FLAG_CLUSTER_ID   = "id"
-	FLAG_ROOTPASSWD   = "root-password"
-	FLAG_MODE         = "mode"
+	FLAG_CLUSTER_NAME  = "cluster-name"
+	FLAG_NAMESPACE     = "namespace"
+	FLAG_CLUSTER_ID    = "id"
+	FLAG_ROOT_PASSWORD = "root-password"
+	FLAG_MODE          = "mode"
+	FLAG_NAME          = "name"
 
 	// Flags for zone-related options
 	FLAG_ZONES = "zones"
@@ -53,7 +54,9 @@ const (
 	FLAG_BACKUP_PATH    = "backup-storage-path"
 
 	// Flags for parameter-related options
-	FLAG_PARAMETERS = "parameters"
+	FLAG_PARAMETERS                    = "parameters"
+	FLAG_MIN_FULL_RESOURCE_POOL_MEMORY = "min-full-resource-pool-memory"
+	FLAG_SYSTEM_MEMORY                 = "system-memory"
 )
 
 // Default values for cluster management
@@ -73,8 +76,16 @@ const (
 	DEFAULT_MONITOR_IMAGE          = "oceanbase/obagent:4.2.1-100000092023101717"
 	DEFAULT_MONITOR_CPU            = 1
 	DEFAULT_MONITOR_MEMORY         = 1
+	DEFAULT_NAME                   = "test"
+	DEFAULT_NAME                   = "test"
 
 	// Default values for Parameter flag
 	DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY = "2147483648"
-	DEFAULT_MIN_SYSTEM_MEMORY             = "1G"
+	DEFAULT_SYSTEM_MEMORY                 = "1G"
+)
+
+// Default cluster type for easier cluster creation
+const (
+	SINGLE_NODE = "single-node"
+	THREE_NODE  = "three-node"
 )

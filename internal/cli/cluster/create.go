@@ -297,6 +297,76 @@ func CreateOBClusterInstance(param *CreateOptions) *v1alpha1.OBCluster {
 	return obcluster
 }
 
+func (o *CreateOptions) SetDefaultConfig(clusterType string) error {
+	if o.BackupVolume.Address == "" || o.BackupVolume.Path == "" {
+		o.BackupVolume = nil
+	}
+	if clusterType == SINGLE_NODE {
+		o.Topology = []param.ZoneTopology{
+			{
+				Zone:     "z1",
+				Replicas: 1,
+			},
+		}
+	} else if clusterType == THREE_NODE {
+		o.Topology = []param.ZoneTopology{
+			{
+				Zone:     "z1",
+				Replicas: 1,
+			},
+			{
+				Zone:     "z2",
+				Replicas: 1,
+			},
+			{
+				Zone:     "z3",
+				Replicas: 1,
+			},
+		}
+	} else {
+		return fmt.Errorf("invalid cluster type: %s", clusterType)
+	}
+	o.Parameters = []modelcommon.KVPair{
+		{
+			Key:   FLAG_MIN_FULL_RESOURCE_POOL_MEMORY,
+			Value: DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY,
+		},
+		{
+			Key:   FLAG_SYSTEM_MEMORY,
+			Value: DEFAULT_SYSTEM_MEMORY,
+		},
+	}
+	o.OBServer = &param.OBServerSpec{
+		Image: DEFAULT_OBSERVER_IMAGE,
+		Resource: modelcommon.ResourceSpec{
+			Cpu:      DEFAULT_OBSERVER_CPU,
+			MemoryGB: DEFAULT_OBSERVER_MEMORY,
+		},
+		Storage: &param.OBServerStorageSpec{
+			Data: modelcommon.StorageSpec{
+				StorageClass: DEFAULT_DATA_STORAGE_CLASS,
+				SizeGB:       DEFAULT_DATA_STORAGE_SIZE,
+			},
+			RedoLog: modelcommon.StorageSpec{
+				StorageClass: DEFAULT_REDO_LOG_STORAGE_CLASS,
+				SizeGB:       DEFAULT_REDO_LOG_STORAGE_SIZE,
+			},
+			Log: modelcommon.StorageSpec{
+				StorageClass: DEFAULT_LOG_STORAGE_CLASS,
+				SizeGB:       DEFAULT_LOG_STORAGE_SIZE,
+			},
+		},
+	}
+	o.Monitor = &param.MonitorSpec{
+		Image: DEFAULT_MONITOR_IMAGE,
+		Resource: modelcommon.ResourceSpec{
+			Cpu:      DEFAULT_MONITOR_CPU,
+			MemoryGB: DEFAULT_MONITOR_MEMORY,
+		},
+	}
+	return nil
+}
+
 // AddFlags adds base and specific feature flags, Only support observer and zone config
 func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 	o.AddBaseFlags(cmd)
@@ -319,7 +389,7 @@ func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags.StringVarP(&o.ClusterName, FLAG_CLUSTER_NAME, "n", "", "Cluster name, if not specified, use resource name in k8s instead")
 	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the cluster")
 	baseFlags.Int64Var(&o.ClusterId, FLAG_CLUSTER_ID, DEFAULT_ID, "The id of the cluster")
-	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOTPASSWD, "p", "", "The root password of the cluster")
+	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOT_PASSWORD, "p", "", "The root password of the cluster")
 	baseFlags.StringVar(&o.Mode, FLAG_MODE, "", "The mode of the cluster")
 }
 
@@ -358,6 +428,6 @@ func (o *CreateOptions) AddBackupVolumeFlags(cmd *cobra.Command) {
 // AddParameterFlags adds the parameter-related flags, e.g. __min_full_resource_pool_memory, to the command
 func (o *CreateOptions) AddParameterFlags(cmd *cobra.Command) {
 	parameterFlags := pflag.NewFlagSet(FLAGSET_PARAMETERS, pflag.ContinueOnError)
-	parameterFlags.StringToStringVar(&o.KvParameters, FLAG_PARAMETERS, map[string]string{"__min_full_resource_pool_memory": DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY, "system_memory": DEFAULT_MIN_SYSTEM_MEMORY}, "Other parameter settings in OBCluster, e.g., __min_full_resource_pool_memory")
+	parameterFlags.StringToStringVar(&o.KvParameters, FLAG_PARAMETERS, map[string]string{FLAG_MIN_FULL_RESOURCE_POOL_MEMORY: DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY, FLAG_SYSTEM_MEMORY: DEFAULT_SYSTEM_MEMORY}, "Other parameter settings in OBCluster, e.g., __min_full_resource_pool_memory")
 	cmd.Flags().AddFlagSet(parameterFlags)
 }

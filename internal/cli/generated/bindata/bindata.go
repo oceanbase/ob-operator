@@ -92,7 +92,7 @@ func internalAssetsCliTemplatesComponent_configYaml() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "internal/assets/cli-templates/component_config.yaml", size: 219, mode: os.FileMode(420), modTime: time.Unix(1728986385, 0)}
+	info := bindataFileInfo{name: "internal/assets/cli-templates/component_config.yaml", size: 219, mode: os.FileMode(420), modTime: time.Unix(1727331319, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }
