@@ -18,97 +18,97 @@ import (
 	"fmt"
 
 	"github.com/manifoldco/promptui"
+
 	"github.com/oceanbase/ob-operator/internal/cli/cluster"
 	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
-var tepl *promptui.PromptTemplates = &promptui.PromptTemplates{
-	Prompt:  "{{ . }} ",
-	Valid:   "{{ . | green }} ",
-	Invalid: "{{ . | red }} ",
-	Success: "{{ . | bold }} ",
-}
+var (
+	promptTepl = &promptui.PromptTemplates{
+		Prompt:  "{{ . }} ",
+		Valid:   "{{ . | green }} ",
+		Invalid: "{{ . | red }} ",
+		Success: "{{ . | bold }} ",
+	}
+	selectTepl = &promptui.SelectTemplates{
+		Label:    "{{ . }} ",
+		Active:   "\U0001F336 {{ . | cyan }}",
+		Inactive: "  {{ . | cyan }}",
+		Selected: "\U0001F336 {{ . | green | cyan }}",
+	}
+)
 
 type PromptFactory struct {
-	template *promptui.PromptTemplates
+	promptTepl *promptui.PromptTemplates
+	selectTepl *promptui.SelectTemplates
 }
 
+// NewPromptFactory creates a new prompt factory
 func NewPromptFactory() *PromptFactory {
 	return &PromptFactory{
-		template: tepl,
+		promptTepl: promptTepl,
+		selectTepl: selectTepl,
 	}
 }
 
-func RunPromptsForCluster(pf *PromptFactory, o *cluster.CreateOptions) (err error) {
-	prompt := pf.CreatePrompt(cluster.FLAG_NAME)
-	if o.Name, err = pf.RunPromptE(prompt); err != nil {
-		return err
-	}
-	prompt = pf.CreatePrompt(cluster.FLAG_NAMESPACE)
-	if o.Namespace, err = pf.RunPromptE(prompt); err != nil {
-		return err
-	}
-	prompt = pf.CreatePrompt(cluster.FLAG_ROOT_PASSWORD)
-	if o.RootPassword, err = pf.RunPromptE(prompt); err != nil {
-		return err
-	}
-	prompt = pf.CreatePrompt(cluster.FLAG_BACKUP_ADDRESS)
-	if o.BackupVolume.Address, err = pf.RunPromptE(prompt); err != nil {
-		return err
-	}
-	prompt = pf.CreatePrompt(cluster.FLAG_BACKUP_PATH)
-	if o.BackupVolume.Path, err = pf.RunPromptE(prompt); err != nil {
-		return err
-	}
-	if err := o.Complete(); err != nil {
-		return err
-	}
-	if err := o.SetDefaultConfig(cluster.SINGLE_NODE); err != nil {
-		return err
-	}
-	return nil
-}
-
-func (pf *PromptFactory) RunPromptE(p *promptui.Prompt) (result string, err error) {
-	if result, err = p.Run(); err != nil {
-		if err == promptui.ErrInterrupt {
-			return "", errors.New("interrupted by user")
+// RunPromptE runs the prompt and returns the result or error
+func (pf *PromptFactory) RunPromptE(p any) (result string, err error) {
+	switch v := p.(type) {
+	case *promptui.Prompt:
+		if result, err = v.Run(); err != nil {
+			if err == promptui.ErrInterrupt {
+				return "", errors.New("interrupted by user")
+			}
+			return "", fmt.Errorf("failed to create cluster: %v", err)
 		}
-		return "", fmt.Errorf("failed to create cluster: %v", err)
+		return result, nil
+	case *promptui.Select:
+		if _, result, err = v.Run(); err != nil {
+			if err == promptui.ErrInterrupt {
+				return "", errors.New("interrupted by user")
+			}
+			return "", fmt.Errorf("failed to create cluster: %v", err)
+		}
+		return result, nil
+	default:
+		return "", errors.New("invalid prompt type")
 	}
-	return result, nil
 }
 
-func (pf *PromptFactory) CreatePrompt(promptType string) *promptui.Prompt {
+// CreatePrompt creates a prompt by prompt factory, based on the prompt type
+func (pf *PromptFactory) CreatePrompt(promptType string) any {
 	switch promptType {
 	case cluster.FLAG_NAME:
 		return &promptui.Prompt{
-			Label:     "Please input the cluster name (Default `test`): ",
-			Templates: pf.template,
+			Label:     "Please input the cluster name, press `enter` to use the default name `test`: ",
+			Templates: pf.promptTepl,
 			Validate: func(input string) error {
 				if !utils.CheckResourceName(input) {
 					return errors.New("invalid cluster name")
 				}
 				return nil
 			},
-			Default: cluster.DEFAULT_NAME,
+			AllowEdit: true,
+			Default:   cluster.DEFAULT_NAME,
 		}
 	case cluster.FLAG_NAMESPACE:
 		return &promptui.Prompt{
-			Label:     "Please input the namespace (Default `default`): ",
-			Templates: pf.template,
+			Label:     "Please input the namespace, press `enter` to use default namespace: ",
+			Templates: pf.promptTepl,
 			Validate: func(input string) error {
 				if input == "" {
 					return errors.New("namespace can not be empty")
 				}
 				return nil
 			},
-			Default: cluster.DEFAULT_NAMESPACE,
+			AllowEdit: true,
+			Default:   cluster.DEFAULT_NAMESPACE,
 		}
 	case cluster.FLAG_ROOT_PASSWORD:
 		return &promptui.Prompt{
-			Label:     "Please input the root password (if not used, generate random password): ",
-			Templates: pf.template,
+			Label:     "Please input the root password, press `enter` to generate a random password: ",
+			Templates: pf.promptTepl,
+			Mask:      '*', // mask the input
 			Validate: func(input string) error {
 				if input == "" {
 					return nil
@@ -118,19 +118,28 @@ func (pf *PromptFactory) CreatePrompt(promptType string) *promptui.Prompt {
 				}
 				return nil
 			},
-			Default: utils.GenerateRandomPassword(8, 32),
+			AllowEdit: true,
 		}
 	case cluster.FLAG_BACKUP_ADDRESS:
 		return &promptui.Prompt{
-			Label:     "Please input the backup address (if not set, it will be empty): ",
-			Templates: pf.template,
+			Label:     "Please input the backup address, if press `enter`, cluster will not support backup: ",
+			Templates: pf.promptTepl,
 			Default:   "",
+			AllowEdit: true,
 		}
 	case cluster.FLAG_BACKUP_PATH:
 		return &promptui.Prompt{
-			Label:     "Please input the backup path (if not set, it will be empty): ",
-			Templates: pf.template,
+			Label:     "Please input the backup path, if press `enter`, cluster will not support backup: ",
+			Templates: pf.promptTepl,
 			Default:   "",
+			AllowEdit: true,
+		}
+	case cluster.CLUSTER_TYPE:
+		return &promptui.Select{
+			Label:        "Please select the cluster type: ",
+			Items:        []string{cluster.SINGLE_NODE, cluster.THREE_NODE},
+			Templates:    pf.selectTepl,
+			HideSelected: true,
 		}
 	default:
 		return nil

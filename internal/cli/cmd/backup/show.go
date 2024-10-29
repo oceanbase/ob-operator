@@ -44,7 +44,7 @@ func NewShowCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err, "failed to get backup policy")
 			}
-			if backupPolicy == nil {
+			if backupPolicy == nil || backupPolicy.Name == "" {
 				logger.Fatalln("no backup policy found")
 			}
 			backupJobList, err := backup.ListBackupJobs(cmd.Context(), backupPolicy.Name, o)
