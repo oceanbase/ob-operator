@@ -1,9 +1,9 @@
-import { COLOR_MAP } from '@/constants';
+import { STATUS_LIST } from '@/constants';
 import { intl } from '@/utils/intl';
+import { findByValue } from '@oceanbase/util';
 import { Link, useAccess } from '@umijs/max';
 import { Button, Card, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-
 import styles from './index.less';
 
 interface TenantsListProps {
@@ -96,7 +96,10 @@ const columns: ColumnsType<API.TenantDetail> = [
     }),
     dataIndex: 'status',
     key: 'status',
-    render: (value) => <Tag color={COLOR_MAP.get(value)}>{value} </Tag>,
+    render: (text) => {
+      const value = findByValue(STATUS_LIST, text);
+      return <Tag color={value.badgeStatus}>{value.label}</Tag>;
+    },
   },
   {
     title: intl.formatMessage({

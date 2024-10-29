@@ -1,5 +1,6 @@
-import { COLOR_MAP } from '@/constants';
+import { STATUS_LIST } from '@/constants';
 import { intl } from '@/utils/intl';
+import { findByValue } from '@oceanbase/util';
 import { Card, Descriptions, Tag } from 'antd';
 
 export default function BasicInfo({
@@ -89,12 +90,13 @@ export default function BasicInfo({
     >
       <Descriptions column={5}>
         {Object.keys(InfoConfig).map((key, index) => {
+          const statusItem = findByValue(STATUS_LIST, info[key]);
           return (
             <Descriptions.Item key={index} label={InfoConfig[key]}>
               {key !== 'status' ? (
                 info[key]
               ) : (
-                <Tag color={COLOR_MAP.get(info[key])}>{info[key]}</Tag>
+                <Tag color={statusItem.badgeStatus}>{statusItem.label}</Tag>
               )}
             </Descriptions.Item>
           );

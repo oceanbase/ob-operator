@@ -1,8 +1,8 @@
+import { STATUS_LIST } from '@/constants';
 import { intl } from '@/utils/intl';
+import { findByValue } from '@oceanbase/util';
 import { Card, Col, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-
-import { COLOR_MAP } from '@/constants';
 
 const getServerColums = () => {
   const serverColums: ColumnsType<API.Server> = [
@@ -37,7 +37,10 @@ const getServerColums = () => {
       }),
       dataIndex: 'status',
       key: 'status',
-      render: (value) => <Tag color={COLOR_MAP.get(value)}>{value} </Tag>,
+      render: (text) => {
+        const value = findByValue(STATUS_LIST, text);
+        return <Tag color={value.badgeStatus}>{value.label}</Tag>;
+      },
     },
   ];
   return serverColums;
