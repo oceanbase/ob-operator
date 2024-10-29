@@ -1155,6 +1155,13 @@
   "src.pages.Tenant.Detail.Overview.5DFC5EF2": "Unlimited",
   "src.components.customModal.2389B108": "Permissions cannot be empty!",
   "src.components.TopoComponent.04F971F3": "Unlimited",
-  "src.components.TopoComponent.BA2B454B": "Unlimited"
+  "src.components.TopoComponent.BA2B454B": "Unlimited",
+  "src.constants.NormalOperation":"Running",
+  "src.constants.Creating":"Creating",
+  "src.constants.Deleting":"Deleting",
+  "src.constants.Unavailable":"Unavailable",
+  "src.constants.Recovering":"Recovering",
+  "src.constants.Pending":"Pending",
+  "src.constants.Warning":"Warning"
 
 }

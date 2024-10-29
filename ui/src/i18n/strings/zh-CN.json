@@ -1154,5 +1154,13 @@
   "src.components.customModal.2169D3CC": "权限控制: 读权限涉及账号和角色的获取，写权限涉及它们的创建、更新和删除",
   "src.components.customModal.2389B108": "权限不能为空！",
   "src.components.TopoComponent.04F971F3": "无限制",
-  "src.components.TopoComponent.BA2B454B": "无限制"
+  "src.components.TopoComponent.BA2B454B": "无限制",
+  "src.constants.NormalOperation":"正常运行",
+  "src.constants.Creating":"创建中",
+  "src.constants.Deleting":"删除中",
+  "src.constants.Unavailable":"不可用",
+  "src.constants.Recovering":"运维中",
+  "src.constants.Pending":"等待中",
+  "src.constants.Warning":"警告"
+
 }
