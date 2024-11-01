@@ -5,7 +5,9 @@ import { Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import CollapsibleCard from '../CollapsibleCard';
 
+import { EVENTSTABLE_STATUS_LIST } from '@/constants';
 import { getEventsReq } from '@/services';
+import { findByValue } from '@oceanbase/util';
 import CustomTooltip from '../CustomTooltip';
 
 interface DataType {
@@ -66,10 +68,10 @@ const columns: ColumnsType<DataType> = [
     onFilter: (value: any, record) => {
       return record.type === value;
     },
-    render: (val) => (
-      <Tag color={val === 'Warning' ? 'warning' : 'default'}>{val}</Tag>
-    ),
-
+    render: (text) => {
+      const value = findByValue(EVENTSTABLE_STATUS_LIST, text);
+      return <Tag color={value.badgeStatus}>{value.label}</Tag>;
+    },
     width: 120,
   },
   {
