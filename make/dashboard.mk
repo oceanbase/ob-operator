@@ -22,11 +22,11 @@ GOTEST_PACKAGES = $(shell go list ./... | grep -v -f tests/excludes.txt)
 UNFMT_FILES ?= $(shell gofmt -l -s $(filter-out , $(GOFILES)))
 
 .PHONY: dashboard-doc-gen
-dashboard-doc-gen: dashboard-dep-install ## Generate swagger docs
+dashboard-doc-gen: ## Generate swagger docs
 	swag init -g cmd/dashboard/main.go -o internal/dashboard/generated/swagger
 
 .PHONY: dashboard-build
-dashboard-build: dashboard-bindata-gen ## Build oceanbase-dashboard
+dashboard-build: dashboard-bindata-gen dashboard-doc-gen ## Build oceanbase-dashboard
 	$(GOBUILD) -o bin/oceanbase-dashboard ./cmd/dashboard/main.go
 
 .PHONY: dashboard-bindata-gen
