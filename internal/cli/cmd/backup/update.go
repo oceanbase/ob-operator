@@ -17,13 +17,13 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/oceanbase/ob-operator/internal/cli/backup"
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
 // NewUpdateCmd update backup policy of the ob tenant
 func NewUpdateCmd() *cobra.Command {
 	o := backup.NewUpdateOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "update <tenant_name>",
 		Short:   "Update backup policy of the specified ob tenant",

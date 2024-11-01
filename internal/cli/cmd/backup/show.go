@@ -17,7 +17,7 @@ import (
 	"sort"
 
 	"github.com/oceanbase/ob-operator/internal/cli/backup"
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 
 	"github.com/spf13/cobra"
@@ -28,8 +28,8 @@ import (
 // NewShowCmd shows the backup policie and backup jobs of the tenant
 func NewShowCmd() *cobra.Command {
 	o := backup.NewShowOptions()
-	tbw, tbLog := cmdUtil.GetTableLoggerInstance()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	tbw, tbLog := utils.GetTableLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "show <tenant-name>",
 		Short:   "show backup policies and backup jobs of the ob tenant",

@@ -76,4 +76,8 @@ const (
 	DEFAULT_UNLIMITED_FLAG = true
 	DEFAULT_FORCE_FLAG     = false
 	DEFAULT_RESTORE_FLAG   = false
+
+	// Default Tenant name for demo cmd
+	DEFAULT_NAME        = "demo-tenant"
+	DEFAULT_TENANT_NAME = "demo_tenant"
 )

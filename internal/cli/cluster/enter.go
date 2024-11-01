@@ -57,6 +57,9 @@ const (
 	FLAG_PARAMETERS                    = "parameters"
 	FLAG_MIN_FULL_RESOURCE_POOL_MEMORY = "min-full-resource-pool-memory"
 	FLAG_SYSTEM_MEMORY                 = "system-memory"
+
+	// Flag for demo cluster
+	FLAG_WAIT = "wait"
 )
 
 // Default values for cluster management
@@ -81,6 +84,9 @@ const (
 	// Default values for Parameter flag
 	DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY = "2147483648"
 	DEFAULT_SYSTEM_MEMORY                 = "1G"
+
+	// Default values for wait flag
+	DEFAULT_WAIT = false
 )
 
 // Default cluster type for easier cluster creation
@@ -88,4 +94,10 @@ const (
 	CLUSTER_TYPE = "cluster-type"
 	SINGLE_NODE  = "single-node"
 	THREE_NODE   = "three-node"
+)
+
+// Error messages for cluster management
+
+const (
+	ErrInvalidClusterType = "invalid cluster type"
 )

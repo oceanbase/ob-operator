@@ -17,14 +17,14 @@ import (
 	"github.com/spf13/cobra"
 
 	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
 // NewDeleteCmd delete ob cluster
 func NewDeleteCmd() *cobra.Command {
 	o := cluster.NewDeleteOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "delete <cluster_name>",
 		Short:   "Delete an ob cluster",

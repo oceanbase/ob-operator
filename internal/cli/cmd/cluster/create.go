@@ -14,18 +14,17 @@ See the Mulan PSL v2 for more details.
 package cluster
 
 import (
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
 	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
 // NewCreateCmd create an ob cluster
 func NewCreateCmd() *cobra.Command {
 	o := cluster.NewCreateOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "create <cluster_name>",
 		Short:   "Create an ob cluster",
@@ -39,10 +38,10 @@ func NewCreateCmd() *cobra.Command {
 				logger.Fatalln(err)
 			}
 			obcluster := cluster.CreateOBClusterInstance(o)
-			if err := clients.CreateSecretsForOBCluster(cmd.Context(), obcluster, o.RootPassword); err != nil {
-				logger.Fatalln(errors.Wrap(err, "Create secrets for obcluster"))
+			if err := cluster.CreateSecretsForOBCluster(cmd.Context(), obcluster, o.RootPassword); err != nil {
+				logger.Fatalln(err)
 			}
-			_, err := clients.CreateOBCluster(cmd.Context(), obcluster)
+			obcluster, err := clients.CreateOBCluster(cmd.Context(), obcluster)
 			if err != nil {
 				logger.Fatalln(err)
 			}

@@ -120,20 +120,6 @@ func (pf *PromptFactory) CreatePrompt(promptType string) any {
 			},
 			AllowEdit: true,
 		}
-	case cluster.FLAG_BACKUP_ADDRESS:
-		return &promptui.Prompt{
-			Label:     "Please input the backup address, if press `enter`, cluster will not support backup: ",
-			Templates: pf.promptTepl,
-			Default:   "",
-			AllowEdit: true,
-		}
-	case cluster.FLAG_BACKUP_PATH:
-		return &promptui.Prompt{
-			Label:     "Please input the backup path, if press `enter`, cluster will not support backup: ",
-			Templates: pf.promptTepl,
-			Default:   "",
-			AllowEdit: true,
-		}
 	case cluster.CLUSTER_TYPE:
 		return &promptui.Select{
 			Label:        "Please select the cluster type: ",

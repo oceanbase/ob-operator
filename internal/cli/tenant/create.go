@@ -41,19 +41,6 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
-func NewCreateOptions() *CreateOptions {
-	return &CreateOptions{
-		UnitConfig: &param.UnitConfig{},
-		Pools:      make([]param.ResourcePoolSpec, 0),
-		Source: &param.TenantSourceSpec{
-			Restore: &param.RestoreSourceSpec{
-				Until: &param.RestoreUntilConfig{},
-			},
-		},
-		ZonePriority: make(map[string]string),
-	}
-}
-
 type CreateOptions struct {
 	generic.ResourceOption
 	ClusterName      string `json:"obcluster" binding:"required"`
@@ -76,6 +63,19 @@ type CreateOptions struct {
 	Restore      bool              `json:"restore"`
 	RestoreType  string            `json:"restoreType"`
 	Timestamp    string            `json:"timestamp"`
+}
+
+func NewCreateOptions() *CreateOptions {
+	return &CreateOptions{
+		UnitConfig: &param.UnitConfig{},
+		Pools:      make([]param.ResourcePoolSpec, 0),
+		Source: &param.TenantSourceSpec{
+			Restore: &param.RestoreSourceSpec{
+				Until: &param.RestoreUntilConfig{},
+			},
+		},
+		ZonePriority: make(map[string]string),
+	}
 }
 
 func (o *CreateOptions) Parse(cmd *cobra.Command, args []string) error {
@@ -189,10 +189,7 @@ func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, 
 				return nil, fmt.Errorf("root password not match")
 			}
 			if t.Spec.Credentials.Root != "" {
-				err = createPasswordSecret(ctx, types.NamespacedName{
-					Namespace: nn.Namespace,
-					Name:      t.Spec.Credentials.Root,
-				}, p.RootPassword)
+				err = utils.CreatePasswordSecret(ctx, nn.Namespace, t.Spec.Credentials.Root, p.RootPassword)
 				if err != nil {
 					return nil, fmt.Errorf(err.Error())
 				}
@@ -207,29 +204,20 @@ func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, 
 
 		if pwd, ok := standbyroSecret.Data["password"]; ok {
 			t.Spec.Credentials.StandbyRO = p.Name + "-standbyro-" + rand.String(6)
-			err = createPasswordSecret(ctx, types.NamespacedName{
-				Namespace: nn.Namespace,
-				Name:      t.Spec.Credentials.StandbyRO,
-			}, string(pwd))
+			err = utils.CreatePasswordSecret(ctx, nn.Namespace, t.Spec.Credentials.StandbyRO, string(pwd))
 			if err != nil {
 				return nil, oberr.NewInternal(err.Error())
 			}
 		}
 	} else {
 		if t.Spec.Credentials.Root != "" {
-			err = createPasswordSecret(ctx, types.NamespacedName{
-				Namespace: nn.Namespace,
-				Name:      t.Spec.Credentials.Root,
-			}, p.RootPassword)
+			err = utils.CreatePasswordSecret(ctx, nn.Namespace, t.Spec.Credentials.Root, p.RootPassword)
 			if err != nil {
 				return nil, oberr.NewInternal(err.Error())
 			}
 		}
 		t.Spec.Credentials.StandbyRO = p.Name + "-standbyro-" + rand.String(6)
-		err = createPasswordSecret(ctx, types.NamespacedName{
-			Namespace: nn.Namespace,
-			Name:      t.Spec.Credentials.StandbyRO,
-		}, rand.String(32))
+		err = utils.CreatePasswordSecret(ctx, nn.Namespace, t.Spec.Credentials.Root, rand.String(32))
 		if err != nil {
 			return nil, oberr.NewInternal(err.Error())
 		}

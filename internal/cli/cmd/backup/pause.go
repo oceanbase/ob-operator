@@ -17,13 +17,13 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/oceanbase/ob-operator/internal/cli/backup"
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
 // NewPauseCmd pause backup policy of the ob tenant
 func NewPauseCmd() *cobra.Command {
 	o := backup.NewPauseOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "pause <tenant_name>",
 		Short:   "pause backup policy of the specified ob tenant",

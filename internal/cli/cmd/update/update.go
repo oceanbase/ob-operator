@@ -16,14 +16,14 @@ package update
 import (
 	"github.com/spf13/cobra"
 
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/update"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
 // NewCmd update the ob-operator and other components
 func NewCmd() *cobra.Command {
 	o := update.NewUpdateOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:   "update <component>",
 		Short: "Command for ob-operator and components update",

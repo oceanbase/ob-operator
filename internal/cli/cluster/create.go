@@ -14,20 +14,21 @@ See the Mulan PSL v2 for more details.
 package cluster
 
 import (
-	"errors"
+	"context"
 	"fmt"
+
+	"github.com/pkg/errors"
+	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
+	corev1 "k8s.io/api/core/v1"
+	apiresource "k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
-
-	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
-	corev1 "k8s.io/api/core/v1"
-	apiresource "k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/oceanbase/ob-operator/internal/cli/generic"
 	utils "github.com/oceanbase/ob-operator/internal/cli/utils"
@@ -75,7 +76,7 @@ func (o *CreateOptions) Validate() error {
 	return nil
 }
 
-func (o *CreateOptions) Parse(_ *cobra.Command, args []string) error {
+func (o *CreateOptions) Parse(cmd *cobra.Command, args []string) error {
 	// Parse the zone topology
 	topology, err := utils.MapZonesToTopology(o.Zones)
 	if err != nil {
@@ -93,6 +94,7 @@ func (o *CreateOptions) Parse(_ *cobra.Command, args []string) error {
 	o.Parameters = parameters
 	o.Topology = topology
 	o.Name = args[0]
+	o.Cmd = cmd
 	return nil
 }
 
@@ -297,72 +299,23 @@ func CreateOBClusterInstance(param *CreateOptions) *v1alpha1.OBCluster {
 	return obcluster
 }
 
-func (o *CreateOptions) SetDefaultConfig(clusterType string) error {
-	if o.BackupVolume.Address == "" || o.BackupVolume.Path == "" {
-		o.BackupVolume = nil
+// CreateSecretsForOBCluster creates secrets for OBCluster
+func CreateSecretsForOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluster, rootPass string) error {
+	err := utils.CreatePasswordSecret(ctx, obcluster.Namespace, obcluster.Spec.UserSecrets.Root, rootPass)
+	if err != nil {
+		return errors.Wrap(err, "Create secret for user root")
 	}
-	if clusterType == SINGLE_NODE {
-		o.Topology = []param.ZoneTopology{
-			{
-				Zone:     "z1",
-				Replicas: 1,
-			},
-		}
-	} else if clusterType == THREE_NODE {
-		o.Topology = []param.ZoneTopology{
-			{
-				Zone:     "z1",
-				Replicas: 1,
-			},
-			{
-				Zone:     "z2",
-				Replicas: 1,
-			},
-			{
-				Zone:     "z3",
-				Replicas: 1,
-			},
-		}
-	} else {
-		return fmt.Errorf("invalid cluster type: %s", clusterType)
+	err = utils.CreatePasswordSecret(ctx, obcluster.Namespace, obcluster.Spec.UserSecrets.Monitor, utils.GenerateNaivePassword())
+	if err != nil {
+		return errors.Wrap(err, "Create secret for user monitor")
 	}
-	o.Parameters = []modelcommon.KVPair{
-		{
-			Key:   FLAG_MIN_FULL_RESOURCE_POOL_MEMORY,
-			Value: DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY,
-		},
-		{
-			Key:   FLAG_SYSTEM_MEMORY,
-			Value: DEFAULT_SYSTEM_MEMORY,
-		},
+	err = utils.CreatePasswordSecret(ctx, obcluster.Namespace, obcluster.Spec.UserSecrets.ProxyRO, utils.GenerateNaivePassword())
+	if err != nil {
+		return errors.Wrap(err, "Create secret for user proxyro")
 	}
-	o.OBServer = &param.OBServerSpec{
-		Image: DEFAULT_OBSERVER_IMAGE,
-		Resource: modelcommon.ResourceSpec{
-			Cpu:      DEFAULT_OBSERVER_CPU,
-			MemoryGB: DEFAULT_OBSERVER_MEMORY,
-		},
-		Storage: &param.OBServerStorageSpec{
-			Data: modelcommon.StorageSpec{
-				StorageClass: DEFAULT_DATA_STORAGE_CLASS,
-				SizeGB:       DEFAULT_DATA_STORAGE_SIZE,
-			},
-			RedoLog: modelcommon.StorageSpec{
-				StorageClass: DEFAULT_REDO_LOG_STORAGE_CLASS,
-				SizeGB:       DEFAULT_REDO_LOG_STORAGE_SIZE,
-			},
-			Log: modelcommon.StorageSpec{
-				StorageClass: DEFAULT_LOG_STORAGE_CLASS,
-				SizeGB:       DEFAULT_LOG_STORAGE_SIZE,
-			},
-		},
-	}
-	o.Monitor = &param.MonitorSpec{
-		Image: DEFAULT_MONITOR_IMAGE,
-		Resource: modelcommon.ResourceSpec{
-			Cpu:      DEFAULT_MONITOR_CPU,
-			MemoryGB: DEFAULT_MONITOR_MEMORY,
-		},
+	err = utils.CreatePasswordSecret(ctx, obcluster.Namespace, obcluster.Spec.UserSecrets.Operator, utils.GenerateNaivePassword())
+	if err != nil {
+		return errors.Wrap(err, "Create secret for user operator")
 	}
 	return nil
 }

@@ -19,15 +19,15 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/oceanbase/ob-operator/internal/cli/cluster"
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
 // NewShowCmd show the overview and operations of ob cluster
 func NewShowCmd() *cobra.Command {
 	o := cluster.NewShowOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
-	tbw, tbLog := cmdUtil.GetTableLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
+	tbw, tbLog := utils.GetTableLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "show <cluster_name>",
 		Short:   "Show overview of an ob cluster",

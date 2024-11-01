@@ -17,15 +17,15 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/types"
 
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
 // NewUpdateCmd update an obtenant
 func NewUpdateCmd() *cobra.Command {
 	o := tenant.NewUpdateOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "update <tenant_name>",
 		Short:   "Update an ob tenant",
@@ -40,7 +40,7 @@ func NewUpdateCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			if err := cmdUtil.CheckTenantStatus(obtenant); err != nil {
+			if err := utils.CheckTenantStatus(obtenant); err != nil {
 				logger.Fatalln(err)
 			} else {
 				o.OldResourcePools = obtenant.Spec.Pools

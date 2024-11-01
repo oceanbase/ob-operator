@@ -16,14 +16,14 @@ package install
 import (
 	"github.com/spf13/cobra"
 
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/install"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
 // NewCmd install the ob-operator and other components
 func NewCmd() *cobra.Command {
 	o := install.NewInstallOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:   "install <component>",
 		Short: "Command for ob-operator and components installation",
