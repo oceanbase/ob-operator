@@ -27,6 +27,9 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }} # The Go version to download (if necessary) and use.
 
+      - name: generate bindata
+        run: make dashboard-bindata-gen cli-bindata-gen
+
       - name: go mod vendor 
         run: go mod vendor
 
