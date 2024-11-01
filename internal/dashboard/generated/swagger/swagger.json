@@ -859,10 +859,7 @@
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/job.Job"
-                                            }
+                                            "$ref": "#/definitions/job.Job"
                                         }
                                     }
                                 }
@@ -7384,11 +7381,17 @@
                 "key": {
                     "type": "string"
                 },
+                "operator": {
+                    "type": "string"
+                },
                 "type": {
                     "$ref": "#/definitions/common.AffinityType"
                 },
-                "value": {
-                    "type": "string"
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -7651,7 +7654,8 @@
             "type": "object",
             "required": [
                 "id",
-                "name"
+                "name",
+                "status"
             ],
             "properties": {
                 "finishTime": {

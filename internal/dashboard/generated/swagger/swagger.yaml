@@ -224,10 +224,14 @@ definitions:
     properties:
       key:
         type: string
+      operator:
+        type: string
       type:
         $ref: '#/definitions/common.AffinityType'
-      value:
-        type: string
+      values:
+        items:
+          type: string
+        type: array
     type: object
   common.AffinityType:
     enum:
@@ -420,6 +424,7 @@ definitions:
     required:
     - id
     - name
+    - status
     type: object
   job.JobResult:
     properties:
@@ -3652,9 +3657,7 @@ paths:
             - $ref: '#/definitions/response.APIResponse'
             - properties:
                 data:
-                  items:
-                    $ref: '#/definitions/job.Job'
-                  type: array
+                  $ref: '#/definitions/job.Job'
               type: object
         "400":
           description: Bad Request

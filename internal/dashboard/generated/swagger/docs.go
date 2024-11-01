@@ -866,10 +866,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/job.Job"
-                                            }
+                                            "$ref": "#/definitions/job.Job"
                                         }
                                     }
                                 }
@@ -7391,11 +7388,17 @@ const docTemplate = `{
                 "key": {
                     "type": "string"
                 },
+                "operator": {
+                    "type": "string"
+                },
                 "type": {
                     "$ref": "#/definitions/common.AffinityType"
                 },
-                "value": {
-                    "type": "string"
+                "values": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -7658,7 +7661,8 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "id",
-                "name"
+                "name",
+                "status"
             ],
             "properties": {
                 "finishTime": {
