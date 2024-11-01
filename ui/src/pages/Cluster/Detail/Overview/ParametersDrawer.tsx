@@ -5,12 +5,13 @@ import { useRequest } from 'ahooks';
 import {
   Button,
   Col,
+  Drawer,
   Form,
   Input,
-  message,
-  Modal,
   Popconfirm,
   Row,
+  Space,
+  message,
 } from 'antd';
 import React from 'react';
 
@@ -21,7 +22,7 @@ export interface ParametersModalProps {
   initialValues: any[];
 }
 
-const ParametersModal: React.FC<ParametersModalProps> = ({
+const ParametersDrawer: React.FC<ParametersModalProps> = ({
   visible,
   onCancel,
   initialValues,
@@ -30,7 +31,7 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
   const [form] = Form.useForm<API.CreateClusterData>();
   const { validateFields } = form;
 
-  const { runAsync: updateLoadType, loading } = useRequest(
+  const { runAsync: updateParameters, loading } = useRequest(
     obproxy.patchOBProxy,
     {
       manual: true,
@@ -49,23 +50,34 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
   );
 
   return (
-    <Modal
+    <Drawer
       title={intl.formatMessage({
         id: 'src.pages.Cluster.Detail.Overview.849E8956',
         defaultMessage: '参数编辑',
       })}
       open={visible}
-      confirmLoading={loading}
-      onOk={() => {
-        validateFields().then((values) => {
-          const { parameters } = values;
-          console.log('parameters', parameters);
-          updateLoadType({
-            parameters,
-          });
-        });
-      }}
-      onCancel={onCancel}
+      destroyOnClose
+      onClose={() => onCancel()}
+      width={520}
+      footer={
+        <Space>
+          <Button onClick={onCancel}>取消</Button>
+          <Button
+            type="primary"
+            loading={loading}
+            onClick={() => {
+              validateFields().then((values) => {
+                const { parameters } = values;
+                updateParameters({
+                  parameters,
+                });
+              });
+            }}
+          >
+            确定
+          </Button>
+        </Space>
+      }
     >
       <Form form={form} layout="vertical" style={{ marginBottom: 56 }}>
         <Form.List name="parameters" initialValue={initialValues}>
@@ -162,7 +174,7 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
                             ghost: true,
                           }}
                         >
-                          <a>
+                          <a style={{ color: 'red' }}>
                             {intl.formatMessage({
                               id: 'src.pages.Cluster.Detail.Overview.86ECCAB9',
                               defaultMessage: '删除',
@@ -193,8 +205,8 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
           )}
         </Form.List>
       </Form>
-    </Modal>
+    </Drawer>
   );
 };
 
-export default ParametersModal;
+export default ParametersDrawer;
