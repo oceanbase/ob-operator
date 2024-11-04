@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	OBTenantRes = schema.GroupVersionResource{
+	OBTenantGVR = schema.GroupVersionResource{
 		Group:    OBTenantGroup,
 		Version:  OBTenantVersion,
 		Resource: OBTenantResource,

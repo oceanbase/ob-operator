@@ -185,7 +185,15 @@ func (m *OBZoneManager) createOneOBServer(serverName string) (*v1alpha1.OBServer
 			MonitorTemplate:  m.OBZone.Spec.MonitorTemplate,
 			BackupVolume:     m.OBZone.Spec.BackupVolume,
 			ServiceAccount:   m.OBZone.Spec.ServiceAccount,
+			K8sCluster:       m.OBZone.Spec.Topology.K8sCluster,
 		},
+	}
+	zoneTopo := m.OBZone.Spec.Topology
+	if zoneTopo.OBServerTemplate != nil {
+		observer.Spec.OBServerTemplate = zoneTopo.OBServerTemplate
+	}
+	if zoneTopo.MonitorTemplate != nil {
+		observer.Spec.MonitorTemplate = zoneTopo.MonitorTemplate
 	}
 	observer.ObjectMeta.Annotations = make(map[string]string)
 	if independentVolumeAnnoExist {

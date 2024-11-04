@@ -1,10 +1,10 @@
-import { MODE_MAP } from '@/constants';
+import { MODE_MAP, STATUS_LIST } from '@/constants';
 import { intl } from '@/utils/intl';
+import { findByValue } from '@oceanbase/util';
 import { Link, useAccess } from '@umijs/max';
 import { Button, Card, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
-import { COLOR_MAP } from '@/constants';
 interface DataType {
   namespace: string;
   name: string;
@@ -99,21 +99,25 @@ const columns: ColumnsType<DataType> = [
     }),
     dataIndex: 'status',
     key: 'status',
-    render: (value, record) => (
-      <Tag color={COLOR_MAP.get(value)}>
-        {' '}
-        {value === 'operating' ? (
-          <Text
-            style={{ maxWidth: 110, color: '#d48806', fontSize: 12 }}
-            ellipsis={{ tooltip: `${value}/${record.statusDetail}` }}
-          >
-            {value}/{record.statusDetail}
-          </Text>
-        ) : (
-          value
-        )}{' '}
-      </Tag>
-    ),
+    render: (text, record) => {
+      const value = findByValue(STATUS_LIST, text);
+      const statusDetail = findByValue(STATUS_LIST, record.statusDetail);
+
+      return (
+        <Tag color={value.badgeStatus}>
+          {value === 'operating' ? (
+            <Text
+              style={{ maxWidth: 110, color: '#d48806', fontSize: 12 }}
+              ellipsis={{ tooltip: `${text}/${record.statusDetail}` }}
+            >
+              {value.label}/{statusDetail.label}
+            </Text>
+          ) : (
+            value.label
+          )}
+        </Tag>
+      );
+    },
   },
   {
     title: intl.formatMessage({

@@ -1,0 +1,27 @@
+# permissions for end users to view k8sclusters.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: k8scluster-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: ob-operator
+    app.kubernetes.io/part-of: ob-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: k8scluster-viewer-role
+rules:
+- apiGroups:
+  - k8s.oceanbase.com
+  resources:
+  - k8sclusters
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - k8s.oceanbase.com
+  resources:
+  - k8sclusters/status
+  verbs:
+  - get

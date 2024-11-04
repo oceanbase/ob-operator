@@ -25,7 +25,7 @@ func NewCmd() *cobra.Command {
 	o := update.NewUpdateOptions()
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
-		Use:   "update <components>",
+		Use:   "update <component>",
 		Short: "Command for ob-operator and components update",
 		Long: `Command for ob-operator and components update.
 

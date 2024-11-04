@@ -1,10 +1,11 @@
+import CustomTooltip from '@/components/CustomTooltip';
+import { NODESTABLE_STATUS_LIST } from '@/constants';
+import { getNodeInfoReq } from '@/services';
 import { intl } from '@/utils/intl';
+import { findByValue } from '@oceanbase/util';
 import { useRequest } from 'ahooks';
 import { Card, Col, Progress, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-
-import CustomTooltip from '@/components/CustomTooltip';
-import { getNodeInfoReq } from '@/services';
 
 interface DataType {
   key: React.Key;
@@ -41,14 +42,9 @@ const columns: ColumnsType<DataType> = [
     dataIndex: 'status',
     key: 'status',
     width: 100,
-    render: (val) => {
-      let color = 'default';
-      if (val === 'ready') {
-        color = 'success';
-      } else if (val === 'not ready') {
-        color = 'warning';
-      }
-      return <Tag color={color}>{val}</Tag>;
+    render: (text) => {
+      const value = findByValue(NODESTABLE_STATUS_LIST, text);
+      return <Tag color={value.badgeStatus}>{value.label}</Tag>;
     },
   },
   {
@@ -59,7 +55,9 @@ const columns: ColumnsType<DataType> = [
     dataIndex: 'roles',
     key: 'roles',
     width: 120,
-    render: (val) => <CustomTooltip text={val} width={100} />,
+    render: (val) => {
+      return val.length !== 0 ? <CustomTooltip text={val} width={100} /> : '-';
+    },
   },
   {
     title: intl.formatMessage({
@@ -96,6 +94,7 @@ const columns: ColumnsType<DataType> = [
     dataIndex: 'externalIP',
     key: 'externalIP',
     width: 120,
+    render: (text) => <span>{text || '-'}</span>,
   },
   {
     title: intl.formatMessage({

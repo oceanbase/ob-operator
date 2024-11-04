@@ -1,11 +1,11 @@
 import type { ObproxyOBProxyOverview } from '@/api/generated';
-import { OBPROXY_COLOR_MAP } from '@/constants';
+import { OBPROXY_STATUS_LIST } from '@/constants';
 import { intl } from '@/utils/intl';
+import { findByValue } from '@oceanbase/util';
 import { Link, useAccess } from '@umijs/max';
 import { Button, Card, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-
 interface ClusterListProps {
   handleAddCluster: () => void;
   obproxies: ObproxyOBProxyOverview[] | undefined;
@@ -104,7 +104,10 @@ const columns: ColumnsType<ObproxyOBProxyOverview> = [
     }),
     dataIndex: 'status',
     key: 'status',
-    render: (value) => <Tag color={OBPROXY_COLOR_MAP.get(value)}>{value}</Tag>,
+    render: (text) => {
+      const value = findByValue(OBPROXY_STATUS_LIST, text);
+      return <Tag color={value.badgeStatus}>{value.label}</Tag>;
+    },
   },
 ];
 

@@ -13,6 +13,8 @@ See the Mulan PSL v2 for more details.
 package obtenantoperation
 
 import (
+	"time"
+
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
@@ -98,6 +100,7 @@ func (m *ObTenantOperationManager) waitForOBTenantToBeStatus(waitSeconds int, ma
 		if matcher(tenant) {
 			return nil
 		}
+		time.Sleep(time.Second)
 	}
 	return errors.Errorf("wait for tenant %s to be in desired status timeout", m.Resource.Name)
 }

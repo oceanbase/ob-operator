@@ -44,6 +44,7 @@ type OBServerSpec struct {
 	BackupVolume     *apitypes.BackupVolumeSpec `json:"backupVolume,omitempty"`
 	//+kubebuilder:default=default
 	ServiceAccount string `json:"serviceAccount,omitempty"`
+	K8sCluster     string `json:"k8sCluster,omitempty"`
 }
 
 // OBServerStatus defines the observed state of OBServer
@@ -115,4 +116,8 @@ func (s *OBServer) SupportStaticIP() bool {
 		mode, modeAnnoExist := annos[oceanbaseconst.AnnotationsMode]
 		return modeAnnoExist && (mode == oceanbaseconst.ModeStandalone || mode == oceanbaseconst.ModeService)
 	}
+}
+
+func (s *OBServer) InMasterK8s() bool {
+	return s.Spec.K8sCluster == ""
 }

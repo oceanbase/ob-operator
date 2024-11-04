@@ -18,4 +18,6 @@ func init() {
 	taskMap.Register(tExpandPVC, ExpandPVC)
 	taskMap.Register(tWaitForPvcResized, WaitForPvcResized)
 	taskMap.Register(tCreateOBServerSvc, CreateOBServerSvc)
+	taskMap.Register(tCheckAndCreateNs, CheckAndCreateNs)
+	taskMap.Register(tCleanOwnedResources, CleanOwnedResources)
 }

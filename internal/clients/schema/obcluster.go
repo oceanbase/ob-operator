@@ -22,7 +22,7 @@ const (
 )
 
 var (
-	OBClusterRes = schema.GroupVersionResource{
+	OBClusterGVR = schema.GroupVersionResource{
 		Group:    OBClusterGroup,
 		Version:  OBClusterVersion,
 		Resource: OBClusterResource,

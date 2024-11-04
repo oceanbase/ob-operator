@@ -39,7 +39,7 @@ install-delve: ## Install delve, a debugger for the Go programming language. Mor
 	go install github.com/go-delve/delve/cmd/dlv@master
 
 .PHONY: tools 
-tools: kustomize controller-gen envtest install-delve ## Download all tools
+tools: kustomize controller-gen envtest ## Download all tools
 
 .PHONY: init-generator
 init-generator: ## Install generator tools

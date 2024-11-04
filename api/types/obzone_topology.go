@@ -20,4 +20,8 @@ type OBZoneTopology struct {
 	Affinity     *corev1.Affinity    `json:"affinity,omitempty"`
 	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
 	Replica      int                 `json:"replica"`
+
+	K8sCluster       string            `json:"k8sCluster,omitempty"`
+	OBServerTemplate *OBServerTemplate `json:"observer,omitempty"`
+	MonitorTemplate  *MonitorTemplate  `json:"monitor,omitempty"`
 }

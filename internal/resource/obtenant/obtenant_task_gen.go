@@ -21,6 +21,6 @@ func init() {
 	taskMap.Register(tCheckAndApplyWhiteList, CheckAndApplyWhiteList)
 	taskMap.Register(tCheckAndApplyPrimaryZone, CheckAndApplyPrimaryZone)
 	taskMap.Register(tCheckAndApplyLocality, CheckAndApplyLocality)
-	taskMap.Register(tCreateUserWithCredentialSecrets, CreateUserWithCredentialSecrets)
 	taskMap.Register(tOptimizeTenantByScenario, OptimizeTenantByScenario)
+	taskMap.Register(tCreateUserWithCredentialSecrets, CreateUserWithCredentialSecrets)
 }

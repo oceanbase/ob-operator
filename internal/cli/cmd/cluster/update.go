@@ -14,14 +14,11 @@ See the Mulan PSL v2 for more details.
 package cluster
 
 import (
-	"fmt"
-
 	"github.com/spf13/cobra"
 
 	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
 	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/clients"
-	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 )
 
 // NewUpdateCmd update obcluster
@@ -30,8 +27,8 @@ func NewUpdateCmd() *cobra.Command {
 	logger := cmdUtil.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "update <cluster_name>",
-		Short:   "Update ob cluster",
-		Long:    "Update ob cluster, support cpu/memory/storage",
+		Short:   "Update an ob cluster",
+		Long:    "Update an ob cluster, support cpu/memory/storage",
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -45,15 +42,14 @@ func NewUpdateCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			if obcluster.Status.Status != clusterstatus.Running {
-				logger.Fatalln(fmt.Errorf("Obcluster status invalid, Status:%s", obcluster.Status.Status))
-			}
-			updateOp := cluster.GetUpdateOperations(o)
-			op, err := clients.CreateOBClusterOperation(cmd.Context(), updateOp)
-			if err != nil {
+			if err := cmdUtil.CheckClusterStatus(obcluster); err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create update operation for obcluster %s success", op.Spec.OBCluster)
+			op := cluster.GetUpdateOperation(o)
+			if _, err = clients.CreateOBClusterOperation(cmd.Context(), op); err != nil {
+				logger.Fatalln(err)
+			}
+			logger.Printf("Create update operation for OBCluster %s successfully", op.Spec.OBCluster)
 		},
 	}
 	o.AddFlags(cmd)

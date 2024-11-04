@@ -11,7 +11,7 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package cluster
+package generic
 
 import (
 	"errors"
@@ -19,31 +19,38 @@ import (
 	"github.com/spf13/cobra"
 )
 
-type ResourceOptions struct {
+type ResourceOption struct {
 	Name      string
 	Namespace string
+	Cmd       *cobra.Command
 }
 
 // Parse the args in obocli
-func (o *ResourceOptions) Parse(_ *cobra.Command, args []string) error {
+func (o *ResourceOption) Parse(cmd *cobra.Command, args []string) error {
 	o.Name = args[0]
+	o.Cmd = cmd
 	return nil
 }
 
-// Complete the unset params in options
-func (o *ResourceOptions) Complete() error {
+// Complete the unset params in option
+func (o *ResourceOption) Complete() error {
 	return nil
 }
 
-// Validate the params in options
-func (o *ResourceOptions) Validate() error {
+// Validate the params in option
+func (o *ResourceOption) Validate() error {
 	if o.Namespace == "" {
-		return errors.New("namespace not specified")
+		return errors.New("namespace is not specified")
 	}
 	return nil
 }
 
-// AddFlags add basic flags for cluster management
-func (o *ResourceOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob cluster")
+// CheckIfFlagChanged checks if flags has changed
+func (o *ResourceOption) CheckIfFlagChanged(flags ...string) bool {
+	for _, flagName := range flags {
+		if flag := o.Cmd.Flags().Lookup(flagName); flag != nil && flag.Changed {
+			return true
+		}
+	}
+	return false
 }

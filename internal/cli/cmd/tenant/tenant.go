@@ -14,8 +14,6 @@ See the Mulan PSL v2 for more details.
 package tenant
 
 import (
-	"log"
-
 	"github.com/spf13/cobra"
 )
 
@@ -23,12 +21,19 @@ import (
 func NewCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tenant",
-		Short: "Command for tenant management",
-		Long:  `Command for tenant management, such as Create, Update, Delete.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			// TODO: not implemented
-			log.Println("oceanbase tenant management")
-		},
+		Short: "Command for OBTenant's management",
+		Long:  `Command for OBTenant's management, such as Create, Update, Delete, Switchover, Activate, Replaylog.`,
 	}
+	cmd.AddCommand(NewCreateCmd())
+	cmd.AddCommand(NewDeleteCmd())
+	cmd.AddCommand(NewUpdateCmd())
+	cmd.AddCommand(NewScaleCmd())
+	cmd.AddCommand(NewListCmd())
+	cmd.AddCommand(NewUpgradeCmd())
+	cmd.AddCommand(NewChangePwdCmd())
+	cmd.AddCommand(NewSwitchOverCmd())
+	cmd.AddCommand(NewActivateCmd())
+	cmd.AddCommand(NewShowCmd())
+	cmd.AddCommand(NewReplayLogCmd())
 	return cmd
 }

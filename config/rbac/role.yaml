@@ -22,9 +22,75 @@ rules:
 - apiGroups:
   - ""
   resources:
+  - persistentvolumeclaims
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumeclaims/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumes
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - persistentvolumes/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - ""
+  resources:
   - pods/log
   verbs:
   - get
+- apiGroups:
+  - ""
+  resources:
+  - pods/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - ""
   resources:
@@ -112,9 +178,9 @@ rules:
   - patch
   - update
 - apiGroups:
-  - ""
+  - k8s.oceanbase.com
   resources:
-  - persistentvolumeclaims
+  - k8sclusters
   verbs:
   - create
   - delete
@@ -124,55 +190,15 @@ rules:
   - update
   - watch
 - apiGroups:
-  - ""
+  - k8s.oceanbase.com
   resources:
-  - persistentvolumeclaims/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - persistentvolumes
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - persistentvolumes/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - ""
-  resources:
-  - pods
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - ""
-  resources:
-  - pods/finalizers
+  - k8sclusters/finalizers
   verbs:
   - update
 - apiGroups:
-  - ""
+  - k8s.oceanbase.com
   resources:
-  - pods/status
+  - k8sclusters/status
   verbs:
   - get
   - patch
@@ -303,46 +329,6 @@ rules:
   - oceanbase.oceanbase.com
   resources:
   - observers/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - oceanbase.oceanbase.com
-  resources:
-  - obtenant
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - oceanbase.oceanbase.com
-  resources:
-  - obtenant/status
-  verbs:
-  - get
-  - patch
-  - update
-- apiGroups:
-  - oceanbase.oceanbase.com
-  resources:
-  - obtenantbackup
-  verbs:
-  - create
-  - delete
-  - get
-  - list
-  - patch
-  - update
-  - watch
-- apiGroups:
-  - oceanbase.oceanbase.com
-  resources:
-  - obtenantbackup/status
   verbs:
   - get
   - patch

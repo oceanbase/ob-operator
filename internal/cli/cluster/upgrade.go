@@ -22,11 +22,12 @@ import (
 
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/cli/generic"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
 
 type UpgradeOptions struct {
-	ResourceOptions
+	generic.ResourceOption
 	Image string `json:"image"`
 }
 
@@ -34,8 +35,8 @@ func NewUpgradeOptions() *UpgradeOptions {
 	return &UpgradeOptions{}
 }
 
-// GetUpgradeOperations creates upgrade opertaions
-func GetUpgradeOperations(o *UpgradeOptions) *v1alpha1.OBClusterOperation {
+// GetUpgradeOperation creates upgrade opertaions
+func GetUpgradeOperation(o *UpgradeOptions) *v1alpha1.OBClusterOperation {
 	upgradeOp := &v1alpha1.OBClusterOperation{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      o.Name + "-upgrade-" + rand.String(6),
@@ -53,14 +54,13 @@ func GetUpgradeOperations(o *UpgradeOptions) *v1alpha1.OBClusterOperation {
 
 func (o *UpgradeOptions) Validate() error {
 	if o.Image == "" {
-		return errors.New("image is required")
+		return errors.New("image is not specified")
 	}
 	return nil
 }
 
 // AddFlags for upgrade options
 func (o *UpgradeOptions) AddFlags(cmd *cobra.Command) {
-	// set image to null, avoid image downgrade
-	cmd.Flags().StringVar(&o.Namespace, "namespace", "default", "namespace of ob cluster")
-	cmd.Flags().StringVar(&o.Image, "image", "", "The image of observer")
+	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "namespace of ob cluster")
+	cmd.Flags().StringVar(&o.Image, FLAG_OBSERVER_IMAGE, "", "The image of observer") // set image to null, avoid image downgrade
 }

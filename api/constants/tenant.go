@@ -31,7 +31,6 @@ const (
 	TenantOpAddResourcePools    types.TenantOperationType = "ADD_RESOURCE_POOLS"
 	TenantOpDeleteResourcePools types.TenantOperationType = "DELETE_RESOURCE_POOLS"
 	TenantOpModifyResourcePools types.TenantOperationType = "MODIFY_RESOURCE_POOLS"
-	TenantOpSetCharset          types.TenantOperationType = "SET_CHARSET"
 )
 
 const (

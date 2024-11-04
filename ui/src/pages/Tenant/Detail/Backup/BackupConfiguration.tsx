@@ -111,7 +111,9 @@ export default function BackupConfiguration({
     scheduleDates: {
       ...formatBackupPolicyData(backupPolicy),
     },
-    scheduleTime: dayjs(backupPolicy.scheduleTime, 'HH:mm'),
+    scheduleTime: backupPolicy.scheduleTime
+      ? dayjs(backupPolicy.scheduleTime, 'HH:mm')
+      : '',
   };
 
   const { run: deleteBackupPolicyReq } = useRequest(deleteBackupReportWrap, {

@@ -1,6 +1,6 @@
 include make/*
 
-VERSION ?= 2.2.2
+VERSION ?= 2.3.0
 # Image URL to use all building/pushing image targets
 IMG ?= quay.io/oceanbase/ob-operator:${VERSION}
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.

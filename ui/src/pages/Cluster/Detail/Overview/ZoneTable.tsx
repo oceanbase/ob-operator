@@ -3,8 +3,9 @@ import { Button, Card, Col, Table, Tag, message } from 'antd';
 import type { ColumnType } from 'antd/es/table';
 
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
-import { COLOR_MAP } from '@/constants';
+import { STATUS_LIST } from '@/constants';
 import { deleteObzoneReportWrap } from '@/services/reportRequest/clusterReportReq';
+import { findByValue } from '@oceanbase/util';
 import { useAccess, useParams } from '@umijs/max';
 interface ZoneTableProps {
   zones: API.Zone[];
@@ -75,7 +76,10 @@ export default function ZoneTable({
         }),
         dataIndex: 'status',
         key: 'status',
-        render: (value) => <Tag color={COLOR_MAP.get(value)}>{value} </Tag>,
+        render: (text) => {
+          const value = findByValue(STATUS_LIST, text);
+          return <Tag color={value.badgeStatus}>{value.label}</Tag>;
+        },
       },
       {
         title: intl.formatMessage({

@@ -18,31 +18,19 @@ export default [
                 component: 'Cluster',
                 name: '集群页',
               },
-              {
-                path: 'cluster/new',
-                component: 'Cluster/New',
-                name: '创建集群',
-              },
+
               {
                 path: 'tenant',
                 component: 'Tenant',
                 name: '租户页',
               },
-              {
-                path: 'tenant/new',
-                component: 'Tenant/New',
-                name: '创建租户',
-              },
+
               {
                 path: 'obproxy',
                 component: 'OBProxy',
                 name: 'obproxy',
               },
-              {
-                path: 'obproxy/new',
-                component: 'OBProxy/New',
-                name: '创建obproxy',
-              },
+
               {
                 path: 'alert',
                 component: 'Alert',
@@ -95,6 +83,21 @@ export default [
                 name: '系统概览页',
               },
             ],
+          },
+          {
+            path: 'tenant/new',
+            component: 'Tenant/New',
+            name: '创建租户',
+          },
+          {
+            path: 'cluster/new',
+            component: 'Cluster/New',
+            name: '创建集群',
+          },
+          {
+            path: 'obproxy/new',
+            component: 'OBProxy/New',
+            name: '创建obproxy',
           },
           {
             path: 'cluster/:ns/:name/:clusterName',
