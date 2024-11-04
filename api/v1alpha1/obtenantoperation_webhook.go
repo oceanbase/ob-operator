@@ -233,9 +233,7 @@ func (r *OBTenantOperation) validateMutation() error {
 		constants.TenantOpDeleteResourcePools:
 		return r.validateNewOperations()
 	default:
-		if r.Spec.TargetTenant == nil {
-			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("targetTenant"), "name of targetTenant is required"))
-		}
+		allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("type"), string(r.Spec.Type)+" type of operation is not supported"))
 	}
 	return allErrs.ToAggregate()
 }
