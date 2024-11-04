@@ -27,11 +27,17 @@ type StorageSpec struct {
 	SizeGB       int64  `json:"size"`
 }
 
+type SelectorExpression struct {
+	Key      string   `json:"key"`
+	Operator string   `json:"operator,omitempty"`
+	Values   []string `json:"values,omitempty"`
+}
+
 type AffinityType string
 
 type AffinitySpec struct {
-	KVPair `json:",inline"`
-	Type   AffinityType `json:"type"`
+	SelectorExpression `json:",inline"`
+	Type               AffinityType `json:"type"`
 }
 
 type ClusterMode string

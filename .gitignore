@@ -43,3 +43,5 @@ log/*
 node_modules/
 ui/dist/
 rbac_policy*.csv
+bindata.go
+swagger/
