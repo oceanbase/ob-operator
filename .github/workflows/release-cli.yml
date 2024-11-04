@@ -27,6 +27,12 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }} # The Go version to download (if necessary) and use.
 
+      - name: install dependencies
+        run: make dashboard-dep-install cli-dep-install
+  
+      - name: generate bindata
+        run: make dashboard-bindata-gen cli-bindata-gen
+
       - name: go mod vendor 
         run: go mod vendor
 
