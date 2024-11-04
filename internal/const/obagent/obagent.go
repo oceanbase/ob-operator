@@ -13,6 +13,10 @@ See the Mulan PSL v2 for more details.
 package monitor
 
 const (
+	LocalHostAddress = "127.0.0.1"
+)
+
+const (
 	HttpPort  = 8088
 	PprofPort = 8089
 )
@@ -42,6 +46,7 @@ const (
 	EnvMonitorUser     = "MONITOR_USER"
 	EnvMonitorPASSWORD = "MONITOR_PASSWORD"
 	EnvOBMonitorStatus = "OB_MONITOR_STATUS"
+	EnvHostIp          = "HOST_IP"
 )
 
 const (

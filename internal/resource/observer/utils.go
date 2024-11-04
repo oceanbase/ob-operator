@@ -395,6 +395,33 @@ func (m *OBServerManager) createMonitorContainer(obcluster *v1alpha1.OBCluster) 
 			},
 		},
 	}
+
+	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
+	if modeAnnoExist {
+		switch mode {
+		case oceanbaseconst.ModeStandalone:
+			envMode := corev1.EnvVar{
+				Name:  "STANDALONE",
+				Value: oceanbaseconst.ModeStandalone,
+			}
+			env = append(env, envMode)
+		case oceanbaseconst.ModeService:
+			svc, err := m.getSvc()
+			if err != nil {
+				if kubeerrors.IsNotFound(err) {
+					m.Logger.Info("Svc not found")
+				} else {
+					m.Logger.Error(err, "Failed to get svc")
+				}
+			} else {
+				envSvcIp := corev1.EnvVar{
+					Name:  "SVC_IP",
+					Value: svc.Spec.ClusterIP,
+				}
+				env = append(env, envSvcIp)
+			}
+		}
+	}
 	env = append(env, envOBModuleStatus)
 	env = append(env, envClusterName)
 	env = append(env, envClusterId)
@@ -540,16 +567,15 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 		Name:  "ZONE_NAME",
 		Value: m.OBServer.Spec.Zone,
 	}
-
 	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist {
 		switch mode {
 		case oceanbaseconst.ModeStandalone:
-			envMode := corev1.EnvVar{
-				Name:  "STANDALONE",
-				Value: oceanbaseconst.ModeStandalone,
+			envHostIp := corev1.EnvVar{
+				Name:  obagentconst.EnvHostIp,
+				Value: obagentconst.LocalHostAddress,
 			}
-			env = append(env, envMode)
+			env = append(env, envHostIp)
 		case oceanbaseconst.ModeService:
 			svc, err := m.getSvc()
 			if err != nil {
@@ -559,11 +585,11 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 					m.Logger.Error(err, "Failed to get svc")
 				}
 			} else {
-				envSvcIp := corev1.EnvVar{
-					Name:  "SVC_IP",
+				envHostIp := corev1.EnvVar{
+					Name:  obagentconst.EnvHostIp,
 					Value: svc.Spec.ClusterIP,
 				}
-				env = append(env, envSvcIp)
+				env = append(env, envHostIp)
 			}
 		}
 	}
