@@ -14,13 +14,21 @@ See the Mulan PSL v2 for more details.
 package demo
 
 import (
-	"github.com/spf13/cobra"
+	"context"
+	"log"
+	"time"
 
+	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/types"
+
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/cli/cluster"
 	"github.com/oceanbase/ob-operator/internal/cli/demo"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
+	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
+	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 )
 
 // NewCmd create demo command for cluster creation
@@ -29,14 +37,16 @@ func NewCmd() *cobra.Command {
 	tenantOptions := tenant.NewCreateOptions()
 	logger := utils.GetDefaultLoggerInstance()
 	pf := demo.NewPromptFactory()
-	wait := false
+	var clusterType string
+	var wait bool
+	var err error
 	cmd := &cobra.Command{
 		Use:   "demo <subcommand>",
 		Short: "deploy demo ob cluster and tenant in easier way",
 		Long:  `deploy demo ob cluster and tenant in easier way, currently support single node and three node cluster, with corresponding tenant`,
-		Run: func(cmd *cobra.Command, args []string) {
-			var err error
-			var clusterType string
+		Args:  cobra.NoArgs,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			// prompt for cluster create options
 			prompt := pf.CreatePrompt(cluster.FLAG_NAME)
 			if clusterOptions.Name, err = pf.RunPromptE(prompt); err != nil {
 				logger.Fatalln(err)
@@ -53,6 +63,16 @@ func NewCmd() *cobra.Command {
 			if clusterOptions.RootPassword, err = pf.RunPromptE(prompt); err != nil {
 				logger.Fatalln(err)
 			}
+			prompt = pf.CreatePrompt(tenant.FLAG_TENANT_NAME_IN_K8S)
+			if tenantOptions.Name, err = pf.RunPromptE(prompt); err != nil {
+				logger.Fatalln(err)
+			}
+			prompt = pf.CreatePrompt(tenant.FLAG_TENANT_NAME)
+			if tenantOptions.TenantName, err = pf.RunPromptE(prompt); err != nil {
+				logger.Fatalln(err)
+			}
+		},
+		Run: func(cmd *cobra.Command, args []string) {
 			if err := clusterOptions.Complete(); err != nil {
 				logger.Fatalln(err)
 			}
@@ -65,23 +85,68 @@ func NewCmd() *cobra.Command {
 			if err := demo.SetDefaultTenantConf(clusterType, clusterOptions.Namespace, clusterOptions.Name, tenantOptions); err != nil {
 				logger.Fatalln(err)
 			}
-			obcluster := cluster.CreateOBClusterInstance(clusterOptions)
-			if err := clients.CreateSecretsForOBCluster(cmd.Context(), obcluster, clusterOptions.RootPassword); err != nil {
-				logger.Fatalf("failed to create secrets for ob cluster: %v", err)
-			}
-			if _, err := clients.CreateOBCluster(cmd.Context(), obcluster); err != nil {
+			obcluster, err := cluster.CreateOBCluster(cmd.Context(), clusterOptions)
+			if err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create OBCluster instance: %s", clusterOptions.ClusterName)
-			logger.Printf("Run `echo $(kubectl get secret %s -clusterOptions jsonpath='{.data.password}'|base64 --decode)` to get the secrets", obcluster.Spec.UserSecrets.Root)
+			logger.Printf("Creating OBCluster instance: %s", clusterOptions.ClusterName)
+			waitForClusterReady(cmd.Context(), obcluster, logger, 2*time.Second)
+			logger.Printf("Run `echo $(kubectl get secret %s -clusterOptions jsonpath='{.data.password}'|base64 --decode)` to get clsuter secrets", obcluster.Spec.UserSecrets.Root)
+		},
+		PostRun: func(cmd *cobra.Command, args []string) {
+			// create tenant after cluster ready
 			obtenant, err := tenant.CreateOBTenant(cmd.Context(), tenantOptions)
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			logger.Printf("Create OBTenant instance: %s", tenantOptions.TenantName)
-			logger.Printf("Run `echo $(kubectl get secret %s -o jsonpath='{.data.password}'|base64 --decode)` to get the secrets", obtenant.Spec.Credentials.Root)
+			logger.Printf("Creating OBTenant instance: %s", tenantOptions.TenantName)
+			waitForTenantReady(cmd.Context(), obtenant, logger, 1*time.Second)
+			logger.Printf("Run `echo $(kubectl get secret %s -o jsonpath='{.data.password}'|base64 --decode)` to get tenant secrets", obtenant.Spec.Credentials.Root)
 		},
 	}
+	// TODO: if w is set, wait for the cluster and tenant ready
 	cmd.Flags().BoolVarP(&wait, cluster.FLAG_WAIT, "w", cluster.DEFAULT_WAIT, "wait for the cluster and tenant ready")
 	return cmd
+}
+
+// waitForTenantReady wait for tenant ready, log the task status
+func waitForClusterReady(ctx context.Context, obcluster *v1alpha1.OBCluster, logger *log.Logger, waitTime time.Duration) {
+	var err error
+	lastTask := ""
+	lastTaskStatus := ""
+	logger.Println("Waiting for cluster ready...")
+	for obcluster.Status.Status != clusterstatus.Running {
+		time.Sleep(waitTime)
+		obcluster, err = clients.GetOBCluster(ctx, obcluster.Namespace, obcluster.Name)
+		if err != nil {
+			logger.Fatalln(err)
+		}
+		if obcluster.Status.OperationContext != nil && (lastTask != string(obcluster.Status.OperationContext.Task) || lastTaskStatus != string(obcluster.Status.OperationContext.TaskStatus)) {
+			logger.Printf("Task: %s, Status: %s", obcluster.Status.OperationContext.Task, obcluster.Status.OperationContext.TaskStatus)
+			lastTask = string(obcluster.Status.OperationContext.Task)
+			lastTaskStatus = string(obcluster.Status.OperationContext.TaskStatus)
+		}
+	}
+	logger.Println("Cluster create successfully")
+}
+
+// waitForTenantReady wait for tenant ready, log the task status
+func waitForTenantReady(ctx context.Context, obtenant *v1alpha1.OBTenant, logger *log.Logger, waitTime time.Duration) {
+	var err error
+	lastTask := ""
+	lastTaskStatus := ""
+	logger.Println("Waiting for tenant ready...")
+	for obtenant.Status.Status != tenantstatus.Running {
+		time.Sleep(waitTime)
+		obtenant, err = clients.GetOBTenant(ctx, types.NamespacedName{Namespace: obtenant.Namespace, Name: obtenant.Name})
+		if err != nil {
+			logger.Fatalln(err)
+		}
+		if obtenant.Status.OperationContext != nil && (lastTask != string(obtenant.Status.OperationContext.Task) || lastTaskStatus != string(obtenant.Status.OperationContext.TaskStatus)) {
+			logger.Printf("Task: %s, Status: %s", obtenant.Status.OperationContext.Task, obtenant.Status.OperationContext.TaskStatus)
+			lastTask = string(obtenant.Status.OperationContext.Task)
+			lastTaskStatus = string(obtenant.Status.OperationContext.TaskStatus)
+		}
+	}
+	logger.Println("Tenant create successfully")
 }

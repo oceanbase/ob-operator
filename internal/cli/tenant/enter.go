@@ -78,6 +78,11 @@ const (
 	DEFAULT_RESTORE_FLAG   = false
 
 	// Default Tenant name for demo cmd
-	DEFAULT_NAME        = "demo-tenant"
-	DEFAULT_TENANT_NAME = "demo_tenant"
+	DEFAULT_TENANT_NAME_IN_K8S = "demo-tenant"
+	DEFAULT_TENANT_NAME        = "demo_tenant"
+)
+
+// using in `demo` command, tenant resource name in k8s
+const (
+	FLAG_TENANT_NAME_IN_K8S = "tenant-name-in-k8s"
 )

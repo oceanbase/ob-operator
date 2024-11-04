@@ -20,6 +20,7 @@ import (
 	"github.com/manifoldco/promptui"
 
 	"github.com/oceanbase/ob-operator/internal/cli/cluster"
+	"github.com/oceanbase/ob-operator/internal/cli/tenant"
 	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
@@ -84,7 +85,7 @@ func (pf *PromptFactory) CreatePrompt(promptType string) any {
 			Templates: pf.promptTepl,
 			Validate: func(input string) error {
 				if !utils.CheckResourceName(input) {
-					return errors.New("invalid cluster name")
+					return errors.New("invalid resource name in k8s")
 				}
 				return nil
 			},
@@ -126,6 +127,32 @@ func (pf *PromptFactory) CreatePrompt(promptType string) any {
 			Items:        []string{cluster.SINGLE_NODE, cluster.THREE_NODE},
 			Templates:    pf.selectTepl,
 			HideSelected: true,
+		}
+	case tenant.FLAG_TENANT_NAME_IN_K8S:
+		return &promptui.Prompt{
+			Label:     "Please input the tenant resource name, press `enter` to use the default name `demo-tenant`: ",
+			Templates: pf.promptTepl,
+			Validate: func(input string) error {
+				if !utils.CheckResourceName(input) {
+					return errors.New("invalid resource name in k8s")
+				}
+				return nil
+			},
+			AllowEdit: true,
+			Default:   tenant.DEFAULT_TENANT_NAME_IN_K8S,
+		}
+	case tenant.FLAG_TENANT_NAME:
+		return &promptui.Prompt{
+			Label:     "Please input the tenant name, press `enter` to use the default name `demo_tenant`: ",
+			Templates: pf.promptTepl,
+			Validate: func(input string) error {
+				if !utils.CheckTenantName(input) {
+					return errors.New("invalid tenant name")
+				}
+				return nil
+			},
+			AllowEdit: true,
+			Default:   tenant.DEFAULT_TENANT_NAME,
 		}
 	default:
 		return nil
