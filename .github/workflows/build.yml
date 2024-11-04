@@ -30,15 +30,18 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      - name: generate bindata
+        run: make dashboard-dep-install cli-dep-install dashboard-bindata-gen dashboard-doc-gen cli-bindata-gen
+
       - name: go mod vendor
         run: go mod vendor
 
       - name: go build ob-operator
-        run: go build -o bin/manager cmd/operator/main.go
+        run: make build
       
       - name: go build oceanbase-dashboard
-        run: go build -o bin/oceanbase-dashboard cmd/dashboard/main.go
+        run: make dashboard-build
         
       - name: go build oceanbase-cli
-        run: go build -o bin/obocli cmd/cli/main.go
+        run: make cli-build
         
