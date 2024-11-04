@@ -12,7 +12,7 @@ data:
     - name: ob-rule
       rules:
       - alert: cluster_active_session
-        expr: sum(ob_session_active_num) by (ob_cluster_name, obzone, svr_ip) > 10000
+        expr: sum(ob_active_session_num) by (ob_cluster_name, obzone, svr_ip) > 10000
         for: 1m
         labels:
           instance_type: obcluster
@@ -44,63 +44,8 @@ data:
         annotations:
           description: 'Cluster {{ $labels.ob_cluster_name }} has {{ $value }} index fail tables.'
           summary: 'Found index fail table in cluster {{ $labels.ob_cluster_name }}.'
-      - alert: frozen_version_check
-        expr: max(ob_zone_stat{name="frozen_version"}) by (ob_cluster_name) - min(ob_zone_stat{name="last_merged_version"}) by (ob_cluster_name) > 1
-        for: 1m
-        labels:
-          instance_type: obcluster
-          rule_name: frozen_version_check
-          rule_type: builtin
-          severity: warning
-        annotations:
-          description: 'Cluster {{ $labels.ob_cluster_name }} has {{ $value }} delta versions between merged and frozen data.'
-          summary: 'Frozen version is too much larger than merged version.'
-      - alert: cluster_merge_error
-        expr: max(ob_zone_stat{name="is_merge_error"}) by (ob_cluster_name) > 0
-        for: 1m
-        labels:
-          instance_type: obcluster
-          rule_name: cluster_merge_error
-          rule_type: builtin
-          severity: warning
-        annotations:
-          description: 'Cluster {{ $labels.ob_cluster_name }} merge error.'
-          summary: 'Cluster {{ $labels.ob_cluster_name }} merge error.'
-      - alert: cluster_merge_timeout
-        expr: max(ob_zone_stat{name="is_merge_timeout"}) by (ob_cluster_name) > 0
-        for: 1m
-        labels:
-          instance_type: obcluster
-          rule_name: cluster_merge_timeout
-          rule_type: builtin
-          severity: warning
-        annotations:
-          description: 'Cluster {{ $labels.ob_cluster_name }} merge timeout.'
-          summary: 'Cluster {{ $labels.ob_cluster_name }} merge timeout.'
-      - alert: cluster_no_frozen
-        expr:  (max(ob_zone_current_timestamp{name="frozen_time"}) by (ob_cluster_name) - max(ob_zone_stat{name="frozen_time"}) by (ob_cluster_name)) / 1000000 > 90000
-        for: 1m
-        labels:
-          instance_type: obcluster
-          rule_name: cluster_no_frozen
-          rule_type: builtin
-          severity: warning
-        annotations:
-          description: 'Cluster {{ $labels.ob_cluster_name }} has not frozen for {{ $value }} seconds.'
-          summary: 'Cluster {{ $labels.ob_cluster_name }} has not frozen for a long time.'
-      - alert: cluster_no_merge
-        expr: (max(ob_zone_current_timestamp{name="merge_start_time"}) by (ob_cluster_name) - max(ob_zone_stat{name="merge_start_time"}) by (ob_cluster_name)) / 1000000  > 90000
-        for: 1m
-        labels:
-          instance_type: obcluster
-          rule_name: cluster_no_merge
-          rule_type: builtin
-          severity: warning
-        annotations:
-          description: 'Cluster {{ $labels.ob_cluster_name }} has not merge for {{ $value }} seconds.'
-          summary: 'Cluster {{ $labels.ob_cluster_name }} has not merge for a long time.'
       - alert: tenant_active_session
-        expr: sum(ob_session_active_num) by (ob_cluster_name, obzone, svr_ip, tenant_name) > 2000
+        expr: sum(ob_active_session_num) by (ob_cluster_name, obzone, svr_ip, tenant_name) > 2000
         for: 1m
         labels:
           instance_type: obtenant
@@ -176,28 +121,17 @@ data:
         annotations:
           description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} has not frozen for {{ $value }} seconds.'
           summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} has not frozen for a long time.'
-      - alert: tenant_partition_leader_absent
-        expr: max(partition_leader_absent_count) by (ob_cluster_name, tenant_name) > 100
+      - alert: tenant500_mem_hold_percent
+        expr: 100 * sum(ob_tenant500_memory_hold_bytes) by (@GBLABELS) / sum(ob_server_resource_memory_bytes) by (@GBLABELS) > 95
         for: 3m 
         labels:
           instance_type: obtenant
-          rule_name: tenant_partition_leader_absent
+          rule_name: tenant500_mem_hold_percent
           rule_type: builtin
           severity: warning
         annotations:
-          description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} found {{ $value }} partition leader absent.'
-          summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} found partition leader absent.'
-      - alert: tenant_partition_replica_absent
-        expr: max(partition_replica_absent_count) by (ob_cluster_name, tenant_name) > 100
-        for: 3m 
-        labels:
-          instance_type: obtenant
-          rule_name: tenant_partition_replica_absent
-          rule_type: builtin
-          severity: warning
-        annotations:
-          description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} found {{ $value }} partition replica absent.'
-          summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} found partition replica absent.'
+          description: 'Tenant 500 of obcluster {{ $labels.ob_cluster_name }} memory hold percent too high, {{ $value }}.'
+          summary: 'Tenant 500 of obcluster {{ $labels.ob_cluster_name }} memory hold percent too high.'
       - alert: tenant_task_timeout
         expr: max(ob_tenant_task_max_duration_seconds) by (ob_cluster_name, tenant_name) > 10800
         for: 1m 
@@ -209,28 +143,6 @@ data:
         annotations:
           description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} found task not finished for {{ $value }} seconds.'
           summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} found task not finished for a long time.'
-      - alert: standby_tenant_sync_delay
-        expr: max(standby_tenant_delay_seconds) by (ob_cluster_name, tenant_name) > 600
-        for: 1m 
-        labels:
-          instance_type: obtenant
-          rule_name: standby_tenant_sync_delay
-          rule_type: builtin
-          severity: caution
-        annotations:
-          description: 'Standby tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} sync delay {{ $value }} seconds.'
-          summary: 'Standby tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} sync delay too long.'
-      - alert: standby_tenant_sync_error
-        expr: max(standby_tenant_restore_status_code) by (ob_cluster_name, tenant_name) == 2
-        for: 1m 
-        labels:
-          instance_type: obtenant
-          rule_name: standby_tenant_sync_error
-          rule_type: builtin
-          severity: warning
-        annotations:
-          description: 'Standby tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} sync error.'
-          summary: 'Standby tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} sync error.'
       - alert: tenant_memstore_percent
         expr: 100 * sum(ob_sysstat{stat_id="130001"}) by (ob_cluster_name, obzone, svr_ip, tenant_name) / sum(ob_sysstat{stat_id="130004"}) by (ob_cluster_name, obzone, svr_ip, tenant_name) > 95
         for: 2m
