@@ -45,7 +45,7 @@ export default function Overview() {
           defaultMessage: '删除成功',
         }),
       );
-      history.push('/obproxy');
+      history.replace('/obproxy');
     }
   };
 

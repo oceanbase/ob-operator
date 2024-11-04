@@ -51,7 +51,7 @@ const ClusterOverview: React.FC = () => {
           defaultMessage: '删除成功',
         }),
       );
-      history.push('/cluster');
+      history.replace('/cluster');
     }
   };
 
