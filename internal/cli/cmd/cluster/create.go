@@ -18,7 +18,6 @@ import (
 
 	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
 	"github.com/oceanbase/ob-operator/internal/cli/utils"
-	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
 // NewCreateCmd create an ob cluster
@@ -37,11 +36,7 @@ func NewCreateCmd() *cobra.Command {
 			if err := o.Validate(); err != nil {
 				logger.Fatalln(err)
 			}
-			obcluster := cluster.CreateOBClusterInstance(o)
-			if err := cluster.CreateSecretsForOBCluster(cmd.Context(), obcluster, o.RootPassword); err != nil {
-				logger.Fatalln(err)
-			}
-			obcluster, err := clients.CreateOBCluster(cmd.Context(), obcluster)
+			obcluster, err := cluster.CreateOBCluster(cmd.Context(), o)
 			if err != nil {
 				logger.Fatalln(err)
 			}

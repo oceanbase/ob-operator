@@ -20,11 +20,12 @@ import (
 	"strings"
 	"time"
 
-	apitypes "github.com/oceanbase/ob-operator/api/types"
-	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srand "k8s.io/apimachinery/pkg/util/rand"
+
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
 // CreatePasswordSecret creates a secret with password
@@ -66,7 +67,7 @@ func GenerateClusterID() int64 {
 	return GenerateClusterID()
 }
 
-// GenerateNaivePassword generated naive password in length 16
+// GenerateNaivePassword generated naive password in length 16, used in tenant creation
 func GenerateNaivePassword() string {
 	return k8srand.String(16)
 }

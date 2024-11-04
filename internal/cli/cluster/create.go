@@ -26,6 +26,7 @@ import (
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/clients"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
@@ -265,38 +266,45 @@ func buildMonitorTemplate(monitorSpec *param.MonitorSpec) *apitypes.MonitorTempl
 	return monitorTemplate
 }
 
-// CreateOBClusterInstance creates an OBClusterInstance
-func CreateOBClusterInstance(param *CreateOptions) *v1alpha1.OBCluster {
-	observerTemplate := buildOBServerTemplate(param.OBServer)
-	monitorTemplate := buildMonitorTemplate(param.Monitor)
-	backupVolume := buildBackupVolume(param.BackupVolume)
-	parameters := buildOBClusterParameters(param.Parameters)
-	topology := buildOBClusterTopology(param.Topology)
+// CreateOBCluster creates an OBCluster
+func CreateOBCluster(ctx context.Context, o *CreateOptions) (*v1alpha1.OBCluster, error) {
+	observerTemplate := buildOBServerTemplate(o.OBServer)
+	monitorTemplate := buildMonitorTemplate(o.Monitor)
+	backupVolume := buildBackupVolume(o.BackupVolume)
+	parameters := buildOBClusterParameters(o.Parameters)
+	topology := buildOBClusterTopology(o.Topology)
 	obcluster := &v1alpha1.OBCluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace:   param.Namespace,
-			Name:        param.Name,
+			Namespace:   o.Namespace,
+			Name:        o.Name,
 			Annotations: map[string]string{},
 		},
 		Spec: v1alpha1.OBClusterSpec{
-			ClusterName:      param.ClusterName,
-			ClusterId:        param.ClusterId,
+			ClusterName:      o.ClusterName,
+			ClusterId:        o.ClusterId,
 			OBServerTemplate: observerTemplate,
 			MonitorTemplate:  monitorTemplate,
 			BackupVolume:     backupVolume,
 			Parameters:       parameters,
 			Topology:         topology,
-			UserSecrets:      utils.GenerateUserSecrets(param.Name, param.ClusterId),
+			UserSecrets:      utils.GenerateUserSecrets(o.Name, o.ClusterId),
 		},
 	}
-	switch param.Mode {
+	switch o.Mode {
 	case string(modelcommon.ClusterModeStandalone):
 		obcluster.Annotations[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeStandalone
 	case string(modelcommon.ClusterModeService):
 		obcluster.Annotations[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeService
 	default:
 	}
-	return obcluster
+	if err := CreateSecretsForOBCluster(ctx, obcluster, o.RootPassword); err != nil {
+		return nil, err
+	}
+	obcluster, err := clients.CreateOBCluster(ctx, obcluster)
+	if err != nil {
+		return nil, err
+	}
+	return obcluster, nil
 }
 
 // CreateSecretsForOBCluster creates secrets for OBCluster

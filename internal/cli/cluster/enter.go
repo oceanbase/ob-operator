@@ -55,8 +55,8 @@ const (
 
 	// Flags for parameter-related options
 	FLAG_PARAMETERS                    = "parameters"
-	FLAG_MIN_FULL_RESOURCE_POOL_MEMORY = "min-full-resource-pool-memory"
-	FLAG_SYSTEM_MEMORY                 = "system-memory"
+	FLAG_MIN_FULL_RESOURCE_POOL_MEMORY = "__min_full_resource_pool_memory"
+	FLAG_SYSTEM_MEMORY                 = "system_memory"
 
 	// Flag for demo cluster
 	FLAG_WAIT = "wait"
@@ -67,7 +67,7 @@ const (
 	// Default values for int and string flags
 	DEFAULT_NAMESPACE              = "default"
 	DEFAULT_ID                     = 0
-	DEFAULT_OBSERVER_IMAGE         = "quay.io/oceanbase/oceanbase-cloud-native:4.2.1.6-106000012024042515"
+	DEFAULT_OBSERVER_IMAGE         = "quay.io/oceanbase/oceanbase-cloud-native:4.3.3.1-101000012024102216"
 	DEFAULT_OBSERVER_CPU           = 2
 	DEFAULT_OBSERVER_MEMORY        = 10
 	DEFAULT_DATA_STORAGE_CLASS     = "local-path"

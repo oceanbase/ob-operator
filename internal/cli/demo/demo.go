@@ -24,6 +24,7 @@ import (
 )
 
 func SetDefaultClusterConf(clusterType string, o *cluster.CreateOptions) error {
+	o.BackupVolume = nil // set to nil to disable backup volume
 	o.Parameters = []modelcommon.KVPair{
 		{
 			Key:   cluster.FLAG_MIN_FULL_RESOURCE_POOL_MEMORY,
@@ -94,12 +95,11 @@ func SetDefaultClusterConf(clusterType string, o *cluster.CreateOptions) error {
 func SetDefaultTenantConf(clusterType string, namespace string, clusterName string, o *tenant.CreateOptions) error {
 	o.Namespace = namespace
 	o.ClusterName = clusterName
-	o.Name = tenant.DEFAULT_NAME
-	o.TenantName = tenant.DEFAULT_TENANT_NAME
 	o.TenantRole = string(apiconst.TenantRolePrimary)
 	o.Charset = tenant.DEFAULT_CHARSET
 	o.ConnectWhiteList = tenant.DEFAULT_CONNECT_WHITE_LIST
 	o.UnitNumber = tenant.DEFAULT_UNIT_NUMBER
+	o.Source = nil // set to nil to avoid creating tenant with source
 	o.UnitConfig = &param.UnitConfig{
 		MaxIops:     tenant.DEFAULT_MAX_IOPS,
 		MinIops:     tenant.DEFAULT_MIN_IOPS,
