@@ -79,21 +79,26 @@ func NewCreateOptions() *CreateOptions {
 }
 
 func (o *CreateOptions) Parse(cmd *cobra.Command, args []string) error {
+	o.Name = args[0]
+	o.Cmd = cmd
 	pools, err := utils.MapZonesToPools(o.ZonePriority)
 	if err != nil {
 		return err
 	}
 	o.Pools = pools
-	o.Name = args[0]
-	o.Cmd = cmd
-	o.TenantRole = string(apiconst.TenantRolePrimary)
+	// If flag `from` is specified, create a tenant as a empty standby tenant or restore a tenant.
 	if o.CheckIfFlagChanged("from") {
 		o.Source.Tenant = &o.From
-		// If flag `restore` is specified, restore a tenant, otherwise create an empty standby tenant.
-		if !o.Restore {
+		// If flag `restore` is specified, restore a tenant, currently only create primary tenant as default
+		if o.Restore {
+			o.TenantRole = string(apiconst.TenantRolePrimary)
+		} else {
 			o.TenantRole = string(apiconst.TenantRoleStandby)
 			o.Source.Restore = nil
 		}
+	} else {
+		o.TenantRole = string(apiconst.TenantRolePrimary)
+		o.Source = nil
 	}
 	return nil
 }
@@ -217,7 +222,7 @@ func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, 
 			}
 		}
 		t.Spec.Credentials.StandbyRO = p.Name + "-standbyro-" + rand.String(6)
-		err = utils.CreatePasswordSecret(ctx, nn.Namespace, t.Spec.Credentials.Root, rand.String(32))
+		err = utils.CreatePasswordSecret(ctx, nn.Namespace, t.Spec.Credentials.StandbyRO, rand.String(32))
 		if err != nil {
 			return nil, oberr.NewInternal(err.Error())
 		}
@@ -374,20 +379,6 @@ func buildOBTenantApiType(nn types.NamespacedName, p *CreateOptions) (*v1alpha1.
 	return t, nil
 }
 
-func createPasswordSecret(ctx context.Context, nn types.NamespacedName, password string) error {
-	k8sclient := client.GetClient()
-	_, err := k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, &corev1.Secret{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      nn.Name,
-			Namespace: nn.Namespace,
-		},
-		StringData: map[string]string{
-			"password": password,
-		},
-	}, v1.CreateOptions{})
-	return err
-}
-
 // AddFlags for create options
 func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 	o.AddBaseFlags(cmd)
@@ -403,8 +394,8 @@ func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags.StringVar(&o.ClusterName, FLAG_CLUSTER_NAME, "", "The cluster name tenant belonged to in k8s")
 	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the tenant")
 	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOTPASSWD, "p", "", "The root password of the primary tenant, if not specified, generate a random password")
-	baseFlags.StringVarP(&o.Charset, FLAG_CHARSET, "c", DEFAULT_CHARSET, "The charset using in ob tenant")
-	baseFlags.StringVar(&o.ConnectWhiteList, FLAG_CONNECT_WHITE_LIST, DEFAULT_CONNECT_WHITE_LIST, "The connect white list using in ob tenant")
+	baseFlags.StringVarP(&o.Charset, FLAG_CHARSET, "c", DEFAULT_CHARSET, "The charset used in ob tenant")
+	baseFlags.StringVar(&o.ConnectWhiteList, FLAG_CONNECT_WHITE_LIST, DEFAULT_CONNECT_WHITE_LIST, "The connect white list used in ob tenant")
 	baseFlags.StringVar(&o.From, FLAG_FROM, "", "restore from data source")
 }
 
