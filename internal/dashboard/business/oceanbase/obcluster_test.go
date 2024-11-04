@@ -46,21 +46,21 @@ func getMockedCreateClusterParam() *param.CreateOBClusterParam {
 				Value: "test-toleration-value",
 			}},
 			Affinities: []common.AffinitySpec{{
-				KVPair: common.KVPair{
-					Key:   "test-node-affinity",
-					Value: "test-node-affinity-value",
+				SelectorExpression: common.SelectorExpression{
+					Key:    "test-node-affinity",
+					Values: []string{"test-node-affinity-value"},
 				},
 				Type: common.NodeAffinityType,
 			}, {
-				KVPair: common.KVPair{
-					Key:   "test-pod-affinity",
-					Value: "test-pod-affinity-value",
+				SelectorExpression: common.SelectorExpression{
+					Key:    "test-pod-affinity",
+					Values: []string{"test-pod-affinity-value"},
 				},
 				Type: common.PodAffinityType,
 			}, {
-				KVPair: common.KVPair{
-					Key:   "test-pod-anti-affinity",
-					Value: "test-pod-anti-affinity-value",
+				SelectorExpression: common.SelectorExpression{
+					Key:    "test-pod-anti-affinity",
+					Values: []string{"test-pod-anti-affinity-value"},
 				},
 				Type: common.PodAntiAffinityType,
 			}},
