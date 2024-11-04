@@ -82,7 +82,7 @@ export default function TenantOverview() {
           defaultMessage: '删除成功',
         }),
       );
-      history.push('/tenant');
+      history.replace('/tenant');
     }
   };
 
