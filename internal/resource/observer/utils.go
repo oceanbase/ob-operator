@@ -400,11 +400,11 @@ func (m *OBServerManager) createMonitorContainer(obcluster *v1alpha1.OBCluster) 
 	if modeAnnoExist {
 		switch mode {
 		case oceanbaseconst.ModeStandalone:
-			envMode := corev1.EnvVar{
-				Name:  "STANDALONE",
-				Value: oceanbaseconst.ModeStandalone,
+			envHostIp := corev1.EnvVar{
+				Name:  obagentconst.EnvHostIp,
+				Value: obagentconst.LocalHostAddress,
 			}
-			env = append(env, envMode)
+			env = append(env, envHostIp)
 		case oceanbaseconst.ModeService:
 			svc, err := m.getSvc()
 			if err != nil {
@@ -414,11 +414,11 @@ func (m *OBServerManager) createMonitorContainer(obcluster *v1alpha1.OBCluster) 
 					m.Logger.Error(err, "Failed to get svc")
 				}
 			} else {
-				envSvcIp := corev1.EnvVar{
-					Name:  "SVC_IP",
+				envHostIp := corev1.EnvVar{
+					Name:  obagentconst.EnvHostIp,
 					Value: svc.Spec.ClusterIP,
 				}
-				env = append(env, envSvcIp)
+				env = append(env, envHostIp)
 			}
 		}
 	}
@@ -571,11 +571,11 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 	if modeAnnoExist {
 		switch mode {
 		case oceanbaseconst.ModeStandalone:
-			envHostIp := corev1.EnvVar{
-				Name:  obagentconst.EnvHostIp,
-				Value: obagentconst.LocalHostAddress,
+			envMode := corev1.EnvVar{
+				Name:  "STANDALONE",
+				Value: oceanbaseconst.ModeStandalone,
 			}
-			env = append(env, envHostIp)
+			env = append(env, envMode)
 		case oceanbaseconst.ModeService:
 			svc, err := m.getSvc()
 			if err != nil {
@@ -585,15 +585,14 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 					m.Logger.Error(err, "Failed to get svc")
 				}
 			} else {
-				envHostIp := corev1.EnvVar{
-					Name:  obagentconst.EnvHostIp,
+				envSvcIp := corev1.EnvVar{
+					Name:  "SVC_IP",
 					Value: svc.Spec.ClusterIP,
 				}
-				env = append(env, envHostIp)
+				env = append(env, envSvcIp)
 			}
 		}
 	}
-
 	startupParameters := make([]string, 0)
 	for _, parameter := range obcluster.Spec.Parameters {
 		reserved := false
