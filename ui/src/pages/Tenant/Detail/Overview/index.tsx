@@ -82,7 +82,7 @@ export default function TenantOverview() {
           defaultMessage: '删除成功',
         }),
       );
-      history.push('/tenant');
+      history.replace('/tenant');
     }
   };
 
@@ -211,7 +211,7 @@ export default function TenantOverview() {
 
   const operateSuccess = () => {
     setTimeout(() => {
-      getTenantDetail({ ns:ns!, name:name! });
+      getTenantDetail({ ns: ns!, name: name! });
     }, 1000);
   };
   const header = () => {
