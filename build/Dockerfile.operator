@@ -8,12 +8,12 @@ ARG RACE
 WORKDIR /workspace
 # copy everything
 COPY . .
-RUN GO11MODULE=ON CGO_ENABLED=0 GOOS=linux go build ${RACE} -o manager cmd/operator/main.go
+RUN make build
 
 # start build docker image
 FROM openanolis/anolisos:8.8
 WORKDIR /
-COPY --from=builder /workspace/manager .
+COPY --from=builder /workspace/bin/manager .
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 USER 65534:65534
 

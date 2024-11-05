@@ -30,8 +30,8 @@ dashboard-build: dashboard-bindata-gen dashboard-doc-gen ## Build oceanbase-dash
 	$(GOBUILD) -o bin/oceanbase-dashboard ./cmd/dashboard/main.go
 
 .PHONY: dashboard-bindata-gen
-dashboard-bindata-gen: ## Generate bindata
-	go-bindata -o internal/dashboard/generated/bindata/bindata.go -pkg bindata internal/assets/dashboard/...
+dashboard-bindata-gen: dashboard-dep-install ## Generate bindata
+	go-bindata -o internal/dashboard/generated/bindata/bindata.go -pkg bindata internal/assets/...
 
 .PHONY: dashboard-clean
 dashboard-clean: ## Clean build
@@ -40,8 +40,12 @@ dashboard-clean: ## Clean build
 
 .PHONY: dashboard-dep-install
 dashboard-dep-install: ## Install dependencies for oceanbase-dashboard
-	go install github.com/go-bindata/go-bindata/...@v3.1.2+incompatible
-	go install github.com/swaggo/swag/cmd/swag@latest
+	@if [ -z "$(shell command -v swag)" ]; then \
+		go install github.com/swaggo/swag/cmd/swag@latest; \
+	fi
+	@if [ -z "$(shell command -v go-bindata)" ]; then \
+		go install github.com/go-bindata/go-bindata/...@v3.1.2+incompatible; \
+	fi
 
 .PHONY: dashboard-run
 dashboard-run: ## Run oceanbase-dashboard in dev mode
