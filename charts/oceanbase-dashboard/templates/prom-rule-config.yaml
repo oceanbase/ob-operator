@@ -122,16 +122,16 @@ data:
           description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} has not frozen for {{ $value }} seconds.'
           summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} has not frozen for a long time.'
       - alert: tenant500_mem_hold_percent
-        expr: 100 * sum(ob_tenant500_memory_hold_bytes) by (@GBLABELS) / sum(ob_server_resource_memory_bytes) by (@GBLABELS) > 95
+        expr: 100 * sum(ob_tenant500_memory_hold_bytes) by (ob_cluster_name, obzone, svr_ip) / sum(ob_server_resource_memory_bytes) by (ob_cluster_name, obzone, svr_ip) > 95
         for: 3m 
         labels:
-          instance_type: obtenant
+          instance_type: obcluster
           rule_name: tenant500_mem_hold_percent
           rule_type: builtin
           severity: warning
         annotations:
-          description: 'Tenant 500 of obcluster {{ $labels.ob_cluster_name }} memory hold percent too high, {{ $value }}.'
-          summary: 'Tenant 500 of obcluster {{ $labels.ob_cluster_name }} memory hold percent too high.'
+          description: 'Tenant 500 on observer {{ $labels.svr_ip }} of obcluster {{ $labels.ob_cluster_name }} memory hold percent too high, {{ $value }}.'
+          summary: 'Tenant 500 on observer {{ $labels.svr_ip }} of obcluster {{ $labels.ob_cluster_name }} memory hold percent too high.'
       - alert: tenant_task_timeout
         expr: max(ob_tenant_task_max_duration_seconds) by (ob_cluster_name, tenant_name) > 10800
         for: 1m 
