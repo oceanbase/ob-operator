@@ -9,6 +9,7 @@ on:
       - '**/*.go'
       - 'go.mod'
       - 'go.sum'
+      - '**/*.mk'
   push:
     branches:
       - master
@@ -17,6 +18,7 @@ on:
       - '**/*.go'
       - 'go.mod'
       - 'go.sum'
+      - '**/*.mk'
 
 env:
   GO_VERSION: "1.22"
