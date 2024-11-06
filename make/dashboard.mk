@@ -31,7 +31,7 @@ dashboard-build: dashboard-bindata-gen dashboard-doc-gen ## Build oceanbase-dash
 
 .PHONY: dashboard-bindata-gen
 dashboard-bindata-gen: dashboard-dep-install ## Generate bindata
-	go-bindata -o internal/dashboard/generated/bindata/bindata.go -pkg bindata internal/assets/...
+	go-bindata -o internal/dashboard/generated/bindata/bindata.go -pkg bindata internal/assets/dashboard/...
 
 .PHONY: dashboard-clean
 dashboard-clean: ## Clean build
