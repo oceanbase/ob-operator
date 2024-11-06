@@ -14,18 +14,12 @@ See the Mulan PSL v2 for more details.
 package utils
 
 import (
-	"crypto/rand"
 	"fmt"
 	"math"
-	"regexp"
 	"strconv"
-	"strings"
-	"time"
 
 	"k8s.io/apimachinery/pkg/api/resource"
-	k8srand "k8s.io/apimachinery/pkg/util/rand"
 
-	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 
@@ -33,75 +27,6 @@ import (
 
 	param "github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 )
-
-const (
-	characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~#%^&*_-+|(){}[]:,.?/"
-	factor     = 4294901759
-)
-
-func GenerateUserSecrets(clusterName string, clusterId int64) *apitypes.OBUserSecrets {
-	return &apitypes.OBUserSecrets{
-		Root:     fmt.Sprintf("%s-%d-root-%s", clusterName, clusterId, GenerateUUID()),
-		ProxyRO:  fmt.Sprintf("%s-%d-proxyro-%s", clusterName, clusterId, GenerateUUID()),
-		Monitor:  fmt.Sprintf("%s-%d-monitor-%s", clusterName, clusterId, GenerateUUID()),
-		Operator: fmt.Sprintf("%s-%d-operator-%s", clusterName, clusterId, GenerateUUID()),
-	}
-}
-
-// GenerateClusterID generated random cluster ID
-func GenerateClusterID() int64 {
-	clusterID := time.Now().Unix() % factor
-	if clusterID != 0 {
-		return clusterID
-	}
-	return GenerateClusterID()
-}
-
-// CheckResourceName checks resource name in k8s
-func CheckResourceName(name string) bool {
-	regex := `[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*`
-	re := regexp.MustCompile(regex)
-	return re.MatchString(name)
-}
-
-// CheckPassword checks password when creating cluster
-func CheckPassword(password string) bool {
-	var (
-		countUppercase   int
-		countLowercase   int
-		countNumber      int
-		countSpecialChar int
-	)
-
-	for _, char := range password {
-		if strings.ContainsRune(characters, char) {
-			switch {
-			case strings.ContainsRune("ABCDEFGHIJKLMNOPQRSTUVWXYZ", char):
-				countUppercase++
-			case strings.ContainsRune("abcdefghijklmnopqrstuvwxyz", char):
-				countLowercase++
-			case strings.ContainsRune("0123456789", char):
-				countNumber++
-			default:
-				countSpecialChar++
-			}
-		} else {
-			return false
-		}
-		// if satisfied
-		if countUppercase >= 2 && countLowercase >= 2 && countNumber >= 2 && countSpecialChar >= 2 {
-			return true
-		}
-	}
-	return countUppercase >= 2 && countLowercase >= 2 && countNumber >= 2 && countSpecialChar >= 2
-}
-
-// CheckTenantName check Tenant name when creating tenant
-func CheckTenantName(name string) bool {
-	regex := `^[_a-zA-Z][^-]*$`
-	re := regexp.MustCompile(regex)
-	return re.MatchString(name)
-}
 
 // MapZonesToTopology map --zones to zoneTopology
 func MapZonesToTopology(zones map[string]string) ([]param.ZoneTopology, error) {
@@ -157,51 +82,6 @@ func MapParameters(parameters map[string]string) ([]common.KVPair, error) {
 	return kvMap, nil
 }
 
-// GenerateRandomPassword generated random password in range [minLength,maxLength]
-func GenerateRandomPassword(minLength int, maxLength int) string {
-	const (
-		minUppercase   = 2
-		minLowercase   = 2
-		minNumber      = 2
-		minSpecialChar = 2
-	)
-	var (
-		countUppercase   int
-		countLowercase   int
-		countNumber      int
-		countSpecialChar int
-	)
-
-	var sb strings.Builder
-	for countUppercase < minUppercase || countLowercase < minLowercase || countNumber < minNumber || countSpecialChar < minSpecialChar {
-		b := make([]byte, 1)
-		_, err := rand.Read(b)
-		if err != nil {
-			panic(err)
-		}
-
-		randomIndex := int(b[0]) % len(characters)
-		randomChar := characters[randomIndex]
-		if err := sb.WriteByte(randomChar); err != nil {
-			panic(err)
-		}
-		switch {
-		case strings.ContainsRune("ABCDEFGHIJKLMNOPQRSTUVWXYZ", rune(randomChar)):
-			countUppercase++
-		case strings.ContainsRune("abcdefghijklmnopqrstuvwxyz", rune(randomChar)):
-			countLowercase++
-		case strings.ContainsRune("0123456789", rune(randomChar)):
-			countNumber++
-		default:
-			countSpecialChar++
-		}
-	}
-	if len(sb.String()) < minLength || len(sb.String()) > maxLength {
-		return GenerateRandomPassword(minLength, maxLength)
-	}
-	return sb.String()
-}
-
 // ParseUnitConfig parse param.UnitConfig to v1alpha1.UnitConfig
 func ParseUnitConfig(unitConfig *param.UnitConfig) (*v1alpha1.UnitConfig, error) {
 	cpuCount, err := resource.ParseQuantity(unitConfig.CPUCount)
@@ -236,9 +116,4 @@ func ParseUnitConfig(unitConfig *param.UnitConfig) (*v1alpha1.UnitConfig, error)
 		MinIops:     minIops,
 		IopsWeight:  unitConfig.IopsWeight,
 	}, nil
-}
-
-// GenerateUUID returns uuid
-func GenerateUUID() string {
-	return k8srand.String(12)
 }

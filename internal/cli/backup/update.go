@@ -22,8 +22,8 @@ import (
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/generic"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
@@ -50,7 +50,7 @@ func UpdateTenantBackupPolicy(ctx context.Context, o *UpdateOptions) error {
 	if err != nil {
 		return err
 	}
-	if err := util.CheckTenantStatus(obtenant); err != nil {
+	if err := utils.CheckTenantStatus(obtenant); err != nil {
 		return err
 	}
 	policy, err := clients.GetTenantBackupPolicy(ctx, nn)

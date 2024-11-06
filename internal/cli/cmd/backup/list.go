@@ -20,15 +20,15 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/oceanbase/ob-operator/internal/cli/backup"
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
 // NewListCmd list all backup policies
 func NewListCmd() *cobra.Command {
 	o := backup.NewListOptions()
-	tbw, tbLog := cmdUtil.GetTableLoggerInstance()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	tbw, tbLog := utils.GetTableLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List all backup policies",

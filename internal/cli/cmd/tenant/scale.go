@@ -17,15 +17,15 @@ import (
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/types"
 
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
 // NewScaleCmd scale an obtenant
 func NewScaleCmd() *cobra.Command {
 	o := tenant.NewScaleOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "scale <tenant_name>",
 		Short:   "Scale an ob tenant",
@@ -40,7 +40,7 @@ func NewScaleCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			if err := cmdUtil.CheckTenantStatus(obtenant); err != nil {
+			if err := utils.CheckTenantStatus(obtenant); err != nil {
 				logger.Fatalln(err)
 			} else {
 				o.OldResourcePools = obtenant.Spec.Pools

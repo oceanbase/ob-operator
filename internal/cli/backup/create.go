@@ -29,8 +29,9 @@ import (
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	"github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/generic"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
+
 	"github.com/oceanbase/ob-operator/internal/clients"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
@@ -108,7 +109,7 @@ func CreateTenantBackupPolicy(ctx context.Context, o *CreateOptions) (*v1alpha1.
 		return nil, err
 	}
 	// Check tenant status
-	if err := util.CheckTenantStatus(tenant); err != nil {
+	if err := utils.CheckTenantStatus(tenant); err != nil {
 		return nil, err
 	}
 	// Check if backup policy already exists

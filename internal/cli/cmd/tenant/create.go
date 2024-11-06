@@ -16,14 +16,14 @@ package tenant
 import (
 	"github.com/spf13/cobra"
 
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
 // NewCreateCmd create an ob tenant
 func NewCreateCmd() *cobra.Command {
 	o := tenant.NewCreateOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "create <tenant_name> --cluster=<cluster_name>",
 		Short:   "Create an ob tenant",

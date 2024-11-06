@@ -18,15 +18,15 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
 // NewSwitchOverCmd switchover two tenants
 func NewSwitchOverCmd() *cobra.Command {
 	o := tenant.NewSwitchOverOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "switchover <primary_tenant_name> <standby_tenant_name>",
 		Short:   "Switchover of primary ob tenant and standby ob tenant",
@@ -43,10 +43,10 @@ func NewSwitchOverCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			if err := cmdUtil.CheckTenantStatus(standbyTenant); err != nil {
+			if err := utils.CheckTenantStatus(standbyTenant); err != nil {
 				logger.Fatalln(err)
 			}
-			if err := cmdUtil.CheckPrimaryTenant(standbyTenant); err != nil {
+			if err := utils.CheckPrimaryTenant(standbyTenant); err != nil {
 				logger.Fatalln(err)
 			}
 			primaryTenant, err := clients.GetOBTenant(cmd.Context(), types.NamespacedName{
@@ -56,10 +56,10 @@ func NewSwitchOverCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			if err := cmdUtil.CheckTenantStatus(primaryTenant); err != nil {
+			if err := utils.CheckTenantStatus(primaryTenant); err != nil {
 				logger.Fatalln(err)
 			}
-			if err := cmdUtil.CheckTenantRole(primaryTenant, apiconst.TenantRolePrimary); err != nil {
+			if err := utils.CheckTenantRole(primaryTenant, apiconst.TenantRolePrimary); err != nil {
 				logger.Fatalln(err)
 			}
 			op := tenant.GetSwitchOverOperation(o)

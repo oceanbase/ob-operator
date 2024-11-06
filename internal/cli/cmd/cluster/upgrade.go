@@ -17,14 +17,14 @@ import (
 	"github.com/spf13/cobra"
 
 	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
 // NewUpgradeCmd upgrade obclusters
 func NewUpgradeCmd() *cobra.Command {
 	o := cluster.NewUpgradeOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "upgrade <cluster_name>",
 		Short:   "Upgrade an ob cluster",
@@ -39,7 +39,7 @@ func NewUpgradeCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err)
 			}
-			if err := cmdUtil.CheckClusterStatus(obcluster); err != nil {
+			if err := utils.CheckClusterStatus(obcluster); err != nil {
 				logger.Fatalln(err)
 			}
 			op := cluster.GetUpgradeOperation(o)

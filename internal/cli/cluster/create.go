@@ -14,20 +14,22 @@ See the Mulan PSL v2 for more details.
 package cluster
 
 import (
-	"errors"
+	"context"
 	"fmt"
 
-	apitypes "github.com/oceanbase/ob-operator/api/types"
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
-	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
-	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
-
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	corev1 "k8s.io/api/core/v1"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/clients"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 
 	"github.com/oceanbase/ob-operator/internal/cli/generic"
 	utils "github.com/oceanbase/ob-operator/internal/cli/utils"
@@ -75,7 +77,7 @@ func (o *CreateOptions) Validate() error {
 	return nil
 }
 
-func (o *CreateOptions) Parse(_ *cobra.Command, args []string) error {
+func (o *CreateOptions) Parse(cmd *cobra.Command, args []string) error {
 	// Parse the zone topology
 	topology, err := utils.MapZonesToTopology(o.Zones)
 	if err != nil {
@@ -93,6 +95,7 @@ func (o *CreateOptions) Parse(_ *cobra.Command, args []string) error {
 	o.Parameters = parameters
 	o.Topology = topology
 	o.Name = args[0]
+	o.Cmd = cmd
 	return nil
 }
 
@@ -263,38 +266,66 @@ func buildMonitorTemplate(monitorSpec *param.MonitorSpec) *apitypes.MonitorTempl
 	return monitorTemplate
 }
 
-// CreateOBClusterInstance creates an OBClusterInstance
-func CreateOBClusterInstance(param *CreateOptions) *v1alpha1.OBCluster {
-	observerTemplate := buildOBServerTemplate(param.OBServer)
-	monitorTemplate := buildMonitorTemplate(param.Monitor)
-	backupVolume := buildBackupVolume(param.BackupVolume)
-	parameters := buildOBClusterParameters(param.Parameters)
-	topology := buildOBClusterTopology(param.Topology)
+// CreateOBCluster creates an OBCluster
+func CreateOBCluster(ctx context.Context, o *CreateOptions) (*v1alpha1.OBCluster, error) {
+	observerTemplate := buildOBServerTemplate(o.OBServer)
+	monitorTemplate := buildMonitorTemplate(o.Monitor)
+	backupVolume := buildBackupVolume(o.BackupVolume)
+	parameters := buildOBClusterParameters(o.Parameters)
+	topology := buildOBClusterTopology(o.Topology)
 	obcluster := &v1alpha1.OBCluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace:   param.Namespace,
-			Name:        param.Name,
+			Namespace:   o.Namespace,
+			Name:        o.Name,
 			Annotations: map[string]string{},
 		},
 		Spec: v1alpha1.OBClusterSpec{
-			ClusterName:      param.ClusterName,
-			ClusterId:        param.ClusterId,
+			ClusterName:      o.ClusterName,
+			ClusterId:        o.ClusterId,
 			OBServerTemplate: observerTemplate,
 			MonitorTemplate:  monitorTemplate,
 			BackupVolume:     backupVolume,
 			Parameters:       parameters,
 			Topology:         topology,
-			UserSecrets:      utils.GenerateUserSecrets(param.Name, param.ClusterId),
+			UserSecrets:      utils.GenerateUserSecrets(o.Name, o.ClusterId),
 		},
 	}
-	switch param.Mode {
+	switch o.Mode {
 	case string(modelcommon.ClusterModeStandalone):
 		obcluster.Annotations[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeStandalone
 	case string(modelcommon.ClusterModeService):
 		obcluster.Annotations[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeService
 	default:
 	}
-	return obcluster
+	if err := CreateSecretsForOBCluster(ctx, obcluster, o.RootPassword); err != nil {
+		return nil, err
+	}
+	obcluster, err := clients.CreateOBCluster(ctx, obcluster)
+	if err != nil {
+		return nil, err
+	}
+	return obcluster, nil
+}
+
+// CreateSecretsForOBCluster creates secrets for OBCluster
+func CreateSecretsForOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluster, rootPass string) error {
+	err := utils.CreatePasswordSecret(ctx, obcluster.Namespace, obcluster.Spec.UserSecrets.Root, rootPass)
+	if err != nil {
+		return errors.Wrap(err, "Create secret for user root")
+	}
+	err = utils.CreatePasswordSecret(ctx, obcluster.Namespace, obcluster.Spec.UserSecrets.Monitor, utils.GenerateNaivePassword())
+	if err != nil {
+		return errors.Wrap(err, "Create secret for user monitor")
+	}
+	err = utils.CreatePasswordSecret(ctx, obcluster.Namespace, obcluster.Spec.UserSecrets.ProxyRO, utils.GenerateNaivePassword())
+	if err != nil {
+		return errors.Wrap(err, "Create secret for user proxyro")
+	}
+	err = utils.CreatePasswordSecret(ctx, obcluster.Namespace, obcluster.Spec.UserSecrets.Operator, utils.GenerateNaivePassword())
+	if err != nil {
+		return errors.Wrap(err, "Create secret for user operator")
+	}
+	return nil
 }
 
 // AddFlags adds base and specific feature flags, Only support observer and zone config
@@ -319,7 +350,7 @@ func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags.StringVarP(&o.ClusterName, FLAG_CLUSTER_NAME, "n", "", "Cluster name, if not specified, use resource name in k8s instead")
 	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the cluster")
 	baseFlags.Int64Var(&o.ClusterId, FLAG_CLUSTER_ID, DEFAULT_ID, "The id of the cluster")
-	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOTPASSWD, "p", "", "The root password of the cluster")
+	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOT_PASSWORD, "p", "", "The root password of the cluster")
 	baseFlags.StringVar(&o.Mode, FLAG_MODE, "", "The mode of the cluster")
 }
 
@@ -358,6 +389,6 @@ func (o *CreateOptions) AddBackupVolumeFlags(cmd *cobra.Command) {
 // AddParameterFlags adds the parameter-related flags, e.g. __min_full_resource_pool_memory, to the command
 func (o *CreateOptions) AddParameterFlags(cmd *cobra.Command) {
 	parameterFlags := pflag.NewFlagSet(FLAGSET_PARAMETERS, pflag.ContinueOnError)
-	parameterFlags.StringToStringVar(&o.KvParameters, FLAG_PARAMETERS, map[string]string{"__min_full_resource_pool_memory": DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY, "system_memory": DEFAULT_MIN_SYSTEM_MEMORY}, "Other parameter settings in OBCluster, e.g., __min_full_resource_pool_memory")
+	parameterFlags.StringToStringVar(&o.KvParameters, FLAG_PARAMETERS, map[string]string{FLAG_MIN_FULL_RESOURCE_POOL_MEMORY: DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY, FLAG_SYSTEM_MEMORY: DEFAULT_SYSTEM_MEMORY}, "Other parameter settings in OBCluster, e.g., __min_full_resource_pool_memory")
 	cmd.Flags().AddFlagSet(parameterFlags)
 }
