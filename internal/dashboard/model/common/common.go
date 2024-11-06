@@ -38,6 +38,15 @@ type AffinityType string
 type AffinitySpec struct {
 	SelectorExpression `json:",inline"`
 	Type               AffinityType `json:"type"`
+	Weight             int32        `json:"weight,omitempty"`
+	Preferred          bool         `json:"preferred,omitempty"`
+}
+
+type TolerationSpec struct {
+	KVPair            `json:",inline"`
+	Operator          string `json:"operator"`
+	Effect            string `json:"effect"`
+	TolerationSeconds *int64 `json:"tolerationSeconds,omitempty"`
 }
 
 type ClusterMode string

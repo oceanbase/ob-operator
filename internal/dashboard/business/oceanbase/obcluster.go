@@ -205,10 +205,27 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 			zoneAffinity := obzone.Spec.Topology.Affinity
 			switch {
 			case zoneAffinity.NodeAffinity != nil:
-				for _, term := range zoneAffinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms {
-					for _, req := range term.MatchExpressions {
+				zn := zoneAffinity.NodeAffinity
+				if zn.RequiredDuringSchedulingIgnoredDuringExecution != nil {
+					for _, term := range zn.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms {
+						for _, req := range term.MatchExpressions {
+							affinities = append(affinities, modelcommon.AffinitySpec{
+								Type: modelcommon.NodeAffinityType,
+								SelectorExpression: modelcommon.SelectorExpression{
+									Key:      req.Key,
+									Operator: string(req.Operator),
+									Values:   req.Values,
+								},
+							})
+						}
+					}
+				}
+				for _, term := range zn.PreferredDuringSchedulingIgnoredDuringExecution {
+					for _, req := range term.Preference.MatchExpressions {
 						affinities = append(affinities, modelcommon.AffinitySpec{
-							Type: modelcommon.NodeAffinityType,
+							Type:      modelcommon.NodeAffinityType,
+							Weight:    term.Weight,
+							Preferred: true,
 							SelectorExpression: modelcommon.SelectorExpression{
 								Key:      req.Key,
 								Operator: string(req.Operator),
@@ -218,7 +235,8 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 					}
 				}
 			case zoneAffinity.PodAffinity != nil:
-				for _, term := range zoneAffinity.PodAffinity.RequiredDuringSchedulingIgnoredDuringExecution {
+				zp := zoneAffinity.PodAffinity
+				for _, term := range zp.RequiredDuringSchedulingIgnoredDuringExecution {
 					for _, req := range term.LabelSelector.MatchExpressions {
 						affinities = append(affinities, modelcommon.AffinitySpec{
 							Type: modelcommon.PodAffinityType,
@@ -230,8 +248,23 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 						})
 					}
 				}
+				for _, term := range zp.PreferredDuringSchedulingIgnoredDuringExecution {
+					for _, req := range term.PodAffinityTerm.LabelSelector.MatchExpressions {
+						affinities = append(affinities, modelcommon.AffinitySpec{
+							Type:      modelcommon.PodAffinityType,
+							Weight:    term.Weight,
+							Preferred: true,
+							SelectorExpression: modelcommon.SelectorExpression{
+								Key:      req.Key,
+								Operator: string(req.Operator),
+								Values:   req.Values,
+							},
+						})
+					}
+				}
 			case zoneAffinity.PodAntiAffinity != nil:
-				for _, term := range zoneAffinity.PodAntiAffinity.RequiredDuringSchedulingIgnoredDuringExecution {
+				zpa := zoneAffinity.PodAntiAffinity
+				for _, term := range zpa.RequiredDuringSchedulingIgnoredDuringExecution {
 					for _, req := range term.LabelSelector.MatchExpressions {
 						affinities = append(affinities, modelcommon.AffinitySpec{
 							Type: modelcommon.PodAntiAffinityType,
@@ -243,14 +276,33 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 						})
 					}
 				}
+				for _, term := range zpa.PreferredDuringSchedulingIgnoredDuringExecution {
+					for _, req := range term.PodAffinityTerm.LabelSelector.MatchExpressions {
+						affinities = append(affinities, modelcommon.AffinitySpec{
+							Type:      modelcommon.PodAntiAffinityType,
+							Weight:    term.Weight,
+							Preferred: true,
+							SelectorExpression: modelcommon.SelectorExpression{
+								Key:      req.Key,
+								Operator: string(req.Operator),
+								Values:   req.Values,
+							},
+						})
+					}
+				}
 			}
 		}
 
-		tolerations := make([]modelcommon.KVPair, 0)
+		tolerations := make([]modelcommon.TolerationSpec, 0)
 		for _, toleration := range obzone.Spec.Topology.Tolerations {
-			tolerations = append(tolerations, modelcommon.KVPair{
-				Key:   toleration.Key,
-				Value: toleration.Value,
+			tolerations = append(tolerations, modelcommon.TolerationSpec{
+				KVPair: modelcommon.KVPair{
+					Key:   toleration.Key,
+					Value: toleration.Value,
+				},
+				Operator:          string(toleration.Operator),
+				Effect:            string(toleration.Effect),
+				TolerationSeconds: toleration.TolerationSeconds,
 			})
 		}
 		respZone := response.OBZone{
