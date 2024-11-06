@@ -1,4 +1,3 @@
-import MoreModal from '@/components/moreModal';
 import { intl } from '@/utils/intl';
 import G6, { IG6GraphEvent } from '@antv/g6';
 import { createNodeFromReact } from '@antv/g6-react-node';
@@ -24,11 +23,11 @@ import {
 } from '@/services/reportRequest/clusterReportReq';
 import { deleteObtenantPool } from '@/services/tenant';
 import type { Topo } from '@/type/topo';
+import MoreModal from '../moreModal';
 import { ReactNode, config } from './G6register';
 import {
   clusterOperate,
   clusterOperateOfTenant,
-  getClusterOperates,
   getZoneOperateOfCluster,
   getZoneOperateOfTenant,
   serverOperate,
@@ -207,7 +206,10 @@ export default function TopoComponent({
       'zone',
       createNodeFromReact(ReactNode(handleClick, access.obclusterwrite)),
     );
-    G6.registerNode('server', createNodeFromReact(ReactNode()));
+    G6.registerNode(
+      'server',
+      createNodeFromReact(ReactNode(handleClick, access.obclusterwrite)),
+    );
     G6.registerEdge('flow-line', {
       draw(cfg, group) {
         const startPoint = cfg.startPoint!;
@@ -327,6 +329,20 @@ export default function TopoComponent({
           },
           { chooseZoneNameCurrent: chooseZoneName.current },
         ),
+      });
+    }
+    if (operate === 'deleteServer') {
+      showDeleteConfirm({
+        title: '你确定要删除该server吗？',
+        // TODO
+        onOk: () => {},
+      });
+    }
+    if (operate === 'restartServer') {
+      showDeleteConfirm({
+        title: '你确定重启该server吗？',
+        // TODO
+        onOk: () => {},
       });
     }
   };

@@ -155,9 +155,7 @@ const ClusterOverview: React.FC = () => {
             setChooseServerNum={setChooseServerNum}
           />
         )}
-        {clusterDetail && (
-          <ServerTable servers={clusterDetail.servers as API.Server[]} />
-        )}
+        {clusterDetail && <ServerTable clusterDetail={clusterDetail} />}
         <Col span={24}>
           <EventsTable
             objectType="OBCLUSTER"
