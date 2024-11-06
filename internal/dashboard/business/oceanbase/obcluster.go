@@ -203,8 +203,7 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 		affinities := make([]modelcommon.AffinitySpec, 0)
 		if obzone.Spec.Topology.Affinity != nil {
 			zoneAffinity := obzone.Spec.Topology.Affinity
-			switch {
-			case zoneAffinity.NodeAffinity != nil:
+			if zoneAffinity.NodeAffinity != nil {
 				zn := zoneAffinity.NodeAffinity
 				if zn.RequiredDuringSchedulingIgnoredDuringExecution != nil {
 					for _, term := range zn.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms {
@@ -234,7 +233,8 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 						})
 					}
 				}
-			case zoneAffinity.PodAffinity != nil:
+			}
+			if zoneAffinity.PodAffinity != nil {
 				zp := zoneAffinity.PodAffinity
 				for _, term := range zp.RequiredDuringSchedulingIgnoredDuringExecution {
 					for _, req := range term.LabelSelector.MatchExpressions {
@@ -262,7 +262,8 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 						})
 					}
 				}
-			case zoneAffinity.PodAntiAffinity != nil:
+			}
+			if zoneAffinity.PodAntiAffinity != nil {
 				zpa := zoneAffinity.PodAntiAffinity
 				for _, term := range zpa.RequiredDuringSchedulingIgnoredDuringExecution {
 					for _, req := range term.LabelSelector.MatchExpressions {
