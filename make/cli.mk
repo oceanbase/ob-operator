@@ -23,12 +23,12 @@ CLI_BUILD := GO11MODULE=ON CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build 
 BUILD_DIR?=bin/
 
 .PHONY: cli-build
-cli-build: cli-bindata-gen ## Build oceanbase-cli
+cli-build: cli-bindata-gen dashboard-doc-gen dashboard-bindata-gen ## Build oceanbase-cli
 	@echo "Building $(BINARY_NAME) for $(GOOS)/$(GOARCH)..."
 	$(CLI_BUILD) -o $(BUILD_DIR)$(BINARY_NAME) cmd/cli/main.go
 
 .PHONY: cli-bindata-gen
-cli-bindata-gen: ## Generate bindata
+cli-bindata-gen: cli-dep-install ## Generate bindata
 	go-bindata -o internal/cli/generated/bindata/bindata.go -pkg bindata internal/assets/cli-templates/...
 
 .PHONY: cli-clean
@@ -38,8 +38,12 @@ cli-clean: ## Clean build
 
 .PHONY : cli-dep-install
 cli-dep-install: ## Install oceanbase-cli deps
-	go install github.com/spf13/cobra
-	go install github.com/go-bindata/go-bindata/...@v3.1.2+incompatible
+	@if [ -z "$(shell command -v go-bindata)" ]; then \
+		go install github.com/go-bindata/go-bindata/...@v3.1.2+incompatible; \
+	fi
+	@if [ -z "$(shell command -v cobra)" ]; then \
+		go install github.com/spf13/cobra; \
+	fi
 	
 .PHONY : cli-run
 cli-run: ## Run oceanbase-cli in dev mode
