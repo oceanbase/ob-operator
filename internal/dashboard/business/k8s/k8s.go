@@ -106,7 +106,7 @@ func extractNodeConditions(node *corev1.Node) []response.K8sNodeCondition {
 	return conditions
 }
 
-func extractNodeResource(metricsMap map[string]*metricsv1beta1.NodeMetrics, node *corev1.Node) *response.K8sNodeResource {
+func extractNodeResource(metricsMap map[string]metricsv1beta1.NodeMetrics, node *corev1.Node) *response.K8sNodeResource {
 	nodeResource := &response.K8sNodeResource{}
 	metrics, ok := metricsMap[node.Name]
 	nodeResource.CpuTotal = node.Status.Capacity.Cpu().AsApproximateFloat64()
