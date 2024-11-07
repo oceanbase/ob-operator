@@ -17,6 +17,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 	k8sconst "github.com/oceanbase/ob-operator/pkg/k8s/constants"
@@ -29,4 +30,18 @@ func ListNodes(ctx context.Context) (*corev1.NodeList, error) {
 	return client.ClientSet.CoreV1().Nodes().List(ctx, metav1.ListOptions{
 		TimeoutSeconds: &timeout,
 	})
+}
+
+func ListNodeMetrics(ctx context.Context) (map[string]metricsv1beta1.NodeMetrics, error) {
+	client := client.GetClient()
+	nodeMetricsMap := make(map[string]metricsv1beta1.NodeMetrics)
+	metricsList, err := client.MetricsClientset.MetricsV1beta1().NodeMetricses().List(ctx, metav1.ListOptions{
+		TimeoutSeconds: &timeout,
+	})
+	if err == nil {
+		for _, metrics := range metricsList.Items {
+			nodeMetricsMap[metrics.Name] = metrics
+		}
+	}
+	return nodeMetricsMap, err
 }
