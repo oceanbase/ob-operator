@@ -41,8 +41,8 @@ type OBZone struct {
 	OBServers    []OBServer      `json:"observers,omitempty"`
 	NodeSelector []common.KVPair `json:"nodeSelector,omitempty"`
 
-	Tolerations []common.KVPair       `json:"tolerations,omitempty"`
-	Affinities  []common.AffinitySpec `json:"affinities,omitempty"`
+	Tolerations []common.TolerationSpec `json:"tolerations,omitempty"`
+	Affinities  []common.AffinitySpec   `json:"affinities,omitempty"`
 }
 
 type OBMetrics struct {
