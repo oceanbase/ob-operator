@@ -42,6 +42,14 @@ rules:
       - endpoints
       - pods
     verbs: ["get", "list", "watch"]
+  - apiGroups: ["metrics.k8s.io"]
+    resources:
+      - nodes
+      - nodes/proxy
+      - services
+      - endpoints
+      - pods
+    verbs: ["get", "list", "watch"]
   - apiGroups:
       - extensions
     resources:

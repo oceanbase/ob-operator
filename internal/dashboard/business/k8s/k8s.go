@@ -22,6 +22,7 @@ import (
 	storagev1 "k8s.io/api/storage/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
@@ -105,34 +106,21 @@ func extractNodeConditions(node *corev1.Node) []response.K8sNodeCondition {
 	return conditions
 }
 
-func extractNodeResource(ctx context.Context, node *corev1.Node) *response.K8sNodeResource {
+func extractNodeResource(metricsMap map[string]*metricsv1beta1.NodeMetrics, node *corev1.Node) *response.K8sNodeResource {
 	nodeResource := &response.K8sNodeResource{}
+	metrics, ok := metricsMap[node.Name]
 	nodeResource.CpuTotal = node.Status.Capacity.Cpu().AsApproximateFloat64()
 	nodeResource.MemoryTotal = node.Status.Capacity.Memory().AsApproximateFloat64() / constant.GB
-	podList, err := resource.ListAllPods(ctx)
-	if err == nil {
-		cpuRequested := 0.0
-		memoryRequested := 0.0
-		for _, pod := range podList.Items {
-			if !strings.Contains(pod.Spec.NodeName, node.Name) {
-				continue
-			}
-			for _, container := range pod.Spec.Containers {
-				cpuRequest, found := container.Resources.Requests[ResourceCpu]
-				if found {
-					cpuRequested += cpuRequest.AsApproximateFloat64()
-				}
-				memoryRequest, found := container.Resources.Requests[ResourceMemory]
-				if found {
-					memoryRequested += memoryRequest.AsApproximateFloat64() / constant.GB
-				}
-			}
+	if ok {
+		if cpuUsed, ok := metrics.Usage[corev1.ResourceCPU]; ok {
+			nodeResource.CpuUsed = cpuUsed.AsApproximateFloat64()
 		}
-		nodeResource.CpuUsed = cpuRequested
-		nodeResource.MemoryUsed = memoryRequested
+		if memoryUsed, ok := metrics.Usage[corev1.ResourceMemory]; ok {
+			nodeResource.MemoryUsed = memoryUsed.AsApproximateFloat64() / constant.GB
+		}
+		nodeResource.CpuFree = nodeResource.CpuTotal - nodeResource.CpuUsed
+		nodeResource.MemoryFree = nodeResource.MemoryTotal - nodeResource.MemoryUsed
 	}
-	nodeResource.CpuFree = nodeResource.CpuTotal - nodeResource.CpuUsed
-	nodeResource.MemoryFree = nodeResource.MemoryTotal - nodeResource.MemoryUsed
 	return nodeResource
 }
 
@@ -222,6 +210,7 @@ func ListEvents(ctx context.Context, queryEventParam *param.QueryEventParam) ([]
 func ListNodes(ctx context.Context) ([]response.K8sNode, error) {
 	nodes := make([]response.K8sNode, 0)
 	nodeList, err := resource.ListNodes(ctx)
+	nodeMetricsMap, metricsErr := resource.ListNodeMetrics(ctx)
 	if err == nil {
 		for _, node := range nodeList.Items {
 			internalAddress, externalAddress := extractNodeAddress(&node)
@@ -240,26 +229,19 @@ func ListNodes(ctx context.Context) ([]response.K8sNode, error) {
 				CRI:        node.Status.NodeInfo.ContainerRuntimeVersion,
 			}
 
+			nodeResource := &response.K8sNodeResource{}
+			if metricsErr == nil {
+				nodeResource = extractNodeResource(nodeMetricsMap, &node)
+			} else {
+				logger.Errorf("Got error when list node metrics, err: %v", metricsErr)
+			}
 			nodes = append(nodes, response.K8sNode{
 				Info:     nodeInfo,
-				Resource: extractNodeResource(ctx, &node),
+				Resource: nodeResource,
 			})
 		}
 	}
 	return nodes, err
-}
-
-func ListNodeResources(ctx context.Context) ([]response.K8sNodeResource, error) {
-	nodeList, err := resource.ListNodes(ctx)
-	if err != nil {
-		return nil, err
-	}
-	nodeResources := make([]response.K8sNodeResource, 0, len(nodeList.Items))
-	for _, node := range nodeList.Items {
-		nodeResource := extractNodeResource(ctx, &node)
-		nodeResources = append(nodeResources, *nodeResource)
-	}
-	return nodeResources, nil
 }
 
 func ListStorageClasses(ctx context.Context) ([]response.StorageClass, error) {
