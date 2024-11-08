@@ -21,13 +21,6 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
-func ListAllPods(ctx context.Context) (*corev1.PodList, error) {
-	client := client.GetClient()
-	return client.ClientSet.CoreV1().Pods(corev1.NamespaceAll).List(ctx, metav1.ListOptions{
-		TimeoutSeconds: &timeout,
-	})
-}
-
 func ListPods(ctx context.Context, namespace string) (*corev1.PodList, error) {
 	client := client.GetClient()
 	return client.ClientSet.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{

@@ -4,7 +4,7 @@ PROJECT=oceanbase-dashboard
 PROCESSOR=4
 PWD ?= $(shell pwd)
 
-DASHBOARD_VERSION ?= 0.3.1
+DASHBOARD_VERSION ?= 0.3.2
 DASHBOARD_IMG ?= quay.io/oceanbase/oceanbase-dashboard:${DASHBOARD_VERSION}
 COMMIT_HASH ?= $(shell git rev-parse --short HEAD)
 BUILD_TIMESTAMP ?= $(shell date '+%Y%m%d%H%M%S')
@@ -31,7 +31,7 @@ dashboard-build: dashboard-bindata-gen dashboard-doc-gen ## Build oceanbase-dash
 
 .PHONY: dashboard-bindata-gen
 dashboard-bindata-gen: dashboard-dep-install ## Generate bindata
-	go-bindata -o internal/dashboard/generated/bindata/bindata.go -pkg bindata internal/assets/...
+	go-bindata -o internal/dashboard/generated/bindata/bindata.go -pkg bindata internal/assets/dashboard/...
 
 .PHONY: dashboard-clean
 dashboard-clean: ## Clean build

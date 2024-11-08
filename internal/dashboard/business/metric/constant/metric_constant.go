@@ -13,10 +13,10 @@ See the Mulan PSL v2 for more details.
 package constant
 
 const (
-	MetricConfigFile     = "internal/assets/metric.yaml"
-	MetricConfigFileEnUS = "internal/assets/metric_en_US.yaml"
-	MetricConfigFileZhCN = "internal/assets/metric_zh_CN.yaml"
-	MetricExprConfigFile = "internal/assets/metric_expr.yaml"
+	MetricConfigFile     = "internal/assets/dashboard/metric.yaml"
+	MetricConfigFileEnUS = "internal/assets/dashboard/metric_en_US.yaml"
+	MetricConfigFileZhCN = "internal/assets/dashboard/metric_zh_CN.yaml"
+	MetricExprConfigFile = "internal/assets/dashboard/metric_expr.yaml"
 )
 
 const (
