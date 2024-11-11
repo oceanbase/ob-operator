@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
 
 # This script is used to setup obproxy for an OBCluster handyly for quick testing.
 # It will install obproxy and configure it with a simple configuration file.

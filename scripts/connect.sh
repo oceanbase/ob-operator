@@ -1,4 +1,4 @@
-#! /usr/bin/env bash
+#!/usr/bin/env bash
 
 # This script is used to connect to an OBCluster in a Kubernetes cluster.
 
