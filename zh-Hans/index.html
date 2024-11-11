@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="generator" content="Docusaurus v3.1.1">
 <title data-rh="true">项目介绍 | ob-operator</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:image" content="https://oceanbase.github.io/ob-operator/zh-Hans/img/logo.png"><meta data-rh="true" name="twitter:image" content="https://oceanbase.github.io/ob-operator/zh-Hans/img/logo.png"><meta data-rh="true" property="og:url" content="https://oceanbase.github.io/ob-operator/zh-Hans/"><meta data-rh="true" property="og:locale" content="zh_Hans"><meta data-rh="true" property="og:locale:alternate" content="en"><meta data-rh="true" name="docusaurus_locale" content="zh-Hans"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="zh-Hans"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" name="keywords" content="oceanbase, kubernetes, operator, manual, deployment, backup, database, distributed database, mysql, sql, cloud native"><meta data-rh="true" property="og:title" content="项目介绍 | ob-operator"><meta data-rh="true" name="description" content="ob-operator 是满足 Kubernetes Operator 扩展范式的自动化工具，可以极大简化在 Kubernetes 上部署和管理 OceanBase 集群及相关资源的过程。"><meta data-rh="true" property="og:description" content="ob-operator 是满足 Kubernetes Operator 扩展范式的自动化工具，可以极大简化在 Kubernetes 上部署和管理 OceanBase 集群及相关资源的过程。"><link data-rh="true" rel="icon" href="/ob-operator/zh-Hans/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://oceanbase.github.io/ob-operator/zh-Hans/"><link data-rh="true" rel="alternate" href="https://oceanbase.github.io/ob-operator/" hreflang="en"><link data-rh="true" rel="alternate" href="https://oceanbase.github.io/ob-operator/zh-Hans/" hreflang="zh-Hans"><link data-rh="true" rel="alternate" href="https://oceanbase.github.io/ob-operator/" hreflang="x-default"><link data-rh="true" rel="preconnect" href="https://XDTG6XZ6KB-dsn.algolia.net" crossorigin="anonymous"><script data-rh="true">function insertBanner(){var n=document.createElement("div");n.id="__docusaurus-base-url-issue-banner-container";n.innerHTML='\n<div id="__docusaurus-base-url-issue-banner" style="border: thick solid red; background-color: rgb(255, 230, 179); margin: 20px; padding: 20px; font-size: 20px;">\n   <p style="font-weight: bold; font-size: 30px;">Your Docusaurus site did not load properly.</p>\n   <p>A very common reason is a wrong site <a href="https://docusaurus.io/docs/docusaurus.config.js/#baseUrl" style="font-weight: bold;">baseUrl configuration</a>.</p>\n   <p>Current configured baseUrl = <span style="font-weight: bold; color: red;">/ob-operator/zh-Hans/</span> </p>\n   <p>We suggest trying baseUrl = <span id="__docusaurus-base-url-issue-banner-suggestion-container" style="font-weight: bold; color: green;"></span></p>\n</div>\n',document.body.prepend(n);var e=document.getElementById("__docusaurus-base-url-issue-banner-suggestion-container"),o=window.location.pathname,s="/"===o.substr(-1)?o:o+"/";e.innerHTML=s}document.addEventListener("DOMContentLoaded",(function(){void 0===window.docusaurus&&insertBanner()}))</script><link rel="stylesheet" href="/ob-operator/zh-Hans/assets/css/styles.f190c25b.css">
-<script src="/ob-operator/zh-Hans/assets/js/runtime~main.6d07aaa0.js" defer="defer"></script>
+<script src="/ob-operator/zh-Hans/assets/js/runtime~main.953ef5f8.js" defer="defer"></script>
 <script src="/ob-operator/zh-Hans/assets/js/main.1e3fd82e.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -99,7 +99,7 @@
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="环境依赖">环境依赖<a href="#环境依赖" class="hash-link" aria-label="环境依赖的直接链接" title="环境依赖的直接链接">​</a></h2>
 <p>ob-operator 使用 <a href="https://book.kubebuilder.io/introduction" target="_blank" rel="noopener noreferrer">kubebuilder</a> 项目进行构建，所以开发和运行环境与其相近。</p>
 <ul>
-<li>构建 ob-operator 需要 Go 1.20 版本及以上；</li>
+<li>构建 ob-operator 需要 Go 1.22 版本及以上；</li>
 <li>运行 ob-operator 需要 Kubernetes 集群和 kubectl 的版本在 1.18 及以上。我们在 1.23 ~ 1.28 版本的 K8s 集群上检验过 ob-operator 的运行是符合预期的。</li>
 <li>如果使用 Docker 作为集群的容器运行时，需要 Docker 17.03 及以上版本；我们的构建和运行环境使用的 Docker 版本为 18。</li>
 </ul>
@@ -125,9 +125,9 @@
 <li><a href="https://ask.oceanbase.com/" target="_blank" rel="noopener noreferrer">官方论坛</a></li>
 <li><a href="https://oceanbase.slack.com/archives/C053PT371S7" target="_blank" rel="noopener noreferrer">Slack</a></li>
 <li>微信群（请添加小助手微信，微信号: OBCE666）</li>
-<li>钉钉群（<a href="/ob-operator/zh-Hans/assets/files/dingtalk-operator-users-6feeeda042ca96cb0d62dc20144f88c2.png" target="_blank">二维码</a>）</li>
+<li>钉钉群（<a href="/ob-operator/zh-Hans/assets/files/dingtalk-operator-users-28b6fd8d3ebcb81815cc06a78dab7a22.png" target="_blank">二维码</a>）</li>
 </ul>
-<div style="width:200px"><p><img decoding="async" loading="lazy" alt="钉钉群二维码" src="/ob-operator/zh-Hans/assets/images/dingtalk-operator-users-6feeeda042ca96cb0d62dc20144f88c2.png" width="862" height="842" class="img_ev3q"></p></div>
+<div style="width:200px"><p><img decoding="async" loading="lazy" alt="钉钉群二维码" src="/ob-operator/zh-Hans/assets/images/dingtalk-operator-users-28b6fd8d3ebcb81815cc06a78dab7a22.png" width="464" height="464" class="img_ev3q"></p></div>
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="参与开发">参与开发<a href="#参与开发" class="hash-link" aria-label="参与开发的直接链接" title="参与开发的直接链接">​</a></h2>
 <ul>
 <li><a href="https://github.com/oceanbase/ob-operator/issues" target="_blank" rel="noopener noreferrer">提出 Issue</a></li>
