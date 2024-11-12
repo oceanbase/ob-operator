@@ -21,7 +21,6 @@
     "@antv/g6": "^4.8.21",
     "@antv/g6-react-node": "^1.4.5",
     "@oceanbase/ui": "^0.2.13",
-    "@openapitools/openapi-generator-cli": "^2.13.5",
     "@umijs/max": "^4.0.72",
     "@xterm/xterm": "^5.4.0",
     "ahooks": "^3.7.8",
@@ -46,6 +45,7 @@
     "prettier-plugin-organize-imports": "^3.2.2",
     "prettier-plugin-packagejson": "^2.4.3",
     "typescript": "^5.0.3",
-    "typescript-eslint": "^7.6.0"
+    "typescript-eslint": "^7.6.0",
+    "@openapitools/openapi-generator-cli": "^2.13.5"
   }
 }
