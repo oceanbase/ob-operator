@@ -1,7 +1,8 @@
-import { intl } from '@/utils/intl';
-import { Terminal } from '@xterm/xterm';
 import { Button, Modal } from 'antd';
+
 import React from 'react';
+import { Terminal } from '@xterm/xterm';
+import { intl } from '@/utils/intl';
 
 export interface ITerminal {
   terminalId: string;
@@ -34,8 +35,11 @@ export const OBTerminal: React.FC<ITerminal> = (props) => {
         const cols = Math.floor(containerWidth / 9.2);
         const rows = Math.floor(cols / 4);
         term.resize(cols, rows);
+
+        const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+        
         const ws = new WebSocket(
-          `ws://${location.host}/api/v1/terminal/${terminalId}?cols=${cols}&rows=${rows}`,
+          `${protocol}://${location.host}/api/v1/terminal/${terminalId}?cols=${cols}&rows=${rows}`,
         );
         term.write('Hello from \x1B[1;3;31mOceanBase\x1B[0m\r\n');
 
