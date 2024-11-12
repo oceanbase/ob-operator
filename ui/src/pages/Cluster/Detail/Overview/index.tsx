@@ -1,17 +1,17 @@
-import { intl } from '@/utils/intl';
-import { PageContainer } from '@ant-design/pro-components';
-import { history, useAccess, useModel, useParams } from '@umijs/max';
-import { useRequest } from 'ahooks';
-import { Button, Col, Row, message } from 'antd';
-import { useEffect, useRef, useState } from 'react';
-
 import EventsTable from '@/components/EventsTable';
 import OperateModal from '@/components/customModal/OperateModal';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { REFRESH_CLUSTER_TIME } from '@/constants';
 import { getClusterDetailReq } from '@/services';
 import { deleteClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
+import { intl } from '@/utils/intl';
+import { PageContainer } from '@ant-design/pro-components';
+import { history, useAccess, useModel, useParams } from '@umijs/max';
+import { useRequest } from 'ahooks';
+import { Button, Card, Col, Descriptions, Empty, Row, message } from 'antd';
+import { useEffect, useRef, useState } from 'react';
 import BasicInfo from './BasicInfo';
+import ParametersDrawer from './ParametersDrawer';
 import ServerTable from './ServerTable';
 import ZoneTable from './ZoneTable';
 
@@ -20,6 +20,7 @@ const ClusterOverview: React.FC = () => {
   const access = useAccess();
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const { ns, name } = useParams();
   const chooseZoneName = useRef<string>('');
   const timerRef = useRef<NodeJS.Timeout>();
@@ -137,6 +138,8 @@ const ClusterOverview: React.FC = () => {
     };
   }, []);
 
+  const parameters = clusterDetail?.info?.parameters;
+
   return (
     <PageContainer header={header()}>
       <Row gutter={[16, 16]}>
@@ -145,6 +148,43 @@ const ClusterOverview: React.FC = () => {
             <BasicInfo {...(clusterDetail.info as API.ClusterInfo)} />
           </Col>
         )}
+        <Col span={24}>
+          <Card
+            title={
+              <h2 style={{ marginBottom: 0 }}>
+                {intl.formatMessage({
+                  id: 'src.pages.Cluster.Detail.Overview.9F880AEF',
+                  defaultMessage: '参数设置',
+                })}
+              </h2>
+            }
+            extra={
+              <Button onClick={() => setIsDrawerOpen(true)} type="primary">
+                {intl.formatMessage({
+                  id: 'src.pages.Cluster.Detail.Overview.533B34EA',
+                  defaultMessage: '编辑',
+                })}
+              </Button>
+            }
+          >
+            {parameters?.length > 0 ? (
+              <Descriptions
+                title={intl.formatMessage({
+                  id: 'src.pages.Cluster.Detail.Overview.7F3B8DF8',
+                  defaultMessage: '集群参数',
+                })}
+              >
+                {parameters.map((parameter, index) => (
+                  <Descriptions.Item label={parameter.key} key={index}>
+                    {parameter.value}
+                  </Descriptions.Item>
+                ))}
+              </Descriptions>
+            ) : (
+              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            )}
+          </Card>
+        </Col>
         {clusterDetail && (
           <ZoneTable
             clusterStatus={clusterDetail.status}
@@ -174,6 +214,13 @@ const ClusterOverview: React.FC = () => {
           zoneName: chooseZoneName.current,
           defaultValue: chooseServerNum,
         }}
+      />
+
+      <ParametersDrawer
+        visible={isDrawerOpen}
+        onCancel={() => setIsDrawerOpen(false)}
+        onSuccess={() => setIsDrawerOpen(false)}
+        initialValues={parameters}
       />
     </PageContainer>
   );

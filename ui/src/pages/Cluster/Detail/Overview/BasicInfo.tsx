@@ -19,7 +19,6 @@ export default function BasicInfo({
   storage,
   backupVolume,
   monitor,
-  parameters,
   clusterName,
   extra = true,
   style,
@@ -216,20 +215,6 @@ export default function BasicInfo({
               </Descriptions.Item>
             ))}
           </Descriptions>
-          {parameters && (
-            <Descriptions
-              title={intl.formatMessage({
-                id: 'Dashboard.Detail.Overview.BasicInfo.ClusterParameters',
-                defaultMessage: '集群参数',
-              })}
-            >
-              {parameters.map((parameter, index) => (
-                <Descriptions.Item label={parameter.key} key={index}>
-                  {parameter.value}
-                </Descriptions.Item>
-              ))}
-            </Descriptions>
-          )}
 
           {monitor && (
             <Descriptions

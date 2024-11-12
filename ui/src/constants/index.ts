@@ -410,7 +410,7 @@ export const STATUS_LIST = [
 
   {
     label: intl.formatMessage({
-      id: 'osrc.constants.Recovering',
+      id: 'src.constants.Recovering',
       defaultMessage: '运维中',
     }),
     value: 'operating',
