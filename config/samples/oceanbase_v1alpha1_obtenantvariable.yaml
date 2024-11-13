@@ -1,0 +1,9 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenantVariable
+metadata:
+  labels:
+    app.kubernetes.io/name: ob-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: obtenantvariable-sample
+spec:
+  # TODO(user): Add fields here
