@@ -29,8 +29,11 @@ export default function NewBackup() {
   const scheduleValue = Form.useWatch(['scheduleDates'], form);
 
   const distType = [
-    { label: 'OSS', value: 'OSS' },
     { label: 'NFS', value: 'NFS' },
+    { label: 'OSS', value: 'OSS' },
+    { label: 'COS', value: 'COS' },
+    { label: 'S3', value: 'S3' },
+    { label: 'S3-Compatible', value: 'S3-Compatible' },
   ];
 
   const handleSubmit = async (values: API.NewBackupForm) => {
@@ -250,6 +253,61 @@ export default function NewBackup() {
                     />
                   </Form.Item>
                 </Col>
+
+                <Form.Item noStyle dependencies={['destType']}>
+                  {({ getFieldValue }) => {
+                    if (getFieldValue(['destType']) === 'COS') {
+                      return (
+                        <Col span={8}>
+                          <Form.Item
+                            label="AppID"
+                            name={['appID']}
+                            rules={[
+                              {
+                                required: true,
+                                message: '请输入AppID',
+                              },
+                            ]}
+                          >
+                            <Password
+                              placeholder={intl.formatMessage({
+                                id: 'Dashboard.Detail.NewBackup.PleaseEnter',
+                                defaultMessage: '请输入',
+                              })}
+                            />
+                          </Form.Item>
+                        </Col>
+                      );
+                    }
+                  }}
+                </Form.Item>
+                <Form.Item noStyle dependencies={['destType']}>
+                  {({ getFieldValue }) => {
+                    if (getFieldValue(['destType']) === 'S3') {
+                      return (
+                        <Col span={8}>
+                          <Form.Item
+                            label="S3"
+                            name={['S3']}
+                            rules={[
+                              {
+                                required: true,
+                                message: '请输入 S3',
+                              },
+                            ]}
+                          >
+                            <Password
+                              placeholder={intl.formatMessage({
+                                id: 'Dashboard.Detail.NewBackup.PleaseEnter',
+                                defaultMessage: '请输入',
+                              })}
+                            />
+                          </Form.Item>
+                        </Col>
+                      );
+                    }
+                  }}
+                </Form.Item>
               </Row>
             </Col>
             <Col span={12}>
