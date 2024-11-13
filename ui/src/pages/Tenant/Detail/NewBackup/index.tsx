@@ -287,12 +287,12 @@ export default function NewBackup() {
                       return (
                         <Col span={8}>
                           <Form.Item
-                            label="S3"
-                            name={['S3']}
+                            label="Region"
+                            name={['Region']}
                             rules={[
                               {
                                 required: true,
-                                message: '请输入 S3',
+                                message: '请输入 Region',
                               },
                             ]}
                           >
