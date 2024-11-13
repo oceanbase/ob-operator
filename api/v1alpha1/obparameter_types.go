@@ -32,6 +32,8 @@ type OBParameterSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 	ClusterName string              `json:"clusterName"`
 	ClusterId   int64               `json:"clusterId,omitempty"`
+	TenantName  string              `json:"tenantName,omitempty"`
+	TenantId    int64               `json:"tenantId,omitempty"`
 	Parameter   *apitypes.Parameter `json:"parameter"`
 }
 

@@ -15,8 +15,8 @@ package sql
 const (
 	SetParameter            = "alter system set %s = ?"
 	SetParameterWithScope   = "alter system set %s = ? %s = ?"
-	QueryParameter          = "select zone, svr_ip, svr_port, name, value, scope, edit_level from __all_virtual_sys_parameter_stat where name = ?"
-	QueryParameterWithScope = "select zone, svr_ip, svr_port, name, value, scope, edit_level from __all_virtual_sys_parameter_stat where name = ? and %s = ?"
+	QueryParameter          = "select zone, svr_ip, svr_port, name, value, scope, edit_level, coalesce(tenant_id, 0) as tenant_id from gv$ob_parameters where name = ?"
+	QueryParameterWithScope = "select zone, svr_ip, svr_port, name, value, scope, edit_level, coalesce(tenant_id, 0) as tenant_id from gv$ob_parameters where name = ? and %s = ?"
 )
 
 const (

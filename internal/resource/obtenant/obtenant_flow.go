@@ -186,3 +186,15 @@ func genCreateEmptyStandbyTenantFlow(_ *OBTenantManager) *tasktypes.TaskFlow {
 		},
 	}
 }
+
+func genMaintainTenantParametersFlow(_ *OBTenantManager) *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name: "maintain tenant parameters",
+			Tasks: []tasktypes.TaskName{
+				tMaintainTenantParameters,
+			},
+			TargetStatus: tenantstatus.Running,
+		},
+	}
+}

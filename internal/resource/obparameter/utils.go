@@ -37,7 +37,7 @@ func (m *OBParameterManager) getOBCluster() (*v1alpha1.OBCluster, error) {
 	obcluster := &v1alpha1.OBCluster{}
 	err := m.Client.Get(m.Ctx, m.generateNamespacedName(clusterName), obcluster)
 	if err != nil {
-		return nil, errors.Wrap(err, "get obcluster")
+		return nil, errors.Wrap(err, "Get obcluster")
 	}
 	return obcluster, nil
 }

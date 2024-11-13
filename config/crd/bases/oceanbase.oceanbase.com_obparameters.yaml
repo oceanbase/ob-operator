@@ -73,6 +73,11 @@ spec:
                 - name
                 - value
                 type: object
+              tenantId:
+                format: int64
+                type: integer
+              tenantName:
+                type: string
             required:
             - clusterName
             - parameter
