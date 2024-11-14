@@ -47,10 +47,11 @@ type OBTenantSpec struct {
 	Pools []ResourcePoolSpec `json:"pools"`
 
 	//+kubebuilder:default=PRIMARY
-	TenantRole  apitypes.TenantRole `json:"tenantRole,omitempty"`
-	Source      *TenantSourceSpec   `json:"source,omitempty"`
-	Credentials TenantCredentials   `json:"credentials,omitempty"`
-	Scenario    string              `json:"scenario,omitempty"`
+	TenantRole  apitypes.TenantRole  `json:"tenantRole,omitempty"`
+	Source      *TenantSourceSpec    `json:"source,omitempty"`
+	Credentials TenantCredentials    `json:"credentials,omitempty"`
+	Scenario    string               `json:"scenario,omitempty"`
+	Parameters  []apitypes.Parameter `json:"parameters,omitempty"`
 }
 
 type TenantCredentials struct {
@@ -101,9 +102,10 @@ type OBTenantStatus struct {
 	OperationContext *tasktypes.OperationContext `json:"operationContext,omitempty"`
 	TenantRecordInfo TenantRecordInfo            `json:"tenantRecordInfo,omitempty"`
 
-	TenantRole  apitypes.TenantRole `json:"tenantRole,omitempty"`
-	Source      *TenantSourceStatus `json:"source,omitempty"`
-	Credentials TenantCredentials   `json:"credentials,omitempty"`
+	TenantRole  apitypes.TenantRole  `json:"tenantRole,omitempty"`
+	Source      *TenantSourceStatus  `json:"source,omitempty"`
+	Credentials TenantCredentials    `json:"credentials,omitempty"`
+	Parameters  []apitypes.Parameter `json:"parameters,omitempty"`
 }
 
 type TenantSourceStatus struct {

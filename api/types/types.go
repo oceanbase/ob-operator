@@ -33,3 +33,5 @@ type TenantOperationType string
 
 type ClusterOperationType string
 type ClusterOperationStatus string
+
+type ParameterScope string

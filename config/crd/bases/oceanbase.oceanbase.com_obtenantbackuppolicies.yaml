@@ -484,6 +484,18 @@ spec:
                         type: boolean
                       obcluster:
                         type: string
+                      parameters:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                       pools:
                         items:
                           properties:
@@ -679,6 +691,18 @@ spec:
                         - taskStatus
                         - tasks
                         type: object
+                      parameters:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                       resourcePool:
                         items:
                           properties:

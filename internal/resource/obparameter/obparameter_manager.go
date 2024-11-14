@@ -122,6 +122,10 @@ func (m *OBParameterManager) UpdateStatus() error {
 		parameterMatched := true
 		parameterValues := make([]apitypes.ParameterValue, 0)
 		for _, parameterInfo := range parameterInfoList {
+			// filter out parameters
+			if (m.OBParameter.Spec.TenantName == "" && parameterInfo.TenantID > 1) || (m.OBParameter.Spec.TenantName != "" && parameterInfo.TenantID != m.OBParameter.Spec.TenantId) {
+				continue
+			}
 			parameterValue := apitypes.ParameterValue{
 				Name:   parameterInfo.Name,
 				Value:  parameterInfo.Value,

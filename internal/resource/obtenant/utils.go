@@ -24,8 +24,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
@@ -905,6 +907,94 @@ func CreateUserWithCredentials(m *OBTenantManager) error {
 			m.Logger.Error(err, "Failed to grant privilege to standbyRO")
 			return err
 		}
+	}
+	return nil
+}
+
+func (m *OBTenantManager) listOBParameters() (*v1alpha1.OBParameterList, error) {
+	obparameterList := &v1alpha1.OBParameterList{}
+	err := m.Client.List(m.Ctx, obparameterList, client.MatchingLabels{
+		oceanbaseconst.LabelRefUID: string(m.OBTenant.GetUID()),
+	}, client.InNamespace(m.OBTenant.Namespace))
+	if err != nil {
+		return nil, errors.Wrap(err, "get obparameter list")
+	}
+	return obparameterList, nil
+}
+
+func (m *OBTenantManager) generateParameterName(name string) string {
+	return fmt.Sprintf("%s-%s-%s", m.OBTenant.Spec.ClusterName, m.OBTenant.Name, strings.ReplaceAll(name, "_", "-"))
+}
+
+func (m *OBTenantManager) createOBParameter(parameter *apitypes.Parameter) error {
+	m.Logger.Info("Create ob tenant parameters")
+	ownerReferenceList := make([]metav1.OwnerReference, 0)
+	ownerReference := metav1.OwnerReference{
+		APIVersion: m.OBTenant.APIVersion,
+		Kind:       m.OBTenant.Kind,
+		Name:       m.OBTenant.Name,
+		UID:        m.OBTenant.GetUID(),
+	}
+	ownerReferenceList = append(ownerReferenceList, ownerReference)
+	labels := make(map[string]string)
+	labels[oceanbaseconst.LabelRefUID] = string(m.OBTenant.GetUID())
+	labels[oceanbaseconst.LabelRefOBTenant] = m.OBTenant.Name
+	parameterName := m.generateParameterName(parameter.Name)
+	obparameter := &v1alpha1.OBParameter{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            parameterName,
+			Namespace:       m.OBTenant.Namespace,
+			OwnerReferences: ownerReferenceList,
+			Labels:          labels,
+		},
+		Spec: v1alpha1.OBParameterSpec{
+			ClusterName: m.OBTenant.Spec.ClusterName,
+			TenantName:  m.OBTenant.Spec.TenantName,
+			TenantId:    int64(m.OBTenant.Status.TenantRecordInfo.TenantID),
+			Parameter:   parameter,
+		},
+	}
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Create obparameter", "parameter", parameterName)
+	err := m.Client.Create(m.Ctx, obparameter)
+	if err != nil {
+		m.Logger.Error(err, "create obparameter failed")
+		return errors.Wrap(err, "create obparameter")
+	}
+	return nil
+}
+
+func (m *OBTenantManager) updateOBParameter(parameter *apitypes.Parameter) error {
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		obparameter := &v1alpha1.OBParameter{}
+		err := m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.OBTenant.Namespace,
+			Name:      m.generateParameterName(parameter.Name),
+		}, obparameter)
+		if err != nil {
+			return errors.Wrap(err, "Get obparameter")
+		}
+		obparameter.Spec.Parameter.Value = parameter.Value
+		err = m.Client.Update(m.Ctx, obparameter)
+		if err != nil {
+			return errors.Wrap(err, "Update obparameter")
+		}
+		return nil
+	})
+}
+
+func (m *OBTenantManager) deleteOBParameter(parameter *apitypes.Parameter) error {
+	obparameter := &v1alpha1.OBParameter{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.OBTenant.Namespace,
+		Name:      m.generateParameterName(parameter.Name),
+	}, obparameter)
+	if err != nil {
+		return errors.Wrap(err, "Get obparameter")
+	}
+	obparameter.Spec.Parameter.Value = parameter.Value
+	err = m.Client.Delete(m.Ctx, obparameter)
+	if err != nil {
+		return errors.Wrap(err, "Delete obparameter")
 	}
 	return nil
 }
