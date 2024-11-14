@@ -466,18 +466,6 @@ func (m *OBTenantManager) getCharset() (string, error) {
 	return charset.Charset, nil
 }
 
-func (m *OBTenantManager) getVariable(variableName string) (string, error) {
-	oceanbaseOperationManager, err := m.getClusterSysClient()
-	if err != nil {
-		return "", errors.Wrap(err, "Failed to get sql operator error when getting variable")
-	}
-	variable, err := oceanbaseOperationManager.GetVariable(m.Ctx, variableName)
-	if err != nil {
-		return "", errors.Wrap(err, "Get sql error when get variable")
-	}
-	return variable.Value, nil
-}
-
 func (m *OBTenantManager) getTenantByName(tenantName string) (*model.OBTenant, error) {
 	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {

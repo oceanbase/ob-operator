@@ -19,23 +19,25 @@ package controller
 import (
 	"context"
 
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	oceanbasev1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	resobtenantvariable "github.com/oceanbase/ob-operator/internal/resource/obtenantvariable"
+	"github.com/oceanbase/ob-operator/internal/telemetry"
+	"github.com/oceanbase/ob-operator/pkg/coordinator"
 )
 
 // OBTenantVariableReconciler reconciles a OBTenantVariable object
 type OBTenantVariableReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme   *runtime.Scheme
+	Recorder record.EventRecorder
 }
-
-// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenantvariables,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenantvariables/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenantvariables/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -47,17 +49,33 @@ type OBTenantVariableReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.19.1/pkg/reconcile
 func (r *OBTenantVariableReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
+	variable := &v1alpha1.OBTenantVariable{}
+	err := r.Client.Get(ctx, req.NamespacedName, variable)
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			// variable not found, just return
+			return ctrl.Result{}, nil
+		}
+		logger.Error(err, "Get obtenant variable error")
+		return ctrl.Result{}, err
+	}
 
-	// TODO(user): your logic here
-
-	return ctrl.Result{}, nil
+	variableManager := &resobtenantvariable.OBTenantVariableManager{
+		Ctx:              ctx,
+		OBTenantVariable: variable,
+		Client:           r.Client,
+		Logger:           &logger,
+		Recorder:         telemetry.NewRecorder(ctx, r.Recorder),
+	}
+	coordinator := coordinator.NewCoordinator(variableManager, &logger)
+	return coordinator.Coordinate()
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *OBTenantVariableReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&oceanbasev1alpha1.OBTenantVariable{}).
+		For(&v1alpha1.OBTenantVariable{}).
 		Named("obtenantvariable").
 		Complete(r)
 }

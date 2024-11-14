@@ -10,9 +10,11 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package sql
+package obtenantvariable
 
 const (
-	GetGlobalVariable = "select name, coalesce(value, \"\") as value from DBA_OB_SYS_VARIABLES where scope like '%global%' and name = ?"
-	SetGlobalVariable = "set global %s = ?"
+	New       = "new"
+	PendingOB = "pending ob"
+	Matched   = "matched"
+	NotMatch  = "not match"
 )

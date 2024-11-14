@@ -18,6 +18,9 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -29,13 +32,18 @@ type OBTenantVariableSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of OBTenantVariable. Edit obtenantvariable_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	OBCluster string             `json:"obcluster"`
+	OBTenant  string             `json:"obtenant"`
+	Variable  *apitypes.Variable `json:"variable"`
 }
 
 // OBTenantVariableStatus defines the observed state of OBTenantVariable.
 type OBTenantVariableStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	OperationContext *tasktypes.OperationContext `json:"operationContext,omitempty"`
+	Status           string                      `json:"status"`
+	Variable         apitypes.Variable           `json:"variable"`
 }
 
 // +kubebuilder:object:root=true

@@ -73,11 +73,6 @@ type Charset struct {
 	Charset string `json:"charset" db:"charset"`
 }
 
-type Variable struct {
-	VariableName string `json:"Variable_name" db:"Variable_name"`
-	Value        string `json:"Value" db:"Value"`
-}
-
 type RsJob struct {
 	JobID      int64  `json:"job_id" db:"job_id"`
 	JobType    string `json:"job_type" db:"job_type"`

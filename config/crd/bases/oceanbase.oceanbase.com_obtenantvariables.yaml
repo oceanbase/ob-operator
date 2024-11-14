@@ -39,13 +39,89 @@ spec:
           spec:
             description: OBTenantVariableSpec defines the desired state of OBTenantVariable.
             properties:
-              foo:
+              obcluster:
                 description: Foo is an example field of OBTenantVariable. Edit obtenantvariable_types.go
                   to remove/update
                 type: string
+              obtenant:
+                type: string
+              variable:
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+                required:
+                - name
+                - value
+                type: object
+            required:
+            - obcluster
+            - obtenant
+            - variable
             type: object
           status:
             description: OBTenantVariableStatus defines the observed state of OBTenantVariable.
+            properties:
+              operationContext:
+                description: |-
+                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+                  Important: Run "make" to regenerate code after modifying this file
+                properties:
+                  failureRule:
+                    properties:
+                      failureStatus:
+                        type: string
+                      failureStrategy:
+                        type: string
+                      maxRetry:
+                        type: integer
+                      retryCount:
+                        type: integer
+                    required:
+                    - failureStatus
+                    - failureStrategy
+                    type: object
+                  idx:
+                    type: integer
+                  name:
+                    type: string
+                  targetStatus:
+                    type: string
+                  task:
+                    type: string
+                  taskId:
+                    type: string
+                  taskStatus:
+                    type: string
+                  tasks:
+                    items:
+                      type: string
+                    type: array
+                required:
+                - idx
+                - name
+                - targetStatus
+                - task
+                - taskId
+                - taskStatus
+                - tasks
+                type: object
+              status:
+                type: string
+              variable:
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+                required:
+                - name
+                - value
+                type: object
+            required:
+            - status
+            - variable
             type: object
         type: object
     served: true
