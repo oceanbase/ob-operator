@@ -28,7 +28,7 @@ export default function NewBackup() {
   const publicKey = usePublicKey();
   const scheduleValue = Form.useWatch(['scheduleDates'], form);
 
-  const distType = [
+  const distTypes = [
     { label: 'NFS', value: 'NFS' },
     { label: 'OSS', value: 'OSS' },
     { label: 'COS', value: 'COS' },
@@ -143,7 +143,7 @@ export default function NewBackup() {
                         id: 'Dashboard.Detail.NewBackup.PleaseSelect',
                         defaultMessage: '请选择',
                       })}
-                      options={distType}
+                      options={distTypes}
                     />
                   </Form.Item>
                 </Col>
@@ -269,7 +269,7 @@ export default function NewBackup() {
                               },
                             ]}
                           >
-                            <Password
+                            <Input
                               placeholder={intl.formatMessage({
                                 id: 'Dashboard.Detail.NewBackup.PleaseEnter',
                                 defaultMessage: '请输入',
