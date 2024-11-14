@@ -26,7 +26,7 @@ $(KUSTOMIZE): $(LOCALBIN)
 
 .PHONY: kubebuilder
 kubebuilder:
-	test -s $(LOCALBIN)/kubebuilder || \
+	test -s $(LOCALBIN)/kubebuilder || mkdir -p $(LOCALBIN) && \
 	curl -L -o $(LOCALBIN)/kubebuilder "https://go.kubebuilder.io/dl/latest/$(go env GOOS)/$(go env GOARCH)" && chmod +x $(LOCALBIN)/kubebuilder
 
 .PHONY: controller-gen
