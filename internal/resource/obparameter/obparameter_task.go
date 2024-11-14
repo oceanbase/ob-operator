@@ -15,6 +15,7 @@ package obparameter
 import (
 	"github.com/pkg/errors"
 
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/param"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
@@ -29,7 +30,14 @@ func SetOBParameter(m *OBParameterManager) tasktypes.TaskError {
 		m.Logger.Error(err, "Get operation manager failed")
 		return errors.Wrapf(err, "Get operation manager")
 	}
-	err = operationManager.SetParameter(m.Ctx, m.OBParameter.Spec.Parameter.Name, m.OBParameter.Spec.Parameter.Value, nil)
+	var scope *param.Scope
+	if m.OBParameter.Spec.TenantName != "" {
+		scope = &param.Scope{
+			Name:  "tenant",
+			Value: m.OBParameter.Spec.TenantName,
+		}
+	}
+	err = operationManager.SetParameter(m.Ctx, m.OBParameter.Spec.Parameter.Name, m.OBParameter.Spec.Parameter.Value, scope)
 	if err != nil {
 		m.Logger.Error(err, "Set parameter failed")
 		return errors.Wrapf(err, "Set parameter")

@@ -163,7 +163,9 @@ func (m *OBClusterManager) UpdateStatus() error {
 	}
 	obparameterStatusList := make([]apitypes.Parameter, 0)
 	for _, obparameter := range obparameterList.Items {
-		obparameterStatusList = append(obparameterStatusList, *(obparameter.Spec.Parameter))
+		if obparameter.Spec.TenantName == "" {
+			obparameterStatusList = append(obparameterStatusList, *(obparameter.Spec.Parameter))
+		}
 	}
 	m.OBCluster.Status.Parameters = obparameterStatusList
 
