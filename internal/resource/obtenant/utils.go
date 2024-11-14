@@ -926,7 +926,7 @@ func CreateUserWithCredentials(m *OBTenantManager) error {
 func (m *OBTenantManager) listOBParameters() (*v1alpha1.OBParameterList, error) {
 	obparameterList := &v1alpha1.OBParameterList{}
 	err := m.Client.List(m.Ctx, obparameterList, client.MatchingLabels{
-		oceanbaseconst.LabelRefOBCluster: m.OBTenant.Spec.ClusterName,
+		oceanbaseconst.LabelRefUID: string(m.OBTenant.GetUID()),
 	}, client.InNamespace(m.OBTenant.Namespace))
 	if err != nil {
 		return nil, errors.Wrap(err, "get obparameter list")
@@ -950,7 +950,7 @@ func (m *OBTenantManager) createOBParameter(parameter *apitypes.Parameter) error
 	ownerReferenceList = append(ownerReferenceList, ownerReference)
 	labels := make(map[string]string)
 	labels[oceanbaseconst.LabelRefUID] = string(m.OBTenant.GetUID())
-	labels[oceanbaseconst.LabelRefOBCluster] = m.OBTenant.Spec.ClusterName
+	labels[oceanbaseconst.LabelRefOBTenant] = m.OBTenant.Name
 	parameterName := m.generateParameterName(parameter.Name)
 	obparameter := &v1alpha1.OBParameter{
 		ObjectMeta: metav1.ObjectMeta{
