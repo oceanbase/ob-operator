@@ -54,6 +54,12 @@ Create a tenant `t1` with resource name called `demo-tenant` in cluster `test`.
 obocli tenant create demo-tenant --cluster=test --tenant-name=t1
 ```
 
+Use obocli to install ob-operaor in cluster.
+
+```bash
+obocli install ob-operator
+```
+
 For more command information, you can use the following command to check the help information of obocli.
 
 ```bash
