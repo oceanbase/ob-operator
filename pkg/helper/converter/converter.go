@@ -43,18 +43,18 @@ func ConvertFloat(value any) any {
 }
 
 func AutoConvert(value string) any {
-	//try parse to int
+	// try parse to int
 	if ret, err := strconv.Atoi(value); err == nil {
 		return ret
 	}
-	//try parse to float64
+	// try parse to float64
 	if ret, err := strconv.ParseFloat(value, 64); err == nil {
 		return ret
 	}
-	//try parse to bool
+	// try parse to bool
 	if ret, err := strconv.ParseBool(value); err == nil {
 		return ret
 	}
-	//try string value
+	// return string value
 	return value
 }

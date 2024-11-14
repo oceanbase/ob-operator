@@ -13,10 +13,11 @@ See the Mulan PSL v2 for more details.
 package obtenantvariable
 
 import (
+	"github.com/pkg/errors"
+
 	"github.com/oceanbase/ob-operator/pkg/helper/converter"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
-	"github.com/pkg/errors"
 )
 
 //go:generate task_register $GOFILE
