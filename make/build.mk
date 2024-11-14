@@ -8,7 +8,7 @@ build: dashboard-doc-gen dashboard-bindata-gen cli-bindata-gen manifests generat
 # (i.e. docker build --platform linux/arm64 ). However, you must enable docker buildKit for it.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: docker-build
-docker-build: ## Build docker image with the manager.
+docker-build: generate ## Build docker image with the manager.
 	docker build -t ${IMG} --build-arg GOPROXY=${GOPROXY} --build-arg GOSUMDB=${GOSUMDB} --build-arg RACE=${RACE} -f build/Dockerfile.operator .
 
 .PHONY: docker-push
