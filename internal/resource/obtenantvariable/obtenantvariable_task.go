@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package obtenantvariable
 
 import (
+	"github.com/oceanbase/ob-operator/pkg/helper/converter"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 	"github.com/pkg/errors"
@@ -28,7 +29,7 @@ func SetOBTenantVariable(m *OBTenantVariableManager) tasktypes.TaskError {
 		m.Logger.Error(err, "Get operation manager failed")
 		return errors.Wrapf(err, "Get operation manager")
 	}
-	err = operationManager.SetGlobalVariable(m.Ctx, m.OBTenantVariable.Spec.Variable.Name, m.OBTenantVariable.Spec.Variable.Value)
+	err = operationManager.SetGlobalVariable(m.Ctx, m.OBTenantVariable.Spec.Variable.Name, converter.AutoConvert(m.OBTenantVariable.Spec.Variable.Value))
 	if err != nil {
 		m.Logger.Error(err, "Set tenant variable failed")
 		return errors.Wrapf(err, "Set tenant variable")

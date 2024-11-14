@@ -32,9 +32,8 @@ type OBTenantVariableSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of OBTenantVariable. Edit obtenantvariable_types.go to remove/update
-	OBCluster string             `json:"obcluster"`
-	OBTenant  string             `json:"obtenant"`
-	Variable  *apitypes.Variable `json:"variable"`
+	OBTenant string             `json:"obtenant"`
+	Variable *apitypes.Variable `json:"variable"`
 }
 
 // OBTenantVariableStatus defines the observed state of OBTenantVariable.
@@ -46,8 +45,13 @@ type OBTenantVariableStatus struct {
 	Variable         apitypes.Variable           `json:"variable"`
 }
 
-// +kubebuilder:object:root=true
-// +kubebuilder:subresource:status
+//+kubebuilder:object:root=true
+//+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Tenant",type="string",JSONPath=".spec.obtenant"
+//+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+//+kubebuilder:printcolumn:name="Key",type="string",JSONPath=".spec.variable.name"
+//+kubebuilder:printcolumn:name="WantedValue",type="string",JSONPath=".spec.variable.value"
 
 // OBTenantVariable is the Schema for the obtenantvariables API.
 type OBTenantVariable struct {

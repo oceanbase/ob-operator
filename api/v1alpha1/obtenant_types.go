@@ -52,6 +52,7 @@ type OBTenantSpec struct {
 	Credentials TenantCredentials    `json:"credentials,omitempty"`
 	Scenario    string               `json:"scenario,omitempty"`
 	Parameters  []apitypes.Parameter `json:"parameters,omitempty"`
+	Variables   []apitypes.Variable  `json:"variables,omitempty"`
 }
 
 type TenantCredentials struct {
@@ -106,6 +107,7 @@ type OBTenantStatus struct {
 	Source      *TenantSourceStatus  `json:"source,omitempty"`
 	Credentials TenantCredentials    `json:"credentials,omitempty"`
 	Parameters  []apitypes.Parameter `json:"parameters,omitempty"`
+	Variables   []apitypes.Variable  `json:"variables,omitempty"`
 }
 
 type TenantSourceStatus struct {

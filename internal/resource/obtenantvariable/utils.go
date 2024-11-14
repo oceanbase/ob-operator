@@ -30,15 +30,6 @@ func (m *OBTenantVariableManager) generateNamespacedName(name string) types.Name
 	return namespacedName
 }
 
-func (m *OBTenantVariableManager) getOBCluster() (*v1alpha1.OBCluster, error) {
-	obcluster := &v1alpha1.OBCluster{}
-	err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBTenantVariable.Spec.OBCluster), obcluster)
-	if err != nil {
-		return nil, errors.Wrap(err, "get obcluster")
-	}
-	return obcluster, nil
-}
-
 func (m *OBTenantVariableManager) getOBTenant() (*v1alpha1.OBTenant, error) {
 	obtenant := &v1alpha1.OBTenant{}
 	err := m.Client.Get(m.Ctx, m.generateNamespacedName(m.OBTenantVariable.Spec.OBTenant), obtenant)
@@ -49,11 +40,12 @@ func (m *OBTenantVariableManager) getOBTenant() (*v1alpha1.OBTenant, error) {
 }
 
 func (m *OBTenantVariableManager) getOceanbaseOperationManager() (*operation.OceanbaseOperationManager, error) {
-	obcluster, err := m.getOBCluster()
+	obtenant, err := m.getOBTenant()
 	if err != nil {
 		return nil, errors.Wrap(err, "Get obcluster from K8s")
 	}
-	obtenant, err := m.getOBTenant()
+	obcluster := &v1alpha1.OBCluster{}
+	err = m.Client.Get(m.Ctx, m.generateNamespacedName(obtenant.Spec.ClusterName), obcluster)
 	if err != nil {
 		return nil, errors.Wrap(err, "Get obcluster from K8s")
 	}

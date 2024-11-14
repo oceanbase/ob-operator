@@ -24,7 +24,6 @@ import (
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
-	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	obtenantvariablestatus "github.com/oceanbase/ob-operator/internal/const/status/obtenantvariable"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
@@ -101,34 +100,25 @@ func (m *OBTenantVariableManager) CheckAndUpdateFinalizers() error {
 }
 
 func (m *OBTenantVariableManager) UpdateStatus() error {
-	obcluster, err := m.getOBTenant()
-	if err != nil {
-		return errors.Wrap(err, "Get obcluster from K8s")
-	}
 	operationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		m.Logger.Error(err, "Get operation manager failed")
 		return errors.Wrapf(err, "Get operation manager")
 	}
-	if obcluster.Status.Status != clusterstatus.Running {
-		m.OBTenantVariable.Status.Status = obtenantvariablestatus.PendingOB
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("OBCluster not in running status, skip compare obtenantvariable")
-	} else {
-		variable, err := operationManager.GetGlobalVariable(m.Ctx, m.OBTenantVariable.Spec.Variable.Name)
-		if err != nil {
-			m.Logger.Error(err, "Get tenant variable info failed")
-			return errors.Wrapf(err, "Get tenant variable info")
-		}
-		m.OBTenantVariable.Status.Variable = apitypes.Variable{
-			Name:  variable.Name,
-			Value: variable.Value,
-		}
-		if m.OBTenantVariable.Status.Status != obtenantvariablestatus.NotMatch {
-			if variable.Value != m.OBTenantVariable.Spec.Variable.Value {
-				m.OBTenantVariable.Status.Status = obtenantvariablestatus.NotMatch
-			} else {
-				m.OBTenantVariable.Status.Status = obtenantvariablestatus.Matched
-			}
+	variable, err := operationManager.GetGlobalVariable(m.Ctx, m.OBTenantVariable.Spec.Variable.Name)
+	if err != nil {
+		m.Logger.Error(err, "Get tenant variable info failed")
+		return errors.Wrapf(err, "Get tenant variable info")
+	}
+	m.OBTenantVariable.Status.Variable = apitypes.Variable{
+		Name:  variable.Name,
+		Value: variable.Value,
+	}
+	if m.OBTenantVariable.Status.Status != obtenantvariablestatus.NotMatch {
+		if variable.Value != m.OBTenantVariable.Spec.Variable.Value {
+			m.OBTenantVariable.Status.Status = obtenantvariablestatus.NotMatch
+		} else {
+			m.OBTenantVariable.Status.Status = obtenantvariablestatus.Matched
 		}
 	}
 	err = m.retryUpdateStatus()

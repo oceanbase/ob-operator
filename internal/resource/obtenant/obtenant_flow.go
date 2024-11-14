@@ -198,3 +198,15 @@ func genMaintainTenantParametersFlow(_ *OBTenantManager) *tasktypes.TaskFlow {
 		},
 	}
 }
+
+func genMaintainTenantVariablesFlow(_ *OBTenantManager) *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name: "maintain tenant variables",
+			Tasks: []tasktypes.TaskName{
+				tMaintainTenantVariables,
+			},
+			TargetStatus: tenantstatus.Running,
+		},
+	}
+}

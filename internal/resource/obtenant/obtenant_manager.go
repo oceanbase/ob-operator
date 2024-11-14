@@ -279,6 +279,8 @@ func (m *OBTenantManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow = genCreateEmptyStandbyTenantFlow(m)
 	case tenantstatus.MaintainingParameters:
 		taskFlow = genMaintainTenantParametersFlow(m)
+	case tenantstatus.MaintainingVariables:
+		taskFlow = genMaintainTenantVariablesFlow(m)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obtenant")
 		return nil, nil
@@ -380,6 +382,9 @@ func (m *OBTenantManager) NextStatus() (string, error) {
 	if m.hasModifiedParameters() {
 		return tenantstatus.MaintainingParameters, nil
 	}
+	if m.hasModifiedVariables() {
+		return tenantstatus.MaintainingVariables, nil
+	}
 	return tenantstatus.Running, nil
 }
 
@@ -420,6 +425,30 @@ func (m *OBTenantManager) hasModifiedParameters() bool {
 		parameterModified = true
 	}
 	return parameterModified
+}
+
+func (m *OBTenantManager) hasModifiedVariables() bool {
+	variableModified := false
+	variableMap := make(map[string]apitypes.Variable)
+	for _, variable := range m.OBTenant.Status.Variables {
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Build variable map", "variable", variable.Name)
+		variableMap[variable.Name] = variable
+	}
+	for _, variable := range m.OBTenant.Spec.Variables {
+		variableStatus, variableExists := variableMap[variable.Name]
+		// need create or update variable
+		if !variableExists || variableStatus.Value != variable.Value {
+			variableModified = true
+			break
+		}
+		delete(variableMap, variable.Name)
+	}
+
+	// need delete variable
+	if len(variableMap) > 0 {
+		variableModified = true
+	}
+	return variableModified
 }
 
 func (m *OBTenantManager) hasModifiedUnitConfig() (bool, error) {
@@ -592,6 +621,18 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 		}
 	}
 	tenantCurrentStatus.Parameters = obparameterStatusList
+
+	// Refresh variable info
+	variableList, err := m.listOBTenantVariables()
+	if err != nil {
+		m.Logger.Error(err, "list obtenantvariables error")
+		return tenantCurrentStatus, errors.Wrap(err, "list obtenantvariables")
+	}
+	variableStatusList := make([]apitypes.Variable, 0)
+	for _, variable := range variableList.Items {
+		variableStatusList = append(variableStatusList, *(variable.Spec.Variable))
+	}
+	tenantCurrentStatus.Variables = variableStatusList
 
 	return tenantCurrentStatus, nil
 }

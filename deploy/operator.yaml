@@ -14207,6 +14207,18 @@ spec:
                         type: string
                       unitNum:
                         type: integer
+                      variables:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                     required:
                     - obcluster
                     - pools
@@ -14558,6 +14570,18 @@ spec:
                         type: object
                       tenantRole:
                         type: string
+                      variables:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                     required:
                     - resourcePool
                     - status
@@ -15490,6 +15514,18 @@ spec:
                         type: string
                       unitNum:
                         type: integer
+                      variables:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                     required:
                     - obcluster
                     - pools
@@ -15841,6 +15877,18 @@ spec:
                         type: object
                       tenantRole:
                         type: string
+                      variables:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                     required:
                     - resourcePool
                     - status
@@ -16039,6 +16087,18 @@ spec:
                         type: string
                       unitNum:
                         type: integer
+                      variables:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                     required:
                     - obcluster
                     - pools
@@ -16390,6 +16450,18 @@ spec:
                         type: object
                       tenantRole:
                         type: string
+                      variables:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                     required:
                     - resourcePool
                     - status
@@ -16944,6 +17016,18 @@ spec:
                 type: string
               unitNum:
                 type: integer
+              variables:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+                  required:
+                  - name
+                  - value
+                  type: object
+                type: array
             required:
             - obcluster
             - pools
@@ -17295,6 +17379,18 @@ spec:
                 type: object
               tenantRole:
                 type: string
+              variables:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+                  required:
+                  - name
+                  - value
+                  type: object
+                type: array
             required:
             - resourcePool
             - status
@@ -17321,7 +17417,23 @@ spec:
     singular: obtenantvariable
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.obtenant
+      name: Tenant
+      type: string
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .spec.variable.name
+      name: Key
+      type: string
+    - jsonPath: .spec.variable.value
+      name: WantedValue
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: OBTenantVariable is the Schema for the obtenantvariables API.
@@ -17346,11 +17458,9 @@ spec:
           spec:
             description: OBTenantVariableSpec defines the desired state of OBTenantVariable.
             properties:
-              obcluster:
+              obtenant:
                 description: Foo is an example field of OBTenantVariable. Edit obtenantvariable_types.go
                   to remove/update
-                type: string
-              obtenant:
                 type: string
               variable:
                 properties:
@@ -17363,7 +17473,6 @@ spec:
                 - value
                 type: object
             required:
-            - obcluster
             - obtenant
             - variable
             type: object
