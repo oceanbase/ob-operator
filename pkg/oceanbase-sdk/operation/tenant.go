@@ -130,15 +130,6 @@ func (m *OceanbaseOperationManager) GetCharset(ctx context.Context) (*model.Char
 	return charset, nil
 }
 
-func (m *OceanbaseOperationManager) GetVariable(ctx context.Context, name string) (*model.Variable, error) {
-	variable := &model.Variable{}
-	err := m.QueryRow(ctx, variable, sql.GetVariableLike, name)
-	if err != nil {
-		return variable, errors.Wrap(err, "Get variable")
-	}
-	return variable, nil
-}
-
 func (m *OceanbaseOperationManager) GetRsJob(ctx context.Context, reJobName string) (*model.RsJob, error) {
 	rsJob := &model.RsJob{}
 	err := m.QueryRow(ctx, rsJob, sql.GetRsJob, reJobName)

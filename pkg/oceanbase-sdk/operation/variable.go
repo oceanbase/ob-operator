@@ -17,9 +17,16 @@ import (
 	"fmt"
 
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/sql"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 
 func (m *OceanbaseOperationManager) SetGlobalVariable(ctx context.Context, name string, value any) error {
 	setGlobalVariableSql := fmt.Sprintf(sql.SetGlobalVariable, name)
 	return m.ExecWithDefaultTimeout(ctx, setGlobalVariableSql, value)
+}
+
+func (m *OceanbaseOperationManager) GetGlobalVariable(ctx context.Context, name string) (*model.Variable, error) {
+	variable := &model.Variable{}
+	err := m.QueryRow(ctx, variable, sql.GetGlobalVariable, name)
+	return variable, err
 }

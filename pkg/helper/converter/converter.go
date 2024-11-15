@@ -15,6 +15,7 @@ package converter
 import (
 	"fmt"
 	"math"
+	"strconv"
 )
 
 func ConvertToString(value any) string {
@@ -39,4 +40,21 @@ func ConvertFloat(value any) any {
 	default:
 		return v
 	}
+}
+
+func AutoConvert(value string) any {
+	// try parse to int
+	if ret, err := strconv.Atoi(value); err == nil {
+		return ret
+	}
+	// try parse to float64
+	if ret, err := strconv.ParseFloat(value, 64); err == nil {
+		return ret
+	}
+	// try parse to bool
+	if ret, err := strconv.ParseBool(value); err == nil {
+		return ret
+	}
+	// return string value
+	return value
 }

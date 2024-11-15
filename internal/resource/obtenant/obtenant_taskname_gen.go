@@ -26,4 +26,5 @@ const (
 	tOptimizeTenantByScenario        ttypes.TaskName = "optimize tenant by scenario"
 	tCreateUserWithCredentialSecrets ttypes.TaskName = "create user with credential secrets"
 	tMaintainTenantParameters        ttypes.TaskName = "maintain tenant parameters"
+	tMaintainTenantVariables         ttypes.TaskName = "maintain tenant variables"
 )

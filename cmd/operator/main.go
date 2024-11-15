@@ -167,6 +167,14 @@ func main() {
 		setupLog.Error(err, "Unable to create controller", "controller", "OBParameter")
 		os.Exit(1)
 	}
+	if err = (&controller.OBTenantVariableReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: telemetry.NewRecorder(ctx, mgr.GetEventRecorderFor(config.OBTenantVariableControllerName)),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "Unable to create controller", "controller", "OBTenantVariable")
+		os.Exit(1)
+	}
 	if err = (&controller.OBTenantReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),

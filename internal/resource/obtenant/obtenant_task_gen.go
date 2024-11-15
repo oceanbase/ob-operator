@@ -24,4 +24,5 @@ func init() {
 	taskMap.Register(tOptimizeTenantByScenario, OptimizeTenantByScenario)
 	taskMap.Register(tCreateUserWithCredentialSecrets, CreateUserWithCredentialSecrets)
 	taskMap.Register(tMaintainTenantParameters, MaintainTenantParameters)
+	taskMap.Register(tMaintainTenantVariables, MaintainTenantVariables)
 }

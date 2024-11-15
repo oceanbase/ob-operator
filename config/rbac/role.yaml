@@ -486,6 +486,32 @@ rules:
 - apiGroups:
   - oceanbase.oceanbase.com
   resources:
+  - obtenantvariables
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantvariables/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantvariables/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
   - obzones
   verbs:
   - create
