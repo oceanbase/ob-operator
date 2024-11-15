@@ -1,4 +1,0 @@
-## Append samples of your project ##
-resources:
-- oceanbase_v1alpha1_obtenantvariable.yaml
-# +kubebuilder:scaffold:manifestskustomizesamples

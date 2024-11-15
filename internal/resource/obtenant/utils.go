@@ -1006,7 +1006,6 @@ func (m *OBTenantManager) deleteOBParameter(parameter *apitypes.Parameter) error
 	if err != nil {
 		return errors.Wrap(err, "Get obparameter")
 	}
-	obparameter.Spec.Parameter.Value = parameter.Value
 	err = m.Client.Delete(m.Ctx, obparameter)
 	if err != nil {
 		return errors.Wrap(err, "Delete obparameter")
@@ -1077,7 +1076,6 @@ func (m *OBTenantManager) deleteOBTenantVariable(variable *apitypes.Variable) er
 	if err != nil {
 		return errors.Wrap(err, "Get obtenantvariable")
 	}
-	obtenantvariable.Spec.Variable.Value = variable.Value
 	err = m.Client.Delete(m.Ctx, obtenantvariable)
 	if err != nil {
 		return errors.Wrap(err, "Delete obtenantvariable")

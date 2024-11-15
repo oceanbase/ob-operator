@@ -13,8 +13,7 @@ See the Mulan PSL v2 for more details.
 package obtenantvariable
 
 const (
-	New       = "new"
-	PendingOB = "pending ob"
-	Matched   = "matched"
-	NotMatch  = "not match"
+	New      = "new"
+	Matched  = "matched"
+	NotMatch = "not match"
 )

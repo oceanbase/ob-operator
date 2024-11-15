@@ -621,13 +621,13 @@ func MaintainTenantVariables(m *OBTenantManager) tasktypes.TaskError {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Variable not exists, need create", "variable", variable.Name)
 			err := m.createOBTenantVariable(&variable)
 			if err != nil {
-				m.Logger.Error(err, "Create obtenantvariable failed", "param", variable.Name)
+				m.Logger.Error(err, "Create obtenantvariable failed", "variable", variable.Name)
 			}
 		} else if variableStatus.Value != variable.Value {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Variable value not matched, need update", "variable", variable.Name)
 			err := m.updateOBTenantVariable(&variable)
 			if err != nil {
-				m.Logger.Error(err, "Update obtenantvariable failed", "param", variable.Name)
+				m.Logger.Error(err, "Update obtenantvariable failed", "variable", variable.Name)
 			}
 		}
 		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Remove variable from map", "variable", variable.Name)
