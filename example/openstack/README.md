@@ -14,6 +14,6 @@ bash oceanbase.sh
 ```
 
 ### Deploy OpenStack
-Once OceanBase is set up, deploying OpenStack is straightforward. Override the necessary variables using the files under the openstack directory. The files are based on OpenStack version 2024.1.
+Once OceanBase is set up, deploying OpenStack is straightforward. Override the necessary variables using the files under the openstack directory. You may need to change the password to your desired one. The files are based on OpenStack version 2024.1.
 Follow the official OpenStack Helm [document](https://docs.openstack.org/openstack-helm/latest/readme.html).
 

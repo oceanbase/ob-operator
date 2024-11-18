@@ -29,7 +29,7 @@ endpoints:
         username: neutron
         password: password
     hosts:
-      default: svc-openstack
+      default: svc-obproxy-openstack
     host_fqdn_override:
       default: null
     path: /neutron
