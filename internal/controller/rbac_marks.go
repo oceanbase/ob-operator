@@ -87,6 +87,10 @@ package controller
 // +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obzones/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obzones/finalizers,verbs=update
 
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenantvariables,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenantvariables/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenantvariables/finalizers,verbs=update
+
 /**
 **  [GROUP] k8s.oceanbase.com
 **/

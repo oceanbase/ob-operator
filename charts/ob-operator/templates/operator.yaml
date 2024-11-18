@@ -10277,6 +10277,11 @@ spec:
                 - name
                 - value
                 type: object
+              tenantId:
+                format: int64
+                type: integer
+              tenantName:
+                type: string
             required:
             - clusterName
             - parameter
@@ -14039,6 +14044,18 @@ spec:
                         type: boolean
                       obcluster:
                         type: string
+                      parameters:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                       pools:
                         items:
                           properties:
@@ -14177,6 +14194,18 @@ spec:
                         type: string
                       unitNum:
                         type: integer
+                      variables:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                     required:
                     - obcluster
                     - pools
@@ -14234,6 +14263,18 @@ spec:
                         - taskStatus
                         - tasks
                         type: object
+                      parameters:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                       resourcePool:
                         items:
                           properties:
@@ -14516,6 +14557,18 @@ spec:
                         type: object
                       tenantRole:
                         type: string
+                      variables:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                     required:
                     - resourcePool
                     - status
@@ -15298,6 +15351,18 @@ spec:
                         type: boolean
                       obcluster:
                         type: string
+                      parameters:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                       pools:
                         items:
                           properties:
@@ -15436,6 +15501,18 @@ spec:
                         type: string
                       unitNum:
                         type: integer
+                      variables:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                     required:
                     - obcluster
                     - pools
@@ -15493,6 +15570,18 @@ spec:
                         - taskStatus
                         - tasks
                         type: object
+                      parameters:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                       resourcePool:
                         items:
                           properties:
@@ -15775,6 +15864,18 @@ spec:
                         type: object
                       tenantRole:
                         type: string
+                      variables:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                     required:
                     - resourcePool
                     - status
@@ -15823,6 +15924,18 @@ spec:
                         type: boolean
                       obcluster:
                         type: string
+                      parameters:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                       pools:
                         items:
                           properties:
@@ -15961,6 +16074,18 @@ spec:
                         type: string
                       unitNum:
                         type: integer
+                      variables:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                     required:
                     - obcluster
                     - pools
@@ -16018,6 +16143,18 @@ spec:
                         - taskStatus
                         - tasks
                         type: object
+                      parameters:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                       resourcePool:
                         items:
                           properties:
@@ -16300,6 +16437,18 @@ spec:
                         type: object
                       tenantRole:
                         type: string
+                      variables:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                     required:
                     - resourcePool
                     - status
@@ -16704,6 +16853,18 @@ spec:
                 type: boolean
               obcluster:
                 type: string
+              parameters:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+                  required:
+                  - name
+                  - value
+                  type: object
+                type: array
               pools:
                 items:
                   properties:
@@ -16842,6 +17003,18 @@ spec:
                 type: string
               unitNum:
                 type: integer
+              variables:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+                  required:
+                  - name
+                  - value
+                  type: object
+                type: array
             required:
             - obcluster
             - pools
@@ -16899,6 +17072,18 @@ spec:
                 - taskStatus
                 - tasks
                 type: object
+              parameters:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+                  required:
+                  - name
+                  - value
+                  type: object
+                type: array
               resourcePool:
                 items:
                   properties:
@@ -17181,9 +17366,165 @@ spec:
                 type: object
               tenantRole:
                 type: string
+              variables:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+                  required:
+                  - name
+                  - value
+                  type: object
+                type: array
             required:
             - resourcePool
             - status
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    cert-manager.io/inject-ca-from: {{ .Release.Namespace }}/oceanbase-serving-cert
+    controller-gen.kubebuilder.io/version: v0.15.0
+  name: obtenantvariables.oceanbase.oceanbase.com
+spec:
+  group: oceanbase.oceanbase.com
+  names:
+    kind: OBTenantVariable
+    listKind: OBTenantVariableList
+    plural: obtenantvariables
+    singular: obtenantvariable
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.obtenant
+      name: Tenant
+      type: string
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    - jsonPath: .spec.variable.name
+      name: Key
+      type: string
+    - jsonPath: .spec.variable.value
+      name: WantedValue
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: OBTenantVariable is the Schema for the obtenantvariables API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: OBTenantVariableSpec defines the desired state of OBTenantVariable.
+            properties:
+              obtenant:
+                description: Foo is an example field of OBTenantVariable. Edit obtenantvariable_types.go
+                  to remove/update
+                type: string
+              variable:
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+                required:
+                - name
+                - value
+                type: object
+            required:
+            - obtenant
+            - variable
+            type: object
+          status:
+            description: OBTenantVariableStatus defines the observed state of OBTenantVariable.
+            properties:
+              operationContext:
+                description: |-
+                  INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
+                  Important: Run "make" to regenerate code after modifying this file
+                properties:
+                  failureRule:
+                    properties:
+                      failureStatus:
+                        type: string
+                      failureStrategy:
+                        type: string
+                      maxRetry:
+                        type: integer
+                      retryCount:
+                        type: integer
+                    required:
+                    - failureStatus
+                    - failureStrategy
+                    type: object
+                  idx:
+                    type: integer
+                  name:
+                    type: string
+                  targetStatus:
+                    type: string
+                  task:
+                    type: string
+                  taskId:
+                    type: string
+                  taskStatus:
+                    type: string
+                  tasks:
+                    items:
+                      type: string
+                    type: array
+                required:
+                - idx
+                - name
+                - targetStatus
+                - task
+                - taskId
+                - taskStatus
+                - tasks
+                type: object
+              status:
+                type: string
+              variable:
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+                required:
+                - name
+                - value
+                type: object
+            required:
+            - status
+            - variable
             type: object
         type: object
     served: true
@@ -21138,6 +21479,32 @@ rules:
 - apiGroups:
   - oceanbase.oceanbase.com
   resources:
+  - obtenantvariables
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantvariables/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantvariables/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
   - obzones
   verbs:
   - create
@@ -21184,6 +21551,56 @@ metadata:
 rules:
 - nonResourceURLs:
   - /metrics
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: ob-operator
+  name: oceanbase-obtenantvariable-editor-role
+rules:
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantvariables
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantvariables/status
+  verbs:
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/name: ob-operator
+  name: oceanbase-obtenantvariable-viewer-role
+rules:
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantvariables
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - oceanbase.oceanbase.com
+  resources:
+  - obtenantvariables/status
   verbs:
   - get
 ---

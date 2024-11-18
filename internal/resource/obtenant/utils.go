@@ -468,18 +468,6 @@ func (m *OBTenantManager) getCharset() (string, error) {
 	return charset.Charset, nil
 }
 
-func (m *OBTenantManager) getVariable(variableName string) (string, error) {
-	oceanbaseOperationManager, err := m.getClusterSysClient()
-	if err != nil {
-		return "", errors.Wrap(err, "Failed to get sql operator error when getting variable")
-	}
-	variable, err := oceanbaseOperationManager.GetVariable(m.Ctx, variableName)
-	if err != nil {
-		return "", errors.Wrap(err, "Get sql error when get variable")
-	}
-	return variable.Value, nil
-}
-
 func (m *OBTenantManager) getTenantByName(tenantName string) (*model.OBTenant, error) {
 	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
@@ -923,6 +911,17 @@ func CreateUserWithCredentials(m *OBTenantManager) error {
 	return nil
 }
 
+func (m *OBTenantManager) listOBTenantVariables() (*v1alpha1.OBTenantVariableList, error) {
+	variableList := &v1alpha1.OBTenantVariableList{}
+	err := m.Client.List(m.Ctx, variableList, client.MatchingLabels{
+		oceanbaseconst.LabelRefUID: string(m.OBTenant.GetUID()),
+	}, client.InNamespace(m.OBTenant.Namespace))
+	if err != nil {
+		return nil, errors.Wrap(err, "get obteanntvariable list")
+	}
+	return variableList, nil
+}
+
 func (m *OBTenantManager) listOBParameters() (*v1alpha1.OBParameterList, error) {
 	obparameterList := &v1alpha1.OBParameterList{}
 	err := m.Client.List(m.Ctx, obparameterList, client.MatchingLabels{
@@ -935,7 +934,11 @@ func (m *OBTenantManager) listOBParameters() (*v1alpha1.OBParameterList, error) 
 }
 
 func (m *OBTenantManager) generateParameterName(name string) string {
-	return fmt.Sprintf("%s-%s-%s", m.OBTenant.Spec.ClusterName, m.OBTenant.Name, strings.ReplaceAll(name, "_", "-"))
+	return fmt.Sprintf("param-%s-%s-%s", m.OBTenant.Spec.ClusterName, m.OBTenant.Name, strings.ReplaceAll(name, "_", "-"))
+}
+
+func (m *OBTenantManager) generateVariableName(name string) string {
+	return fmt.Sprintf("var-%s-%s-%s", m.OBTenant.Spec.ClusterName, m.OBTenant.Name, strings.ReplaceAll(name, "_", "-"))
 }
 
 func (m *OBTenantManager) createOBParameter(parameter *apitypes.Parameter) error {
@@ -1003,10 +1006,79 @@ func (m *OBTenantManager) deleteOBParameter(parameter *apitypes.Parameter) error
 	if err != nil {
 		return errors.Wrap(err, "Get obparameter")
 	}
-	obparameter.Spec.Parameter.Value = parameter.Value
 	err = m.Client.Delete(m.Ctx, obparameter)
 	if err != nil {
 		return errors.Wrap(err, "Delete obparameter")
+	}
+	return nil
+}
+
+func (m *OBTenantManager) createOBTenantVariable(variable *apitypes.Variable) error {
+	m.Logger.Info("Create ob tenant variable")
+	ownerReferenceList := make([]metav1.OwnerReference, 0)
+	ownerReference := metav1.OwnerReference{
+		APIVersion: m.OBTenant.APIVersion,
+		Kind:       m.OBTenant.Kind,
+		Name:       m.OBTenant.Name,
+		UID:        m.OBTenant.GetUID(),
+	}
+	ownerReferenceList = append(ownerReferenceList, ownerReference)
+	labels := make(map[string]string)
+	labels[oceanbaseconst.LabelRefUID] = string(m.OBTenant.GetUID())
+	labels[oceanbaseconst.LabelRefOBTenant] = m.OBTenant.Name
+	variableName := m.generateVariableName(variable.Name)
+	obtenantvariable := &v1alpha1.OBTenantVariable{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            variableName,
+			Namespace:       m.OBTenant.Namespace,
+			OwnerReferences: ownerReferenceList,
+			Labels:          labels,
+		},
+		Spec: v1alpha1.OBTenantVariableSpec{
+			OBTenant: m.OBTenant.Name,
+			Variable: variable,
+		},
+	}
+	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Create obtenantvariable", "variable", variableName)
+	err := m.Client.Create(m.Ctx, obtenantvariable)
+	if err != nil {
+		m.Logger.Error(err, "create obtenantvariable failed")
+		return errors.Wrap(err, "create obtenantvariable")
+	}
+	return nil
+}
+
+func (m *OBTenantManager) updateOBTenantVariable(variable *apitypes.Variable) error {
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		obtenantvariable := &v1alpha1.OBTenantVariable{}
+		err := m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.OBTenant.Namespace,
+			Name:      m.generateVariableName(variable.Name),
+		}, obtenantvariable)
+		if err != nil {
+			return errors.Wrap(err, "Get obtenantvariable")
+		}
+		obtenantvariable.Spec.Variable.Value = variable.Value
+		err = m.Client.Update(m.Ctx, obtenantvariable)
+		if err != nil {
+			return errors.Wrap(err, "Update obtenantvariable")
+		}
+		return nil
+	})
+}
+
+func (m *OBTenantManager) deleteOBTenantVariable(variable *apitypes.Variable) error {
+	obtenantvariable := &v1alpha1.OBTenantVariable{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.OBTenant.Namespace,
+		Name:      m.generateVariableName(variable.Name),
+	}, obtenantvariable)
+	if err != nil {
+		return errors.Wrap(err, "Get obtenantvariable")
+	}
+	err = m.Client.Delete(m.Ctx, obtenantvariable)
+	if err != nil {
+		return errors.Wrap(err, "Delete obtenantvariable")
 	}
 	return nil
 }

@@ -27,7 +27,6 @@ const (
 
 	GetResourceTotal = "SELECT cpu_capacity, mem_capacity, data_disk_capacity FROM oceanbase.GV$OB_SERVERS;"
 	GetCharset       = "SELECT CHARSET('oceanbase') as charset;"
-	GetVariableLike  = "SHOW VARIABLES LIKE ?;"
 	GetRsJob         = "select job_id, job_type, job_status, tenant_id from DBA_OB_TENANT_JOBS where tenant_name=? and job_status ='INPROGRESS' and job_type='ALTER_TENANT_LOCALITY'"
 	GetObVersion     = "SELECT ob_version() as version;"
 

@@ -13,5 +13,6 @@ See the Mulan PSL v2 for more details.
 package sql
 
 const (
+	GetGlobalVariable = "select name, coalesce(value, \"\") as value from DBA_OB_SYS_VARIABLES where scope like '%global%' and name = ?"
 	SetGlobalVariable = "set global %s = ?"
 )

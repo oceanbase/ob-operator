@@ -608,3 +608,39 @@ func MaintainTenantParameters(m *OBTenantManager) tasktypes.TaskError {
 	}
 	return nil
 }
+
+func MaintainTenantVariables(m *OBTenantManager) tasktypes.TaskError {
+	variableMap := make(map[string]apitypes.Variable)
+	for _, variable := range m.OBTenant.Status.Variables {
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Build variable map", "variable", variable.Name)
+		variableMap[variable.Name] = variable
+	}
+	for _, variable := range m.OBTenant.Spec.Variables {
+		variableStatus, variableExists := variableMap[variable.Name]
+		if !variableExists {
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Variable not exists, need create", "variable", variable.Name)
+			err := m.createOBTenantVariable(&variable)
+			if err != nil {
+				m.Logger.Error(err, "Create obtenantvariable failed", "variable", variable.Name)
+			}
+		} else if variableStatus.Value != variable.Value {
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Variable value not matched, need update", "variable", variable.Name)
+			err := m.updateOBTenantVariable(&variable)
+			if err != nil {
+				m.Logger.Error(err, "Update obtenantvariable failed", "variable", variable.Name)
+			}
+		}
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Remove variable from map", "variable", variable.Name)
+		delete(variableMap, variable.Name)
+	}
+
+	// delete variables that not in spec definition
+	for _, variable := range variableMap {
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Delete variable", "variable", variable.Name)
+		err := m.deleteOBTenantVariable(&variable)
+		if err != nil {
+			m.Logger.Error(err, "Failed to delete obtenantvariable")
+		}
+	}
+	return nil
+}

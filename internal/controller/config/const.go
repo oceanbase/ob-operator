@@ -17,6 +17,7 @@ const (
 	OBZoneControllerName               = "obzone-controller"
 	OBServerControllerName             = "observer-controller"
 	OBParameterControllerName          = "obparameter-controller"
+	OBTenantVariableControllerName     = "obtenantvariable-controller"
 	OBTenantControllerName             = "obtenant-controller"
 	OBTenantBackupControllerName       = "obtenantbackup-controller"
 	OBTenantRestoreControllerName      = "obtenantrestore-controller"

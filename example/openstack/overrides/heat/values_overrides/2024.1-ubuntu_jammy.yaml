@@ -24,7 +24,7 @@ endpoints:
         username: heat
         password: password
     hosts:
-      default: svc-openstack
+      default: svc-obproxy-openstack
     path: /heat
     scheme: mysql+pymysql
     port:

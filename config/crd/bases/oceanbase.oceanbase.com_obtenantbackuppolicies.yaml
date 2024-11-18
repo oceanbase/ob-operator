@@ -634,6 +634,18 @@ spec:
                         type: string
                       unitNum:
                         type: integer
+                      variables:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                     required:
                     - obcluster
                     - pools
@@ -985,6 +997,18 @@ spec:
                         type: object
                       tenantRole:
                         type: string
+                      variables:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                     required:
                     - resourcePool
                     - status

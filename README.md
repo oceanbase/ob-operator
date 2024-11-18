@@ -46,7 +46,7 @@ Helm Chart parameterizes the namespace in which ob-operator is deployed, allowin
 ```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm repo update
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.3.0
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace
 ```
 
 #### Using terraform

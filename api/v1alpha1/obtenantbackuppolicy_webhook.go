@@ -138,7 +138,7 @@ func (r *OBTenantBackupPolicy) ValidateCreate() (admission.Warnings, error) {
 			Name:      r.Spec.TenantCRName,
 		}, tenant)
 		if err != nil {
-			return nil, apierrors.NewNotFound(schema.GroupResource{Group: "oceanbase.oceanbase.com", Resource: "obtenants"}, r.Spec.TenantName)
+			return nil, apierrors.NewNotFound(schema.GroupResource{Group: "oceanbase.oceanbase.com", Resource: "obtenants"}, r.Spec.TenantCRName)
 		}
 
 		if tenant.Status.Status != tenantstatus.Running {

@@ -60,8 +60,10 @@ type OBClusterStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.status"
-//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 //+kubebuilder:printcolumn:name="ClusterName",type="string",JSONPath=".spec.clusterName"
+//+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
+//+kubebuilder:printcolumn:name="Image",type="string",JSONPath=".spec.observer.image",priority=1
+//+kubebuilder:printcolumn:name="Storage",type="string",JSONPath=".spec.observer.storage",priority=1
 //+kubebuilder:printcolumn:name="Tasks",type="string",JSONPath=".status.operationContext.tasks",priority=1
 //+kubebuilder:printcolumn:name="Task",type="string",JSONPath=".status.operationContext.task",priority=1
 

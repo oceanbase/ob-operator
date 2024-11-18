@@ -12,7 +12,7 @@ ob-operator supports deployment using Helm. Before deploying ob-operator with th
 
 ```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.3.0
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace
 ```
 
 Parameters:
