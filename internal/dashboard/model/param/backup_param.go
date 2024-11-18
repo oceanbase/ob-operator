@@ -28,7 +28,7 @@ type DaysFieldBase struct {
 }
 
 type BackupPolicyBase struct {
-	// Enum: NFS, OSS
+	// Enum: NFS, OSS, COS, S3, S3_COMPATIBLE
 	DestType    BackupDestType `json:"destType" binding:"required" example:"NFS"`
 	ArchivePath string         `json:"archivePath" binding:"required"`
 	BakDataPath string         `json:"bakDataPath" binding:"required"`
@@ -39,9 +39,16 @@ type BackupPolicyBase struct {
 
 type CreateBackupPolicy struct {
 	BackupPolicyBase      `json:",inline"`
-	OSSAccessID           string `json:"ossAccessId,omitempty" example:"encryptedPassword"`
-	OSSAccessKey          string `json:"ossAccessKey,omitempty" example:"encryptedPassword"`
 	BakEncryptionPassword string `json:"bakEncryptionPassword,omitempty" example:"encryptedPassword"`
+
+	// Used for non-NFS
+	OSSAccessID  string `json:"ossAccessId,omitempty" example:"encryptedPassword"`
+	OSSAccessKey string `json:"ossAccessKey,omitempty" example:"encryptedPassword"`
+	Host         string `json:"host,omitempty" example:"https://oss-cn-hangzhou.aliyuncs.com"`
+	// Used for S3
+	Region string `json:"region,omitempty" example:"cn-hangzhou"`
+	// Used for COS
+	AppID string `json:"appId,omitempty" example:"123456"`
 }
 
 type ScheduleDate struct {

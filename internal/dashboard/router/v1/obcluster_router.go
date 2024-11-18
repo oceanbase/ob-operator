@@ -31,4 +31,8 @@ func InitOBClusterRoutes(g *gin.RouterGroup) {
 	g.DELETE("/obclusters/namespace/:namespace/name/:name/obzones/:obzoneName", h.Wrap(h.DeleteOBZone, acbiz.PathGuard("obcluster", ":namespace+:name", "write")))
 	g.GET("/obclusters/:namespace/:name/resource-usages", h.Wrap(h.ListOBClusterResources, acbiz.PathGuard("obcluster", ":namespace+:name", "read")))
 	g.GET("/obclusters/:namespace/:name/related-events", h.Wrap(h.ListOBClusterRelatedEvents, acbiz.PathGuard("obcluster", ":namespace+:name", "read")))
+
+	g.PATCH("/obclusters/namespace/:namespace/name/:name", h.Wrap(h.PatchOBCluster, acbiz.PathGuard("obcluster", ":namespace+:name", "write")))
+	g.POST("/obclusters/namespace/:namespace/name/:name/restart", h.Wrap(h.RestartOBServers, acbiz.PathGuard("obcluster", ":namespace+:name", "write")))
+	g.DELETE("/obclusters/namespace/:namespace/name/:name/observers", h.Wrap(h.DeleteOBServers, acbiz.PathGuard("obcluster", ":namespace+:name", "write")))
 }
