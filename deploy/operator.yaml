@@ -6792,11 +6792,19 @@ spec:
     - jsonPath: .status.status
       name: Status
       type: string
+    - jsonPath: .spec.clusterName
+      name: ClusterName
+      type: string
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
-    - jsonPath: .spec.clusterName
-      name: ClusterName
+    - jsonPath: .spec.observer.image
+      name: Image
+      priority: 1
+      type: string
+    - jsonPath: .spec.observer.storage
+      name: Storage
+      priority: 1
       type: string
     - jsonPath: .status.operationContext.tasks
       name: Tasks
