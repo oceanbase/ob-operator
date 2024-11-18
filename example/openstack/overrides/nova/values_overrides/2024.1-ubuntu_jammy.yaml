@@ -30,7 +30,7 @@ endpoints:
         username: nova
         password: password
     hosts:
-      default: svc-openstack
+      default: svc-obproxy-openstack
     host_fqdn_override:
       default: null
     path: /nova
@@ -47,7 +47,7 @@ endpoints:
         username: nova
         password: password
     hosts:
-      default: svc-openstack
+      default: svc-obproxy-openstack
     host_fqdn_override:
       default: null
     path: /nova_api
@@ -64,7 +64,7 @@ endpoints:
         username: nova
         password: password
     hosts:
-      default: svc-openstack
+      default: svc-obproxy-openstack
     host_fqdn_override:
       default: null
     path: /nova_cell0
