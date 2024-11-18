@@ -34,14 +34,14 @@ func NewUpdateOptions() *UpdateOptions {
 func (o *UpdateOptions) Parse(_ *cobra.Command, args []string) error {
 	// if not specified, use default config
 	if len(args) == 0 {
-		defaultComponents := o.GetDefaultComponents()
+		defaultComponents := o.InstallOptions.GetDefaultComponents()
 		// update Components to default config
-		o.Components = defaultComponents
+		o.InstallOptions.Components = defaultComponents
 		return nil
 	}
 	name := args[0]
-	if v, ok := o.Components[name]; ok {
-		o.Components = map[string]string{name: v}
+	if v, ok := o.InstallOptions.Components[name]; ok {
+		o.InstallOptions.Components = map[string]string{name: v}
 		return nil
 	}
 	return fmt.Errorf("component %s is not supported", name)
