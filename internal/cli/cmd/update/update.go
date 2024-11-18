@@ -26,8 +26,8 @@ func NewCmd() *cobra.Command {
 	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:   "update <component>",
-		Short: "Command for ob-operator and components update",
-		Long: `Command for ob-operator and components update.
+		Short: "Command for ob-operator and other components update",
+		Long: `Command for ob-operator and other components update.
 
 Currently support:
 - ob-operator: A Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes.
@@ -39,15 +39,21 @@ if not specified, update ob-operator and ob-dashboard by default`,
 		PreRunE: o.Parse,
 		Args:    cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) == 0 {
-				logger.Println("update ob-operator and ob-dashboard by default")
-			}
+			componentCount := 0
 			for component, version := range o.Components {
-				if err := o.Install(component, version); err != nil {
-					logger.Fatalln(err)
+				if utils.CheckIfComponentExists(component) {
+					componentCount++
+					if err := o.Install(component, version); err != nil {
+						logger.Fatalln(err)
+					} else {
+						logger.Printf("%s update successfully\n", component)
+					}
 				} else {
-					logger.Printf("%s update successfully", component)
+					logger.Printf("Component %s is not found\n", component)
 				}
+			}
+			if componentCount == 0 {
+				logger.Println("No components to update")
 			}
 		},
 	}
