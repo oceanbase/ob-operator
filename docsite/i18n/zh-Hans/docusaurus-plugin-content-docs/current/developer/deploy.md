@@ -10,7 +10,7 @@ ob-operator 支持通过 Helm 进行部署，在使用 Helm 命令部署 ob-oper
 
 ```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.3.0
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace
 ```
 
 参数说明：
