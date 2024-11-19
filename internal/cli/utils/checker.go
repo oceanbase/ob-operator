@@ -112,14 +112,14 @@ func checkIfResourceExists(checkCmd string, resourceList ...string) bool {
 	cmd := exec.Command("sh", "-c", checkCmd)
 	var out bytes.Buffer
 	cmd.Stdout = &out
-	err := cmd.Run()
 
-	if err != nil {
+	if err := cmd.Run(); err != nil {
 		return false
 	}
 
+	output := out.Bytes()
 	for _, resource := range resourceList {
-		if !bytes.Contains(out.Bytes(), []byte(resource)) {
+		if !bytes.Contains(output, []byte(resource)) {
 			return false
 		}
 	}
