@@ -22,7 +22,6 @@ export default function New() {
   const publicKey = usePublicKey();
   const [form] = Form.useForm<API.NewTenantForm>();
   const [passwordVal, setPasswordVal] = useState('');
-  const [deleteVal, setDeleteVal] = useState<boolean>(true);
   const [selectClusterId, setSelectClusterId] = useState<string>();
   const [clusterList, setClusterList] = useState<API.SimpleClusterList>([]);
   useRequest(getSimpleClusterList, {
@@ -147,10 +146,8 @@ export default function New() {
             <BasicInfo
               passwordVal={passwordVal}
               clusterList={clusterList}
-              deleteVal={deleteVal}
               setSelectClusterId={setSelectClusterId}
               setPasswordVal={setPasswordVal}
-              setDeleteVal={setDeleteVal}
               form={form}
             />
           </Col>

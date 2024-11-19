@@ -13,16 +13,12 @@ interface BasicInfoProps {
   passwordVal: string;
   clusterList: API.SimpleClusterList;
   setSelectClusterId: React.Dispatch<React.SetStateAction<number | undefined>>;
-  setDeleteVal: boolean;
-  deleteVal: boolean;
   setPasswordVal: React.Dispatch<React.SetStateAction<string>>;
 }
 export default function BasicInfo({
   form,
   passwordVal,
   clusterList,
-  deleteVal,
-  setDeleteVal,
   setPasswordVal,
   setSelectClusterId,
 }: BasicInfoProps) {
@@ -208,15 +204,15 @@ export default function BasicInfo({
             </Select>
           </Form.Item>
         </Col>
-        <Space>
-          删除保护
-          <Checkbox
-            defaultChecked={deleteVal}
-            onChange={(e) => {
-              setDeleteVal(e.target.checked);
-            }}
-          />
-        </Space>
+
+        <Col span={8}>
+          <Form.Item name={['deleteVal']} label={<></>}>
+            <Space>
+              删除保护
+              <Checkbox defaultChecked={true} />
+            </Space>
+          </Form.Item>
+        </Col>
         {/* <Col span={8}>
               <Form.Item name={["charset"]} label="字符集">
                 <Select />
