@@ -11,9 +11,9 @@ export default function ServerTable({
   clusterDetail: API.ClusterDetail[];
 }) {
   const servers = clusterDetail?.servers;
-  // 是否为单节点集群： zone的个数 ===1 && OBServer的个数 == 1
+  // 是否为单节点集群： servers的个数 ===1 && OBServer的个数 == 1
   const isStandAloneCluster =
-    clusterDetail.zones?.length == 1 &&
+    clusterDetail.servers?.length == 1 &&
     flatten((clusterDetail.zones || []).map((item) => item.servers || []))
       ?.length === 1;
 
