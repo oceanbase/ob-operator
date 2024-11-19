@@ -3,7 +3,6 @@ import { intl } from '@/utils/intl';
 import { findByValue } from '@oceanbase/util';
 import { Button, Card, Col, Modal, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { flatten } from 'lodash';
 
 export default function ServerTable({
   clusterDetail,
@@ -11,11 +10,6 @@ export default function ServerTable({
   clusterDetail: API.ClusterDetail[];
 }) {
   const servers = clusterDetail?.servers;
-  // 是否为单节点集群： servers的个数 ===1 && OBServer的个数 == 1
-  const isStandAloneCluster =
-    clusterDetail.servers?.length == 1 &&
-    flatten((clusterDetail.zones || []).map((item) => item.servers || []))
-      ?.length === 1;
 
   const serverColums: ColumnsType<API.Server> = [
     {
@@ -57,7 +51,11 @@ export default function ServerTable({
     {
       title: '操作',
       dataIndex: 'operation',
-      render: () => {
+      render: (_, record) => {
+        // 任何 zone 里面只剩一个 server 就不能删了
+        const sameZone = servers?.filter(
+          (server) => server?.zone === record?.zone,
+        );
         return (
           <>
             <Button
@@ -77,7 +75,7 @@ export default function ServerTable({
             <Button
               danger
               type="link"
-              disabled={isStandAloneCluster}
+              disabled={servers.length === 1 || sameZone.length === 1}
               onClick={() => {
                 Modal.confirm({
                   title: '确定要删除当前 server 吗?',
