@@ -473,3 +473,26 @@ export const EVENTSTABLE_STATUS_LIST = [
     badgeStatus: 'warning',
   },
 ];
+
+export const LOADTYPE_LIST = [
+  {
+    value: 'EXPRESS_OLTP',
+    label: 'Express OLTP',
+  },
+  {
+    value: 'COMPLEX_OLTP',
+    label: 'Complex OLTP',
+  },
+  {
+    value: 'HTAP',
+    label: 'HTAP',
+  },
+  {
+    value: 'OLAP',
+    label: 'OLAP',
+  },
+  {
+    value: 'KV',
+    label: 'KV',
+  },
+];

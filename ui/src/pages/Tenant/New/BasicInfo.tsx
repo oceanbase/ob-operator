@@ -1,23 +1,28 @@
 import InputNumber from '@/components/InputNumber';
 import PasswordInput from '@/components/PasswordInput';
-import { TZ_NAME_REG } from '@/constants';
-import { intl } from '@/utils/intl';
-import { Card, Col, Form, Input, Row, Select } from 'antd';
+import { LOADTYPE_LIST, TZ_NAME_REG } from '@/constants';
 import { resourceNameRule } from '@/constants/rules';
+import { intl } from '@/utils/intl';
+import { Card, Checkbox, Col, Form, Input, Row, Select, Space } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
+
+const { Option } = Select;
 
 interface BasicInfoProps {
   form: FormInstance<API.NewTenantForm>;
   passwordVal: string;
   clusterList: API.SimpleClusterList;
   setSelectClusterId: React.Dispatch<React.SetStateAction<number | undefined>>;
-
+  setDeleteVal: boolean;
+  deleteVal: boolean;
   setPasswordVal: React.Dispatch<React.SetStateAction<string>>;
 }
 export default function BasicInfo({
   form,
   passwordVal,
   clusterList,
+  deleteVal,
+  setDeleteVal,
   setPasswordVal,
   setSelectClusterId,
 }: BasicInfoProps) {
@@ -182,6 +187,36 @@ export default function BasicInfo({
             <Select mode="tags" />
           </Form.Item>
         </Col>
+        <Col span={8}>
+          <Form.Item
+            label={'优化场景'}
+            name={'loadType'}
+            initialValue="HTAP"
+            rules={[
+              {
+                required: true,
+                message: '请选择优化场景',
+              },
+            ]}
+          >
+            <Select>
+              {LOADTYPE_LIST?.map((item) => (
+                <Option key={item.value} value={item.value}>
+                  {item.label}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Col>
+        <Space>
+          删除保护
+          <Checkbox
+            defaultChecked={deleteVal}
+            onChange={(e) => {
+              setDeleteVal(e.target.checked);
+            }}
+          />
+        </Space>
         {/* <Col span={8}>
               <Form.Item name={["charset"]} label="字符集">
                 <Select />

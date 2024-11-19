@@ -22,6 +22,7 @@ export default function New() {
   const publicKey = usePublicKey();
   const [form] = Form.useForm<API.NewTenantForm>();
   const [passwordVal, setPasswordVal] = useState('');
+  const [deleteVal, setDeleteVal] = useState<boolean>(true);
   const [selectClusterId, setSelectClusterId] = useState<string>();
   const [clusterList, setClusterList] = useState<API.SimpleClusterList>([]);
   useRequest(getSimpleClusterList, {
@@ -43,8 +44,7 @@ export default function New() {
     });
   //Selected cluster's resource name and namespace
   const { name: clusterName, namespace: ns } =
-    clusterList.filter((cluster) => cluster.id === selectClusterId)[0] ||
-    {};
+    clusterList.filter((cluster) => cluster.id === selectClusterId)[0] || {};
   const essentialParameter = essentialParameterRes?.data;
 
   const onFinish = async (values: API.NewTenantForm) => {
@@ -88,9 +88,8 @@ export default function New() {
   };
 
   useUpdateEffect(() => {
-    const { name, namespace } = clusterList.find(
-      (cluster) => cluster.id === selectClusterId,
-    ) || {};
+    const { name, namespace } =
+      clusterList.find((cluster) => cluster.id === selectClusterId) || {};
     if (name && namespace) {
       getEssentialParameters({
         ns: namespace,
@@ -148,8 +147,10 @@ export default function New() {
             <BasicInfo
               passwordVal={passwordVal}
               clusterList={clusterList}
+              deleteVal={deleteVal}
               setSelectClusterId={setSelectClusterId}
               setPasswordVal={setPasswordVal}
+              setDeleteVal={setDeleteVal}
               form={form}
             />
           </Col>
@@ -163,7 +164,7 @@ export default function New() {
             />
           </Col>
           <Col span={24}>
-            <TenantSource ns={ns}/>
+            <TenantSource ns={ns} />
           </Col>
         </Row>
       </Form>

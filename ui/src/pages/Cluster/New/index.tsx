@@ -19,7 +19,10 @@ import Topo from './Topo';
 export default function New() {
   const navigate = useNavigate();
   const [form] = Form.useForm<API.CreateClusterData>();
-  const [passwordVal, setPasswordVal] = useState('');
+  const [passwordVal, setPasswordVal] = useState<string>('');
+  const [pvcValue, setPvcValue] = useState<boolean>(false);
+  // 默认勾选
+  const [deleteValue, setDeleteValue] = useState<boolean>(true);
   const { data: storageClassesRes, run: fetchStorageClasses } = useRequest(
     getStorageClasses,
     {
@@ -53,6 +56,8 @@ export default function New() {
       message.success(res.message, 3);
       form.resetFields();
       setPasswordVal('');
+      setPvcValue(false);
+      setDeleteValue(true);
       history.back();
     }
   };
@@ -114,12 +119,19 @@ export default function New() {
           <Col span={24}>
             <BasicInfo
               passwordVal={passwordVal}
+              deleteValue={deleteValue}
               setPasswordVal={setPasswordVal}
+              setDeleteValue={setDeleteValue}
               form={form}
             />
           </Col>
           <Topo form={form} />
-          <Observer storageClasses={storageClasses} form={form} />
+          <Observer
+            storageClasses={storageClasses}
+            form={form}
+            pvcValue={pvcValue}
+            setPvcValue={setPvcValue}
+          />
           <Monitor />
           <Parameters />
           <BackUp />
