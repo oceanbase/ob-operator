@@ -45,18 +45,22 @@ const zoneOperate: Topo.OperateTypeLabel = [
 ];
 
 const serverOperate: Topo.OperateTypeLabel = [
+  {
+    value: 'restartServer',
+    label: '重启server',
+  },
+  {
+    value: 'deleteServer',
+    label: intl.formatMessage({
+      id: 'dashboard.Detail.Topo.constants.DeleteServer',
+      defaultMessage: '删除server',
+    }),
+  },
   // {
   //   value: 'add',
   //   label: intl.formatMessage({
   //     id: 'dashboard.Detail.Topo.constants.AddServer',
   //     defaultMessage: '添加server',
-  //   }),
-  // },
-  // {
-  //   value: 'delete',
-  //   label: intl.formatMessage({
-  //     id: 'dashboard.Detail.Topo.constants.DeleteServer',
-  //     defaultMessage: '删除server',
   //   }),
   // },
   // {
