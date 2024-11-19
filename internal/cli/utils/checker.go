@@ -14,12 +14,49 @@ See the Mulan PSL v2 for more details.
 package utils
 
 import (
+	"bytes"
 	"fmt"
+	"os/exec"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
+)
+
+var (
+	operatorCheckCmd             = "kubectl get crds -A -o name | grep oceanbase.oceanbase.com"
+	certManagerCheckCmd          = "kubectl get crds -o name | grep cert-manager"
+	dashboardCheckCmd            = "helm list | grep oceanbase-dashboard"
+	localPathProvisionerCheckCmd = "kubectl get deployment -A | grep local-path-provisioner"
+)
+
+var (
+	// Define the resources to check for each command
+	certManagerResources = []string{
+		"challenges.acme.cert-manager.io",
+		"orders.acme.cert-manager.io",
+		"certificaterequests.cert-manager.io",
+		"certificates.cert-manager.io",
+		"clusterissuers.cert-manager.io",
+		"issuers.cert-manager.io",
+	}
+
+	operatorResources = []string{
+		"obparameters.oceanbase.oceanbase.com",
+		"observers.oceanbase.oceanbase.com",
+		"obclusters.oceanbase.oceanbase.com",
+		"obtenantbackups.oceanbase.oceanbase.com",
+		"obtenantrestores.oceanbase.oceanbase.com",
+		"obzones.oceanbase.oceanbase.com",
+		"obtenants.oceanbase.oceanbase.com",
+		"obtenantoperations.oceanbase.oceanbase.com",
+		"obtenantbackuppolicies.oceanbase.oceanbase.com",
+	}
+
+	dashboardResources = "oceanbase-dashboard"
+
+	localPathProvisionerResources = "local-path-provisioner"
 )
 
 // CheckTenantStatus checks running status of obtenant
@@ -52,4 +89,39 @@ func CheckTenantRole(tenant *v1alpha1.OBTenant, role apitypes.TenantRole) error 
 		return fmt.Errorf("Tenant is not %s tenant", string(role))
 	}
 	return nil
+}
+
+// CheckIfComponentExists checks if component exists in the environment
+func CheckIfComponentExists(component string) bool {
+	switch component {
+	case "cert-manager":
+		return checkIfResourceExists(certManagerCheckCmd, certManagerResources...)
+	case "ob-operator":
+		return checkIfResourceExists(operatorCheckCmd, operatorResources...)
+	case "ob-dashboard":
+		return checkIfResourceExists(dashboardCheckCmd, dashboardResources)
+	case "local-path-provisioner":
+		return checkIfResourceExists(localPathProvisionerCheckCmd, localPathProvisionerResources)
+	default:
+		return false
+	}
+}
+
+// checkIfResourceExists checks if the resource exists in the environment
+func checkIfResourceExists(checkCmd string, resourceList ...string) bool {
+	cmd := exec.Command("sh", "-c", checkCmd)
+	var out bytes.Buffer
+	cmd.Stdout = &out
+
+	if err := cmd.Run(); err != nil {
+		return false
+	}
+
+	output := out.Bytes()
+	for _, resource := range resourceList {
+		if !bytes.Contains(output, []byte(resource)) {
+			return false
+		}
+	}
+	return true
 }

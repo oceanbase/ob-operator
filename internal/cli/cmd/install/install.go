@@ -26,8 +26,8 @@ func NewCmd() *cobra.Command {
 	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:   "install <component>",
-		Short: "Command for ob-operator and components installation",
-		Long: `Command for ob-operator and components installation.
+		Short: "Command for ob-operator and other components installation",
+		Long: `Command for ob-operator and other components installation.
 
 Currently support:
 - ob-operator: A Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes.
@@ -35,7 +35,7 @@ Currently support:
 - local-path-provisioner: Provides a way for the Kubernetes users to utilize the local storage in each node, Storage of OceanBase cluster relies on it, which should be installed beforehand.
 - cert-manager: Creates TLS certificates for workloads in Kubernetes and renews the certificates before they expire, ob-operator relies on it for certificate management, which should be installed beforehand.
 
-if not specified, install ob-operator and ob-dashboard by default`,
+if not specified, install ob-operator and ob-dashboard by default, and cert-manager if it is not found in cluster.`,
 		PreRunE: o.Parse,
 		Args:    cobra.MaximumNArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -46,7 +46,7 @@ if not specified, install ob-operator and ob-dashboard by default`,
 				if err := o.Install(component, version); err != nil {
 					logger.Fatalln(err)
 				} else {
-					logger.Printf("%s install successfully", component)
+					logger.Printf("%s install successfully\n", component)
 				}
 			}
 		},
