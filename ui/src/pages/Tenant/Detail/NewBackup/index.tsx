@@ -196,6 +196,25 @@ export default function NewBackup() {
                               />
                             </Form.Item>
                           </Col>
+                          <Col span={8}>
+                            <Form.Item
+                              label="Host"
+                              name={['host']}
+                              rules={[
+                                {
+                                  required: true,
+                                  message: '请输入 Host',
+                                },
+                              ]}
+                            >
+                              <Input
+                                placeholder={intl.formatMessage({
+                                  id: 'Dashboard.Detail.NewBackup.PleaseEnter',
+                                  defaultMessage: '请输入',
+                                })}
+                              />
+                            </Form.Item>
+                          </Col>
                         </>
                       );
                     }
