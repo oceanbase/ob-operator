@@ -25,7 +25,7 @@ const (
 
 // CheckResourceName checks resource name in k8s
 func CheckResourceName(name string) bool {
-	regex := `[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*`
+	regex := `^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`
 	re := regexp.MustCompile(regex)
 	return re.MatchString(name)
 }
@@ -64,7 +64,7 @@ func CheckPassword(password string) bool {
 
 // CheckTenantName check Tenant name when creating tenant
 func CheckTenantName(name string) bool {
-	regex := `^[_a-zA-Z][^-]*$`
+	regex := `^[_a-zA-Z][^-\n]*$`
 	re := regexp.MustCompile(regex)
 	return re.MatchString(name)
 }
