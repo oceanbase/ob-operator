@@ -69,8 +69,6 @@ const (
 	DEFAULT_MEMORY_SIZE        = "2Gi"
 	DEFAULT_LOG_DISK_SIZE      = "4Gi"
 	DEFAULT_RESTORE_TYPE       = "OSS"
-	DEFAULT_ARCHIVE_SOURCE     = "t1/log_archive_custom"
-	DEFAULT_BAK_DATA_SOURCE    = "t1/data_backup_custom_enc"
 
 	// Default values for bool flags
 	DEFAULT_UNLIMITED_FLAG = true
