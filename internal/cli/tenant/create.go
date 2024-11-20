@@ -107,8 +107,20 @@ func (o *CreateOptions) Complete() error {
 	if o.RootPassword == "" {
 		o.RootPassword = utils.GenerateRandomPassword(8, 32)
 	}
+	if o.TenantName == "" {
+		o.TenantName = o.Name
+	}
 	if o.Timestamp != "" {
 		o.Source.Restore.Until.Timestamp = &o.Timestamp
+	}
+	if o.RestoreType != "" {
+		o.RestoreType = strings.ToUpper(o.RestoreType)
+	}
+	if o.RestoreType == "NFS" && o.Source.Restore.BakDataSource == "" {
+		o.Source.Restore.BakDataSource = fmt.Sprintf("%s/%s", "backup", o.From)
+	}
+	if o.RestoreType == "NFS" && o.Source.Restore.ArchiveSource == "" {
+		o.Source.Restore.ArchiveSource = fmt.Sprintf("%s/%s", "archive", o.From)
 	}
 	return nil
 }
@@ -118,7 +130,7 @@ func (o *CreateOptions) Validate() error {
 		return errors.New("namespace is not specified")
 	}
 	if o.ClusterName == "" {
-		return errors.New("cluster name is not specified")
+		return errors.New("cluster is not specified")
 	}
 	if o.TenantName == "" {
 		return errors.New("tenant name is not specified")
@@ -128,9 +140,6 @@ func (o *CreateOptions) Validate() error {
 	}
 	if !utils.CheckTenantName(o.TenantName) {
 		return fmt.Errorf("invalid tenant name: %s, the first letter must be a letter or an underscore and cannot contain -", o.TenantName)
-	}
-	if o.Source != nil && o.Source.Tenant != nil && o.TenantRole == "PRIMARY" {
-		return fmt.Errorf("invalid tenant role")
 	}
 	if o.Restore && o.RestoreType != "OSS" && o.RestoreType != "NFS" {
 		return errors.New("Restore Type not supported")
@@ -179,7 +188,7 @@ func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, 
 			if kubeerrors.IsNotFound(err) {
 				return nil, fmt.Errorf("primary tenant not found")
 			}
-			return nil, fmt.Errorf(err.Error())
+			return nil, err
 		}
 		if existing.Status.TenantRole != apiconst.TenantRolePrimary {
 			return nil, fmt.Errorf("the target tenant is not primary tenant")
@@ -187,7 +196,7 @@ func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, 
 		// Match root password
 		rootSecret, err := k8sclient.ClientSet.CoreV1().Secrets(existing.Namespace).Get(ctx, existing.Status.Credentials.Root, v1.GetOptions{})
 		if err != nil {
-			return nil, fmt.Errorf(err.Error())
+			return nil, err
 		}
 		if pwd, ok := rootSecret.Data["password"]; ok {
 			if p.RootPassword != string(pwd) {
@@ -196,7 +205,7 @@ func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, 
 			if t.Spec.Credentials.Root != "" {
 				err = utils.CreatePasswordSecret(ctx, nn.Namespace, t.Spec.Credentials.Root, p.RootPassword)
 				if err != nil {
-					return nil, fmt.Errorf(err.Error())
+					return nil, err
 				}
 			}
 		}
@@ -424,9 +433,9 @@ func (o *CreateOptions) AddRestoreFlags(cmd *cobra.Command) {
 	restoreFlags := pflag.NewFlagSet(FLAGSET_RESTORE, pflag.ContinueOnError)
 	restoreFlags.BoolVarP(&o.Restore, FLAG_RESTORE, "r", DEFAULT_RESTORE_FLAG, "Restore from backup files")
 	restoreFlags.StringVar(&o.RestoreType, FLAG_RESTORE_TYPE, DEFAULT_RESTORE_TYPE, "The type of restore source, support OSS or NFS")
-	restoreFlags.StringVar(&o.Source.Restore.ArchiveSource, FLAG_ARCHIVE_SOURCE, DEFAULT_ARCHIVE_SOURCE, "The archive source of restore")
+	restoreFlags.StringVar(&o.Source.Restore.ArchiveSource, FLAG_ARCHIVE_SOURCE, "", "The archive source of restore")
 	restoreFlags.StringVar(&o.Source.Restore.BakEncryptionPassword, FLAG_BAK_ENCRYPTION_PASS, "", "The backup encryption password of obtenant")
-	restoreFlags.StringVar(&o.Source.Restore.BakDataSource, FLAG_BAK_DATA_SOURCE, DEFAULT_BAK_DATA_SOURCE, "The bak data source of restore")
+	restoreFlags.StringVar(&o.Source.Restore.BakDataSource, FLAG_BAK_DATA_SOURCE, "", "The bak data source of restore")
 	restoreFlags.StringVar(&o.Source.Restore.OSSAccessID, FLAG_OSS_ACCESS_ID, "", "The oss access id of restore")
 	restoreFlags.StringVar(&o.Source.Restore.OSSAccessKey, FLAG_OSS_ACCESS_KEY, "", "The oss access key of restore")
 	restoreFlags.BoolVar(&o.Source.Restore.Until.Unlimited, FLAG_UNLIMITED, DEFAULT_UNLIMITED_FLAG, "time limited for restore")
