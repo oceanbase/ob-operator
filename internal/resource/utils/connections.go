@@ -149,9 +149,12 @@ func getSysClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCl
 		default:
 			s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, userName, tenantName, password, oceanbaseconst.DefaultDatabase)
 		}
-		// if err is nil, db connection is already checked available
 		sysClient, err := operation.GetOceanbaseOperationManager(s)
-		if err == nil && sysClient != nil {
+		var checkConnectionErr error
+		if obcluster.Status.Status != clusterstatus.New {
+			_, checkConnectionErr = sysClient.ListServers(context.TODO())
+		}
+		if err == nil && checkConnectionErr == nil {
 			sysClient.Logger = logger
 			return sysClient, nil
 		}
