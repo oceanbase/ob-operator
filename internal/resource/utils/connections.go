@@ -151,10 +151,10 @@ func getSysClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCl
 		}
 		sysClient, err := operation.GetOceanbaseOperationManager(s)
 		var checkConnectionErr error
-		if obcluster.Status.Status != clusterstatus.New {
-			_, checkConnectionErr = sysClient.ListServers(context.TODO())
+		if obcluster.Status.Status != clusterstatus.New && err == nil && sysClient != nil {
+			_, checkConnectionErr = sysClient.ListServers(context.Background())
 		}
-		if err == nil && checkConnectionErr == nil {
+		if err == nil && sysClient != nil && checkConnectionErr == nil {
 			sysClient.Logger = logger
 			return sysClient, nil
 		}
