@@ -227,6 +227,7 @@ If you encounter any issues while using ob-operator, please feel free to seek he
 ## Contributing
 
 - [Submit an issue](https://github.com/oceanbase/ob-operator/issues)
+- [Create a discussion](https://github.com/oceanbase/ob-operator/discussions)
 - [Create a Pull request](https://github.com/oceanbase/ob-operator/pulls)
 
 ## License
