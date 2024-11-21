@@ -480,6 +480,10 @@ export const LOADTYPE_LIST = [
     label: 'Express OLTP',
   },
   {
+    value: 'EXPRESS_OLTP_PERF',
+    label: 'Express OLTP PERF',
+  },
+  {
     value: 'COMPLEX_OLTP',
     label: 'Complex OLTP',
   },
