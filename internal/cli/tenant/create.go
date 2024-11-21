@@ -405,7 +405,7 @@ func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOTPASSWD, "p", "", "The root password of the primary tenant, if not specified, generate a random password")
 	baseFlags.StringVarP(&o.Charset, FLAG_CHARSET, "c", DEFAULT_CHARSET, "The charset used in ob tenant")
 	baseFlags.StringVar(&o.ConnectWhiteList, FLAG_CONNECT_WHITE_LIST, DEFAULT_CONNECT_WHITE_LIST, "The connect white list used in ob tenant")
-	baseFlags.StringVar(&o.From, FLAG_FROM, "", "restore from data source")
+	baseFlags.StringVar(&o.From, FLAG_FROM, "", "The source tenant to create a standby tenant or restore the tenant")
 }
 
 // AddPoolFlags add pool-related flags
@@ -431,7 +431,7 @@ func (o *CreateOptions) AddUnitFlags(cmd *cobra.Command) {
 // AddRestoreFlags add restore flags
 func (o *CreateOptions) AddRestoreFlags(cmd *cobra.Command) {
 	restoreFlags := pflag.NewFlagSet(FLAGSET_RESTORE, pflag.ContinueOnError)
-	restoreFlags.BoolVarP(&o.Restore, FLAG_RESTORE, "r", DEFAULT_RESTORE_FLAG, "Restore from backup files")
+	restoreFlags.BoolVarP(&o.Restore, FLAG_RESTORE, "r", DEFAULT_RESTORE_FLAG, "Restore from backup files, set to true to restore a tenant, also need the `from` flag to specify the source tenant")
 	restoreFlags.StringVar(&o.RestoreType, FLAG_RESTORE_TYPE, DEFAULT_RESTORE_TYPE, "The type of restore source, support OSS or NFS")
 	restoreFlags.StringVar(&o.Source.Restore.ArchiveSource, FLAG_ARCHIVE_SOURCE, "", "The archive source of restore")
 	restoreFlags.StringVar(&o.Source.Restore.BakEncryptionPassword, FLAG_BAK_ENCRYPTION_PASS, "", "The backup encryption password of obtenant")
@@ -439,6 +439,6 @@ func (o *CreateOptions) AddRestoreFlags(cmd *cobra.Command) {
 	restoreFlags.StringVar(&o.Source.Restore.OSSAccessID, FLAG_OSS_ACCESS_ID, "", "The oss access id of restore")
 	restoreFlags.StringVar(&o.Source.Restore.OSSAccessKey, FLAG_OSS_ACCESS_KEY, "", "The oss access key of restore")
 	restoreFlags.BoolVar(&o.Source.Restore.Until.Unlimited, FLAG_UNLIMITED, DEFAULT_UNLIMITED_FLAG, "time limited for restore")
-	restoreFlags.StringVar(&o.Timestamp, FLAG_UNTIL_TIMESTAMP, "", "timestamp for obtenant restore")
+	restoreFlags.StringVar(&o.Timestamp, FLAG_UNTIL_TIMESTAMP, "", "Timestamp for obtenant restore")
 	cmd.Flags().AddFlagSet(restoreFlags)
 }

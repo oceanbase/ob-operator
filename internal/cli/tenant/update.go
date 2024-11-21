@@ -52,7 +52,14 @@ func NewUpdateOptions() *UpdateOptions {
 		ModifyResourcePools: make([]v1alpha1.ResourcePoolSpec, 0),
 		AddResourcePools:    make([]v1alpha1.ResourcePoolSpec, 0),
 		DeleteResourcePools: make([]string, 0),
-		UnitConfig:          &param.UnitConfig{},
+		UnitConfig: &param.UnitConfig{
+			CPUCount:    "1",
+			MemorySize:  "2Gi",
+			MaxIops:     1024,
+			MinIops:     1024,
+			IopsWeight:  1,
+			LogDiskSize: "4Gi",
+		},
 	}
 }
 
@@ -195,6 +202,6 @@ func (o *UpdateOptions) Validate() error {
 func (o *UpdateOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of OBTenant")
 	cmd.Flags().StringVar(&o.ConnectWhiteList, FLAG_CONNECT_WHITE_LIST, "", "The connect white list of ob tenant")
-	cmd.Flags().StringToStringVar(&o.ZonePriority, FLAG_ZONE_PRIORITY, nil, "zone priority config of OBTenant")
-	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, "f", DEFAULT_FORCE_FLAG, "force operation")
+	cmd.Flags().StringToStringVar(&o.ZonePriority, FLAG_ZONE_PRIORITY, nil, "The zone priority config of OBTenant, e.g. --priority=<zone>=<priority>, set priority to 0 to delete zone from the unit pool")
+	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, "f", DEFAULT_FORCE_FLAG, "If the operation is a force operation")
 }

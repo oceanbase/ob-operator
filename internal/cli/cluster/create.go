@@ -340,7 +340,7 @@ func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 // AddZoneFlags adds the zone-related flags to the command.
 func (o *CreateOptions) AddZoneFlags(cmd *cobra.Command) {
 	zoneFlags := pflag.NewFlagSet(FLAGSET_ZONE, pflag.ContinueOnError)
-	zoneFlags.StringToStringVarP(&o.Zones, FLAG_ZONES, "z", map[string]string{"z1": "1"}, "The zones of the cluster in the format 'Zone=Replica', multiple values can be provided separated by commas")
+	zoneFlags.StringToStringVarP(&o.Zones, FLAG_ZONES, "z", map[string]string{"z1": "1"}, "The zones of the cluster, e.g. '--zones=<zone>=<replica>'")
 	cmd.Flags().AddFlagSet(zoneFlags)
 }
 
