@@ -44,7 +44,7 @@ const (
 
 	// restore flags
 	FLAG_RESTORE             = "restore"
-	FLAG_RESTORE_TYPE        = "type"
+	FLAG_RESTORE_TYPE        = "restore-type"
 	FLAG_ARCHIVE_SOURCE      = "archive-source"
 	FLAG_BAK_ENCRYPTION_PASS = "bak-encryption-password"
 	FLAG_BAK_DATA_SOURCE     = "bak-data-source"
@@ -69,8 +69,6 @@ const (
 	DEFAULT_MEMORY_SIZE        = "2Gi"
 	DEFAULT_LOG_DISK_SIZE      = "4Gi"
 	DEFAULT_RESTORE_TYPE       = "OSS"
-	DEFAULT_ARCHIVE_SOURCE     = "demo_tenant/log_archive_custom"
-	DEFAULT_BAK_DATA_SOURCE    = "demo_tenant/data_backup_custom_enc"
 
 	// Default values for bool flags
 	DEFAULT_UNLIMITED_FLAG = true
@@ -78,8 +76,8 @@ const (
 	DEFAULT_RESTORE_FLAG   = false
 
 	// Default Tenant name for demo cmd
-	DEFAULT_TENANT_NAME_IN_K8S = "demo-tenant"
-	DEFAULT_TENANT_NAME        = "demo_tenant"
+	DEFAULT_TENANT_NAME_IN_K8S = "t1"
+	DEFAULT_TENANT_NAME        = "t1"
 )
 
 // using in `demo` command, tenant resource name in k8s

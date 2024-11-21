@@ -114,10 +114,10 @@ func (o *UpdateOptions) Complete() error {
 			expandStorageSize.DataStorage = apiresource.NewQuantity(o.Storage.Data.SizeGB*constant.GB, apiresource.BinarySI)
 		}
 		if o.Storage.RedoLog.SizeGB != 0 {
-			expandStorageSize.DataStorage = apiresource.NewQuantity(o.Storage.RedoLog.SizeGB*constant.GB, apiresource.BinarySI)
+			expandStorageSize.RedoLogStorage = apiresource.NewQuantity(o.Storage.RedoLog.SizeGB*constant.GB, apiresource.BinarySI)
 		}
 		if o.Storage.Log.SizeGB != 0 {
-			expandStorageSize.DataStorage = apiresource.NewQuantity(o.Storage.Log.SizeGB*constant.GB, apiresource.BinarySI)
+			expandStorageSize.LogStorage = apiresource.NewQuantity(o.Storage.Log.SizeGB*constant.GB, apiresource.BinarySI)
 		}
 		o.ModifyConfig = &v1alpha1.ModifyOBServersConfig{ExpandStorageSize: expandStorageSize}
 	default:

@@ -47,14 +47,16 @@ func NewShowCmd() *cobra.Command {
 			if len(obcluster.Status.OBZoneStatus) > 0 {
 				tbLog.Println("ZONE \t STATUS")
 				for _, zone := range obcluster.Status.OBZoneStatus {
-					tbLog.Printf("%s \t %s \n\n", zone.Zone, zone.Status)
+					tbLog.Printf("%s \t %s \n", zone.Zone, zone.Status)
 				}
+				tbLog.Println()
 			}
 			if len(obcluster.Status.Parameters) > 0 {
 				tbLog.Println("KEY \t VALUE")
 				for _, Parameter := range obcluster.Status.Parameters {
-					tbLog.Printf("%s \t %s \n\n", Parameter.Name, Parameter.Value)
+					tbLog.Printf("%s \t %s \n", Parameter.Name, Parameter.Value)
 				}
+				tbLog.Println()
 			}
 
 			if len(obclusterOperationList.Items) > 0 {
@@ -63,7 +65,7 @@ func NewShowCmd() *cobra.Command {
 				})
 				tbLog.Println("OPERATION TYPE \t TTLDAYS \t STATUS \t CREATETIME")
 				for _, op := range obclusterOperationList.Items {
-					tbLog.Printf("%s \t %d \t  %s \t %s\n", op.Spec.Type, op.Spec.TTLDays, op.Status.Status, op.CreationTimestamp)
+					tbLog.Printf("%s \t %d \t  %s \t %s \n", op.Spec.Type, op.Spec.TTLDays, op.Status.Status, op.CreationTimestamp)
 				}
 			} else {
 				logger.Printf("No OBClusterOperations found in %s", obcluster.Spec.ClusterName)

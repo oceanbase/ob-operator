@@ -18,7 +18,6 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/rand"
 
@@ -53,7 +52,14 @@ func NewUpdateOptions() *UpdateOptions {
 		ModifyResourcePools: make([]v1alpha1.ResourcePoolSpec, 0),
 		AddResourcePools:    make([]v1alpha1.ResourcePoolSpec, 0),
 		DeleteResourcePools: make([]string, 0),
-		UnitConfig:          &param.UnitConfig{},
+		UnitConfig: &param.UnitConfig{
+			CPUCount:    "1",
+			MemorySize:  "2Gi",
+			MaxIops:     1024,
+			MinIops:     1024,
+			IopsWeight:  1,
+			LogDiskSize: "4Gi",
+		},
 	}
 }
 
@@ -196,19 +202,6 @@ func (o *UpdateOptions) Validate() error {
 func (o *UpdateOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of OBTenant")
 	cmd.Flags().StringVar(&o.ConnectWhiteList, FLAG_CONNECT_WHITE_LIST, "", "The connect white list of ob tenant")
-	cmd.Flags().StringToStringVar(&o.ZonePriority, FLAG_ZONE_PRIORITY, nil, "zone priority config of OBTenant")
-	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, "f", DEFAULT_FORCE_FLAG, "force operation")
-	o.AddUnitFlags(cmd)
-}
-
-// AddUnitFlags add unit-resource-related flags
-func (o *UpdateOptions) AddUnitFlags(cmd *cobra.Command) {
-	unitFlags := pflag.NewFlagSet(FLAGSET_UNIT, pflag.ContinueOnError)
-	unitFlags.Int64Var(&o.UnitConfig.MaxIops, FLAG_MAX_IOPS, DEFAULT_MAX_IOPS, "The max iops of unit")
-	unitFlags.Int64Var(&o.UnitConfig.MinIops, FLAG_MIN_IOPS, DEFAULT_MIN_IOPS, "The min iops of unit")
-	unitFlags.IntVar(&o.UnitConfig.IopsWeight, FLAG_IOPS_WEIGHT, DEFAULT_IOPS_WEIGHT, "The iops weight of unit")
-	unitFlags.StringVar(&o.UnitConfig.CPUCount, FLAG_CPU_COUNT, DEFAULT_CPU_COUNT, "The cpu count of unit")
-	unitFlags.StringVar(&o.UnitConfig.MemorySize, FLAG_MEMORY_SIZE, DEFAULT_MEMORY_SIZE, "The memory size of unit")
-	unitFlags.StringVar(&o.UnitConfig.LogDiskSize, FLAG_LOG_DISK_SIZE, DEFAULT_LOG_DISK_SIZE, "The log disk size of unit")
-	cmd.Flags().AddFlagSet(unitFlags)
+	cmd.Flags().StringToStringVar(&o.ZonePriority, FLAG_ZONE_PRIORITY, nil, "The zone priority config of OBTenant, e.g. --priority=<zone>=<priority>, set priority to 0 to delete zone from the unit pool")
+	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, "f", DEFAULT_FORCE_FLAG, "If the operation is a force operation")
 }
