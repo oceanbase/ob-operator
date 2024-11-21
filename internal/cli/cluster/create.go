@@ -337,6 +337,10 @@ func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 	o.AddBackupVolumeFlags(cmd)
 }
 
+func (o *CreateOptions) SetRequiredFlags(cmd *cobra.Command) {
+	_ = cmd.MarkFlagRequired(FLAG_ZONES)
+}
+
 // AddZoneFlags adds the zone-related flags to the command.
 func (o *CreateOptions) AddZoneFlags(cmd *cobra.Command) {
 	zoneFlags := pflag.NewFlagSet(FLAGSET_ZONE, pflag.ContinueOnError)

@@ -44,6 +44,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.29.3
 	k8s.io/apimachinery v0.29.3
+	k8s.io/cli-runtime v0.0.0
 	k8s.io/client-go v0.29.3
 	k8s.io/kubernetes v1.27.2
 	k8s.io/metrics v0.0.0
