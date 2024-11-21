@@ -954,6 +954,7 @@ func (m *OBTenantManager) createOBParameter(parameter *apitypes.Parameter) error
 	labels := make(map[string]string)
 	labels[oceanbaseconst.LabelRefUID] = string(m.OBTenant.GetUID())
 	labels[oceanbaseconst.LabelRefOBTenant] = m.OBTenant.Name
+	labels[oceanbaseconst.LabelRefOBCluster] = m.OBTenant.Spec.ClusterName
 	parameterName := m.generateParameterName(parameter.Name)
 	obparameter := &v1alpha1.OBParameter{
 		ObjectMeta: metav1.ObjectMeta{
