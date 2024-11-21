@@ -52,9 +52,12 @@ Zsh:
  
   # If shell completion is not already enabled in your environment,
   # you will need to enable it.  You can execute the following once:
- 
+
   $ echo "autoload -U compinit; compinit" >> ~/.zshrc
- 
+
+  To load completions in your current shell session:
+  $ source <(obocli completion zsh)
+
   # To load completions for each session, execute once:
   $ obocli completion zsh > "${fpath[1]}/_obocli"
  
@@ -97,7 +100,7 @@ func NewCmd(out io.Writer, boilerPlate string) *cobra.Command {
 		Long:                  completionLong,
 		DisableFlagsInUseLine: true,
 		ValidArgs:             shells,
-		Args:                  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),
+		Args:                  cobra.OnlyValidArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := RunCompletionE(out, boilerPlate, cmd, args); err != nil {
 				logger.Fatalln(err)
@@ -119,7 +122,7 @@ func RunCompletionE(out io.Writer, boilerPlate string, cmd *cobra.Command, args 
 	if !found {
 		return fmt.Errorf("unsupported shell type %q", args[0])
 	}
-	return run(out, boilerPlate, cmd)
+	return run(out, boilerPlate, cmd.Parent())
 }
 
 func runCompletionBash(out io.Writer, boilerPlate string, cmd *cobra.Command) error {
