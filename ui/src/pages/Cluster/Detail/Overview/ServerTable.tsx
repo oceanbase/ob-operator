@@ -1,10 +1,16 @@
 import { STATUS_LIST } from '@/constants';
 import { intl } from '@/utils/intl';
 import { findByValue } from '@oceanbase/util';
-import { Card, Col, Table, Tag } from 'antd';
+import { Button, Card, Col, Modal, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
-const getServerColums = () => {
+export default function ServerTable({
+  clusterDetail,
+}: {
+  clusterDetail: API.ClusterDetail[];
+}) {
+  const servers = clusterDetail?.servers;
+
   const serverColums: ColumnsType<API.Server> = [
     {
       title: intl.formatMessage({
@@ -42,11 +48,50 @@ const getServerColums = () => {
         return <Tag color={value.badgeStatus}>{value.label}</Tag>;
       },
     },
+    {
+      title: '操作',
+      dataIndex: 'operation',
+      render: (_, record) => {
+        // 任何 zone 里面只剩一个 server 就不能删了
+        const sameZone = servers?.filter(
+          (server) => server?.zone === record?.zone,
+        );
+        return (
+          <>
+            <Button
+              type="link"
+              style={{ paddingLeft: 0 }}
+              // TODO: 重启说明，后端会给参数对照
+              // disabled={}
+              onClick={() => {
+                Modal.confirm({
+                  title: '确定要重启当前 server 吗?',
+                  onOk: () => {},
+                });
+              }}
+            >
+              重启
+            </Button>
+            <Button
+              danger
+              type="link"
+              disabled={servers.length === 1 || sameZone.length === 1}
+              onClick={() => {
+                Modal.confirm({
+                  title: '确定要删除当前 server 吗?',
+                  okType: 'danger',
+                  onOk: () => {},
+                });
+              }}
+            >
+              删除
+            </Button>
+          </>
+        );
+      },
+    },
   ];
-  return serverColums;
-};
 
-export default function ServerTable({ servers }: { servers: API.Server[] }) {
   return (
     <Col span={24}>
       <Card
@@ -60,7 +105,7 @@ export default function ServerTable({ servers }: { servers: API.Server[] }) {
         }
       >
         <Table
-          columns={getServerColums()}
+          columns={serverColums}
           rowKey="name"
           dataSource={servers}
           pagination={{ simple: true }}

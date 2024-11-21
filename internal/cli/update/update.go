@@ -32,12 +32,17 @@ func NewUpdateOptions() *UpdateOptions {
 }
 
 func (o *UpdateOptions) Parse(_ *cobra.Command, args []string) error {
+	// if not specified, use default config
 	if len(args) == 0 {
+		defaultComponents := o.InstallOptions.GetDefaultComponents()
+		// update Components to default config
+		o.InstallOptions.Components = defaultComponents
 		return nil
 	}
 	name := args[0]
-	if _, ok := o.Components[name]; !ok {
-		return fmt.Errorf("%s update not supported", name)
+	if v, ok := o.InstallOptions.Components[name]; ok {
+		o.InstallOptions.Components = map[string]string{name: v}
+		return nil
 	}
-	return nil
+	return fmt.Errorf("component %s is not supported", name)
 }

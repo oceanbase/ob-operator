@@ -28,9 +28,12 @@ export default function NewBackup() {
   const publicKey = usePublicKey();
   const scheduleValue = Form.useWatch(['scheduleDates'], form);
 
-  const distType = [
-    { label: 'OSS', value: 'OSS' },
+  const distTypes = [
     { label: 'NFS', value: 'NFS' },
+    { label: 'OSS', value: 'OSS' },
+    { label: 'COS', value: 'COS' },
+    { label: 'S3', value: 'S3' },
+    { label: 'S3-Compatible', value: 'S3-Compatible' },
   ];
 
   const handleSubmit = async (values: API.NewBackupForm) => {
@@ -140,7 +143,7 @@ export default function NewBackup() {
                         id: 'Dashboard.Detail.NewBackup.PleaseSelect',
                         defaultMessage: '请选择',
                       })}
-                      options={distType}
+                      options={distTypes}
                     />
                   </Form.Item>
                 </Col>
@@ -186,6 +189,25 @@ export default function NewBackup() {
                               ]}
                             >
                               <Password
+                                placeholder={intl.formatMessage({
+                                  id: 'Dashboard.Detail.NewBackup.PleaseEnter',
+                                  defaultMessage: '请输入',
+                                })}
+                              />
+                            </Form.Item>
+                          </Col>
+                          <Col span={8}>
+                            <Form.Item
+                              label="Host"
+                              name={['host']}
+                              rules={[
+                                {
+                                  required: true,
+                                  message: '请输入 Host',
+                                },
+                              ]}
+                            >
+                              <Input
                                 placeholder={intl.formatMessage({
                                   id: 'Dashboard.Detail.NewBackup.PleaseEnter',
                                   defaultMessage: '请输入',
@@ -250,6 +272,61 @@ export default function NewBackup() {
                     />
                   </Form.Item>
                 </Col>
+
+                <Form.Item noStyle dependencies={['destType']}>
+                  {({ getFieldValue }) => {
+                    if (getFieldValue(['destType']) === 'COS') {
+                      return (
+                        <Col span={8}>
+                          <Form.Item
+                            label="AppID"
+                            name={['appID']}
+                            rules={[
+                              {
+                                required: true,
+                                message: '请输入AppID',
+                              },
+                            ]}
+                          >
+                            <Input
+                              placeholder={intl.formatMessage({
+                                id: 'Dashboard.Detail.NewBackup.PleaseEnter',
+                                defaultMessage: '请输入',
+                              })}
+                            />
+                          </Form.Item>
+                        </Col>
+                      );
+                    }
+                  }}
+                </Form.Item>
+                <Form.Item noStyle dependencies={['destType']}>
+                  {({ getFieldValue }) => {
+                    if (getFieldValue(['destType']) === 'S3') {
+                      return (
+                        <Col span={8}>
+                          <Form.Item
+                            label="Region"
+                            name={['Region']}
+                            rules={[
+                              {
+                                required: true,
+                                message: '请输入 Region',
+                              },
+                            ]}
+                          >
+                            <Password
+                              placeholder={intl.formatMessage({
+                                id: 'Dashboard.Detail.NewBackup.PleaseEnter',
+                                defaultMessage: '请输入',
+                              })}
+                            />
+                          </Form.Item>
+                        </Col>
+                      );
+                    }
+                  }}
+                </Form.Item>
               </Row>
             </Col>
             <Col span={12}>

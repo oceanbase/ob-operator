@@ -14,7 +14,6 @@ See the Mulan PSL v2 for more details.
 package install
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -46,7 +45,7 @@ func (o *InstallOptions) AddFlags(cmd *cobra.Command) {
 func (o *InstallOptions) Parse(_ *cobra.Command, args []string) error {
 	// if not specified, use default config
 	if len(args) == 0 {
-		defaultComponents := o.getDefaultComponents()
+		defaultComponents := o.GetDefaultComponents()
 		// update Components to default config
 		o.Components = defaultComponents
 		return nil
@@ -104,39 +103,10 @@ func (o *InstallOptions) buildCmd(component, version string) (*exec.Cmd, error) 
 	return cmd, nil
 }
 
-// checkCertManager checks cert-manager in the environment
-func checkCertManager() bool {
-	cmd := exec.Command("kubectl", "get", "crds", "-o", "name", "|", "grep", "cert-manager")
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-	if err != nil {
-		return false
-	}
-
-	// Check if the output contains cert-manager resources
-	expectedResources := []string{
-		"challenges.acme.cert-manager.io",
-		"orders.acme.cert-manager.io",
-		"certificaterequests.cert-manager.io",
-		"certificates.cert-manager.io",
-		"clusterissuers.cert-manager.io",
-		"issuers.cert-manager.io",
-	}
-
-	for _, resource := range expectedResources {
-		if !bytes.Contains(out.Bytes(), []byte(resource)) {
-			return false
-		}
-	}
-
-	return true
-}
-
-func (o *InstallOptions) getDefaultComponents() map[string]string {
+func (o *InstallOptions) GetDefaultComponents() map[string]string {
 	defaultComponents := make(map[string]string) // Initialize the map
 	var componentsList []string
-	if !checkCertManager() {
+	if !utils.CheckIfComponentExists("cert-manager") {
 		componentsList = []string{"cert-manager", "ob-operator", "ob-dashboard"}
 	} else {
 		componentsList = []string{"ob-operator", "ob-dashboard"}
