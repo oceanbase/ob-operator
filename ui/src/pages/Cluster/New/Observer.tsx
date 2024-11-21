@@ -1,9 +1,21 @@
 import { CustomFormItem } from '@/components/CustomFormItem';
+import IconTip from '@/components/IconTip';
 import SelectWithTooltip from '@/components/SelectWithTooltip';
 import { MINIMAL_CONFIG, SUFFIX_UNIT } from '@/constants';
 import { MIRROR_SERVER } from '@/constants/doc';
 import { intl } from '@/utils/intl';
-import { Button, Card, Col, Input, InputNumber, Row, Tooltip } from 'antd';
+import {
+  Button,
+  Card,
+  Checkbox,
+  Col,
+  Form,
+  Input,
+  InputNumber,
+  Row,
+  Space,
+  Tooltip,
+} from 'antd';
 import { FormInstance } from 'antd/lib/form';
 import { clone } from 'lodash';
 import styles from './index.less';
@@ -11,6 +23,8 @@ import styles from './index.less';
 interface ObserverProps {
   storageClasses: API.TooltipData[] | undefined;
   form: FormInstance<API.CreateClusterData>;
+  setPvcValue: boolean;
+  pvcValue: boolean;
 }
 
 const observerToolTipText = intl.formatMessage({
@@ -59,7 +73,12 @@ export const TooltipItemContent = ({ item }) => {
   );
 };
 
-export default function Observer({ storageClasses, form }: ObserverProps) {
+export default function Observer({
+  storageClasses,
+  form,
+  pvcValue,
+  setPvcValue,
+}: ObserverProps) {
   const setMinimalConfiguration = () => {
     const originObserver = clone(form.getFieldsValue());
     form.setFieldsValue({
@@ -173,7 +192,21 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
           </Col>
         </Row>
         <p className={styles.titleText}>storage</p>
-
+        <p className={styles.subTitleText}>存储卷配置</p>
+        <Space style={{ marginBottom: '10px' }}>
+          <IconTip
+            tip={
+              '勾选后，在删除 OBServer 资源之后不会级联删除 PVC；默认会进行级联删除'
+            }
+            content={'PVC 独立生命周期'}
+          />
+          <Checkbox
+            value={pvcValue}
+            onChange={(e) => {
+              setPvcValue(e.target.checked);
+            }}
+          />
+        </Space>
         <Row gutter={16}>
           <Col span={8}>
             <p className={styles.subTitleText}>
@@ -197,19 +230,18 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                   })}
                 />
               </CustomFormItem>
-              <CustomFormItem
+              <Form.Item
                 label="storageClass"
                 name={['observer', 'storage', 'data', 'storageClass']}
               >
-                {storageClasses && (
-                  <SelectWithTooltip
-                    name={['observer', 'storage', 'data', 'storageClass']}
-                    form={form}
-                    selectList={storageClasses}
-                    TooltipItemContent={TooltipItemContent}
-                  />
-                )}
-              </CustomFormItem>
+                <SelectWithTooltip
+                  type="observer"
+                  name={['observer', 'storage', 'data', 'storageClass']}
+                  form={form}
+                  selectList={storageClasses}
+                  TooltipItemContent={TooltipItemContent}
+                />
+              </Form.Item>
             </div>
           </Col>
           <Col span={8}>
@@ -234,19 +266,18 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                   })}
                 />
               </CustomFormItem>
-              <CustomFormItem
+              <Form.Item
                 label="storageClass"
                 name={['observer', 'storage', 'log', 'storageClass']}
               >
-                {storageClasses && (
-                  <SelectWithTooltip
-                    form={form}
-                    name={['observer', 'storage', 'log', 'storageClass']}
-                    selectList={storageClasses}
-                    TooltipItemContent={TooltipItemContent}
-                  />
-                )}
-              </CustomFormItem>
+                <SelectWithTooltip
+                  type="observer"
+                  name={['observer', 'storage', 'data', 'storageClass']}
+                  form={form}
+                  selectList={storageClasses}
+                  TooltipItemContent={TooltipItemContent}
+                />
+              </Form.Item>
             </div>
           </Col>
           <Col span={8}>
@@ -266,20 +297,19 @@ export default function Observer({ storageClasses, form }: ObserverProps) {
                   })}
                 />
               </CustomFormItem>
-              <CustomFormItem
+              <Form.Item
                 label="storageClass"
                 validateTrigger="onBlur"
                 name={['observer', 'storage', 'redoLog', 'storageClass']}
               >
-                {storageClasses && (
-                  <SelectWithTooltip
-                    form={form}
-                    name={['observer', 'storage', 'redoLog', 'storageClass']}
-                    selectList={storageClasses}
-                    TooltipItemContent={TooltipItemContent}
-                  />
-                )}
-              </CustomFormItem>
+                <SelectWithTooltip
+                  type="observer"
+                  name={['observer', 'storage', 'data', 'storageClass']}
+                  form={form}
+                  selectList={storageClasses}
+                  TooltipItemContent={TooltipItemContent}
+                />
+              </Form.Item>
             </div>
           </Col>
         </Row>
