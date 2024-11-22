@@ -1,3 +1,4 @@
 enumPropertyNaming: original
 modelPropertyNaming: original
-supportsES6: true
+supportsES6: true,
+validateSpec: false
