@@ -136,9 +136,11 @@ func runCompletionBash(out io.Writer, boilerPlate string, cmd *cobra.Command) er
 }
 
 func runCompletionZsh(out io.Writer, boilerPlate string, cmd *cobra.Command) error {
-	// Add zsh completion header to specifiy the command to complete for zsh
+	// Add zsh completion header to specify the command to complete for zsh
 	zshHead := fmt.Sprintf("#compdef %[1]s\ncompdef _%[1]s %[1]s\n", cmd.Name())
-	out.Write([]byte(zshHead))
+	if _, err := out.Write([]byte(zshHead)); err != nil {
+		return err
+	}
 
 	if len(boilerPlate) == 0 {
 		boilerPlate = defaultBoilerPlate
