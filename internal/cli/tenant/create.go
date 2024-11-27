@@ -394,13 +394,20 @@ func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 	o.AddUnitFlags(cmd)
 	o.AddPoolFlags(cmd)
 	o.AddRestoreFlags(cmd)
+	o.SetRequiredFlags(cmd)
+}
+
+// SetRequiredFlags set required flags
+func (o *CreateOptions) SetRequiredFlags(cmd *cobra.Command) {
+	_ = cmd.MarkFlagRequired(FLAG_CLUSTER_NAME)
+	_ = cmd.MarkFlagRequired(FLAG_ZONE_PRIORITY)
 }
 
 // AddBaseFlags add base flags
 func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags := cmd.Flags()
 	baseFlags.StringVarP(&o.TenantName, FLAG_TENANT_NAME, "n", "", "Tenant name, if not specified, use name in k8s instead")
-	baseFlags.StringVar(&o.ClusterName, FLAG_CLUSTER_NAME, "", "The cluster name tenant belonged to in k8s")
+	baseFlags.StringVar(&o.ClusterName, FLAG_CLUSTER_NAME, "", "The cluster name tenant belonged to in k8s, required")
 	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the tenant")
 	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOTPASSWD, "p", "", "The root password of the primary tenant, if not specified, generate a random password")
 	baseFlags.StringVarP(&o.Charset, FLAG_CHARSET, "c", DEFAULT_CHARSET, "The charset used in ob tenant")

@@ -31,7 +31,7 @@ import (
 // MapZonesToTopology map --zones to zoneTopology
 func MapZonesToTopology(zones map[string]string) ([]param.ZoneTopology, error) {
 	if zones == nil {
-		return nil, fmt.Errorf("Zone replica is required")
+		return nil, fmt.Errorf("zone replica is required")
 	}
 	topology := make([]param.ZoneTopology, 0)
 	for zoneName, replicaStr := range zones {

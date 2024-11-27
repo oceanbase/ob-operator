@@ -22,7 +22,6 @@ const (
 
 	// Base flags
 	FLAG_NAMESPACE     = "namespace"
-	FLAG_NAME          = "name"
 	FLAG_SCHEDULE_TYPE = "schedule-type"
 	FLAG_DEST_TYPE     = "dest-type"
 	FLAG_ARCHIVE_PATH  = "archive-path"
