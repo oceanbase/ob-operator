@@ -290,9 +290,9 @@ func (r *OBTenant) validateMutation() error {
 	if r.Spec.Source != nil && r.Spec.Source.Restore != nil {
 		res := r.Spec.Source.Restore
 
-		if res.ArchiveSource == nil && res.BakDataSource == nil && res.SourceUri == "" {
+		if (res.ArchiveSource == nil || res.BakDataSource == nil) && res.SourceUri == "" {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("source").Child("restore"), res, "Restore must have a source option, but both archiveSource, bakDataSource and sourceUri are nil now"))
-		} else {
+		} else if res.ArchiveSource != nil && res.BakDataSource != nil {
 			destErrs := errors.Join(
 				validateBackupDestination(cluster, res.ArchiveSource, "spec", "source", "restore", "archiveSource"),
 				validateBackupDestination(cluster, res.BakDataSource, "spec", "source", "restore", "bakDataSource"),
