@@ -7,7 +7,7 @@
 
 ### Bugfix
 1. Fix obagent deployment with service or standalone mode.
-2. Fix add server failure in certain scenario.
+2. Fix sql execution failure when adding server to the cluster in certain scenario.
 
 ### Enhancement
 1. Add image and store config to the output of obcluster resource.

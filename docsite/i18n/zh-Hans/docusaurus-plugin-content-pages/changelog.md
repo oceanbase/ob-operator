@@ -7,7 +7,7 @@
 
 ### 缺陷修复
 1. 修复 obagent 对于 service 和 standalone 模式集群的兼容问题
-2. 修复了特定场景下 add server 失败的问题
+2. 修复了特定场景下执行 SQL 添加 observer 到集群失败的问题
 
 ### 功能优化
 1. obcluster 资源的 output 中增加部署镜像和存储相关的展示
