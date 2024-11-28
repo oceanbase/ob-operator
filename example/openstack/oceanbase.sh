@@ -5,7 +5,7 @@ set -xe
 CLUSTER_NAME=openstack
 TENANT_NAME=openstack
 OCEANBASE_NAMESPACE=openstack
-STORAGE_CLASS=local-path
+STORAGE_CLASS=general
 OCEANBASE_CLUSTER_IMAGE=oceanbase/oceanbase-cloud-native:4.2.5.0-100000052024102022
 OBPROXY_IMAGE=oceanbase/obproxy-ce:4.3.2.0-26
 ROOT_PASSWORD=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16 | base64 -w 0)
