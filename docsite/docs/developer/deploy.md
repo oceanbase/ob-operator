@@ -19,13 +19,13 @@ Parameters:
 
 * namespace: Namespace, can be customized. It is recommended to use "oceanbase-system" as the namespace.
 
-* version: ob-operator version number. It is recommended to use the latest version `2.3.0`.
+* version: ob-operator version number. It is recommended to use the latest version `2.3.1`.
 
 ## 2.2 Deploying with Configuration Files
 
 * Stable
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.0_release/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.1_release/deploy/operator.yaml
 ```
 * Development
 ```shell
