@@ -5,8 +5,8 @@ set -xe
 CLUSTER_NAME=openstack
 TENANT_NAME=openstack
 OCEANBASE_NAMESPACE=openstack
-STORAGE_CLASS=general
-OCEANBASE_CLUSTER_IMAGE=oceanbase/oceanbase-cloud-native:4.3.3.1-101000012024102216
+STORAGE_CLASS=local-path
+OCEANBASE_CLUSTER_IMAGE=oceanbase/oceanbase-cloud-native:4.2.5.0-100000052024102022
 OBPROXY_IMAGE=oceanbase/obproxy-ce:4.3.2.0-26
 ROOT_PASSWORD=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16 | base64 -w 0)
 PROXYRO_PASSWORD=$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 16 | base64 -w 0)
@@ -22,7 +22,7 @@ fi
 
 # install ob-operator, always apply the newest version
 echo "install or update ob-operator"
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/refs/heads/2.3.0_release/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/refs/heads/2.3.1_release/deploy/operator.yaml
 kubectl wait --for=condition=Ready pod -l "control-plane=controller-manager" -n oceanbase-system --timeout=300s
 
 tee /tmp/namespace.yaml <<EOF
@@ -112,6 +112,11 @@ metadata:
 spec:
   obcluster: ${CLUSTER_NAME}
   tenantName: ${TENANT_NAME}
+  variables:
+    - name: autocommit
+      value: "0"
+    - name: version
+      value: "8.0.30"
   unitNum: 1
   charset: utf8mb4
   connectWhiteList: '%'
@@ -233,45 +238,6 @@ EOF
 
 kubectl apply -f /tmp/obproxy.yaml
 kubectl wait --for=condition=Ready pod -l app="app-obproxy-${CLUSTER_NAME}" -n ${OCEANBASE_NAMESPACE} --timeout=300s
-
-tee /tmp/tenant-job.yaml <<EOF
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: tenant-config-job
-  namespace: ${OCEANBASE_NAMESPACE}
-spec:
-  backoffLimit: 3
-  ttlSecondsAfterFinished: 300
-  template:
-    spec:
-      containers:
-      - name: mysql-client
-        image: mysql:8.0
-        command: ["/bin/bash"]
-        args:
-        - -c
-        - |
-          mysql -h\${HOST} -P\${PORT} -u\${USER} -p\${PASSWORD} -e "
-          SET GLOBAL autocommit = 0;
-          SET GLOBAL version = '8.0.30';
-          "
-        env:
-        - name: HOST
-          value: svc-obproxy-${CLUSTER_NAME}.${OCEANBASE_NAMESPACE}.svc
-        - name: PORT
-          value: "2883"
-        - name: USER
-          value: root
-        - name: PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: root-password
-              key: password
-      restartPolicy: Never
-EOF
-kubectl apply -f /tmp/tenant-job.yaml
-kubectl wait --for=condition=complete  job/tenant-config-job -n ${OCEANBASE_NAMESPACE} --timeout=300s
 
 echo "OceanBase is ready, you may use the following connection"
 echo "mysql -hsvc-obproxy-${CLUSTER_NAME}.${OCEANBASE_NAMESPACE}.svc -P2883 -uroot -p$(echo ${ROOT_PASSWORD} | base64 -d)"
