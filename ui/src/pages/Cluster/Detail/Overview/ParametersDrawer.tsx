@@ -1,4 +1,4 @@
-import { obproxy } from '@/api';
+import { obcluster } from '@/api';
 import { intl } from '@/utils/intl';
 import { PlusOutlined } from '@ant-design/icons';
 import { useRequest } from 'ahooks';
@@ -8,10 +8,10 @@ import {
   Drawer,
   Form,
   Input,
+  message,
   Popconfirm,
   Row,
   Space,
-  message,
 } from 'antd';
 import React from 'react';
 
@@ -20,6 +20,8 @@ export interface ParametersModalProps {
   onCancel: () => void;
   onSuccess: () => void;
   initialValues: any[];
+  name: string;
+  namespace: string;
 }
 
 const ParametersDrawer: React.FC<ParametersModalProps> = ({
@@ -27,12 +29,14 @@ const ParametersDrawer: React.FC<ParametersModalProps> = ({
   onCancel,
   initialValues,
   onSuccess,
+  name,
+  namespace,
 }) => {
   const [form] = Form.useForm<API.CreateClusterData>();
   const { validateFields } = form;
 
   const { runAsync: updateParameters, loading } = useRequest(
-    obproxy.patchOBProxy,
+    obcluster.patchOBCluster,
     {
       manual: true,
       onSuccess: (res) => {
@@ -67,10 +71,7 @@ const ParametersDrawer: React.FC<ParametersModalProps> = ({
             loading={loading}
             onClick={() => {
               validateFields().then((values) => {
-                const { parameters } = values;
-                updateParameters({
-                  parameters,
-                });
+                updateParameters(name, namespace, values, `编辑参数已成功`);
               });
             }}
           >
