@@ -40,6 +40,7 @@ func NewCmd() *cobra.Command {
 	var clusterType string
 	var wait bool
 	var err error
+	var prompt any
 	cmd := &cobra.Command{
 		Use:   "demo <subcommand>",
 		Short: "deploy demo ob cluster and tenant in easier way",
@@ -47,13 +48,19 @@ func NewCmd() *cobra.Command {
 		Args:  cobra.NoArgs,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			// prompt for cluster create options
-			prompt := pf.CreatePrompt(cluster.FLAG_NAME)
-			if clusterOptions.Name, err = pf.RunPromptE(prompt); err != nil {
-				logger.Fatalln(err)
-			}
-			prompt = pf.CreatePrompt(cluster.FLAG_NAMESPACE)
-			if clusterOptions.Namespace, err = pf.RunPromptE(prompt); err != nil {
-				logger.Fatalln(err)
+			for {
+				prompt = pf.CreatePrompt(cluster.FLAG_NAME)
+				if clusterOptions.Name, err = pf.RunPromptE(prompt); err != nil {
+					logger.Fatalln(err)
+				}
+				prompt = pf.CreatePrompt(cluster.FLAG_NAMESPACE)
+				if clusterOptions.Namespace, err = pf.RunPromptE(prompt); err != nil {
+					logger.Fatalln(err)
+				}
+				if !utils.CheckIfClusterExists(cmd.Context(), clusterOptions.Name, clusterOptions.Namespace) {
+					break
+				}
+				logger.Printf("Cluster %s already exists in namespace %s, please input another cluster name", clusterOptions.Name, clusterOptions.Namespace)
 			}
 			prompt = pf.CreatePrompt(cluster.CLUSTER_TYPE)
 			if clusterType, err = pf.RunPromptE(prompt); err != nil {
@@ -63,9 +70,17 @@ func NewCmd() *cobra.Command {
 			if clusterOptions.RootPassword, err = pf.RunPromptE(prompt); err != nil {
 				logger.Fatalln(err)
 			}
-			prompt = pf.CreatePrompt(tenant.FLAG_TENANT_NAME_IN_K8S)
-			if tenantOptions.Name, err = pf.RunPromptE(prompt); err != nil {
-				logger.Fatalln(err)
+
+			// prompt for tenant create options
+			for {
+				prompt = pf.CreatePrompt(tenant.FLAG_TENANT_NAME_IN_K8S)
+				if tenantOptions.Name, err = pf.RunPromptE(prompt); err != nil {
+					logger.Fatalln(err)
+				}
+				if !utils.CheckIfTenantExists(cmd.Context(), tenantOptions.Name, clusterOptions.Namespace) {
+					break
+				}
+				logger.Printf("Tenant %s already exists in namespace %s, please input another tenant name", tenantOptions.Name, clusterOptions.Namespace)
 			}
 			prompt = pf.CreatePrompt(tenant.FLAG_TENANT_NAME)
 			if tenantOptions.TenantName, err = pf.RunPromptE(prompt); err != nil {
@@ -91,7 +106,7 @@ func NewCmd() *cobra.Command {
 			}
 			logger.Printf("Creating OBCluster instance: %s", clusterOptions.ClusterName)
 			waitForClusterReady(cmd.Context(), obcluster, logger, 2*time.Second)
-			logger.Printf("Run `echo $(kubectl get secret %s -clusterOptions jsonpath='{.data.password}'|base64 --decode)` to get clsuter secrets", obcluster.Spec.UserSecrets.Root)
+			logger.Printf("Run `echo $(kubectl get secret %s -o jsonpath='{.data.password}'|base64 --decode)` to get clsuter secrets", obcluster.Spec.UserSecrets.Root)
 		},
 		PostRun: func(cmd *cobra.Command, args []string) {
 			// create tenant after cluster ready
