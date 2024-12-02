@@ -19,9 +19,15 @@ import (
 )
 
 func GetCNIFromAnnotation(pod *corev1.Pod) string {
+	// check annotation for calico
 	_, found := pod.Annotations[oceanbaseconst.AnnotationCalicoValidate]
 	if found {
 		return oceanbaseconst.CNICalico
+	}
+	// check annotation for kube-ovn
+	_, found = pod.Annotations[oceanbaseconst.AnnotationKubeOvnValidate]
+	if found {
+		return oceanbaseconst.CNIKubeOvn
 	}
 	return oceanbaseconst.CNIUnknown
 }
@@ -30,6 +36,9 @@ func NeedAnnotation(pod *corev1.Pod, cni string) bool {
 	switch cni {
 	case oceanbaseconst.CNICalico:
 		_, found := pod.Annotations[oceanbaseconst.AnnotationCalicoIpAddrs]
+		return !found
+	case oceanbaseconst.CNIKubeOvn:
+		_, found := pod.Annotations[oceanbaseconst.AnnotationKubeOvnIpAddrs]
 		return !found
 	default:
 		return false
