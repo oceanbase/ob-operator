@@ -31,12 +31,12 @@ func NewCliCmd() *cobra.Command {
 		Use:   "obocli",
 		Short: "OceanBase Operator Cli",
 		Long:  "OceanBase Operator Cli tool to manage OceanBase clusters, tenants, and backup policies.",
-		Run: func(cmd *cobra.Command, args []string) {
+		RunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Flags().Changed("version") {
 				versionCmd := version.NewCmd()
-				versionCmd.Run(cmd, args)
+				return versionCmd.RunE(cmd, args)
 			} else {
-				_ = cmd.Help()
+				return cmd.Help()
 			}
 		},
 	}
