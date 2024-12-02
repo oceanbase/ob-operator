@@ -643,6 +643,10 @@ func (m *OBServerManager) generateStaticIpAnnotation() map[string]string {
 		if m.OBServer.Status.PodIp != "" {
 			annotations[oceanbaseconst.AnnotationCalicoIpAddrs] = fmt.Sprintf("[\"%s\"]", m.OBServer.Status.PodIp)
 		}
+	case oceanbaseconst.CNIKubeOvn:
+		if m.OBServer.Status.PodIp != "" {
+			annotations[oceanbaseconst.AnnotationKubeOvnIpAddrs] = m.OBServer.Status.PodIp
+		}
 	default:
 		m.Logger.Info("No CNI is configured, set empty annotation")
 	}

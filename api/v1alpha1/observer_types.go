@@ -108,6 +108,8 @@ func (s *OBServer) SupportStaticIP() bool {
 	switch s.Status.CNI {
 	case oceanbaseconst.CNICalico:
 		return true
+	case oceanbaseconst.CNIKubeOvn:
+		return true
 	default:
 		annos := s.GetAnnotations()
 		if annos == nil {
