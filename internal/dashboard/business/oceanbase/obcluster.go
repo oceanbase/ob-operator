@@ -20,6 +20,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	logger "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
@@ -34,8 +35,10 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
+	clustermodel "github.com/oceanbase/ob-operator/internal/dashboard/model/obcluster"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
+	"github.com/oceanbase/ob-operator/internal/dashboard/utils"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
@@ -876,4 +879,31 @@ func DeleteOBServers(ctx context.Context, nn *param.K8sObjectIdentity, param *pa
 	}
 
 	return buildOBClusterResponse(ctx, obcluster)
+}
+
+func ListOBClusterParameters(ctx context.Context, nn *param.K8sObjectIdentity) ([]clustermodel.ParameterItem, error) {
+	obcluster, err := clients.GetOBCluster(ctx, nn.Namespace, nn.Name)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Get obcluster %s %s", nn.Namespace, nn.Name)
+	}
+	observerList := v1alpha1.OBServerList{}
+	err = clients.ServerClient.List(ctx, nn.Namespace, &observerList, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s", oceanbaseconst.LabelRefOBCluster, nn.Name),
+	})
+	if err != nil {
+		logrus.WithError(err).Error("Failed to list observers")
+		return nil, errors.Wrap(err, "List observers")
+	}
+	conn, err := utils.GetOBConnection(ctx, obcluster, "root", "sys", obcluster.Spec.UserSecrets.Root)
+	if err != nil {
+		logrus.Info("Failed to get OceanBase database connection")
+		return nil, errors.Wrap(err, "Get OceanBase database connection")
+	}
+	parameterItems := make([]clustermodel.ParameterItem, 0)
+	err = conn.QueryList(ctx, &parameterItems, "SHOW PARAMETERS")
+	if err != nil {
+		logrus.WithError(err).Error("Failed to query parameters")
+		return nil, errors.Wrap(err, "Query parameters")
+	}
+	return parameterItems, nil
 }

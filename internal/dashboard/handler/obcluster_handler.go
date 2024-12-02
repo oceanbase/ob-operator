@@ -24,6 +24,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/clients"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/obcluster"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
@@ -472,4 +473,26 @@ func DeleteOBServers(c *gin.Context) (*response.OBCluster, error) {
 	}
 	logger.Infof("Delete observers with param: %+v", deleteParam)
 	return oceanbase.DeleteOBServers(c, obclusterIdentity, deleteParam)
+}
+
+// @ID ListOBClusterParameters
+// @Summary List OBCluster Parameters
+// @Description List OBCluster Parameters by namespace and name
+// @Tags OBCluster
+// @Accept application/json
+// @Produce application/json
+// @Param namespace path string true "namespace of obcluster resource"
+// @Param name path string true "name of obcluster resource"
+// @Success 200 object response.APIResponse{data=[]obcluster.ParameterItem}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/obclusters/namespace/{namespace}/name/{name}/parameters [GET]
+func ListOBClusterParameters(c *gin.Context) ([]obcluster.ParameterItem, error) {
+	nn := &param.K8sObjectIdentity{}
+	err := c.BindUri(nn)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return oceanbase.ListOBClusterParameters(c, nn)
 }
