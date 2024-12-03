@@ -190,10 +190,7 @@ const ClusterOverview: React.FC = () => {
       }),
       extra: access.obclusterwrite
         ? [
-            <Dropdown
-              menu={{ items }}
-              placement="bottomRight"
-            >
+            <Dropdown menu={{ items }} placement="bottomRight">
               <Button>
                 集群管理
                 <DownOutlined />
@@ -242,7 +239,7 @@ const ClusterOverview: React.FC = () => {
         defaultMessage: 'RedoLog 存储类',
       }),
       type: 'redoLog',
-      label: 'StorageClass',
+      label: 'storageClass',
       value: storage?.redoLogStorage?.storageClass,
     },
     {

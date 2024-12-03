@@ -1,8 +1,13 @@
 import { obcluster } from '@/api';
+import { CustomFormItem } from '@/components/CustomFormItem';
+import InputNumber from '@/components/InputNumber';
+import SelectWithTooltip from '@/components/SelectWithTooltip';
+import { MINIMAL_CONFIG, SUFFIX_UNIT } from '@/constants';
+import { getStorageClasses } from '@/services';
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
-import { Button, Col, Drawer, Form, Input, message, Row, Space } from 'antd';
-import React from 'react';
+import { Button, Col, Drawer, Form, Row, Space, message } from 'antd';
+import React, { useEffect } from 'react';
 
 export interface ParametersModalProps {
   visible: boolean;
@@ -12,6 +17,46 @@ export interface ParametersModalProps {
   name: string;
   namespace: string;
 }
+
+export const TooltipItemContent = ({ item }) => {
+  return (
+    <ul style={{ margin: 0, padding: '10px' }}>
+      {item.toolTipData.map((data: any) => {
+        const key = Object.keys(data)[0];
+        if (typeof data[key] === 'string') {
+          return (
+            <li style={{ listStyle: 'none' }} key={key}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <p>{key}：</p>
+                <p>{data[key]}</p>
+              </div>
+            </li>
+          );
+        } else {
+          const value = JSON.stringify(data[key]) || String(data[key]);
+          return (
+            <li style={{ listStyle: 'none' }} key={key}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <p>{key}：</p>
+                <p>{value}</p>
+              </div>
+            </li>
+          );
+        }
+      })}
+    </ul>
+  );
+};
 
 const ResourceDrawer: React.FC<ParametersModalProps> = ({
   visible,
@@ -23,6 +68,34 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
 }) => {
   const [form] = Form.useForm<API.CreateClusterData>();
   const { validateFields } = form;
+
+  useEffect(() => {
+    const data = {};
+    const log = {};
+    const redoLog = {};
+
+    initialValues?.forEach((item) => {
+      if (item.type === 'data') {
+        data[item.label] = item.value;
+      }
+      if (item.type === 'log') {
+        log[item.label] = item.value;
+      }
+      if (item.type === 'redoLog') {
+        redoLog[item.label] = item.value;
+      }
+    });
+
+    form.setFieldValue(['storage'], {
+      data,
+      log,
+      redoLog,
+    });
+  }, [initialValues]);
+
+  const { data: storageClassesRes } = useRequest(getStorageClasses, {});
+
+  const storageClasses = storageClassesRes?.data;
 
   const { runAsync: patchOBCluster, loading } = useRequest(
     obcluster.patchOBCluster,
@@ -42,6 +115,9 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
     },
   );
 
+  const fontStyle: React.CSSProperties = {
+    fontWeight: 600,
+  };
   return (
     <Drawer
       title={'存储资源编辑'}
@@ -57,38 +133,7 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
             loading={loading}
             onClick={() => {
               validateFields().then((value) => {
-                const { resource } = value;
-
-                const date = resource
-                  ?.filter((item) => item.type === 'data')
-                  ?.map((item1) =>
-                    item1.label === 'size'
-                      ? { size: item1.value }
-                      : { storageClass: item1.value },
-                  );
-                const log = resource
-                  ?.filter((item) => item.type === 'log')
-                  ?.map((item1) =>
-                    item1.label === 'size'
-                      ? { size: item1.value }
-                      : { storageClass: item1.value },
-                  );
-                const redoLog = resource
-                  ?.filter((item) => item.type === 'redoLog')
-                  ?.map((item1) =>
-                    item1.label === 'size'
-                      ? { size: item1.value }
-                      : { storageClass: item1.value },
-                  );
-
-                const body = {
-                  storage: {
-                    data: date,
-                    log: log,
-                    redoLog: redoLog,
-                  },
-                };
-                patchOBCluster(name, namespace, body, `存储资源编辑成功`);
+                patchOBCluster(name, namespace, value, `存储资源编辑成功`);
               });
             }}
           >
@@ -97,77 +142,106 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
         </Space>
       }
     >
-      <Form form={form} layout="vertical" style={{ marginBottom: 56 }}>
-        <Form.List name="resource" initialValue={initialValues}>
-          {(fields) => (
-            <>
-              {fields.map(({ key, name }, index) => {
-                return (
-                  <div key={key}>
-                    <Row gutter={8}>
-                      <Col span={10}>
-                        <Form.Item
-                          label={
-                            index === 0 &&
-                            intl.formatMessage({
-                              id: 'src.pages.Cluster.Detail.Overview.0F9AD89D',
-                              defaultMessage: '参数名',
-                            })
-                          }
-                          name={[name, 'key']}
-                          rules={[
-                            {
-                              required: true,
-                              message: intl.formatMessage({
-                                id: 'src.pages.Cluster.Detail.Overview.F0473B44',
-                                defaultMessage: '请输入参数名',
-                              }),
-                            },
-                          ]}
-                        >
-                          <Input
-                            placeholder={intl.formatMessage({
-                              id: 'src.pages.Cluster.Detail.Overview.C118F812',
-                              defaultMessage: '请输入',
-                            })}
-                          />
-                        </Form.Item>
-                      </Col>
-                      <Col span={10}>
-                        <Form.Item
-                          label={
-                            index === 0 &&
-                            intl.formatMessage({
-                              id: 'src.pages.Cluster.Detail.Overview.4E02366B',
-                              defaultMessage: '参数值',
-                            })
-                          }
-                          name={[name, 'value']}
-                          rules={[
-                            {
-                              required: true,
-                              message: intl.formatMessage({
-                                id: 'src.pages.Cluster.Detail.Overview.5DA70D14',
-                                defaultMessage: '请输入参数值',
-                              }),
-                            },
-                          ]}
-                        >
-                          <Input
-                            placeholder={intl.formatMessage({
-                              id: 'src.pages.Cluster.Detail.Overview.E26B7DFD',
-                              defaultMessage: '请输入',
-                            })}
-                          />
-                        </Form.Item>
-                      </Col>
-                    </Row>
-                  </div>
-                );
-              })}
-            </>
-          )}
-        </Form.List>
+      <Form form={form} layout="vertical">
+        <Row gutter={16}>
+          <Col span={24}>
+            <p style={fontStyle}>数据</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+              <CustomFormItem
+                style={{ marginRight: '8px' }}
+                label="size"
+                name={['storage', 'data', 'size']}
+              >
+                <InputNumber
+                  min={MINIMAL_CONFIG.data}
+                  addonAfter={SUFFIX_UNIT}
+                  placeholder={intl.formatMessage({
+                    id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
+                    defaultMessage: '请输入',
+                  })}
+                />
+              </CustomFormItem>
+              <CustomFormItem
+                label="storageClass"
+                name={['storage', 'data', 'storageClass']}
+              >
+                {storageClasses && (
+                  <SelectWithTooltip
+                    name={['storage', 'data', 'storageClass']}
+                    form={form}
+                    selectList={storageClasses}
+                    TooltipItemContent={TooltipItemContent}
+                  />
+                )}
+              </CustomFormItem>
+            </div>
+          </Col>
+          <Col span={24}>
+            <p style={fontStyle}>日志</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+              <CustomFormItem
+                style={{ marginRight: '8px' }}
+                label="size"
+                name={['storage', 'log', 'size']}
+              >
+                <InputNumber
+                  min={MINIMAL_CONFIG.log}
+                  addonAfter={SUFFIX_UNIT}
+                  placeholder={intl.formatMessage({
+                    id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
+                    defaultMessage: '请输入',
+                  })}
+                />
+              </CustomFormItem>
+              <CustomFormItem
+                label="storageClass"
+                name={['storage', 'log', 'storageClass']}
+              >
+                {storageClasses && (
+                  <SelectWithTooltip
+                    form={form}
+                    name={['storage', 'log', 'storageClass']}
+                    selectList={storageClasses}
+                    TooltipItemContent={TooltipItemContent}
+                  />
+                )}
+              </CustomFormItem>
+            </div>
+          </Col>
+          <Col span={24}>
+            <p style={fontStyle}>redoLog</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+              <CustomFormItem
+                style={{ marginRight: '8px' }}
+                label="size"
+                name={['storage', 'redoLog', 'size']}
+              >
+                <InputNumber
+                  min={MINIMAL_CONFIG.redoLog}
+                  addonAfter={SUFFIX_UNIT}
+                  placeholder={intl.formatMessage({
+                    id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
+                    defaultMessage: '请输入',
+                  })}
+                />
+              </CustomFormItem>
+              <CustomFormItem
+                label="storageClass"
+                validateTrigger="onBlur"
+                name={['storage', 'redoLog', 'storageClass']}
+              >
+                {storageClasses && (
+                  <SelectWithTooltip
+                    form={form}
+                    name={['storage', 'redoLog', 'storageClass']}
+                    selectList={storageClasses}
+                    TooltipItemContent={TooltipItemContent}
+                  />
+                )}
+              </CustomFormItem>
+            </div>
+          </Col>
+        </Row>
       </Form>
     </Drawer>
   );
