@@ -2,7 +2,6 @@
 title: 项目介绍
 ---
 
-import Link from '@docusaurus/Link'
 
 # ob-operator
 
@@ -130,7 +129,7 @@ mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 
 ### OceanBase Dashboard
 
-我们很高兴向用户推出创新的 OceanBase Kubernetes Dashboard，这是一款旨在改善用户在 Kubernetes 上管理和监控 OceanBase 集群体验的先进工具。欢迎各位用户使用和反馈，同时我们也在积极开发新功能以增强未来的更新。<Link to="docs/dashboard/quickstart">快速上手</Link>文档能帮助您快速了解 OceanBase 的功能和使用方法。
+我们很高兴向用户推出创新的 OceanBase Kubernetes Dashboard，这是一款旨在改善用户在 Kubernetes 上管理和监控 OceanBase 集群体验的先进工具。欢迎各位用户使用和反馈，同时我们也在积极开发新功能以增强未来的更新。[快速上手](/docs/dashboard/quickstart)文档能帮助您快速了解 OceanBase 的功能和使用方法。
 
 安装 OceanBase Dashboard 非常简单, 只需要执行如下命令。
 
@@ -167,7 +166,11 @@ ob-operator 以 kubebuilder 为基础，通过统一的资源管理器接口、�
 
 ![ob-operator 架构设计](/img/ob-operator-arch.png)
 
-有关架构细节可参见<Link to="docs/developer/arch">架构设计文档</Link>。
+ob-operator 任务管理器的架构如下图所示：
+
+![ob-operator 任务管理器](/img/ob-operator-task-manager-arch.png)
+
+有关架构细节可参见[架构设计文档](/docs/developer/arch)。
 
 ## 特性
 
@@ -211,10 +214,10 @@ ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项�
 
 ## 文档
 
-- <Link to="docs/developer/arch">ob-operator 架构设计</Link>
-- <Link to="docs/developer/deploy">部署 ob-operator</Link>
-- <Link to="docs/developer/contributor-guidance">开发手册</Link>
-- <Link to="docs/manual/what-is-ob-operator">用户手册</Link>
+- [ob-operator 架构设计](/docs/developer/arch)
+- [部署 ob-operator](/docs/developer/deploy)
+- [开发手册](/docs/developer/contributor-guidance)
+- [用户手册](/docs/manual/what-is-ob-operator)
 
 ## 获取帮助
 

@@ -2,8 +2,6 @@
 title: Introduction
 ---
 
-import Link from '@docusaurus/Link'
-
 # ob-operator
 
 `ob-operator` is a Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes.
@@ -131,7 +129,7 @@ mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 
 ### OceanBase Dashboard
 
-We are excited to unveil our innovative OceanBase Kubernetes Dashboard, a pioneering tool designed to enhance your experience with managing and monitoring OceanBase clusters on Kubernetes. We are proud to offer this amazing tool to our users and will actively work on new features and enhancements for future updates. <Link to="docs/dashboard/quickstart">Quick Start</Link> guide is available to help you get started with OceanBase Dashboard.
+We are excited to unveil our innovative OceanBase Kubernetes Dashboard, a pioneering tool designed to enhance your experience with managing and monitoring OceanBase clusters on Kubernetes. We are proud to offer this amazing tool to our users and will actively work on new features and enhancements for future updates. [Quick Start](/docs/dashboard/quickstart) guide is available to help you get started with OceanBase Dashboard.
 
 Deploy OceanBase Dashboard is pretty simple, just run the following commands:
 
@@ -164,11 +162,15 @@ Login with admin user and password.
 
 ## Project Architecture
 
-ob-operator is built on top of kubebuilder and provides control and management of OceanBase clusters and related applications through a unified resource manager interface, a global task manager instance, and a task flow mechanism for handling long-running tasks. The architecture diagram is approximately as follows:
+ob-operator is built on top of kubebuilder and provides control and management of OceanBase clusters and related applications through a unified resource manager interface, a global task manager instance, and a task flow mechanism for handling long-running tasks. The architecture diagram of ob-operator is approximately as follows:
 
 ![ob-operator Architecture](/img/ob-operator-arch.png)
 
-For more detailed information about the architecture, please refer to the <Link to="docs/developer/arch">Architecture Document</Link>.
+Architecture diagram of ob-operator Task Manager is as follows:
+
+![ob-operator Task Manager Architecture](/img/ob-operator-task-manager-arch.png)
+
+For more detailed information about the architecture, please refer to the [Architecture](/docs/developer/arch) Document.
 
 ## Features
 
@@ -212,9 +214,9 @@ ob-operator is built using the [kubebuilder](https://book.kubebuilder.io/introdu
 
 ## Documents
 
-- <Link to="docs/developer/arch">Architecture</Link>
-- <Link to="docs/developer/contributor-guidance">Contributor Guidance</Link>
-- <Link to="docs/manual/what-is-ob-operator">User Manual</Link>
+- [Architecture](/docs/developer/arch)
+- [Contributor Guidance](/docs/developer/contributor-guidance)
+- [User Manual](/docs/manual/what-is-ob-operator)
 
 ## Getting Help
 

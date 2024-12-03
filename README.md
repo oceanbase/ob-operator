@@ -160,9 +160,13 @@ Login with admin user and password.
 
 ## Project Architecture
 
-ob-operator is built on top of kubebuilder and provides control and management of OceanBase clusters and related applications through a unified resource manager interface, a global task manager instance, and a task flow mechanism for handling long-running tasks. The architecture diagram is approximately as follows:
+ob-operator is built on top of kubebuilder and provides control and management of OceanBase clusters and related applications through a unified resource manager interface, a global task manager instance, and a task flow mechanism for handling long-running tasks. The architecture diagram of ob-operator is approximately as follows:
 
 ![ob-operator Architecture](./docsite/static/img/ob-operator-arch.png)
+
+Architecture diagram of ob-operator Task Manager is as follows:
+
+![ob-operator Task Manager Architecture](./docsite/static/img/ob-operator-task-manager-arch.png)
 
 For more detailed information about the architecture, please refer to the [Architecture Document](https://oceanbase.github.io/ob-operator/docs/developer/arch).
 
