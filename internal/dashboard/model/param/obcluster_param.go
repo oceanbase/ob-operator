@@ -12,14 +12,17 @@ See the Mulan PSL v2 for more details.
 
 package param
 
-import "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
+import (
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
+)
 
 type ZoneTopology struct {
-	Zone         string                `json:"zone"`
-	Replicas     int                   `json:"replicas"`
-	NodeSelector []common.KVPair       `json:"nodeSelector,omitempty"`
-	Tolerations  []common.KVPair       `json:"tolerations,omitempty"`
-	Affinities   []common.AffinitySpec `json:"affinities,omitempty"`
+	Zone         string                  `json:"zone"`
+	Replicas     int                     `json:"replicas"`
+	NodeSelector []common.KVPair         `json:"nodeSelector,omitempty"`
+	Tolerations  []common.TolerationSpec `json:"tolerations,omitempty"`
+	Affinities   []common.AffinitySpec   `json:"affinities,omitempty"`
 }
 
 type OBServerStorageSpec struct {
@@ -60,6 +63,11 @@ type CreateOBClusterParam struct {
 	Parameters   []common.KVPair    `json:"parameters"`
 	BackupVolume *NFSVolumeSpec     `json:"backupVolume"`
 	Mode         common.ClusterMode `json:"mode"`
+
+	// Enum: express_oltp, express_oltp, olap, kv, htap, express_oltp_perf
+	Scenario           string `json:"scenario"`
+	DeletionProtection bool   `json:"deletionProtection"`
+	PvcIndependent     bool   `json:"pvcIndependent"`
 }
 
 type UpgradeOBClusterParam struct {
@@ -80,3 +88,20 @@ type OBZoneIdentity struct {
 	Name       string `json:"name" uri:"name" binding:"required"`
 	OBZoneName string `json:"obzoneName" uri:"obzoneName" binding:"required"`
 }
+
+type PatchOBClusterParam struct {
+	Resource           common.ResourceSpec  `json:"resource"`
+	Storage            *OBServerStorageSpec `json:"storage"`
+	Monitor            *MonitorSpec         `json:"monitor"`
+	RemoveMonitor      bool                 `json:"removeMonitor"`
+	BackupVolume       *NFSVolumeSpec       `json:"backupVolume"`
+	RemoveBackupVolume bool                 `json:"removeBackupVolume"`
+
+	Parameters               []common.KVPair `json:"parameters,omitempty"`
+	AddDeletionProtection    bool            `json:"addDeletionProtection"`
+	RemoveDeletionProtection bool            `json:"removeDeletionProtection"`
+}
+
+type RestartOBServersParam v1alpha1.RestartOBServersConfig
+
+type DeleteOBServersParam v1alpha1.DeleteOBServersConfig

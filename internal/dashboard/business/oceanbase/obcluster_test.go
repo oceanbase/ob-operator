@@ -41,9 +41,11 @@ func getMockedCreateClusterParam() *param.CreateOBClusterParam {
 				Key:   "test-node-selector",
 				Value: "test-node-selector-value",
 			}},
-			Tolerations: []common.KVPair{{
-				Key:   "test-toleration",
-				Value: "test-toleration-value",
+			Tolerations: []common.TolerationSpec{{
+				KVPair: common.KVPair{
+					Key:   "test-toleration",
+					Value: "test-toleration-value",
+				},
 			}},
 			Affinities: []common.AffinitySpec{{
 				SelectorExpression: common.SelectorExpression{

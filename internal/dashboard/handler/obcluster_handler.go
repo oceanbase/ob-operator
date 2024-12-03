@@ -29,6 +29,7 @@ import (
 	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 
 // @ID GetOBClusterStatistic
@@ -382,4 +383,116 @@ func GetScopedEvents(ctx context.Context, ns, kind string, scoped []string) []re
 		}
 	}
 	return events
+}
+
+// @ID PatchOBCluster
+// @Summary patch obcluster
+// @Description patch obcluster configuration including resources, storage, monitor and parameters
+// @Tags OBCluster
+// @Accept application/json
+// @Produce application/json
+// @Param namespace path string true "obcluster namespace"
+// @Param name path string true "obcluster name"
+// @Param body body param.PatchOBClusterParam true "patch obcluster request body"
+// @Success 200 object response.APIResponse{data=response.OBCluster}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/obclusters/namespace/{namespace}/name/{name} [PATCH]
+// @Security ApiKeyAuth
+func PatchOBCluster(c *gin.Context) (*response.OBCluster, error) {
+	obclusterIdentity := &param.K8sObjectIdentity{}
+	err := c.BindUri(obclusterIdentity)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	patchParam := &param.PatchOBClusterParam{}
+	err = c.Bind(patchParam)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	logger.Infof("Patch obcluster with param: %+v", patchParam)
+	return oceanbase.PatchOBCluster(c, obclusterIdentity, patchParam)
+}
+
+// @ID RestartOBServers
+// @Summary restart observers
+// @Description restart specified observers in the obcluster
+// @Tags OBCluster
+// @Accept application/json
+// @Produce application/json
+// @Param namespace path string true "obcluster namespace"
+// @Param name path string true "obcluster name"
+// @Param body body param.RestartOBServersParam true "restart observers request body"
+// @Success 200 object response.APIResponse{data=response.OBCluster}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/obclusters/namespace/{namespace}/name/{name}/restart [POST]
+// @Security ApiKeyAuth
+func RestartOBServers(c *gin.Context) (*response.OBCluster, error) {
+	obclusterIdentity := &param.K8sObjectIdentity{}
+	err := c.BindUri(obclusterIdentity)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	restartParam := &param.RestartOBServersParam{}
+	err = c.Bind(restartParam)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	logger.Infof("Restart observers with param: %+v", restartParam)
+	return oceanbase.RestartOBServers(c, obclusterIdentity, restartParam)
+}
+
+// @ID DeleteOBServers
+// @Summary delete observers
+// @Description delete specified observers from the obcluster
+// @Tags OBCluster
+// @Accept application/json
+// @Produce application/json
+// @Param namespace path string true "obcluster namespace"
+// @Param name path string true "obcluster name"
+// @Param body body param.DeleteOBServersParam true "delete observers request body"
+// @Success 200 object response.APIResponse{data=response.OBCluster}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/obclusters/namespace/{namespace}/name/{name}/observers [DELETE]
+// @Security ApiKeyAuth
+func DeleteOBServers(c *gin.Context) (*response.OBCluster, error) {
+	obclusterIdentity := &param.K8sObjectIdentity{}
+	err := c.BindUri(obclusterIdentity)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	deleteParam := &param.DeleteOBServersParam{}
+	err = c.Bind(deleteParam)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	logger.Infof("Delete observers with param: %+v", deleteParam)
+	return oceanbase.DeleteOBServers(c, obclusterIdentity, deleteParam)
+}
+
+// @ID ListOBClusterParameters
+// @Summary List OBCluster Parameters
+// @Description List OBCluster Parameters by namespace and name
+// @Tags OBCluster
+// @Accept application/json
+// @Produce application/json
+// @Param namespace path string true "namespace of obcluster resource"
+// @Param name path string true "name of obcluster resource"
+// @Success 200 object response.APIResponse{data=[]model.Parameter}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/obclusters/namespace/{namespace}/name/{name}/parameters [GET]
+func ListOBClusterParameters(c *gin.Context) ([]*model.Parameter, error) {
+	nn := &param.K8sObjectIdentity{}
+	err := c.BindUri(nn)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return oceanbase.ListOBClusterParameters(c, nn)
 }

@@ -43,7 +43,6 @@ func MapZonesToTopology(zones map[string]string) ([]param.ZoneTopology, error) {
 			Zone:         zoneName,
 			Replicas:     replica,
 			NodeSelector: make([]common.KVPair, 0),
-			Tolerations:  make([]common.KVPair, 0),
 			Affinities:   make([]common.AffinitySpec, 0),
 		})
 	}
