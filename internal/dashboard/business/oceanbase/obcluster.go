@@ -35,11 +35,11 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
-	clustermodel "github.com/oceanbase/ob-operator/internal/dashboard/model/obcluster"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/internal/dashboard/utils"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
+	models "github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 
 const (
@@ -886,7 +886,7 @@ func DeleteOBServers(ctx context.Context, nn *param.K8sObjectIdentity, param *pa
 	return buildOBClusterResponse(ctx, obcluster)
 }
 
-func ListOBClusterParameters(ctx context.Context, nn *param.K8sObjectIdentity) ([]clustermodel.ParameterItem, error) {
+func ListOBClusterParameters(ctx context.Context, nn *param.K8sObjectIdentity) ([]*models.Parameter, error) {
 	obcluster, err := clients.GetOBCluster(ctx, nn.Namespace, nn.Name)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Get obcluster %s %s", nn.Namespace, nn.Name)
@@ -904,11 +904,10 @@ func ListOBClusterParameters(ctx context.Context, nn *param.K8sObjectIdentity) (
 		logrus.Info("Failed to get OceanBase database connection")
 		return nil, errors.Wrap(err, "Get OceanBase database connection")
 	}
-	parameterItems := make([]clustermodel.ParameterItem, 0)
-	err = conn.QueryList(ctx, &parameterItems, "SHOW PARAMETERS")
+	parameters, err := conn.ListParametersWithTenantID(ctx, 1)
 	if err != nil {
 		logrus.WithError(err).Error("Failed to query parameters")
 		return nil, errors.Wrap(err, "Query parameters")
 	}
-	return parameterItems, nil
+	return parameters, nil
 }

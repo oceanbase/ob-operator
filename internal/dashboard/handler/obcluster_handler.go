@@ -24,12 +24,12 @@ import (
 	"github.com/oceanbase/ob-operator/internal/clients"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
-	"github.com/oceanbase/ob-operator/internal/dashboard/model/obcluster"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
+	models "github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 
 // @ID GetOBClusterStatistic
@@ -483,12 +483,12 @@ func DeleteOBServers(c *gin.Context) (*response.OBCluster, error) {
 // @Produce application/json
 // @Param namespace path string true "namespace of obcluster resource"
 // @Param name path string true "name of obcluster resource"
-// @Success 200 object response.APIResponse{data=[]obcluster.ParameterItem}
+// @Success 200 object response.APIResponse{data=[]models.Parameter}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/namespace/{namespace}/name/{name}/parameters [GET]
-func ListOBClusterParameters(c *gin.Context) ([]obcluster.ParameterItem, error) {
+func ListOBClusterParameters(c *gin.Context) ([]*models.Parameter, error) {
 	nn := &param.K8sObjectIdentity{}
 	err := c.BindUri(nn)
 	if err != nil {
