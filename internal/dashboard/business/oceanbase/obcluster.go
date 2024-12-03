@@ -119,11 +119,16 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		// TODO: add metrics
 		Metrics: nil,
 	}
-	var parameters []modelcommon.KVPair
+	var parameters []response.ParameterSpec
+	statusParameterMap := make(map[string]string, 0)
+	for _, param := range obcluster.Status.Parameters {
+		statusParameterMap[param.Name] = param.Value
+	}
 	for _, param := range obcluster.Spec.Parameters {
-		parameters = append(parameters, modelcommon.KVPair{
-			Key:   param.Name,
-			Value: param.Value,
+		parameters = append(parameters, response.ParameterSpec{
+			Name:      param.Name,
+			SpecValue: param.Value,
+			Value:     statusParameterMap[param.Name],
 		})
 	}
 	respCluster.Parameters = parameters
