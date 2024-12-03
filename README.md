@@ -164,8 +164,6 @@ ob-operator is built on top of kubebuilder and provides control and management o
 
 ![ob-operator Architecture](./docsite/static/img/ob-operator-arch.png)
 
-Architecture diagram of ob-operator Task Manager is as follows:
-
 ![ob-operator Task Manager Architecture](./docsite/static/img/ob-operator-task-manager-arch.png)
 
 For more detailed information about the architecture, please refer to the [Architecture Document](https://oceanbase.github.io/ob-operator/docs/developer/arch).
@@ -215,6 +213,8 @@ ob-operator is built using the [kubebuilder](https://book.kubebuilder.io/introdu
 - [Architecture](https://oceanbase.github.io/ob-operator/docs/developer/arch)
 - [Contributor Guidance](https://oceanbase.github.io/ob-operator/docs/developer/contributor-guidance)
 - [User Manual](https://oceanbase.github.io/ob-operator/docs/manual/what-is-ob-operator)
+
+github.com/oceanbase/ob-operator + /docs/developer/arch
 
 ## Getting Help
 

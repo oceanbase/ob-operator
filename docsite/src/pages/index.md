@@ -166,8 +166,6 @@ ob-operator is built on top of kubebuilder and provides control and management o
 
 ![ob-operator Architecture](/img/ob-operator-arch.png)
 
-Architecture diagram of ob-operator Task Manager is as follows:
-
 ![ob-operator Task Manager Architecture](/img/ob-operator-task-manager-arch.png)
 
 For more detailed information about the architecture, please refer to the [Architecture](/docs/developer/arch) Document.
