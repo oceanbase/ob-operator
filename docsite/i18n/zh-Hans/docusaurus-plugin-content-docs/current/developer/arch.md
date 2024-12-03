@@ -12,12 +12,22 @@ ob-operator 遵循 Kubernetes 的 [Operator 拓展范式](https://kubernetes.io/
 * OBCluster: OceanBase 集群资源
 * OBZone: OceanBase Zone 资源，隶属于某个 OBCluster
 * OBServer: OceanBase observer 资源，隶属于某个 OBZone
-* OBParameter: 集群参数
+* OBParameter: 集群和租户参数
 * OBTenant: OceanBase 集群当中的租户，隶属于某个 OBCluster
 * OBTenantBackupPolicy: 租户备份策略
 * OBTenantBackup: 租户备份任务
 * OBTenantRestore: 租户恢复任务
 * OBTenantOperation: 租户运维操作
+* OBTenantVariable: 租户变量
+* OBClusterOperation: 集群运维操作
+* OBResourceRescue: 资源救治任务，用于处理资源异常情况
+* K8sCluster: 受 ob-operator 控制的 Kubernetes 集群
+
+## 架构图
+
+下面这张架构图展示了 ob-operator 的层级设计和自定义资源之间的关系。
+
+![ob-operator 架构图](/img/ob-operator-arch.png)
 
 ## 资源管理器
 
@@ -65,4 +75,4 @@ Kubernetes 在内部采用控制循环和消息队列的方式来实现事件的
 
 控制循环、资源管理器、任务管理器的关系如下图所示。
 
-![控制循环、资源管理器、任务管理器的关系](/img/ob-operator-arch.png)
+![控制循环、资源管理器、任务管理器的关系](/img/ob-operator-task-manager-arch.png)
