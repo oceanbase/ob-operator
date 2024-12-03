@@ -106,7 +106,7 @@ func NewCmd() *cobra.Command {
 			}
 			logger.Printf("Creating OBCluster instance: %s", clusterOptions.ClusterName)
 			waitForClusterReady(cmd.Context(), obcluster, logger, 2*time.Second)
-			logger.Printf("Run `echo $(kubectl get secret %s -o jsonpath='{.data.password}'|base64 --decode)` to get clsuter secrets", obcluster.Spec.UserSecrets.Root)
+			logger.Printf("Run `echo $(kubectl get secret %s -n %s -o jsonpath='{.data.password}'|base64 --decode)` to get cluster secrets", obcluster.Spec.UserSecrets.Root, obcluster.Namespace)
 		},
 		PostRun: func(cmd *cobra.Command, args []string) {
 			// create tenant after cluster ready
@@ -116,7 +116,7 @@ func NewCmd() *cobra.Command {
 			}
 			logger.Printf("Creating OBTenant instance: %s", tenantOptions.TenantName)
 			waitForTenantReady(cmd.Context(), obtenant, logger, 1*time.Second)
-			logger.Printf("Run `echo $(kubectl get secret %s -o jsonpath='{.data.password}'|base64 --decode)` to get tenant secrets", obtenant.Spec.Credentials.Root)
+			logger.Printf("Run `echo $(kubectl get secret %s -n %s -o jsonpath='{.data.password}'|base64 --decode)` to get tenant secrets", obtenant.Spec.Credentials.Root, obtenant.Namespace)
 		},
 	}
 	// TODO: if w is set, wait for the cluster and tenant ready
