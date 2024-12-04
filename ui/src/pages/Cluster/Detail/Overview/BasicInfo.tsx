@@ -1,10 +1,9 @@
+import { obcluster } from '@/api';
 import { MODE_MAP, STATUS_LIST } from '@/constants';
-import { floorToTwoDecimalPlaces } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { findByValue } from '@oceanbase/util';
-import { Card, Descriptions, Switch, Tag, Typography } from 'antd';
-import { useState } from 'react';
-import styles from './index.less';
+import { useRequest } from 'ahooks';
+import { Card, Checkbox, Descriptions, Tag, Typography, message } from 'antd';
 
 const { Text } = Typography;
 export default function BasicInfo({
@@ -15,78 +14,26 @@ export default function BasicInfo({
   image,
   mode,
   rootPasswordSecret,
-  resource,
-  storage,
   backupVolume,
   monitor,
   clusterName,
-  extra = true,
   style,
+  addDeletionProtection,
 }: API.ClusterInfo & { style?: React.CSSProperties; extra?: boolean }) {
-  const [checked, setChecked] = useState<boolean>(false);
-  const OBServerConfig = extra
-    ? [
-        {
-          label: 'CPU',
-          value: resource.cpu,
-        },
-        {
-          label: 'Memory',
-          value: floorToTwoDecimalPlaces(resource.memory / (1 << 30)) + 'Gi',
-        },
-        {
-          label: intl.formatMessage({
-            id: 'Dashboard.Detail.Overview.BasicInfo.DatafileStorageClass',
-            defaultMessage: 'Datafile 存储类',
-          }),
-          value: storage.dataStorage.storageClass,
-        },
-        {
-          label: intl.formatMessage({
-            id: 'Dashboard.Detail.Overview.BasicInfo.DatafileStorageSize',
-            defaultMessage: 'Datafile 存储大小',
-          }),
-          value:
-            floorToTwoDecimalPlaces(storage.dataStorage.size / (1 << 30)) +
-            'Gi',
-        },
-        {
-          label: intl.formatMessage({
-            id: 'Dashboard.Detail.Overview.BasicInfo.RedologStorageClass',
-            defaultMessage: 'RedoLog 存储类',
-          }),
-          value: storage.redoLogStorage.storageClass,
-        },
-        {
-          label: intl.formatMessage({
-            id: 'Dashboard.Detail.Overview.BasicInfo.RedologSize',
-            defaultMessage: 'RedoLog 大小',
-          }),
-          value:
-            floorToTwoDecimalPlaces(storage.redoLogStorage.size / (1 << 30)) +
-            'Gi',
-        },
-        {
-          label: intl.formatMessage({
-            id: 'Dashboard.Detail.Overview.BasicInfo.SystemLogStorageClass',
-            defaultMessage: '系统日志存储类',
-          }),
-          value: storage.sysLogStorage.storageClass,
-        },
-        {
-          label: intl.formatMessage({
-            id: 'Dashboard.Detail.Overview.BasicInfo.SystemLogStorageSize',
-            defaultMessage: '系统日志存储大小',
-          }),
-          value:
-            floorToTwoDecimalPlaces(storage.sysLogStorage.size / (1 << 30)) +
-            'Gi',
-        },
-      ]
-    : [];
-
   const statusItem = findByValue(STATUS_LIST, status);
   const statusDetailItem = findByValue(STATUS_LIST, statusDetail);
+
+  const { runAsync: patchOBCluster, loading } = useRequest(
+    obcluster.patchOBCluster,
+    {
+      manual: true,
+      onSuccess: (res) => {
+        if (res.successful) {
+          message.success('修改删除保护已成功');
+        }
+      },
+    },
+  );
 
   return (
     <Card
@@ -158,6 +105,20 @@ export default function BasicInfo({
             )}
           </Tag>
         </Descriptions.Item>
+
+        <Descriptions.Item label={'删除保护'}>
+          <Checkbox
+            // loading 态禁止操作，防止重复操作
+            disabled={loading}
+            defaultChecked={addDeletionProtection}
+            onChange={(e) => {
+              const body = {
+                addDeletionProtection: e.target.checked,
+              };
+              patchOBCluster(name, namespace, body);
+            }}
+          />
+        </Descriptions.Item>
         <Descriptions.Item
           span={2}
           label={intl.formatMessage({
@@ -178,94 +139,55 @@ export default function BasicInfo({
           {rootPasswordSecret || '-'}
         </Descriptions.Item>
       </Descriptions>
-      {extra && (
-        <div style={{ marginBottom: 12 }}>
-          <span
-            style={{
-              color: '#132039',
-              fontSize: 16,
-              fontWeight: 600,
-              marginRight: 8,
-            }}
-          >
-            {intl.formatMessage({
-              id: 'Dashboard.Detail.Overview.BasicInfo.DetailedClusterConfiguration',
-              defaultMessage: '集群详细配置',
+
+      {monitor && (
+        <Descriptions
+          title={intl.formatMessage({
+            id: 'Dashboard.Detail.Overview.BasicInfo.MonitoringConfiguration',
+            defaultMessage: '监控配置',
+          })}
+        >
+          <Descriptions.Item label="CPU">
+            {monitor.resource.cpu}
+          </Descriptions.Item>
+          <Descriptions.Item label="Memory">
+            {monitor.resource.memory}
+          </Descriptions.Item>
+          <Descriptions.Item
+            label={intl.formatMessage({
+              id: 'Dashboard.Detail.Overview.BasicInfo.Image',
+              defaultMessage: '镜像',
             })}
-          </span>
-          <Switch
-            checked={checked}
-            onChange={(checked) => setChecked(checked)}
-          />
-        </div>
+          >
+            {monitor.image}
+          </Descriptions.Item>
+        </Descriptions>
       )}
 
-      {checked && extra && (
-        <div className={styles.detailConfig}>
-          <Descriptions
-            style={{ width: '50%' }}
-            title={intl.formatMessage({
-              id: 'Dashboard.Detail.Overview.BasicInfo.ObserverResourceConfiguration',
-              defaultMessage: 'OBServer 资源配置',
+      {backupVolume && (
+        <Descriptions
+          title={intl.formatMessage({
+            id: 'Dashboard.Detail.Overview.BasicInfo.BackupVolumeConfiguration',
+            defaultMessage: '备份卷配置',
+          })}
+        >
+          <Descriptions.Item
+            label={intl.formatMessage({
+              id: 'Dashboard.Detail.Overview.BasicInfo.Address',
+              defaultMessage: '地址',
             })}
           >
-            {OBServerConfig.map((item, index) => (
-              <Descriptions.Item span={2} key={index} label={item.label}>
-                {item.value}
-              </Descriptions.Item>
-            ))}
-          </Descriptions>
-
-          {monitor && (
-            <Descriptions
-              title={intl.formatMessage({
-                id: 'Dashboard.Detail.Overview.BasicInfo.MonitoringConfiguration',
-                defaultMessage: '监控配置',
-              })}
-            >
-              <Descriptions.Item label="CPU">
-                {monitor.resource.cpu}
-              </Descriptions.Item>
-              <Descriptions.Item label="Memory">
-                {monitor.resource.memory}
-              </Descriptions.Item>
-              <Descriptions.Item
-                label={intl.formatMessage({
-                  id: 'Dashboard.Detail.Overview.BasicInfo.Image',
-                  defaultMessage: '镜像',
-                })}
-              >
-                {monitor.image}
-              </Descriptions.Item>
-            </Descriptions>
-          )}
-
-          {backupVolume && (
-            <Descriptions
-              title={intl.formatMessage({
-                id: 'Dashboard.Detail.Overview.BasicInfo.BackupVolumeConfiguration',
-                defaultMessage: '备份卷配置',
-              })}
-            >
-              <Descriptions.Item
-                label={intl.formatMessage({
-                  id: 'Dashboard.Detail.Overview.BasicInfo.Address',
-                  defaultMessage: '地址',
-                })}
-              >
-                {backupVolume.address}
-              </Descriptions.Item>
-              <Descriptions.Item
-                label={intl.formatMessage({
-                  id: 'Dashboard.Detail.Overview.BasicInfo.Path',
-                  defaultMessage: '路径',
-                })}
-              >
-                {backupVolume.path}
-              </Descriptions.Item>
-            </Descriptions>
-          )}
-        </div>
+            {backupVolume.address}
+          </Descriptions.Item>
+          <Descriptions.Item
+            label={intl.formatMessage({
+              id: 'Dashboard.Detail.Overview.BasicInfo.Path',
+              defaultMessage: '路径',
+            })}
+          >
+            {backupVolume.path}
+          </Descriptions.Item>
+        </Descriptions>
       )}
     </Card>
   );
