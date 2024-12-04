@@ -1,3 +1,4 @@
+import { obcluster } from '@/api';
 import EventsTable from '@/components/EventsTable';
 import IconTip from '@/components/IconTip';
 import OperateModal from '@/components/customModal/OperateModal';
@@ -25,13 +26,15 @@ import {
   Select,
   Space,
   Table,
+  Tag,
   Tooltip,
   message,
 } from 'antd';
+import { isEmpty } from 'lodash';
 import { useEffect, useRef, useState } from 'react';
 import BasicInfo from './BasicInfo';
 import NFSInfoModal from './NFSInfoModal';
-import ParametersDrawer from './ParametersDrawer';
+import ParametersModal from './ParametersModal';
 import ResourceDrawer from './ResourceDrawer';
 import ServerTable from './ServerTable';
 import ZoneTable from './ZoneTable';
@@ -51,9 +54,23 @@ const ClusterOverview: React.FC = () => {
   const [chooseServerNum, setChooseServerNum] = useState<number>(1);
   const [mountNFSModal, setMountNFSModal] = useState<boolean>(false);
   const [removeNFSModal, setRemoveNFSModal] = useState<boolean>(false);
+  const [parametersData, setParametersData] = useState([]);
   const modalType = useRef<API.ModalType>('addZone');
 
-  const { setFieldsValue } = form;
+  const { setFieldsValue, validateFields } = form;
+
+  const {
+    data: listOBClusterParameters,
+    loading,
+    refresh,
+  } = useRequest(obcluster.listOBClusterParameters, {
+    defaultParams: [ns, name],
+    onSuccess: (res) => {
+      setParametersData(res?.data || []);
+    },
+  });
+
+  const parametersList = listOBClusterParameters?.data;
 
   const { data: clusterDetail, run: getClusterDetail } = useRequest(
     getClusterDetailReq,
@@ -201,16 +218,6 @@ const ClusterOverview: React.FC = () => {
     };
   };
 
-  useEffect(() => {
-    getClusterDetail({ ns: ns!, name: name! });
-
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, []);
-
   const { parameters, storage, resource } = clusterDetail?.info || {};
 
   const resourceinit = [
@@ -275,10 +282,68 @@ const ClusterOverview: React.FC = () => {
     },
   ];
 
+  const controlParameters = [
+    {
+      label: '已托管',
+      value: true,
+    },
+    {
+      label: '未托管',
+      value: false,
+    },
+  ];
+
+  const accordanceList = [
+    {
+      label: <Tag color={'green'}>{'已匹配'}</Tag>,
+      value: true,
+    },
+    {
+      label: <Tag color={'gold'}>{'不匹配'}</Tag>,
+      value: false,
+    },
+  ];
+
+  const newParametersData = parametersList
+    ?.map((element) => {
+      // obcluster 的 parameters 里面加了个 specValue 的字段，
+      // 如果 specValue 不等于 value，状态写 "不匹配" (黄色tag)，如果两个值相等，写"已匹配"(绿色tag)
+      const findSpec = parameters?.find(
+        (item: any) => element.value === item.specValue,
+      );
+      if (!isEmpty(findSpec)) {
+        return { ...element, accordance: true };
+      } else if (isEmpty(findSpec)) {
+        return { ...element, accordance: false };
+      }
+    })
+    ?.map((element: any) => {
+      //  // 在 obcluster 的 parameters  里面的就是托管给 operator
+      const findName = parameters?.find(
+        (item: any) => element.name === item.name,
+      );
+      if (!isEmpty(findName)) {
+        return { ...element, controlParameter: true };
+      } else if (isEmpty(findName)) {
+        return { ...element, controlParameter: false };
+      }
+    });
+
+  useEffect(() => {
+    getClusterDetail({ ns: ns!, name: name! });
+    setParametersData(newParametersData);
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+
   const columns = [
     {
       title: '参数名',
-      dataIndex: 'key',
+      dataIndex: 'name',
     },
     {
       title: '参数值',
@@ -286,51 +351,59 @@ const ClusterOverview: React.FC = () => {
     },
     {
       title: '参数说明',
-      dataIndex: 'name',
+      dataIndex: 'info',
     },
     {
       title: '托管 operator',
-      dataIndex: 'name',
-      filters: [
-        {
-          label: '是',
-          value: 'yes',
-        },
-        {
-          label: '否',
-          value: 'no',
-        },
-      ].map(({ label, value }) => ({
+      dataIndex: 'controlParameter',
+      filters: controlParameters.map(({ label, value }) => ({
         text: label,
         value,
       })),
+      onFilter: (value: any, record) => {
+        return record?.controlParameter === value;
+      },
+      render: (text: boolean) => {
+        return <span>{text ? '是' : '否'}</span>;
+      },
     },
     {
       title: <IconTip tip="只有托管 operator 的参数才有状态" content="状态" />,
-      dataIndex: 'name',
-      render: (text) => {
-        return <span>{text || '-'}</span>;
+      dataIndex: 'accordance',
+      width: 100,
+      render: (text: boolean) => {
+        const tagColor = text ? 'green' : 'gold';
+        const tagContent = text ? '已匹配' : '不匹配';
+
+        return <Tag color={tagColor}>{tagContent}</Tag>;
       },
     },
     {
       title: '操作',
-      dataIndex: 'operation',
+      dataIndex: 'controlParameter',
       render: (text, record) => {
         return (
-          <a
-            onClick={() => {
-              setIsDrawerOpen(true);
-              setParametersRecord(record);
-            }}
-          >
-            编辑
-          </a>
+          <Space size={1}>
+            <Button
+              type="link"
+              onClick={() => {
+                setIsDrawerOpen(true);
+                setParametersRecord(record);
+              }}
+            >
+              编辑
+            </Button>
+            {text && (
+              <Button type="link" onClick={() => {}}>
+                解除托管
+              </Button>
+            )}
+          </Space>
         );
       },
     },
   ];
 
-  console.log('cl', clusterDetail);
   return (
     <PageContainer header={header()}>
       <Row gutter={[16, 16]}>
@@ -339,43 +412,6 @@ const ClusterOverview: React.FC = () => {
             <BasicInfo {...(clusterDetail?.info as API.ClusterInfo)} />
           </Col>
         )}
-        {/* <Col span={24}>
-          <Card
-            title={
-              <h2 style={{ marginBottom: 0 }}>
-                {intl.formatMessage({
-                  id: 'src.pages.Cluster.Detail.Overview.9F880AEF',
-                  defaultMessage: '参数设置',
-                })}
-              </h2>
-            }
-            extra={
-              <Button onClick={() => setIsDrawerOpen(true)} type="primary">
-                {intl.formatMessage({
-                  id: 'src.pages.Cluster.Detail.Overview.533B34EA',
-                  defaultMessage: '编辑',
-                })}
-              </Button>
-            }
-          >
-            {parameters?.length > 0 ? (
-              <Descriptions
-                title={intl.formatMessage({
-                  id: 'src.pages.Cluster.Detail.Overview.7F3B8DF8',
-                  defaultMessage: '集群参数',
-                })}
-              >
-                {parameters.map((parameter, index) => (
-                  <Descriptions.Item label={parameter.key} key={index}>
-                    {parameter.value}
-                  </Descriptions.Item>
-                ))}
-              </Descriptions>
-            ) : (
-              <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
-            )}
-          </Card>
-        </Col> */}
         <Col span={24}>
           <Card
             title={<h2 style={{ marginBottom: 0 }}>节点资源配置</h2>}
@@ -430,28 +466,106 @@ const ClusterOverview: React.FC = () => {
             <Form form={form}>
               <Row gutter={[24, 16]}>
                 <Col span={6}>
-                  <Form.Item name="" label="参数名">
-                    <Input placeholder="请输入" />
+                  <Form.Item label="参数名" name={'name'}>
+                    <Input placeholder="请输入" allowClear />
                   </Form.Item>
                 </Col>
                 <Col span={6}>
-                  <Form.Item name="" label="托管状态">
-                    <Select options={[{ value: 'lucy', label: 'Lucy' }]} />
+                  <Form.Item label="托管状态" name={'controlParameter'}>
+                    <Select
+                      options={controlParameters}
+                      allowClear={true}
+                      onChange={() => {
+                        setParametersData(newParametersData);
+                      }}
+                    />
                   </Form.Item>
                 </Col>
                 <Col span={6}>
-                  <Form.Item name="" label="状态">
-                    <Select options={[{ value: 'lucy', label: 'Lucy' }]} />
+                  <Form.Item label="状态" name={'accordance'}>
+                    <Select
+                      options={accordanceList}
+                      allowClear={true}
+                      onChange={() => {
+                        setParametersData(newParametersData);
+                      }}
+                    />
                   </Form.Item>
                 </Col>
                 <Col>
                   <Space size="middle">
-                    <Button type="primary">查询</Button>
+                    <Button
+                      type="primary"
+                      onClick={() => {
+                        validateFields().then((values) => {
+                          const { name, controlParameter, accordance } = values;
+
+                          if (name !== undefined && name !== '') {
+                            setParametersData(
+                              parametersData?.filter((item) =>
+                                item.name?.includes(name),
+                              ),
+                            );
+                          }
+                          if (
+                            controlParameter !== undefined &&
+                            controlParameter !== ''
+                          ) {
+                            setParametersData(
+                              parametersData?.filter(
+                                (item) =>
+                                  item.controlParameter === controlParameter,
+                              ),
+                            );
+                          }
+                          if (accordance !== undefined && accordance !== '') {
+                            setParametersData(
+                              parametersData?.filter(
+                                (item) => item.accordance === accordance,
+                              ),
+                            );
+                          }
+                          if (!!name && !!controlParameter) {
+                            setParametersData(
+                              parametersData?.filter(
+                                (item) =>
+                                  item.name?.includes(name) &&
+                                  item.controlParameter === controlParameter,
+                              ),
+                            );
+                          }
+                          if (!!name && !!accordance) {
+                            setParametersData(
+                              parametersData?.filter(
+                                (item) =>
+                                  item.name?.includes(name) &&
+                                  item.accordance === accordance,
+                              ),
+                            );
+                          }
+                          if (!!name && !!controlParameter && !!accordance) {
+                            setParametersData(
+                              parametersData?.filter(
+                                (item) =>
+                                  item.name?.includes(name) &&
+                                  item.controlParameter === controlParameter &&
+                                  item.accordance === accordance,
+                              ),
+                            );
+                          }
+                        });
+                      }}
+                    >
+                      查询
+                    </Button>
                     <Button
                       onClick={() => {
                         setFieldsValue({
-                          shieldStatus: '',
+                          name: '',
+                          defaultStatus: '',
+                          status: '',
                         });
+                        refresh();
                       }}
                     >
                       重置
@@ -465,7 +579,8 @@ const ClusterOverview: React.FC = () => {
               rowKey="name"
               pagination={{ simple: true }}
               columns={columns}
-              dataSource={parameters}
+              loading={loading}
+              dataSource={parametersData}
             />
           </Card>
         </Col>
@@ -500,11 +615,11 @@ const ClusterOverview: React.FC = () => {
         }}
       />
 
-      <ParametersDrawer
+      <ParametersModal
         visible={isDrawerOpen}
         onCancel={() => setIsDrawerOpen(false)}
         onSuccess={() => setIsDrawerOpen(false)}
-        initialValues={[parametersRecord]}
+        initialValues={parametersRecord}
         {...(clusterDetail?.info as API.ClusterInfo)}
       />
 
