@@ -500,17 +500,14 @@ const ClusterOverview: React.FC = () => {
                         validateFields().then((values) => {
                           const { name, controlParameter, accordance } = values;
 
-                          if (name !== undefined && name !== '') {
+                          if (name) {
                             setParametersData(
                               parametersData?.filter((item) =>
                                 item.name?.includes(name),
                               ),
                             );
                           }
-                          if (
-                            controlParameter !== undefined &&
-                            controlParameter !== ''
-                          ) {
+                          if (controlParameter) {
                             setParametersData(
                               parametersData?.filter(
                                 (item) =>
@@ -518,7 +515,7 @@ const ClusterOverview: React.FC = () => {
                               ),
                             );
                           }
-                          if (accordance !== undefined && accordance !== '') {
+                          if (accordance) {
                             setParametersData(
                               parametersData?.filter(
                                 (item) => item.accordance === accordance,
