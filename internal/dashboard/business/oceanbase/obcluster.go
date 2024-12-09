@@ -511,6 +511,31 @@ func buildOBClusterParameters(parameters []modelcommon.KVPair) []apitypes.Parame
 	return obparameters
 }
 
+func modifyParametersIncrementally(obcluster *v1alpha1.OBCluster, adding []modelcommon.KVPair, deleting []string) {
+	deletingMap := make(map[string]struct{}, len(deleting))
+	for _, key := range deleting {
+		deletingMap[key] = struct{}{}
+	}
+	exsitingMap := make(map[string]string, len(obcluster.Spec.Parameters))
+	for _, param := range obcluster.Spec.Parameters {
+		exsitingMap[param.Name] = param.Value
+	}
+	for _, key := range deleting {
+		delete(exsitingMap, key)
+	}
+	for _, addingParam := range adding {
+		exsitingMap[addingParam.Key] = addingParam.Value
+	}
+	newParameters := make([]apitypes.Parameter, 0, len(exsitingMap))
+	for key, value := range exsitingMap {
+		newParameters = append(newParameters, apitypes.Parameter{
+			Name:  key,
+			Value: value,
+		})
+	}
+	obcluster.Spec.Parameters = newParameters
+}
+
 func generateUUID() string {
 	parts := strings.Split(uuid.New().String(), "-")
 	return parts[len(parts)-1]
@@ -804,6 +829,8 @@ func PatchOBCluster(ctx context.Context, nn *param.K8sObjectIdentity, param *par
 	} else if len(param.Parameters) > 0 {
 		// Update parameters if specified
 		obcluster.Spec.Parameters = buildOBClusterParameters(param.Parameters)
+	} else if len(param.ModifiedParameters) > 0 || len(param.DeletedParameters) > 0 {
+		modifyParametersIncrementally(obcluster, param.ModifiedParameters, param.DeletedParameters)
 	}
 
 	if param.AddDeletionProtection && !alreadyIgnoredDeletion {
