@@ -18,7 +18,6 @@ const (
 	Unrecoverable        = "observer unrecoverable"
 	Running              = "running"
 	Upgrade              = "upgrade"
-	AddServer            = "Add server"
 	Annotate             = "annotate"
 	BootstrapReady       = "bootstrap ready"
 	Deleting             = "deleting"

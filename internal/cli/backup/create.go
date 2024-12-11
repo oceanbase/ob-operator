@@ -219,12 +219,16 @@ func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 	o.AddDaysFieldFlags(cmd)
 	o.AddScheduleFlags(cmd)
 	o.AddAccessFlags(cmd)
+	o.SetRequiredFlags(cmd)
+}
+
+func (o *CreateOptions) SetRequiredFlags(cmd *cobra.Command) {
+	_ = cmd.MarkFlagRequired(FLAG_FULL)
 }
 
 // AddBaseFlags adds the base flags for the create command
 func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags := cmd.Flags()
-	baseFlags.StringVar(&o.Name, FLAG_NAME, "", "The name of the ob tenant")
 	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the ob tenant")
 	baseFlags.StringVar(&o.DestType, FLAG_DEST_TYPE, DEFAULT_DEST_TYPE, "The destination type of the backup policy, currently support OSS or NFS")
 	baseFlags.StringVar(&o.ArchivePath, FLAG_ARCHIVE_PATH, "", "The archive path of the backup policy")

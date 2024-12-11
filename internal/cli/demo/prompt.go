@@ -130,7 +130,7 @@ func (pf *PromptFactory) CreatePrompt(promptType string) any {
 		}
 	case tenant.FLAG_TENANT_NAME_IN_K8S:
 		return &promptui.Prompt{
-			Label:     "Please input the tenant resource name, press `enter` to use the default name `demo-tenant`: ",
+			Label:     "Please input the tenant resource name, press `enter` to use the default name `t1`: ",
 			Templates: pf.promptTepl,
 			Validate: func(input string) error {
 				if !utils.CheckResourceName(input) {
@@ -143,7 +143,7 @@ func (pf *PromptFactory) CreatePrompt(promptType string) any {
 		}
 	case tenant.FLAG_TENANT_NAME:
 		return &promptui.Prompt{
-			Label:     "Please input the tenant name, press `enter` to use the default name `demo_tenant`: ",
+			Label:     "Please input the tenant name, press `enter` to use the default name `t1`: ",
 			Templates: pf.promptTepl,
 			Validate: func(input string) error {
 				if !utils.CheckTenantName(input) {

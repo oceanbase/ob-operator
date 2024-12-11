@@ -337,10 +337,14 @@ func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 	o.AddBackupVolumeFlags(cmd)
 }
 
+func (o *CreateOptions) SetRequiredFlags(cmd *cobra.Command) {
+	_ = cmd.MarkFlagRequired(FLAG_ZONES)
+}
+
 // AddZoneFlags adds the zone-related flags to the command.
 func (o *CreateOptions) AddZoneFlags(cmd *cobra.Command) {
 	zoneFlags := pflag.NewFlagSet(FLAGSET_ZONE, pflag.ContinueOnError)
-	zoneFlags.StringToStringVarP(&o.Zones, FLAG_ZONES, "z", map[string]string{"z1": "1"}, "The zones of the cluster in the format 'Zone=Replica', multiple values can be provided separated by commas")
+	zoneFlags.StringToStringVarP(&o.Zones, FLAG_ZONES, "z", map[string]string{"z1": "1"}, "The zones of the cluster, e.g. '--zones=<zone>=<replica>'")
 	cmd.Flags().AddFlagSet(zoneFlags)
 }
 
@@ -351,7 +355,7 @@ func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the cluster")
 	baseFlags.Int64Var(&o.ClusterId, FLAG_CLUSTER_ID, DEFAULT_ID, "The id of the cluster")
 	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOT_PASSWORD, "p", "", "The root password of the cluster")
-	baseFlags.StringVar(&o.Mode, FLAG_MODE, "", "The mode of the cluster")
+	baseFlags.StringVar(&o.Mode, FLAG_MODE, DEFAULT_MODE, "The mode of the cluster")
 }
 
 // AddObserverFlags adds the observer-related flags to the command.

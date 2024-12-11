@@ -288,6 +288,10 @@ func AnnotateOBServerPod(m *OBServerManager) tasktypes.TaskError {
 		m.Logger.Info("Update pod annotation, cni is calico")
 		observerPod.Annotations[oceanbaseconst.AnnotationCalicoIpAddrs] = fmt.Sprintf("[\"%s\"]", m.OBServer.Status.PodIp)
 	}
+	if m.OBServer.Status.CNI == oceanbaseconst.CNIKubeOvn {
+		m.Logger.Info("Update pod annotation, cni is kube-ovn")
+		observerPod.Annotations[oceanbaseconst.AnnotationKubeOvnIpAddrs] = m.OBServer.Status.PodIp
+	}
 	err = m.K8sResClient.Update(m.Ctx, observerPod)
 	if err != nil {
 		return errors.Wrapf(err, "Failed to update pod annotation of observer %s", m.OBServer.Name)

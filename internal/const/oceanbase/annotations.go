@@ -13,8 +13,10 @@ See the Mulan PSL v2 for more details.
 package oceanbase
 
 const (
-	AnnotationCalicoValidate = "cni.projectcalico.org/podIP"
-	AnnotationCalicoIpAddrs  = "cni.projectcalico.org/ipAddrs"
+	AnnotationCalicoValidate  = "cni.projectcalico.org/podIP"
+	AnnotationCalicoIpAddrs   = "cni.projectcalico.org/ipAddrs"
+	AnnotationKubeOvnValidate = "ovn.kubernetes.io/ip_address"
+	AnnotationKubeOvnIpAddrs  = "ovn.kubernetes.io/ip_address"
 )
 
 const (
@@ -35,5 +37,6 @@ const (
 
 const (
 	CNICalico  = "calico"
+	CNIKubeOvn = "kube-ovn"
 	CNIUnknown = "unknown"
 )

@@ -80,6 +80,7 @@ const (
 	DEFAULT_MONITOR_CPU            = 1
 	DEFAULT_MONITOR_MEMORY         = 1
 	DEFAULT_NAME                   = "test"
+	DEFAULT_MODE                   = "service"
 
 	// Default values for Parameter flag
 	DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY = "2147483648"

@@ -31,6 +31,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	"github.com/oceanbase/ob-operator/internal/clients/schema"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
@@ -41,8 +42,10 @@ import (
 func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam) (*v1alpha1.OBTenant, error) {
 	t := &v1alpha1.OBTenant{
 		ObjectMeta: v1.ObjectMeta{
-			Name:      nn.Name,
-			Namespace: nn.Namespace,
+			Name:        nn.Name,
+			Namespace:   nn.Namespace,
+			Annotations: make(map[string]string),
+			Labels:      make(map[string]string),
 		},
 		TypeMeta: v1.TypeMeta{
 			Kind:       schema.OBTenantKind,
@@ -58,6 +61,8 @@ func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam)
 
 			// guard non-nil
 			Pools: []v1alpha1.ResourcePoolSpec{},
+
+			Scenario: p.Scenario,
 		},
 	}
 
@@ -140,6 +145,27 @@ func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam)
 				t.Spec.Source.Restore.Until.Unlimited = true
 			}
 		}
+	}
+	if len(p.Variables) > 0 {
+		t.Spec.Variables = make([]apitypes.Variable, 0, len(p.Variables))
+		for i := range p.Variables {
+			t.Spec.Variables = append(t.Spec.Variables, apitypes.Variable{
+				Name:  p.Variables[i].Key,
+				Value: p.Variables[i].Value,
+			})
+		}
+	}
+	if len(p.Parameters) > 0 {
+		t.Spec.Parameters = make([]apitypes.Parameter, 0, len(p.Parameters))
+		for i := range p.Parameters {
+			t.Spec.Parameters = append(t.Spec.Parameters, apitypes.Parameter{
+				Name:  p.Parameters[i].Key,
+				Value: p.Parameters[i].Value,
+			})
+		}
+	}
+	if p.DeletionProtection {
+		t.Annotations[oceanbaseconst.AnnotationsIgnoreDeletion] = "true"
 	}
 	return t, nil
 }
@@ -351,7 +377,7 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 		}
 
 		if p.Source.Restore.OSSAccessID != "" && p.Source.Restore.OSSAccessKey != "" {
-			ossSecretName := p.Name + "-oss-access-" + rand.String(6)
+			ossSecretName := nn.Name + "-backup-" + strings.ToLower(strings.ReplaceAll(string(p.Source.Restore.Type), "_", "-")) + "-secret-" + rand.String(6)
 			t.Spec.Source.Restore.ArchiveSource.OSSAccessSecret = ossSecretName
 			t.Spec.Source.Restore.BakDataSource.OSSAccessSecret = ossSecretName
 			_, err = k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, &corev1.Secret{
@@ -362,6 +388,8 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 				StringData: map[string]string{
 					"accessId":  p.Source.Restore.OSSAccessID,
 					"accessKey": p.Source.Restore.OSSAccessKey,
+					"appId":     p.Source.Restore.AppID,
+					"s3Region":  p.Source.Restore.Region,
 				},
 			}, v1.CreateOptions{})
 			if err != nil {
@@ -548,6 +576,7 @@ func PatchTenant(ctx context.Context, nn types.NamespacedName, p *param.PatchTen
 	if err != nil {
 		return nil, err
 	}
+	alreadyIgnoreDeletion := tenant.Annotations[oceanbaseconst.AnnotationsIgnoreDeletion] == "true"
 	if p.UnitNumber != nil {
 		tenant.Spec.UnitNumber = *p.UnitNumber
 	}
@@ -594,6 +623,31 @@ func PatchTenant(ctx context.Context, nn types.NamespacedName, p *param.PatchTen
 				}
 			}
 		}
+	}
+	if alreadyIgnoreDeletion && p.RemoveDeletionProtection {
+		delete(tenant.Annotations, oceanbaseconst.AnnotationsIgnoreDeletion)
+	} else if !alreadyIgnoreDeletion && p.AddDeletionProtection {
+		tenant.Annotations[oceanbaseconst.AnnotationsIgnoreDeletion] = "true"
+	}
+	if len(p.Variables) > 0 {
+		newVars := make([]apitypes.Variable, 0, len(p.Variables))
+		for i := range p.Variables {
+			newVars = append(newVars, apitypes.Variable{
+				Name:  p.Variables[i].Key,
+				Value: p.Variables[i].Value,
+			})
+		}
+		tenant.Spec.Variables = newVars
+	}
+	if len(p.Parameters) > 0 {
+		newParameters := make([]apitypes.Parameter, 0, len(p.Parameters))
+		for i := range p.Parameters {
+			newParameters = append(newParameters, apitypes.Parameter{
+				Name:  p.Parameters[i].Key,
+				Value: p.Parameters[i].Value,
+			})
+		}
+		tenant.Spec.Parameters = newParameters
 	}
 	tenant, err = clients.UpdateOBTenant(ctx, tenant)
 	if err != nil {

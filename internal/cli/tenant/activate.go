@@ -54,5 +54,5 @@ func GetActivateOperation(o *ActivateOptions) *v1alpha1.OBTenantOperation {
 // AddFlags add basic flags for tenant management
 func (o *ActivateOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "namespace of ob tenant")
-	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, "f", DEFAULT_FORCE_FLAG, "force operation")
+	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, "f", DEFAULT_FORCE_FLAG, "If the operation is a force operation")
 }
