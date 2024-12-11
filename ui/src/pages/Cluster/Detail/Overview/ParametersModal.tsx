@@ -1,5 +1,7 @@
+import { obcluster } from '@/api';
 import { intl } from '@/utils/intl';
-import { Button, Col, Form, Input, Modal, Row, Space } from 'antd';
+import { useRequest } from 'ahooks';
+import { Button, Col, Form, Input, message, Modal, Row, Space } from 'antd';
 import React from 'react';
 
 export interface ParametersModalProps {
@@ -15,30 +17,30 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
   visible,
   onCancel,
   initialValues,
-  // onSuccess,
-  // name,
-  // namespace,
+  onSuccess,
+  name,
+  namespace,
 }) => {
   const [form] = Form.useForm<API.CreateClusterData>();
   const { validateFields } = form;
 
-  // const { runAsync: updateParameters, loading } = useRequest(
-  //   obcluster.patchOBCluster,
-  //   {
-  //     manual: true,
-  //     onSuccess: (res) => {
-  //       if (res.successful) {
-  //         message.success(
-  //           intl.formatMessage({
-  //             id: 'src.pages.Cluster.Detail.Overview.E908AA54',
-  //             defaultMessage: '编辑参数已成功',
-  //           }),
-  //         );
-  //         onSuccess();
-  //       }
-  //     },
-  //   },
-  // );
+  const { runAsync: updateParameters, loading } = useRequest(
+    obcluster.patchOBCluster,
+    {
+      manual: true,
+      onSuccess: (res) => {
+        if (res.successful) {
+          message.success(
+            intl.formatMessage({
+              id: 'src.pages.Cluster.Detail.Overview.E908AA54',
+              defaultMessage: '编辑参数已成功',
+            }),
+          );
+          onSuccess();
+        }
+      },
+    },
+  );
 
   return (
     <Modal
@@ -55,12 +57,13 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
           <Button onClick={onCancel}>取消</Button>
           <Button
             type="primary"
-            // loading={loading}
-            // TODO 单独编辑参数接口
+            loading={loading}
             onClick={() => {
               validateFields().then((values) => {
-                console.log('values', values);
-                // updateParameters(name, namespace, values, `编辑参数已成功`);
+                const objValue = {
+                  modifiedParameters: [values],
+                };
+                updateParameters(name, namespace, objValue, `编辑参数已成功`);
               });
             }}
           >
@@ -78,7 +81,7 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
                 defaultMessage: '参数名',
               })}
               initialValue={initialValues?.name}
-              name={'name'}
+              name={'key'}
             >
               <Input disabled={true} />
             </Form.Item>
