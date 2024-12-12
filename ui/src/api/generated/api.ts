@@ -1822,6 +1822,31 @@ export interface ListK8sStorageClasses200Response {
 /**
  * 
  * @export
+ * @interface ListOBClusterParameters200Response
+ */
+export interface ListOBClusterParameters200Response {
+    /**
+     * 
+     * @type {Array<ModelParameter>}
+     * @memberof ListOBClusterParameters200Response
+     */
+    'data': Array<ModelParameter>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ListOBClusterParameters200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ListOBClusterParameters200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
  * @interface ListOBClusterResources200Response
  */
 export interface ListOBClusterResources200Response {
@@ -2118,6 +2143,91 @@ export interface ListSuspiciousSqls200Response {
      * @memberof ListSuspiciousSqls200Response
      */
     'successful': boolean;
+}
+/**
+ * 
+ * @export
+ * @interface ModelParameter
+ */
+export interface ModelParameter {
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'dataType'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'defaultValue'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'edit_level'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'info'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'isDefault'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'name'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'scope'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'section'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'svr_ip'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelParameter
+     */
+    'svr_port'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelParameter
+     */
+    'tenant_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'value'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'zone'?: string;
 }
 /**
  * 
@@ -3762,13 +3872,25 @@ export interface ParamPatchOBClusterParam {
      */
     'backupVolume'?: ParamNFSVolumeSpec;
     /**
+     * Delete some parameters
+     * @type {Array<string>}
+     * @memberof ParamPatchOBClusterParam
+     */
+    'deletedParameters'?: Array<string>;
+    /**
+     * Add or modify some parameters
+     * @type {Array<CommonKVPair>}
+     * @memberof ParamPatchOBClusterParam
+     */
+    'modifiedParameters'?: Array<CommonKVPair>;
+    /**
      * 
      * @type {ParamMonitorSpec}
      * @memberof ParamPatchOBClusterParam
      */
     'monitor'?: ParamMonitorSpec;
     /**
-     * 
+     * Replace all parameters
      * @type {Array<CommonKVPair>}
      * @memberof ParamPatchOBClusterParam
      */
@@ -5501,10 +5623,10 @@ export interface ResponseOBCluster {
     'namespace': string;
     /**
      * 
-     * @type {Array<CommonKVPair>}
+     * @type {Array<ResponseParameterSpec>}
      * @memberof ResponseOBCluster
      */
-    'parameters': Array<CommonKVPair>;
+    'parameters': Array<ResponseParameterSpec>;
     /**
      * 
      * @type {ResponseResourceSpecRender}
@@ -6318,6 +6440,31 @@ export interface ResponseOBZoneAvailableResource {
      * @memberof ResponseOBZoneAvailableResource
      */
     'serverCount': number;
+}
+/**
+ * 
+ * @export
+ * @interface ResponseParameterSpec
+ */
+export interface ResponseParameterSpec {
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseParameterSpec
+     */
+    'name': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseParameterSpec
+     */
+    'specValue': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseParameterSpec
+     */
+    'value': string;
 }
 /**
  * 
@@ -11941,6 +12088,44 @@ export const OBClusterApiAxiosParamCreator = function (configuration?: Configura
             };
         },
         /**
+         * List OBCluster Parameters by namespace and name
+         * @summary List OBCluster Parameters
+         * @param {string} namespace namespace of obcluster resource
+         * @param {string} name name of obcluster resource
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listOBClusterParameters: async (namespace: string, name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('listOBClusterParameters', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('listOBClusterParameters', 'name', name)
+            const localVarPath = `/api/v1/obclusters/namespace/{namespace}/name/{name}/parameters`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * list related events of specific obcluster, including obzone and observer.
          * @summary list related events
          * @param {string} namespace obcluster namespace
@@ -12356,6 +12541,20 @@ export const OBClusterApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * List OBCluster Parameters by namespace and name
+         * @summary List OBCluster Parameters
+         * @param {string} namespace namespace of obcluster resource
+         * @param {string} name name of obcluster resource
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listOBClusterParameters(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListOBClusterParameters200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listOBClusterParameters(namespace, name, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OBClusterApi.listOBClusterParameters']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * list related events of specific obcluster, including obzone and observer.
          * @summary list related events
          * @param {string} namespace obcluster namespace
@@ -12544,6 +12743,17 @@ export const OBClusterApiFactory = function (configuration?: Configuration, base
             return localVarFp.getOBClusterStatistic(options).then((request) => request(axios, basePath));
         },
         /**
+         * List OBCluster Parameters by namespace and name
+         * @summary List OBCluster Parameters
+         * @param {string} namespace namespace of obcluster resource
+         * @param {string} name name of obcluster resource
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listOBClusterParameters(namespace: string, name: string, options?: any): AxiosPromise<ListOBClusterParameters200Response> {
+            return localVarFp.listOBClusterParameters(namespace, name, options).then((request) => request(axios, basePath));
+        },
+        /**
          * list related events of specific obcluster, including obzone and observer.
          * @summary list related events
          * @param {string} namespace obcluster namespace
@@ -12722,6 +12932,19 @@ export class OBClusterApi extends BaseAPI {
      */
     public getOBClusterStatistic(options?: RawAxiosRequestConfig) {
         return OBClusterApiFp(this.configuration).getOBClusterStatistic(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * List OBCluster Parameters by namespace and name
+     * @summary List OBCluster Parameters
+     * @param {string} namespace namespace of obcluster resource
+     * @param {string} name name of obcluster resource
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OBClusterApi
+     */
+    public listOBClusterParameters(namespace: string, name: string, options?: RawAxiosRequestConfig) {
+        return OBClusterApiFp(this.configuration).listOBClusterParameters(namespace, name, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
