@@ -20,6 +20,6 @@ const (
 )
 
 const (
-	ListParametersWithTenantID = "select name, value from GV$OB_PARAMETERS where tenant_id = ?"
+	ListParametersWithTenantID = "select name, value, data_type, info, section, default_value, isdefault, edit_level, scope from GV$OB_PARAMETERS where tenant_id = ?"
 	SelectCompatibleOfTenants  = "select name, value, tenant_id from GV$OB_PARAMETERS where name = 'compatible'"
 )

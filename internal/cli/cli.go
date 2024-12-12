@@ -18,6 +18,7 @@ import (
 
 	"github.com/oceanbase/ob-operator/internal/cli/cmd/backup"
 	"github.com/oceanbase/ob-operator/internal/cli/cmd/cluster"
+	"github.com/oceanbase/ob-operator/internal/cli/cmd/completion"
 	"github.com/oceanbase/ob-operator/internal/cli/cmd/demo"
 	"github.com/oceanbase/ob-operator/internal/cli/cmd/install"
 	"github.com/oceanbase/ob-operator/internal/cli/cmd/tenant"
@@ -47,6 +48,7 @@ func NewCliCmd() *cobra.Command {
 	cmd.AddCommand(install.NewCmd())
 	cmd.AddCommand(update.NewCmd())
 	cmd.AddCommand(demo.NewCmd())
+	cmd.AddCommand(completion.NewCmd(cmd.OutOrStdout(), ""))
 	cmd.Flags().BoolP("version", "v", false, "Print the version of oceanbase cli")
 	return cmd
 }

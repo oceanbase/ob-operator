@@ -2,8 +2,6 @@
 title: Introduction
 ---
 
-import Link from '@docusaurus/Link'
-
 # ob-operator
 
 `ob-operator` is a Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes.
@@ -20,7 +18,7 @@ ob-operator relies on [cert-manager](https://cert-manager.io/docs/) for certific
 If you have trouble accessing `quay.io` image registry, our mirrored cert-manager manifests can be applied through following command:
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.0_release/deploy/cert-manager.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.1_release/deploy/cert-manager.yaml
 ```
 
 Storage of OceanBase cluster in this example relies on [local-path-provisioner](https://github.com/rancher/local-path-provisioner), which should be installed beforehand. You should confirm that there is enough disk space in storage destination of local-path-provisioner.If you decide to deploy OceanBase cluster in production environment, it is recommended to use other storage solutions. We have provided a compatible table for storage solutions that we tested in section [Storage Compatibility](#storage-compatibility).
@@ -34,7 +32,7 @@ You can deploy ob-operator in a Kubernetes cluster by executing the following co
 - Stable
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.0_release/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.1_release/deploy/operator.yaml
 ```
 
 - Development
@@ -102,7 +100,7 @@ kubectl create secret generic root-password --from-literal=password='root_passwo
 You can deploy OceanBase in a Kubernetes cluster by executing the following command:
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.0_release/example/quickstart/obcluster.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.1_release/example/quickstart/obcluster.yaml
 ```
 
 It generally takes around 2 minutes to bootstrap a cluster. Execute the following command to check the status of the cluster. Once the cluster status changes to "running," it indicates that the cluster has been successfully created and bootstrapped:
@@ -131,7 +129,7 @@ mysql -h{POD_IP} -P2881 -uroot -proot_password oceanbase -A -c
 
 ### OceanBase Dashboard
 
-We are excited to unveil our innovative OceanBase Kubernetes Dashboard, a pioneering tool designed to enhance your experience with managing and monitoring OceanBase clusters on Kubernetes. We are proud to offer this amazing tool to our users and will actively work on new features and enhancements for future updates. <Link to="docs/dashboard/quickstart">Quick Start</Link> guide is available to help you get started with OceanBase Dashboard.
+We are excited to unveil our innovative OceanBase Kubernetes Dashboard, a pioneering tool designed to enhance your experience with managing and monitoring OceanBase clusters on Kubernetes. We are proud to offer this amazing tool to our users and will actively work on new features and enhancements for future updates. [Quick Start](/docs/dashboard/quickstart) guide is available to help you get started with OceanBase Dashboard.
 
 Deploy OceanBase Dashboard is pretty simple, just run the following commands:
 
@@ -164,11 +162,13 @@ Login with admin user and password.
 
 ## Project Architecture
 
-ob-operator is built on top of kubebuilder and provides control and management of OceanBase clusters and related applications through a unified resource manager interface, a global task manager instance, and a task flow mechanism for handling long-running tasks. The architecture diagram is approximately as follows:
+ob-operator is built on top of kubebuilder and provides control and management of OceanBase clusters and related applications through a unified resource manager interface, a global task manager instance, and a task flow mechanism for handling long-running tasks. The architecture diagram of ob-operator is approximately as follows:
 
 ![ob-operator Architecture](/img/ob-operator-arch.png)
 
-For more detailed information about the architecture, please refer to the <Link to="docs/developer/arch">Architecture Document</Link>.
+![ob-operator Task Manager Architecture](/img/ob-operator-task-manager-arch.png)
+
+For more detailed information about the architecture, please refer to the [Architecture](/docs/developer/arch) Document.
 
 ## Features
 
@@ -212,9 +212,9 @@ ob-operator is built using the [kubebuilder](https://book.kubebuilder.io/introdu
 
 ## Documents
 
-- <Link to="docs/developer/arch">Architecture</Link>
-- <Link to="docs/developer/contributor-guidance">Contributor Guidance</Link>
-- <Link to="docs/manual/what-is-ob-operator">User Manual</Link>
+- [Architecture](/docs/developer/arch)
+- [Contributor Guidance](/docs/developer/contributor-guidance)
+- [User Manual](/docs/manual/what-is-ob-operator)
 
 ## Getting Help
 

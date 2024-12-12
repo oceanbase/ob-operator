@@ -20,11 +20,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	logger "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/clients"
@@ -35,7 +37,9 @@ import (
 	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
+	"github.com/oceanbase/ob-operator/internal/dashboard/utils"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
+	models "github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 
 const (
@@ -115,11 +119,16 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		// TODO: add metrics
 		Metrics: nil,
 	}
-	var parameters []modelcommon.KVPair
+	var parameters []response.ParameterSpec
+	statusParameterMap := make(map[string]string, 0)
+	for _, param := range obcluster.Status.Parameters {
+		statusParameterMap[param.Name] = param.Value
+	}
 	for _, param := range obcluster.Spec.Parameters {
-		parameters = append(parameters, modelcommon.KVPair{
-			Key:   param.Name,
-			Value: param.Value,
+		parameters = append(parameters, response.ParameterSpec{
+			Name:      param.Name,
+			SpecValue: param.Value,
+			Value:     statusParameterMap[param.Name],
 		})
 	}
 	respCluster.Parameters = parameters
@@ -537,6 +546,7 @@ func generateOBClusterInstance(param *param.CreateOBClusterParam) *v1alpha1.OBCl
 			Parameters:       parameters,
 			Topology:         topology,
 			UserSecrets:      generateUserSecrets(param.Name, param.ClusterId),
+			Scenario:         param.Scenario,
 		},
 	}
 	switch param.Mode {
@@ -545,6 +555,12 @@ func generateOBClusterInstance(param *param.CreateOBClusterParam) *v1alpha1.OBCl
 	case modelcommon.ClusterModeService:
 		obcluster.Annotations[oceanbaseconst.AnnotationsMode] = oceanbaseconst.ModeService
 	default:
+	}
+	if param.DeletionProtection {
+		obcluster.Annotations[oceanbaseconst.AnnotationsIgnoreDeletion] = "true"
+	}
+	if param.PvcIndependent {
+		obcluster.Annotations[oceanbaseconst.AnnotationsIndependentPVCLifecycle] = "true"
 	}
 	return obcluster
 }
@@ -722,4 +738,176 @@ func GetOBClusterStatistic(ctx context.Context) ([]response.OBClusterStatistic, 
 			Count:  failedCount,
 		})
 	return statisticResult, nil
+}
+
+func PatchOBCluster(ctx context.Context, nn *param.K8sObjectIdentity, param *param.PatchOBClusterParam) (*response.OBCluster, error) {
+	obcluster, err := clients.GetOBCluster(ctx, nn.Namespace, nn.Name)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Get obcluster %s %s", nn.Namespace, nn.Name)
+	}
+	if obcluster.Status.Status != clusterstatus.Running {
+		return nil, errors.Errorf("OBCluster status is invalid %s", obcluster.Status.Status)
+	}
+	alreadyIgnoredDeletion := obcluster.Annotations[oceanbaseconst.AnnotationsIgnoreDeletion] == "true"
+
+	if obcluster.Spec.OBServerTemplate != nil {
+		// Update resource if specified
+		obcluster.Spec.OBServerTemplate.Resource = &apitypes.ResourceSpec{
+			Cpu:    *apiresource.NewQuantity(param.Resource.Cpu, apiresource.DecimalSI),
+			Memory: *apiresource.NewQuantity(param.Resource.MemoryGB*constant.GB, apiresource.BinarySI),
+		}
+	} else if param.Storage != nil && obcluster.Spec.OBServerTemplate != nil {
+		// Update storage if specified
+		obcluster.Spec.OBServerTemplate.Storage = &apitypes.OceanbaseStorageSpec{
+			DataStorage: &apitypes.StorageSpec{
+				StorageClass: param.Storage.Data.StorageClass,
+				Size:         *apiresource.NewQuantity(param.Storage.Data.SizeGB*constant.GB, apiresource.BinarySI),
+			},
+			RedoLogStorage: &apitypes.StorageSpec{
+				StorageClass: param.Storage.RedoLog.StorageClass,
+				Size:         *apiresource.NewQuantity(param.Storage.RedoLog.SizeGB*constant.GB, apiresource.BinarySI),
+			},
+			LogStorage: &apitypes.StorageSpec{
+				StorageClass: param.Storage.Log.StorageClass,
+				Size:         *apiresource.NewQuantity(param.Storage.Log.SizeGB*constant.GB, apiresource.BinarySI),
+			},
+		}
+	} else if param.Monitor != nil && obcluster.Spec.MonitorTemplate == nil {
+		// Update monitor if specified
+		obcluster.Spec.MonitorTemplate = &apitypes.MonitorTemplate{
+			Image: param.Monitor.Image,
+			Resource: &apitypes.ResourceSpec{
+				Cpu:    *apiresource.NewQuantity(param.Monitor.Resource.Cpu, apiresource.DecimalSI),
+				Memory: *apiresource.NewQuantity(param.Monitor.Resource.MemoryGB*constant.GB, apiresource.BinarySI),
+			},
+		}
+	} else if param.RemoveMonitor {
+		// Remove monitor if specified
+		obcluster.Spec.MonitorTemplate = nil
+	} else if param.BackupVolume != nil && obcluster.Spec.BackupVolume == nil {
+		// Update backup volume if specified
+		obcluster.Spec.BackupVolume = &apitypes.BackupVolumeSpec{
+			Volume: &corev1.Volume{
+				Name: "ob-backup",
+				VolumeSource: corev1.VolumeSource{
+					NFS: &corev1.NFSVolumeSource{
+						Server:   param.BackupVolume.Address,
+						Path:     param.BackupVolume.Path,
+						ReadOnly: false,
+					},
+				},
+			},
+		}
+	} else if param.RemoveBackupVolume {
+		// Remove backup volume if specified
+		obcluster.Spec.BackupVolume = nil
+	} else if len(param.Parameters) > 0 {
+		// Update parameters if specified
+		obcluster.Spec.Parameters = buildOBClusterParameters(param.Parameters)
+	}
+
+	if param.AddDeletionProtection && !alreadyIgnoredDeletion {
+		// Update deletion protection if specified
+		obcluster.Annotations[oceanbaseconst.AnnotationsIgnoreDeletion] = "true"
+	} else if param.RemoveDeletionProtection && alreadyIgnoredDeletion {
+		delete(obcluster.Annotations, oceanbaseconst.AnnotationsIgnoreDeletion)
+	}
+
+	cluster, err := clients.UpdateOBCluster(ctx, obcluster)
+	if err != nil {
+		return nil, oberr.NewInternal(err.Error())
+	}
+	return buildOBClusterResponse(ctx, cluster)
+}
+
+func RestartOBServers(ctx context.Context, nn *param.K8sObjectIdentity, param *param.RestartOBServersParam) (*response.OBCluster, error) {
+	obcluster, err := clients.GetOBCluster(ctx, nn.Namespace, nn.Name)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Get obcluster %s %s", nn.Namespace, nn.Name)
+	}
+	if obcluster.Status.Status != clusterstatus.Running {
+		return nil, errors.Errorf("OBCluster status is invalid %s", obcluster.Status.Status)
+	}
+
+	// Create OBClusterOperation for restarting observers
+	operation := &v1alpha1.OBClusterOperation{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "restart-observers-",
+			Namespace:    nn.Namespace,
+		},
+		Spec: v1alpha1.OBClusterOperationSpec{
+			Type:      constants.ClusterOpTypeRestartOBServers,
+			OBCluster: nn.Name,
+			RestartOBServers: &v1alpha1.RestartOBServersConfig{
+				OBServers: param.OBServers,
+				OBZones:   param.OBZones,
+				All:       param.All,
+			},
+		},
+	}
+
+	_, err = clients.CreateOBClusterOperation(ctx, operation)
+	if err != nil {
+		return nil, oberr.NewInternal(err.Error())
+	}
+
+	return buildOBClusterResponse(ctx, obcluster)
+}
+
+func DeleteOBServers(ctx context.Context, nn *param.K8sObjectIdentity, param *param.DeleteOBServersParam) (*response.OBCluster, error) {
+	obcluster, err := clients.GetOBCluster(ctx, nn.Namespace, nn.Name)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Get obcluster %s %s", nn.Namespace, nn.Name)
+	}
+	if obcluster.Status.Status != clusterstatus.Running {
+		return nil, errors.Errorf("OBCluster status is invalid %s", obcluster.Status.Status)
+	}
+
+	// Create OBClusterOperation for deleting observers
+	operation := &v1alpha1.OBClusterOperation{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: "delete-observers-",
+			Namespace:    nn.Namespace,
+		},
+		Spec: v1alpha1.OBClusterOperationSpec{
+			Type:      constants.ClusterOpTypeDeleteOBServers,
+			OBCluster: nn.Name,
+			DeleteOBServers: &v1alpha1.DeleteOBServersConfig{
+				OBServers: param.OBServers,
+			},
+		},
+	}
+
+	_, err = clients.CreateOBClusterOperation(ctx, operation)
+	if err != nil {
+		return nil, oberr.NewInternal(err.Error())
+	}
+
+	return buildOBClusterResponse(ctx, obcluster)
+}
+
+func ListOBClusterParameters(ctx context.Context, nn *param.K8sObjectIdentity) ([]*models.Parameter, error) {
+	obcluster, err := clients.GetOBCluster(ctx, nn.Namespace, nn.Name)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Get obcluster %s %s", nn.Namespace, nn.Name)
+	}
+	observerList := v1alpha1.OBServerList{}
+	err = clients.ServerClient.List(ctx, nn.Namespace, &observerList, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s", oceanbaseconst.LabelRefOBCluster, nn.Name),
+	})
+	if err != nil {
+		logrus.WithError(err).Error("Failed to list observers")
+		return nil, errors.Wrap(err, "List observers")
+	}
+	conn, err := utils.GetOBConnection(ctx, obcluster, "root", "sys", obcluster.Spec.UserSecrets.Root)
+	if err != nil {
+		logrus.Info("Failed to get OceanBase database connection")
+		return nil, errors.Wrap(err, "Get OceanBase database connection")
+	}
+	parameters, err := conn.ListParametersWithTenantID(ctx, 1)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to query parameters")
+		return nil, errors.Wrap(err, "Query parameters")
+	}
+	return parameters, nil
 }

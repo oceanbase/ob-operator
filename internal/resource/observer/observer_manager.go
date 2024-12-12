@@ -94,7 +94,9 @@ func (m *OBServerManager) UpdateStatus() error {
 			m.OBServer.Status.PodIp = pod.Status.PodIP
 			m.OBServer.Status.NodeIp = pod.Status.HostIP
 			// TODO update from obcluster
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("OBServer pod info", "pod", pod)
 			m.OBServer.Status.CNI = resourceutils.GetCNIFromAnnotation(pod)
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Get CNI", "cni", m.OBServer.Status.CNI)
 
 			if m.OBServer.Status.ServiceIp == "" {
 				mode, modeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsMode)

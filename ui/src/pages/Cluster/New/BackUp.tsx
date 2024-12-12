@@ -7,10 +7,7 @@ export default function BackUp() {
     <Col span={24}>
       <CollapsibleCard
         collapsible={true}
-        title={intl.formatMessage({
-          id: 'Dashboard.Cluster.New.BackUp.BackupAndRecovery',
-          defaultMessage: '备份恢复',
-        })}
+        title={'挂载 NFS 备份卷'}
         bordered={false}
       >
         <Row gutter={8}>

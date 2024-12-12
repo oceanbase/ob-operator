@@ -392,6 +392,43 @@ export interface AlertAlertFilter {
 /**
  * 
  * @export
+ * @interface AlertAnalyzeParam
+ */
+export interface AlertAnalyzeParam {
+    /**
+     * 
+     * @type {number}
+     * @memberof AlertAnalyzeParam
+     */
+    'endsAt': number;
+    /**
+     * 
+     * @type {OceanbaseOBInstance}
+     * @memberof AlertAnalyzeParam
+     */
+    'instance': OceanbaseOBInstance;
+    /**
+     * 
+     * @type {string}
+     * @memberof AlertAnalyzeParam
+     */
+    'resultPath'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof AlertAnalyzeParam
+     */
+    'rule': string;
+    /**
+     * 
+     * @type {number}
+     * @memberof AlertAnalyzeParam
+     */
+    'startsAt': number;
+}
+/**
+ * 
+ * @export
  * @enum {string}
  */
 
@@ -445,16 +482,34 @@ export interface CommonAffinitySpec {
     'key'?: string;
     /**
      * 
+     * @type {string}
+     * @memberof CommonAffinitySpec
+     */
+    'operator'?: string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof CommonAffinitySpec
+     */
+    'preferred'?: boolean;
+    /**
+     * Enum: NODE, POD, POD_ANTI
      * @type {CommonAffinityType}
      * @memberof CommonAffinitySpec
      */
     'type'?: CommonAffinityType;
     /**
      * 
-     * @type {string}
+     * @type {Array<string>}
      * @memberof CommonAffinitySpec
      */
-    'value'?: string;
+    'values'?: Array<string>;
+    /**
+     * 
+     * @type {number}
+     * @memberof CommonAffinitySpec
+     */
+    'weight'?: number;
 }
 
 
@@ -537,13 +592,50 @@ export interface CommonStorageSpec {
      * @type {number}
      * @memberof CommonStorageSpec
      */
-    'size'?: number;
+    'size': number;
     /**
      * 
      * @type {string}
      * @memberof CommonStorageSpec
      */
     'storageClass'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface CommonTolerationSpec
+ */
+export interface CommonTolerationSpec {
+    /**
+     * 
+     * @type {string}
+     * @memberof CommonTolerationSpec
+     */
+    'effect'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CommonTolerationSpec
+     */
+    'key'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof CommonTolerationSpec
+     */
+    'operator'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof CommonTolerationSpec
+     */
+    'tolerationSeconds'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof CommonTolerationSpec
+     */
+    'value'?: string;
 }
 /**
  * 
@@ -642,6 +734,31 @@ export interface CreateOBPROXY200Response {
      * 
      * @type {boolean}
      * @memberof CreateOBPROXY200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
+ * @interface CreateOrUpdateInspectionPolicy200Response
+ */
+export interface CreateOrUpdateInspectionPolicy200Response {
+    /**
+     * 
+     * @type {InspectionPolicy}
+     * @memberof CreateOrUpdateInspectionPolicy200Response
+     */
+    'data': InspectionPolicy;
+    /**
+     * 
+     * @type {string}
+     * @memberof CreateOrUpdateInspectionPolicy200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof CreateOrUpdateInspectionPolicy200Response
      */
     'successful': boolean;
 }
@@ -798,25 +915,50 @@ export interface CreateTenant200Response {
 /**
  * 
  * @export
- * @interface DeleteOBCluster200Response
+ * @interface DeleteInspectionPolicy200Response
  */
-export interface DeleteOBCluster200Response {
+export interface DeleteInspectionPolicy200Response {
     /**
      * 
      * @type {boolean}
-     * @memberof DeleteOBCluster200Response
+     * @memberof DeleteInspectionPolicy200Response
      */
     'data': boolean;
     /**
      * 
      * @type {string}
-     * @memberof DeleteOBCluster200Response
+     * @memberof DeleteInspectionPolicy200Response
      */
     'message': string;
     /**
      * 
      * @type {boolean}
-     * @memberof DeleteOBCluster200Response
+     * @memberof DeleteInspectionPolicy200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
+ * @interface DiagnoseAlert200Response
+ */
+export interface DiagnoseAlert200Response {
+    /**
+     * 
+     * @type {JobJob}
+     * @memberof DiagnoseAlert200Response
+     */
+    'data': JobJob;
+    /**
+     * 
+     * @type {string}
+     * @memberof DiagnoseAlert200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof DiagnoseAlert200Response
      */
     'successful': boolean;
 }
@@ -842,6 +984,31 @@ export interface GetBackupPolicy200Response {
      * 
      * @type {boolean}
      * @memberof GetBackupPolicy200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
+ * @interface GetInspectionReport200Response
+ */
+export interface GetInspectionReport200Response {
+    /**
+     * 
+     * @type {InspectionReport}
+     * @memberof GetInspectionReport200Response
+     */
+    'data': InspectionReport;
+    /**
+     * 
+     * @type {string}
+     * @memberof GetInspectionReport200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof GetInspectionReport200Response
      */
     'successful': boolean;
 }
@@ -970,6 +1137,363 @@ export interface GetStatistics200Response {
      */
     'successful': boolean;
 }
+/**
+ * 
+ * @export
+ * @interface InspectionInspectionItem
+ */
+export interface InspectionInspectionItem {
+    /**
+     * 
+     * @type {string}
+     * @memberof InspectionInspectionItem
+     */
+    'name': string;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof InspectionInspectionItem
+     */
+    'results'?: Array<string>;
+}
+/**
+ * 
+ * @export
+ * @enum {string}
+ */
+
+export const InspectionInspectionScenario = {
+    ScenarioBasic: 'basic',
+    ScenarioPerformance: 'performance'
+} as const;
+
+export type InspectionInspectionScenario = typeof InspectionInspectionScenario[keyof typeof InspectionInspectionScenario];
+
+
+/**
+ * 
+ * @export
+ * @interface InspectionInspectionScheduleConfig
+ */
+export interface InspectionInspectionScheduleConfig {
+    /**
+     * 
+     * @type {string}
+     * @memberof InspectionInspectionScheduleConfig
+     */
+    'crontab': string;
+    /**
+     * 
+     * @type {InspectionInspectionScenario}
+     * @memberof InspectionInspectionScheduleConfig
+     */
+    'scenario': InspectionInspectionScenario;
+}
+
+
+/**
+ * 
+ * @export
+ * @enum {string}
+ */
+
+export const InspectionInspectionScheduleStatus = {
+    ScheduleEnabled: 'enabled',
+    ScheduleDisabled: 'disabled'
+} as const;
+
+export type InspectionInspectionScheduleStatus = typeof InspectionInspectionScheduleStatus[keyof typeof InspectionInspectionScheduleStatus];
+
+
+/**
+ * 
+ * @export
+ * @interface InspectionPolicy
+ */
+export interface InspectionPolicy {
+    /**
+     * 
+     * @type {Array<InspectionReportBriefInfo>}
+     * @memberof InspectionPolicy
+     */
+    'latestReports'?: Array<InspectionReportBriefInfo>;
+    /**
+     * 
+     * @type {ResponseOBClusterMeta}
+     * @memberof InspectionPolicy
+     */
+    'obCluster': ResponseOBClusterMeta;
+    /**
+     * 
+     * @type {Array<InspectionInspectionScheduleConfig>}
+     * @memberof InspectionPolicy
+     */
+    'scheduleConfig'?: Array<InspectionInspectionScheduleConfig>;
+    /**
+     * 
+     * @type {InspectionInspectionScheduleStatus}
+     * @memberof InspectionPolicy
+     */
+    'status': InspectionInspectionScheduleStatus;
+}
+
+
+/**
+ * 
+ * @export
+ * @interface InspectionReport
+ */
+export interface InspectionReport {
+    /**
+     * 
+     * @type {number}
+     * @memberof InspectionReport
+     */
+    'finishTime'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof InspectionReport
+     */
+    'id': string;
+    /**
+     * 
+     * @type {ResponseOBClusterMeta}
+     * @memberof InspectionReport
+     */
+    'obCluster': ResponseOBClusterMeta;
+    /**
+     * 
+     * @type {InspectionResultDetail}
+     * @memberof InspectionReport
+     */
+    'resultDetail'?: InspectionResultDetail;
+    /**
+     * 
+     * @type {InspectionResultStatistics}
+     * @memberof InspectionReport
+     */
+    'resultStatistics': InspectionResultStatistics;
+    /**
+     * 
+     * @type {InspectionInspectionScenario}
+     * @memberof InspectionReport
+     */
+    'scenario': InspectionInspectionScenario;
+    /**
+     * 
+     * @type {number}
+     * @memberof InspectionReport
+     */
+    'startTime'?: number;
+    /**
+     * 
+     * @type {JobJobStatus}
+     * @memberof InspectionReport
+     */
+    'status': JobJobStatus;
+}
+
+
+/**
+ * 
+ * @export
+ * @interface InspectionReportBriefInfo
+ */
+export interface InspectionReportBriefInfo {
+    /**
+     * 
+     * @type {number}
+     * @memberof InspectionReportBriefInfo
+     */
+    'finishTime'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof InspectionReportBriefInfo
+     */
+    'id': string;
+    /**
+     * 
+     * @type {ResponseOBClusterMeta}
+     * @memberof InspectionReportBriefInfo
+     */
+    'obCluster': ResponseOBClusterMeta;
+    /**
+     * 
+     * @type {InspectionResultStatistics}
+     * @memberof InspectionReportBriefInfo
+     */
+    'resultStatistics': InspectionResultStatistics;
+    /**
+     * 
+     * @type {InspectionInspectionScenario}
+     * @memberof InspectionReportBriefInfo
+     */
+    'scenario': InspectionInspectionScenario;
+    /**
+     * 
+     * @type {number}
+     * @memberof InspectionReportBriefInfo
+     */
+    'startTime'?: number;
+    /**
+     * 
+     * @type {JobJobStatus}
+     * @memberof InspectionReportBriefInfo
+     */
+    'status': JobJobStatus;
+}
+
+
+/**
+ * 
+ * @export
+ * @interface InspectionResultDetail
+ */
+export interface InspectionResultDetail {
+    /**
+     * 
+     * @type {Array<InspectionInspectionItem>}
+     * @memberof InspectionResultDetail
+     */
+    'criticalItems'?: Array<InspectionInspectionItem>;
+    /**
+     * 
+     * @type {Array<InspectionInspectionItem>}
+     * @memberof InspectionResultDetail
+     */
+    'failedItems'?: Array<InspectionInspectionItem>;
+    /**
+     * 
+     * @type {Array<InspectionInspectionItem>}
+     * @memberof InspectionResultDetail
+     */
+    'moderateItems'?: Array<InspectionInspectionItem>;
+    /**
+     * 
+     * @type {Array<InspectionInspectionItem>}
+     * @memberof InspectionResultDetail
+     */
+    'negligibleItems'?: Array<InspectionInspectionItem>;
+}
+/**
+ * 
+ * @export
+ * @interface InspectionResultStatistics
+ */
+export interface InspectionResultStatistics {
+    /**
+     * 
+     * @type {number}
+     * @memberof InspectionResultStatistics
+     */
+    'criticalCount'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof InspectionResultStatistics
+     */
+    'failedCount'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof InspectionResultStatistics
+     */
+    'moderateCount'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof InspectionResultStatistics
+     */
+    'negligibleCount'?: number;
+}
+/**
+ * 
+ * @export
+ * @interface JobJob
+ */
+export interface JobJob {
+    /**
+     * 
+     * @type {number}
+     * @memberof JobJob
+     */
+    'finishTime'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof JobJob
+     */
+    'id': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof JobJob
+     */
+    'name': string;
+    /**
+     * 
+     * @type {JobJobResult}
+     * @memberof JobJob
+     */
+    'result'?: JobJobResult;
+    /**
+     * 
+     * @type {number}
+     * @memberof JobJob
+     */
+    'startTime'?: number;
+    /**
+     * 
+     * @type {JobJobStatus}
+     * @memberof JobJob
+     */
+    'status': JobJobStatus;
+}
+
+
+/**
+ * 
+ * @export
+ * @interface JobJobResult
+ */
+export interface JobJobResult {
+    /**
+     * 
+     * @type {string}
+     * @memberof JobJobResult
+     */
+    'attachmentId'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof JobJobResult
+     */
+    'exitCode': number;
+    /**
+     * 
+     * @type {string}
+     * @memberof JobJobResult
+     */
+    'output'?: string;
+}
+/**
+ * 
+ * @export
+ * @enum {string}
+ */
+
+export const JobJobStatus = {
+    JobStatusSuccessful: 'successful',
+    JobStatusFailed: 'failed',
+    JobStatusRunning: 'running',
+    JobStatusPending: 'pending'
+} as const;
+
+export type JobJobStatus = typeof JobJobStatus[keyof typeof JobJobStatus];
+
+
 /**
  * 
  * @export
@@ -1148,6 +1672,56 @@ export interface ListBackupJobs200Response {
 /**
  * 
  * @export
+ * @interface ListInspectionPolicies200Response
+ */
+export interface ListInspectionPolicies200Response {
+    /**
+     * 
+     * @type {Array<InspectionPolicy>}
+     * @memberof ListInspectionPolicies200Response
+     */
+    'data': Array<InspectionPolicy>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ListInspectionPolicies200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ListInspectionPolicies200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
+ * @interface ListInspectionReports200Response
+ */
+export interface ListInspectionReports200Response {
+    /**
+     * 
+     * @type {Array<InspectionReportBriefInfo>}
+     * @memberof ListInspectionReports200Response
+     */
+    'data': Array<InspectionReportBriefInfo>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ListInspectionReports200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ListInspectionReports200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
  * @interface ListK8sEvents200Response
  */
 export interface ListK8sEvents200Response {
@@ -1248,6 +1822,31 @@ export interface ListK8sStorageClasses200Response {
 /**
  * 
  * @export
+ * @interface ListOBClusterParameters200Response
+ */
+export interface ListOBClusterParameters200Response {
+    /**
+     * 
+     * @type {Array<ModelParameter>}
+     * @memberof ListOBClusterParameters200Response
+     */
+    'data': Array<ModelParameter>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ListOBClusterParameters200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ListOBClusterParameters200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
  * @interface ListOBClusterResources200Response
  */
 export interface ListOBClusterResources200Response {
@@ -1342,6 +1941,31 @@ export interface ListOBProxyParameters200Response {
      * 
      * @type {boolean}
      * @memberof ListOBProxyParameters200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
+ * @interface ListOBTenantDatabases200Response
+ */
+export interface ListOBTenantDatabases200Response {
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof ListOBTenantDatabases200Response
+     */
+    'data': Array<string>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ListOBTenantDatabases200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ListOBTenantDatabases200Response
      */
     'successful': boolean;
 }
@@ -1469,6 +2093,141 @@ export interface ListSilencers200Response {
      * @memberof ListSilencers200Response
      */
     'successful': boolean;
+}
+/**
+ * 
+ * @export
+ * @interface ListSqlMetrics200Response
+ */
+export interface ListSqlMetrics200Response {
+    /**
+     * 
+     * @type {Array<SqlSqlMetricMetaCategory>}
+     * @memberof ListSqlMetrics200Response
+     */
+    'data': Array<SqlSqlMetricMetaCategory>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ListSqlMetrics200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ListSqlMetrics200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
+ * @interface ListSuspiciousSqls200Response
+ */
+export interface ListSuspiciousSqls200Response {
+    /**
+     * 
+     * @type {Array<SqlSqlInfo>}
+     * @memberof ListSuspiciousSqls200Response
+     */
+    'data': Array<SqlSqlInfo>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ListSuspiciousSqls200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ListSuspiciousSqls200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
+ * @interface ModelParameter
+ */
+export interface ModelParameter {
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'dataType'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'defaultValue'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'edit_level'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'info'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'isDefault'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'name'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'scope'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'section'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'svr_ip'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelParameter
+     */
+    'svr_port'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ModelParameter
+     */
+    'tenant_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'value'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ModelParameter
+     */
+    'zone'?: string;
 }
 /**
  * 
@@ -2570,6 +3329,23 @@ export type OceanbaseOBInstanceType = typeof OceanbaseOBInstanceType[keyof typeo
 /**
  * 
  * @export
+ * @enum {string}
+ */
+
+export const ParamBackupDestType = {
+    BackupDestNFS: 'NFS',
+    BackupDestOSS: 'OSS',
+    BackupDestCOS: 'COS',
+    BackupDestS3: 'S3',
+    BackupDestS3Compatible: 'S3_COMPATIBLE'
+} as const;
+
+export type ParamBackupDestType = typeof ParamBackupDestType[keyof typeof ParamBackupDestType];
+
+
+/**
+ * 
+ * @export
  * @interface ParamChangeTenantRole
  */
 export interface ParamChangeTenantRole {
@@ -2625,6 +3401,12 @@ export interface ParamConfigurableInfo {
  */
 export interface ParamCreateBackupPolicy {
     /**
+     * Used for COS
+     * @type {string}
+     * @memberof ParamCreateBackupPolicy
+     */
+    'appId'?: string;
+    /**
      * 
      * @type {string}
      * @memberof ParamCreateBackupPolicy
@@ -2643,11 +3425,17 @@ export interface ParamCreateBackupPolicy {
      */
     'bakEncryptionPassword'?: string;
     /**
-     * Enum: NFS, OSS
+     * Enum: NFS, OSS, COS, S3, S3_COMPATIBLE
+     * @type {ParamBackupDestType}
+     * @memberof ParamCreateBackupPolicy
+     */
+    'destType': ParamBackupDestType;
+    /**
+     * 
      * @type {string}
      * @memberof ParamCreateBackupPolicy
      */
-    'destType': string;
+    'host'?: string;
     /**
      * 
      * @type {number}
@@ -2655,7 +3443,7 @@ export interface ParamCreateBackupPolicy {
      */
     'jobKeepDays'?: number;
     /**
-     * 
+     * Used for non-NFS
      * @type {string}
      * @memberof ParamCreateBackupPolicy
      */
@@ -2679,6 +3467,12 @@ export interface ParamCreateBackupPolicy {
      */
     'recoveryDays'?: number;
     /**
+     * Used for S3
+     * @type {string}
+     * @memberof ParamCreateBackupPolicy
+     */
+    'region'?: string;
+    /**
      * 
      * @type {Array<ParamScheduleDate>}
      * @memberof ParamCreateBackupPolicy
@@ -2697,6 +3491,8 @@ export interface ParamCreateBackupPolicy {
      */
     'scheduleType'?: string;
 }
+
+
 /**
  * 
  * @export
@@ -2736,6 +3532,12 @@ export interface ParamCreateOBClusterParam {
     'clusterName'?: string;
     /**
      * 
+     * @type {boolean}
+     * @memberof ParamCreateOBClusterParam
+     */
+    'deletionProtection'?: boolean;
+    /**
+     * 
      * @type {CommonClusterMode}
      * @memberof ParamCreateOBClusterParam
      */
@@ -2772,10 +3574,22 @@ export interface ParamCreateOBClusterParam {
     'parameters'?: Array<CommonKVPair>;
     /**
      * 
+     * @type {boolean}
+     * @memberof ParamCreateOBClusterParam
+     */
+    'pvcIndependent'?: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof ParamCreateOBClusterParam
      */
     'rootPassword'?: string;
+    /**
+     * Enum: express_oltp, express_oltp, olap, kv, htap, express_oltp_perf
+     * @type {string}
+     * @memberof ParamCreateOBClusterParam
+     */
+    'scenario'?: string;
     /**
      * 
      * @type {Array<ParamZoneTopology>}
@@ -2805,6 +3619,12 @@ export interface ParamCreateOBTenantParam {
     'connectWhiteList'?: string;
     /**
      * 
+     * @type {boolean}
+     * @memberof ParamCreateOBTenantParam
+     */
+    'deletionProtection'?: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof ParamCreateOBTenantParam
      */
@@ -2823,6 +3643,12 @@ export interface ParamCreateOBTenantParam {
     'obcluster': string;
     /**
      * 
+     * @type {Array<CommonKVPair>}
+     * @memberof ParamCreateOBTenantParam
+     */
+    'parameters'?: Array<CommonKVPair>;
+    /**
+     * 
      * @type {Array<ParamResourcePoolSpec>}
      * @memberof ParamCreateOBTenantParam
      */
@@ -2833,6 +3659,12 @@ export interface ParamCreateOBTenantParam {
      * @memberof ParamCreateOBTenantParam
      */
     'rootPassword': string;
+    /**
+     * Enum: express_oltp, express_oltp, olap, kv, htap, express_oltp_perf
+     * @type {string}
+     * @memberof ParamCreateOBTenantParam
+     */
+    'scenario'?: string;
     /**
      * 
      * @type {ParamTenantSourceSpec}
@@ -2863,6 +3695,25 @@ export interface ParamCreateOBTenantParam {
      * @memberof ParamCreateOBTenantParam
      */
     'unitNum': number;
+    /**
+     * 
+     * @type {Array<CommonKVPair>}
+     * @memberof ParamCreateOBTenantParam
+     */
+    'variables'?: Array<CommonKVPair>;
+}
+/**
+ * 
+ * @export
+ * @interface ParamDeleteOBServersParam
+ */
+export interface ParamDeleteOBServersParam {
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof ParamDeleteOBServersParam
+     */
+    'observers'?: Array<string>;
 }
 /**
  * 
@@ -3005,9 +3856,100 @@ export interface ParamOBServerStorageSpec {
 /**
  * 
  * @export
+ * @interface ParamPatchOBClusterParam
+ */
+export interface ParamPatchOBClusterParam {
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ParamPatchOBClusterParam
+     */
+    'addDeletionProtection'?: boolean;
+    /**
+     * 
+     * @type {ParamNFSVolumeSpec}
+     * @memberof ParamPatchOBClusterParam
+     */
+    'backupVolume'?: ParamNFSVolumeSpec;
+    /**
+     * Delete some parameters
+     * @type {Array<string>}
+     * @memberof ParamPatchOBClusterParam
+     */
+    'deletedParameters'?: Array<string>;
+    /**
+     * Add or modify some parameters
+     * @type {Array<CommonKVPair>}
+     * @memberof ParamPatchOBClusterParam
+     */
+    'modifiedParameters'?: Array<CommonKVPair>;
+    /**
+     * 
+     * @type {ParamMonitorSpec}
+     * @memberof ParamPatchOBClusterParam
+     */
+    'monitor'?: ParamMonitorSpec;
+    /**
+     * Replace all parameters
+     * @type {Array<CommonKVPair>}
+     * @memberof ParamPatchOBClusterParam
+     */
+    'parameters'?: Array<CommonKVPair>;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ParamPatchOBClusterParam
+     */
+    'removeBackupVolume'?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ParamPatchOBClusterParam
+     */
+    'removeDeletionProtection'?: boolean;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ParamPatchOBClusterParam
+     */
+    'removeMonitor'?: boolean;
+    /**
+     * 
+     * @type {CommonResourceSpec}
+     * @memberof ParamPatchOBClusterParam
+     */
+    'resource'?: CommonResourceSpec;
+    /**
+     * 
+     * @type {ParamOBServerStorageSpec}
+     * @memberof ParamPatchOBClusterParam
+     */
+    'storage'?: ParamOBServerStorageSpec;
+}
+/**
+ * 
+ * @export
  * @interface ParamPatchTenant
  */
 export interface ParamPatchTenant {
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ParamPatchTenant
+     */
+    'addDeletionProtection'?: boolean;
+    /**
+     * 
+     * @type {Array<CommonKVPair>}
+     * @memberof ParamPatchTenant
+     */
+    'parameters'?: Array<CommonKVPair>;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ParamPatchTenant
+     */
+    'removeDeletionProtection'?: boolean;
     /**
      * Deprecated Description: Deprecated, use PATCH /obtenants/:namespace/:name/pools/:zoneName instead
      * @type {ParamPatchUnitConfig}
@@ -3020,6 +3962,12 @@ export interface ParamPatchTenant {
      * @memberof ParamPatchTenant
      */
     'unitNum'?: number;
+    /**
+     * 
+     * @type {Array<CommonKVPair>}
+     * @memberof ParamPatchTenant
+     */
+    'variables'?: Array<CommonKVPair>;
 }
 /**
  * 
@@ -3131,9 +4079,40 @@ export interface ParamResourcePoolSpec {
 /**
  * 
  * @export
+ * @interface ParamRestartOBServersParam
+ */
+export interface ParamRestartOBServersParam {
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ParamRestartOBServersParam
+     */
+    'all'?: boolean;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof ParamRestartOBServersParam
+     */
+    'observers'?: Array<string>;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof ParamRestartOBServersParam
+     */
+    'obzones'?: Array<string>;
+}
+/**
+ * 
+ * @export
  * @interface ParamRestoreSourceSpec
  */
 export interface ParamRestoreSourceSpec {
+    /**
+     * 
+     * @type {string}
+     * @memberof ParamRestoreSourceSpec
+     */
+    'appId'?: string;
     /**
      * 
      * @type {string}
@@ -3165,11 +4144,17 @@ export interface ParamRestoreSourceSpec {
      */
     'ossAccessKey'?: string;
     /**
-     * Enum: OSS, NFS
+     * 
      * @type {string}
      * @memberof ParamRestoreSourceSpec
      */
-    'type': string;
+    'region'?: string;
+    /**
+     * Enum: OSS, NFS, COS, S3, S3_COMPATIBLE
+     * @type {ParamBackupDestType}
+     * @memberof ParamRestoreSourceSpec
+     */
+    'type': ParamBackupDestType;
     /**
      * 
      * @type {ParamRestoreUntilConfig}
@@ -3177,6 +4162,8 @@ export interface ParamRestoreSourceSpec {
      */
     'until'?: ParamRestoreUntilConfig;
 }
+
+
 /**
  * 
  * @export
@@ -3397,10 +4384,10 @@ export interface ParamZoneTopology {
     'replicas'?: number;
     /**
      * 
-     * @type {Array<CommonKVPair>}
+     * @type {Array<CommonTolerationSpec>}
      * @memberof ParamZoneTopology
      */
-    'tolerations'?: Array<CommonKVPair>;
+    'tolerations'?: Array<CommonTolerationSpec>;
     /**
      * 
      * @type {string}
@@ -3540,6 +4527,56 @@ export interface QueryMetrics200Response {
 /**
  * 
  * @export
+ * @interface QueryPlanDetailInfo200Response
+ */
+export interface QueryPlanDetailInfo200Response {
+    /**
+     * 
+     * @type {SqlPlanDetail}
+     * @memberof QueryPlanDetailInfo200Response
+     */
+    'data': SqlPlanDetail;
+    /**
+     * 
+     * @type {string}
+     * @memberof QueryPlanDetailInfo200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof QueryPlanDetailInfo200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
+ * @interface QuerySqlDetailInfo200Response
+ */
+export interface QuerySqlDetailInfo200Response {
+    /**
+     * 
+     * @type {SqlSqlDetailedInfo}
+     * @memberof QuerySqlDetailInfo200Response
+     */
+    'data': SqlSqlDetailedInfo;
+    /**
+     * 
+     * @type {string}
+     * @memberof QuerySqlDetailInfo200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof QuerySqlDetailInfo200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
  * @interface ReceiverReceiver
  */
 export interface ReceiverReceiver {
@@ -3610,6 +4647,31 @@ export interface ReceiverTemplate {
 }
 
 
+/**
+ * 
+ * @export
+ * @interface RequestStatistics200Response
+ */
+export interface RequestStatistics200Response {
+    /**
+     * 
+     * @type {Array<SqlRequestStatisticInfo>}
+     * @memberof RequestStatistics200Response
+     */
+    'data': Array<SqlRequestStatisticInfo>;
+    /**
+     * 
+     * @type {string}
+     * @memberof RequestStatistics200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof RequestStatistics200Response
+     */
+    'successful': boolean;
+}
 /**
  * 
  * @export
@@ -3745,11 +4807,11 @@ export interface ResponseBackupPolicy {
      */
     'createTime': string;
     /**
-     * Enum: NFS, OSS
-     * @type {string}
+     * Enum: NFS, OSS, COS, S3, S3_COMPATIBLE
+     * @type {ParamBackupDestType}
      * @memberof ResponseBackupPolicy
      */
-    'destType': string;
+    'destType': ParamBackupDestType;
     /**
      * 
      * @type {Array<ResponseK8sEvent>}
@@ -3829,6 +4891,8 @@ export interface ResponseBackupPolicy {
      */
     'uid': string;
 }
+
+
 /**
  * 
  * @export
@@ -4559,10 +5623,10 @@ export interface ResponseOBCluster {
     'namespace': string;
     /**
      * 
-     * @type {Array<CommonKVPair>}
+     * @type {Array<ResponseParameterSpec>}
      * @memberof ResponseOBCluster
      */
-    'parameters': Array<CommonKVPair>;
+    'parameters': Array<ResponseParameterSpec>;
     /**
      * 
      * @type {ResponseResourceSpecRender}
@@ -4611,6 +5675,51 @@ export interface ResponseOBCluster {
      * @memberof ResponseOBCluster
      */
     'version'?: string;
+}
+
+
+/**
+ * 
+ * @export
+ * @interface ResponseOBClusterMeta
+ */
+export interface ResponseOBClusterMeta {
+    /**
+     * 
+     * @type {number}
+     * @memberof ResponseOBClusterMeta
+     */
+    'clusterId': number;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseOBClusterMeta
+     */
+    'clusterName': string;
+    /**
+     * 
+     * @type {CommonClusterMode}
+     * @memberof ResponseOBClusterMeta
+     */
+    'mode': CommonClusterMode;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseOBClusterMeta
+     */
+    'name': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseOBClusterMeta
+     */
+    'namespace': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseOBClusterMeta
+     */
+    'uid': string;
 }
 
 
@@ -5278,10 +6387,10 @@ export interface ResponseOBZone {
     'statusDetail': string;
     /**
      * 
-     * @type {Array<CommonKVPair>}
+     * @type {Array<CommonTolerationSpec>}
      * @memberof ResponseOBZone
      */
-    'tolerations'?: Array<CommonKVPair>;
+    'tolerations'?: Array<CommonTolerationSpec>;
     /**
      * 
      * @type {string}
@@ -5331,6 +6440,31 @@ export interface ResponseOBZoneAvailableResource {
      * @memberof ResponseOBZoneAvailableResource
      */
     'serverCount': number;
+}
+/**
+ * 
+ * @export
+ * @interface ResponseParameterSpec
+ */
+export interface ResponseParameterSpec {
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseParameterSpec
+     */
+    'name': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseParameterSpec
+     */
+    'specValue': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseParameterSpec
+     */
+    'value': string;
 }
 /**
  * 
@@ -6026,6 +7160,786 @@ export interface SilenceStatus {
 }
 
 
+/**
+ * 
+ * @export
+ * @enum {string}
+ */
+
+export const SqlIndexCategory = {
+    IndexCategoryPrimaryKey: 'primaryKey',
+    IndexCategoryGlobalNormal: 'globalNormal',
+    IndexCategoryGlobalUnique: 'globalUnique',
+    IndexCategoryLocalNormal: 'localNormal',
+    IndexCategoryLocalUnique: 'localUnique'
+} as const;
+
+export type SqlIndexCategory = typeof SqlIndexCategory[keyof typeof SqlIndexCategory];
+
+
+/**
+ * 
+ * @export
+ * @interface SqlIndexInfo
+ */
+export interface SqlIndexInfo {
+    /**
+     * 
+     * @type {SqlIndexCategory}
+     * @memberof SqlIndexInfo
+     */
+    'category': SqlIndexCategory;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof SqlIndexInfo
+     */
+    'columns': Array<string>;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlIndexInfo
+     */
+    'indexName': string;
+    /**
+     * 
+     * @type {SqlIndexStatus}
+     * @memberof SqlIndexInfo
+     */
+    'status': SqlIndexStatus;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlIndexInfo
+     */
+    'tableName': string;
+}
+
+
+/**
+ * 
+ * @export
+ * @enum {string}
+ */
+
+export const SqlIndexStatus = {
+    IndexStatusCreating: 'creating',
+    IndexStatusAvailable: 'available',
+    IndexStatusError: 'error'
+} as const;
+
+export type SqlIndexStatus = typeof SqlIndexStatus[keyof typeof SqlIndexStatus];
+
+
+/**
+ * 
+ * @export
+ * @enum {string}
+ */
+
+export const SqlMetricCategory = {
+    Meta: 'meta',
+    Latency: 'latency',
+    Execution: 'execution'
+} as const;
+
+export type SqlMetricCategory = typeof SqlMetricCategory[keyof typeof SqlMetricCategory];
+
+
+/**
+ * 
+ * @export
+ * @enum {string}
+ */
+
+export const SqlPlanCategory = {
+    PlanCategoryLocal: 'local',
+    PlanCategoryRemote: 'remote',
+    PlanCategoryDistributed: 'distributed'
+} as const;
+
+export type SqlPlanCategory = typeof SqlPlanCategory[keyof typeof SqlPlanCategory];
+
+
+/**
+ * 
+ * @export
+ * @interface SqlPlanDetail
+ */
+export interface SqlPlanDetail {
+    /**
+     * 
+     * @type {SqlPlanCategory}
+     * @memberof SqlPlanDetail
+     */
+    'category': SqlPlanCategory;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanDetail
+     */
+    'generatedTime': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanDetail
+     */
+    'mergedVersion': number;
+    /**
+     * 
+     * @type {SqlPlanOperator}
+     * @memberof SqlPlanDetail
+     */
+    'planDetail': SqlPlanOperator;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlPlanDetail
+     */
+    'planHash': string;
+    /**
+     * 
+     * @type {Array<SqlPlanStatisticByServer>}
+     * @memberof SqlPlanDetail
+     */
+    'planStatistics': Array<SqlPlanStatisticByServer>;
+}
+
+
+/**
+ * 
+ * @export
+ * @interface SqlPlanDetailParam
+ */
+export interface SqlPlanDetailParam {
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlPlanDetailParam
+     */
+    'database'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanDetailParam
+     */
+    'endTime'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlPlanDetailParam
+     */
+    'namespace': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlPlanDetailParam
+     */
+    'obcluster': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlPlanDetailParam
+     */
+    'obtenant'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlPlanDetailParam
+     */
+    'planHash': string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanDetailParam
+     */
+    'startTime'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlPlanDetailParam
+     */
+    'user'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface SqlPlanOperator
+ */
+export interface SqlPlanOperator {
+    /**
+     * 
+     * @type {Array<SqlPlanOperator>}
+     * @memberof SqlPlanOperator
+     */
+    'childOperators'?: Array<SqlPlanOperator>;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanOperator
+     */
+    'cost': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanOperator
+     */
+    'estimatedRows': number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlPlanOperator
+     */
+    'name'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlPlanOperator
+     */
+    'operator': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlPlanOperator
+     */
+    'outputOrFilter'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface SqlPlanStatistic
+ */
+export interface SqlPlanStatistic {
+    /**
+     * 
+     * @type {SqlPlanCategory}
+     * @memberof SqlPlanStatistic
+     */
+    'category': SqlPlanCategory;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanStatistic
+     */
+    'cost': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanStatistic
+     */
+    'cpuTime': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanStatistic
+     */
+    'generatedTime': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanStatistic
+     */
+    'mergedVersion': number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlPlanStatistic
+     */
+    'planHash': string;
+}
+
+
+/**
+ * 
+ * @export
+ * @interface SqlPlanStatisticByServer
+ */
+export interface SqlPlanStatisticByServer {
+    /**
+     * 
+     * @type {SqlPlanCategory}
+     * @memberof SqlPlanStatisticByServer
+     */
+    'category': SqlPlanCategory;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanStatisticByServer
+     */
+    'cost': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanStatisticByServer
+     */
+    'cpuTime': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanStatisticByServer
+     */
+    'generatedTime': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanStatisticByServer
+     */
+    'mergedVersion': number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlPlanStatisticByServer
+     */
+    'planHash': string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanStatisticByServer
+     */
+    'planId': number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlPlanStatisticByServer
+     */
+    'server': string;
+}
+
+
+/**
+ * 
+ * @export
+ * @interface SqlRequestStatisticInfo
+ */
+export interface SqlRequestStatisticInfo {
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlRequestStatisticInfo
+     */
+    'database': string;
+    /**
+     * 
+     * @type {Array<SqlSqlStatisticMetric>}
+     * @memberof SqlRequestStatisticInfo
+     */
+    'executionStatistics': Array<SqlSqlStatisticMetric>;
+    /**
+     * 
+     * @type {ResponseMetricData}
+     * @memberof SqlRequestStatisticInfo
+     */
+    'executionTrend': ResponseMetricData;
+    /**
+     * 
+     * @type {Array<SqlSqlStatisticMetric>}
+     * @memberof SqlRequestStatisticInfo
+     */
+    'latencyStatistics': Array<SqlSqlStatisticMetric>;
+    /**
+     * 
+     * @type {ResponseMetricData}
+     * @memberof SqlRequestStatisticInfo
+     */
+    'latencyTrend': ResponseMetricData;
+    /**
+     * 
+     * @type {Array<SqlSqlStatisticMetric>}
+     * @memberof SqlRequestStatisticInfo
+     */
+    'planCategoryStatistics': Array<SqlSqlStatisticMetric>;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlRequestStatisticInfo
+     */
+    'tenant': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlRequestStatisticInfo
+     */
+    'user': string;
+}
+/**
+ * 
+ * @export
+ * @interface SqlSqlDetailParam
+ */
+export interface SqlSqlDetailParam {
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlDetailParam
+     */
+    'database'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlDetailParam
+     */
+    'endTime'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlDetailParam
+     */
+    'interval': number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlDetailParam
+     */
+    'namespace': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlDetailParam
+     */
+    'obcluster': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlDetailParam
+     */
+    'obtenant'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlDetailParam
+     */
+    'sqlId': string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlDetailParam
+     */
+    'startTime'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlDetailParam
+     */
+    'user'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface SqlSqlDetailedInfo
+ */
+export interface SqlSqlDetailedInfo {
+    /**
+     * 
+     * @type {Array<SqlSqlDiagnoseInfo>}
+     * @memberof SqlSqlDetailedInfo
+     */
+    'diagnoseInfo'?: Array<SqlSqlDiagnoseInfo>;
+    /**
+     * 
+     * @type {Array<ResponseMetricData>}
+     * @memberof SqlSqlDetailedInfo
+     */
+    'executionTrend': Array<ResponseMetricData>;
+    /**
+     * 
+     * @type {Array<SqlIndexInfo>}
+     * @memberof SqlSqlDetailedInfo
+     */
+    'indexies'?: Array<SqlIndexInfo>;
+    /**
+     * 
+     * @type {Array<ResponseMetricData>}
+     * @memberof SqlSqlDetailedInfo
+     */
+    'latencyTrend': Array<ResponseMetricData>;
+    /**
+     * 
+     * @type {Array<SqlPlanStatistic>}
+     * @memberof SqlSqlDetailedInfo
+     */
+    'plans': Array<SqlPlanStatistic>;
+}
+/**
+ * 
+ * @export
+ * @interface SqlSqlDiagnoseInfo
+ */
+export interface SqlSqlDiagnoseInfo {
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlDiagnoseInfo
+     */
+    'reason': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlDiagnoseInfo
+     */
+    'suggestion'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface SqlSqlFilter
+ */
+export interface SqlSqlFilter {
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlFilter
+     */
+    'database'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlFilter
+     */
+    'endTime'?: number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof SqlSqlFilter
+     */
+    'includeInnerSql'?: boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlFilter
+     */
+    'keyword'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlFilter
+     */
+    'namespace': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlFilter
+     */
+    'obcluster': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlFilter
+     */
+    'obtenant'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlFilter
+     */
+    'startTime'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlFilter
+     */
+    'user'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface SqlSqlInfo
+ */
+export interface SqlSqlInfo {
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlInfo
+     */
+    'database': string;
+    /**
+     * 
+     * @type {Array<SqlSqlDiagnoseInfo>}
+     * @memberof SqlSqlInfo
+     */
+    'diagnoseInfo'?: Array<SqlSqlDiagnoseInfo>;
+    /**
+     * 
+     * @type {Array<SqlSqlStatisticMetric>}
+     * @memberof SqlSqlInfo
+     */
+    'executionStatistics': Array<SqlSqlStatisticMetric>;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof SqlSqlInfo
+     */
+    'isInner': boolean;
+    /**
+     * 
+     * @type {Array<SqlSqlStatisticMetric>}
+     * @memberof SqlSqlInfo
+     */
+    'latencyStatistics': Array<SqlSqlStatisticMetric>;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlInfo
+     */
+    'observer': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlInfo
+     */
+    'sqlID': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlInfo
+     */
+    'sqlText': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlInfo
+     */
+    'sqlType': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlInfo
+     */
+    'tenant': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlInfo
+     */
+    'user': string;
+}
+/**
+ * 
+ * @export
+ * @interface SqlSqlMetricMeta
+ */
+export interface SqlSqlMetricMeta {
+    /**
+     * 
+     * @type {SqlMetricCategory}
+     * @memberof SqlSqlMetricMeta
+     */
+    'category': SqlMetricCategory;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlMetricMeta
+     */
+    'description': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof SqlSqlMetricMeta
+     */
+    'displayByDefault': boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlMetricMeta
+     */
+    'name': string;
+}
+
+
+/**
+ * 
+ * @export
+ * @interface SqlSqlMetricMetaCategory
+ */
+export interface SqlSqlMetricMetaCategory {
+    /**
+     * 
+     * @type {SqlMetricCategory}
+     * @memberof SqlSqlMetricMetaCategory
+     */
+    'category': SqlMetricCategory;
+    /**
+     * 
+     * @type {Array<SqlSqlMetricMeta>}
+     * @memberof SqlSqlMetricMetaCategory
+     */
+    'metrics': Array<SqlSqlMetricMeta>;
+}
+
+
+/**
+ * 
+ * @export
+ * @interface SqlSqlRequestStatisticParam
+ */
+export interface SqlSqlRequestStatisticParam {
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlRequestStatisticParam
+     */
+    'database'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlRequestStatisticParam
+     */
+    'endTime'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlRequestStatisticParam
+     */
+    'namespace': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlRequestStatisticParam
+     */
+    'obcluster': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlRequestStatisticParam
+     */
+    'obtenant'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlRequestStatisticParam
+     */
+    'startTime'?: number;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof SqlSqlRequestStatisticParam
+     */
+    'statisticScopes': Array<string>;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlRequestStatisticParam
+     */
+    'user'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface SqlSqlStatisticMetric
+ */
+export interface SqlSqlStatisticMetric {
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlStatisticMetric
+     */
+    'name': string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlStatisticMetric
+     */
+    'value': number;
+}
 
 /**
  * AccessControlApi - axios parameter creator
@@ -7165,6 +9079,45 @@ export const AlarmApiAxiosParamCreator = function (configuration?: Configuration
             };
         },
         /**
+         * Diagnose alert, trigger a job to do data collection and analization on background.
+         * @summary Diagnose alert
+         * @param {AlertAnalyzeParam} body alert analyze param
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        diagnoseAlert: async (body: AlertAnalyzeParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('diagnoseAlert', 'body', body)
+            const localVarPath = `/api/v1/alarm/alert/diagnose`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Get alarm receiver, query by receiver name.
          * @summary Get alarm receiver
          * @param {string} name rule name
@@ -7674,6 +9627,19 @@ export const AlarmApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Diagnose alert, trigger a job to do data collection and analization on background.
+         * @summary Diagnose alert
+         * @param {AlertAnalyzeParam} body alert analyze param
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async diagnoseAlert(body: AlertAnalyzeParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DiagnoseAlert200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.diagnoseAlert(body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AlarmApi.diagnoseAlert']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Get alarm receiver, query by receiver name.
          * @summary Get alarm receiver
          * @param {string} name rule name
@@ -7904,6 +9870,16 @@ export const AlarmApiFactory = function (configuration?: Configuration, basePath
             return localVarFp.deleteSilencer(id, options).then((request) => request(axios, basePath));
         },
         /**
+         * Diagnose alert, trigger a job to do data collection and analization on background.
+         * @summary Diagnose alert
+         * @param {AlertAnalyzeParam} body alert analyze param
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        diagnoseAlert(body: AlertAnalyzeParam, options?: any): AxiosPromise<DiagnoseAlert200Response> {
+            return localVarFp.diagnoseAlert(body, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Get alarm receiver, query by receiver name.
          * @summary Get alarm receiver
          * @param {string} name rule name
@@ -8114,6 +10090,18 @@ export class AlarmApi extends BaseAPI {
      */
     public deleteSilencer(id: string, options?: RawAxiosRequestConfig) {
         return AlarmApiFp(this.configuration).deleteSilencer(id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Diagnose alert, trigger a job to do data collection and analization on background.
+     * @summary Diagnose alert
+     * @param {AlertAnalyzeParam} body alert analyze param
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AlarmApi
+     */
+    public diagnoseAlert(body: AlertAnalyzeParam, options?: RawAxiosRequestConfig) {
+        return AlarmApiFp(this.configuration).diagnoseAlert(body, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -8912,6 +10900,702 @@ export class InfoApi extends BaseAPI {
 
 
 /**
+ * InspectionApi - axios parameter creator
+ * @export
+ */
+export const InspectionApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * create or update inspection policy
+         * @summary create or update inspection policy
+         * @param {InspectionPolicy} body inspection policy
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createOrUpdateInspectionPolicy: async (body: InspectionPolicy, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('createOrUpdateInspectionPolicy', 'body', body)
+            const localVarPath = `/api/v1/inspection/policies`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * delete inspection policy
+         * @summary delete inspection policy
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteInspectionPolicy: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/inspection/policies/{namespace}/{name}/{scenario}`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * get inspection policy
+         * @summary get inspection policy
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getInspectionPolicy: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/inspection/policies/{namespace}/{name}`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * get inspection report
+         * @summary get inspection report
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getInspectionReport: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/inspection/reports/{id}`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * list inspection policies
+         * @summary list inspection policies
+         * @param {string} [namespace] Namespace
+         * @param {string} [name] Object name
+         * @param {string} [obclusterName] obcluster name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listInspectionPolicies: async (namespace?: string, name?: string, obclusterName?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/inspection/policies`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+            if (namespace !== undefined) {
+                localVarQueryParameter['namespace'] = namespace;
+            }
+
+            if (name !== undefined) {
+                localVarQueryParameter['name'] = name;
+            }
+
+            if (obclusterName !== undefined) {
+                localVarQueryParameter['obclusterName'] = obclusterName;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * list inspection reports
+         * @summary list inspection reports
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listInspectionReports: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/inspection/reports`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * trigger inspection
+         * @summary trigger inspection
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        triggerInspection: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/inspection/policies/{namespace}/{name}/{scenario}`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * InspectionApi - functional programming interface
+ * @export
+ */
+export const InspectionApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = InspectionApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * create or update inspection policy
+         * @summary create or update inspection policy
+         * @param {InspectionPolicy} body inspection policy
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createOrUpdateInspectionPolicy(body: InspectionPolicy, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOrUpdateInspectionPolicy200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createOrUpdateInspectionPolicy(body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['InspectionApi.createOrUpdateInspectionPolicy']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * delete inspection policy
+         * @summary delete inspection policy
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async deleteInspectionPolicy(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DeleteInspectionPolicy200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteInspectionPolicy(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['InspectionApi.deleteInspectionPolicy']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * get inspection policy
+         * @summary get inspection policy
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getInspectionPolicy(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOrUpdateInspectionPolicy200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getInspectionPolicy(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['InspectionApi.getInspectionPolicy']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * get inspection report
+         * @summary get inspection report
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getInspectionReport(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetInspectionReport200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getInspectionReport(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['InspectionApi.getInspectionReport']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * list inspection policies
+         * @summary list inspection policies
+         * @param {string} [namespace] Namespace
+         * @param {string} [name] Object name
+         * @param {string} [obclusterName] obcluster name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listInspectionPolicies(namespace?: string, name?: string, obclusterName?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListInspectionPolicies200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listInspectionPolicies(namespace, name, obclusterName, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['InspectionApi.listInspectionPolicies']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * list inspection reports
+         * @summary list inspection reports
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listInspectionReports(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListInspectionReports200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listInspectionReports(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['InspectionApi.listInspectionReports']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * trigger inspection
+         * @summary trigger inspection
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async triggerInspection(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOrUpdateInspectionPolicy200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.triggerInspection(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['InspectionApi.triggerInspection']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * InspectionApi - factory interface
+ * @export
+ */
+export const InspectionApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = InspectionApiFp(configuration)
+    return {
+        /**
+         * create or update inspection policy
+         * @summary create or update inspection policy
+         * @param {InspectionPolicy} body inspection policy
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createOrUpdateInspectionPolicy(body: InspectionPolicy, options?: any): AxiosPromise<CreateOrUpdateInspectionPolicy200Response> {
+            return localVarFp.createOrUpdateInspectionPolicy(body, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * delete inspection policy
+         * @summary delete inspection policy
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteInspectionPolicy(options?: any): AxiosPromise<DeleteInspectionPolicy200Response> {
+            return localVarFp.deleteInspectionPolicy(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * get inspection policy
+         * @summary get inspection policy
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getInspectionPolicy(options?: any): AxiosPromise<CreateOrUpdateInspectionPolicy200Response> {
+            return localVarFp.getInspectionPolicy(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * get inspection report
+         * @summary get inspection report
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getInspectionReport(options?: any): AxiosPromise<GetInspectionReport200Response> {
+            return localVarFp.getInspectionReport(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * list inspection policies
+         * @summary list inspection policies
+         * @param {string} [namespace] Namespace
+         * @param {string} [name] Object name
+         * @param {string} [obclusterName] obcluster name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listInspectionPolicies(namespace?: string, name?: string, obclusterName?: string, options?: any): AxiosPromise<ListInspectionPolicies200Response> {
+            return localVarFp.listInspectionPolicies(namespace, name, obclusterName, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * list inspection reports
+         * @summary list inspection reports
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listInspectionReports(options?: any): AxiosPromise<ListInspectionReports200Response> {
+            return localVarFp.listInspectionReports(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * trigger inspection
+         * @summary trigger inspection
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        triggerInspection(options?: any): AxiosPromise<CreateOrUpdateInspectionPolicy200Response> {
+            return localVarFp.triggerInspection(options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * InspectionApi - object-oriented interface
+ * @export
+ * @class InspectionApi
+ * @extends {BaseAPI}
+ */
+export class InspectionApi extends BaseAPI {
+    /**
+     * create or update inspection policy
+     * @summary create or update inspection policy
+     * @param {InspectionPolicy} body inspection policy
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InspectionApi
+     */
+    public createOrUpdateInspectionPolicy(body: InspectionPolicy, options?: RawAxiosRequestConfig) {
+        return InspectionApiFp(this.configuration).createOrUpdateInspectionPolicy(body, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * delete inspection policy
+     * @summary delete inspection policy
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InspectionApi
+     */
+    public deleteInspectionPolicy(options?: RawAxiosRequestConfig) {
+        return InspectionApiFp(this.configuration).deleteInspectionPolicy(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * get inspection policy
+     * @summary get inspection policy
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InspectionApi
+     */
+    public getInspectionPolicy(options?: RawAxiosRequestConfig) {
+        return InspectionApiFp(this.configuration).getInspectionPolicy(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * get inspection report
+     * @summary get inspection report
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InspectionApi
+     */
+    public getInspectionReport(options?: RawAxiosRequestConfig) {
+        return InspectionApiFp(this.configuration).getInspectionReport(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * list inspection policies
+     * @summary list inspection policies
+     * @param {string} [namespace] Namespace
+     * @param {string} [name] Object name
+     * @param {string} [obclusterName] obcluster name
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InspectionApi
+     */
+    public listInspectionPolicies(namespace?: string, name?: string, obclusterName?: string, options?: RawAxiosRequestConfig) {
+        return InspectionApiFp(this.configuration).listInspectionPolicies(namespace, name, obclusterName, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * list inspection reports
+     * @summary list inspection reports
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InspectionApi
+     */
+    public listInspectionReports(options?: RawAxiosRequestConfig) {
+        return InspectionApiFp(this.configuration).listInspectionReports(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * trigger inspection
+     * @summary trigger inspection
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InspectionApi
+     */
+    public triggerInspection(options?: RawAxiosRequestConfig) {
+        return InspectionApiFp(this.configuration).triggerInspection(options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
+ * JobApi - axios parameter creator
+ * @export
+ */
+export const JobApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * Delete a job by id
+         * @summary Delete a job
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteJob: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/jobs/{id}`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Get job by id
+         * @summary Get job
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJob: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/jobs/{id}`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * JobApi - functional programming interface
+ * @export
+ */
+export const JobApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = JobApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * Delete a job by id
+         * @summary Delete a job
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async deleteJob(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DeleteInspectionPolicy200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteJob(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobApi.deleteJob']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Get job by id
+         * @summary Get job
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getJob(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DiagnoseAlert200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getJob(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobApi.getJob']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * JobApi - factory interface
+ * @export
+ */
+export const JobApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = JobApiFp(configuration)
+    return {
+        /**
+         * Delete a job by id
+         * @summary Delete a job
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteJob(options?: any): AxiosPromise<DeleteInspectionPolicy200Response> {
+            return localVarFp.deleteJob(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Get job by id
+         * @summary Get job
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getJob(options?: any): AxiosPromise<DiagnoseAlert200Response> {
+            return localVarFp.getJob(options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * JobApi - object-oriented interface
+ * @export
+ * @class JobApi
+ * @extends {BaseAPI}
+ */
+export class JobApi extends BaseAPI {
+    /**
+     * Delete a job by id
+     * @summary Delete a job
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobApi
+     */
+    public deleteJob(options?: RawAxiosRequestConfig) {
+        return JobApiFp(this.configuration).deleteJob(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Get job by id
+     * @summary Get job
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobApi
+     */
+    public getJob(options?: RawAxiosRequestConfig) {
+        return JobApiFp(this.configuration).getJob(options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
  * MetricApi - axios parameter creator
  * @export
  */
@@ -9241,6 +11925,53 @@ export const OBClusterApiAxiosParamCreator = function (configuration?: Configura
             };
         },
         /**
+         * delete specified observers from the obcluster
+         * @summary delete observers
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
+         * @param {ParamDeleteOBServersParam} body delete observers request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteOBServers: async (namespace: string, name: string, body: ParamDeleteOBServersParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('deleteOBServers', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('deleteOBServers', 'name', name)
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('deleteOBServers', 'body', body)
+            const localVarPath = `/api/v1/obclusters/namespace/{namespace}/name/{name}/observers`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * delete obzone
          * @summary delete obzone
          * @param {string} namespace obcluster namespace
@@ -9334,6 +12065,44 @@ export const OBClusterApiAxiosParamCreator = function (configuration?: Configura
          */
         getOBClusterStatistic: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/v1/obclusters/statistic`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * List OBCluster Parameters by namespace and name
+         * @summary List OBCluster Parameters
+         * @param {string} namespace namespace of obcluster resource
+         * @param {string} name name of obcluster resource
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listOBClusterParameters: async (namespace: string, name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('listOBClusterParameters', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('listOBClusterParameters', 'name', name)
+            const localVarPath = `/api/v1/obclusters/namespace/{namespace}/name/{name}/parameters`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -9465,6 +12234,100 @@ export const OBClusterApiAxiosParamCreator = function (configuration?: Configura
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * patch obcluster configuration including resources, storage, monitor and parameters
+         * @summary patch obcluster
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
+         * @param {ParamPatchOBClusterParam} body patch obcluster request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchOBCluster: async (namespace: string, name: string, body: ParamPatchOBClusterParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('patchOBCluster', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('patchOBCluster', 'name', name)
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('patchOBCluster', 'body', body)
+            const localVarPath = `/api/v1/obclusters/namespace/{namespace}/name/{name}`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * restart specified observers in the obcluster
+         * @summary restart observers
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
+         * @param {ParamRestartOBServersParam} body restart observers request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        restartOBServers: async (namespace: string, name: string, body: ParamRestartOBServersParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('restartOBServers', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('restartOBServers', 'name', name)
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('restartOBServers', 'body', body)
+            const localVarPath = `/api/v1/obclusters/namespace/{namespace}/name/{name}/restart`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
 
             return {
                 url: toPathString(localVarUrlObj),
@@ -9615,10 +12478,25 @@ export const OBClusterApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async deleteOBCluster(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DeleteOBCluster200Response>> {
+        async deleteOBCluster(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DeleteInspectionPolicy200Response>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.deleteOBCluster(namespace, name, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['OBClusterApi.deleteOBCluster']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * delete specified observers from the obcluster
+         * @summary delete observers
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
+         * @param {ParamDeleteOBServersParam} body delete observers request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async deleteOBServers(namespace: string, name: string, body: ParamDeleteOBServersParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOBCluster200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteOBServers(namespace, name, body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OBClusterApi.deleteOBServers']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -9663,6 +12541,20 @@ export const OBClusterApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * List OBCluster Parameters by namespace and name
+         * @summary List OBCluster Parameters
+         * @param {string} namespace namespace of obcluster resource
+         * @param {string} name name of obcluster resource
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listOBClusterParameters(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListOBClusterParameters200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listOBClusterParameters(namespace, name, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OBClusterApi.listOBClusterParameters']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * list related events of specific obcluster, including obzone and observer.
          * @summary list related events
          * @param {string} namespace obcluster namespace
@@ -9700,6 +12592,36 @@ export const OBClusterApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.listOBClusters(options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['OBClusterApi.listOBClusters']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * patch obcluster configuration including resources, storage, monitor and parameters
+         * @summary patch obcluster
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
+         * @param {ParamPatchOBClusterParam} body patch obcluster request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async patchOBCluster(namespace: string, name: string, body: ParamPatchOBClusterParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOBCluster200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.patchOBCluster(namespace, name, body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OBClusterApi.patchOBCluster']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * restart specified observers in the obcluster
+         * @summary restart observers
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
+         * @param {ParamRestartOBServersParam} body restart observers request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async restartOBServers(namespace: string, name: string, body: ParamRestartOBServersParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOBCluster200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.restartOBServers(namespace, name, body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OBClusterApi.restartOBServers']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -9773,8 +12695,20 @@ export const OBClusterApiFactory = function (configuration?: Configuration, base
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteOBCluster(namespace: string, name: string, options?: any): AxiosPromise<DeleteOBCluster200Response> {
+        deleteOBCluster(namespace: string, name: string, options?: any): AxiosPromise<DeleteInspectionPolicy200Response> {
             return localVarFp.deleteOBCluster(namespace, name, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * delete specified observers from the obcluster
+         * @summary delete observers
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
+         * @param {ParamDeleteOBServersParam} body delete observers request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteOBServers(namespace: string, name: string, body: ParamDeleteOBServersParam, options?: any): AxiosPromise<CreateOBCluster200Response> {
+            return localVarFp.deleteOBServers(namespace, name, body, options).then((request) => request(axios, basePath));
         },
         /**
          * delete obzone
@@ -9809,6 +12743,17 @@ export const OBClusterApiFactory = function (configuration?: Configuration, base
             return localVarFp.getOBClusterStatistic(options).then((request) => request(axios, basePath));
         },
         /**
+         * List OBCluster Parameters by namespace and name
+         * @summary List OBCluster Parameters
+         * @param {string} namespace namespace of obcluster resource
+         * @param {string} name name of obcluster resource
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listOBClusterParameters(namespace: string, name: string, options?: any): AxiosPromise<ListOBClusterParameters200Response> {
+            return localVarFp.listOBClusterParameters(namespace, name, options).then((request) => request(axios, basePath));
+        },
+        /**
          * list related events of specific obcluster, including obzone and observer.
          * @summary list related events
          * @param {string} namespace obcluster namespace
@@ -9838,6 +12783,30 @@ export const OBClusterApiFactory = function (configuration?: Configuration, base
          */
         listOBClusters(options?: any): AxiosPromise<ListOBClusters200Response> {
             return localVarFp.listOBClusters(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * patch obcluster configuration including resources, storage, monitor and parameters
+         * @summary patch obcluster
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
+         * @param {ParamPatchOBClusterParam} body patch obcluster request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchOBCluster(namespace: string, name: string, body: ParamPatchOBClusterParam, options?: any): AxiosPromise<CreateOBCluster200Response> {
+            return localVarFp.patchOBCluster(namespace, name, body, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * restart specified observers in the obcluster
+         * @summary restart observers
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
+         * @param {ParamRestartOBServersParam} body restart observers request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        restartOBServers(namespace: string, name: string, body: ParamRestartOBServersParam, options?: any): AxiosPromise<CreateOBCluster200Response> {
+            return localVarFp.restartOBServers(namespace, name, body, options).then((request) => request(axios, basePath));
         },
         /**
          * scale observer
@@ -9914,6 +12883,20 @@ export class OBClusterApi extends BaseAPI {
     }
 
     /**
+     * delete specified observers from the obcluster
+     * @summary delete observers
+     * @param {string} namespace obcluster namespace
+     * @param {string} name obcluster name
+     * @param {ParamDeleteOBServersParam} body delete observers request body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OBClusterApi
+     */
+    public deleteOBServers(namespace: string, name: string, body: ParamDeleteOBServersParam, options?: RawAxiosRequestConfig) {
+        return OBClusterApiFp(this.configuration).deleteOBServers(namespace, name, body, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * delete obzone
      * @summary delete obzone
      * @param {string} namespace obcluster namespace
@@ -9952,6 +12935,19 @@ export class OBClusterApi extends BaseAPI {
     }
 
     /**
+     * List OBCluster Parameters by namespace and name
+     * @summary List OBCluster Parameters
+     * @param {string} namespace namespace of obcluster resource
+     * @param {string} name name of obcluster resource
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OBClusterApi
+     */
+    public listOBClusterParameters(namespace: string, name: string, options?: RawAxiosRequestConfig) {
+        return OBClusterApiFp(this.configuration).listOBClusterParameters(namespace, name, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * list related events of specific obcluster, including obzone and observer.
      * @summary list related events
      * @param {string} namespace obcluster namespace
@@ -9986,6 +12982,34 @@ export class OBClusterApi extends BaseAPI {
      */
     public listOBClusters(options?: RawAxiosRequestConfig) {
         return OBClusterApiFp(this.configuration).listOBClusters(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * patch obcluster configuration including resources, storage, monitor and parameters
+     * @summary patch obcluster
+     * @param {string} namespace obcluster namespace
+     * @param {string} name obcluster name
+     * @param {ParamPatchOBClusterParam} body patch obcluster request body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OBClusterApi
+     */
+    public patchOBCluster(namespace: string, name: string, body: ParamPatchOBClusterParam, options?: RawAxiosRequestConfig) {
+        return OBClusterApiFp(this.configuration).patchOBCluster(namespace, name, body, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * restart specified observers in the obcluster
+     * @summary restart observers
+     * @param {string} namespace obcluster namespace
+     * @param {string} name obcluster name
+     * @param {ParamRestartOBServersParam} body restart observers request body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OBClusterApi
+     */
+    public restartOBServers(namespace: string, name: string, body: ParamRestartOBServersParam, options?: RawAxiosRequestConfig) {
+        return OBClusterApiFp(this.configuration).restartOBServers(namespace, name, body, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -11106,6 +14130,47 @@ export const OBTenantApiAxiosParamCreator = function (configuration?: Configurat
             };
         },
         /**
+         * List all the databases under obtenant
+         * @summary List obtenant databases
+         * @param {string} namespace obtenant namespace
+         * @param {string} name obtenant name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listOBTenantDatabases: async (namespace: string, name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('listOBTenantDatabases', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('listOBTenantDatabases', 'name', name)
+            const localVarPath = `/api/v1/obtenants/{namespace}/{name}/databases`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * List related events of specific tenant, including restore, backup and backup policy events
          * @summary List related events of specific tenant
          * @param {string} namespace obtenant namespace
@@ -11119,6 +14184,47 @@ export const OBTenantApiAxiosParamCreator = function (configuration?: Configurat
             // verify required parameter 'name' is not null or undefined
             assertParamExists('listOBTenantRelatedEvents', 'name', name)
             const localVarPath = `/api/v1/obtenants/{namespace}/{name}/related-events`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * List all the users under obtenant
+         * @summary List obtenant users
+         * @param {string} namespace obtenant namespace
+         * @param {string} name obtenant name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listOBTenantUsers: async (namespace: string, name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('listOBTenantUsers', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('listOBTenantUsers', 'name', name)
+            const localVarPath = `/api/v1/obtenants/{namespace}/{name}/users`
                 .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
                 .replace(`{${"name"}}`, encodeURIComponent(String(name)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
@@ -11578,6 +14684,20 @@ export const OBTenantApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * List all the databases under obtenant
+         * @summary List obtenant databases
+         * @param {string} namespace obtenant namespace
+         * @param {string} name obtenant name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listOBTenantDatabases(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListOBTenantDatabases200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listOBTenantDatabases(namespace, name, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OBTenantApi.listOBTenantDatabases']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * List related events of specific tenant, including restore, backup and backup policy events
          * @summary List related events of specific tenant
          * @param {string} namespace obtenant namespace
@@ -11589,6 +14709,20 @@ export const OBTenantApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.listOBTenantRelatedEvents(namespace, name, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['OBTenantApi.listOBTenantRelatedEvents']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * List all the users under obtenant
+         * @summary List obtenant users
+         * @param {string} namespace obtenant namespace
+         * @param {string} name obtenant name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listOBTenantUsers(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListOBTenantDatabases200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listOBTenantUsers(namespace, name, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OBTenantApi.listOBTenantUsers']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -11826,6 +14960,17 @@ export const OBTenantApiFactory = function (configuration?: Configuration, baseP
             return localVarFp.listBackupJobs(namespace, name, type, limit, options).then((request) => request(axios, basePath));
         },
         /**
+         * List all the databases under obtenant
+         * @summary List obtenant databases
+         * @param {string} namespace obtenant namespace
+         * @param {string} name obtenant name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listOBTenantDatabases(namespace: string, name: string, options?: any): AxiosPromise<ListOBTenantDatabases200Response> {
+            return localVarFp.listOBTenantDatabases(namespace, name, options).then((request) => request(axios, basePath));
+        },
+        /**
          * List related events of specific tenant, including restore, backup and backup policy events
          * @summary List related events of specific tenant
          * @param {string} namespace obtenant namespace
@@ -11835,6 +14980,17 @@ export const OBTenantApiFactory = function (configuration?: Configuration, baseP
          */
         listOBTenantRelatedEvents(namespace: string, name: string, options?: any): AxiosPromise<ListK8sEvents200Response> {
             return localVarFp.listOBTenantRelatedEvents(namespace, name, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * List all the users under obtenant
+         * @summary List obtenant users
+         * @param {string} namespace obtenant namespace
+         * @param {string} name obtenant name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listOBTenantUsers(namespace: string, name: string, options?: any): AxiosPromise<ListOBTenantDatabases200Response> {
+            return localVarFp.listOBTenantUsers(namespace, name, options).then((request) => request(axios, basePath));
         },
         /**
          * Patch an obtenant pool in a specific namespace
@@ -12082,6 +15238,19 @@ export class OBTenantApi extends BaseAPI {
     }
 
     /**
+     * List all the databases under obtenant
+     * @summary List obtenant databases
+     * @param {string} namespace obtenant namespace
+     * @param {string} name obtenant name
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OBTenantApi
+     */
+    public listOBTenantDatabases(namespace: string, name: string, options?: RawAxiosRequestConfig) {
+        return OBTenantApiFp(this.configuration).listOBTenantDatabases(namespace, name, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * List related events of specific tenant, including restore, backup and backup policy events
      * @summary List related events of specific tenant
      * @param {string} namespace obtenant namespace
@@ -12092,6 +15261,19 @@ export class OBTenantApi extends BaseAPI {
      */
     public listOBTenantRelatedEvents(namespace: string, name: string, options?: RawAxiosRequestConfig) {
         return OBTenantApiFp(this.configuration).listOBTenantRelatedEvents(namespace, name, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * List all the users under obtenant
+     * @summary List obtenant users
+     * @param {string} namespace obtenant namespace
+     * @param {string} name obtenant name
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OBTenantApi
+     */
+    public listOBTenantUsers(namespace: string, name: string, options?: RawAxiosRequestConfig) {
+        return OBTenantApiFp(this.configuration).listOBTenantUsers(namespace, name, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -12175,6 +15357,584 @@ export const ListBackupJobsTypeEnum = {
     ARCHIVE: 'ARCHIVE'
 } as const;
 export type ListBackupJobsTypeEnum = typeof ListBackupJobsTypeEnum[keyof typeof ListBackupJobsTypeEnum];
+
+
+/**
+ * SqlApi - axios parameter creator
+ * @export
+ */
+export const SqlApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * list sqls metrics
+         * @summary list sql metrics
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listSqlMetrics: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/sql/metrics`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * list suspicious sqls
+         * @summary list suspicious sqls
+         * @param {SqlSqlFilter} body sql filter
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listSuspiciousSqls: async (body: SqlSqlFilter, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('listSuspiciousSqls', 'body', body)
+            const localVarPath = `/api/v1/sql/suspiciousSqls`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * list top sqls ordering by spcecific metrics
+         * @summary list top sqls
+         * @param {SqlSqlFilter} body sql filter
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listTopSqls: async (body: SqlSqlFilter, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('listTopSqls', 'body', body)
+            const localVarPath = `/api/v1/sql/topSqls`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * query detailed statistic info of a plan
+         * @summary query plan detail info
+         * @param {SqlPlanDetailParam} body param for query detailed plan info
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        queryPlanDetailInfo: async (body: SqlPlanDetailParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('queryPlanDetailInfo', 'body', body)
+            const localVarPath = `/api/v1/sql/queryPlanDetailInfo`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * query detailed statistic info of a SQL
+         * @summary query SQL detail info
+         * @param {SqlSqlDetailParam} body param for query detailed sql info
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        querySqlDetailInfo: async (body: SqlSqlDetailParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('querySqlDetailInfo', 'body', body)
+            const localVarPath = `/api/v1/sql/querySqlDetailInfo`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * list request statistics
+         * @summary list request statistics
+         * @param {SqlSqlRequestStatisticParam} body sql request statistic param
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        requestStatistics: async (body: SqlSqlRequestStatisticParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('requestStatistics', 'body', body)
+            const localVarPath = `/api/v1/sql/requestStatistics`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * SqlApi - functional programming interface
+ * @export
+ */
+export const SqlApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = SqlApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * list sqls metrics
+         * @summary list sql metrics
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listSqlMetrics(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListSqlMetrics200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listSqlMetrics(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SqlApi.listSqlMetrics']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * list suspicious sqls
+         * @summary list suspicious sqls
+         * @param {SqlSqlFilter} body sql filter
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listSuspiciousSqls(body: SqlSqlFilter, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListSuspiciousSqls200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listSuspiciousSqls(body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SqlApi.listSuspiciousSqls']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * list top sqls ordering by spcecific metrics
+         * @summary list top sqls
+         * @param {SqlSqlFilter} body sql filter
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listTopSqls(body: SqlSqlFilter, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListSuspiciousSqls200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listTopSqls(body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SqlApi.listTopSqls']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * query detailed statistic info of a plan
+         * @summary query plan detail info
+         * @param {SqlPlanDetailParam} body param for query detailed plan info
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async queryPlanDetailInfo(body: SqlPlanDetailParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<QueryPlanDetailInfo200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.queryPlanDetailInfo(body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SqlApi.queryPlanDetailInfo']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * query detailed statistic info of a SQL
+         * @summary query SQL detail info
+         * @param {SqlSqlDetailParam} body param for query detailed sql info
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async querySqlDetailInfo(body: SqlSqlDetailParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<QuerySqlDetailInfo200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.querySqlDetailInfo(body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SqlApi.querySqlDetailInfo']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * list request statistics
+         * @summary list request statistics
+         * @param {SqlSqlRequestStatisticParam} body sql request statistic param
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async requestStatistics(body: SqlSqlRequestStatisticParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RequestStatistics200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.requestStatistics(body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SqlApi.requestStatistics']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * SqlApi - factory interface
+ * @export
+ */
+export const SqlApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = SqlApiFp(configuration)
+    return {
+        /**
+         * list sqls metrics
+         * @summary list sql metrics
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listSqlMetrics(options?: any): AxiosPromise<ListSqlMetrics200Response> {
+            return localVarFp.listSqlMetrics(options).then((request) => request(axios, basePath));
+        },
+        /**
+         * list suspicious sqls
+         * @summary list suspicious sqls
+         * @param {SqlSqlFilter} body sql filter
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listSuspiciousSqls(body: SqlSqlFilter, options?: any): AxiosPromise<ListSuspiciousSqls200Response> {
+            return localVarFp.listSuspiciousSqls(body, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * list top sqls ordering by spcecific metrics
+         * @summary list top sqls
+         * @param {SqlSqlFilter} body sql filter
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listTopSqls(body: SqlSqlFilter, options?: any): AxiosPromise<ListSuspiciousSqls200Response> {
+            return localVarFp.listTopSqls(body, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * query detailed statistic info of a plan
+         * @summary query plan detail info
+         * @param {SqlPlanDetailParam} body param for query detailed plan info
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        queryPlanDetailInfo(body: SqlPlanDetailParam, options?: any): AxiosPromise<QueryPlanDetailInfo200Response> {
+            return localVarFp.queryPlanDetailInfo(body, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * query detailed statistic info of a SQL
+         * @summary query SQL detail info
+         * @param {SqlSqlDetailParam} body param for query detailed sql info
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        querySqlDetailInfo(body: SqlSqlDetailParam, options?: any): AxiosPromise<QuerySqlDetailInfo200Response> {
+            return localVarFp.querySqlDetailInfo(body, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * list request statistics
+         * @summary list request statistics
+         * @param {SqlSqlRequestStatisticParam} body sql request statistic param
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        requestStatistics(body: SqlSqlRequestStatisticParam, options?: any): AxiosPromise<RequestStatistics200Response> {
+            return localVarFp.requestStatistics(body, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * SqlApi - object-oriented interface
+ * @export
+ * @class SqlApi
+ * @extends {BaseAPI}
+ */
+export class SqlApi extends BaseAPI {
+    /**
+     * list sqls metrics
+     * @summary list sql metrics
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SqlApi
+     */
+    public listSqlMetrics(options?: RawAxiosRequestConfig) {
+        return SqlApiFp(this.configuration).listSqlMetrics(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * list suspicious sqls
+     * @summary list suspicious sqls
+     * @param {SqlSqlFilter} body sql filter
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SqlApi
+     */
+    public listSuspiciousSqls(body: SqlSqlFilter, options?: RawAxiosRequestConfig) {
+        return SqlApiFp(this.configuration).listSuspiciousSqls(body, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * list top sqls ordering by spcecific metrics
+     * @summary list top sqls
+     * @param {SqlSqlFilter} body sql filter
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SqlApi
+     */
+    public listTopSqls(body: SqlSqlFilter, options?: RawAxiosRequestConfig) {
+        return SqlApiFp(this.configuration).listTopSqls(body, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * query detailed statistic info of a plan
+     * @summary query plan detail info
+     * @param {SqlPlanDetailParam} body param for query detailed plan info
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SqlApi
+     */
+    public queryPlanDetailInfo(body: SqlPlanDetailParam, options?: RawAxiosRequestConfig) {
+        return SqlApiFp(this.configuration).queryPlanDetailInfo(body, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * query detailed statistic info of a SQL
+     * @summary query SQL detail info
+     * @param {SqlSqlDetailParam} body param for query detailed sql info
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SqlApi
+     */
+    public querySqlDetailInfo(body: SqlSqlDetailParam, options?: RawAxiosRequestConfig) {
+        return SqlApiFp(this.configuration).querySqlDetailInfo(body, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * list request statistics
+     * @summary list request statistics
+     * @param {SqlSqlRequestStatisticParam} body sql request statistic param
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SqlApi
+     */
+    public requestStatistics(body: SqlSqlRequestStatisticParam, options?: RawAxiosRequestConfig) {
+        return SqlApiFp(this.configuration).requestStatistics(body, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
+ * StorageApi - axios parameter creator
+ * @export
+ */
+export const StorageApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * Get file by id
+         * @summary Get file
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getFile: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            const localVarPath = `/api/v1/storage/{id}`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * StorageApi - functional programming interface
+ * @export
+ */
+export const StorageApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = StorageApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * Get file by id
+         * @summary Get file
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getFile(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<File>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getFile(options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['StorageApi.getFile']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * StorageApi - factory interface
+ * @export
+ */
+export const StorageApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = StorageApiFp(configuration)
+    return {
+        /**
+         * Get file by id
+         * @summary Get file
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getFile(options?: any): AxiosPromise<File> {
+            return localVarFp.getFile(options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * StorageApi - object-oriented interface
+ * @export
+ * @class StorageApi
+ * @extends {BaseAPI}
+ */
+export class StorageApi extends BaseAPI {
+    /**
+     * Get file by id
+     * @summary Get file
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof StorageApi
+     */
+    public getFile(options?: RawAxiosRequestConfig) {
+        return StorageApiFp(this.configuration).getFile(options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
 
 
 /**

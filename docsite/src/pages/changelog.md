@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.3.1 (Release on 2024.11.28)
+
+### New Feature
+1. Support tenant variable and parameter management.
+
+### Bugfix
+1. Fix obagent deployment with service or standalone mode.
+2. Fix sql execution failure when adding server to the cluster in certain scenario.
+
+### Enhancement
+1. Add image and store config to the output of obcluster resource.
+
 ## 2.3.0 (Release on 2024.10.14)
 
 ### New Features

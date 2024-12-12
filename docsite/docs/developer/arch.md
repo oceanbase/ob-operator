@@ -12,12 +12,22 @@ ob-operator follows the [Operator pattern of Kubernetes](https://kubernetes.io/d
 * OBCluster: Represents an OceanBase cluster.
 * OBZone: Represents an OceanBase zone that belongs to an OBCluster.
 * OBServer: Represents an OceanBase observer resource that belongs to an OBZone.
-* OBParameter: Represents cluster parameters.
+* OBParameter: Represents cluster and tenant parameters.
 * OBTenant: Represents a tenant in the OceanBase cluster, which belongs to an OBCluster.
 * OBTenantBackupPolicy: Represents a scheduling backup policy for a tenant.
 * OBTenantBackup: Represents a backup task for a tenant.
 * OBTenantRestore: Represents a restore task for a tenant.
 * OBTenantOperation: Represents operational tasks for a tenant.
+* OBTenantVariable: Represents tenant variables.
+* OBClusterOperation: Represents operational tasks for a cluster.
+* OBResourceRescue: Represents a resource rescue task, which is used to recover resources that are stuck in an error state.
+* K8sCluster: Represents a Kubernetes cluster that is managed by ob-operator.
+
+## Diagram
+
+The following diagram illustrates layers of ob-operator and the relationship among the custom resources.
+
+![ob-operator architecture](/img/ob-operator-arch.png)
 
 ## Resource Manager
 
@@ -66,4 +76,4 @@ To address this issue, ob-operator adopts task flow mechanism and a global task 
 
 The relationship among the control loop, resource manager, and task manager is depicted in the following figure.
 
-![The relationship among the control loop, resource manager, and task manager](/img/ob-operator-arch.png)
+![The relationship among the control loop, resource manager, and task manager](/img/ob-operator-task-manager-arch.png)

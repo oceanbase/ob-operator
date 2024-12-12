@@ -202,6 +202,7 @@ func (o *UpdateOptions) Validate() error {
 func (o *UpdateOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of OBTenant")
 	cmd.Flags().StringVar(&o.ConnectWhiteList, FLAG_CONNECT_WHITE_LIST, "", "The connect white list of ob tenant")
-	cmd.Flags().StringToStringVar(&o.ZonePriority, FLAG_ZONE_PRIORITY, nil, "The zone priority config of OBTenant, e.g. --priority=<zone>=<priority>, set priority to 0 to delete zone from the unit pool")
+	cmd.Flags().StringToStringVar(&o.ZonePriority, FLAG_ZONE_PRIORITY, nil, "The zone priority config of OBTenant, e.g. --priority=<zone>=<priority>, set priority to 0 to delete zone from the unit pool, required")
 	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, "f", DEFAULT_FORCE_FLAG, "If the operation is a force operation")
+	_ = cmd.MarkFlagRequired(FLAG_ZONE_PRIORITY)
 }

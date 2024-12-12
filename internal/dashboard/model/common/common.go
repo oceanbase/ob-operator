@@ -24,7 +24,7 @@ type ResourceSpec struct {
 
 type StorageSpec struct {
 	StorageClass string `json:"storageClass"`
-	SizeGB       int64  `json:"size"`
+	SizeGB       int64  `json:"size" binding:"required"`
 }
 
 type SelectorExpression struct {
@@ -37,9 +37,10 @@ type AffinityType string
 
 type AffinitySpec struct {
 	SelectorExpression `json:",inline"`
-	Type               AffinityType `json:"type"`
-	Weight             int32        `json:"weight,omitempty"`
-	Preferred          bool         `json:"preferred,omitempty"`
+	// Enum: NODE, POD, POD_ANTI
+	Type      AffinityType `json:"type"`
+	Weight    int32        `json:"weight,omitempty"`
+	Preferred bool         `json:"preferred,omitempty"`
 }
 
 type TolerationSpec struct {

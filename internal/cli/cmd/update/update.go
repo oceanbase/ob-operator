@@ -24,20 +24,25 @@ import (
 func NewCmd() *cobra.Command {
 	o := update.NewUpdateOptions()
 	logger := utils.GetDefaultLoggerInstance()
+	componentList := []string{}
+	for component := range o.Components {
+		componentList = append(componentList, component)
+	}
 	cmd := &cobra.Command{
 		Use:   "update <component>",
 		Short: "Command for ob-operator and other components update",
 		Long: `Command for ob-operator and other components update.
 
 Currently support:
-- ob-operator: A Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes.
+- ob-operator: A Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes, support stable and develop version.
 - ob-dashboard: A web application that provides resource management capabilities.
-- local-path-provisioner: Provides a way for the Kubernetes users to utilize the local storage in each node, Storage of OceanBase cluster relies on it, which should be installed beforehand.
+- local-path-provisioner: Provides a way for the Kubernetes users to utilize the local storage in each node, Storage of OceanBase cluster relies on it, which should be installed beforehand, support stable and develop version.
 - cert-manager: Creates TLS certificates for workloads in Kubernetes and renews the certificates before they expire, ob-operator relies on it for certificate management, which should be installed beforehand.
 		
 if not specified, update ob-operator and ob-dashboard by default`,
-		PreRunE: o.Parse,
-		Args:    cobra.MaximumNArgs(1),
+		PreRunE:   o.Parse,
+		ValidArgs: componentList,
+		Args:      cobra.MatchAll(cobra.MaximumNArgs(1), cobra.OnlyValidArgs),
 		Run: func(cmd *cobra.Command, args []string) {
 			componentCount := 0
 			for component, version := range o.Components {

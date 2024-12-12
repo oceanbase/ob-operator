@@ -17,13 +17,13 @@ helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --
 
 * namespace：命名空间，可自定义，一般建议使用 oceanbase-system。
 
-* version：ob-operator 版本号，建议使用最新的版本 `2.3.0`。
+* version：ob-operator 版本号，建议使用最新的版本 `2.3.1`。
 
 ## 2.2 使用配置文件部署
 
 * Stable
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.0_release/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.1_release/deploy/operator.yaml
 ```
 * Development
 ```shell

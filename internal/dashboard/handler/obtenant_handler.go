@@ -443,7 +443,10 @@ func CreateBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	if createPolicyParam.DestType == "OSS" {
+	if createPolicyParam.DestType != param.BackupDestNFS {
+		if createPolicyParam.Host == "" {
+			return nil, httpErr.NewBadRequest("Host is required for non-NFS type destination")
+		}
 		createPolicyParam.OSSAccessID, err = crypto.DecryptWithPrivateKey(createPolicyParam.OSSAccessID)
 		if err != nil {
 			return nil, httpErr.NewBadRequest(err.Error())
@@ -451,6 +454,12 @@ func CreateBackupPolicy(c *gin.Context) (*response.BackupPolicy, error) {
 		createPolicyParam.OSSAccessKey, err = crypto.DecryptWithPrivateKey(createPolicyParam.OSSAccessKey)
 		if err != nil {
 			return nil, httpErr.NewBadRequest(err.Error())
+		}
+		if createPolicyParam.DestType == param.BackupDestCOS && createPolicyParam.AppID == "" {
+			return nil, httpErr.NewBadRequest("AppID is required for COS type destination")
+		}
+		if createPolicyParam.DestType == param.BackupDestS3 && createPolicyParam.Region == "" {
+			return nil, httpErr.NewBadRequest("Region is required for S3 type destination")
 		}
 	}
 	if createPolicyParam.BakEncryptionPassword != "" {
