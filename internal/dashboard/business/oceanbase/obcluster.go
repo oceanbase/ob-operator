@@ -90,12 +90,13 @@ func buildOBClusterOverview(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 	}
 	return &response.OBClusterOverview{
 		OBClusterMeta: response.OBClusterMeta{
-			UID:         string(obcluster.UID),
-			Namespace:   obcluster.Namespace,
-			Name:        obcluster.Name,
-			ClusterName: obcluster.Spec.ClusterName,
-			ClusterId:   obcluster.Spec.ClusterId,
-			Mode:        clusterMode,
+			UID:             string(obcluster.UID),
+			Namespace:       obcluster.Namespace,
+			Name:            obcluster.Name,
+			ClusterName:     obcluster.Spec.ClusterName,
+			ClusterId:       obcluster.Spec.ClusterId,
+			Mode:            clusterMode,
+			SupportStaticIP: obcluster.SupportStaticIP(),
 		},
 		Status:       getStatisticStatus(obcluster),
 		StatusDetail: obcluster.Status.Status,

@@ -58,7 +58,10 @@ type OBClusterMeta struct {
 	ClusterName string             `json:"clusterName" binding:"required"`
 	ClusterId   int64              `json:"clusterId" binding:"required"`
 	Mode        common.ClusterMode `json:"mode" binding:"required"`
+
+	SupportStaticIP bool `json:"supportStaticIP" binding:"required"`
 }
+
 type OBClusterOverview struct {
 	OBClusterMeta `json:",inline"`
 	Status        string   `json:"status" binding:"required"`
