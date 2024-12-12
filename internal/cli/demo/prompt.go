@@ -39,6 +39,7 @@ var (
 	}
 )
 
+// PromptFactory is a factory to create prompt
 type PromptFactory struct {
 	promptTepl *promptui.PromptTemplates
 	selectTepl *promptui.SelectTemplates
@@ -114,7 +115,7 @@ func (pf *PromptFactory) CreatePrompt(promptType string) any {
 				if input == "" {
 					return nil
 				}
-				if utils.CheckPassword(input) {
+				if !utils.CheckPassword(input) {
 					return errors.New("invalid password")
 				}
 				return nil

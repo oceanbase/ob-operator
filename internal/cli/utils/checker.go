@@ -15,11 +15,15 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os/exec"
 
+	"k8s.io/apimachinery/pkg/types"
+
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/clients"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 )
@@ -58,6 +62,22 @@ var (
 
 	localPathProvisionerResources = "local-path-provisioner"
 )
+
+// CheckIfClusterExists checks if cluster exists in the environment
+func CheckIfClusterExists(ctx context.Context, name string, namespace string) bool {
+	cluster, _ := clients.GetOBCluster(ctx, namespace, name)
+	return cluster != nil
+}
+
+// CheckIfTenantExists checks if tenant exists in the environment
+func CheckIfTenantExists(ctx context.Context, name string, namespace string) bool {
+	nn := types.NamespacedName{
+		Name:      name,
+		Namespace: namespace,
+	}
+	tenant, _ := clients.GetOBTenant(ctx, nn)
+	return tenant != nil
+}
 
 // CheckTenantStatus checks running status of obtenant
 func CheckTenantStatus(tenant *v1alpha1.OBTenant) error {

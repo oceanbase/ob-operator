@@ -31,9 +31,6 @@ func NewCreateCmd() *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := o.Complete(); err != nil {
-				logger.Fatalln(err)
-			}
 			if err := o.Validate(); err != nil {
 				logger.Fatalln(err)
 			}

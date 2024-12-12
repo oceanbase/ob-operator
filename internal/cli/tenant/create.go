@@ -116,12 +116,6 @@ func (o *CreateOptions) Complete() error {
 	if o.RestoreType != "" {
 		o.RestoreType = strings.ToUpper(o.RestoreType)
 	}
-	if o.RestoreType == "NFS" && o.Source.Restore.BakDataSource == "" {
-		o.Source.Restore.BakDataSource = fmt.Sprintf("%s/%s", "backup", o.From)
-	}
-	if o.RestoreType == "NFS" && o.Source.Restore.ArchiveSource == "" {
-		o.Source.Restore.ArchiveSource = fmt.Sprintf("%s/%s", "archive", o.From)
-	}
 	return nil
 }
 
@@ -141,14 +135,17 @@ func (o *CreateOptions) Validate() error {
 	if !utils.CheckTenantName(o.TenantName) {
 		return fmt.Errorf("invalid tenant name: %s, the first letter must be a letter or an underscore and cannot contain -", o.TenantName)
 	}
+	if o.Restore && o.Source == nil {
+		return errors.New("source tenant is not specified")
+	}
 	if o.Restore && o.RestoreType != "OSS" && o.RestoreType != "NFS" {
-		return errors.New("Restore Type not supported")
+		return errors.New("restore Type is not supported")
 	}
 	if o.Restore && o.RestoreType == "OSS" && o.Source.Restore.OSSAccessKey == "" {
-		return errors.New("oss access key not specified")
+		return errors.New("oss access key is not specified")
 	}
 	if o.Restore && o.RestoreType == "NFS" && o.Source.Restore.BakEncryptionPassword == "" {
-		return errors.New("back encryption password not specified")
+		return errors.New("back encryption password is not specified")
 	}
 	return nil
 }
@@ -401,6 +398,7 @@ func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 func (o *CreateOptions) SetRequiredFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired(FLAG_CLUSTER_NAME)
 	_ = cmd.MarkFlagRequired(FLAG_ZONE_PRIORITY)
+	cmd.MarkFlagsRequiredTogether(FLAG_RESTORE, FLAG_ARCHIVE_SOURCE, FLAG_BAK_DATA_SOURCE)
 }
 
 // AddBaseFlags add base flags
