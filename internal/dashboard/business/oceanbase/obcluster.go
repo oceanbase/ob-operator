@@ -20,7 +20,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	logger "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
@@ -896,17 +895,17 @@ func ListOBClusterParameters(ctx context.Context, nn *param.K8sObjectIdentity) (
 		LabelSelector: fmt.Sprintf("%s=%s", oceanbaseconst.LabelRefOBCluster, nn.Name),
 	})
 	if err != nil {
-		logrus.WithError(err).Error("Failed to list observers")
+		logger.WithError(err).Error("Failed to list observers")
 		return nil, errors.Wrap(err, "List observers")
 	}
 	conn, err := utils.GetOBConnection(ctx, obcluster, "root", "sys", obcluster.Spec.UserSecrets.Root)
 	if err != nil {
-		logrus.Info("Failed to get OceanBase database connection")
+		logger.Info("Failed to get OceanBase database connection")
 		return nil, errors.Wrap(err, "Get OceanBase database connection")
 	}
 	parameters, err := conn.ListParametersWithTenantID(ctx, 1)
 	if err != nil {
-		logrus.WithError(err).Error("Failed to query parameters")
+		logger.WithError(err).Error("Failed to query parameters")
 		return nil, errors.Wrap(err, "Query parameters")
 	}
 	return parameters, nil

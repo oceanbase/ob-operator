@@ -36,9 +36,8 @@ func NewCliCmd() *cobra.Command {
 			if cmd.Flags().Changed("version") {
 				versionCmd := version.NewCmd()
 				return versionCmd.RunE(cmd, args)
-			} else {
-				return cmd.Help()
 			}
+			return cmd.Help()
 		},
 	}
 	cmd.AddCommand(version.NewCmd())
