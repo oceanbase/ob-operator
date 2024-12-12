@@ -16,7 +16,6 @@ package backup
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
@@ -178,17 +177,6 @@ func CreateTenantBackupPolicy(ctx context.Context, o *CreateOptions) (*v1alpha1.
 	return policy, nil
 }
 
-func (o *CreateOptions) Complete() error {
-	// set default values for archive path and backup data path
-	if o.DestType == "NFS" && o.ArchivePath == "" {
-		o.ArchivePath = fmt.Sprintf("%s/%s", "archive", o.Name)
-	}
-	if o.DestType == "NFS" && o.BakDataPath == "" {
-		o.BakDataPath = fmt.Sprintf("%s/%s", "backup", o.Name)
-	}
-	return nil
-}
-
 func (o *CreateOptions) Validate() error {
 	if o.Namespace == "" {
 		return errors.New("Namespace is required")
@@ -224,6 +212,8 @@ func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 
 func (o *CreateOptions) SetRequiredFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired(FLAG_FULL)
+	_ = cmd.MarkFlagRequired(FLAG_ARCHIVE_PATH)
+	_ = cmd.MarkFlagRequired(FLAG_BAK_DATA_PATH)
 }
 
 // AddBaseFlags adds the base flags for the create command
