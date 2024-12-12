@@ -45,7 +45,7 @@ func NewShowCmd() *cobra.Command {
 				logger.Fatalln(err, "failed to get backup policy")
 			}
 			if backupPolicy == nil || backupPolicy.Name == "" {
-				logger.Fatalln("no backup policy found")
+				logger.Fatalln("no backup policies found")
 			}
 			backupJobList, err := backup.ListBackupJobs(cmd.Context(), backupPolicy.Name, o)
 			if err != nil {
@@ -60,9 +60,9 @@ func NewShowCmd() *cobra.Command {
 				sort.Slice(backupJobList.Items, func(i, j int) bool {
 					return backupJobList.Items[i].CreationTimestamp.Before(&backupJobList.Items[j].CreationTimestamp)
 				})
+				tbLog.Println("JOBNAME \t STATUS \t TYPE \t STARTAT \t ENDAT \t")
 			}
 			for _, job := range backupJobList.Items {
-				tbLog.Println("JOBNAME \t STATUS \t TYPE \t STARTAT \t ENDAT \t")
 				tbLog.Printf("%s \t %s \t %s \t %s \t %s \n", job.Name, job.Status.Status, job.Spec.Type, job.Status.StartedAt, job.Status.EndedAt)
 			}
 			if err = tbw.Flush(); err != nil {
