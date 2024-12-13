@@ -29,5 +29,5 @@ func NewListOptions() *ListOptions {
 
 // AddFlags adds flags for list command
 func (o *ListOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of ob tenant, if not set, use default namespace")
+	cmd.Flags().StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of ob tenant, if not set, use default namespace")
 }

@@ -117,7 +117,7 @@ func (o *UpdateOptions) AddFlags(cmd *cobra.Command) {
 // AddBaseFlags adds the base flags for the create command
 func (o *UpdateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags := cmd.Flags()
-	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the ob tenant")
+	baseFlags.StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the ob tenant")
 	baseFlags.IntVar(&o.JobKeepDays, FLAG_JOB_KEEP_DAYS, DEFAULT_JOB_KEEP_DAYS, "The number of days to keep the backup job")
 	baseFlags.IntVar(&o.RecoveryDays, FLAG_RECOVERY_DAYS, DEFAULT_RECOVERY_DAYS, "The number of days to keep the backup recovery")
 	baseFlags.IntVar(&o.PieceIntervalDays, FLAG_PIECE_INTERVAL_DAYS, DEFAULT_PIECE_INTERVAL_DAYS, "The number of days to switch the backup piece")

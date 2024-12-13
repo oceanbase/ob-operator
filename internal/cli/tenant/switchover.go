@@ -62,6 +62,6 @@ func GetSwitchOverOperation(o *SwitchOverOptions) *v1alpha1.OBTenantOperation {
 
 // AddFlags add basic flags for tenant management
 func (o *SwitchOverOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "namespace of ob tenant")
-	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, "f", DEFAULT_FORCE_FLAG, "If the operation is a force operation")
+	cmd.Flags().StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "namespace of ob tenant")
+	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, SHORTHAND_FORCE, DEFAULT_FORCE_FLAG, "If the operation is a force operation")
 }

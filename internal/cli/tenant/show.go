@@ -29,5 +29,5 @@ func NewShowOptions() *ShowOptions {
 
 // AddFlags add basic flags for tenant management
 func (o *ShowOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "namespace of ob cluster")
+	cmd.Flags().StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "namespace of ob cluster")
 }

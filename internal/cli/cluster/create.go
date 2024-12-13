@@ -344,17 +344,17 @@ func (o *CreateOptions) SetRequiredFlags(cmd *cobra.Command) {
 // AddZoneFlags adds the zone-related flags to the command.
 func (o *CreateOptions) AddZoneFlags(cmd *cobra.Command) {
 	zoneFlags := pflag.NewFlagSet(FLAGSET_ZONE, pflag.ContinueOnError)
-	zoneFlags.StringToStringVarP(&o.Zones, FLAG_ZONES, "z", map[string]string{"z1": "1"}, "The zones of the cluster, e.g. '--zones=<zone>=<replica>'")
+	zoneFlags.StringToStringVarP(&o.Zones, FLAG_ZONES, SHORTHAND_ZONES, map[string]string{"z1": "1"}, "The zones of the cluster, e.g. '--zones=<zone>=<replica>'")
 	cmd.Flags().AddFlagSet(zoneFlags)
 }
 
 // AddBaseFlags adds the base flags to the command.
 func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags := cmd.Flags()
-	baseFlags.StringVarP(&o.ClusterName, FLAG_CLUSTER_NAME, "n", "", "Cluster name, if not specified, use resource name in k8s instead")
-	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the cluster")
+	baseFlags.StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the cluster")
+	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOT_PASSWORD, SHORTHAND_PASSWD, "", "The root password of the cluster")
+	baseFlags.StringVar(&o.ClusterName, FLAG_CLUSTER_NAME, "", "Cluster name, if not specified, use resource name in k8s instead")
 	baseFlags.Int64Var(&o.ClusterId, FLAG_CLUSTER_ID, DEFAULT_ID, "The id of the cluster")
-	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOT_PASSWORD, "p", "", "The root password of the cluster")
 	baseFlags.StringVar(&o.Mode, FLAG_MODE, DEFAULT_MODE, "The mode of the cluster")
 }
 

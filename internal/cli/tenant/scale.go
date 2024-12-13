@@ -117,9 +117,9 @@ func (o *ScaleOptions) Validate() error {
 
 // AddFlags for scale options
 func (o *ScaleOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "namespace of OBTenant")
+	cmd.Flags().StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "namespace of OBTenant")
+	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, SHORTHAND_FORCE, DEFAULT_FORCE_FLAG, "If the operation is a force operation")
 	cmd.Flags().IntVar(&o.UnitNumber, FLAG_UNIT_NUMBER, DEFAULT_UNIT_NUMBER, "unit-number of pools")
-	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, "f", DEFAULT_FORCE_FLAG, "If the operation is a force operation")
 	o.AddUnitFlags(cmd)
 }
 
