@@ -41,7 +41,7 @@ func NewCreateCmd() *cobra.Command {
 				logger.Fatalln(err)
 			}
 			logger.Printf("Create OBTenant instance: %s", o.TenantName)
-			logger.Printf("Run `echo $(kubectl get secret %s -o jsonpath='{.data.password}'|base64 --decode)` to get the secrets", obtenant.Spec.Credentials.Root)
+			logger.Printf("Run `echo $(kubectl get secret %s -n %s -o jsonpath='{.data.password}'|base64 --decode)` to get the secrets", obtenant.Spec.Credentials.Root, obtenant.Namespace)
 		},
 	}
 	o.AddFlags(cmd)

@@ -129,7 +129,7 @@ func addHelmRepo() error {
 
 // updateHelmRepo update ob-operator helm repo
 func updateHelmRepo() error {
-	cmdUpdateRepo := exec.Command("helm", "repo", "update", "ob-operator")
+	cmdUpdateRepo := exec.Command("helm", "repo", "update")
 	output, err := cmdUpdateRepo.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("updating repo failed: %s, %s", err, output)
