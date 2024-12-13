@@ -776,7 +776,7 @@ func PatchOBCluster(ctx context.Context, nn *param.K8sObjectIdentity, param *par
 	}
 	alreadyIgnoredDeletion := obcluster.Annotations[oceanbaseconst.AnnotationsIgnoreDeletion] == "true"
 
-	if obcluster.Spec.OBServerTemplate != nil {
+	if param.Resource != nil {
 		// Update resource if specified
 		obcluster.Spec.OBServerTemplate.Resource = &apitypes.ResourceSpec{
 			Cpu:    *apiresource.NewQuantity(param.Resource.Cpu, apiresource.DecimalSI),

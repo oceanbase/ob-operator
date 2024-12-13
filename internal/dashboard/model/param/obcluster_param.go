@@ -90,7 +90,7 @@ type OBZoneIdentity struct {
 }
 
 type PatchOBClusterParam struct {
-	Resource           common.ResourceSpec  `json:"resource"`
+	Resource           *common.ResourceSpec `json:"resource"`
 	Storage            *OBServerStorageSpec `json:"storage"`
 	Monitor            *MonitorSpec         `json:"monitor"`
 	RemoveMonitor      bool                 `json:"removeMonitor"`
