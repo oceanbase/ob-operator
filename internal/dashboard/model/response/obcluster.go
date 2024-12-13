@@ -59,7 +59,8 @@ type OBClusterMeta struct {
 	ClusterId   int64              `json:"clusterId" binding:"required"`
 	Mode        common.ClusterMode `json:"mode" binding:"required"`
 
-	SupportStaticIP bool `json:"supportStaticIP" binding:"required"`
+	SupportStaticIP    bool `json:"supportStaticIP" binding:"required"`
+	DeletionProtection bool `json:"deletionProtection" binding:"required"`
 }
 
 type OBClusterOverview struct {

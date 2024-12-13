@@ -77,6 +77,7 @@ func buildOBClusterOverview(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 	}
 	clusterMode := modelcommon.ClusterModeNormal
 	annotations := obcluster.GetAnnotations()
+	deletionProtection := false
 	if annotations != nil {
 		if mode, ok := annotations[oceanbaseconst.AnnotationsMode]; ok {
 			switch mode {
@@ -87,16 +88,18 @@ func buildOBClusterOverview(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 			default:
 			}
 		}
+		deletionProtection = annotations[oceanbaseconst.AnnotationsIgnoreDeletion] == "true"
 	}
 	return &response.OBClusterOverview{
 		OBClusterMeta: response.OBClusterMeta{
-			UID:             string(obcluster.UID),
-			Namespace:       obcluster.Namespace,
-			Name:            obcluster.Name,
-			ClusterName:     obcluster.Spec.ClusterName,
-			ClusterId:       obcluster.Spec.ClusterId,
-			Mode:            clusterMode,
-			SupportStaticIP: obcluster.SupportStaticIP(),
+			UID:                string(obcluster.UID),
+			Namespace:          obcluster.Namespace,
+			Name:               obcluster.Name,
+			ClusterName:        obcluster.Spec.ClusterName,
+			ClusterId:          obcluster.Spec.ClusterId,
+			Mode:               clusterMode,
+			SupportStaticIP:    obcluster.SupportStaticIP(),
+			DeletionProtection: deletionProtection,
 		},
 		Status:       getStatisticStatus(obcluster),
 		StatusDetail: obcluster.Status.Status,
@@ -860,8 +863,8 @@ func RestartOBServers(ctx context.Context, nn *param.K8sObjectIdentity, param *p
 	// Create OBClusterOperation for restarting observers
 	operation := &v1alpha1.OBClusterOperation{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: "restart-observers-",
-			Namespace:    nn.Namespace,
+			Name:      utils.GenerateName("restart-observers"),
+			Namespace: nn.Namespace,
 		},
 		Spec: v1alpha1.OBClusterOperationSpec{
 			Type:      constants.ClusterOpTypeRestartOBServers,
@@ -894,8 +897,8 @@ func DeleteOBServers(ctx context.Context, nn *param.K8sObjectIdentity, param *pa
 	// Create OBClusterOperation for deleting observers
 	operation := &v1alpha1.OBClusterOperation{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: "delete-observers-",
-			Namespace:    nn.Namespace,
+			Name:      utils.GenerateName("delete-observers"),
+			Namespace: nn.Namespace,
 		},
 		Spec: v1alpha1.OBClusterOperationSpec{
 			Type:      constants.ClusterOpTypeDeleteOBServers,
