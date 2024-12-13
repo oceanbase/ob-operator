@@ -20,11 +20,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/rand"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/clients/schema"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
-	"github.com/oceanbase/ob-operator/internal/dashboard/utils"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
@@ -112,7 +112,7 @@ func ListAllTenantBackupPolicies(ctx context.Context, ns string, listOptions met
 func ForceDeleteTenantBackupPolicy(ctx context.Context, nn types.NamespacedName) error {
 	_, err := RescueClient.Create(ctx, &v1alpha1.OBResourceRescue{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: utils.GenerateName("force-delete"),
+			Name: "force-delete-" + rand.String(8),
 		},
 		Spec: v1alpha1.OBResourceRescueSpec{
 			TargetKind:    schema.OBTenantBackupPolicyKind,
