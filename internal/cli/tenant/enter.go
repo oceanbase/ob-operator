@@ -84,3 +84,12 @@ const (
 const (
 	FLAG_TENANT_NAME_IN_K8S = "tenant-name-in-k8s"
 )
+
+// Shorthand for tenant management
+const (
+	SHORTHAND_NAMESPACE = "n"
+	SHORTHAND_CHARSET   = "c"
+	SHORTHAND_FORCE     = "f"
+	SHORTHAND_RESTORE   = "r"
+	SHORTHAND_PASSWD    = "p"
+)

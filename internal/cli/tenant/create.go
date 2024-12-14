@@ -404,11 +404,11 @@ func (o *CreateOptions) SetRequiredFlags(cmd *cobra.Command) {
 // AddBaseFlags add base flags
 func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags := cmd.Flags()
-	baseFlags.StringVarP(&o.TenantName, FLAG_TENANT_NAME, "n", "", "Tenant name, if not specified, use name in k8s instead")
+	baseFlags.StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the tenant")
+	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOTPASSWD, SHORTHAND_PASSWD, "", "The root password of the primary tenant, if not specified, generate a random password")
+	baseFlags.StringVarP(&o.Charset, FLAG_CHARSET, SHORTHAND_CHARSET, DEFAULT_CHARSET, "The charset used in ob tenant")
+	baseFlags.StringVar(&o.TenantName, FLAG_TENANT_NAME, "", "Tenant name, if not specified, use name in k8s instead")
 	baseFlags.StringVar(&o.ClusterName, FLAG_CLUSTER_NAME, "", "The cluster name tenant belonged to in k8s, required")
-	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the tenant")
-	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOTPASSWD, "p", "", "The root password of the primary tenant, if not specified, generate a random password")
-	baseFlags.StringVarP(&o.Charset, FLAG_CHARSET, "c", DEFAULT_CHARSET, "The charset used in ob tenant")
 	baseFlags.StringVar(&o.ConnectWhiteList, FLAG_CONNECT_WHITE_LIST, DEFAULT_CONNECT_WHITE_LIST, "The connect white list used in ob tenant")
 	baseFlags.StringVar(&o.From, FLAG_FROM, "", "The source tenant to create a standby tenant or restore the tenant")
 }
@@ -436,7 +436,7 @@ func (o *CreateOptions) AddUnitFlags(cmd *cobra.Command) {
 // AddRestoreFlags add restore flags
 func (o *CreateOptions) AddRestoreFlags(cmd *cobra.Command) {
 	restoreFlags := pflag.NewFlagSet(FLAGSET_RESTORE, pflag.ContinueOnError)
-	restoreFlags.BoolVarP(&o.Restore, FLAG_RESTORE, "r", DEFAULT_RESTORE_FLAG, "Restore from backup files, set to true to restore a tenant, also need the `from` flag to specify the source tenant")
+	restoreFlags.BoolVarP(&o.Restore, FLAG_RESTORE, SHORTHAND_RESTORE, DEFAULT_RESTORE_FLAG, "Restore from backup files, set to true to restore a tenant, also need the `from` flag to specify the source tenant")
 	restoreFlags.StringVar(&o.RestoreType, FLAG_RESTORE_TYPE, DEFAULT_RESTORE_TYPE, "The type of restore source, support OSS or NFS")
 	restoreFlags.StringVar(&o.Source.Restore.ArchiveSource, FLAG_ARCHIVE_SOURCE, "", "The archive source of restore")
 	restoreFlags.StringVar(&o.Source.Restore.BakEncryptionPassword, FLAG_BAK_ENCRYPTION_PASS, "", "The backup encryption password of obtenant")

@@ -98,7 +98,13 @@ const (
 )
 
 // Error messages for cluster management
-
 const (
 	ErrInvalidClusterType = "invalid cluster type"
+)
+
+// Shorthand for cluster management
+const (
+	SHORTHAND_ZONES     = "z"
+	SHORTHAND_NAMESPACE = "n"
+	SHORTHAND_PASSWD    = "p"
 )

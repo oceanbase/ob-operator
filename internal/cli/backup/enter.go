@@ -66,3 +66,10 @@ const (
 	DEFAULT_JOBTYPE             = "ALL"
 	DEFAULT_LIMIT               = 0
 )
+
+// Shorthand for backup policy management
+const (
+	SHORTHAND_NAMESPACE = "n"
+	SHORTHAND_FORCE     = "f"
+	SHORTHAND_TYPE      = "t"
+)
