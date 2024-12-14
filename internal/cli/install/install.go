@@ -64,10 +64,7 @@ func (o *InstallOptions) Install(component, version string) error {
 	if err != nil {
 		return err
 	}
-	if err := utils.RunCmd(cmd); err != nil {
-		return err
-	}
-	return nil
+	return utils.RunCmd(cmd)
 }
 
 // AddFlags add flags to install command

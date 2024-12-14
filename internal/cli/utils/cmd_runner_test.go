@@ -17,8 +17,9 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
 func TestAddHelmRepo(t *testing.T) {
@@ -69,6 +70,7 @@ func TestRunCmd(t *testing.T) {
 	assert.Error(t, err)
 
 	cmd, err = utils.BuildCmd("cert-manager", "2.2.2_release")
+	assert.NoError(t, err)
 	err = utils.RunCmd(cmd)
 	assert.NoError(t, err)
 
