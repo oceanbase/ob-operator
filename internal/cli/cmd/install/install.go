@@ -20,14 +20,12 @@ import (
 	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
+var componentList = []string{"ob-operator", "ob-dashboard", "local-path-provisioner", "cert-manager", "local-path-provisioner-dev", "ob-operator-dev"}
+
 // NewCmd install the ob-operator and other components
 func NewCmd() *cobra.Command {
 	o := install.NewInstallOptions()
 	logger := utils.GetDefaultLoggerInstance()
-	componentList := []string{}
-	for component := range o.Components {
-		componentList = append(componentList, component)
-	}
 	cmd := &cobra.Command{
 		Use:   "install <component>",
 		Short: "Command for ob-operator and other components installation",
@@ -48,6 +46,7 @@ if not specified, install ob-operator and ob-dashboard by default, and cert-mana
 				logger.Println("Install ob-operator and ob-dashboard by default")
 			}
 			for component, version := range o.Components {
+				logger.Printf("Installing component %s, version %s\n", component, version)
 				if err := o.Install(component, version); err != nil {
 					logger.Fatalln(err)
 				} else {

@@ -116,11 +116,11 @@ func CheckIfComponentExists(component string) bool {
 	switch component {
 	case "cert-manager":
 		return checkIfResourceExists(certManagerCheckCmd, certManagerResources...)
-	case "ob-operator":
+	case "ob-operator", "ob-operator-dev":
 		return checkIfResourceExists(operatorCheckCmd, operatorResources...)
 	case "ob-dashboard":
 		return checkIfResourceExists(dashboardCheckCmd, dashboardResources)
-	case "local-path-provisioner":
+	case "local-path-provisioner", "local-path-provisioner-dev":
 		return checkIfResourceExists(localPathProvisionerCheckCmd, localPathProvisionerResources)
 	default:
 		return false

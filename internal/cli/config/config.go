@@ -11,7 +11,7 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package utils
+package config
 
 import (
 	"bytes"
@@ -20,14 +20,15 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/oceanbase/ob-operator/internal/cli/generated/bindata"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
 // component config for test
-var component_conf = "internal/assets/cli-templates/component_config.yaml"
+var confPath = "internal/assets/cli-templates/component_config.yaml"
 
-func GetComponentsConf() map[string]string {
+func readComponentConf(path string) map[string]string {
 	components := make(map[string]string)
-	fileobj, err := bindata.Asset(component_conf)
+	fileobj, err := bindata.Asset(path)
 	// panic if file not exists
 	if err != nil {
 		panic(fmt.Errorf("Error reading component config file: %v", err))
@@ -41,4 +42,25 @@ func GetComponentsConf() map[string]string {
 		panic(fmt.Errorf("Error decoding component config file: %v", err))
 	}
 	return components
+}
+
+// GetAllComponents returns all the components
+func GetAllComponents() map[string]string {
+	return readComponentConf(confPath)
+}
+
+// GetDefaultComponents returns the default components to be installed
+func GetDefaultComponents() map[string]string {
+	var componentsList []string
+	components := GetAllComponents()
+	defaultComponents := make(map[string]string) // Initialize the map
+	if !utils.CheckIfComponentExists("cert-manager") {
+		componentsList = []string{"cert-manager", "ob-operator", "ob-dashboard"}
+	} else {
+		componentsList = []string{"ob-operator", "ob-dashboard"}
+	}
+	for _, component := range componentsList {
+		defaultComponents[component] = components[component]
+	}
+	return defaultComponents
 }
