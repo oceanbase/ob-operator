@@ -184,5 +184,5 @@ func waitForTenantReady(ctx context.Context, obtenant *v1alpha1.OBTenant, logger
 			logger.Fatalf("Task: %s timeout", lastTask)
 		}
 	}
-	logger.Println("Create Tenant instance successfully")
+	logger.Println("Create Tenant successfully")
 }
