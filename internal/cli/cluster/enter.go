@@ -59,7 +59,8 @@ const (
 	FLAG_SYSTEM_MEMORY                 = "system_memory"
 
 	// Flag for demo cluster
-	FLAG_WAIT = "wait"
+	FLAG_WAIT    = "wait"
+	FLAG_TIMEOUT = "timeout"
 )
 
 // Default values for cluster management
@@ -88,6 +89,8 @@ const (
 
 	// Default values for wait flag
 	DEFAULT_WAIT = false
+	// Default timeout
+	DEFAULT_TIMEOUT = 30
 )
 
 // Default cluster type for easier cluster creation
@@ -107,4 +110,8 @@ const (
 	SHORTHAND_ZONES     = "z"
 	SHORTHAND_NAMESPACE = "n"
 	SHORTHAND_PASSWD    = "p"
+
+	// Shorthand for demo cluster creation
+	SHORTHAND_WAIT    = "w"
+	SHORTHAND_TIMEOUT = "t"
 )
