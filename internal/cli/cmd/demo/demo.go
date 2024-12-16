@@ -31,10 +31,8 @@ import (
 	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 )
 
-var defaultTimeoutDuration = 30 * time.Minute
-
 // NewCmd create demo command for cluster creation
-func NewCmd(timeoutDuration time.Duration) *cobra.Command {
+func NewCmd() *cobra.Command {
 	clusterOptions := cluster.NewCreateOptions()
 	tenantOptions := tenant.NewCreateOptions()
 	logger := utils.GetDefaultLoggerInstance()
@@ -42,12 +40,10 @@ func NewCmd(timeoutDuration time.Duration) *cobra.Command {
 	clusterTickerDuration := 2 * time.Second
 	tenantTickerDuration := 1 * time.Second
 	var clusterType string
+	var timeoutDuration time.Duration
 	var wait bool
 	var err error
 	var prompt any
-	if timeoutDuration == 0 {
-		timeoutDuration = defaultTimeoutDuration
-	}
 	cmd := &cobra.Command{
 		Use:   "demo <subcommand>",
 		Short: "deploy demo ob cluster and tenant in easier way",
@@ -126,8 +122,9 @@ func NewCmd(timeoutDuration time.Duration) *cobra.Command {
 			logger.Printf("Run `echo $(kubectl get secret %s -n %s -o jsonpath='{.data.password}'|base64 --decode)` to get tenant secrets", obtenant.Spec.Credentials.Root, obtenant.Namespace)
 		},
 	}
-	// TODO: if w is set, wait for cluster and tenant ready
-	cmd.Flags().BoolVarP(&wait, cluster.FLAG_WAIT, "w", cluster.DEFAULT_WAIT, "wait for the cluster and tenant ready")
+	// TODO: if w is set, wait for cluster and tenant ready, not implemented yet
+	cmd.Flags().BoolVarP(&wait, cluster.FLAG_WAIT, cluster.SHORTHAND_WAIT, cluster.DEFAULT_WAIT, "wait for the cluster and tenant ready")
+	cmd.Flags().DurationVarP(&timeoutDuration, cluster.FLAG_TIMEOUT, cluster.SHORTHAND_TIMEOUT, cluster.DEFAULT_TIMEOUT*time.Minute, "timeout duration for waiting for the cluster and tenant ready")
 	return cmd
 }
 

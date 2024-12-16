@@ -46,7 +46,7 @@ func NewCliCmd() *cobra.Command {
 	cmd.AddCommand(backup.NewCmd())
 	cmd.AddCommand(install.NewCmd())
 	cmd.AddCommand(update.NewCmd())
-	cmd.AddCommand(demo.NewCmd(0))
+	cmd.AddCommand(demo.NewCmd())
 	cmd.AddCommand(completion.NewCmd(cmd.OutOrStdout(), ""))
 	cmd.Flags().BoolP("version", "v", false, "Print the version of oceanbase cli")
 	return cmd
