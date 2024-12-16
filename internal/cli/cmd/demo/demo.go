@@ -31,16 +31,23 @@ import (
 	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
 )
 
+var defaultTimeoutDuration = 30 * time.Minute
+
 // NewCmd create demo command for cluster creation
-func NewCmd() *cobra.Command {
+func NewCmd(timeoutDuration time.Duration) *cobra.Command {
 	clusterOptions := cluster.NewCreateOptions()
 	tenantOptions := tenant.NewCreateOptions()
 	logger := utils.GetDefaultLoggerInstance()
 	pf := demo.NewPromptFactory()
+	clusterTickerDuration := 2 * time.Second
+	tenantTickerDuration := 1 * time.Second
 	var clusterType string
 	var wait bool
 	var err error
 	var prompt any
+	if timeoutDuration == 0 {
+		timeoutDuration = defaultTimeoutDuration
+	}
 	cmd := &cobra.Command{
 		Use:   "demo <subcommand>",
 		Short: "deploy demo ob cluster and tenant in easier way",
@@ -105,7 +112,7 @@ func NewCmd() *cobra.Command {
 				logger.Fatalln(err)
 			}
 			logger.Printf("Creating OBCluster instance: %s", clusterOptions.ClusterName)
-			waitForClusterReady(cmd.Context(), obcluster, logger, 2*time.Second)
+			waitForClusterReady(cmd.Context(), obcluster, logger, timeoutDuration, clusterTickerDuration)
 			logger.Printf("Run `echo $(kubectl get secret %s -n %s -o jsonpath='{.data.password}'|base64 --decode)` to get cluster secrets", obcluster.Spec.UserSecrets.Root, obcluster.Namespace)
 		},
 		PostRun: func(cmd *cobra.Command, args []string) {
@@ -115,53 +122,70 @@ func NewCmd() *cobra.Command {
 				logger.Fatalln(err)
 			}
 			logger.Printf("Creating OBTenant instance: %s", tenantOptions.TenantName)
-			waitForTenantReady(cmd.Context(), obtenant, logger, 1*time.Second)
+			waitForTenantReady(cmd.Context(), obtenant, logger, timeoutDuration, tenantTickerDuration)
 			logger.Printf("Run `echo $(kubectl get secret %s -n %s -o jsonpath='{.data.password}'|base64 --decode)` to get tenant secrets", obtenant.Spec.Credentials.Root, obtenant.Namespace)
 		},
 	}
-	// TODO: if w is set, wait for the cluster and tenant ready
+	// TODO: if w is set, wait for cluster and tenant ready
 	cmd.Flags().BoolVarP(&wait, cluster.FLAG_WAIT, "w", cluster.DEFAULT_WAIT, "wait for the cluster and tenant ready")
 	return cmd
 }
 
 // waitForTenantReady wait for tenant ready, log the task status
-func waitForClusterReady(ctx context.Context, obcluster *v1alpha1.OBCluster, logger *log.Logger, waitTime time.Duration) {
+func waitForClusterReady(ctx context.Context, obcluster *v1alpha1.OBCluster, logger *log.Logger, timeoutDuration time.Duration, tickerDuration time.Duration) {
 	var err error
 	lastTask := ""
 	lastTaskStatus := ""
+	timeout := time.NewTimer(timeoutDuration)
+	ticker := time.NewTicker(tickerDuration)
+	defer ticker.Stop()
+	defer timeout.Stop()
 	logger.Println("Waiting for cluster ready...")
 	for obcluster.Status.Status != clusterstatus.Running {
-		time.Sleep(waitTime)
-		obcluster, err = clients.GetOBCluster(ctx, obcluster.Namespace, obcluster.Name)
-		if err != nil {
-			logger.Fatalln(err)
-		}
-		if obcluster.Status.OperationContext != nil && (lastTask != string(obcluster.Status.OperationContext.Task) || lastTaskStatus != string(obcluster.Status.OperationContext.TaskStatus)) {
-			logger.Printf("Task: %s, Status: %s", obcluster.Status.OperationContext.Task, obcluster.Status.OperationContext.TaskStatus)
-			lastTask = string(obcluster.Status.OperationContext.Task)
-			lastTaskStatus = string(obcluster.Status.OperationContext.TaskStatus)
+		select {
+		case <-ticker.C:
+			obcluster, err = clients.GetOBCluster(ctx, obcluster.Namespace, obcluster.Name)
+			if err != nil {
+				logger.Fatalln(err)
+			}
+			if obcluster.Status.OperationContext != nil && (lastTask != string(obcluster.Status.OperationContext.Task) || lastTaskStatus != string(obcluster.Status.OperationContext.TaskStatus)) {
+				logger.Printf("Task: %s, Status: %s", obcluster.Status.OperationContext.Task, obcluster.Status.OperationContext.TaskStatus)
+				lastTask = string(obcluster.Status.OperationContext.Task)
+				lastTaskStatus = string(obcluster.Status.OperationContext.TaskStatus)
+				timeout.Reset(timeoutDuration)
+			}
+		case <-timeout.C:
+			logger.Fatalf("Task: %s timeout", lastTask)
 		}
 	}
-	logger.Println("Cluster create successfully")
+	logger.Println("Create Cluster successfully")
 }
 
 // waitForTenantReady wait for tenant ready, log the task status
-func waitForTenantReady(ctx context.Context, obtenant *v1alpha1.OBTenant, logger *log.Logger, waitTime time.Duration) {
+func waitForTenantReady(ctx context.Context, obtenant *v1alpha1.OBTenant, logger *log.Logger, timeoutDuration time.Duration, tickerDuration time.Duration) {
 	var err error
 	lastTask := ""
 	lastTaskStatus := ""
+	timeout := time.NewTimer(timeoutDuration)
+	ticker := time.NewTicker(tickerDuration)
+	defer ticker.Stop()
+	defer timeout.Stop()
 	logger.Println("Waiting for tenant ready...")
 	for obtenant.Status.Status != tenantstatus.Running {
-		time.Sleep(waitTime)
-		obtenant, err = clients.GetOBTenant(ctx, types.NamespacedName{Namespace: obtenant.Namespace, Name: obtenant.Name})
-		if err != nil {
-			logger.Fatalln(err)
-		}
-		if obtenant.Status.OperationContext != nil && (lastTask != string(obtenant.Status.OperationContext.Task) || lastTaskStatus != string(obtenant.Status.OperationContext.TaskStatus)) {
-			logger.Printf("Task: %s, Status: %s", obtenant.Status.OperationContext.Task, obtenant.Status.OperationContext.TaskStatus)
-			lastTask = string(obtenant.Status.OperationContext.Task)
-			lastTaskStatus = string(obtenant.Status.OperationContext.TaskStatus)
+		select {
+		case <-ticker.C:
+			obtenant, err = clients.GetOBTenant(ctx, types.NamespacedName{Namespace: obtenant.Namespace, Name: obtenant.Name})
+			if err != nil {
+				logger.Fatalln(err)
+			}
+			if obtenant.Status.OperationContext != nil && (lastTask != string(obtenant.Status.OperationContext.Task) || lastTaskStatus != string(obtenant.Status.OperationContext.TaskStatus)) {
+				lastTask = string(obtenant.Status.OperationContext.Task)
+				lastTaskStatus = string(obtenant.Status.OperationContext.TaskStatus)
+				timeout.Reset(timeoutDuration)
+			}
+		case <-timeout.C:
+			logger.Fatalf("Task: %s timeout", lastTask)
 		}
 	}
-	logger.Println("Tenant create successfully")
+	logger.Println("Create Tenant instance successfully")
 }
