@@ -25,11 +25,11 @@ import (
 
 // Injected by build script
 var (
-	OS         = ""
-	Arch       = ""
-	Version    = ""
-	CommitHash = ""
-	BuildTime  = ""
+	OS         = "unknown"
+	Arch       = "unknown"
+	Version    = "unknown"
+	CommitHash = "unknown"
+	BuildTime  = "unknown"
 )
 
 // defaultVersionTemplate is the default template for displaying version information.

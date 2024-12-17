@@ -1,10 +1,12 @@
 ##@ cli
 
-BINARY_NAME ?= obocli
+BINARY_NAME ?= okctl
 CLI_VERSION ?= 0.1.0
 GOARCH ?=$(shell uname -m)
 GOOS ?= $(shell uname -s | tr LD ld)
 VERSION_INJECT_PACKAGE=github.com/oceanbase/ob-operator/internal/cli/cmd/version
+LOGGER_HEAD_INJECT_PACKAGE=github.com/oceanbase/ob-operator/internal/cli/utils
+BINARY_NAME_INJECT_PACKAGE=github.com/oceanbase/ob-operator/internal/cli
 COMMIT_HASH ?= $(shell git rev-parse --short HEAD)
 BUILD_TIMESTAMP ?= $(shell date '+%Y%m%d%H%M%S')
 
@@ -15,11 +17,13 @@ else ifeq ($(GOARCH),aarch64)
     GOARCH = arm64
 endif
 
-CLI_BUILD_FLAGS = -p 4 -ldflags="-X '$(VERSION_INJECT_PACKAGE).Version=$(CLI_VERSION)' -X '$(VERSION_INJECT_PACKAGE).CommitHash=$(COMMIT_HASH)' -X '$(VERSION_INJECT_PACKAGE).BuildTime=$(BUILD_TIMESTAMP)' "
+# build flags
+CLI_BUILD_FLAGS = -p 4 -ldflags="-X '$(VERSION_INJECT_PACKAGE).Version=$(CLI_VERSION)' -X '$(VERSION_INJECT_PACKAGE).CommitHash=$(COMMIT_HASH)' -X '$(VERSION_INJECT_PACKAGE).BuildTime=$(BUILD_TIMESTAMP)' -X '$(BINARY_NAME_INJECT_PACKAGE).BinaryName=$(BINARY_NAME)'  -X '$(LOGGER_HEAD_INJECT_PACKAGE).BinaryName=$(BINARY_NAME)'"
+
 # build args
 CLI_BUILD := GO11MODULE=ON CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build $(CLI_BUILD_FLAGS)
 
-# build dir for obocli 
+# build dir for cli
 BUILD_DIR?=bin/
 
 .PHONY: cli-build

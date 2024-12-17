@@ -46,6 +46,7 @@ require (
 	k8s.io/api v0.29.3
 	k8s.io/apimachinery v0.29.3
 	k8s.io/client-go v0.29.3
+	k8s.io/kubectl v0.0.0
 	k8s.io/kubernetes v1.27.2
 	k8s.io/metrics v0.29.3
 	sigs.k8s.io/controller-runtime v0.15.0
@@ -55,8 +56,10 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.5.2 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.5.2 // indirect
+	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
+	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/alecthomas/units v0.0.0-20231202071711-9a357b53e9c9 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/aws/aws-sdk-go v1.51.25 // indirect
@@ -123,9 +126,12 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.6 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
+	github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/moby/spdystream v0.2.0 // indirect
+	github.com/moby/term v0.0.0-20221205130635-1aeaba878587 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
@@ -140,6 +146,7 @@ require (
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/rogpeppe/go-internal v1.13.1 // indirect
+	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
@@ -178,6 +185,7 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiextensions-apiserver v0.29.3 // indirect
+	k8s.io/cli-runtime v0.29.3 // indirect
 	k8s.io/component-base v0.29.3 // indirect
 	k8s.io/klog/v2 v2.120.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect

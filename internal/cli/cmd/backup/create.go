@@ -20,13 +20,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
-var createExample = `
-	# Create a backup policy by OSS
-	obocli backup create <tenant_name> --archive-path=oss://<bucket_name>/<path> --bak-data-path=oss://<bucket_name>/<path>  --oss-access-id=<access_id> --oss-access-key=<access_key>
-	
-	# Create a backup policy by NFS
-	obocli backup create <tenant_name> --archive-path=<path> --bak-data-path=<path> --bak-encryption-password=<password>
-`
+
 
 // NewCreateCmd create an new backup policy
 func NewCreateCmd() *cobra.Command {

@@ -25,7 +25,7 @@ type ResourceOption struct {
 	Cmd       *cobra.Command
 }
 
-// Parse the args in obocli
+// Parse the args in cli
 func (o *ResourceOption) Parse(cmd *cobra.Command, args []string) error {
 	o.Name = args[0]
 	o.Cmd = cmd
