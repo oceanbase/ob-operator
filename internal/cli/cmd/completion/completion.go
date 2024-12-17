@@ -40,13 +40,13 @@ const defaultBoilerPlate = `
 var completionLong = `To load completions:
 Bash:
  
-  $ source <(obocli completion bash)
+  $ source <(okctl completion bash)
  
   # To load completions for each session, execute once:
   # Linux:
-  $ obocli completion bash > /etc/bash_completion.d/obocli
+  $ okctl completion bash > /etc/bash_completion.d/okctl
   # macOS:
-  $ obocli completion bash > /usr/local/etc/bash_completion.d/obocli
+  $ okctl completion bash > /usr/local/etc/bash_completion.d/okctl
  
 Zsh:
  
@@ -56,26 +56,26 @@ Zsh:
   $ echo "autoload -U compinit; compinit" >> ~/.zshrc
 
   To load completions in your current shell session:
-  $ source <(obocli completion zsh)
+  $ source <(okctl completion zsh)
 
   # To load completions for each session, execute once:
-  $ obocli completion zsh > "${fpath[1]}/_obocli"
+  $ okctl completion zsh > "${fpath[1]}/_okctl"
  
   # You will need to start a new shell for this setup to take effect.
  
 fish:
  
-  $ obocli completion fish | source
+  $ okctl completion fish | source
  
   # To load completions for each session, execute once:
-  $ obocli completion fish > ~/.config/fish/completions/obocli.fish
+  $ okctl completion fish > ~/.config/fish/completions/okctl.fish
  
 PowerShell:
  
-  PS> obocli completion powershell | Out-String | Invoke-Expression
+  PS> okctl completion powershell | Out-String | Invoke-Expression
  
   # To load completions for every new session, run:
-  PS> obocli completion powershell > obocli.ps1
+  PS> okctl completion powershell > okctl.ps1
   # and source this file from your PowerShell profile.
 `
 var (
@@ -113,10 +113,10 @@ func NewCmd(out io.Writer, boilerPlate string) *cobra.Command {
 // RunCompletionE is the entry point for the completion command
 func RunCompletionE(out io.Writer, boilerPlate string, cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
-		return errors.New("shell not specified. See 'obocli completion -h' for help and examples")
+		return errors.New("shell not specified. See 'okctl completion -h' for help and examples")
 	}
 	if len(args) > 1 {
-		return errors.New("too many arguments. Expected only the shell type. See 'obocli completion -h' for help and examples")
+		return errors.New("too many arguments. Expected only the shell type. See 'okctl completion -h' for help and examples")
 	}
 	run, found := completionShells[args[0]]
 	if !found {

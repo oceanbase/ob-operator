@@ -8,7 +8,7 @@ on:
 env:
   tagName: ${{ github.ref_name }}
   GO_VERSION : "1.22"
-  BinaryName: "obocli"
+  BinaryName: "okctl"
 
 jobs:
   release-oceanbase-cli:

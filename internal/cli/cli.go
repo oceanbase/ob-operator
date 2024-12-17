@@ -26,12 +26,26 @@ import (
 	"github.com/oceanbase/ob-operator/internal/cli/cmd/version"
 )
 
+// BinaryName injected by ldflags
+var BinaryName = "unknown"
+
+var rootLongDesc = `         
+=============================================
+          _             _     _ 
+   ___   | | __   ___  | |_  | |
+  / _ \  | |/ /  / __| | __| | |
+ | (_) | |   <  | (__  | |_  | |
+  \___/  |_|\_\  \___|  \__| |_|
+
+=============================================
+A Command Line Tool compatible with OceanBase Operator`
+
 // NewCliCmd return ob-operator cli
 func NewCliCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "obocli",
+		Use:   BinaryName,
 		Short: "OceanBase Operator Cli",
-		Long:  "OceanBase Operator Cli tool to manage OceanBase clusters, tenants, and backup policies.",
+		Long:  rootLongDesc,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Flags().Changed("version") {
 				versionCmd := version.NewCmd()
