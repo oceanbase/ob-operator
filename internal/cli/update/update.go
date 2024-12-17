@@ -40,8 +40,6 @@ func (o *UpdateOptions) Parse(_ *cobra.Command, args []string) error {
 		components := config.GetAllComponents()
 		// check if the component is supported
 		defaultVersion, exist := components[name]
-
-		// check if the component is supported
 		if !exist {
 			return fmt.Errorf("component %s is not supported", name)
 		}

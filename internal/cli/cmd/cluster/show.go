@@ -17,6 +17,7 @@ import (
 	"sort"
 
 	"github.com/spf13/cobra"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/oceanbase/ob-operator/internal/cli/cluster"
 	"github.com/oceanbase/ob-operator/internal/cli/utils"
@@ -36,7 +37,11 @@ func NewShowCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			obcluster, err := clients.GetOBCluster(cmd.Context(), o.Namespace, o.Name)
 			if err != nil {
-				logger.Fatalln(err)
+				if kubeerrors.IsNotFound(err) {
+					logger.Fatalf("OBCluster %s not found", o.Name)
+				} else {
+					logger.Fatalln(err)
+				}
 			}
 			obclusterOperationList, err := clients.GetOBClusterOperations(cmd.Context(), obcluster)
 			if err != nil {
