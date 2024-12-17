@@ -20,8 +20,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
-
-
 // NewCreateCmd create an new backup policy
 func NewCreateCmd() *cobra.Command {
 	o := backup.NewCreateOptions()

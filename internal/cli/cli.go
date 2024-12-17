@@ -27,9 +27,9 @@ import (
 )
 
 // BinaryName injected by ldflags
-var BinaryName string = "unknown"
+var BinaryName = "unknown"
 
-var rootLongDesc string = `         
+var rootLongDesc = `         
 =============================================
           _             _     _ 
    ___   | | __   ___  | |_  | |

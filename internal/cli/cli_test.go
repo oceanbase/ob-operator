@@ -16,6 +16,8 @@ package cli_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/oceanbase/ob-operator/internal/cli"
 )
 
@@ -26,12 +28,8 @@ func TestCli(t *testing.T) {
 		t.Errorf("NewCliCmd() failed")
 	} else {
 		t.Logf("NewCliCmd() success")
-	}
-
-	// Test Runable
-	if err := cmd.RunE(cmd, []string{"help"}); err != nil {
-		t.Errorf("RunE() failed")
-	} else {
-		t.Logf("RunE() success")
+		// Test Runable
+		err := cmd.RunE(cmd, []string{"help"})
+		assert.NoErrorf(t, err, "cli failed to run")
 	}
 }
