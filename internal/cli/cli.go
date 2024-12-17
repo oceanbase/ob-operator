@@ -38,7 +38,7 @@ var rootLongDesc string = `
   \___/  |_|\_\  \___|  \__| |_|
 
 =============================================
-A Command line tool compatible with OceanBase Operator`
+A Command Line Tool compatible with OceanBase Operator`
 
 // NewCliCmd return ob-operator cli
 func NewCliCmd() *cobra.Command {
