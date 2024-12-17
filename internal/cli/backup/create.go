@@ -193,10 +193,13 @@ func (o *CreateOptions) Validate() error {
 	if o.FullCrontab == "" {
 		return errors.New("Full backup schedule is required, at least one of the full schedule must be specified")
 	}
+	if o.IncrementalCrontab == "" {
+		return errors.New("Incremental backup schedule is required, at least one of the incremental schedule must be specified")
+	}
 	if !checkCrontabSyntax(o.FullCrontab) {
 		return errors.New("Invalid full backup schedule")
 	}
-	if o.IncrementalCrontab != "" && !checkCrontabSyntax(o.IncrementalCrontab) {
+	if !checkCrontabSyntax(o.IncrementalCrontab) {
 		return errors.New("Invalid incremental backup schedule")
 	}
 	return nil
@@ -212,6 +215,7 @@ func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 
 func (o *CreateOptions) SetRequiredFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired(FLAG_FULL)
+	_ = cmd.MarkFlagRequired(FLAG_INCREMENTAL)
 	_ = cmd.MarkFlagRequired(FLAG_ARCHIVE_PATH)
 	_ = cmd.MarkFlagRequired(FLAG_BAK_DATA_PATH)
 }
