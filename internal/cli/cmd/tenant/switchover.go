@@ -15,6 +15,7 @@ package tenant
 
 import (
 	"github.com/spf13/cobra"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
@@ -41,7 +42,11 @@ func NewSwitchOverCmd() *cobra.Command {
 				Namespace: o.Namespace,
 			})
 			if err != nil {
-				logger.Fatalln(err)
+				if kubeerrors.IsNotFound(err) {
+					logger.Fatalf("OBTenant %s not found", o.StandbyTenant)
+				} else {
+					logger.Fatalln(err)
+				}
 			}
 			if err := utils.CheckTenantStatus(standbyTenant); err != nil {
 				logger.Fatalln(err)
@@ -54,7 +59,11 @@ func NewSwitchOverCmd() *cobra.Command {
 				Namespace: o.Namespace,
 			})
 			if err != nil {
-				logger.Fatalln(err)
+				if kubeerrors.IsNotFound(err) {
+					logger.Fatalf("OBTenant %s not found", o.PrimaryTenant)
+				} else {
+					logger.Fatalln(err)
+				}
 			}
 			if err := utils.CheckTenantStatus(primaryTenant); err != nil {
 				logger.Fatalln(err)

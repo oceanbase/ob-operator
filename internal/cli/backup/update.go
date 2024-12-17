@@ -20,6 +20,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/oceanbase/ob-operator/internal/cli/generic"
@@ -48,6 +49,9 @@ func UpdateTenantBackupPolicy(ctx context.Context, o *UpdateOptions) error {
 	}
 	obtenant, err := clients.GetOBTenant(ctx, nn)
 	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return errors.New("tenant not found")
+		}
 		return err
 	}
 	if err := utils.CheckTenantStatus(obtenant); err != nil {

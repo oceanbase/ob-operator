@@ -15,6 +15,7 @@ package tenant
 
 import (
 	"github.com/spf13/cobra"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
@@ -40,7 +41,11 @@ func NewChangePwdCmd() *cobra.Command {
 				Namespace: o.Namespace,
 			})
 			if err != nil {
-				logger.Fatalln(err)
+				if kubeerrors.IsNotFound(err) {
+					logger.Fatalf("OBTenant %s not found", o.Name)
+				} else {
+					logger.Fatalln(err)
+				}
 			}
 			if err := utils.CheckTenantStatus(obtenant); err != nil {
 				logger.Fatalln(err)
