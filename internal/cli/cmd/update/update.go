@@ -16,11 +16,10 @@ package update
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/oceanbase/ob-operator/internal/cli/config"
 	"github.com/oceanbase/ob-operator/internal/cli/update"
 	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
-
-var componentList = []string{"ob-operator", "ob-dashboard", "local-path-provisioner", "cert-manager"}
 
 // NewCmd update the ob-operator and other components
 func NewCmd() *cobra.Command {
@@ -39,7 +38,7 @@ Currently support:
 		
 if not specified, update ob-operator and ob-dashboard by default`,
 		PreRunE:               o.Parse,
-		ValidArgs:             componentList,
+		ValidArgs:             config.ComponentUpdateList,
 		DisableFlagsInUseLine: true,
 		Args:                  cobra.MatchAll(cobra.MaximumNArgs(1), cobra.OnlyValidArgs),
 		Run: func(cmd *cobra.Command, args []string) {

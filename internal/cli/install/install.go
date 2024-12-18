@@ -38,7 +38,11 @@ func (o *InstallOptions) Parse(_ *cobra.Command, args []string) error {
 	// if specified, use the specified component
 	if len(args) > 0 {
 		name := args[0]
-		components := config.GetAllComponents()
+		components, err := config.GetAllComponents()
+		if err != nil {
+			return err
+		}
+
 		// check if the component is supported
 		defaultVersion, exist := components[name]
 		if !exist {
@@ -53,7 +57,10 @@ func (o *InstallOptions) Parse(_ *cobra.Command, args []string) error {
 		}
 	} else {
 		// if no component is specified, install default components
-		defaultComponents := config.GetDefaultComponents()
+		defaultComponents, err := config.GetDefaultComponents()
+		if err != nil {
+			return err
+		}
 		o.Components = defaultComponents
 	}
 	return nil

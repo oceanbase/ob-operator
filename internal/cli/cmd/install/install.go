@@ -16,11 +16,10 @@ package install
 import (
 	"github.com/spf13/cobra"
 
+	"github.com/oceanbase/ob-operator/internal/cli/config"
 	"github.com/oceanbase/ob-operator/internal/cli/install"
 	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
-
-var componentList = []string{"ob-operator", "ob-dashboard", "local-path-provisioner", "cert-manager", "local-path-provisioner-dev", "ob-operator-dev"}
 
 // NewCmd install the ob-operator and other components
 func NewCmd() *cobra.Command {
@@ -39,7 +38,7 @@ Currently support:
 
 if not specified, install ob-operator and ob-dashboard by default, and cert-manager if it is not found in cluster.`,
 		PreRunE:   o.Parse,
-		ValidArgs: componentList,
+		ValidArgs: config.ComponentList,
 		Args:      cobra.MatchAll(cobra.MaximumNArgs(1), cobra.OnlyValidArgs),
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
