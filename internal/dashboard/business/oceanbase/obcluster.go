@@ -630,7 +630,7 @@ func ScaleOBServer(ctx context.Context, obzoneIdentity *param.OBZoneIdentity, sc
 		return nil, errors.Wrapf(err, "Get obcluster %s %s", obzoneIdentity.Namespace, obzoneIdentity.Name)
 	}
 	if obcluster.Status.Status != clusterstatus.Running {
-		return nil, errors.Errorf("OBCluster status is invalid %s", obcluster.Status.Status)
+		return nil, errors.Errorf("OBCluster status is invalid: %s, expected to be running", obcluster.Status.Status)
 	}
 	found := false
 	replicaChanged := false
@@ -663,7 +663,7 @@ func DeleteOBZone(ctx context.Context, obzoneIdentity *param.OBZoneIdentity) (*r
 		return nil, errors.Wrapf(err, "Get obcluster %s %s", obzoneIdentity.Namespace, obzoneIdentity.Name)
 	}
 	if obcluster.Status.Status != clusterstatus.Running {
-		return nil, errors.Errorf("OBCluster status is invalid %s", obcluster.Status.Status)
+		return nil, errors.Errorf("OBCluster status is invalid: %s, expected to be running", obcluster.Status.Status)
 	}
 	if len(obcluster.Spec.Topology) <= 2 {
 		return nil, oberr.NewBadRequest("Forbid to delete zone when the number of zone <= 2")
@@ -694,7 +694,7 @@ func AddOBZone(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity, 
 		return nil, errors.Wrapf(err, "Get obcluster %s %s", obclusterIdentity.Namespace, obclusterIdentity.Name)
 	}
 	if obcluster.Status.Status != clusterstatus.Running {
-		return nil, errors.Errorf("OBCluster status is invalid %s", obcluster.Status.Status)
+		return nil, errors.Errorf("OBCluster status is invalid: %s, expected to be running", obcluster.Status.Status)
 	}
 	for _, obzone := range obcluster.Spec.Topology {
 		if obzone.Zone == zone.Zone {
@@ -775,7 +775,7 @@ func PatchOBCluster(ctx context.Context, nn *param.K8sObjectIdentity, param *par
 		return nil, errors.Wrapf(err, "Get obcluster %s %s", nn.Namespace, nn.Name)
 	}
 	if obcluster.Status.Status != clusterstatus.Running {
-		return nil, errors.Errorf("OBCluster status is invalid %s", obcluster.Status.Status)
+		return nil, errors.Errorf("OBCluster status is invalid: %s, expected to be running", obcluster.Status.Status)
 	}
 	alreadyIgnoredDeletion := obcluster.Annotations[oceanbaseconst.AnnotationsIgnoreDeletion] == "true"
 
@@ -857,7 +857,7 @@ func RestartOBServers(ctx context.Context, nn *param.K8sObjectIdentity, param *p
 		return nil, errors.Wrapf(err, "Get obcluster %s %s", nn.Namespace, nn.Name)
 	}
 	if obcluster.Status.Status != clusterstatus.Running {
-		return nil, errors.Errorf("OBCluster status is invalid %s", obcluster.Status.Status)
+		return nil, errors.Errorf("OBCluster status is invalid: %s, expected to be running", obcluster.Status.Status)
 	}
 
 	// Create OBClusterOperation for restarting observers
@@ -891,7 +891,7 @@ func DeleteOBServers(ctx context.Context, nn *param.K8sObjectIdentity, param *pa
 		return nil, errors.Wrapf(err, "Get obcluster %s %s", nn.Namespace, nn.Name)
 	}
 	if obcluster.Status.Status != clusterstatus.Running {
-		return nil, errors.Errorf("OBCluster status is invalid %s", obcluster.Status.Status)
+		return nil, errors.Errorf("OBCluster status is invalid: %s, expected to be running", obcluster.Status.Status)
 	}
 
 	// Create OBClusterOperation for deleting observers
