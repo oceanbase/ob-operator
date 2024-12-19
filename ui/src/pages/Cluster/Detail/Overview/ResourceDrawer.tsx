@@ -67,7 +67,7 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
   onSuccess,
 }) => {
   const [form] = Form.useForm<API.CreateClusterData>();
-  const { validateFields } = form;
+  const { validateFields, setFieldValue, resetFields } = form;
 
   useEffect(() => {
     const data = {};
@@ -86,7 +86,7 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
       }
     });
 
-    form.setFieldValue(['storage'], {
+    setFieldValue(['storage'], {
       data,
       log,
       redoLog,
@@ -123,17 +123,27 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
       title={'存储资源编辑'}
       open={visible}
       destroyOnClose
-      onClose={() => onCancel()}
+      onClose={() => {
+        onCancel();
+        resetFields();
+      }}
       width={520}
       footer={
         <Space>
-          <Button onClick={onCancel}>取消</Button>
+          <Button
+            onClick={() => {
+              onCancel();
+              resetFields();
+            }}
+          >
+            取消
+          </Button>
           <Button
             type="primary"
             loading={loading}
             onClick={() => {
               validateFields().then((value) => {
-                patchOBCluster(name, namespace, value, `存储资源编辑成功`);
+                patchOBCluster(namespace, name, value, `存储资源编辑成功`);
               });
             }}
           >

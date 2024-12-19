@@ -1,15 +1,40 @@
+import { obcluster } from '@/api';
 import { STATUS_LIST } from '@/constants';
 import { intl } from '@/utils/intl';
 import { findByValue } from '@oceanbase/util';
-import { Button, Card, Col, Modal, Table, Tag } from 'antd';
+import { useRequest } from 'ahooks';
+import { Button, Card, Col, message, Modal, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 export default function ServerTable({
   clusterDetail,
+  clusterDetailRefresh,
 }: {
   clusterDetail: API.ClusterDetail[];
+  clusterDetailRefresh: () => void;
 }) {
-  const servers = clusterDetail?.servers;
+  const { info, servers, supportStaticIP, status } = clusterDetail || {};
+
+  const { namespace, name } = info;
+  const { runAsync: deleteOBServers } = useRequest(obcluster.deleteOBServers, {
+    manual: true,
+    onSuccess: (res) => {
+      if (res.successful) {
+        message.success('删除 Server 已成功');
+        clusterDetailRefresh();
+      }
+    },
+  });
+  const { runAsync: restartOBServers, loading: restartOBServersLoading } =
+    useRequest(obcluster.restartOBServers, {
+      manual: true,
+      onSuccess: (res) => {
+        if (res.successful) {
+          message.success('重启 Server 已成功');
+          clusterDetailRefresh();
+        }
+      },
+    });
 
   const serverColums: ColumnsType<API.Server> = [
     {
@@ -61,12 +86,19 @@ export default function ServerTable({
             <Button
               type="link"
               style={{ paddingLeft: 0 }}
-              // TODO: 重启说明，后端会给参数对照
-              // disabled={}
+              disabled={
+                restartOBServersLoading ||
+                !supportStaticIP ||
+                status !== 'running'
+              }
               onClick={() => {
                 Modal.confirm({
                   title: '确定要重启当前 server 吗?',
-                  onOk: () => {},
+                  onOk: () => {
+                    restartOBServers(namespace, name, {
+                      observers: [record?.name],
+                    });
+                  },
                 });
               }}
             >
@@ -75,12 +107,20 @@ export default function ServerTable({
             <Button
               danger
               type="link"
-              disabled={servers.length === 1 || sameZone.length === 1}
+              disabled={
+                servers.length === 1 ||
+                sameZone.length === 1 ||
+                status !== 'running'
+              }
               onClick={() => {
                 Modal.confirm({
                   title: '确定要删除当前 server 吗?',
                   okType: 'danger',
-                  onOk: () => {},
+                  onOk: () => {
+                    deleteOBServers(namespace, name, {
+                      observers: [record?.name],
+                    });
+                  },
                 });
               }}
             >

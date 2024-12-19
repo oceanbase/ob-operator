@@ -22,7 +22,7 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
   namespace,
 }) => {
   const [form] = Form.useForm<API.CreateClusterData>();
-  const { validateFields } = form;
+  const { validateFields, resetFields } = form;
 
   const { runAsync: updateParameters, loading } = useRequest(
     obcluster.patchOBCluster,
@@ -50,11 +50,21 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
       })}
       open={visible}
       destroyOnClose
-      onCancel={() => onCancel()}
+      onCancel={() => {
+        onCancel();
+        resetFields();
+      }}
       width={520}
       footer={
         <Space>
-          <Button onClick={onCancel}>取消</Button>
+          <Button
+            onClick={() => {
+              onCancel();
+              resetFields();
+            }}
+          >
+            取消
+          </Button>
           <Button
             type="primary"
             loading={loading}
@@ -63,7 +73,7 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
                 const objValue = {
                   modifiedParameters: [values],
                 };
-                updateParameters(name, namespace, objValue, `编辑参数已成功`);
+                updateParameters(namespace, name, objValue, `编辑参数已成功`);
               });
             }}
           >

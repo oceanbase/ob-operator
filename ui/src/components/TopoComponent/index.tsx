@@ -7,6 +7,7 @@ import { Spin, message } from 'antd';
 import _ from 'lodash';
 import { ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 
+import { obcluster } from '@/api';
 import OperateModal from '@/components/customModal/OperateModal';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { RESULT_STATUS } from '@/constants';
@@ -28,9 +29,9 @@ import { ReactNode, config } from './G6register';
 import {
   clusterOperate,
   clusterOperateOfTenant,
+  getServerOperateOfCluster,
   getZoneOperateOfCluster,
   getZoneOperateOfTenant,
-  serverOperate,
 } from './constants';
 import {
   appenAutoShapeListener,
@@ -91,6 +92,8 @@ export default function TopoComponent({
   const preTopoData = useRef<any>(null);
   //The zone name selected when clicking the more icon
   const chooseZoneName = useRef<string>('');
+  //The Server/Zone name selected when clicking the more icon
+  const chooseServerName = useRef<string>('');
   //Number of servers in the selected zone
   const [chooseServerNum, setChooseServerNum] = useState<number>(1);
   //If the topoData cluster status is operating, it needs to be polled.
@@ -106,7 +109,6 @@ export default function TopoComponent({
   });
   const clusterStatus = useRef(originTopoData?.basicInfo?.status);
   const tenantStatus = useRef(status);
-
   //Node more icon click event
   const handleClick = (evt: IG6GraphEvent) => {
     if (modelRef.current) {
@@ -149,7 +151,20 @@ export default function TopoComponent({
         }
 
         case 'server': {
-          setOprateList(serverOperate);
+          const disabled = tenantReplicas
+            ? clusterStatus.current !== 'running' ||
+              tenantStatus.current !== 'running'
+            : clusterStatus.current !== 'running';
+          const server = evt.item?._cfg?.model?.label as string;
+          const serverZone = evt.item?._cfg?.model?.zone as string;
+          setOprateList(
+            getServerOperateOfCluster(
+              originTopoData?.topoData,
+              disabled,
+              serverZone,
+            ),
+          );
+          chooseServerName.current = server;
           break;
         }
       }
@@ -264,6 +279,27 @@ export default function TopoComponent({
     }
   };
 
+  const { runAsync: deleteOBServers } = useRequest(obcluster.deleteOBServers, {
+    manual: true,
+    onSuccess: (res) => {
+      if (res.successful) {
+        message.success('删除 Server 已成功');
+      }
+    },
+  });
+
+  const { runAsync: restartOBServers } = useRequest(
+    obcluster.restartOBServers,
+    {
+      manual: true,
+      onSuccess: (res) => {
+        if (res.successful) {
+          message.success('重启 Server 已成功');
+        }
+      },
+    },
+  );
+
   /**
    * Call up the operation and maintenance operation modal
    */
@@ -333,16 +369,22 @@ export default function TopoComponent({
     }
     if (operate === 'deleteServer') {
       showDeleteConfirm({
-        title: '你确定要删除该server吗？',
-        // TODO
-        onOk: () => {},
+        title: '你确定要删除该 server 吗？',
+        onOk: () => {
+          deleteOBServers(ns!, name!, {
+            observers: [chooseServerName.current],
+          });
+        },
       });
     }
     if (operate === 'restartServer') {
       showDeleteConfirm({
-        title: '你确定重启该server吗？',
-        // TODO
-        onOk: () => {},
+        title: '你确定重启该 server 吗？',
+        onOk: () => {
+          restartOBServers(ns!, name!, {
+            observers: [chooseServerName.current],
+          });
+        },
       });
     }
   };
