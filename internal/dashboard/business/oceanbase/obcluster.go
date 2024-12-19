@@ -934,7 +934,7 @@ func ListOBClusterParameters(ctx context.Context, nn *param.K8sObjectIdentity) (
 		logger.Info("Failed to get OceanBase database connection")
 		return nil, errors.Wrap(err, "Get OceanBase database connection")
 	}
-	parameters, err := conn.ListParametersWithTenantID(ctx, 1)
+	parameters, err := conn.ListClusterParameters(ctx)
 	if err != nil {
 		logger.WithError(err).Error("Failed to query parameters")
 		return nil, errors.Wrap(err, "Query parameters")
