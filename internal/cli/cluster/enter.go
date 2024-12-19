@@ -23,11 +23,12 @@ const (
 	FLAGSET_PARAMETERS    = "parameters"
 
 	// Flags for all the commands in cluster management
-	FLAG_CLUSTER_NAME = "cluster-name"
-	FLAG_NAMESPACE    = "namespace"
-	FLAG_CLUSTER_ID   = "id"
-	FLAG_ROOTPASSWD   = "root-password"
-	FLAG_MODE         = "mode"
+	FLAG_CLUSTER_NAME  = "cluster-name"
+	FLAG_NAMESPACE     = "namespace"
+	FLAG_CLUSTER_ID    = "id"
+	FLAG_ROOT_PASSWORD = "root-password"
+	FLAG_MODE          = "mode"
+	FLAG_NAME          = "name"
 
 	// Flags for zone-related options
 	FLAG_ZONES = "zones"
@@ -53,7 +54,13 @@ const (
 	FLAG_BACKUP_PATH    = "backup-storage-path"
 
 	// Flags for parameter-related options
-	FLAG_PARAMETERS = "parameters"
+	FLAG_PARAMETERS                    = "parameters"
+	FLAG_MIN_FULL_RESOURCE_POOL_MEMORY = "__min_full_resource_pool_memory"
+	FLAG_SYSTEM_MEMORY                 = "system_memory"
+
+	// Flag for demo cluster
+	FLAG_WAIT    = "wait"
+	FLAG_TIMEOUT = "timeout"
 )
 
 // Default values for cluster management
@@ -61,7 +68,7 @@ const (
 	// Default values for int and string flags
 	DEFAULT_NAMESPACE              = "default"
 	DEFAULT_ID                     = 0
-	DEFAULT_OBSERVER_IMAGE         = "quay.io/oceanbase/oceanbase-cloud-native:4.2.1.6-106000012024042515"
+	DEFAULT_OBSERVER_IMAGE         = "quay.io/oceanbase/oceanbase-cloud-native:4.3.3.1-101000012024102216"
 	DEFAULT_OBSERVER_CPU           = 2
 	DEFAULT_OBSERVER_MEMORY        = 10
 	DEFAULT_DATA_STORAGE_CLASS     = "local-path"
@@ -73,8 +80,38 @@ const (
 	DEFAULT_MONITOR_IMAGE          = "oceanbase/obagent:4.2.1-100000092023101717"
 	DEFAULT_MONITOR_CPU            = 1
 	DEFAULT_MONITOR_MEMORY         = 1
+	DEFAULT_NAME                   = "test"
+	DEFAULT_MODE                   = "service"
 
 	// Default values for Parameter flag
 	DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY = "2147483648"
-	DEFAULT_MIN_SYSTEM_MEMORY             = "1G"
+	DEFAULT_SYSTEM_MEMORY                 = "1G"
+
+	// Default values for wait flag
+	DEFAULT_WAIT = false
+	// Default timeout
+	DEFAULT_TIMEOUT = 30
+)
+
+// Default cluster type for easier cluster creation
+const (
+	CLUSTER_TYPE = "cluster-type"
+	SINGLE_NODE  = "single-node"
+	THREE_NODE   = "three-node"
+)
+
+// Error messages for cluster management
+const (
+	ErrInvalidClusterType = "invalid cluster type"
+)
+
+// Shorthand for cluster management
+const (
+	SHORTHAND_ZONES     = "z"
+	SHORTHAND_NAMESPACE = "n"
+	SHORTHAND_PASSWD    = "p"
+
+	// Shorthand for demo cluster creation
+	SHORTHAND_WAIT    = "w"
+	SHORTHAND_TIMEOUT = "t"
 )

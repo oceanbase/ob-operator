@@ -61,6 +61,7 @@ func (o *UpgradeOptions) Validate() error {
 
 // AddFlags for upgrade options
 func (o *UpgradeOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "namespace of ob cluster")
+	cmd.Flags().StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "namespace of ob cluster")
 	cmd.Flags().StringVar(&o.Image, FLAG_OBSERVER_IMAGE, "", "The image of observer") // set image to null, avoid image downgrade
+	_ = cmd.MarkFlagRequired(FLAG_OBSERVER_IMAGE)
 }

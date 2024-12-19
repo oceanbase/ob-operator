@@ -92,7 +92,7 @@ func (m *OBClusterManager) listOBParameters() (*v1alpha1.OBParameterList, error)
 		oceanbaseconst.LabelRefOBCluster: m.OBCluster.Name,
 	}, client.InNamespace(m.OBCluster.Namespace))
 	if err != nil {
-		return nil, errors.Wrap(err, "get obzone list")
+		return nil, errors.Wrap(err, "get obparameter list")
 	}
 	return obparameterList, nil
 }

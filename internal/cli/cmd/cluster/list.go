@@ -18,14 +18,14 @@ import (
 
 	"github.com/spf13/cobra"
 
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
 // NewListCmd list all ob clusters
 func NewListCmd() *cobra.Command {
-	tbw, tbLog := cmdUtil.GetTableLoggerInstance()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	tbw, tbLog := utils.GetTableLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List ob clusters",

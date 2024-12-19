@@ -11,9 +11,10 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package util
+package utils
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"text/tabwriter"
@@ -23,8 +24,12 @@ var fLog *log.Logger
 var tbLog *log.Logger
 var tbw = tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
 
+// BinaryName injected by ldflags
+var BinaryName string
+
 func init() {
-	fLog = log.New(os.Stdout, "[obocli]: ", 0)
+	logHead := fmt.Sprintf("[%s]: ", BinaryName)
+	fLog = log.New(os.Stdout, logHead, 0)
 	tbLog = log.New(tbw, "", 0)
 }
 

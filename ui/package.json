@@ -5,7 +5,7 @@
     "build": "max build",
     "dev": "max dev",
     "format": "prettier --cache --write .",
-    "gen:api": "openapi-generator-cli generate -i ../internal/dashboard/generated/swagger/swagger.yaml -g typescript-axios -c .openapi_config.yaml -o ./src/api/generated",
+    "gen:api": "openapi-generator-cli generate -i ./generated/doc.json -g typescript-axios -c .openapi_config.yaml -o ./src/api/generated",
     "postinstall": "max setup",
     "lint": "eslint src",
     "oic:clear": "oic --configPath ./must.cjs --clear",
@@ -45,6 +45,7 @@
     "prettier-plugin-organize-imports": "^3.2.2",
     "prettier-plugin-packagejson": "^2.4.3",
     "typescript": "^5.0.3",
-    "typescript-eslint": "^7.6.0"
+    "typescript-eslint": "^7.6.0",
+    "@openapitools/openapi-generator-cli": "^2.13.5"
   }
 }

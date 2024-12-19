@@ -41,8 +41,8 @@ type OBZone struct {
 	OBServers    []OBServer      `json:"observers,omitempty"`
 	NodeSelector []common.KVPair `json:"nodeSelector,omitempty"`
 
-	Tolerations []common.KVPair       `json:"tolerations,omitempty"`
-	Affinities  []common.AffinitySpec `json:"affinities,omitempty"`
+	Tolerations []common.TolerationSpec `json:"tolerations,omitempty"`
+	Affinities  []common.AffinitySpec   `json:"affinities,omitempty"`
 }
 
 type OBMetrics struct {
@@ -82,12 +82,18 @@ type ResourceSpecRender struct {
 	Memory int64 `json:"memory" binding:"required"`
 }
 
+type ParameterSpec struct {
+	Name      string `json:"name" binding:"required"`
+	SpecValue string `json:"specValue" binding:"required"`
+	Value     string `json:"value" binding:"required"`
+}
+
 type OBClusterExtra struct {
 	Resource ResourceSpecRender `json:"resource" binding:"required"`
 	Storage  OBServerStorage    `json:"storage" binding:"required"`
 
 	RootPasswordSecret string          `json:"rootPasswordSecret" binding:"required"`
-	Parameters         []common.KVPair `json:"parameters" binding:"required"`
+	Parameters         []ParameterSpec `json:"parameters" binding:"required"`
 	Monitor            *MonitorSpec    `json:"monitor"`
 	BackupVolume       *NFSVolumeSpec  `json:"backupVolume"`
 }

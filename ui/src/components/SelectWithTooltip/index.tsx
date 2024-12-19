@@ -5,6 +5,7 @@ interface SelectWithTooltipProps {
   selectList: API.TooltipData[];
   form: any;
   name: string | number | (string | number)[];
+  type: string;
   TooltipItemContent: (item: API.TooltipData) => JSX.Element;
 }
 
@@ -12,17 +13,18 @@ export default function SelectWithTooltip({
   selectList,
   form,
   name,
-  TooltipItemContent
+  type,
+  TooltipItemContent,
 }: SelectWithTooltipProps) {
   const filterOption = (
     input: string,
     option: { label: string; value: string },
-  ) =>{
+  ) => {
     return (option?.value ?? '').toLowerCase().includes(input.toLowerCase());
-  }  
+  };
 
   const formatData = (selectList: API.TooltipData[]) => {
-    selectList.forEach((item: API.TooltipData) => {
+    selectList?.forEach((item: API.TooltipData) => {
       item.label = (
         <Tooltip
           color="#fff"
@@ -34,7 +36,7 @@ export default function SelectWithTooltip({
               '0 3px 6px -4px rgba(0,0,0,.12), 0 6px 16px 0 rgba(0,0,0,.08), 0 9px 28px 8px rgba(0,0,0,.05)',
           }}
           placement="right"
-          title={<TooltipItemContent item={item}/>}
+          title={<TooltipItemContent item={item} />}
         >
           <div>{item.value}</div>
         </Tooltip>
@@ -59,7 +61,11 @@ export default function SelectWithTooltip({
       filterOption={filterOption}
       options={formatData(selectList)}
       onChange={selectChange}
-      value={form.getFieldValue(name)}
+      value={
+        type === 'observer' && formatData(selectList)?.length !== 1
+          ? ''
+          : form.getFieldValue(name)
+      }
       // dropdownRender={DropDownComponent}
     />
   );

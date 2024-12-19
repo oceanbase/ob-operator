@@ -15,7 +15,7 @@ ob-operator 是满足 Kubernetes Operator 扩展范式的自动化工具，可�
 ob-operator 依赖 [cert-manager](https://cert-manager.io/docs/), cert-manager 的安装可以参考对应的[安装文档](https://cert-manager.io/docs/installation/)，如果您无法访问官方制品托管在 `quay.io` 镜像站的镜像，可通过下面的指令安装我们转托在 `docker.io` 中的制品：
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.0_release/deploy/cert-manager.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/stable/deploy/cert-manager.yaml
 ```
 
 本例子中的 OceanBase 集群存储依赖 [local-path-provisioner](https://github.com/rancher/local-path-provisioner) 提供, 需要提前进行安装并确保其存储目的地有足够大的磁盘空间。如果您计划在生产环境部署，推荐使用其他的存储解决方案。我们在[存储兼容性](#存储兼容性)一节提供了我们测试过的存储兼容性结果。
@@ -29,7 +29,7 @@ kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.0_r
 - 稳定版本
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.0_release/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/stable/deploy/operator.yaml
 ```
 
 - 开发版本
@@ -45,7 +45,7 @@ Helm Chart 将 ob-operator 部署的命名空间进行了参数化，可在安�
 ```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm repo update
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.3.0
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace
 ```
 
 #### 使用 terraform
@@ -97,7 +97,7 @@ kubectl create secret generic root-password --from-literal=password='root_passwo
 通过以下命令即可在 K8s 集群中部署 OceanBase：
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.0_release/example/quickstart/obcluster.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/stable/example/quickstart/obcluster.yaml
 ```
 
 一般初始化集群需要 2 分钟左右的时间，执行以下命令，查询集群状态，当集群状态变成 running 之后表示集群创建和初始化成功：
@@ -162,6 +162,8 @@ ob-operator 以 kubebuilder 为基础，通过统一的资源管理器接口、�
 
 ![ob-operator 架构设计](./docsite/static/img/ob-operator-arch.png)
 
+![ob-operator 任务管理器](./docsite/static/img/ob-operator-task-manager-arch.png)
+
 有关架构细节可参见[架构设计文档](https://oceanbase.github.io/ob-operator/zh-Hans/docs/developer/arch)。
 
 ## 特性
@@ -200,7 +202,7 @@ ob-operator 支持 OceanBase v4.x 版本。某些特性需要特定的 OceanBase
 
 ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项目进行构建，所以开发和运行环境与其相近。
 
-- 构建 ob-operator 需要 Go 1.20 版本及以上；
+- 构建 ob-operator 需要 Go 1.22 版本及以上；
 - 运行 ob-operator 需要 Kubernetes 集群和 kubectl 的版本在 1.18 及以上。我们在 1.23 ~ 1.28 版本的 K8s 集群上检验过 ob-operator 的运行是符合预期的。
 - 如果使用 Docker 作为集群的容器运行时，需要 Docker 17.03 及以上版本；我们的构建和运行环境使用的 Docker 版本为 18。
 
@@ -225,6 +227,7 @@ ob-operator 使用 [kubebuilder](https://book.kubebuilder.io/introduction) 项�
 ## 参与开发
 
 - [提出 Issue](https://github.com/oceanbase/ob-operator/issues)
+- [发起 Discussion](https://github.com/oceanbase/ob-operator/discussions)
 - [发起 Pull request](https://github.com/oceanbase/ob-operator/pulls)
 
 ## 许可证

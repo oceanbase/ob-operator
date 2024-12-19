@@ -114,10 +114,10 @@ func (o *UpdateOptions) Complete() error {
 			expandStorageSize.DataStorage = apiresource.NewQuantity(o.Storage.Data.SizeGB*constant.GB, apiresource.BinarySI)
 		}
 		if o.Storage.RedoLog.SizeGB != 0 {
-			expandStorageSize.DataStorage = apiresource.NewQuantity(o.Storage.RedoLog.SizeGB*constant.GB, apiresource.BinarySI)
+			expandStorageSize.RedoLogStorage = apiresource.NewQuantity(o.Storage.RedoLog.SizeGB*constant.GB, apiresource.BinarySI)
 		}
 		if o.Storage.Log.SizeGB != 0 {
-			expandStorageSize.DataStorage = apiresource.NewQuantity(o.Storage.Log.SizeGB*constant.GB, apiresource.BinarySI)
+			expandStorageSize.LogStorage = apiresource.NewQuantity(o.Storage.Log.SizeGB*constant.GB, apiresource.BinarySI)
 		}
 		o.ModifyConfig = &v1alpha1.ModifyOBServersConfig{ExpandStorageSize: expandStorageSize}
 	default:
@@ -128,7 +128,7 @@ func (o *UpdateOptions) Complete() error {
 
 // AddFlags for update options
 func (o *UpdateOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "namespace of ob cluster")
+	cmd.Flags().StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "namespace of ob cluster")
 	cmd.Flags().Int64Var(&o.Resource.Cpu, FLAG_OBSERVER_CPU, DEFAULT_OBSERVER_CPU, "The cpu of the observer")
 	cmd.Flags().Int64Var(&o.Resource.MemoryGB, FLAG_OBSERVER_MEMORY, DEFAULT_OBSERVER_MEMORY, "The memory of the observer")
 	cmd.Flags().StringVar(&o.Storage.Data.StorageClass, FLAG_DATA_STORAGE_CLASS, "", "The storage class of the data storage")

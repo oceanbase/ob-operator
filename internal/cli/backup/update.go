@@ -20,10 +20,11 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/generic"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
@@ -48,9 +49,12 @@ func UpdateTenantBackupPolicy(ctx context.Context, o *UpdateOptions) error {
 	}
 	obtenant, err := clients.GetOBTenant(ctx, nn)
 	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return errors.New("tenant not found")
+		}
 		return err
 	}
-	if err := util.CheckTenantStatus(obtenant); err != nil {
+	if err := utils.CheckTenantStatus(obtenant); err != nil {
 		return err
 	}
 	policy, err := clients.GetTenantBackupPolicy(ctx, nn)
@@ -117,8 +121,7 @@ func (o *UpdateOptions) AddFlags(cmd *cobra.Command) {
 // AddBaseFlags adds the base flags for the create command
 func (o *UpdateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags := cmd.Flags()
-	baseFlags.StringVar(&o.Name, FLAG_NAME, "", "The name of the ob tenant")
-	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the ob tenant")
+	baseFlags.StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the ob tenant")
 	baseFlags.IntVar(&o.JobKeepDays, FLAG_JOB_KEEP_DAYS, DEFAULT_JOB_KEEP_DAYS, "The number of days to keep the backup job")
 	baseFlags.IntVar(&o.RecoveryDays, FLAG_RECOVERY_DAYS, DEFAULT_RECOVERY_DAYS, "The number of days to keep the backup recovery")
 	baseFlags.IntVar(&o.PieceIntervalDays, FLAG_PIECE_INTERVAL_DAYS, DEFAULT_PIECE_INTERVAL_DAYS, "The number of days to switch the backup piece")

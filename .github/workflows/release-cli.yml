@@ -8,7 +8,7 @@ on:
 env:
   tagName: ${{ github.ref_name }}
   GO_VERSION : "1.22"
-  BinaryName: "obocli"
+  BinaryName: "okctl"
 
 jobs:
   release-oceanbase-cli:
@@ -26,12 +26,9 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }} # The Go version to download (if necessary) and use.
-
-      - name: install dependencies
-        run: make dashboard-dep-install cli-dep-install
   
       - name: generate bindata
-        run: make dashboard-bindata-gen cli-bindata-gen
+        run: make dashboard-bindata-gen dashboard-doc-gen cli-bindata-gen
 
       - name: go mod vendor 
         run: go mod vendor

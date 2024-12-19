@@ -23,7 +23,7 @@ endpoints:
         username: keystone
         password: password
     hosts:
-      default: svc-openstack
+      default: svc-obproxy-openstack
     path: /keystone
     scheme: mysql+pymysql
     port:

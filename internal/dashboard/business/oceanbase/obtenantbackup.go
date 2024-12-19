@@ -354,8 +354,8 @@ func CreateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *p
 		return nil, err
 	}
 
-	if p.DestType == "OSS" && p.OSSAccessID != "" && p.OSSAccessKey != "" {
-		ossSecretName := nn.Name + "-backup-oss-secret-" + rand.String(6)
+	if p.DestType != param.BackupDestNFS && p.OSSAccessID != "" && p.OSSAccessKey != "" {
+		ossSecretName := nn.Name + "-backup-" + strings.ToLower(strings.ReplaceAll(string(p.DestType), "_", "-")) + "-secret-" + rand.String(6)
 		backupPolicy.Spec.LogArchive.Destination.OSSAccessSecret = ossSecretName
 		backupPolicy.Spec.DataBackup.Destination.OSSAccessSecret = ossSecretName
 		secret := &corev1.Secret{
@@ -366,6 +366,8 @@ func CreateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *p
 			StringData: map[string]string{
 				"accessId":  p.OSSAccessID,
 				"accessKey": p.OSSAccessKey,
+				"s3Region":  p.Region,
+				"appId":     p.AppID,
 			},
 		}
 		_, err := client.GetClient().ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, secret, metav1.CreateOptions{})

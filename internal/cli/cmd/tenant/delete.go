@@ -15,17 +15,18 @@ package tenant
 
 import (
 	"github.com/spf13/cobra"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
 // NewDeleteCmd delete ob tenant
 func NewDeleteCmd() *cobra.Command {
 	o := tenant.NewDeleteOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "delete <tenant_name>",
 		Short:   "Delete an ob tenant",
@@ -37,7 +38,11 @@ func NewDeleteCmd() *cobra.Command {
 				Name:      o.Name,
 			})
 			if err != nil {
-				logger.Fatalln(err)
+				if kubeerrors.IsNotFound(err) {
+					logger.Fatalf("OBTenant %s not found", o.Name)
+				} else {
+					logger.Fatalln(err)
+				}
 			}
 			logger.Printf("Delete OBTenant %s successfully", o.Name)
 		},

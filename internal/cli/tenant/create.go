@@ -41,19 +41,6 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
-func NewCreateOptions() *CreateOptions {
-	return &CreateOptions{
-		UnitConfig: &param.UnitConfig{},
-		Pools:      make([]param.ResourcePoolSpec, 0),
-		Source: &param.TenantSourceSpec{
-			Restore: &param.RestoreSourceSpec{
-				Until: &param.RestoreUntilConfig{},
-			},
-		},
-		ZonePriority: make(map[string]string),
-	}
-}
-
 type CreateOptions struct {
 	generic.ResourceOption
 	ClusterName      string `json:"obcluster" binding:"required"`
@@ -78,22 +65,40 @@ type CreateOptions struct {
 	Timestamp    string            `json:"timestamp"`
 }
 
+func NewCreateOptions() *CreateOptions {
+	return &CreateOptions{
+		UnitConfig: &param.UnitConfig{},
+		Pools:      make([]param.ResourcePoolSpec, 0),
+		Source: &param.TenantSourceSpec{
+			Restore: &param.RestoreSourceSpec{
+				Until: &param.RestoreUntilConfig{},
+			},
+		},
+		ZonePriority: make(map[string]string),
+	}
+}
+
 func (o *CreateOptions) Parse(cmd *cobra.Command, args []string) error {
+	o.Name = args[0]
+	o.Cmd = cmd
 	pools, err := utils.MapZonesToPools(o.ZonePriority)
 	if err != nil {
 		return err
 	}
 	o.Pools = pools
-	o.Name = args[0]
-	o.Cmd = cmd
-	o.TenantRole = string(apiconst.TenantRolePrimary)
+	// If flag `from` is specified, create a tenant as a empty standby tenant or restore a tenant.
 	if o.CheckIfFlagChanged("from") {
 		o.Source.Tenant = &o.From
-		// If flag `restore` is specified, restore a tenant, otherwise create an empty standby tenant.
-		if !o.Restore {
+		// If flag `restore` is specified, restore a tenant, currently only create primary tenant as default
+		if o.Restore {
+			o.TenantRole = string(apiconst.TenantRolePrimary)
+		} else {
 			o.TenantRole = string(apiconst.TenantRoleStandby)
 			o.Source.Restore = nil
 		}
+	} else {
+		o.TenantRole = string(apiconst.TenantRolePrimary)
+		o.Source = nil
 	}
 	return nil
 }
@@ -102,8 +107,14 @@ func (o *CreateOptions) Complete() error {
 	if o.RootPassword == "" {
 		o.RootPassword = utils.GenerateRandomPassword(8, 32)
 	}
+	if o.TenantName == "" {
+		o.TenantName = o.Name
+	}
 	if o.Timestamp != "" {
 		o.Source.Restore.Until.Timestamp = &o.Timestamp
+	}
+	if o.RestoreType != "" {
+		o.RestoreType = strings.ToUpper(o.RestoreType)
 	}
 	return nil
 }
@@ -113,7 +124,7 @@ func (o *CreateOptions) Validate() error {
 		return errors.New("namespace is not specified")
 	}
 	if o.ClusterName == "" {
-		return errors.New("cluster name is not specified")
+		return errors.New("cluster is not specified")
 	}
 	if o.TenantName == "" {
 		return errors.New("tenant name is not specified")
@@ -124,17 +135,17 @@ func (o *CreateOptions) Validate() error {
 	if !utils.CheckTenantName(o.TenantName) {
 		return fmt.Errorf("invalid tenant name: %s, the first letter must be a letter or an underscore and cannot contain -", o.TenantName)
 	}
-	if o.Source != nil && o.Source.Tenant != nil && o.TenantRole == "PRIMARY" {
-		return fmt.Errorf("invalid tenant role")
+	if o.Restore && o.Source == nil {
+		return errors.New("source tenant is not specified")
 	}
 	if o.Restore && o.RestoreType != "OSS" && o.RestoreType != "NFS" {
-		return errors.New("Restore Type not supported")
+		return errors.New("restore Type is not supported")
 	}
 	if o.Restore && o.RestoreType == "OSS" && o.Source.Restore.OSSAccessKey == "" {
-		return errors.New("oss access key not specified")
+		return errors.New("oss access key is not specified")
 	}
 	if o.Restore && o.RestoreType == "NFS" && o.Source.Restore.BakEncryptionPassword == "" {
-		return errors.New("back encryption password not specified")
+		return errors.New("back encryption password is not specified")
 	}
 	return nil
 }
@@ -174,7 +185,7 @@ func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, 
 			if kubeerrors.IsNotFound(err) {
 				return nil, fmt.Errorf("primary tenant not found")
 			}
-			return nil, fmt.Errorf(err.Error())
+			return nil, err
 		}
 		if existing.Status.TenantRole != apiconst.TenantRolePrimary {
 			return nil, fmt.Errorf("the target tenant is not primary tenant")
@@ -182,19 +193,16 @@ func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, 
 		// Match root password
 		rootSecret, err := k8sclient.ClientSet.CoreV1().Secrets(existing.Namespace).Get(ctx, existing.Status.Credentials.Root, v1.GetOptions{})
 		if err != nil {
-			return nil, fmt.Errorf(err.Error())
+			return nil, err
 		}
 		if pwd, ok := rootSecret.Data["password"]; ok {
 			if p.RootPassword != string(pwd) {
 				return nil, fmt.Errorf("root password not match")
 			}
 			if t.Spec.Credentials.Root != "" {
-				err = createPasswordSecret(ctx, types.NamespacedName{
-					Namespace: nn.Namespace,
-					Name:      t.Spec.Credentials.Root,
-				}, p.RootPassword)
+				err = utils.CreatePasswordSecret(ctx, nn.Namespace, t.Spec.Credentials.Root, p.RootPassword)
 				if err != nil {
-					return nil, fmt.Errorf(err.Error())
+					return nil, err
 				}
 			}
 		}
@@ -207,29 +215,20 @@ func CreateOBTenant(ctx context.Context, p *CreateOptions) (*v1alpha1.OBTenant, 
 
 		if pwd, ok := standbyroSecret.Data["password"]; ok {
 			t.Spec.Credentials.StandbyRO = p.Name + "-standbyro-" + rand.String(6)
-			err = createPasswordSecret(ctx, types.NamespacedName{
-				Namespace: nn.Namespace,
-				Name:      t.Spec.Credentials.StandbyRO,
-			}, string(pwd))
+			err = utils.CreatePasswordSecret(ctx, nn.Namespace, t.Spec.Credentials.StandbyRO, string(pwd))
 			if err != nil {
 				return nil, oberr.NewInternal(err.Error())
 			}
 		}
 	} else {
 		if t.Spec.Credentials.Root != "" {
-			err = createPasswordSecret(ctx, types.NamespacedName{
-				Namespace: nn.Namespace,
-				Name:      t.Spec.Credentials.Root,
-			}, p.RootPassword)
+			err = utils.CreatePasswordSecret(ctx, nn.Namespace, t.Spec.Credentials.Root, p.RootPassword)
 			if err != nil {
 				return nil, oberr.NewInternal(err.Error())
 			}
 		}
 		t.Spec.Credentials.StandbyRO = p.Name + "-standbyro-" + rand.String(6)
-		err = createPasswordSecret(ctx, types.NamespacedName{
-			Namespace: nn.Namespace,
-			Name:      t.Spec.Credentials.StandbyRO,
-		}, rand.String(32))
+		err = utils.CreatePasswordSecret(ctx, nn.Namespace, t.Spec.Credentials.StandbyRO, rand.String(32))
 		if err != nil {
 			return nil, oberr.NewInternal(err.Error())
 		}
@@ -386,38 +385,32 @@ func buildOBTenantApiType(nn types.NamespacedName, p *CreateOptions) (*v1alpha1.
 	return t, nil
 }
 
-func createPasswordSecret(ctx context.Context, nn types.NamespacedName, password string) error {
-	k8sclient := client.GetClient()
-	_, err := k8sclient.ClientSet.CoreV1().Secrets(nn.Namespace).Create(ctx, &corev1.Secret{
-		ObjectMeta: v1.ObjectMeta{
-			Name:      nn.Name,
-			Namespace: nn.Namespace,
-		},
-		StringData: map[string]string{
-			"password": password,
-		},
-	}, v1.CreateOptions{})
-	return err
-}
-
 // AddFlags for create options
 func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 	o.AddBaseFlags(cmd)
 	o.AddUnitFlags(cmd)
 	o.AddPoolFlags(cmd)
 	o.AddRestoreFlags(cmd)
+	o.SetRequiredFlags(cmd)
+}
+
+// SetRequiredFlags set required flags
+func (o *CreateOptions) SetRequiredFlags(cmd *cobra.Command) {
+	_ = cmd.MarkFlagRequired(FLAG_CLUSTER_NAME)
+	_ = cmd.MarkFlagRequired(FLAG_ZONE_PRIORITY)
+	cmd.MarkFlagsRequiredTogether(FLAG_RESTORE, FLAG_ARCHIVE_SOURCE, FLAG_BAK_DATA_SOURCE)
 }
 
 // AddBaseFlags add base flags
 func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags := cmd.Flags()
-	baseFlags.StringVarP(&o.TenantName, FLAG_TENANT_NAME, "n", "", "Tenant name, if not specified, use name in k8s instead")
-	baseFlags.StringVar(&o.ClusterName, FLAG_CLUSTER_NAME, "", "The cluster name tenant belonged to in k8s")
-	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the tenant")
-	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOTPASSWD, "p", "", "The root password of the primary tenant, if not specified, generate a random password")
-	baseFlags.StringVarP(&o.Charset, FLAG_CHARSET, "c", DEFAULT_CHARSET, "The charset using in ob tenant")
-	baseFlags.StringVar(&o.ConnectWhiteList, FLAG_CONNECT_WHITE_LIST, DEFAULT_CONNECT_WHITE_LIST, "The connect white list using in ob tenant")
-	baseFlags.StringVar(&o.From, FLAG_FROM, "", "restore from data source")
+	baseFlags.StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the tenant")
+	baseFlags.StringVarP(&o.RootPassword, FLAG_ROOTPASSWD, SHORTHAND_PASSWD, "", "The root password of the primary tenant, if not specified, generate a random password")
+	baseFlags.StringVarP(&o.Charset, FLAG_CHARSET, SHORTHAND_CHARSET, DEFAULT_CHARSET, "The charset used in ob tenant")
+	baseFlags.StringVar(&o.TenantName, FLAG_TENANT_NAME, "", "Tenant name, if not specified, use name in k8s instead")
+	baseFlags.StringVar(&o.ClusterName, FLAG_CLUSTER_NAME, "", "The cluster name tenant belonged to in k8s, required")
+	baseFlags.StringVar(&o.ConnectWhiteList, FLAG_CONNECT_WHITE_LIST, DEFAULT_CONNECT_WHITE_LIST, "The connect white list used in ob tenant")
+	baseFlags.StringVar(&o.From, FLAG_FROM, "", "The source tenant to create a standby tenant or restore the tenant")
 }
 
 // AddPoolFlags add pool-related flags
@@ -443,14 +436,14 @@ func (o *CreateOptions) AddUnitFlags(cmd *cobra.Command) {
 // AddRestoreFlags add restore flags
 func (o *CreateOptions) AddRestoreFlags(cmd *cobra.Command) {
 	restoreFlags := pflag.NewFlagSet(FLAGSET_RESTORE, pflag.ContinueOnError)
-	restoreFlags.BoolVarP(&o.Restore, FLAG_RESTORE, "r", DEFAULT_RESTORE_FLAG, "Restore from backup files")
+	restoreFlags.BoolVarP(&o.Restore, FLAG_RESTORE, SHORTHAND_RESTORE, DEFAULT_RESTORE_FLAG, "Restore from backup files, set to true to restore a tenant, also need the `from` flag to specify the source tenant")
 	restoreFlags.StringVar(&o.RestoreType, FLAG_RESTORE_TYPE, DEFAULT_RESTORE_TYPE, "The type of restore source, support OSS or NFS")
-	restoreFlags.StringVar(&o.Source.Restore.ArchiveSource, FLAG_ARCHIVE_SOURCE, DEFAULT_ARCHIVE_SOURCE, "The archive source of restore")
+	restoreFlags.StringVar(&o.Source.Restore.ArchiveSource, FLAG_ARCHIVE_SOURCE, "", "The archive source of restore")
 	restoreFlags.StringVar(&o.Source.Restore.BakEncryptionPassword, FLAG_BAK_ENCRYPTION_PASS, "", "The backup encryption password of obtenant")
-	restoreFlags.StringVar(&o.Source.Restore.BakDataSource, FLAG_BAK_DATA_SOURCE, DEFAULT_BAK_DATA_SOURCE, "The bak data source of restore")
+	restoreFlags.StringVar(&o.Source.Restore.BakDataSource, FLAG_BAK_DATA_SOURCE, "", "The bak data source of restore")
 	restoreFlags.StringVar(&o.Source.Restore.OSSAccessID, FLAG_OSS_ACCESS_ID, "", "The oss access id of restore")
 	restoreFlags.StringVar(&o.Source.Restore.OSSAccessKey, FLAG_OSS_ACCESS_KEY, "", "The oss access key of restore")
 	restoreFlags.BoolVar(&o.Source.Restore.Until.Unlimited, FLAG_UNLIMITED, DEFAULT_UNLIMITED_FLAG, "time limited for restore")
-	restoreFlags.StringVar(&o.Timestamp, FLAG_UNTIL_TIMESTAMP, "", "timestamp for obtenant restore")
+	restoreFlags.StringVar(&o.Timestamp, FLAG_UNTIL_TIMESTAMP, "", "Timestamp for obtenant restore")
 	cmd.Flags().AddFlagSet(restoreFlags)
 }

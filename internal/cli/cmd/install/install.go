@@ -16,37 +16,41 @@ package install
 import (
 	"github.com/spf13/cobra"
 
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/install"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
+
+var componentList = []string{"ob-operator", "ob-dashboard", "local-path-provisioner", "cert-manager", "local-path-provisioner-dev", "ob-operator-dev"}
 
 // NewCmd install the ob-operator and other components
 func NewCmd() *cobra.Command {
 	o := install.NewInstallOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:   "install <component>",
-		Short: "Command for ob-operator and components installation",
-		Long: `Command for ob-operator and components installation.
+		Short: "Command for ob-operator and other components installation",
+		Long: `Command for ob-operator and other components installation.
 
 Currently support:
-- ob-operator: A Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes.
+- ob-operator: A Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes, support stable and develop version.
 - ob-dashboard: A web application that provides resource management capabilities.
-- local-path-provisioner: Provides a way for the Kubernetes users to utilize the local storage in each node, Storage of OceanBase cluster relies on it, which should be installed beforehand.
+- local-path-provisioner: Provides a way for the Kubernetes users to utilize the local storage in each node, Storage of OceanBase cluster relies on it, which should be installed beforehand, support stable and develop version.
 - cert-manager: Creates TLS certificates for workloads in Kubernetes and renews the certificates before they expire, ob-operator relies on it for certificate management, which should be installed beforehand.
 
-if not specified, install ob-operator and ob-dashboard by default`,
-		PreRunE: o.Parse,
-		Args:    cobra.MaximumNArgs(1),
+if not specified, install ob-operator and ob-dashboard by default, and cert-manager if it is not found in cluster.`,
+		PreRunE:   o.Parse,
+		ValidArgs: componentList,
+		Args:      cobra.MatchAll(cobra.MaximumNArgs(1), cobra.OnlyValidArgs),
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {
 				logger.Println("Install ob-operator and ob-dashboard by default")
 			}
 			for component, version := range o.Components {
+				logger.Printf("Installing component %s, version %s\n", component, version)
 				if err := o.Install(component, version); err != nil {
 					logger.Fatalln(err)
 				} else {
-					logger.Printf("%s install successfully", component)
+					logger.Printf("%s install successfully\n", component)
 				}
 			}
 		},

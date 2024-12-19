@@ -22,7 +22,6 @@ const (
 
 	// Base flags
 	FLAG_NAMESPACE     = "namespace"
-	FLAG_NAME          = "name"
 	FLAG_SCHEDULE_TYPE = "schedule-type"
 	FLAG_DEST_TYPE     = "dest-type"
 	FLAG_ARCHIVE_PATH  = "archive-path"
@@ -66,4 +65,11 @@ const (
 	DEFAULT_FORCE               = false
 	DEFAULT_JOBTYPE             = "ALL"
 	DEFAULT_LIMIT               = 0
+)
+
+// Shorthand for backup policy management
+const (
+	SHORTHAND_NAMESPACE = "n"
+	SHORTHAND_FORCE     = "f"
+	SHORTHAND_TYPE      = "t"
 )

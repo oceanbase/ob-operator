@@ -12,6 +12,10 @@ See the Mulan PSL v2 for more details.
 
 package param
 
+import (
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
+)
+
 type CreateOBTenantParam struct {
 	Name             string `json:"name" binding:"required"`
 	Namespace        string `json:"namespace" binding:"required"`
@@ -28,9 +32,13 @@ type CreateOBTenantParam struct {
 	// Enum: Primary, Standby
 	TenantRole TenantRole        `json:"tenantRole,omitempty"`
 	Source     *TenantSourceSpec `json:"source,omitempty"`
-}
 
-type UpdateOBTenantParam CreateOBTenantParam
+	// Enum: express_oltp, express_oltp, olap, kv, htap, express_oltp_perf
+	Scenario           string          `json:"scenario"`
+	DeletionProtection bool            `json:"deletionProtection"`
+	Parameters         []common.KVPair `json:"parameters"`
+	Variables          []common.KVPair `json:"variables"`
+}
 
 type ResourcePoolSpec struct {
 	Zone     string `json:"zone" binding:"required"`
@@ -45,7 +53,7 @@ type TenantSourceSpec struct {
 }
 
 type RestoreSourceSpec struct {
-	// Enum: OSS, NFS
+	// Enum: OSS, NFS, COS, S3, S3_COMPATIBLE
 	Type          BackupDestType `json:"type" binding:"required"`
 	ArchiveSource string         `json:"archiveSource" binding:"required"`
 	BakDataSource string         `json:"bakDataSource" binding:"required"`
@@ -54,6 +62,9 @@ type RestoreSourceSpec struct {
 
 	BakEncryptionPassword string              `json:"bakEncryptionPassword,omitempty"`
 	Until                 *RestoreUntilConfig `json:"until,omitempty"`
+
+	AppID  string `json:"appId,omitempty"`
+	Region string `json:"region,omitempty"`
 }
 
 type UnitConfig struct {
@@ -93,6 +104,11 @@ type PatchTenant struct {
 	// Deprecated
 	// Description: Deprecated, use PATCH /obtenants/:namespace/:name/pools/:zoneName instead
 	UnitConfig *PatchUnitConfig `json:"unitConfig,omitempty"`
+
+	Parameters               []common.KVPair `json:"parameters"`
+	Variables                []common.KVPair `json:"variables"`
+	AddDeletionProtection    bool            `json:"addDeletionProtection"`
+	RemoveDeletionProtection bool            `json:"removeDeletionProtection"`
 }
 
 type TenantPoolSpec struct {

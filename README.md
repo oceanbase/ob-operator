@@ -16,7 +16,7 @@ ob-operator relies on [cert-manager](https://cert-manager.io/docs/) for certific
 If you have trouble accessing `quay.io` image registry, our mirrored cert-manager manifests can be applied through following command:
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.0_release/deploy/cert-manager.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/stable/deploy/cert-manager.yaml
 ```
 
 Storage of OceanBase cluster in this example relies on [local-path-provisioner](https://github.com/rancher/local-path-provisioner), which should be installed beforehand. You should confirm that there is enough disk space in storage destination of local-path-provisioner. If you decide to deploy OceanBase cluster in production environment, it is recommended to use other storage solutions. We have provided a compatible table for storage solutions that we tested in section [Storage Compatibility](#storage-compatibility).
@@ -30,7 +30,7 @@ You can deploy ob-operator in a Kubernetes cluster by executing the following co
 - Stable
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.0_release/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/stable/deploy/operator.yaml
 ```
 
 - Development
@@ -46,7 +46,7 @@ Helm Chart parameterizes the namespace in which ob-operator is deployed, allowin
 ```shell
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm repo update
-helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace --version=2.3.0
+helm install ob-operator ob-operator/ob-operator --namespace=oceanbase-system --create-namespace
 ```
 
 #### Using terraform
@@ -98,7 +98,7 @@ kubectl create secret generic root-password --from-literal=password='root_passwo
 You can deploy OceanBase in a Kubernetes cluster by executing the following command:
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.0_release/example/quickstart/obcluster.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/stable/example/quickstart/obcluster.yaml
 ```
 
 It generally takes around 2 minutes to bootstrap a cluster. Execute the following command to check the status of the cluster. Once the cluster status changes to "running," it indicates that the cluster has been successfully created and bootstrapped:
@@ -160,9 +160,11 @@ Login with admin user and password.
 
 ## Project Architecture
 
-ob-operator is built on top of kubebuilder and provides control and management of OceanBase clusters and related applications through a unified resource manager interface, a global task manager instance, and a task flow mechanism for handling long-running tasks. The architecture diagram is approximately as follows:
+ob-operator is built on top of kubebuilder and provides control and management of OceanBase clusters and related applications through a unified resource manager interface, a global task manager instance, and a task flow mechanism for handling long-running tasks. The architecture diagram of ob-operator is approximately as follows:
 
 ![ob-operator Architecture](./docsite/static/img/ob-operator-arch.png)
+
+![ob-operator Task Manager Architecture](./docsite/static/img/ob-operator-task-manager-arch.png)
 
 For more detailed information about the architecture, please refer to the [Architecture Document](https://oceanbase.github.io/ob-operator/docs/developer/arch).
 
@@ -202,7 +204,7 @@ OceanBase v3.x versions are currently not supported by ob-operator.
 
 ob-operator is built using the [kubebuilder](https://book.kubebuilder.io/introduction) project, so the development and runtime environment are similar to it.
 
-- To build ob-operator: Go version 1.20 or higher is required.
+- To build ob-operator: Go version 1.22 or higher is required.
 - To run ob-operator: Kubernetes cluster and kubectl version 1.18 or higher are required. We examined the functionalities on k8s cluster of version from 1.23 ~ 1.28 and ob-operator performs well.
 - If using Docker as the container runtime for the cluster, Docker version 17.03 or higher is required. We tested building and running ob-operator with Docker 18.
 
@@ -211,6 +213,8 @@ ob-operator is built using the [kubebuilder](https://book.kubebuilder.io/introdu
 - [Architecture](https://oceanbase.github.io/ob-operator/docs/developer/arch)
 - [Contributor Guidance](https://oceanbase.github.io/ob-operator/docs/developer/contributor-guidance)
 - [User Manual](https://oceanbase.github.io/ob-operator/docs/manual/what-is-ob-operator)
+
+github.com/oceanbase/ob-operator + /docs/developer/arch
 
 ## Getting Help
 
@@ -227,7 +231,8 @@ If you encounter any issues while using ob-operator, please feel free to seek he
 ## Contributing
 
 - [Submit an issue](https://github.com/oceanbase/ob-operator/issues)
-- [Create a Pull request](https://github.com/oceanbase/ob-operator/pulls)
+- [Create a discussion](https://github.com/oceanbase/ob-operator/discussions)
+- [Create a pull request](https://github.com/oceanbase/ob-operator/pulls)
 
 ## License
 

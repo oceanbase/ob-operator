@@ -7,6 +7,7 @@ $(LOCALBIN): ## Location to install dependencies to
 ## Tool Binaries
 KUSTOMIZE ?= $(LOCALBIN)/kustomize
 CONTROLLER_GEN ?= $(LOCALBIN)/controller-gen
+KUBEBUILDER ?= $(LOCALBIN)/kubebuilder
 ENVTEST ?= $(LOCALBIN)/setup-envtest
 
 ## Tool Versions
@@ -22,6 +23,11 @@ $(KUSTOMIZE): $(LOCALBIN)
 		rm -rf $(LOCALBIN)/kustomize; \
 	fi
 	test -s $(LOCALBIN)/kustomize || { curl -Ss $(KUSTOMIZE_INSTALL_SCRIPT) --output install_kustomize.sh && bash install_kustomize.sh $(subst v,,$(KUSTOMIZE_VERSION)) $(LOCALBIN); rm install_kustomize.sh; }
+
+.PHONY: kubebuilder
+kubebuilder:
+	test -s $(LOCALBIN)/kubebuilder || mkdir -p $(LOCALBIN) && \
+	curl -L -o $(LOCALBIN)/kubebuilder "https://go.kubebuilder.io/dl/latest/$(go env GOOS)/$(go env GOARCH)" && chmod +x $(LOCALBIN)/kubebuilder
 
 .PHONY: controller-gen
 controller-gen: $(CONTROLLER_GEN) ## Download controller-gen locally if necessary. If wrong version is installed, it will be overwritten.
@@ -39,7 +45,7 @@ install-delve: ## Install delve, a debugger for the Go programming language. Mor
 	go install github.com/go-delve/delve/cmd/dlv@master
 
 .PHONY: tools 
-tools: kustomize controller-gen envtest ## Download all tools
+tools: kubebuilder kustomize controller-gen envtest ## Download all tools
 
 .PHONY: init-generator
 init-generator: ## Install generator tools

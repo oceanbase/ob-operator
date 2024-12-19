@@ -28,6 +28,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/oceanbase/ob-operator/api/constants"
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	cmdconst "github.com/oceanbase/ob-operator/internal/const/cmd"
@@ -567,5 +568,79 @@ func CreateUserWithCredentialSecrets(m *OBTenantManager) tasktypes.TaskError {
 		m.Logger.Error(err, "Failed to create user or change password, please check the credential secrets")
 	}
 
+	return nil
+}
+
+func MaintainTenantParameters(m *OBTenantManager) tasktypes.TaskError {
+	parameterMap := make(map[string]apitypes.Parameter)
+	for _, parameter := range m.OBTenant.Status.Parameters {
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Build parameter map", "parameter", parameter.Name)
+		parameterMap[parameter.Name] = parameter
+	}
+	for _, parameter := range m.OBTenant.Spec.Parameters {
+		parameterStatus, parameterExists := parameterMap[parameter.Name]
+		if !parameterExists {
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Parameter not exists, need create", "param", parameter.Name)
+			err := m.createOBParameter(&parameter)
+			if err != nil {
+				// since parameter is not a big problem, just log the error
+				m.Logger.Error(err, "Create obparameter failed", "param", parameter.Name)
+			}
+		} else if parameterStatus.Value != parameter.Value {
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Parameter value not matched, need update", "param", parameter.Name)
+			err := m.updateOBParameter(&parameter)
+			if err != nil {
+				// since parameter is not a big problem, just log the error
+				m.Logger.Error(err, "Update obparameter failed", "param", parameter.Name)
+			}
+		}
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Remove parameter from map", "parameter", parameter.Name)
+		delete(parameterMap, parameter.Name)
+	}
+
+	// delete parameters that not in spec definition
+	for _, parameter := range parameterMap {
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Delete parameter", "parameter", parameter.Name)
+		err := m.deleteOBParameter(&parameter)
+		if err != nil {
+			m.Logger.Error(err, "Failed to delete parameter")
+		}
+	}
+	return nil
+}
+
+func MaintainTenantVariables(m *OBTenantManager) tasktypes.TaskError {
+	variableMap := make(map[string]apitypes.Variable)
+	for _, variable := range m.OBTenant.Status.Variables {
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Build variable map", "variable", variable.Name)
+		variableMap[variable.Name] = variable
+	}
+	for _, variable := range m.OBTenant.Spec.Variables {
+		variableStatus, variableExists := variableMap[variable.Name]
+		if !variableExists {
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Variable not exists, need create", "variable", variable.Name)
+			err := m.createOBTenantVariable(&variable)
+			if err != nil {
+				m.Logger.Error(err, "Create obtenantvariable failed", "variable", variable.Name)
+			}
+		} else if variableStatus.Value != variable.Value {
+			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Variable value not matched, need update", "variable", variable.Name)
+			err := m.updateOBTenantVariable(&variable)
+			if err != nil {
+				m.Logger.Error(err, "Update obtenantvariable failed", "variable", variable.Name)
+			}
+		}
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Remove variable from map", "variable", variable.Name)
+		delete(variableMap, variable.Name)
+	}
+
+	// delete variables that not in spec definition
+	for _, variable := range variableMap {
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Delete variable", "variable", variable.Name)
+		err := m.deleteOBTenantVariable(&variable)
+		if err != nil {
+			m.Logger.Error(err, "Failed to delete obtenantvariable")
+		}
+	}
 	return nil
 }

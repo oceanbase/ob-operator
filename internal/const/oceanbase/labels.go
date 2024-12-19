@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package oceanbase
 
 const (
+	LabelRefOBTenant     = "ref-obtenant"
 	LabelRefOBCluster    = "ref-obcluster"
 	LabelRefOBZone       = "ref-obzone"
 	LabelRefOBServer     = "ref-observer"

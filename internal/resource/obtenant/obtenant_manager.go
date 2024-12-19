@@ -29,6 +29,7 @@ import (
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
@@ -172,7 +173,7 @@ func (m *OBTenantManager) UpdateStatus() error {
 		// build tenant status from DB
 		tenantStatusCurrent, err := m.buildTenantStatus()
 		if err != nil {
-			m.Logger.Error(err, "Got error when build obtenant status from DB")
+			m.Logger.Error(err, "Got error when build obtenant status")
 			return err
 		}
 		m.OBTenant.Status = *tenantStatusCurrent
@@ -276,6 +277,10 @@ func (m *OBTenantManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		taskFlow = genCancelRestoreFlow(m)
 	case tenantstatus.CreatingEmptyStandby:
 		taskFlow = genCreateEmptyStandbyTenantFlow(m)
+	case tenantstatus.MaintainingParameters:
+		taskFlow = genMaintainTenantParametersFlow(m)
+	case tenantstatus.MaintainingVariables:
+		taskFlow = genMaintainTenantVariablesFlow(m)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for obtenant")
 		return nil, nil
@@ -374,6 +379,12 @@ func (m *OBTenantManager) NextStatus() (string, error) {
 	if hasModifiedUnitConfig {
 		return tenantstatus.MaintainingUnitConfig, nil
 	}
+	if m.hasModifiedParameters() {
+		return tenantstatus.MaintainingParameters, nil
+	}
+	if m.hasModifiedVariables() {
+		return tenantstatus.MaintainingVariables, nil
+	}
 	return tenantstatus.Running, nil
 }
 
@@ -390,6 +401,54 @@ func (m *OBTenantManager) hasModifiedWhiteList() bool {
 		return true
 	}
 	return false
+}
+
+func (m *OBTenantManager) hasModifiedParameters() bool {
+	parameterModified := false
+	parameterMap := make(map[string]apitypes.Parameter)
+	for _, parameter := range m.OBTenant.Status.Parameters {
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Build parameter map", "parameter", parameter.Name)
+		parameterMap[parameter.Name] = parameter
+	}
+	for _, parameter := range m.OBTenant.Spec.Parameters {
+		parameterStatus, parameterExists := parameterMap[parameter.Name]
+		// need create or update parameter
+		if !parameterExists || parameterStatus.Value != parameter.Value {
+			parameterModified = true
+			break
+		}
+		delete(parameterMap, parameter.Name)
+	}
+
+	// need delete parameter
+	if len(parameterMap) > 0 {
+		parameterModified = true
+	}
+	return parameterModified
+}
+
+func (m *OBTenantManager) hasModifiedVariables() bool {
+	variableModified := false
+	variableMap := make(map[string]apitypes.Variable)
+	for _, variable := range m.OBTenant.Status.Variables {
+		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Build variable map", "variable", variable.Name)
+		variableMap[variable.Name] = variable
+	}
+	for _, variable := range m.OBTenant.Spec.Variables {
+		variableStatus, variableExists := variableMap[variable.Name]
+		// need create or update variable
+		if !variableExists || variableStatus.Value != variable.Value {
+			variableModified = true
+			break
+		}
+		delete(variableMap, variable.Name)
+	}
+
+	// need delete variable
+	if len(variableMap) > 0 {
+		variableModified = true
+	}
+	return variableModified
 }
 
 func (m *OBTenantManager) hasModifiedUnitConfig() (bool, error) {
@@ -548,6 +607,32 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 	if _, err = m.getTenantClient(); err != nil {
 		tenantCurrentStatus.Credentials.Root = m.OBTenant.Spec.Credentials.Root
 	}
+
+	// Refresh parameter info
+	obparameterList, err := m.listOBParameters()
+	if err != nil {
+		m.Logger.Error(err, "list obparameters error")
+		return tenantCurrentStatus, errors.Wrap(err, "list obparameters")
+	}
+	obparameterStatusList := make([]apitypes.Parameter, 0)
+	for _, obparameter := range obparameterList.Items {
+		if obparameter.Spec.TenantName == m.OBTenant.Spec.TenantName {
+			obparameterStatusList = append(obparameterStatusList, *(obparameter.Spec.Parameter))
+		}
+	}
+	tenantCurrentStatus.Parameters = obparameterStatusList
+
+	// Refresh variable info
+	variableList, err := m.listOBTenantVariables()
+	if err != nil {
+		m.Logger.Error(err, "list obtenantvariables error")
+		return tenantCurrentStatus, errors.Wrap(err, "list obtenantvariables")
+	}
+	variableStatusList := make([]apitypes.Variable, 0)
+	for _, variable := range variableList.Items {
+		variableStatusList = append(variableStatusList, *(variable.Spec.Variable))
+	}
+	tenantCurrentStatus.Variables = variableStatusList
 
 	return tenantCurrentStatus, nil
 }

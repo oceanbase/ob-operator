@@ -15,18 +15,19 @@ package tenant
 
 import (
 	"github.com/spf13/cobra"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
 // NewReplayLogCmd replay log of an ob tenant
 func NewReplayLogCmd() *cobra.Command {
 	o := tenant.NewReplayLogOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "replaylog <tenant_name>",
 		Short:   "replay log of an ob tenant",
@@ -38,12 +39,16 @@ func NewReplayLogCmd() *cobra.Command {
 				Name:      o.Name,
 			})
 			if err != nil {
+				if kubeerrors.IsNotFound(err) {
+					logger.Fatalf("OBTenant %s not found", o.Name)
+				} else {
+					logger.Fatalln(err)
+				}
+			}
+			if err := utils.CheckTenantStatus(obtenant); err != nil {
 				logger.Fatalln(err)
 			}
-			if err := cmdUtil.CheckTenantStatus(obtenant); err != nil {
-				logger.Fatalln(err)
-			}
-			if err := cmdUtil.CheckTenantRole(obtenant, apiconst.TenantRoleStandby); err != nil {
+			if err := utils.CheckTenantRole(obtenant, apiconst.TenantRoleStandby); err != nil {
 				logger.Fatalln(err)
 			}
 			op := tenant.GetReplayLogOperation(o)

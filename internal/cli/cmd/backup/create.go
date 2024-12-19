@@ -17,23 +17,21 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/oceanbase/ob-operator/internal/cli/backup"
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
 // NewCreateCmd create an new backup policy
 func NewCreateCmd() *cobra.Command {
 	o := backup.NewCreateOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "create <tenant_name>",
 		Short:   "Create a backup policy for the specified ob tenant",
 		Long:    `Create a backup policy for the specified ob tenant.`,
+		Example: createExample,
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := o.Complete(); err != nil {
-				logger.Fatalln(err)
-			}
 			if err := o.Validate(); err != nil {
 				logger.Fatalln(err)
 			}

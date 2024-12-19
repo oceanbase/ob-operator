@@ -15,16 +15,17 @@ package cluster
 
 import (
 	"github.com/spf13/cobra"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 
 	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
 // NewDeleteCmd delete ob cluster
 func NewDeleteCmd() *cobra.Command {
 	o := cluster.NewDeleteOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "delete <cluster_name>",
 		Short:   "Delete an ob cluster",
@@ -33,7 +34,11 @@ func NewDeleteCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			err := clients.DeleteOBCluster(cmd.Context(), o.Namespace, o.Name)
 			if err != nil {
-				logger.Fatalln(err)
+				if kubeerrors.IsNotFound(err) {
+					logger.Fatalf("OBCluster %s not found", o.Name)
+				} else {
+					logger.Fatalln(err)
+				}
 			}
 			logger.Printf("Delete OBCluster %s successfully", o.Name)
 		},

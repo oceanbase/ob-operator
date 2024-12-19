@@ -1,10 +1,11 @@
 //@ts-nocheck
+import moreImg from '@/assets/more.svg';
+import { STATUS_LIST } from '@/constants';
 import G6 from '@antv/g6';
 import { Group, Image, Rect, Text } from '@antv/g6-react-node';
+import { findByValue } from '@oceanbase/util';
 
-import moreImg from '@/assets/more.svg';
-
-const nodeWidth = 150;
+const nodeWidth = 180;
 const nodeheight = 48;
 
 const tooltip = new G6.Tooltip({
@@ -121,6 +122,9 @@ function ReactNode(handleClick?: any, writable?: boolean) {
   return ({ cfg }: any) => {
     // Zones not included in the tenant will be disabled
     const { label, status, typeText, disable } = cfg;
+
+    const statusLabel = findByValue(STATUS_LIST, status)?.label;
+
     return (
       <Group>
         <Rect
@@ -145,7 +149,7 @@ function ReactNode(handleClick?: any, writable?: boolean) {
             style={{
               position: 'absolute',
               fontSize: 12,
-              x: nodeWidth / 2 - 12,
+              x: nodeWidth / 2 - 18,
               y: nodeheight / 2,
               fill: 'rgb(0,0,0,.85)',
             }}
@@ -172,7 +176,7 @@ function ReactNode(handleClick?: any, writable?: boolean) {
               position: 'absolute',
               img: disable ? null : cfg.badgeImg,
               x: nodeWidth / 2 - 25,
-              y: nodeheight / 2 + 10,
+              y: nodeheight / 2 + 7.5,
               width: 12,
               height: 12,
             }}
@@ -185,19 +189,19 @@ function ReactNode(handleClick?: any, writable?: boolean) {
               fontSize: 8,
               fill: 'rgb(0,0,0,.45)',
               x: nodeWidth / 2 - 12,
-              y: nodeheight / 2 + 20,
+              y: nodeheight / 2 + 17,
             }}
           >
-            {status}
+            {statusLabel}
           </Text>
-          {cfg.type !== 'server' && writable ? (
+          {writable ? (
             <Image
               onClick={handleClick}
               id={cfg.label}
               style={{
                 position: 'absolute',
-                x: 130,
-                y: 16,
+                x: 165,
+                y: 12,
                 width: 2.5,
                 height: 16,
                 cursor: 'pointer',

@@ -15,7 +15,7 @@ echo "release tag: $git_tag"
 # Build the release binaries for every OS/arch combination.
 # It builds compressed artifacts on $release_dir.
 function build_binary {
-    binary_name="obocli"
+    binary_name="okctl"
     echo "build $binary_name binaries"
     version=$1
 

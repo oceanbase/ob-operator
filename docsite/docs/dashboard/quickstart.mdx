@@ -7,7 +7,7 @@ import TabItem from '@theme/TabItem'
 
 # OceanBase Dashboard Quick Start
 
-OceanBase Dashboard is a white-screen operation and maintenance tool that is compatible with ob-operator. As of the latest version 0.2.1, it has functions such as cluster management, tenant management, backup management, performance monitoring, and terminal connection. It is the preferred tool for monitoring OceanBase cluster performance metrics in a K8s environment.
+OceanBase Dashboard is a white-screen operation and maintenance tool that is compatible with ob-operator. As of the latest version 0.3.2, it has functions such as cluster management, tenant management, backup management, performance monitoring, and terminal connection. It is the preferred tool for monitoring OceanBase cluster performance metrics in a K8s environment.
 
 ## Deploy OceanBase Dashboard
 
@@ -16,13 +16,13 @@ It's recommended to install OceanBase Dashboard using [Helm](https://github.com/
 ```bash
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm repo update ob-operator
-helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.2.1
+helm install oceanbase-dashboard ob-operator/oceanbase-dashboard
 ```
 
 If you want to install it in another namespace, you can replace the last installation command with the following command (`<namespace>` is the target namespace you want to install). If the namespace does not exist, you can add `--create-namespace` to create it.
 
 ```bash
-helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.2.1 -n <namespace> --create-namespace
+helm install oceanbase-dashboard ob-operator/oceanbase-dashboard -n <namespace> --create-namespace
 ```
 
 If the installation command is executed successfully, the following notes will be displayed.

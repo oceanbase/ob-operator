@@ -1,10 +1,41 @@
+import { obcluster } from '@/api';
 import { STATUS_LIST } from '@/constants';
 import { intl } from '@/utils/intl';
 import { findByValue } from '@oceanbase/util';
-import { Card, Col, Table, Tag } from 'antd';
+import { useRequest } from 'ahooks';
+import { Button, Card, Col, message, Modal, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
-const getServerColums = () => {
+export default function ServerTable({
+  clusterDetail,
+  clusterDetailRefresh,
+}: {
+  clusterDetail: API.ClusterDetail[];
+  clusterDetailRefresh: () => void;
+}) {
+  const { info, servers, supportStaticIP, status } = clusterDetail || {};
+
+  const { namespace, name } = info;
+  const { runAsync: deleteOBServers } = useRequest(obcluster.deleteOBServers, {
+    manual: true,
+    onSuccess: (res) => {
+      if (res.successful) {
+        message.success('删除 Server 已成功');
+        clusterDetailRefresh();
+      }
+    },
+  });
+  const { runAsync: restartOBServers, loading: restartOBServersLoading } =
+    useRequest(obcluster.restartOBServers, {
+      manual: true,
+      onSuccess: (res) => {
+        if (res.successful) {
+          message.success('重启 Server 已成功');
+          clusterDetailRefresh();
+        }
+      },
+    });
+
   const serverColums: ColumnsType<API.Server> = [
     {
       title: intl.formatMessage({
@@ -42,11 +73,65 @@ const getServerColums = () => {
         return <Tag color={value.badgeStatus}>{value.label}</Tag>;
       },
     },
+    {
+      title: '操作',
+      dataIndex: 'operation',
+      render: (_, record) => {
+        // 任何 zone 里面只剩一个 server 就不能删了
+        const sameZone = servers?.filter(
+          (server) => server?.zone === record?.zone,
+        );
+        return (
+          <>
+            <Button
+              type="link"
+              style={{ paddingLeft: 0 }}
+              disabled={
+                restartOBServersLoading ||
+                !supportStaticIP ||
+                status !== 'running'
+              }
+              onClick={() => {
+                Modal.confirm({
+                  title: '确定要重启当前 server 吗?',
+                  onOk: () => {
+                    restartOBServers(namespace, name, {
+                      observers: [record?.name],
+                    });
+                  },
+                });
+              }}
+            >
+              重启
+            </Button>
+            <Button
+              danger
+              type="link"
+              disabled={
+                servers.length === 1 ||
+                sameZone.length === 1 ||
+                status !== 'running'
+              }
+              onClick={() => {
+                Modal.confirm({
+                  title: '确定要删除当前 server 吗?',
+                  okType: 'danger',
+                  onOk: () => {
+                    deleteOBServers(namespace, name, {
+                      observers: [record?.name],
+                    });
+                  },
+                });
+              }}
+            >
+              删除
+            </Button>
+          </>
+        );
+      },
+    },
   ];
-  return serverColums;
-};
 
-export default function ServerTable({ servers }: { servers: API.Server[] }) {
   return (
     <Col span={24}>
       <Card
@@ -60,7 +145,7 @@ export default function ServerTable({ servers }: { servers: API.Server[] }) {
         }
       >
         <Table
-          columns={getServerColums()}
+          columns={serverColums}
           rowKey="name"
           dataSource={servers}
           pagination={{ simple: true }}

@@ -60,7 +60,7 @@ func ListBackupJobs(ctx context.Context, policyName string, o *ShowOptions) (*v1
 
 // AddFlags adds flags for show command
 func (o *ShowOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of ob tenant, if not set, use default namespace")
-	cmd.Flags().StringVar(&o.jobType, FLAG_JOB_TYPE, DEFAULT_JOBTYPE, "The type of backup job, support FULL, INC, CLEAN, ARCHIVE, ALL")
+	cmd.Flags().StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of ob tenant, if not set, use default namespace")
+	cmd.Flags().StringVarP(&o.jobType, FLAG_JOB_TYPE, SHORTHAND_TYPE, DEFAULT_JOBTYPE, "The type of backup job, support FULL, INC, CLEAN, ARCHIVE, ALL")
 	cmd.Flags().Int64Var(&o.limit, FLAG_LIMIT, DEFAULT_LIMIT, "The number of backup jobs to show")
 }

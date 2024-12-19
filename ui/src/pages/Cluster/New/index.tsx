@@ -1,14 +1,14 @@
 import { getStorageClasses } from '@/services';
-import { createClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
-import { strTrim } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Col, Form, Row, message } from 'antd';
+import { Button, Col, Form, message, Row } from 'antd';
 import { useEffect, useState } from 'react';
 
 import { encryptText, usePublicKey } from '@/hook/usePublicKey';
+import { createClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
+import { strTrim } from '@/utils/helper';
 import BackUp from './BackUp';
 import BasicInfo from './BasicInfo';
 import Monitor from './Monitor';
@@ -19,7 +19,10 @@ import Topo from './Topo';
 export default function New() {
   const navigate = useNavigate();
   const [form] = Form.useForm<API.CreateClusterData>();
-  const [passwordVal, setPasswordVal] = useState('');
+  const [passwordVal, setPasswordVal] = useState<string>('');
+  const [pvcValue, setPvcValue] = useState<boolean>(false);
+  // 默认勾选
+  const [deleteValue, setDeleteValue] = useState<boolean>(true);
   const { data: storageClassesRes, run: fetchStorageClasses } = useRequest(
     getStorageClasses,
     {
@@ -47,12 +50,15 @@ export default function New() {
   const onFinish = async (values: API.CreateClusterData) => {
     values.clusterId = new Date().getTime() % 4294901759;
     values.rootPassword = encryptText(values.rootPassword, publicKey) as string;
-
+    values.deletionProtection = deleteValue;
+    values.pvcIndependent = pvcValue;
     const res = await createClusterReportWrap({ ...strTrim(values) });
     if (res.successful) {
       message.success(res.message, 3);
       form.resetFields();
       setPasswordVal('');
+      setPvcValue(false);
+      setDeleteValue(true);
       history.back();
     }
   };
@@ -114,12 +120,19 @@ export default function New() {
           <Col span={24}>
             <BasicInfo
               passwordVal={passwordVal}
+              deleteValue={deleteValue}
               setPasswordVal={setPasswordVal}
+              setDeleteValue={setDeleteValue}
               form={form}
             />
           </Col>
           <Topo form={form} />
-          <Observer storageClasses={storageClasses} form={form} />
+          <Observer
+            storageClasses={storageClasses}
+            form={form}
+            pvcValue={pvcValue}
+            setPvcValue={setPvcValue}
+          />
           <Monitor />
           <Parameters />
           <BackUp />

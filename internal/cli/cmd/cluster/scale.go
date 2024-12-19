@@ -15,16 +15,17 @@ package cluster
 
 import (
 	"github.com/spf13/cobra"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 
 	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
 // NewScaleCmd scale zones in ob cluster
 func NewScaleCmd() *cobra.Command {
 	o := cluster.NewScaleOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "scale <cluster_name>",
 		Args:    cobra.ExactArgs(1),
@@ -34,9 +35,13 @@ func NewScaleCmd() *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			obcluster, err := clients.GetOBCluster(cmd.Context(), o.Namespace, o.Name)
 			if err != nil {
-				logger.Fatalln(err)
+				if kubeerrors.IsNotFound(err) {
+					logger.Fatalf("OBCluster %s not found", o.Name)
+				} else {
+					logger.Fatalln(err)
+				}
 			}
-			if err := cmdUtil.CheckClusterStatus(obcluster); err != nil {
+			if err := utils.CheckClusterStatus(obcluster); err != nil {
 				logger.Fatalln(err)
 			} else {
 				o.OldTopology = obcluster.Spec.Topology

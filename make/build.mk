@@ -1,14 +1,14 @@
 ##@ Build
 
 .PHONY: build
-build: manifests generate fmt vet ## Build manager binary.
-	go build -o bin/manager cmd/operator/main.go
+build: dashboard-doc-gen dashboard-bindata-gen cli-bindata-gen manifests generate fmt vet ## Build manager binary.
+	CGO_ENABLED=0 GOOS=linux go build -o bin/manager cmd/operator/main.go
 
 # If you wish built the manager image targeting other platforms you can use the --platform flag.
 # (i.e. docker build --platform linux/arm64 ). However, you must enable docker buildKit for it.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: docker-build
-docker-build: ## Build docker image with the manager.
+docker-build: generate fmt ## Build docker image with the manager.
 	docker build -t ${IMG} --build-arg GOPROXY=${GOPROXY} --build-arg GOSUMDB=${GOSUMDB} --build-arg RACE=${RACE} -f build/Dockerfile.operator .
 
 .PHONY: docker-push

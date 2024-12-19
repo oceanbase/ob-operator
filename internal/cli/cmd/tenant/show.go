@@ -17,10 +17,11 @@ import (
 	"sort"
 
 	"github.com/spf13/cobra"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
+	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
@@ -40,7 +41,11 @@ func NewShowCmd() *cobra.Command {
 				Name:      o.Name,
 			})
 			if err != nil {
-				logger.Fatalln(err)
+				if kubeerrors.IsNotFound(err) {
+					logger.Fatalf("OBTenant %s not found", o.Name)
+				} else {
+					logger.Fatalln(err)
+				}
 			}
 			obtenantOperationList, err := clients.GetOBTenantOperations(cmd.Context(), obtenant)
 			if err != nil {
@@ -51,8 +56,9 @@ func NewShowCmd() *cobra.Command {
 			if len(obtenant.Status.Pools) > 0 {
 				tbLog.Println("ZONELIST \t UNITNUM \t PRIORITY")
 				for _, pool := range obtenant.Status.Pools {
-					tbLog.Printf("%s \t %d \t %d\n\n", pool.ZoneList, pool.UnitNumber, pool.Priority)
+					tbLog.Printf("%s \t %d \t %d \n", pool.ZoneList, pool.UnitNumber, pool.Priority)
 				}
+				tbLog.Println()
 			}
 			if len(obtenantOperationList.Items) > 0 {
 				sort.Slice(obtenantOperationList.Items, func(i, j int) bool {
@@ -60,7 +66,7 @@ func NewShowCmd() *cobra.Command {
 				})
 				tbLog.Println("OPERATION TYPE \t STATUS \t CREATETIME")
 				for _, op := range obtenantOperationList.Items {
-					tbLog.Printf("%s \t %s \t %s\n", op.Spec.Type, op.Status.Status, op.CreationTimestamp)
+					tbLog.Printf("%s \t %s \t %s \n", op.Spec.Type, op.Status.Status, op.CreationTimestamp)
 				}
 			} else {
 				logger.Printf("No OBTenantOperations found in %s", obtenant.Spec.TenantName)

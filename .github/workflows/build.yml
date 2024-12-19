@@ -1,4 +1,4 @@
-name: build images
+name: build binaries
 
 on:
   pull_request:
@@ -7,12 +7,18 @@ on:
       - "*_release"
     paths:
       - '**/*.go'
+      - 'go.mod'
+      - 'go.sum'
+      - '**/*.mk'
   push:
     branches:
       - master
       - "*_release"
     paths:
       - '**/*.go'
+      - 'go.mod'
+      - 'go.sum'
+      - '**/*.mk'
 
 env:
   GO_VERSION: "1.22"
@@ -31,7 +37,7 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
 
       - name: generate bindata
-        run: make dashboard-dep-install cli-dep-install dashboard-bindata-gen dashboard-doc-gen cli-bindata-gen
+        run: make dashboard-bindata-gen dashboard-doc-gen cli-bindata-gen
 
       - name: go mod vendor
         run: go mod vendor

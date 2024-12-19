@@ -17,7 +17,7 @@ import (
 	"sort"
 
 	"github.com/oceanbase/ob-operator/internal/cli/backup"
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 
 	"github.com/spf13/cobra"
@@ -28,8 +28,8 @@ import (
 // NewShowCmd shows the backup policie and backup jobs of the tenant
 func NewShowCmd() *cobra.Command {
 	o := backup.NewShowOptions()
-	tbw, tbLog := cmdUtil.GetTableLoggerInstance()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	tbw, tbLog := utils.GetTableLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "show <tenant-name>",
 		Short:   "show backup policies and backup jobs of the ob tenant",
@@ -44,8 +44,8 @@ func NewShowCmd() *cobra.Command {
 			if err != nil {
 				logger.Fatalln(err, "failed to get backup policy")
 			}
-			if backupPolicy == nil {
-				logger.Fatalln("no backup policy found")
+			if backupPolicy == nil || backupPolicy.Name == "" {
+				logger.Fatalln("no backup policies found")
 			}
 			backupJobList, err := backup.ListBackupJobs(cmd.Context(), backupPolicy.Name, o)
 			if err != nil {
@@ -60,9 +60,9 @@ func NewShowCmd() *cobra.Command {
 				sort.Slice(backupJobList.Items, func(i, j int) bool {
 					return backupJobList.Items[i].CreationTimestamp.Before(&backupJobList.Items[j].CreationTimestamp)
 				})
+				tbLog.Println("JOBNAME \t STATUS \t TYPE \t STARTAT \t ENDAT \t")
 			}
 			for _, job := range backupJobList.Items {
-				tbLog.Println("JOBNAME \t STATUS \t TYPE \t STARTAT \t ENDAT \t")
 				tbLog.Printf("%s \t %s \t %s \t %s \t %s \n", job.Name, job.Status.Status, job.Spec.Type, job.Status.StartedAt, job.Status.EndedAt)
 			}
 			if err = tbw.Flush(); err != nil {

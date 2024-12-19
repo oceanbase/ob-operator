@@ -15,18 +15,19 @@ package tenant
 
 import (
 	"github.com/spf13/cobra"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/tenant"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
 // NewActivateCmd activates a standby obtenant
 func NewActivateCmd() *cobra.Command {
 	o := tenant.NewActivateOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "activate <standby_tenant_name>",
 		Short:   "Activate a standby ob tenant",
@@ -41,9 +42,13 @@ func NewActivateCmd() *cobra.Command {
 				Namespace: o.Namespace,
 			})
 			if err != nil {
-				logger.Fatalln(err)
+				if kubeerrors.IsNotFound(err) {
+					logger.Fatalf("OBTenant %s not found", o.Name)
+				} else {
+					logger.Fatalln(err)
+				}
 			}
-			if err := cmdUtil.CheckTenantStatus(obtenant); err != nil {
+			if err := utils.CheckTenantStatus(obtenant); err != nil {
 				logger.Fatalln(err)
 			}
 			if obtenant.Status.TenantRole == apiconst.TenantRolePrimary {

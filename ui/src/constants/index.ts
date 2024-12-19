@@ -81,6 +81,7 @@ const CLUSTER_INFO_CONFIG = [
   'rootPasswordSecret',
   'mode',
   'parameters',
+  'deletionProtection',
 ];
 
 const TOPO_INFO_CONFIG = [
@@ -410,7 +411,7 @@ export const STATUS_LIST = [
 
   {
     label: intl.formatMessage({
-      id: 'osrc.constants.Recovering',
+      id: 'src.constants.Recovering',
       defaultMessage: '运维中',
     }),
     value: 'operating',
@@ -471,5 +472,32 @@ export const EVENTSTABLE_STATUS_LIST = [
     }),
     value: 'Warning',
     badgeStatus: 'warning',
+  },
+];
+
+export const LOADTYPE_LIST = [
+  {
+    value: 'EXPRESS_OLTP',
+    label: 'Express OLTP',
+  },
+  {
+    value: 'EXPRESS_OLTP_PERF',
+    label: 'Express OLTP PERF',
+  },
+  {
+    value: 'COMPLEX_OLTP',
+    label: 'Complex OLTP',
+  },
+  {
+    value: 'HTAP',
+    label: 'HTAP',
+  },
+  {
+    value: 'OLAP',
+    label: 'OLAP',
+  },
+  {
+    value: 'KV',
+    label: 'KV',
   },
 ];

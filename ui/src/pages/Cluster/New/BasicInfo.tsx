@@ -1,12 +1,14 @@
 import { intl } from '@/utils/intl';
-import { Card, Col, Form, Input, Row, Select } from 'antd';
+import { Card, Checkbox, Col, Form, Input, Row, Select, Space } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
 
 import PasswordInput from '@/components/PasswordInput';
 import SelectNSFromItem from '@/components/SelectNSFromItem';
 import TooltipPretty from '@/components/TooltipPretty';
-import { MODE_MAP } from '@/constants';
+import { LOADTYPE_LIST, MODE_MAP } from '@/constants';
 import { resourceNameRule } from '@/constants/rules';
+
+const { Option } = Select;
 
 interface BasicInfoProps {
   form: FormInstance<API.CreateClusterData>;
@@ -17,7 +19,9 @@ interface BasicInfoProps {
 export default function BasicInfo({
   form,
   passwordVal,
+  deleteValue,
   setPasswordVal,
+  setDeleteValue,
 }: BasicInfoProps) {
   return (
     <Card
@@ -147,7 +151,37 @@ export default function BasicInfo({
             />
           </Form.Item>
         </Col>
+        <Col span={8}>
+          <Form.Item
+            label={'优化场景'}
+            name={'scenario'}
+            initialValue="HTAP"
+            rules={[
+              {
+                required: true,
+                message: '请选择优化场景',
+              },
+            ]}
+          >
+            <Select>
+              {LOADTYPE_LIST?.map((item) => (
+                <Option key={item.value} value={item.value}>
+                  {item.label}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Col>
       </Row>
+      <Space>
+        删除保护
+        <Checkbox
+          defaultChecked={deleteValue}
+          onChange={(e) => {
+            setDeleteValue(e.target.value);
+          }}
+        />
+      </Space>
     </Card>
   );
 }

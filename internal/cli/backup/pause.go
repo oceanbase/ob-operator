@@ -28,6 +28,5 @@ func NewPauseOptions() *PauseOptions {
 }
 
 func (o *PauseOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Name, FLAG_NAME, "", "The name of the tenant")
-	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the tenant")
+	cmd.Flags().StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the tenant")
 }

@@ -21,13 +21,15 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/metadata"
 	"k8s.io/client-go/rest"
+	"k8s.io/metrics/pkg/client/clientset/versioned"
 )
 
 type Client struct {
-	ClientSet     *kubernetes.Clientset
-	DynamicClient dynamic.Interface
-	MetaClient    metadata.Interface
-	config        *rest.Config
+	ClientSet        *kubernetes.Clientset
+	DynamicClient    dynamic.Interface
+	MetaClient       metadata.Interface
+	MetricsClientset *versioned.Clientset
+	config           *rest.Config
 }
 
 var client *Client
@@ -75,11 +77,16 @@ func getClientFromConfig(config *rest.Config) (*Client, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create meta client")
 	}
+	metricsClientset, err := versioned.NewForConfig(config)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create metrics client")
+	}
 	return &Client{
-		ClientSet:     clientset,
-		DynamicClient: dynamicClient,
-		MetaClient:    metaClient,
-		config:        config,
+		ClientSet:        clientset,
+		DynamicClient:    dynamicClient,
+		MetaClient:       metaClient,
+		MetricsClientset: metricsClientset,
+		config:           config,
 	}, nil
 }
 

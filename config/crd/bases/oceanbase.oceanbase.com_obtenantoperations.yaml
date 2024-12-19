@@ -340,6 +340,18 @@ spec:
                         type: boolean
                       obcluster:
                         type: string
+                      parameters:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                       pools:
                         items:
                           properties:
@@ -478,6 +490,18 @@ spec:
                         type: string
                       unitNum:
                         type: integer
+                      variables:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                     required:
                     - obcluster
                     - pools
@@ -535,6 +559,18 @@ spec:
                         - taskStatus
                         - tasks
                         type: object
+                      parameters:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                       resourcePool:
                         items:
                           properties:
@@ -817,6 +853,18 @@ spec:
                         type: object
                       tenantRole:
                         type: string
+                      variables:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                     required:
                     - resourcePool
                     - status
@@ -865,6 +913,18 @@ spec:
                         type: boolean
                       obcluster:
                         type: string
+                      parameters:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                       pools:
                         items:
                           properties:
@@ -1003,6 +1063,18 @@ spec:
                         type: string
                       unitNum:
                         type: integer
+                      variables:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                     required:
                     - obcluster
                     - pools
@@ -1060,6 +1132,18 @@ spec:
                         - taskStatus
                         - tasks
                         type: object
+                      parameters:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                       resourcePool:
                         items:
                           properties:
@@ -1342,6 +1426,18 @@ spec:
                         type: object
                       tenantRole:
                         type: string
+                      variables:
+                        items:
+                          properties:
+                            name:
+                              type: string
+                            value:
+                              type: string
+                          required:
+                          - name
+                          - value
+                          type: object
+                        type: array
                     required:
                     - resourcePool
                     - status

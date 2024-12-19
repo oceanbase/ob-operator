@@ -16,38 +16,49 @@ package update
 import (
 	"github.com/spf13/cobra"
 
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
 	"github.com/oceanbase/ob-operator/internal/cli/update"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
+
+var componentList = []string{"ob-operator", "ob-dashboard", "local-path-provisioner", "cert-manager"}
 
 // NewCmd update the ob-operator and other components
 func NewCmd() *cobra.Command {
 	o := update.NewUpdateOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:   "update <component>",
-		Short: "Command for ob-operator and components update",
-		Long: `Command for ob-operator and components update.
+		Short: "Command for ob-operator and other components update",
+		Long: `Command for ob-operator and other components update.
 
 Currently support:
-- ob-operator: A Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes.
+- ob-operator: A Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes, support stable and develop version.
 - ob-dashboard: A web application that provides resource management capabilities.
-- local-path-provisioner: Provides a way for the Kubernetes users to utilize the local storage in each node, Storage of OceanBase cluster relies on it, which should be installed beforehand.
+- local-path-provisioner: Provides a way for the Kubernetes users to utilize the local storage in each node, Storage of OceanBase cluster relies on it, which should be installed beforehand, support stable and develop version.
 - cert-manager: Creates TLS certificates for workloads in Kubernetes and renews the certificates before they expire, ob-operator relies on it for certificate management, which should be installed beforehand.
 		
 if not specified, update ob-operator and ob-dashboard by default`,
-		PreRunE: o.Parse,
-		Args:    cobra.MaximumNArgs(1),
+		PreRunE:               o.Parse,
+		ValidArgs:             componentList,
+		DisableFlagsInUseLine: true,
+		Args:                  cobra.MatchAll(cobra.MaximumNArgs(1), cobra.OnlyValidArgs),
 		Run: func(cmd *cobra.Command, args []string) {
-			if len(args) == 0 {
-				logger.Println("update ob-operator and ob-dashboard by default")
-			}
+			componentCount := 0
 			for component, version := range o.Components {
-				if err := o.Install(component, version); err != nil {
-					logger.Fatalln(err)
+				if utils.CheckIfComponentExists(component) {
+					componentCount++
+					logger.Printf("Updating component %s, version %s\n", component, version)
+					if err := o.Update(component, version); err != nil {
+						logger.Fatalln(err)
+					} else {
+						logger.Printf("%s update successfully\n", component)
+					}
 				} else {
-					logger.Printf("%s update successfully", component)
+					logger.Printf("Component %s is not found\n", component)
 				}
+			}
+			if componentCount == 0 {
+				logger.Println("No components to update")
 			}
 		},
 	}

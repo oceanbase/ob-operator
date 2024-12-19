@@ -17,13 +17,13 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/oceanbase/ob-operator/internal/cli/backup"
-	cmdUtil "github.com/oceanbase/ob-operator/internal/cli/cmd/util"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
 // NewDeleteCmd delete backup policy
 func NewDeleteCmd() *cobra.Command {
 	o := backup.NewDeleteOptions()
-	logger := cmdUtil.GetDefaultLoggerInstance()
+	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "delete <tenant_name>",
 		Short:   "Delete backup policy for the specified tenant",
