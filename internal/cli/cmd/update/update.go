@@ -33,7 +33,7 @@ func NewCmd() *cobra.Command {
 Currently support:
 - ob-operator: A Kubernetes operator that simplifies the deployment and management of OceanBase cluster and related resources on Kubernetes, support stable and develop version.
 - ob-dashboard: A web application that provides resource management capabilities.
-- local-path-provisioner: Provides a way for the Kubernetes users to utilize the local storage in each node, Storage of OceanBase cluster relies on it, which should be installed beforehand, support stable and develop version.
+- local-path-provisioner: Provides a way for the Kubernetes users to utilize the local storage in each node, Storage of OceanBase cluster relies on it, which should be installed beforehand.
 - cert-manager: Creates TLS certificates for workloads in Kubernetes and renews the certificates before they expire, ob-operator relies on it for certificate management, which should be installed beforehand.
 		
 if not specified, update ob-operator and ob-dashboard by default`,

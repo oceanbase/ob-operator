@@ -40,7 +40,7 @@ const (
 
 // ComponentList is the list of components that can be installed
 var ComponentList = []string{
-	"cert-manager", "ob-operator", "ob-dashboard", "local-path-provisioner", "local-path-provisioner-dev", "ob-operator-dev",
+	"cert-manager", "ob-operator", "ob-dashboard", "local-path-provisioner", "ob-operator-dev",
 }
 
 // ComponentUpdateList is the list of components that can be updated
@@ -90,7 +90,7 @@ func getVersion(component string) (string, error) {
 		return getVersionFromChart(component)
 	case "cert-manager", "ob-operator":
 		return stableVersion, nil
-	case "ob-operator-dev", "local-path-provisioner-dev":
+	case "ob-operator-dev":
 		return devVersion, nil
 	default:
 		return "", errors.New("version not found for the component")
