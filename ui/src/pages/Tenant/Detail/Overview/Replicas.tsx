@@ -20,28 +20,28 @@ interface ReplicasProps {
 const LABEL_TEXT_MAP = {
   priority: intl.formatMessage({
     id: 'Dashboard.Detail.Overview.Replicas.Priority',
-    defaultMessage: '优先级',
+    defaultMessage: '优先级'
   }),
   type: intl.formatMessage({
     id: 'Dashboard.Detail.Overview.Replicas.ReplicaType',
-    defaultMessage: '副本类型',
+    defaultMessage: '副本类型'
   }),
   maxCPU: intl.formatMessage({
     id: 'Dashboard.Detail.Overview.Replicas.MaximumAvailableCpu',
-    defaultMessage: '最大可用 CPU',
+    defaultMessage: '最大可用 CPU'
   }),
   memorySize: intl.formatMessage({
     id: 'Dashboard.Detail.Overview.Replicas.MemorySize',
-    defaultMessage: '内存大小',
+    defaultMessage: '内存大小'
   }),
   minCPU: intl.formatMessage({
     id: 'Dashboard.Detail.Overview.Replicas.MinimumAvailableCpu',
-    defaultMessage: '最小可用 CPU',
+    defaultMessage: '最小可用 CPU'
   }),
   logDiskSize: intl.formatMessage({
     id: 'Dashboard.Detail.Overview.Replicas.ClogDiskSize',
-    defaultMessage: 'Clog 盘大小',
-  }),
+    defaultMessage: 'Clog 盘大小'
+  })
 };
 
 export default function Replicas({
@@ -51,7 +51,7 @@ export default function Replicas({
   setEditZone,
   operateType,
   cluster,
-  tenantStatus,
+  tenantStatus
 }: ReplicasProps) {
   const { ns, name } = useParams();
   const access = useAccess();
@@ -70,10 +70,10 @@ export default function Replicas({
       refreshTenant();
       message.success(
         res.message ||
-          intl.formatMessage({
-            id: 'Dashboard.Detail.Overview.Replicas.DeletedSuccessfully',
-            defaultMessage: '删除成功',
-          }),
+        intl.formatMessage({
+          id: 'Dashboard.Detail.Overview.Replicas.DeletedSuccessfully',
+          defaultMessage: '删除成功'
+        })
       );
     }
   };
@@ -94,109 +94,109 @@ export default function Replicas({
       <CollapsibleCard
         loading={!cluster?.topology?.length}
         title={
-          <h2 style={{ marginBottom: 0 }}>
+        <h2 style={{ marginBottom: 0 }}>
             {intl.formatMessage({
-              id: 'Dashboard.Detail.Overview.Replicas.ResourcePool',
-              defaultMessage: '资源池',
-            })}
+            id: 'Dashboard.Detail.Overview.Replicas.ResourcePool',
+            defaultMessage: '资源池'
+          })}
           </h2>
         }
         extra={
-          access.obclusterwrite ? (
-            <Button
-              type="primary"
-              disabled={
-                cluster?.topology?.length === replicaList.length ||
-                tenantStatus !== 'running'
-              }
-              onClick={addResourcePool}
-            >
+        access.obclusterwrite ?
+        <Button
+          type="primary"
+          disabled={
+          cluster?.topology?.length === replicaList.length ||
+          tenantStatus !== 'running'
+          }
+          onClick={addResourcePool}>
+
               {intl.formatMessage({
-                id: 'Dashboard.Detail.Overview.Replicas.AddAResourcePool',
-                defaultMessage: '新增资源池',
-              })}
-            </Button>
-          ) : null
+            id: 'Dashboard.Detail.Overview.Replicas.AddAResourcePool',
+            defaultMessage: '新增资源池'
+          })}
+            </Button> :
+        null
         }
         collapsible={true}
-        defaultExpand={true}
-      >
-        {replicaList.map((replica, index) => (
-          <Descriptions
-            column={5}
-            key={index}
-            title={
-              <div className={styles.titleContainer}>
+        defaultExpand={true}>
+
+        {replicaList.map((replica, index) =>
+        <Descriptions
+          column={5}
+          key={index}
+          title={
+          <div className={styles.titleContainer}>
                 <span>
                   {intl.formatMessage(
-                    {
-                      id: 'Dashboard.Detail.Overview.Replicas.ResourcePoolReplicazone',
-                      defaultMessage: '资源池 - {{replicaZone}}',
-                    },
-                    { replicaZone: replica.zone },
-                  )}
+                {
+                  id: 'Dashboard.Detail.Overview.Replicas.ResourcePoolReplicazone',
+                  defaultMessage: '资源池 - {{replicaZone}}'
+                },
+                { replicaZone: replica.zone }
+              )}
                 </span>
                 <div>
                   <Button
-                    onClick={() => editResourcePool(replica.zone)}
-                    disabled={
-                      tenantStatus !== 'running' || !access.obclusterwrite
-                    }
-                    type="link"
-                  >
+                onClick={() => editResourcePool(replica.zone)}
+                disabled={
+                tenantStatus !== 'running' || !access.obclusterwrite
+                }
+                type="link">
+
                     {intl.formatMessage({
-                      id: 'Dashboard.Detail.Overview.Replicas.Edit',
-                      defaultMessage: '编辑',
-                    })}
+                  id: 'Dashboard.Detail.Overview.Replicas.Edit',
+                  defaultMessage: '编辑'
+                })}
                   </Button>
                   <Button
-                    onClick={() => {
-                      showDeleteConfirm({
-                        onOk: () => deleteResourcePool(replica.zone),
-                        title: intl.formatMessage(
-                          {
-                            id: 'Dashboard.Detail.Overview.Replicas.AreYouSureYouWant',
-                            defaultMessage:
-                              '确定要删除该租户在{{replicaZone}}上的资源池吗？',
-                          },
-                          { replicaZone: replica.zone },
-                        ),
-                      });
-                    }}
-                    disabled={
-                      replicaList.length <= 2 ||
-                      tenantStatus !== 'running' ||
-                      !access.obclusterwrite
-                    }
-                    type="link"
-                    danger
-                  >
+                onClick={() => {
+                  showDeleteConfirm({
+                    onOk: () => deleteResourcePool(replica.zone),
+                    title: intl.formatMessage(
+                      {
+                        id: 'Dashboard.Detail.Overview.Replicas.AreYouSureYouWant',
+                        defaultMessage:
+                        '确定要删除该租户在{{replicaZone}}上的资源池吗？'
+                      },
+                      { replicaZone: replica.zone }
+                    )
+                  });
+                }}
+                disabled={
+                replicaList.length <= 2 ||
+                tenantStatus !== 'running' ||
+                !access.obclusterwrite
+                }
+                type="link"
+                danger>
+
                     {intl.formatMessage({
-                      id: 'Dashboard.Detail.Overview.Replicas.Delete',
-                      defaultMessage: '删除',
-                    })}
+                  id: 'Dashboard.Detail.Overview.Replicas.Delete',
+                  defaultMessage: '删除'
+                })}
                   </Button>
                 </div>
               </div>
-            }
-          >
-            {sortKeys(Object.keys(replica)).map((key, idx) => (
-              <Descriptions.Item label={LABEL_TEXT_MAP[key] || key} key={idx}>
-                {key.includes('Iops') && replica[key] > MAX_IOPS ? (
-                  '无限制'
-                ) : (
-                  <>
+          }>
+
+            {sortKeys(Object.keys(replica)).map((key, idx) =>
+          <Descriptions.Item label={LABEL_TEXT_MAP[key] || key} key={idx}>
+                {key.includes('Iops') && replica[key] > MAX_IOPS ? intl.formatMessage({ id: "src.pages.Tenant.Detail.Overview.2D1BC77D", defaultMessage: "无限制" }) :
+
+
+            <>
                     {replica[key]}
-                    {key === 'memorySize' || key === 'logDiskSize'
-                      ? 'Gi'
-                      : null}
+                    {key === 'memorySize' || key === 'logDiskSize' ?
+              'Gi' :
+              null}
                   </>
-                )}
+            }
               </Descriptions.Item>
-            ))}
+          )}
           </Descriptions>
-        ))}
+        )}
       </CollapsibleCard>
-    </Col>
-  );
+    </Col>);
+
 }

@@ -15,13 +15,13 @@ import BasicInfo from '@/pages/Cluster/Detail/Overview/BasicInfo';
 import {
   getClusterFromTenant,
   getOriginResourceUsages,
-  getZonesOptions,
-} from '@/pages/Tenant/helper';
+  getZonesOptions } from
+'@/pages/Tenant/helper';
 import { getClusterDetailReq } from '@/services';
 import {
   deleteClusterReportWrap,
-  deleteObzoneReportWrap,
-} from '@/services/reportRequest/clusterReportReq';
+  deleteObzoneReportWrap } from
+'@/services/reportRequest/clusterReportReq';
 import { deleteObtenantPool } from '@/services/tenant';
 import type { Topo } from '@/type/topo';
 import MoreModal from '../moreModal';
@@ -31,13 +31,13 @@ import {
   clusterOperateOfTenant,
   getServerOperateOfCluster,
   getZoneOperateOfCluster,
-  getZoneOperateOfTenant,
-} from './constants';
+  getZoneOperateOfTenant } from
+'./constants';
 import {
   appenAutoShapeListener,
   checkTopoDataIsSame,
-  getServerNumber,
-} from './helper';
+  getServerNumber } from
+'./helper';
 import styles from './index.less';
 
 interface TopoProps {
@@ -61,29 +61,29 @@ export default function TopoComponent({
   refreshTenant,
   defaultUnitCount,
   status,
-  loading,
+  loading
 }: TopoProps) {
   const { ns: urlNs, name: urlName } = useParams();
   const access = useAccess();
-  const clusterOperateList = tenantReplicas
-    ? clusterOperateOfTenant
-    : clusterOperate;
+  const clusterOperateList = tenantReplicas ?
+  clusterOperateOfTenant :
+  clusterOperate;
   const modelRef = useRef<HTMLInputElement>(null);
 
   const [visible, setVisible] = useState<boolean>(false);
   const [operateList, setOprateList] =
-    useState<Topo.OperateTypeLabel>(clusterOperateList);
+  useState<Topo.OperateTypeLabel>(clusterOperateList);
   const [inNode, setInNode] = useState<boolean>(false);
   const [inModal, setInModal] = useState<boolean>(false);
   const [[ns, name]] = useState(
-    namespace && clusterNameOfKubectl
-      ? [namespace, clusterNameOfKubectl]
-      : [urlNs, urlName],
+    namespace && clusterNameOfKubectl ?
+    [namespace, clusterNameOfKubectl] :
+    [urlNs, urlName]
   );
 
   //Control the visibility of operation and maintenance modal
   const [operateModalVisible, setOperateModalVisible] =
-    useState<boolean>(false);
+  useState<boolean>(false);
   //Current operation and maintenance modal type
   const modalType = useRef<API.ModalType>('addZone');
   //The currently clicked node id
@@ -100,12 +100,12 @@ export default function TopoComponent({
   const {
     data: originTopoData,
     run: getTopoData,
-    loading: clusterTopoLoading,
+    loading: clusterTopoLoading
   } = useRequest(getClusterDetailReq, {
     manual: true,
     onBefore: () => {
       preTopoData.current = originTopoData?.topoData;
-    },
+    }
   });
   const clusterStatus = useRef(originTopoData?.basicInfo?.status);
   const tenantStatus = useRef(status);
@@ -113,60 +113,60 @@ export default function TopoComponent({
   const handleClick = (evt: IG6GraphEvent) => {
     if (modelRef.current) {
       switch (evt.item?._cfg?.model?.type) {
-        case 'cluster': {
-          const disabled = tenantReplicas
-            ? clusterStatus.current !== 'running' ||
-              tenantStatus.current !== 'running'
-            : clusterStatus.current !== 'running';
-          setOprateList(getClusterOperates(clusterOperateList, disabled));
-          break;
-        }
-
-        case 'zone': {
-          const zone = evt.item?._cfg?.model?.label as string;
-          if (tenantReplicas) {
-            const { setEditZone } = resourcePoolDefaultValue;
-            if (setEditZone) setEditZone(zone);
-            const haveResourcePool = !!tenantReplicas?.find(
-              (replica) => replica.zone === zone,
-            );
-            setOprateList(
-              getZoneOperateOfTenant(
-                haveResourcePool,
-                tenantReplicas,
-                tenantStatus.current,
-                clusterStatus.current,
-              ),
-            );
-          } else {
-            setOprateList(
-              getZoneOperateOfCluster(
-                originTopoData?.topoData,
-                clusterStatus.current,
-              ),
-            );
+        case 'cluster':{
+            const disabled = tenantReplicas ?
+            clusterStatus.current !== 'running' ||
+            tenantStatus.current !== 'running' :
+            clusterStatus.current !== 'running';
+            setOprateList(getClusterOperates(clusterOperateList, disabled));
+            break;
           }
-          chooseZoneName.current = zone;
-          break;
-        }
 
-        case 'server': {
-          const disabled = tenantReplicas
-            ? clusterStatus.current !== 'running' ||
-              tenantStatus.current !== 'running'
-            : clusterStatus.current !== 'running';
-          const server = evt.item?._cfg?.model?.label as string;
-          const serverZone = evt.item?._cfg?.model?.zone as string;
-          setOprateList(
-            getServerOperateOfCluster(
-              originTopoData?.topoData,
-              disabled,
-              serverZone,
-            ),
-          );
-          chooseServerName.current = server;
-          break;
-        }
+        case 'zone':{
+            const zone = evt.item?._cfg?.model?.label as string;
+            if (tenantReplicas) {
+              const { setEditZone } = resourcePoolDefaultValue;
+              if (setEditZone) setEditZone(zone);
+              const haveResourcePool = !!tenantReplicas?.find(
+                (replica) => replica.zone === zone
+              );
+              setOprateList(
+                getZoneOperateOfTenant(
+                  haveResourcePool,
+                  tenantReplicas,
+                  tenantStatus.current,
+                  clusterStatus.current
+                )
+              );
+            } else {
+              setOprateList(
+                getZoneOperateOfCluster(
+                  originTopoData?.topoData,
+                  clusterStatus.current
+                )
+              );
+            }
+            chooseZoneName.current = zone;
+            break;
+          }
+
+        case 'server':{
+            const disabled = tenantReplicas ?
+            clusterStatus.current !== 'running' ||
+            tenantStatus.current !== 'running' :
+            clusterStatus.current !== 'running';
+            const server = evt.item?._cfg?.model?.label as string;
+            const serverZone = evt.item?._cfg?.model?.zone as string;
+            setOprateList(
+              getServerOperateOfCluster(
+                originTopoData?.topoData,
+                disabled,
+                serverZone
+              )
+            );
+            chooseServerName.current = server;
+            break;
+          }
       }
       currentId.current = evt.item!._cfg!.id as string;
       setVisible(true);
@@ -180,10 +180,10 @@ export default function TopoComponent({
     if (res.successful) {
       message.success(
         res.message ||
-          intl.formatMessage({
-            id: 'Dashboard.components.TopoComponent.OperationSucceeded',
-            defaultMessage: '操作成功！',
-          }),
+        intl.formatMessage({
+          id: 'Dashboard.components.TopoComponent.OperationSucceeded',
+          defaultMessage: '操作成功！'
+        })
       );
       getTopoData({ ns: ns!, name: name!, useFor: 'topo', tenantReplicas });
     }
@@ -193,15 +193,15 @@ export default function TopoComponent({
     const res = await deleteObzoneReportWrap({
       ns: ns!,
       name: name!,
-      zoneName: chooseZoneName.current,
+      zoneName: chooseZoneName.current
     });
     if (res.successful) {
       message.success(
         res.message ||
-          intl.formatMessage({
-            id: 'Dashboard.components.TopoComponent.DeletedSuccessfully',
-            defaultMessage: '删除成功',
-          }),
+        intl.formatMessage({
+          id: 'Dashboard.components.TopoComponent.DeletedSuccessfully',
+          defaultMessage: '删除成功'
+        })
       );
       getTopoData({ ns: ns!, name: name!, useFor: 'topo', tenantReplicas });
     }
@@ -215,15 +215,15 @@ export default function TopoComponent({
     graph.current = new G6.TreeGraph(config(width, height));
     G6.registerNode(
       'cluster',
-      createNodeFromReact(ReactNode(handleClick, access.obclusterwrite)),
+      createNodeFromReact(ReactNode(handleClick, access.obclusterwrite))
     );
     G6.registerNode(
       'zone',
-      createNodeFromReact(ReactNode(handleClick, access.obclusterwrite)),
+      createNodeFromReact(ReactNode(handleClick, access.obclusterwrite))
     );
     G6.registerNode(
       'server',
-      createNodeFromReact(ReactNode(handleClick, access.obclusterwrite)),
+      createNodeFromReact(ReactNode(handleClick, access.obclusterwrite))
     );
     G6.registerEdge('flow-line', {
       draw(cfg, group) {
@@ -234,16 +234,16 @@ export default function TopoComponent({
           attrs: {
             stroke: style!.stroke,
             path: [
-              ['M', startPoint.x, startPoint.y], //M: Move to
-              ['L', startPoint.x, (startPoint.y + endPoint.y) / 2], // L:line to
-              ['L', endPoint.x, (startPoint.y + endPoint.y) / 2],
-              ['L', endPoint.x, endPoint.y],
-            ],
-          },
+            ['M', startPoint.x, startPoint.y], //M: Move to
+            ['L', startPoint.x, (startPoint.y + endPoint.y) / 2], // L:line to
+            ['L', endPoint.x, (startPoint.y + endPoint.y) / 2],
+            ['L', endPoint.x, endPoint.y]]
+
+          }
         });
 
         return shape;
-      },
+      }
     });
 
     /**
@@ -265,16 +265,16 @@ export default function TopoComponent({
     const res = await deleteObtenantPool({
       ns: urlNs!,
       name: urlName!,
-      zoneName,
+      zoneName
     });
     if (res.successful) {
       if (refreshTenant) refreshTenant();
       message.success(
         res.message ||
-          intl.formatMessage({
-            id: 'Dashboard.Detail.Overview.Replicas.DeletedSuccessfully',
-            defaultMessage: '删除成功',
-          }),
+        intl.formatMessage({
+          id: 'Dashboard.Detail.Overview.Replicas.DeletedSuccessfully',
+          defaultMessage: '删除成功'
+        })
       );
     }
   };
@@ -283,9 +283,9 @@ export default function TopoComponent({
     manual: true,
     onSuccess: (res) => {
       if (res.successful) {
-        message.success('删除 Server 已成功');
+        message.success(intl.formatMessage({ id: "src.components.TopoComponent.AD3D247F", defaultMessage: "删除 Server 已成功" }));
       }
-    },
+    }
   });
 
   const { runAsync: restartOBServers } = useRequest(
@@ -294,10 +294,10 @@ export default function TopoComponent({
       manual: true,
       onSuccess: (res) => {
         if (res.successful) {
-          message.success('重启 Server 已成功');
+          message.success(intl.formatMessage({ id: "src.components.TopoComponent.86ECC17E", defaultMessage: "重启 Server 已成功" }));
         }
-      },
-    },
+      }
+    }
   );
 
   /**
@@ -317,15 +317,15 @@ export default function TopoComponent({
       showDeleteConfirm({
         title: intl.formatMessage({
           id: 'OBDashboard.Detail.Topo.AreYouSureYouWant',
-          defaultMessage: '你确定要删除集群吗？',
+          defaultMessage: '你确定要删除集群吗？'
         }),
-        onOk: clusterDelete,
+        onOk: clusterDelete
       });
     }
     if (operate === 'scaleServer') {
       modalType.current = 'scaleServer';
       setChooseServerNum(
-        getServerNumber(originTopoData.topoData, chooseZoneName.current),
+        getServerNumber(originTopoData.topoData, chooseZoneName.current)
       );
       setOperateModalVisible(true);
     }
@@ -333,9 +333,9 @@ export default function TopoComponent({
       showDeleteConfirm({
         title: intl.formatMessage({
           id: 'OBDashboard.Detail.Topo.AreYouSureYouWant.1',
-          defaultMessage: '你确定要删除该Zone吗？',
+          defaultMessage: '你确定要删除该Zone吗？'
         }),
-        onOk: zoneDelete,
+        onOk: zoneDelete
       });
     }
     if (operate === 'changeUnitCount') {
@@ -361,30 +361,30 @@ export default function TopoComponent({
           {
             id: 'Dashboard.components.TopoComponent.AreYouSureYouWant',
             defaultMessage:
-              '确定要删除该租户在{{chooseZoneNameCurrent}}上的资源池吗？',
+            '确定要删除该租户在{{chooseZoneNameCurrent}}上的资源池吗？'
           },
-          { chooseZoneNameCurrent: chooseZoneName.current },
-        ),
+          { chooseZoneNameCurrent: chooseZoneName.current }
+        )
       });
     }
     if (operate === 'deleteServer') {
       showDeleteConfirm({
-        title: '你确定要删除该 server 吗？',
+        title: intl.formatMessage({ id: "src.components.TopoComponent.FAB70713", defaultMessage: "你确定要删除该 server 吗？" }),
         onOk: () => {
           deleteOBServers(ns!, name!, {
-            observers: [chooseServerName.current],
+            observers: [chooseServerName.current]
           });
-        },
+        }
       });
     }
     if (operate === 'restartServer') {
       showDeleteConfirm({
-        title: '你确定重启该 server 吗？',
+        title: intl.formatMessage({ id: "src.components.TopoComponent.96A4C193", defaultMessage: "你确定重启该 server 吗？" }),
         onOk: () => {
           restartOBServers(ns!, name!, {
-            observers: [chooseServerName.current],
+            observers: [chooseServerName.current]
           });
-        },
+        }
       });
     }
   };
@@ -467,28 +467,28 @@ export default function TopoComponent({
   // Use different pictures for nodes in different states
   return (
     <div style={{ position: 'relative', height: '100vh' }}>
-      {header
-        ? header
-        : originTopoData && (
-            <BasicInfo
-              extra={false}
-              style={{ backgroundColor: '#f5f8fe', border: 'none' }}
-              {...(originTopoData.basicInfo as API.ClusterInfo)}
-            />
-          )}
+      {header ?
+      header :
+      originTopoData &&
+      <BasicInfo
+        extra={false}
+        style={{ backgroundColor: '#f5f8fe', border: 'none' }}
+        {...originTopoData.basicInfo as API.ClusterInfo} />
+
+      }
 
       <div style={{ height: '100%' }} id="topoContainer"></div>
       {useMemo(
-        () => (
-          <MoreModal
-            innerRef={modelRef}
-            visible={visible}
-            list={operateList}
-            ItemClick={ItemClickOperate}
-          />
-        ),
+        () =>
+        <MoreModal
+          innerRef={modelRef}
+          visible={visible}
+          list={operateList}
+          ItemClick={ItemClickOperate} />,
 
-        [operateList, visible, status],
+
+
+        [operateList, visible, status]
       )}
 
       <OperateModal
@@ -504,33 +504,33 @@ export default function TopoComponent({
           defaultValue: chooseServerNum,
           defaultUnitCount: defaultUnitCount,
           ...resourcePoolDefaultValue,
-          essentialParameter: isCreateResourcePool
-            ? resourcePoolDefaultValue?.essentialParameter
-            : getOriginResourceUsages(
-                resourcePoolDefaultValue?.essentialParameter,
-                resourcePoolDefaultValue?.replicaList?.find(
-                  (replica) =>
-                    replica.zone === resourcePoolDefaultValue.editZone,
-                ),
-              ),
+          essentialParameter: isCreateResourcePool ?
+          resourcePoolDefaultValue?.essentialParameter :
+          getOriginResourceUsages(
+            resourcePoolDefaultValue?.essentialParameter,
+            resourcePoolDefaultValue?.replicaList?.find(
+              (replica) =>
+              replica.zone === resourcePoolDefaultValue.editZone
+            )
+          ),
           newResourcePool: isCreateResourcePool,
-          zonesOptions: isCreateResourcePool
-            ? getZonesOptions(
-                getClusterFromTenant(
-                  resourcePoolDefaultValue?.clusterList,
-                  resourcePoolDefaultValue?.clusterResourceName,
-                ),
-                resourcePoolDefaultValue?.replicaList,
-              )
-            : undefined,
-        }}
-      />
+          zonesOptions: isCreateResourcePool ?
+          getZonesOptions(
+            getClusterFromTenant(
+              resourcePoolDefaultValue?.clusterList,
+              resourcePoolDefaultValue?.clusterResourceName
+            ),
+            resourcePoolDefaultValue?.replicaList
+          ) :
+          undefined
+        }} />
+
 
       <Spin
         spinning={Boolean(clusterTopoLoading || loading)}
         size="large"
-        className={styles.topoSpin}
-      />
-    </div>
-  );
+        className={styles.topoSpin} />
+
+    </div>);
+
 }
