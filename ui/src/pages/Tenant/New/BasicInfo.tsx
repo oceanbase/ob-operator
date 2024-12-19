@@ -186,7 +186,7 @@ export default function BasicInfo({
         <Col span={8}>
           <Form.Item
             label={'优化场景'}
-            name={'loadType'}
+            name={'scenario'}
             initialValue="HTAP"
             rules={[
               {
@@ -206,7 +206,7 @@ export default function BasicInfo({
         </Col>
 
         <Col span={8}>
-          <Form.Item name={['deleteVal']} label={<></>}>
+          <Form.Item name={['deletionProtection']} label={<></>}>
             <Space>
               删除保护
               <Checkbox defaultChecked={true} />
