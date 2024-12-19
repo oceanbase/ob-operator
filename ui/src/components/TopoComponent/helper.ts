@@ -4,8 +4,8 @@ import {
   MAX_IOPS,
   SERVER_IMG_MAP,
   TOPO_INFO_CONFIG,
-  ZONE_IMG_MAP,
-} from '@/constants';
+  ZONE_IMG_MAP } from
+'@/constants';
 import type { Topo } from '@/type/topo';
 import { intl } from '@/utils/intl';
 import { Graph, INode } from '@antv/g6';
@@ -28,7 +28,7 @@ const propsToEventMap = {
   dragleave: 'onDragLeave',
   dragover: 'onDragOver',
   drop: 'onDrop',
-  contextmenu: 'onContextMenu',
+  contextmenu: 'onContextMenu'
 };
 
 /**
@@ -41,8 +41,8 @@ export function appenAutoShapeListener(graph: Graph) {
       const item = evt.item as INode;
       const graph = evt.currentTarget as Graph;
       const func =
-        (shape?.get(propName) as Topo.ShapeEventListner) ||
-        evt.target.cfg[propName];
+      shape?.get(propName) as Topo.ShapeEventListner ||
+      evt.target.cfg[propName];
       if (func) {
         func(evt, item, shape, graph);
       }
@@ -51,24 +51,24 @@ export function appenAutoShapeListener(graph: Graph) {
 }
 
 function getZoneTypeText(
-  zone: Pick<API.ReplicaDetailType, 'zone'>,
-  tenantTopoData: API.ReplicaDetailType[],
-) {
+zone: Pick<API.ReplicaDetailType, 'zone'>,
+tenantTopoData: API.ReplicaDetailType[])
+{
   return tenantTopoData.find((item) => item.zone === zone.zone)?.type;
 }
 
 function getTooltipInfo(
-  zone: Pick<API.ReplicaDetailType, 'zone'>,
-  tenantTopoData: API.ReplicaDetailType[],
-) {
+zone: Pick<API.ReplicaDetailType, 'zone'>,
+tenantTopoData: API.ReplicaDetailType[])
+{
   const targetZone = tenantTopoData.find((item) => item.zone === zone.zone);
   if (targetZone) {
     return {
       maxCPU: targetZone.maxCPU,
       minCPU: targetZone.minCPU,
       memorySize: targetZone.memorySize,
-      minIops: targetZone.minIops >= MAX_IOPS ? '无限制' : targetZone.minIops,
-      maxIops: targetZone.maxIops >= MAX_IOPS ? '无限制' : targetZone.maxIops,
+      minIops: targetZone.minIops >= MAX_IOPS ? intl.formatMessage({ id: "src.components.TopoComponent.601BE33A", defaultMessage: "无限制" }) : targetZone.minIops,
+      maxIops: targetZone.maxIops >= MAX_IOPS ? intl.formatMessage({ id: "src.components.TopoComponent.0E4AAB80", defaultMessage: "无限制" }) : targetZone.maxIops
     };
   }
   return;
@@ -84,7 +84,7 @@ function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
       type: 'zone',
       img: '',
       badgeImg: '',
-      disable: false,
+      disable: false
     };
     const typeText = getZoneTypeText(zone, tenantReplicas || []);
     const tooltipInfo = getTooltipInfo(zone, tenantReplicas || []);
@@ -100,9 +100,9 @@ function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
       temp.tooltipInfo = tooltipInfo;
     }
     if (
-      tenantReplicas &&
-      !tenantReplicas.find((item) => item.zone === zone.zone)
-    ) {
+    tenantReplicas &&
+    !tenantReplicas.find((item) => item.zone === zone.zone))
+    {
       temp.disable = true;
     }
     temp.children = zone.observers.map((server: Topo.TopoServer) => {
@@ -114,7 +114,7 @@ function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
         img: SERVER_IMG_MAP.get(server.status),
         badgeImg: BADGE_IMG_MAP.get(server.status),
         disable: temp.disable,
-        zone: zone.zone,
+        zone: zone.zone
       };
     });
     children.push(temp);
@@ -125,9 +125,9 @@ function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
  * format topodata
  */
 export const formatTopoData = (
-  responseData: any,
-  tenantReplicas?: API.ReplicaDetailType[],
-): {
+responseData: any,
+tenantReplicas?: API.ReplicaDetailType[])
+: {
   topoData: Topo.GraphNodeType;
   basicInfo: Topo.BasicInfoType;
 } => {
@@ -136,7 +136,7 @@ export const formatTopoData = (
     id: responseData.namespace + responseData.name,
     label: intl.formatMessage({
       id: 'OBDashboard.Detail.Topo.helper.Cluster',
-      defaultMessage: '集群',
+      defaultMessage: '集群'
     }),
     status: responseData.status,
     supportStaticIP: responseData.supportStaticIP,
@@ -144,7 +144,7 @@ export const formatTopoData = (
     children: [],
     img: CLUSTER_IMG_MAP.get(responseData.status),
     badgeImg: BADGE_IMG_MAP.get(responseData.status),
-    disable: false,
+    disable: false
   };
   topoData.children = getChildren(responseData.topology, tenantReplicas);
 
@@ -157,7 +157,7 @@ export const formatTopoData = (
 
   return {
     topoData,
-    basicInfo,
+    basicInfo
   };
 };
 
@@ -165,9 +165,9 @@ export const formatTopoData = (
  * Determine whether the old and new topoData attribute values are exactly the same
  */
 export const checkTopoDataIsSame = (
-  oldTopoData: any,
-  newTopoData: any,
-): boolean => {
+oldTopoData: any,
+newTopoData: any)
+: boolean => {
   if (!_.matches(oldTopoData)(newTopoData)) return false;
   if (newTopoData.children.length > oldTopoData.children.length) return false;
   oldTopoData.children.forEach((oldZone: any, idx: number) => {
@@ -178,9 +178,9 @@ export const checkTopoDataIsSame = (
 };
 
 export const getServerNumber = (
-  topoData: Topo.GraphNodeType,
-  zoneName: string,
-): number => {
+topoData: Topo.GraphNodeType,
+zoneName: string)
+: number => {
   const zones = topoData.children || [];
   for (const zone of zones) {
     if (zone.label === zoneName) {
