@@ -5659,6 +5659,12 @@ export interface ResponseOBCluster {
     'storage': ResponseOBServerStorage;
     /**
      * 
+     * @type {boolean}
+     * @memberof ResponseOBCluster
+     */
+    'supportStaticIP': boolean;
+    /**
+     * 
      * @type {Array<ResponseOBZone>}
      * @memberof ResponseOBCluster
      */
@@ -5714,6 +5720,12 @@ export interface ResponseOBClusterMeta {
      * @memberof ResponseOBClusterMeta
      */
     'namespace': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ResponseOBClusterMeta
+     */
+    'supportStaticIP': boolean;
     /**
      * 
      * @type {string}
@@ -5783,6 +5795,12 @@ export interface ResponseOBClusterOverview {
      * @memberof ResponseOBClusterOverview
      */
     'statusDetail': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ResponseOBClusterOverview
+     */
+    'supportStaticIP': boolean;
     /**
      * 
      * @type {Array<ResponseOBZone>}

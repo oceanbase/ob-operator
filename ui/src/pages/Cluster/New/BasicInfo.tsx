@@ -154,7 +154,7 @@ export default function BasicInfo({
         <Col span={8}>
           <Form.Item
             label={'优化场景'}
-            name={'loadType'}
+            name={'scenario'}
             initialValue="HTAP"
             rules={[
               {

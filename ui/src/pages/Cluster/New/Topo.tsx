@@ -19,18 +19,22 @@ import {
 } from 'antd';
 
 import { RULER_ZONE } from '@/constants/rules';
-import { useState } from 'react';
+import { getNodeLabelsReq } from '@/services';
+import { useAccess } from '@umijs/max';
+import { useEffect, useState } from 'react';
 
 export default function Topo({ form }) {
   const [showTopology, setShowTopology] = useState<boolean>(false);
   const [formsubIndex, setFromSubIndex] = useState({});
 
+  const [keyList, setKeyList] = useState<ListType[]>([]);
+  const [valList, setValList] = useState<ListType[]>([]);
+
+  const access = useAccess();
+
   const basicFrom = (topologyConfiguration, name) => (
     <>
-      <Col
-        span={topologyConfiguration === 'nodeSelector' ? 7 : 5}
-        style={{ paddingBottom: 24 }}
-      >
+      <Col span={5} style={{ paddingBottom: 24 }}>
         <Form.Item label={'Key'} name={[name, 'key']}>
           <Input
             placeholder={intl.formatMessage({
@@ -40,7 +44,7 @@ export default function Topo({ form }) {
           />
         </Form.Item>
       </Col>
-      <Col span={topologyConfiguration === 'nodeSelector' ? 8 : 6}>
+      <Col span={6}>
         <Form.Item label={'Operator'} name={[name, 'operator']}>
           <Select
             options={[
@@ -76,22 +80,33 @@ export default function Topo({ form }) {
           />
         </Form.Item>
       </Col>
-      <Col span={topologyConfiguration === 'nodeSelector' ? 8 : 6}>
+      <Col span={6}>
         <Form.Item label={'Value'} name={[name, 'value']}>
-          {topologyConfiguration === 'Toleration' ? (
-            <Input
-              placeholder={intl.formatMessage({
-                id: 'OBDashboard.Cluster.New.Topo.PleaseEnter',
-                defaultMessage: '请输入',
-              })}
-            />
-          ) : (
-            <Select maxTagCount={5} />
-          )}
+          <Input
+            placeholder={intl.formatMessage({
+              id: 'OBDashboard.Cluster.New.Topo.PleaseEnter',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
       </Col>
     </>
   );
+
+  const filterOption = (
+    input: string,
+    option: { label: string; value: string },
+  ) => (option?.label ?? '').toLowerCase().includes(input.toLowerCase());
+
+  useEffect(() => {
+    if (access.systemread || access.systemwrite) {
+      const promise = getNodeLabelsReq();
+      promise.then((data) => {
+        setKeyList(data.key);
+        setValList(data.value);
+      });
+    }
+  }, []);
 
   const NodeSelectorFrom: React.FC = ({ fieldName }) => (
     <Form.Item label="nodeSelector">
@@ -102,7 +117,67 @@ export default function Topo({ form }) {
               return (
                 <div key={key}>
                   <Row gutter={8}>
-                    {basicFrom('nodeSelector', name)}
+                    <Col span={7}>
+                      <Form.Item label={'Key'} name={[name, 'key']}>
+                        <Select
+                          showSearch
+                          placeholder={intl.formatMessage({
+                            id: 'OBDashboard.components.NodeSelector.PleaseSelect',
+                            defaultMessage: '请选择',
+                          })}
+                          optionFilterProp="label"
+                          //@ts-expect-error Custom option component type is incompatible
+                          filterOption={filterOption}
+                          options={keyList}
+                          allowClear
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                      <Form.Item label={'Operator'} name={[name, 'operator']}>
+                        <Select
+                          options={[
+                            {
+                              value: 'Equal',
+                              label: 'Equal',
+                            },
+
+                            {
+                              value: 'In',
+                              label: 'In',
+                            },
+                            {
+                              value: 'NotIn',
+                              label: 'NotIn',
+                            },
+                            {
+                              value: 'Exist',
+                              label: 'Exist',
+                            },
+                            {
+                              value: 'DoesNoExist',
+                              label: 'DoesNoExist',
+                            },
+                          ]}
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col span={8}>
+                      <Form.Item label={'Value'} name={[name, 'value']}>
+                        <Select
+                          showSearch
+                          placeholder={intl.formatMessage({
+                            id: 'OBDashboard.components.NodeSelector.PleaseSelect',
+                            defaultMessage: '请选择',
+                          })}
+                          optionFilterProp="label"
+                          //@ts-expect-error Custom option component type is incompatible
+                          filterOption={filterOption}
+                          options={valList}
+                          allowClear
+                        />
+                      </Form.Item>
+                    </Col>
                     <DeleteOutlined onClick={() => remove(name)} />
                   </Row>
                 </div>
@@ -354,18 +429,18 @@ export default function Topo({ form }) {
                       setShowTopology(!showTopology);
                       setFromSubIndex({
                         ...formsubIndex,
-                        [field.index]: !showTopology,
+                        [field.key]: !showTopology,
                       });
                     }}
                   >
-                    {formsubIndex[field.index] ? (
+                    {formsubIndex[field.key] ? (
                       <DownOutlined />
                     ) : (
                       <RightOutlined />
                     )}
                     Topology
                   </Space>
-                  {formsubIndex[field.index] && (
+                  {formsubIndex[field.key] && (
                     <div style={{ marginTop: 16 }}>
                       <NodeSelectorFrom fieldName={field.name} />
                       <PodAffinityFrom fieldName={field.name} />

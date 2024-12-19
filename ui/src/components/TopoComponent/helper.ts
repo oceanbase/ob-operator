@@ -114,6 +114,7 @@ function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
         img: SERVER_IMG_MAP.get(server.status),
         badgeImg: BADGE_IMG_MAP.get(server.status),
         disable: temp.disable,
+        zone: zone.zone,
       };
     });
     children.push(temp);
@@ -138,6 +139,7 @@ export const formatTopoData = (
       defaultMessage: '集群',
     }),
     status: responseData.status,
+    supportStaticIP: responseData.supportStaticIP,
     type: 'cluster',
     children: [],
     img: CLUSTER_IMG_MAP.get(responseData.status),

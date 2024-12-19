@@ -1,14 +1,14 @@
 import { getStorageClasses } from '@/services';
-import { createClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
-import { strTrim } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Col, Form, Row, message } from 'antd';
+import { Button, Col, Form, message, Row } from 'antd';
 import { useEffect, useState } from 'react';
 
 import { encryptText, usePublicKey } from '@/hook/usePublicKey';
+import { createClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
+import { strTrim } from '@/utils/helper';
 import BackUp from './BackUp';
 import BasicInfo from './BasicInfo';
 import Monitor from './Monitor';
@@ -50,7 +50,8 @@ export default function New() {
   const onFinish = async (values: API.CreateClusterData) => {
     values.clusterId = new Date().getTime() % 4294901759;
     values.rootPassword = encryptText(values.rootPassword, publicKey) as string;
-
+    values.deletionProtection = deleteValue;
+    values.pvcIndependent = pvcValue;
     const res = await createClusterReportWrap({ ...strTrim(values) });
     if (res.successful) {
       message.success(res.message, 3);

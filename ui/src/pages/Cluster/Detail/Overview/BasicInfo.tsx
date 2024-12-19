@@ -18,7 +18,7 @@ export default function BasicInfo({
   monitor,
   clusterName,
   style,
-  addDeletionProtection,
+  deletionProtection,
 }: API.ClusterInfo & { style?: React.CSSProperties; extra?: boolean }) {
   const statusItem = findByValue(STATUS_LIST, status);
   const statusDetailItem = findByValue(STATUS_LIST, statusDetail);
@@ -109,13 +109,16 @@ export default function BasicInfo({
         <Descriptions.Item label={'删除保护'}>
           <Checkbox
             // loading 态禁止操作，防止重复操作
-            disabled={loading}
-            defaultChecked={addDeletionProtection}
+            disabled={loading || status !== 'running'}
+            defaultChecked={deletionProtection}
             onChange={(e) => {
-              const body = {
-                addDeletionProtection: e.target.checked,
-              };
-              patchOBCluster(name, namespace, body);
+              const body = {};
+              if (!e.target.checked) {
+                body.removeDeletionProtection = e.target.checked;
+              } else {
+                body.addDeletionProtection = e.target.checked;
+              }
+              patchOBCluster(namespace, name, body);
             }}
           />
         </Descriptions.Item>

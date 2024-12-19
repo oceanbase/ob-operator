@@ -81,6 +81,7 @@ const CLUSTER_INFO_CONFIG = [
   'rootPasswordSecret',
   'mode',
   'parameters',
+  'deletionProtection',
 ];
 
 const TOPO_INFO_CONFIG = [

@@ -24,6 +24,7 @@ const NFSInfoModal: React.FC<NFSInfoModalProps> = ({
 }) => {
   const [form] = Form.useForm<FormData>();
 
+  const { validateFields, resetFields } = form;
   const { runAsync: patchOBCluster, loading } = useRequest(
     obcluster.patchOBCluster,
     {
@@ -32,6 +33,7 @@ const NFSInfoModal: React.FC<NFSInfoModalProps> = ({
         if (res.successful) {
           message.success(`修改${title}成功`);
           onSuccess();
+          resetFields();
         }
       },
     },
@@ -42,16 +44,19 @@ const NFSInfoModal: React.FC<NFSInfoModalProps> = ({
       title={title}
       open={visible}
       destroyOnClose
-      onCancel={() => onCancel()}
+      onCancel={() => {
+        onCancel();
+        resetFields();
+      }}
       confirmLoading={loading}
       onOk={() => {
         if (removeNFS) {
           const body = {
             removeBackupVolume: true,
           };
-          patchOBCluster(name, namespace, body);
+          patchOBCluster(namespace, name, body);
         } else {
-          form.validateFields().then((values) => {
+          validateFields().then((values) => {
             const { address, path } = values;
             const body = {
               backupVolume: {
@@ -59,7 +64,7 @@ const NFSInfoModal: React.FC<NFSInfoModalProps> = ({
                 path,
               },
             };
-            patchOBCluster(name, namespace, body);
+            patchOBCluster(namespace, name, body);
           });
         }
       }}

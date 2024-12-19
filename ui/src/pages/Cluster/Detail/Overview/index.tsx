@@ -54,8 +54,8 @@ const ClusterOverview: React.FC = () => {
   const [chooseServerNum, setChooseServerNum] = useState<number>(1);
   const [mountNFSModal, setMountNFSModal] = useState<boolean>(false);
   const [removeNFSModal, setRemoveNFSModal] = useState<boolean>(false);
-  const [parametersData, setParametersData] = useState([]);
   const modalType = useRef<API.ModalType>('addZone');
+  const [parametersData, setParametersData] = useState([]);
 
   const { setFieldsValue, validateFields } = form;
 
@@ -66,28 +66,57 @@ const ClusterOverview: React.FC = () => {
   } = useRequest(obcluster.listOBClusterParameters, {
     defaultParams: [ns, name],
     onSuccess: (res) => {
-      setParametersData(res?.data || []);
+      const newData = getNewData(res?.data);
+      setParametersData(newData);
     },
   });
 
-  const parametersList = listOBClusterParameters?.data;
-
-  const { data: clusterDetail, run: getClusterDetail } = useRequest(
-    getClusterDetailReq,
-    {
-      manual: true,
-      onSuccess: (data) => {
-        setChooseClusterName(data.info.clusterName);
-        if (data.status === 'operating') {
-          timerRef.current = setTimeout(() => {
-            getClusterDetail({ ns: ns!, name: name! });
-          }, REFRESH_CLUSTER_TIME);
-        } else if (timerRef.current) {
-          clearTimeout(timerRef.current);
+  const getNewData = (data) => {
+    const obt = data
+      ?.map((element) => {
+        // obcluster 的 parameters 里面加了个 specValue 的字段，
+        // 如果 specValue 不等于 value，状态写 "不匹配" (黄色tag)，如果两个值相等，写"已匹配"(绿色tag)
+        const findSpec = parameters?.find(
+          (item: any) => element.value === item.specValue,
+        );
+        if (!isEmpty(findSpec)) {
+          return { ...element, accordance: true };
+        } else if (isEmpty(findSpec)) {
+          return { ...element, accordance: false };
         }
-      },
+      })
+      ?.map((element: any) => {
+        // 在 obcluster 的 parameters  里面的就是托管给 operator
+        const findName = parameters?.find(
+          (item: any) => element.name === item.name,
+        );
+        if (!isEmpty(findName)) {
+          return { ...element, controlParameter: true };
+        } else if (isEmpty(findName)) {
+          return { ...element, controlParameter: false };
+        }
+      });
+    return obt;
+  };
+
+  const {
+    data: clusterDetail,
+    run: getClusterDetail,
+    refresh: clusterDetailRefresh,
+    loading: clusterDetailLoading,
+  } = useRequest(getClusterDetailReq, {
+    manual: true,
+    onSuccess: (data) => {
+      setChooseClusterName(data.info.clusterName);
+      if (data.status === 'operating') {
+        timerRef.current = setTimeout(() => {
+          getClusterDetail({ ns: ns!, name: name! });
+        }, REFRESH_CLUSTER_TIME);
+      } else if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
     },
-  );
+  });
 
   const handleDelete = async () => {
     const res = await deleteClusterReportWrap({ ns: ns!, name: name! });
@@ -116,8 +145,8 @@ const ClusterOverview: React.FC = () => {
     setOperateModalVisible(true);
   };
 
-  // TODO 判断当前 nfs 状态
-  const removeNFS = false;
+  // 不为空即为绑定了NFS
+  const removeNFS = !!clusterDetail?.info?.backupVolume;
 
   const items: MenuProps['items'] = [
     {
@@ -161,7 +190,6 @@ const ClusterOverview: React.FC = () => {
       label: (
         <Button
           type="text"
-          disabled={clusterDetail?.status === 'operating'}
           onClick={() =>
             showDeleteConfirm({
               onOk: handleDelete,
@@ -185,6 +213,10 @@ const ClusterOverview: React.FC = () => {
       label: (
         <Button
           type="text"
+          disabled={
+            clusterDetail?.status !== 'running' ||
+            !clusterDetail?.supportStaticIP
+          }
           onClick={() => {
             if (removeNFS) {
               setRemoveNFSModal(true);
@@ -237,8 +269,7 @@ const ClusterOverview: React.FC = () => {
       }),
       type: 'data',
       label: 'size',
-      value:
-        floorToTwoDecimalPlaces(storage?.dataStorage?.size / (1 << 30)) + 'Gi',
+      value: floorToTwoDecimalPlaces(storage?.dataStorage?.size / (1 << 30)),
     },
     {
       key: intl.formatMessage({
@@ -256,9 +287,7 @@ const ClusterOverview: React.FC = () => {
       }),
       type: 'redoLog',
       label: 'size',
-      value:
-        floorToTwoDecimalPlaces(storage?.redoLogStorage?.size / (1 << 30)) +
-        'Gi',
+      value: floorToTwoDecimalPlaces(storage?.redoLogStorage?.size / (1 << 30)),
     },
     {
       key: intl.formatMessage({
@@ -276,9 +305,7 @@ const ClusterOverview: React.FC = () => {
       }),
       type: 'log',
       label: 'size',
-      value:
-        floorToTwoDecimalPlaces(storage?.sysLogStorage?.size / (1 << 30)) +
-        'Gi',
+      value: floorToTwoDecimalPlaces(storage?.sysLogStorage?.size / (1 << 30)),
     },
   ];
 
@@ -304,34 +331,8 @@ const ClusterOverview: React.FC = () => {
     },
   ];
 
-  const newParametersData = parametersList
-    ?.map((element) => {
-      // obcluster 的 parameters 里面加了个 specValue 的字段，
-      // 如果 specValue 不等于 value，状态写 "不匹配" (黄色tag)，如果两个值相等，写"已匹配"(绿色tag)
-      const findSpec = parameters?.find(
-        (item: any) => element.value === item.specValue,
-      );
-      if (!isEmpty(findSpec)) {
-        return { ...element, accordance: true };
-      } else if (isEmpty(findSpec)) {
-        return { ...element, accordance: false };
-      }
-    })
-    ?.map((element: any) => {
-      //  // 在 obcluster 的 parameters  里面的就是托管给 operator
-      const findName = parameters?.find(
-        (item: any) => element.name === item.name,
-      );
-      if (!isEmpty(findName)) {
-        return { ...element, controlParameter: true };
-      } else if (isEmpty(findName)) {
-        return { ...element, controlParameter: false };
-      }
-    });
-
   useEffect(() => {
     getClusterDetail({ ns: ns!, name: name! });
-    setParametersData(newParametersData);
 
     return () => {
       if (timerRef.current) {
@@ -405,7 +406,7 @@ const ClusterOverview: React.FC = () => {
   ];
 
   return (
-    <PageContainer header={header()}>
+    <PageContainer header={header()} loading={clusterDetailLoading}>
       <Row gutter={[16, 16]}>
         {clusterDetail && (
           <Col span={24}>
@@ -419,6 +420,7 @@ const ClusterOverview: React.FC = () => {
               <Button
                 onClick={() => setResourceDrawerOpen(true)}
                 type="primary"
+                disabled={!clusterDetail?.supportStaticIP}
               >
                 {intl.formatMessage({
                   id: 'src.pages.Cluster.Detail.Overview.533B34EA',
@@ -445,7 +447,6 @@ const ClusterOverview: React.FC = () => {
             >
               存储资源
             </div>
-            {/* TODO  */}
             <Space style={{ marginBottom: '16px' }}>
               PVC 独立生命周期
               <Tooltip title={'只能在创建时指定，不支持修改'}>
@@ -455,7 +456,9 @@ const ClusterOverview: React.FC = () => {
             <Descriptions>
               {resourceinit?.map((resource) => (
                 <Descriptions.Item label={resource.key}>
-                  {resource.value}
+                  {resource.label === 'size'
+                    ? `${resource.value}Gi`
+                    : resource.value}
                 </Descriptions.Item>
               ))}
             </Descriptions>
@@ -472,24 +475,12 @@ const ClusterOverview: React.FC = () => {
                 </Col>
                 <Col span={6}>
                   <Form.Item label="托管状态" name={'controlParameter'}>
-                    <Select
-                      options={controlParameters}
-                      allowClear={true}
-                      onChange={() => {
-                        setParametersData(newParametersData);
-                      }}
-                    />
+                    <Select options={controlParameters} allowClear={true} />
                   </Form.Item>
                 </Col>
                 <Col span={6}>
                   <Form.Item label="状态" name={'accordance'}>
-                    <Select
-                      options={accordanceList}
-                      allowClear={true}
-                      onChange={() => {
-                        setParametersData(newParametersData);
-                      }}
-                    />
+                    <Select options={accordanceList} allowClear={true} />
                   </Form.Item>
                 </Col>
                 <Col>
@@ -499,17 +490,20 @@ const ClusterOverview: React.FC = () => {
                       onClick={() => {
                         validateFields().then((values) => {
                           const { name, controlParameter, accordance } = values;
+                          const newParametersData = getNewData(
+                            listOBClusterParameters?.data,
+                          );
 
                           if (name) {
                             setParametersData(
-                              parametersData?.filter((item) =>
+                              newParametersData?.filter((item) =>
                                 item.name?.includes(name),
                               ),
                             );
                           }
                           if (controlParameter) {
                             setParametersData(
-                              parametersData?.filter(
+                              newParametersData?.filter(
                                 (item) =>
                                   item.controlParameter === controlParameter,
                               ),
@@ -517,14 +511,14 @@ const ClusterOverview: React.FC = () => {
                           }
                           if (accordance) {
                             setParametersData(
-                              parametersData?.filter(
+                              newParametersData?.filter(
                                 (item) => item.accordance === accordance,
                               ),
                             );
                           }
                           if (!!name && !!controlParameter) {
                             setParametersData(
-                              parametersData?.filter(
+                              newParametersData?.filter(
                                 (item) =>
                                   item.name?.includes(name) &&
                                   item.controlParameter === controlParameter,
@@ -533,7 +527,7 @@ const ClusterOverview: React.FC = () => {
                           }
                           if (!!name && !!accordance) {
                             setParametersData(
-                              parametersData?.filter(
+                              newParametersData?.filter(
                                 (item) =>
                                   item.name?.includes(name) &&
                                   item.accordance === accordance,
@@ -542,7 +536,7 @@ const ClusterOverview: React.FC = () => {
                           }
                           if (!!name && !!controlParameter && !!accordance) {
                             setParametersData(
-                              parametersData?.filter(
+                              newParametersData?.filter(
                                 (item) =>
                                   item.name?.includes(name) &&
                                   item.controlParameter === controlParameter &&
@@ -559,8 +553,8 @@ const ClusterOverview: React.FC = () => {
                       onClick={() => {
                         setFieldsValue({
                           name: '',
-                          defaultStatus: '',
-                          status: '',
+                          controlParameter: '',
+                          accordance: '',
                         });
                         refresh();
                       }}
@@ -591,7 +585,14 @@ const ClusterOverview: React.FC = () => {
             setChooseServerNum={setChooseServerNum}
           />
         )}
-        {clusterDetail && <ServerTable clusterDetail={clusterDetail} />}
+        {clusterDetail && (
+          <ServerTable
+            clusterDetail={clusterDetail}
+            clusterDetailRefresh={() => {
+              clusterDetailRefresh();
+            }}
+          />
+        )}
         <Col span={24}>
           <EventsTable
             objectType="OBCLUSTER"
@@ -613,7 +614,10 @@ const ClusterOverview: React.FC = () => {
       <ParametersModal
         visible={isDrawerOpen}
         onCancel={() => setIsDrawerOpen(false)}
-        onSuccess={() => setIsDrawerOpen(false)}
+        onSuccess={() => {
+          setIsDrawerOpen(false);
+          clusterDetailRefresh();
+        }}
         initialValues={parametersRecord}
         {...(clusterDetail?.info as API.ClusterInfo)}
       />
@@ -621,7 +625,10 @@ const ClusterOverview: React.FC = () => {
       <ResourceDrawer
         visible={resourceDrawerOpen}
         onCancel={() => setResourceDrawerOpen(false)}
-        onSuccess={() => setResourceDrawerOpen(false)}
+        onSuccess={() => {
+          setResourceDrawerOpen(false);
+          clusterDetailRefresh();
+        }}
         initialValues={resourceinit}
         {...(clusterDetail?.info as API.ClusterInfo)}
       />
@@ -633,9 +640,10 @@ const ClusterOverview: React.FC = () => {
         onCancel={() =>
           removeNFS ? setRemoveNFSModal(false) : setMountNFSModal(false)
         }
-        onSuccess={() =>
-          removeNFS ? setRemoveNFSModal(false) : setMountNFSModal(false)
-        }
+        onSuccess={() => {
+          removeNFS ? setRemoveNFSModal(false) : setMountNFSModal(false);
+          clusterDetailRefresh();
+        }}
         {...(clusterDetail?.info as API.ClusterInfo)}
       />
     </PageContainer>
