@@ -90,16 +90,21 @@ type OBZoneIdentity struct {
 }
 
 type PatchOBClusterParam struct {
-	Resource           common.ResourceSpec  `json:"resource"`
+	Resource           *common.ResourceSpec `json:"resource"`
 	Storage            *OBServerStorageSpec `json:"storage"`
 	Monitor            *MonitorSpec         `json:"monitor"`
 	RemoveMonitor      bool                 `json:"removeMonitor"`
 	BackupVolume       *NFSVolumeSpec       `json:"backupVolume"`
 	RemoveBackupVolume bool                 `json:"removeBackupVolume"`
 
-	Parameters               []common.KVPair `json:"parameters,omitempty"`
-	AddDeletionProtection    bool            `json:"addDeletionProtection"`
-	RemoveDeletionProtection bool            `json:"removeDeletionProtection"`
+	// Replace all parameters
+	Parameters []common.KVPair `json:"parameters,omitempty"`
+	// Add or modify some parameters
+	ModifiedParameters []common.KVPair `json:"modifiedParameters,omitempty"`
+	// Delete some parameters
+	DeletedParameters        []string `json:"deletedParameters,omitempty"`
+	AddDeletionProtection    bool     `json:"addDeletionProtection"`
+	RemoveDeletionProtection bool     `json:"removeDeletionProtection"`
 }
 
 type RestartOBServersParam v1alpha1.RestartOBServersConfig
