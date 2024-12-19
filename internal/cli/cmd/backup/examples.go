@@ -17,10 +17,10 @@ import "k8s.io/kubectl/pkg/util/templates"
 
 var createExample = templates.Examples(`
 	# Create a backup policy by OSS
-	okctl backup create <tenant_name> --archive-path=oss://<bucket_name>/<path> --bak-data-path=oss://<bucket_name>/<path>  --oss-access-id=<access_id> --oss-access-key=<access_key>
+	okctl backup create <tenant_name> --archive-path=oss://<bucket_name>/<path> --bak-data-path=oss://<bucket_name>/<path>  --oss-access-id=<access_id> --oss-access-key=<access_key> --inc="0 0 * * 1,2,3," --full="0 0 * * 4,5"
 	
 	# Create a backup policy by NFS
-	okctl backup create <tenant_name> --archive-path=<path> --bak-data-path=<path> --bak-encryption-password=<password>
+	okctl backup create <tenant_name> --archive-path=<path> --bak-data-path=<path> --bak-encryption-password=<password> --inc="0 0 * * 1,2,3," --full="0 0 * * 4,5"
 `)
 
 // TODO: add more examples
