@@ -66,7 +66,7 @@ func BuildCmd(component, version string) (*exec.Cmd, error) {
 		componentFile := "operator.yaml"
 		url := fmt.Sprintf("%s%s/deploy/%s", obURL, version, componentFile)
 		cmd = exec.Command("kubectl", "apply", "-f", url)
-	case "local-path-provisioner", "local-path-provisioner-dev":
+	case "local-path-provisioner":
 		componentFile := "local-path-storage.yaml"
 		url := fmt.Sprintf("%s%s/deploy/%s", localPathURL, version, componentFile)
 		cmd = exec.Command("kubectl", "apply", "-f", url)
