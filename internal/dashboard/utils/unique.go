@@ -26,7 +26,6 @@ func GenerateName(base string) string {
 	current := time.Now().Unix()
 	if strings.HasSuffix(base, "-") {
 		return fmt.Sprintf("%s%d-%s", base, current, rand.String(5))
-	} else {
-		return fmt.Sprintf("%s-%d-%s", base, current, rand.String(5))
 	}
+	return fmt.Sprintf("%s-%d-%s", base, current, rand.String(5))
 }
