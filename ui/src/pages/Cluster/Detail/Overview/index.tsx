@@ -214,8 +214,9 @@ const ClusterOverview: React.FC = () => {
         <Button
           type="text"
           disabled={
-            clusterDetail?.status !== 'running' ||
-            !clusterDetail?.supportStaticIP
+            !isEmpty(clusterDetail) &&
+            (clusterDetail?.status !== 'running' ||
+              !clusterDetail?.supportStaticIP)
           }
           onClick={() => {
             if (removeNFS) {

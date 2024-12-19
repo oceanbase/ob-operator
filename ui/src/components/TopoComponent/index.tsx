@@ -94,7 +94,6 @@ export default function TopoComponent({
   const chooseZoneName = useRef<string>('');
   //The Server/Zone name selected when clicking the more icon
   const chooseServerName = useRef<string>('');
-  const chooseServerZone = useRef<string>('');
   //Number of servers in the selected zone
   const [chooseServerNum, setChooseServerNum] = useState<number>(1);
   //If the topoData cluster status is operating, it needs to be polled.
@@ -166,7 +165,6 @@ export default function TopoComponent({
             ),
           );
           chooseServerName.current = server;
-          chooseServerZone.current = serverZone;
           break;
         }
       }
@@ -384,8 +382,6 @@ export default function TopoComponent({
         title: '你确定重启该 server 吗？',
         onOk: () => {
           restartOBServers(ns!, name!, {
-            all: true,
-            obzones: [chooseServerZone.current],
             observers: [chooseServerName.current],
           });
         },

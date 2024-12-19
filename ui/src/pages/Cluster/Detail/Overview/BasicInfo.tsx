@@ -112,7 +112,7 @@ export default function BasicInfo({
             disabled={loading || status !== 'running'}
             defaultChecked={deletionProtection}
             onChange={(e) => {
-              const body = {};
+              const body = {} as API.ParamPatchOBClusterParam;
               if (!e.target.checked) {
                 body.removeDeletionProtection = e.target.checked;
               } else {

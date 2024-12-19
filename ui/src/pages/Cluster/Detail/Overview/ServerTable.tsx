@@ -96,8 +96,6 @@ export default function ServerTable({
                   title: '确定要重启当前 server 吗?',
                   onOk: () => {
                     restartOBServers(namespace, name, {
-                      all: true,
-                      obzones: [record?.zone],
                       observers: [record?.name],
                     });
                   },
