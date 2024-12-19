@@ -27,13 +27,9 @@ CLI_BUILD := GO11MODULE=ON CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build 
 BUILD_DIR?=bin/
 
 .PHONY: cli-build
-cli-build: cli-bindata-gen dashboard-doc-gen dashboard-bindata-gen ## Build oceanbase-cli
+cli-build:  ## Build oceanbase-cli
 	@echo "Building $(BINARY_NAME) for $(GOOS)/$(GOARCH)..."
 	$(CLI_BUILD) -o $(BUILD_DIR)$(BINARY_NAME) cmd/cli/main.go
-
-.PHONY: cli-bindata-gen
-cli-bindata-gen: cli-dep-install ## Generate bindata
-	go-bindata -o internal/cli/generated/bindata/bindata.go -pkg bindata internal/assets/cli-templates/...
 
 .PHONY: cli-clean
 cli-clean: ## Clean build

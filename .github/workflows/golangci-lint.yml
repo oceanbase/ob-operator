@@ -24,7 +24,7 @@ jobs:
           cache: true
 
       - name: generate bindata
-        run: make dashboard-bindata-gen dashboard-doc-gen cli-bindata-gen
+        run: make dashboard-bindata-gen dashboard-doc-gen
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
