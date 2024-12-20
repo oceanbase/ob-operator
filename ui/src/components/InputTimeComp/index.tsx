@@ -56,11 +56,11 @@ export default function InputTimeComp({ onChange, value }: InputTimeCompProps) {
     return value;
   };
 
-  useEffect(()=>{
-    if(value && value < 60 && unit === 'minute'){
-      setUnit('second')
+  useEffect(() => {
+    if (value && value < 60 && unit === 'minute') {
+      setUnit('second');
     }
-  },[value])
+  }, [value]);
 
   return (
     <InputNumber

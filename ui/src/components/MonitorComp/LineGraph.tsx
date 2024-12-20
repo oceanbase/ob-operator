@@ -70,7 +70,7 @@ export default function LineGraph({
       type,
       useFor,
       filterData,
-      filterQueryMetric
+      filterQueryMetric,
     };
   };
 

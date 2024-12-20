@@ -14,8 +14,8 @@ import {
   InputNumber,
   Row,
   Space,
-  Tooltip } from
-'antd';
+  Tooltip,
+} from 'antd';
 import { FormInstance } from 'antd/lib/form';
 import { clone } from 'lodash';
 import styles from './index.less';
@@ -30,7 +30,7 @@ interface ObserverProps {
 const observerToolTipText = intl.formatMessage({
   id: 'OBDashboard.Cluster.New.Observer.TheImageShouldBeFully',
   defaultMessage:
-  '镜像应写全 registry/image:tag，例如 oceanbase/oceanbase-cloud-native:4.2.0.0-101000032023091319'
+    '镜像应写全 registry/image:tag，例如 oceanbase/oceanbase-cloud-native:4.2.0.0-101000032023091319',
 });
 
 export const TooltipItemContent = ({ item }) => {
@@ -44,14 +44,14 @@ export const TooltipItemContent = ({ item }) => {
               <div
                 style={{
                   display: 'flex',
-                  justifyContent: 'space-between'
-                }}>
-
+                  justifyContent: 'space-between',
+                }}
+              >
                 <p>{key}：</p>
                 <p>{data[key]}</p>
               </div>
-            </li>);
-
+            </li>
+          );
         } else {
           const value = JSON.stringify(data[key]) || String(data[key]);
           return (
@@ -59,25 +59,25 @@ export const TooltipItemContent = ({ item }) => {
               <div
                 style={{
                   display: 'flex',
-                  justifyContent: 'space-between'
-                }}>
-
+                  justifyContent: 'space-between',
+                }}
+              >
                 <p>{key}：</p>
                 <p>{value}</p>
               </div>
-            </li>);
-
+            </li>
+          );
         }
       })}
-    </ul>);
-
+    </ul>
+  );
 };
 
 export default function Observer({
   storageClasses,
   form,
   pvcValue,
-  setPvcValue
+  setPvcValue,
 }: ObserverProps) {
   const setMinimalConfiguration = () => {
     const originObserver = clone(form.getFieldsValue());
@@ -87,21 +87,21 @@ export default function Observer({
         ...originObserver.observer,
         resource: {
           cpu: MINIMAL_CONFIG.cpu,
-          memory: MINIMAL_CONFIG.memory
+          memory: MINIMAL_CONFIG.memory,
         },
         storage: {
           ...originObserver.observer.storage,
           data: {
-            size: MINIMAL_CONFIG.data
+            size: MINIMAL_CONFIG.data,
           },
           log: {
-            size: MINIMAL_CONFIG.log
+            size: MINIMAL_CONFIG.log,
           },
           redoLog: {
-            size: MINIMAL_CONFIG.redoLog
-          }
-        }
-      }
+            size: MINIMAL_CONFIG.redoLog,
+          },
+        },
+      },
     });
   };
 
@@ -110,43 +110,43 @@ export default function Observer({
       <Card
         title="Observer"
         extra={
-        <Button type="primary" onClick={setMinimalConfiguration}>
+          <Button type="primary" onClick={setMinimalConfiguration}>
             {intl.formatMessage({
-            id: 'Dashboard.Cluster.New.Observer.MinimumSpecificationConfiguration',
-            defaultMessage: '最小规格配置'
-          })}
+              id: 'Dashboard.Cluster.New.Observer.MinimumSpecificationConfiguration',
+              defaultMessage: '最小规格配置',
+            })}
           </Button>
-        }>
-
+        }
+      >
         <Tooltip title={observerToolTipText}>
           <CustomFormItem
             style={{ width: '50%' }}
             message={intl.formatMessage({
               id: 'Dashboard.Cluster.New.Observer.EnterAnImage',
-              defaultMessage: '请输入镜像'
+              defaultMessage: '请输入镜像',
             })}
             label={
-            <>
+              <>
                 {intl.formatMessage({
-                id: 'Dashboard.Cluster.New.Observer.Image',
-                defaultMessage: '镜像'
-              })}{' '}
+                  id: 'Dashboard.Cluster.New.Observer.Image',
+                  defaultMessage: '镜像',
+                })}{' '}
                 <a href={MIRROR_SERVER} rel="noreferrer" target="_blank">
                   {intl.formatMessage({
-                  id: 'Dashboard.Cluster.New.Observer.ImageList',
-                  defaultMessage: '（镜像列表）'
-                })}
+                    id: 'Dashboard.Cluster.New.Observer.ImageList',
+                    defaultMessage: '（镜像列表）',
+                  })}
                 </a>
               </>
             }
-            name={['observer', 'image']}>
-
+            name={['observer', 'image']}
+          >
             <Input
               placeholder={intl.formatMessage({
                 id: 'OBDashboard.Cluster.New.Observer.EnterAnImage',
-                defaultMessage: '请输入镜像'
-              })} />
-
+                defaultMessage: '请输入镜像',
+              })}
+            />
           </CustomFormItem>
         </Tooltip>
         <Row>
@@ -154,7 +154,7 @@ export default function Observer({
             <p className={styles.titleText}>
               {intl.formatMessage({
                 id: 'OBDashboard.Cluster.New.Observer.Resources',
-                defaultMessage: '资源'
+                defaultMessage: '资源',
               })}
             </p>
 
@@ -162,85 +162,96 @@ export default function Observer({
               <CustomFormItem
                 className={styles.leftContent}
                 label="cpu"
-                name={['observer', 'resource', 'cpu']}>
-
+                name={['observer', 'resource', 'cpu']}
+              >
                 <InputNumber
                   min={MINIMAL_CONFIG.cpu}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
-                    defaultMessage: '请输入'
-                  })} />
-
+                    defaultMessage: '请输入',
+                  })}
+                />
               </CustomFormItem>
               <CustomFormItem
                 label={intl.formatMessage({
                   id: 'OBDashboard.Cluster.New.Observer.Memory',
-                  defaultMessage: '内存'
+                  defaultMessage: '内存',
                 })}
-                name={['observer', 'resource', 'memory']}>
-
+                name={['observer', 'resource', 'memory']}
+              >
                 <InputNumber
                   min={MINIMAL_CONFIG.memory}
                   addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
-                    defaultMessage: '请输入'
-                  })} />
-
+                    defaultMessage: '请输入',
+                  })}
+                />
               </CustomFormItem>
             </div>
           </Col>
         </Row>
         <p className={styles.titleText}>storage</p>
-        <p className={styles.subTitleText}>{intl.formatMessage({ id: "src.pages.Cluster.New.3F941911", defaultMessage: "存储卷配置" })}</p>
+        <p className={styles.subTitleText}>
+          {intl.formatMessage({
+            id: 'src.pages.Cluster.New.3F941911',
+            defaultMessage: '存储卷配置',
+          })}
+        </p>
         <Space style={{ marginBottom: '10px' }}>
           <IconTip
-            tip={intl.formatMessage({ id: "src.pages.Cluster.New.1430D3F5", defaultMessage: "勾选后，在删除 OBServer 资源之后不会级联删除 PVC；默认会进行级联删除" })
-
-            }
-            content={intl.formatMessage({ id: "src.pages.Cluster.New.94B6798C", defaultMessage: "PVC 独立生命周期" })} />
+            tip={intl.formatMessage({
+              id: 'src.pages.Cluster.New.1430D3F5',
+              defaultMessage:
+                '勾选后，在删除 OBServer 资源之后不会级联删除 PVC；默认会进行级联删除',
+            })}
+            content={intl.formatMessage({
+              id: 'src.pages.Cluster.New.94B6798C',
+              defaultMessage: 'PVC 独立生命周期',
+            })}
+          />
 
           <Checkbox
             value={pvcValue}
             onChange={(e) => {
               setPvcValue(e.target.checked);
-            }} />
-
+            }}
+          />
         </Space>
         <Row gutter={16}>
           <Col span={8}>
             <p className={styles.subTitleText}>
               {intl.formatMessage({
                 id: 'OBDashboard.Cluster.New.Observer.Data',
-                defaultMessage: '数据'
+                defaultMessage: '数据',
               })}
             </p>
             <div className={styles.dataContent}>
               <CustomFormItem
                 className={styles.leftContent}
                 label="size"
-                name={['observer', 'storage', 'data', 'size']}>
-
+                name={['observer', 'storage', 'data', 'size']}
+              >
                 <InputNumber
                   min={MINIMAL_CONFIG.data}
                   addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
-                    defaultMessage: '请输入'
-                  })} />
-
+                    defaultMessage: '请输入',
+                  })}
+                />
               </CustomFormItem>
               <Form.Item
                 label="storageClass"
-                name={['observer', 'storage', 'data', 'storageClass']}>
-
+                name={['observer', 'storage', 'data', 'storageClass']}
+              >
                 <SelectWithTooltip
                   type="observer"
                   name={['observer', 'storage', 'data', 'storageClass']}
                   form={form}
                   selectList={storageClasses}
-                  TooltipItemContent={TooltipItemContent} />
-
+                  TooltipItemContent={TooltipItemContent}
+                />
               </Form.Item>
             </div>
           </Col>
@@ -248,35 +259,35 @@ export default function Observer({
             <p className={styles.subTitleText}>
               {intl.formatMessage({
                 id: 'OBDashboard.Cluster.New.Observer.Log',
-                defaultMessage: '日志'
+                defaultMessage: '日志',
               })}
             </p>
             <div className={styles.logContent}>
               <CustomFormItem
                 className={styles.leftContent}
                 label="size"
-                name={['observer', 'storage', 'log', 'size']}>
-
+                name={['observer', 'storage', 'log', 'size']}
+              >
                 <InputNumber
                   min={MINIMAL_CONFIG.log}
                   addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
-                    defaultMessage: '请输入'
-                  })} />
-
+                    defaultMessage: '请输入',
+                  })}
+                />
               </CustomFormItem>
               <Form.Item
                 label="storageClass"
-                name={['observer', 'storage', 'log', 'storageClass']}>
-
+                name={['observer', 'storage', 'log', 'storageClass']}
+              >
                 <SelectWithTooltip
                   type="observer"
                   name={['observer', 'storage', 'data', 'storageClass']}
                   form={form}
                   selectList={storageClasses}
-                  TooltipItemContent={TooltipItemContent} />
-
+                  TooltipItemContent={TooltipItemContent}
+                />
               </Form.Item>
             </div>
           </Col>
@@ -286,34 +297,34 @@ export default function Observer({
               <CustomFormItem
                 className={styles.leftContent}
                 label="size"
-                name={['observer', 'storage', 'redoLog', 'size']}>
-
+                name={['observer', 'storage', 'redoLog', 'size']}
+              >
                 <InputNumber
                   min={MINIMAL_CONFIG.redoLog}
                   addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
-                    defaultMessage: '请输入'
-                  })} />
-
+                    defaultMessage: '请输入',
+                  })}
+                />
               </CustomFormItem>
               <Form.Item
                 label="storageClass"
                 validateTrigger="onBlur"
-                name={['observer', 'storage', 'redoLog', 'storageClass']}>
-
+                name={['observer', 'storage', 'redoLog', 'storageClass']}
+              >
                 <SelectWithTooltip
                   type="observer"
                   name={['observer', 'storage', 'data', 'storageClass']}
                   form={form}
                   selectList={storageClasses}
-                  TooltipItemContent={TooltipItemContent} />
-
+                  TooltipItemContent={TooltipItemContent}
+                />
               </Form.Item>
             </div>
           </Col>
         </Row>
       </Card>
-    </Col>);
-
+    </Col>
+  );
 }

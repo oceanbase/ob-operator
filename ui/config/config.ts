@@ -17,5 +17,5 @@ export default defineConfig({
   },
   routes,
   history: { type: 'hash' },
-  npmClient: 'yarn'
+  npmClient: 'yarn',
 });

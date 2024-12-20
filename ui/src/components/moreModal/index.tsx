@@ -1,5 +1,5 @@
-import styles from './index.less';
 import { Topo } from '@/type/topo';
+import styles from './index.less';
 
 interface MoreModalProps {
   visible: boolean;

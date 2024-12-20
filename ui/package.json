@@ -33,6 +33,7 @@
   "devDependencies": {
     "@eslint/js": "^9.0.0",
     "@oceanbase-odc/ob-intl-cli": "^2.0.9",
+    "@openapitools/openapi-generator-cli": "^2.13.5",
     "@types/lodash": "^4.14.197",
     "@types/react": "^18.0.33",
     "@types/react-dom": "^18.0.11",
@@ -45,7 +46,6 @@
     "prettier-plugin-organize-imports": "^3.2.2",
     "prettier-plugin-packagejson": "^2.4.3",
     "typescript": "^5.0.3",
-    "typescript-eslint": "^7.6.0",
-    "@openapitools/openapi-generator-cli": "^2.13.5"
+    "typescript-eslint": "^7.6.0"
   }
 }
