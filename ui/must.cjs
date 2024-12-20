@@ -24,7 +24,6 @@ const localePath = path.join(baseDir, 'ui/src/i18n');
 const outputPath = path.join(localePath, './strings');
 const exclude = 'src/main';
 
-
 function matchText(text, path) {
   const isConsoleLog = /^console\.log\(/gi.test(path?.parentPath?.toString());
   let isFormattedMessage = false;

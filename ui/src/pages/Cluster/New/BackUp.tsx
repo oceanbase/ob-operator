@@ -7,7 +7,10 @@ export default function BackUp() {
     <Col span={24}>
       <CollapsibleCard
         collapsible={true}
-        title={'挂载 NFS 备份卷'}
+        title={intl.formatMessage({
+          id: 'src.pages.Cluster.New.1E85AB3D',
+          defaultMessage: '挂载 NFS 备份卷',
+        })}
         bordered={false}
       >
         <Row gutter={8}>

@@ -183,7 +183,10 @@ export default function Replicas({
             {sortKeys(Object.keys(replica)).map((key, idx) => (
               <Descriptions.Item label={LABEL_TEXT_MAP[key] || key} key={idx}>
                 {key.includes('Iops') && replica[key] > MAX_IOPS ? (
-                  '无限制'
+                  intl.formatMessage({
+                    id: 'src.pages.Tenant.Detail.Overview.2D1BC77D',
+                    defaultMessage: '无限制',
+                  })
                 ) : (
                   <>
                     {replica[key]}

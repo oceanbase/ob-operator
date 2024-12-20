@@ -161,9 +161,9 @@ function PermissionSelect({
           <Row gutter={[8, 16]}>
             <Col span={8}>
               <IconTip
-                  tip={findByValue(ACCESS_ROLES_LIST, item.domain).descriptions}
-                  content={findByValue(ACCESS_ROLES_LIST, item.domain).label}
-                />
+                tip={findByValue(ACCESS_ROLES_LIST, item.domain).descriptions}
+                content={findByValue(ACCESS_ROLES_LIST, item.domain).label}
+              />
             </Col>
             <Col span={16}>
               <Checkbox.Group

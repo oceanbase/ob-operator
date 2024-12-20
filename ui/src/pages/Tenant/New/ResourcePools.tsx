@@ -1,5 +1,5 @@
 import InputNumber from '@/components/InputNumber';
-import { SUFFIX_UNIT, getMinResource, MAX_IOPS } from '@/constants';
+import { MAX_IOPS, SUFFIX_UNIT, getMinResource } from '@/constants';
 import { intl } from '@/utils/intl';
 import { Card, Col, Form, Row, Tooltip } from 'antd';
 import { FormInstance } from 'antd/lib/form';

@@ -153,13 +153,19 @@ export default function BasicInfo({
         </Col>
         <Col span={8}>
           <Form.Item
-            label={'优化场景'}
+            label={intl.formatMessage({
+              id: 'src.pages.Cluster.New.04047AB8',
+              defaultMessage: '优化场景',
+            })}
             name={'scenario'}
             initialValue="HTAP"
             rules={[
               {
                 required: true,
-                message: '请选择优化场景',
+                message: intl.formatMessage({
+                  id: 'src.pages.Cluster.New.8126F0B5',
+                  defaultMessage: '请选择优化场景',
+                }),
               },
             ]}
           >
@@ -174,7 +180,11 @@ export default function BasicInfo({
         </Col>
       </Row>
       <Space>
-        删除保护
+        {intl.formatMessage({
+          id: 'src.pages.Cluster.New.FCB7C4F3',
+          defaultMessage: '删除保护',
+        })}
+
         <Checkbox
           defaultChecked={deleteValue}
           onChange={(e) => {

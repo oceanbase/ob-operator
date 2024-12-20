@@ -63,7 +63,10 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
               resetFields();
             }}
           >
-            取消
+            {intl.formatMessage({
+              id: 'src.pages.Cluster.Detail.Overview.42228E22',
+              defaultMessage: '取消',
+            })}
           </Button>
           <Button
             type="primary"
@@ -73,11 +76,22 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
                 const objValue = {
                   modifiedParameters: [values],
                 };
-                updateParameters(namespace, name, objValue, `编辑参数已成功`);
+                updateParameters(
+                  namespace,
+                  name,
+                  objValue,
+                  intl.formatMessage({
+                    id: 'src.pages.Cluster.Detail.Overview.480E47F8',
+                    defaultMessage: '编辑参数已成功',
+                  }),
+                );
               });
             }}
           >
-            确定
+            {intl.formatMessage({
+              id: 'src.pages.Cluster.Detail.Overview.9F17E32D',
+              defaultMessage: '确定',
+            })}
           </Button>
         </Space>
       }

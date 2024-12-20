@@ -5,7 +5,7 @@ export default function CollapsibleCard({
   collapsible,
   children,
   title,
-  defaultExpand=false,
+  defaultExpand = false,
   ...props
 }: any) {
   const [isExpand, setIsExpand] = useState(defaultExpand);
@@ -22,7 +22,11 @@ export default function CollapsibleCard({
           )}
         </Space>
       }
-      bodyStyle={((collapsible && isExpand) || !collapsible) ? { padding: 24 } : { padding: 0 }}
+      bodyStyle={
+        (collapsible && isExpand) || !collapsible
+          ? { padding: 24 }
+          : { padding: 0 }
+      }
       {...props}
     >
       {((collapsible && isExpand) || !collapsible) && children}

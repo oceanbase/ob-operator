@@ -1,11 +1,11 @@
 import { obproxy } from '@/api';
 import MonitorComp from '@/components/MonitorComp';
+import { DEFAULT_QUERY_RANGE } from '@/constants';
 import { PageContainer } from '@ant-design/pro-components';
 import { useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { useEffect } from 'react';
 import BasicInfo from '../Overview/BasicInfo';
-import { DEFAULT_QUERY_RANGE } from '@/constants';
 
 export default function Monitor() {
   const { ns, name } = useParams();

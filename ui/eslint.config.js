@@ -20,6 +20,11 @@ export default [
     },
   },
   {
-    ignores: ['**/i18n/strings/*','**/G6register.tsx','**/.umi/*','**/.umi-production/*'],
+    ignores: [
+      '**/i18n/strings/*',
+      '**/G6register.tsx',
+      '**/.umi/*',
+      '**/.umi-production/*',
+    ],
   },
 ];

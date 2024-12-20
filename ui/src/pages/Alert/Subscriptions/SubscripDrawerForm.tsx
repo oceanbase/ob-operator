@@ -53,7 +53,7 @@ export default function SubscripDrawerForm({
         intl.formatMessage(
           {
             id: 'src.pages.Alert.Subscriptions.BA84E413',
-            defaultMessage: "{ConditionalExpression0}成功!",
+            defaultMessage: '{ConditionalExpression0}成功!',
           },
           {
             ConditionalExpression0: isEdit

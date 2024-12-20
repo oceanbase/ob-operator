@@ -203,7 +203,10 @@ export default function NewBackup() {
                               rules={[
                                 {
                                   required: true,
-                                  message: '请输入 Host',
+                                  message: intl.formatMessage({
+                                    id: 'src.pages.Tenant.Detail.NewBackup.F6D664A0',
+                                    defaultMessage: '请输入 Host',
+                                  }),
                                 },
                               ]}
                             >
@@ -284,7 +287,10 @@ export default function NewBackup() {
                             rules={[
                               {
                                 required: true,
-                                message: '请输入AppID',
+                                message: intl.formatMessage({
+                                  id: 'src.pages.Tenant.Detail.NewBackup.7A899F0F',
+                                  defaultMessage: '请输入AppID',
+                                }),
                               },
                             ]}
                           >
@@ -311,7 +317,10 @@ export default function NewBackup() {
                             rules={[
                               {
                                 required: true,
-                                message: '请输入 Region',
+                                message: intl.formatMessage({
+                                  id: 'src.pages.Tenant.Detail.NewBackup.5A4FD22B',
+                                  defaultMessage: '请输入 Region',
+                                }),
                               },
                             ]}
                           >

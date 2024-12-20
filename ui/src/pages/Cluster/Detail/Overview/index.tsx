@@ -226,7 +226,15 @@ const ClusterOverview: React.FC = () => {
             }
           }}
         >
-          {removeNFS ? '移除 NFS 资源' : '挂载 NFS 资源'}
+          {removeNFS
+            ? intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.C47B9DA4',
+                defaultMessage: '移除 NFS 资源',
+              })
+            : intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.6B97ABB6',
+                defaultMessage: '挂载 NFS 资源',
+              })}
         </Button>
       ),
     },
@@ -242,7 +250,11 @@ const ClusterOverview: React.FC = () => {
         ? [
             <Dropdown menu={{ items }} placement="bottomRight">
               <Button>
-                集群管理
+                {intl.formatMessage({
+                  id: 'src.pages.Cluster.Detail.Overview.A0A43F50',
+                  defaultMessage: '集群管理',
+                })}
+
                 <DownOutlined />
               </Button>
             </Dropdown>,
@@ -312,22 +324,42 @@ const ClusterOverview: React.FC = () => {
 
   const controlParameters = [
     {
-      label: '已托管',
+      label: intl.formatMessage({
+        id: 'src.pages.Cluster.Detail.Overview.403B7E1C',
+        defaultMessage: '已托管',
+      }),
       value: true,
     },
     {
-      label: '未托管',
+      label: intl.formatMessage({
+        id: 'src.pages.Cluster.Detail.Overview.46B66B3E',
+        defaultMessage: '未托管',
+      }),
       value: false,
     },
   ];
 
   const accordanceList = [
     {
-      label: <Tag color={'green'}>{'已匹配'}</Tag>,
+      label: (
+        <Tag color={'green'}>
+          {intl.formatMessage({
+            id: 'src.pages.Cluster.Detail.Overview.D5CCD27D',
+            defaultMessage: '已匹配',
+          })}
+        </Tag>
+      ),
       value: true,
     },
     {
-      label: <Tag color={'gold'}>{'不匹配'}</Tag>,
+      label: (
+        <Tag color={'gold'}>
+          {intl.formatMessage({
+            id: 'src.pages.Cluster.Detail.Overview.DF83C06D',
+            defaultMessage: '不匹配',
+          })}
+        </Tag>
+      ),
       value: false,
     },
   ];
@@ -344,19 +376,31 @@ const ClusterOverview: React.FC = () => {
 
   const columns = [
     {
-      title: '参数名',
+      title: intl.formatMessage({
+        id: 'src.pages.Cluster.Detail.Overview.E5342F26',
+        defaultMessage: '参数名',
+      }),
       dataIndex: 'name',
     },
     {
-      title: '参数值',
+      title: intl.formatMessage({
+        id: 'src.pages.Cluster.Detail.Overview.FA0D096B',
+        defaultMessage: '参数值',
+      }),
       dataIndex: 'value',
     },
     {
-      title: '参数说明',
+      title: intl.formatMessage({
+        id: 'src.pages.Cluster.Detail.Overview.93A9D19D',
+        defaultMessage: '参数说明',
+      }),
       dataIndex: 'info',
     },
     {
-      title: '托管 operator',
+      title: intl.formatMessage({
+        id: 'src.pages.Cluster.Detail.Overview.4FCF90AF',
+        defaultMessage: '托管 operator',
+      }),
       dataIndex: 'controlParameter',
       filters: controlParameters.map(({ label, value }) => ({
         text: label,
@@ -366,22 +410,56 @@ const ClusterOverview: React.FC = () => {
         return record?.controlParameter === value;
       },
       render: (text: boolean) => {
-        return <span>{text ? '是' : '否'}</span>;
+        return (
+          <span>
+            {text
+              ? intl.formatMessage({
+                  id: 'src.pages.Cluster.Detail.Overview.319FA0DB',
+                  defaultMessage: '是',
+                })
+              : intl.formatMessage({
+                  id: 'src.pages.Cluster.Detail.Overview.5DD958C7',
+                  defaultMessage: '否',
+                })}
+          </span>
+        );
       },
     },
     {
-      title: <IconTip tip="只有托管 operator 的参数才有状态" content="状态" />,
+      title: (
+        <IconTip
+          tip={intl.formatMessage({
+            id: 'src.pages.Cluster.Detail.Overview.0B4A3E74',
+            defaultMessage: '只有托管 operator 的参数才有状态',
+          })}
+          content={intl.formatMessage({
+            id: 'src.pages.Cluster.Detail.Overview.6AD01A82',
+            defaultMessage: '状态',
+          })}
+        />
+      ),
       dataIndex: 'accordance',
       width: 100,
       render: (text: boolean) => {
         const tagColor = text ? 'green' : 'gold';
-        const tagContent = text ? '已匹配' : '不匹配';
+        const tagContent = text
+          ? intl.formatMessage({
+              id: 'src.pages.Cluster.Detail.Overview.9A3A4407',
+              defaultMessage: '已匹配',
+            })
+          : intl.formatMessage({
+              id: 'src.pages.Cluster.Detail.Overview.D6588C55',
+              defaultMessage: '不匹配',
+            });
 
         return <Tag color={tagColor}>{tagContent}</Tag>;
       },
     },
     {
-      title: '操作',
+      title: intl.formatMessage({
+        id: 'src.pages.Cluster.Detail.Overview.1B9EA477',
+        defaultMessage: '操作',
+      }),
       dataIndex: 'controlParameter',
       render: (text, record) => {
         return (
@@ -393,11 +471,17 @@ const ClusterOverview: React.FC = () => {
                 setParametersRecord(record);
               }}
             >
-              编辑
+              {intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.F5A088FB',
+                defaultMessage: '编辑',
+              })}
             </Button>
             {text && (
               <Button type="link" onClick={() => {}}>
-                解除托管
+                {intl.formatMessage({
+                  id: 'src.pages.Cluster.Detail.Overview.5FACF7C0',
+                  defaultMessage: '解除托管',
+                })}
               </Button>
             )}
           </Space>
@@ -416,7 +500,14 @@ const ClusterOverview: React.FC = () => {
         )}
         <Col span={24}>
           <Card
-            title={<h2 style={{ marginBottom: 0 }}>节点资源配置</h2>}
+            title={
+              <h2 style={{ marginBottom: 0 }}>
+                {intl.formatMessage({
+                  id: 'src.pages.Cluster.Detail.Overview.43C45255',
+                  defaultMessage: '节点资源配置',
+                })}
+              </h2>
+            }
             extra={
               <Button
                 onClick={() => setResourceDrawerOpen(true)}
@@ -430,7 +521,12 @@ const ClusterOverview: React.FC = () => {
               </Button>
             }
           >
-            <Descriptions title={'计算资源'}>
+            <Descriptions
+              title={intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.C5E0380E',
+                defaultMessage: '计算资源',
+              })}
+            >
               <Descriptions.Item label={'CPU'}>
                 {resource?.cpu}
               </Descriptions.Item>
@@ -446,11 +542,23 @@ const ClusterOverview: React.FC = () => {
                 marginBottom: '16px',
               }}
             >
-              存储资源
+              {intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.05F3B008',
+                defaultMessage: '存储资源',
+              })}
             </div>
             <Space style={{ marginBottom: '16px' }}>
-              PVC 独立生命周期
-              <Tooltip title={'只能在创建时指定，不支持修改'}>
+              {intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.F4D80804',
+                defaultMessage: 'PVC 独立生命周期',
+              })}
+
+              <Tooltip
+                title={intl.formatMessage({
+                  id: 'src.pages.Cluster.Detail.Overview.21732CE3',
+                  defaultMessage: '只能在创建时指定，不支持修改',
+                })}
+              >
                 <Checkbox disabled />
               </Tooltip>
             </Space>
@@ -466,21 +574,54 @@ const ClusterOverview: React.FC = () => {
           </Card>
         </Col>
         <Col span={24}>
-          <Card title={<h2 style={{ marginBottom: 0 }}>集群参数设置</h2>}>
+          <Card
+            title={
+              <h2 style={{ marginBottom: 0 }}>
+                {intl.formatMessage({
+                  id: 'src.pages.Cluster.Detail.Overview.BFE7CA02',
+                  defaultMessage: '集群参数设置',
+                })}
+              </h2>
+            }
+          >
             <Form form={form}>
               <Row gutter={[24, 16]}>
                 <Col span={6}>
-                  <Form.Item label="参数名" name={'name'}>
-                    <Input placeholder="请输入" allowClear />
+                  <Form.Item
+                    label={intl.formatMessage({
+                      id: 'src.pages.Cluster.Detail.Overview.BF489BCE',
+                      defaultMessage: '参数名',
+                    })}
+                    name={'name'}
+                  >
+                    <Input
+                      placeholder={intl.formatMessage({
+                        id: 'src.pages.Cluster.Detail.Overview.E5E4E6B5',
+                        defaultMessage: '请输入',
+                      })}
+                      allowClear
+                    />
                   </Form.Item>
                 </Col>
                 <Col span={6}>
-                  <Form.Item label="托管状态" name={'controlParameter'}>
+                  <Form.Item
+                    label={intl.formatMessage({
+                      id: 'src.pages.Cluster.Detail.Overview.4F7F81B0',
+                      defaultMessage: '托管状态',
+                    })}
+                    name={'controlParameter'}
+                  >
                     <Select options={controlParameters} allowClear={true} />
                   </Form.Item>
                 </Col>
                 <Col span={6}>
-                  <Form.Item label="状态" name={'accordance'}>
+                  <Form.Item
+                    label={intl.formatMessage({
+                      id: 'src.pages.Cluster.Detail.Overview.2873685C',
+                      defaultMessage: '状态',
+                    })}
+                    name={'accordance'}
+                  >
                     <Select options={accordanceList} allowClear={true} />
                   </Form.Item>
                 </Col>
@@ -548,7 +689,10 @@ const ClusterOverview: React.FC = () => {
                         });
                       }}
                     >
-                      查询
+                      {intl.formatMessage({
+                        id: 'src.pages.Cluster.Detail.Overview.E3D520F9',
+                        defaultMessage: '查询',
+                      })}
                     </Button>
                     <Button
                       onClick={() => {
@@ -560,7 +704,10 @@ const ClusterOverview: React.FC = () => {
                         refresh();
                       }}
                     >
-                      重置
+                      {intl.formatMessage({
+                        id: 'src.pages.Cluster.Detail.Overview.96EEA6EE',
+                        defaultMessage: '重置',
+                      })}
                     </Button>
                   </Space>
                 </Col>
@@ -636,7 +783,17 @@ const ClusterOverview: React.FC = () => {
 
       <NFSInfoModal
         removeNFS={removeNFS}
-        title={removeNFS ? '移除 NFS 备份卷' : '挂载 NFS 备份卷'}
+        title={
+          removeNFS
+            ? intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.24BBEBC2',
+                defaultMessage: '移除 NFS 备份卷',
+              })
+            : intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.44A8C98B',
+                defaultMessage: '挂载 NFS 备份卷',
+              })
+        }
         visible={removeNFS ? removeNFSModal : mountNFSModal}
         onCancel={() =>
           removeNFS ? setRemoveNFSModal(false) : setMountNFSModal(false)

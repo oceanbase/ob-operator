@@ -120,7 +120,10 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
   };
   return (
     <Drawer
-      title={'存储资源编辑'}
+      title={intl.formatMessage({
+        id: 'src.pages.Cluster.Detail.Overview.41F76901',
+        defaultMessage: '存储资源编辑',
+      })}
       open={visible}
       destroyOnClose
       onClose={() => {
@@ -136,18 +139,32 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
               resetFields();
             }}
           >
-            取消
+            {intl.formatMessage({
+              id: 'src.pages.Cluster.Detail.Overview.3B8C3AE9',
+              defaultMessage: '取消',
+            })}
           </Button>
           <Button
             type="primary"
             loading={loading}
             onClick={() => {
               validateFields().then((value) => {
-                patchOBCluster(namespace, name, value, `存储资源编辑成功`);
+                patchOBCluster(
+                  namespace,
+                  name,
+                  value,
+                  intl.formatMessage({
+                    id: 'src.pages.Cluster.Detail.Overview.DBF1120A',
+                    defaultMessage: '存储资源编辑成功',
+                  }),
+                );
               });
             }}
           >
-            确定
+            {intl.formatMessage({
+              id: 'src.pages.Cluster.Detail.Overview.AC4C9FB4',
+              defaultMessage: '确定',
+            })}
           </Button>
         </Space>
       }
@@ -155,7 +172,12 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
       <Form form={form} layout="vertical">
         <Row gutter={16}>
           <Col span={24}>
-            <p style={fontStyle}>数据</p>
+            <p style={fontStyle}>
+              {intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.77C825D8',
+                defaultMessage: '数据',
+              })}
+            </p>
             <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
               <CustomFormItem
                 style={{ marginRight: '8px' }}
@@ -187,7 +209,12 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
             </div>
           </Col>
           <Col span={24}>
-            <p style={fontStyle}>日志</p>
+            <p style={fontStyle}>
+              {intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.BB0D5386',
+                defaultMessage: '日志',
+              })}
+            </p>
             <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
               <CustomFormItem
                 style={{ marginRight: '8px' }}

@@ -34,7 +34,7 @@ const useRequestOfMonitor = <R, P extends any[]>(
   service: CombineService<R, P>,
   options?: BaseOptions<R, P> & { isRealTime?: boolean },
 ) => {
-  const { isRealTime } = options || {}
+  const { isRealTime } = options || {};
   const requestResult = useRequest(service, { ...options });
   // 使用竞态锁来防止监控请求堆积
   const [run, setIsLock] = useLockFn(requestResult.run);
