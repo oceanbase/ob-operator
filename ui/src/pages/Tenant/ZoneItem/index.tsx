@@ -1,15 +1,15 @@
 import InputNumber from '@/components/InputNumber';
 import { intl } from '@/utils/intl';
-import { Checkbox,Col,Form } from 'antd';
+import { Checkbox, Col, Form } from 'antd';
 
 interface ZoneItemProps {
   name: string;
   checked: boolean;
   obZoneResource: API.ZoneResource;
   checkBoxOnChange: (checked: boolean, name: string) => void;
-  priorityName?:string[]|string;
-  isEdit?:boolean;
-  checkedFormName?:string[]|string;
+  priorityName?: string[] | string;
+  isEdit?: boolean;
+  checkedFormName?: string[] | string;
 }
 
 export default function ZoneItem({
@@ -19,7 +19,7 @@ export default function ZoneItem({
   checkBoxOnChange,
   isEdit,
   priorityName = ['pools', name, 'priority'],
-  checkedFormName
+  checkedFormName,
 }: ZoneItemProps) {
   return (
     <div
@@ -71,7 +71,7 @@ export default function ZoneItem({
             CPU {obZoneResource['availableCPU']}
           </span>
           <span style={{ marginRight: 12 }}>
-            Memory {obZoneResource['availableMemory'] }GB
+            Memory {obZoneResource['availableMemory']}GB
           </span>
           <span>
             {intl.formatMessage({

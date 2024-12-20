@@ -283,7 +283,12 @@ export default function TopoComponent({
     manual: true,
     onSuccess: (res) => {
       if (res.successful) {
-        message.success('删除 Server 已成功');
+        message.success(
+          intl.formatMessage({
+            id: 'src.components.TopoComponent.AD3D247F',
+            defaultMessage: '删除 Server 已成功',
+          }),
+        );
       }
     },
   });
@@ -294,7 +299,12 @@ export default function TopoComponent({
       manual: true,
       onSuccess: (res) => {
         if (res.successful) {
-          message.success('重启 Server 已成功');
+          message.success(
+            intl.formatMessage({
+              id: 'src.components.TopoComponent.86ECC17E',
+              defaultMessage: '重启 Server 已成功',
+            }),
+          );
         }
       },
     },
@@ -369,7 +379,10 @@ export default function TopoComponent({
     }
     if (operate === 'deleteServer') {
       showDeleteConfirm({
-        title: '你确定要删除该 server 吗？',
+        title: intl.formatMessage({
+          id: 'src.components.TopoComponent.FAB70713',
+          defaultMessage: '你确定要删除该 server 吗？',
+        }),
         onOk: () => {
           deleteOBServers(ns!, name!, {
             observers: [chooseServerName.current],
@@ -379,7 +392,10 @@ export default function TopoComponent({
     }
     if (operate === 'restartServer') {
       showDeleteConfirm({
-        title: '你确定重启该 server 吗？',
+        title: intl.formatMessage({
+          id: 'src.components.TopoComponent.96A4C193',
+          defaultMessage: '你确定重启该 server 吗？',
+        }),
         onOk: () => {
           restartOBServers(ns!, name!, {
             observers: [chooseServerName.current],

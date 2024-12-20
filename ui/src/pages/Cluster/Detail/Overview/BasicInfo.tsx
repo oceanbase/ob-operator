@@ -29,7 +29,12 @@ export default function BasicInfo({
       manual: true,
       onSuccess: (res) => {
         if (res.successful) {
-          message.success('修改删除保护已成功');
+          message.success(
+            intl.formatMessage({
+              id: 'src.pages.Cluster.Detail.Overview.02AE8EA0',
+              defaultMessage: '修改删除保护已成功',
+            }),
+          );
         }
       },
     },
@@ -106,7 +111,12 @@ export default function BasicInfo({
           </Tag>
         </Descriptions.Item>
 
-        <Descriptions.Item label={'删除保护'}>
+        <Descriptions.Item
+          label={intl.formatMessage({
+            id: 'src.pages.Cluster.Detail.Overview.8DB38279',
+            defaultMessage: '删除保护',
+          })}
+        >
           <Checkbox
             // loading 态禁止操作，防止重复操作
             disabled={loading || status !== 'running'}

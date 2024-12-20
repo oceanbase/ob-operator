@@ -1,7 +1,7 @@
-import { useParams } from '@umijs/max';
 import { modifyUnitNumReportWrap } from '@/services/reportRequest/tenantReportReq';
 import { intl } from '@/utils/intl';
-import { Form,InputNumber,message } from 'antd';
+import { useParams } from '@umijs/max';
+import { Form, InputNumber, message } from 'antd';
 import { useEffect } from 'react';
 
 import CustomModal from '.';
@@ -43,7 +43,7 @@ export default function ModifyUnitModal({
             defaultMessage: '修改成功',
           }),
       );
-      if(successCallback) successCallback();
+      if (successCallback) successCallback();
       form.resetFields();
       setVisible(false);
     }

@@ -192,14 +192,25 @@ export default function Observer({
           </Col>
         </Row>
         <p className={styles.titleText}>storage</p>
-        <p className={styles.subTitleText}>存储卷配置</p>
+        <p className={styles.subTitleText}>
+          {intl.formatMessage({
+            id: 'src.pages.Cluster.New.3F941911',
+            defaultMessage: '存储卷配置',
+          })}
+        </p>
         <Space style={{ marginBottom: '10px' }}>
           <IconTip
-            tip={
-              '勾选后，在删除 OBServer 资源之后不会级联删除 PVC；默认会进行级联删除'
-            }
-            content={'PVC 独立生命周期'}
+            tip={intl.formatMessage({
+              id: 'src.pages.Cluster.New.1430D3F5',
+              defaultMessage:
+                '勾选后，在删除 OBServer 资源之后不会级联删除 PVC；默认会进行级联删除',
+            })}
+            content={intl.formatMessage({
+              id: 'src.pages.Cluster.New.94B6798C',
+              defaultMessage: 'PVC 独立生命周期',
+            })}
           />
+
           <Checkbox
             value={pvcValue}
             onChange={(e) => {

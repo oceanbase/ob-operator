@@ -2,8 +2,8 @@ import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { message } from 'antd';
 
-import { useParams } from '@umijs/max';
 import { changeTenantRole } from '@/services/tenant';
+import { useParams } from '@umijs/max';
 
 import CustomModal from '.';
 
@@ -24,7 +24,7 @@ export default function ActivateTenantModal({
           }),
         );
         setVisible(false);
-        if(successCallback)successCallback();
+        if (successCallback) successCallback();
       }
     },
   });

@@ -37,7 +37,7 @@ export default function MonitorComp({
   groupLabels,
   useFor = 'cluster',
   filterData,
-  filterQueryMetric
+  filterQueryMetric,
 }: MonitorCompProps) {
   const { data: allMetrics } = useRequest(getAllMetrics, {
     defaultParams: [queryScope],
@@ -83,9 +83,7 @@ export default function MonitorComp({
           <Col span={24} key={index}>
             <Card
               bodyStyle={{ padding: 0 }}
-              title={
-                <h2 style={{marginBottom: 0}}>{container.name}</h2>
-              }
+              title={<h2 style={{ marginBottom: 0 }}>{container.name}</h2>}
             >
               <div>
                 <div className={styles.monitorContainer}>

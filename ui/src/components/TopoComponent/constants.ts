@@ -47,7 +47,10 @@ const zoneOperate: Topo.OperateTypeLabel = [
 const serverOperate: Topo.OperateTypeLabel = [
   {
     value: 'restartServer',
-    label: '重启server',
+    label: intl.formatMessage({
+      id: 'src.components.TopoComponent.2494A473',
+      defaultMessage: '重启server',
+    }),
     disabled: false,
   },
   {
