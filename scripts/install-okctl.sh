@@ -103,7 +103,7 @@ install_binary() {
     # Clean up downloaded archive
     rm -f "${BINARY_NAME}_${version}.tar.gz"
     
-    echo "Successfully extracted ${BINARY_NAME}-${version} to current directory (./${BINARY_NAME})"
+    echo "Successfully extracted ${BINARY_NAME}-${version} (./${BINARY_NAME}) to current directory"
 }
 
 main() {
