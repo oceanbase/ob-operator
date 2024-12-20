@@ -18,4 +18,5 @@ export default defineConfig({
   routes,
   history: { type: 'hash' },
   npmClient: 'yarn',
+  jsMinifier: 'terser',
 });
