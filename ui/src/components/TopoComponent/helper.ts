@@ -114,7 +114,7 @@ function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
         img: SERVER_IMG_MAP.get(server.status),
         badgeImg: BADGE_IMG_MAP.get(server.status),
         disable: temp.disable,
-        zone: zone.zone
+        zone: zone.zone,
       };
     });
     children.push(temp);

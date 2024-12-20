@@ -87,8 +87,8 @@ func (o *ChangePwdOptions) Validate() error {
 }
 
 func (o *ChangePwdOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "namespace of ob tenant")
-	cmd.Flags().StringVarP(&o.Password, FLAG_PASSWD, "p", "", "new password of ob tenant, required")
-	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, "f", DEFAULT_FORCE_FLAG, "force operation")
+	cmd.Flags().StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "namespace of ob tenant")
+	cmd.Flags().StringVarP(&o.Password, FLAG_PASSWD, SHORTHAND_PASSWD, "", "new password of ob tenant, required")
+	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, SHORTHAND_FORCE, DEFAULT_FORCE_FLAG, "force operation")
 	_ = cmd.MarkFlagRequired(FLAG_PASSWD)
 }

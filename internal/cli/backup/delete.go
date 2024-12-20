@@ -15,7 +15,7 @@ package backup
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/types"
@@ -37,7 +37,7 @@ func DeleteTenantBackupPolicy(ctx context.Context, o *DeleteOptions) error {
 	nn := types.NamespacedName{Name: o.Name, Namespace: o.Namespace}
 	policy, err := clients.GetTenantBackupPolicy(ctx, nn)
 	if policy == nil {
-		return errors.New("Backup policy not found for the tenant")
+		return fmt.Errorf("Backup policy for %s not found", o.Name)
 	}
 	if err != nil {
 		return err
@@ -50,6 +50,6 @@ func DeleteTenantBackupPolicy(ctx context.Context, o *DeleteOptions) error {
 
 // AddFlags add basic flags for tenant management
 func (o *DeleteOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the ob tenant")
-	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, "f", DEFAULT_FORCE, "Force delete the ob tenant backup policy")
+	cmd.Flags().StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the ob tenant")
+	cmd.Flags().BoolVarP(&o.force, FLAG_FORCE, SHORTHAND_FORCE, DEFAULT_FORCE, "Force delete the ob tenant backup policy")
 }

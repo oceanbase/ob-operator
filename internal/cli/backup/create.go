@@ -16,7 +16,6 @@ package backup
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/robfig/cron/v3"
 	"github.com/spf13/cobra"
@@ -178,17 +177,6 @@ func CreateTenantBackupPolicy(ctx context.Context, o *CreateOptions) (*v1alpha1.
 	return policy, nil
 }
 
-func (o *CreateOptions) Complete() error {
-	// set default values for archive path and backup data path
-	if o.DestType == "NFS" && o.ArchivePath == "" {
-		o.ArchivePath = fmt.Sprintf("%s/%s", "archive", o.Name)
-	}
-	if o.DestType == "NFS" && o.BakDataPath == "" {
-		o.BakDataPath = fmt.Sprintf("%s/%s", "backup", o.Name)
-	}
-	return nil
-}
-
 func (o *CreateOptions) Validate() error {
 	if o.Namespace == "" {
 		return errors.New("Namespace is required")
@@ -205,10 +193,13 @@ func (o *CreateOptions) Validate() error {
 	if o.FullCrontab == "" {
 		return errors.New("Full backup schedule is required, at least one of the full schedule must be specified")
 	}
+	if o.IncrementalCrontab == "" {
+		return errors.New("Incremental backup schedule is required, at least one of the incremental schedule must be specified")
+	}
 	if !checkCrontabSyntax(o.FullCrontab) {
 		return errors.New("Invalid full backup schedule")
 	}
-	if o.IncrementalCrontab != "" && !checkCrontabSyntax(o.IncrementalCrontab) {
+	if !checkCrontabSyntax(o.IncrementalCrontab) {
 		return errors.New("Invalid incremental backup schedule")
 	}
 	return nil
@@ -224,12 +215,15 @@ func (o *CreateOptions) AddFlags(cmd *cobra.Command) {
 
 func (o *CreateOptions) SetRequiredFlags(cmd *cobra.Command) {
 	_ = cmd.MarkFlagRequired(FLAG_FULL)
+	_ = cmd.MarkFlagRequired(FLAG_INCREMENTAL)
+	_ = cmd.MarkFlagRequired(FLAG_ARCHIVE_PATH)
+	_ = cmd.MarkFlagRequired(FLAG_BAK_DATA_PATH)
 }
 
 // AddBaseFlags adds the base flags for the create command
 func (o *CreateOptions) AddBaseFlags(cmd *cobra.Command) {
 	baseFlags := cmd.Flags()
-	baseFlags.StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the ob tenant")
+	baseFlags.StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the ob tenant")
 	baseFlags.StringVar(&o.DestType, FLAG_DEST_TYPE, DEFAULT_DEST_TYPE, "The destination type of the backup policy, currently support OSS or NFS")
 	baseFlags.StringVar(&o.ArchivePath, FLAG_ARCHIVE_PATH, "", "The archive path of the backup policy")
 	baseFlags.StringVar(&o.BakDataPath, FLAG_BAK_DATA_PATH, "", "The backup data path of the backup policy")

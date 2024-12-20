@@ -167,7 +167,7 @@ func (o *ScaleOptions) Validate() error {
 
 // AddFlags for scale options
 func (o *ScaleOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.Namespace, FLAG_NAMESPACE, DEFAULT_NAMESPACE, "namespace of ob cluster")
-	cmd.Flags().StringToStringVar(&o.Zones, FLAG_ZONES, nil, "The zone of the cluster, e.g. '--zones=<zone>=<replica>', set replicas to 0 to delete the zone, only one operation of adding, deleting or modifying is allowd at a time, required")
+	cmd.Flags().StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "namespace of ob cluster")
+	cmd.Flags().StringToStringVarP(&o.Zones, FLAG_ZONES, SHORTHAND_ZONES, nil, "The zone of the cluster, e.g. '--zones=<zone>=<replica>', set replicas to 0 to delete the zone, only one operation of adding, deleting or modifying is allowd at a time, required")
 	_ = cmd.MarkFlagRequired(FLAG_ZONES)
 }

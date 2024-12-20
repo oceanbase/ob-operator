@@ -15,6 +15,7 @@ package cluster
 
 import (
 	"github.com/spf13/cobra"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 
 	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
 	"github.com/oceanbase/ob-operator/internal/cli/utils"
@@ -40,7 +41,11 @@ func NewUpdateCmd() *cobra.Command {
 			}
 			obcluster, err := clients.GetOBCluster(cmd.Context(), o.Namespace, o.Name)
 			if err != nil {
-				logger.Fatalln(err)
+				if kubeerrors.IsNotFound(err) {
+					logger.Fatalf("OBCluster %s not found", o.Name)
+				} else {
+					logger.Fatalln(err)
+				}
 			}
 			if err := utils.CheckClusterStatus(obcluster); err != nil {
 				logger.Fatalln(err)

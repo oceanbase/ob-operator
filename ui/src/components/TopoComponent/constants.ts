@@ -162,6 +162,31 @@ serverZone: string)
   });
   return serverOperate;
 };
+const getServerOperateOfCluster = (
+  topoData: Topo.GraphNodeType | undefined,
+  disabled: boolean,
+  serverZone: string,
+): Topo.OperateTypeLabel => {
+  if (!topoData) return [];
+  // 任何 zone 里面只剩一个 server 就不能删了
+  const supportStaticIPisDisabled = topoData?.supportStaticIP;
+  const zoneCurrent = topoData?.children?.find(
+    (zone) => zone.label === serverZone,
+  );
+
+  const serverCurrentisDisabled = zoneCurrent?.children?.length === 1;
+
+  serverOperate.forEach((operate) => {
+    if (disabled) {
+      operate.disabled = disabled;
+    }
+    if (operate.value === 'deleteServer')
+      operate.disabled = serverCurrentisDisabled;
+    if (operate.value === 'restartServer')
+      operate.disabled = !supportStaticIPisDisabled;
+  });
+  return serverOperate;
+};
 
 const getClusterOperates = (
 clusterOperateList: Topo.OperateTypeLabel,
@@ -178,6 +203,7 @@ export {
   clusterOperate,
   clusterOperateOfTenant,
   getClusterOperates,
+  getServerOperateOfCluster,
   getServerOperateOfCluster,
   getZoneOperateOfCluster,
   getZoneOperateOfTenant,

@@ -16,6 +16,7 @@ package utils
 import (
 	"regexp"
 	"strings"
+	"unicode"
 )
 
 const (
@@ -42,11 +43,11 @@ func CheckPassword(password string) bool {
 	for _, char := range password {
 		if strings.ContainsRune(characters, char) {
 			switch {
-			case strings.ContainsRune("ABCDEFGHIJKLMNOPQRSTUVWXYZ", char):
+			case unicode.IsUpper(char):
 				countUppercase++
-			case strings.ContainsRune("abcdefghijklmnopqrstuvwxyz", char):
+			case unicode.IsLower(char):
 				countLowercase++
-			case strings.ContainsRune("0123456789", char):
+			case unicode.IsNumber(char):
 				countNumber++
 			default:
 				countSpecialChar++
@@ -54,7 +55,7 @@ func CheckPassword(password string) bool {
 		} else {
 			return false
 		}
-		// if satisfied
+		// if satisfied, early return
 		if countUppercase >= 2 && countLowercase >= 2 && countNumber >= 2 && countSpecialChar >= 2 {
 			return true
 		}

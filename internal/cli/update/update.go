@@ -18,31 +18,51 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/oceanbase/ob-operator/internal/cli/install"
+	"github.com/oceanbase/ob-operator/internal/cli/config"
+	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
 type UpdateOptions struct {
-	install.InstallOptions
+	Components map[string]string
 }
 
+// NewUpdateOptions create a new UpdateOptions
 func NewUpdateOptions() *UpdateOptions {
 	return &UpdateOptions{
-		InstallOptions: *install.NewInstallOptions(),
+		Components: make(map[string]string),
 	}
 }
 
 func (o *UpdateOptions) Parse(_ *cobra.Command, args []string) error {
-	// if not specified, use default config
-	if len(args) == 0 {
-		defaultComponents := o.InstallOptions.GetDefaultComponents()
-		// update Components to default config
-		o.InstallOptions.Components = defaultComponents
-		return nil
+	// if specified, use the specified component
+	if len(args) > 0 {
+		name := args[0]
+		components, err := config.GetAllComponents()
+		if err != nil {
+			return err
+		}
+
+		// check if the component is supported
+		defaultVersion, exist := components[name]
+		if !exist {
+			return fmt.Errorf("component %s is not supported", name)
+		}
+		o.Components = map[string]string{name: defaultVersion}
+	} else {
+		// if no component is specified, update default components
+		defaultComponents, err := config.GetDefaultComponents()
+		if err != nil {
+			return err
+		}
+		o.Components = defaultComponents
 	}
-	name := args[0]
-	if v, ok := o.InstallOptions.Components[name]; ok {
-		o.InstallOptions.Components = map[string]string{name: v}
-		return nil
+	return nil
+}
+
+func (o *UpdateOptions) Update(component, version string) error {
+	cmd, err := utils.BuildCmd(component, version)
+	if err != nil {
+		return err
 	}
-	return fmt.Errorf("component %s is not supported", name)
+	return utils.RunCmd(cmd)
 }

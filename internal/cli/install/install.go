@@ -15,135 +15,66 @@ package install
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
 
 	"github.com/spf13/cobra"
 
+	"github.com/oceanbase/ob-operator/internal/cli/config"
 	utils "github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
 type InstallOptions struct {
-	version      string
-	Components   map[string]string
-	obUrl        string
-	localPathUrl string
+	version    string
+	Components map[string]string
 }
 
+// NewInstallOptions create a new InstallOptions
 func NewInstallOptions() *InstallOptions {
 	return &InstallOptions{
-		Components:   utils.GetComponentsConf(),
-		obUrl:        "https://raw.githubusercontent.com/oceanbase/ob-operator/",
-		localPathUrl: "https://raw.githubusercontent.com/rancher/local-path-provisioner/",
+		Components: make(map[string]string),
 	}
-}
-
-func (o *InstallOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&o.version, "version", "", "version of component")
 }
 
 func (o *InstallOptions) Parse(_ *cobra.Command, args []string) error {
-	// if not specified, use default config
-	if len(args) == 0 {
-		defaultComponents := o.GetDefaultComponents()
-		// update Components to default config
-		o.Components = defaultComponents
-		return nil
-	}
-	name := args[0]
-	if v, ok := o.Components[name]; ok {
+	// if specified, use the specified component
+	if len(args) > 0 {
+		name := args[0]
+		components, err := config.GetAllComponents()
+		if err != nil {
+			return err
+		}
+
+		// check if the component is supported
+		defaultVersion, exist := components[name]
+		if !exist {
+			return fmt.Errorf("component `%v` is not supported", name)
+		}
+
+		// if version is not specified, use the default version
 		if o.version == "" {
-			o.Components = map[string]string{name: v}
+			o.Components = map[string]string{name: defaultVersion}
 		} else {
 			o.Components = map[string]string{name: o.version}
 		}
-		return nil
+	} else {
+		// if no component is specified, install default components
+		defaultComponents, err := config.GetDefaultComponents()
+		if err != nil {
+			return err
+		}
+		o.Components = defaultComponents
 	}
-	return fmt.Errorf("component `%v` is not supported", name)
+	return nil
 }
 
-// Install component
 func (o *InstallOptions) Install(component, version string) error {
-	cmd, err := o.buildCmd(component, version)
+	cmd, err := utils.BuildCmd(component, version)
 	if err != nil {
 		return err
 	}
-	return runCmd(cmd)
+	return utils.RunCmd(cmd)
 }
 
-// buildCmd build cmd for installation
-func (o *InstallOptions) buildCmd(component, version string) (*exec.Cmd, error) {
-	var cmd *exec.Cmd
-	var url string
-	switch component {
-	case "cert-manager":
-		componentFile := "cert-manager.yaml"
-		url = fmt.Sprintf("%s%s/deploy/%s", o.obUrl, version, componentFile)
-		cmd = exec.Command("kubectl", "apply", "-f", url)
-	case "ob-operator", "ob-operator-dev":
-		componentFile := "operator.yaml"
-		url = fmt.Sprintf("%s%s/deploy/%s", o.obUrl, version, componentFile)
-		cmd = exec.Command("kubectl", "apply", "-f", url)
-	case "local-path-provisioner", "local-path-provisioner-dev":
-		componentFile := "local-path-storage.yaml"
-		url = fmt.Sprintf("%s%s/deploy/%s", o.localPathUrl, version, componentFile)
-		cmd = exec.Command("kubectl", "apply", "-f", url)
-	case "ob-dashboard":
-		if err := addHelmRepo(); err != nil {
-			return nil, err
-		}
-		if err := updateHelmRepo(); err != nil {
-			return nil, err
-		}
-		versionFlag := fmt.Sprintf("--version=%s", version)
-		cmd = exec.Command("helm", "install", "oceanbase-dashboard", "ob-operator/oceanbase-dashboard", versionFlag)
-	default:
-		return nil, fmt.Errorf("unknown component: %s", component)
-	}
-	return cmd, nil
-}
-
-func (o *InstallOptions) GetDefaultComponents() map[string]string {
-	defaultComponents := make(map[string]string) // Initialize the map
-	var componentsList []string
-	if !utils.CheckIfComponentExists("cert-manager") {
-		componentsList = []string{"cert-manager", "ob-operator", "ob-dashboard"}
-	} else {
-		componentsList = []string{"ob-operator", "ob-dashboard"}
-	}
-	for _, component := range componentsList {
-		defaultComponents[component] = o.Components[component]
-	}
-	return defaultComponents
-}
-
-// addHelmRepo add ob-operator helm repo
-func addHelmRepo() error {
-	cmdAddRepo := exec.Command("helm", "repo", "add", "ob-operator", "https://oceanbase.github.io/ob-operator/")
-	output, err := cmdAddRepo.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("adding repo failed: %s, %s", err, output)
-	}
-	return nil
-}
-
-// updateHelmRepo update ob-operator helm repo
-func updateHelmRepo() error {
-	cmdUpdateRepo := exec.Command("helm", "repo", "update", "ob-operator")
-	output, err := cmdUpdateRepo.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("updating repo failed: %s, %s", err, output)
-	}
-	return nil
-}
-
-// runCmd run cmd for components' installation
-func runCmd(cmd *exec.Cmd) error {
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		return fmt.Errorf("%s command failed with error: %v", cmd.String(), err)
-	}
-	return nil
+// AddFlags add flags to install command
+func (o *InstallOptions) AddFlags(cmd *cobra.Command) {
+	cmd.Flags().StringVar(&o.version, "version", "", "version of component")
 }

@@ -7,7 +7,7 @@ import TabItem from '@theme/TabItem'
 
 # OceanBase Dashboard 快速上手
 
-OceanBase Dashboard 是与 ob-operator 配套的白屏运维工具，截止目前最新的 0.2.1 版本具有集群管理、租户管理、备份管理、性能监控和终端直连等功能，是在 K8s 环境中配合 ob-operator 监控 OceanBase 集群性能指标的首选工具。
+OceanBase Dashboard 是与 ob-operator 配套的白屏运维工具，截止目前最新的 0.3.2 版本具有集群管理、租户管理、备份管理、性能监控和终端直连等功能，是在 K8s 环境中配合 ob-operator 监控 OceanBase 集群性能指标的首选工具。
 
 ## 部署 OceanBase Dashboard
 
@@ -16,13 +16,13 @@ OceanBase Dashboard 是与 ob-operator 配套的白屏运维工具，截止目�
 ```bash
 helm repo add ob-operator https://oceanbase.github.io/ob-operator/
 helm repo update ob-operator
-helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.2.1
+helm install oceanbase-dashboard ob-operator/oceanbase-dashboard
 ```
 
 如果要在其他命名空间安装，可将最后一条安装命令替换成为下面的命令（`<namespace>`部分为您需要安装的目标命名空间），如果该命名空间原本不存在，可添加`--create-namespace`进行创建。
 
 ```bash
-helm install oceanbase-dashboard ob-operator/oceanbase-dashboard --version=0.2.1 -n <namespace> --create-namespace
+helm install oceanbase-dashboard ob-operator/oceanbase-dashboard -n <namespace> --create-namespace
 ```
 
 若安装命令执行完后在终端内打印类似下面内容的提示则说明部署成功。

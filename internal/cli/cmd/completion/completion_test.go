@@ -46,12 +46,12 @@ func TestCompletions(t *testing.T) {
 		{
 			name:          "no args",
 			args:          []string{},
-			expectedError: "shell not specified. See 'obocli completion -h' for help and examples",
+			expectedError: "shell not specified. See 'okctl completion -h' for help and examples",
 		},
 		{
 			name:          "too many args",
 			args:          []string{"bash", "zsh"},
-			expectedError: "too many arguments. Expected only the shell type. See 'obocli completion -h' for help and examples",
+			expectedError: "too many arguments. Expected only the shell type. See 'okctl completion -h' for help and examples",
 		},
 		{
 			name:          "unsupported shell",
@@ -63,7 +63,7 @@ func TestCompletions(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(tt *testing.T) {
 			parentCmd := &cobra.Command{
-				Use: "obocli",
+				Use: "okctl",
 			}
 			out := new(bytes.Buffer)
 			cmd := NewCmd(out, defaultBoilerPlate)

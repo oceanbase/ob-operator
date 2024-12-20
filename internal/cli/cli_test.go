@@ -11,22 +11,25 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
-package backup
+package cli_test
 
-import "github.com/spf13/cobra"
+import (
+	"testing"
 
-type PauseOptions struct {
-	UpdateOptions
-}
+	"github.com/stretchr/testify/assert"
 
-func NewPauseOptions() *PauseOptions {
-	return &PauseOptions{
-		UpdateOptions: UpdateOptions{
-			Status: "PAUSED",
-		},
+	"github.com/oceanbase/ob-operator/internal/cli"
+)
+
+func TestCli(t *testing.T) {
+	// Test NewCliCmd
+	cmd := cli.NewCliCmd()
+	if cmd == nil {
+		t.Errorf("NewCliCmd() failed")
+	} else {
+		t.Logf("NewCliCmd() success")
+		// Test Runable
+		err := cmd.RunE(cmd, []string{"help"})
+		assert.NoErrorf(t, err, "cli failed to run")
 	}
-}
-
-func (o *PauseOptions) AddFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "The namespace of the tenant")
 }

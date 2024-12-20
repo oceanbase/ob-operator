@@ -29,14 +29,14 @@ export const TooltipItemContent = ({ item }) => {
               <div
                 style={{
                   display: 'flex',
-                  justifyContent: 'space-between'
-                }}>
-
+                  justifyContent: 'space-between',
+                }}
+              >
                 <p>{key}：</p>
                 <p>{data[key]}</p>
               </div>
-            </li>);
-
+            </li>
+          );
         } else {
           const value = JSON.stringify(data[key]) || String(data[key]);
           return (
@@ -44,18 +44,18 @@ export const TooltipItemContent = ({ item }) => {
               <div
                 style={{
                   display: 'flex',
-                  justifyContent: 'space-between'
-                }}>
-
+                  justifyContent: 'space-between',
+                }}
+              >
                 <p>{key}：</p>
                 <p>{value}</p>
               </div>
-            </li>);
-
+            </li>
+          );
         }
       })}
-    </ul>);
-
+    </ul>
+  );
 };
 
 const ResourceDrawer: React.FC<ParametersModalProps> = ({
@@ -64,7 +64,7 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
   initialValues,
   name,
   namespace,
-  onSuccess
+  onSuccess,
 }) => {
   const [form] = Form.useForm<API.CreateClusterData>();
   const { validateFields, setFieldValue, resetFields } = form;
@@ -89,7 +89,7 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
     setFieldValue(['storage'], {
       data,
       log,
-      redoLog
+      redoLog,
     });
   }, [initialValues]);
 
@@ -106,21 +106,24 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
           message.success(
             intl.formatMessage({
               id: 'src.pages.Cluster.Detail.Overview.E908AA54',
-              defaultMessage: '编辑参数已成功'
-            })
+              defaultMessage: '编辑参数已成功',
+            }),
           );
           onSuccess();
         }
-      }
-    }
+      },
+    },
   );
 
   const fontStyle: React.CSSProperties = {
-    fontWeight: 600
+    fontWeight: 600,
   };
   return (
     <Drawer
-      title={intl.formatMessage({ id: "src.pages.Cluster.Detail.Overview.41F76901", defaultMessage: "存储资源编辑" })}
+      title={intl.formatMessage({
+        id: 'src.pages.Cluster.Detail.Overview.41F76901',
+        defaultMessage: '存储资源编辑',
+      })}
       open={visible}
       destroyOnClose
       onClose={() => {
@@ -129,92 +132,116 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
       }}
       width={520}
       footer={
-      <Space>
+        <Space>
           <Button
-          onClick={() => {
-            onCancel();
-            resetFields();
-          }}>{intl.formatMessage({ id: "src.pages.Cluster.Detail.Overview.3B8C3AE9", defaultMessage: "取消" })}
-
-
-        </Button>
+            onClick={() => {
+              onCancel();
+              resetFields();
+            }}
+          >
+            {intl.formatMessage({
+              id: 'src.pages.Cluster.Detail.Overview.3B8C3AE9',
+              defaultMessage: '取消',
+            })}
+          </Button>
           <Button
-          type="primary"
-          loading={loading}
-          onClick={() => {
-            validateFields().then((value) => {
-              patchOBCluster(namespace, name, value, intl.formatMessage({ id: "src.pages.Cluster.Detail.Overview.DBF1120A", defaultMessage: "存储资源编辑成功" }));
-            });
-          }}>{intl.formatMessage({ id: "src.pages.Cluster.Detail.Overview.AC4C9FB4", defaultMessage: "确定" })}
-
-
-        </Button>
+            type="primary"
+            loading={loading}
+            onClick={() => {
+              validateFields().then((value) => {
+                patchOBCluster(
+                  namespace,
+                  name,
+                  value,
+                  intl.formatMessage({
+                    id: 'src.pages.Cluster.Detail.Overview.DBF1120A',
+                    defaultMessage: '存储资源编辑成功',
+                  }),
+                );
+              });
+            }}
+          >
+            {intl.formatMessage({
+              id: 'src.pages.Cluster.Detail.Overview.AC4C9FB4',
+              defaultMessage: '确定',
+            })}
+          </Button>
         </Space>
-      }>
-
+      }
+    >
       <Form form={form} layout="vertical">
         <Row gutter={16}>
           <Col span={24}>
-            <p style={fontStyle}>{intl.formatMessage({ id: "src.pages.Cluster.Detail.Overview.77C825D8", defaultMessage: "数据" })}</p>
+            <p style={fontStyle}>
+              {intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.77C825D8',
+                defaultMessage: '数据',
+              })}
+            </p>
             <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
               <CustomFormItem
                 style={{ marginRight: '8px' }}
                 label="size"
-                name={['storage', 'data', 'size']}>
-
+                name={['storage', 'data', 'size']}
+              >
                 <InputNumber
                   min={MINIMAL_CONFIG.data}
                   addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
-                    defaultMessage: '请输入'
-                  })} />
-
+                    defaultMessage: '请输入',
+                  })}
+                />
               </CustomFormItem>
               <CustomFormItem
                 label="storageClass"
-                name={['storage', 'data', 'storageClass']}>
-
-                {storageClasses &&
-                <SelectWithTooltip
-                  name={['storage', 'data', 'storageClass']}
-                  form={form}
-                  selectList={storageClasses}
-                  TooltipItemContent={TooltipItemContent} />
-
-                }
+                name={['storage', 'data', 'storageClass']}
+              >
+                {storageClasses && (
+                  <SelectWithTooltip
+                    name={['storage', 'data', 'storageClass']}
+                    form={form}
+                    selectList={storageClasses}
+                    TooltipItemContent={TooltipItemContent}
+                  />
+                )}
               </CustomFormItem>
             </div>
           </Col>
           <Col span={24}>
-            <p style={fontStyle}>{intl.formatMessage({ id: "src.pages.Cluster.Detail.Overview.BB0D5386", defaultMessage: "日志" })}</p>
+            <p style={fontStyle}>
+              {intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.BB0D5386',
+                defaultMessage: '日志',
+              })}
+            </p>
             <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
               <CustomFormItem
                 style={{ marginRight: '8px' }}
                 label="size"
-                name={['storage', 'log', 'size']}>
-
+                name={['storage', 'log', 'size']}
+              >
                 <InputNumber
                   min={MINIMAL_CONFIG.log}
                   addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
-                    defaultMessage: '请输入'
-                  })} />
-
+                    defaultMessage: '请输入',
+                  })}
+                />
               </CustomFormItem>
               <CustomFormItem
                 label="storageClass"
-                name={['storage', 'log', 'storageClass']}>
-
-                {storageClasses &&
-                <SelectWithTooltip
-                  form={form}
-                  name={['storage', 'log', 'storageClass']}
-                  selectList={storageClasses}
-                  TooltipItemContent={TooltipItemContent} />
-
-                }
+                name={['storage', 'log', 'storageClass']}
+              >
+                {storageClasses && (
+                  <SelectWithTooltip
+                    form={form}
+                    name={['storage', 'log', 'storageClass']}
+                    selectList={storageClasses}
+                    TooltipItemContent={TooltipItemContent}
+                  />
+                )}
               </CustomFormItem>
             </div>
           </Col>
@@ -224,37 +251,37 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
               <CustomFormItem
                 style={{ marginRight: '8px' }}
                 label="size"
-                name={['storage', 'redoLog', 'size']}>
-
+                name={['storage', 'redoLog', 'size']}
+              >
                 <InputNumber
                   min={MINIMAL_CONFIG.redoLog}
                   addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
-                    defaultMessage: '请输入'
-                  })} />
-
+                    defaultMessage: '请输入',
+                  })}
+                />
               </CustomFormItem>
               <CustomFormItem
                 label="storageClass"
                 validateTrigger="onBlur"
-                name={['storage', 'redoLog', 'storageClass']}>
-
-                {storageClasses &&
-                <SelectWithTooltip
-                  form={form}
-                  name={['storage', 'redoLog', 'storageClass']}
-                  selectList={storageClasses}
-                  TooltipItemContent={TooltipItemContent} />
-
-                }
+                name={['storage', 'redoLog', 'storageClass']}
+              >
+                {storageClasses && (
+                  <SelectWithTooltip
+                    form={form}
+                    name={['storage', 'redoLog', 'storageClass']}
+                    selectList={storageClasses}
+                    TooltipItemContent={TooltipItemContent}
+                  />
+                )}
               </CustomFormItem>
             </div>
           </Col>
         </Row>
       </Form>
-    </Drawer>);
-
+    </Drawer>
+  );
 };
 
 export default ResourceDrawer;

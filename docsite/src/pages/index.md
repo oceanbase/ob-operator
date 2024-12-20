@@ -18,7 +18,7 @@ ob-operator relies on [cert-manager](https://cert-manager.io/docs/) for certific
 If you have trouble accessing `quay.io` image registry, our mirrored cert-manager manifests can be applied through following command:
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.1_release/deploy/cert-manager.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/stable/deploy/cert-manager.yaml
 ```
 
 Storage of OceanBase cluster in this example relies on [local-path-provisioner](https://github.com/rancher/local-path-provisioner), which should be installed beforehand. You should confirm that there is enough disk space in storage destination of local-path-provisioner.If you decide to deploy OceanBase cluster in production environment, it is recommended to use other storage solutions. We have provided a compatible table for storage solutions that we tested in section [Storage Compatibility](#storage-compatibility).
@@ -32,7 +32,7 @@ You can deploy ob-operator in a Kubernetes cluster by executing the following co
 - Stable
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.1_release/deploy/operator.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/stable/deploy/operator.yaml
 ```
 
 - Development
@@ -100,7 +100,7 @@ kubectl create secret generic root-password --from-literal=password='root_passwo
 You can deploy OceanBase in a Kubernetes cluster by executing the following command:
 
 ```shell
-kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/2.3.1_release/example/quickstart/obcluster.yaml
+kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/stable/example/quickstart/obcluster.yaml
 ```
 
 It generally takes around 2 minutes to bootstrap a cluster. Execute the following command to check the status of the cluster. Once the cluster status changes to "running," it indicates that the cluster has been successfully created and bootstrapped:
