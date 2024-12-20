@@ -5,6 +5,7 @@
     "build": "max build",
     "dev": "max dev",
     "format": "prettier --cache --write .",
+    "check-style": "prettier --check .",
     "gen:api": "openapi-generator-cli generate -i ./generated/doc.json -g typescript-axios -c .openapi_config.yaml -o ./src/api/generated",
     "postinstall": "max setup",
     "lint": "eslint src",
