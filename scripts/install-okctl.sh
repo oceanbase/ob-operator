@@ -104,6 +104,10 @@ install_binary() {
     rm -f "${BINARY_NAME}_${version}.tar.gz"
     
     echo "Successfully extracted ${BINARY_NAME}-${version} (./${BINARY_NAME}) to current directory"
+    echo "Execute ./${BINARY_NAME} --help to get started"
+
+    echo "Recommend to move the binary to a directory in your PATH, e.g. /usr/local/bin/ like so:"
+    echo "sudo mv ./${BINARY_NAME} /usr/local/bin/"
 }
 
 main() {
