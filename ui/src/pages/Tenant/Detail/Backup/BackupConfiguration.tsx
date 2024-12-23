@@ -1,4 +1,9 @@
 import {
+  deleteBackupReportWrap,
+  editBackupReportWrap,
+} from '@/services/reportRequest/backupReportReq';
+import { useAccess, useParams } from '@umijs/max';
+import {
   Button,
   Card,
   Col,
@@ -10,28 +15,22 @@ import {
   Typography,
   message,
 } from 'antd';
+import { useRef } from 'react';
 import {
   checkIsSame,
   checkScheduleDatesHaveFull,
   formatBackupForm,
   formatBackupPolicyData,
 } from '../../helper';
-import {
-  deleteBackupReportWrap,
-  editBackupReportWrap,
-} from '@/services/reportRequest/backupReportReq';
-import { useAccess, useParams } from '@umijs/max';
-import { useRef, useState } from 'react';
 
+import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { BACKUP_RESULT_STATUS } from '@/constants';
+import { usePublicKey } from '@/hook/usePublicKey';
+import { intl } from '@/utils/intl';
+import dayjs from 'dayjs';
 import BakMethodsList from '../NewBackup/BakMethodsList';
 import SchduleSelectFormItem from '../NewBackup/SchduleSelectFormItem';
 import ScheduleTimeFormItem from '../NewBackup/ScheduleTimeFormItem';
-import dayjs from 'dayjs';
-import { intl } from '@/utils/intl';
-import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
-import { usePublicKey } from '@/hook/usePublicKey';
-import { useRequest } from 'ahooks';
 
 interface BackupConfigurationProps {
   backupPolicy: API.BackupPolicy;
@@ -249,8 +248,8 @@ export default function BackupConfiguration({
               onClick={() =>
                 showDeleteConfirm({
                   onOk: async () => {
-                    await deleteBackupReportWrap({ ns: ns!, name: name! })
-                    onDelete?.()
+                    await deleteBackupReportWrap({ ns: ns!, name: name! });
+                    onDelete?.();
                   },
                   title: intl.formatMessage({
                     id: 'Dashboard.Detail.Backup.BackupConfiguration.AreYouSureYouWant',
@@ -297,7 +296,9 @@ export default function BackupConfiguration({
             />
           </Col>
           <Col span={12}>
-            <ScheduleTimeFormItem disable={!isEditing || !access.obclusterwrite} />
+            <ScheduleTimeFormItem
+              disable={!isEditing || !access.obclusterwrite}
+            />
           </Col>
           <Col span={12}>
             <BakMethodsList

@@ -1,16 +1,16 @@
 import { BACKUP_RESULT_STATUS, REFRESH_TENANT_TIME } from '@/constants';
-import { Button, Card, Col, Row } from 'antd';
 import { getBackupPolicy, getTenant } from '@/services/tenant';
 import { history, useAccess, useParams } from '@umijs/max';
+import { Button, Card, Col, Row } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 
+import EmptyImg from '@/assets/empty.svg';
+import { intl } from '@/utils/intl';
+import { PageContainer } from '@ant-design/pro-components';
+import { useRequest } from 'ahooks';
+import BasicInfo from '../Overview/BasicInfo';
 import BackupConfiguration from './BackupConfiguration';
 import BackupJobs from './BackupJobs';
-import BasicInfo from '../Overview/BasicInfo';
-import EmptyImg from '@/assets/empty.svg';
-import { PageContainer } from '@ant-design/pro-components';
-import { intl } from '@/utils/intl';
-import { useRequest } from 'ahooks';
 
 export default function Backup() {
   const { ns, name, tenantName } = useParams();
@@ -24,7 +24,9 @@ export default function Backup() {
     {
       defaultParams: [{ ns: ns!, name: name! }],
       pollingInterval: REFRESH_TENANT_TIME,
-      ready: !backupPolicy || (!isEditing && !BACKUP_RESULT_STATUS.includes(backupPolicy.status)),
+      ready:
+        !backupPolicy ||
+        (!isEditing && !BACKUP_RESULT_STATUS.includes(backupPolicy.status)),
       onSuccess: ({ successful, data }) => {
         if (successful) {
           setBackupPolicy(data);

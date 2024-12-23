@@ -1,3 +1,4 @@
+import { history, useAccess, useModel, useParams } from '@umijs/max';
 import {
   Button,
   Card,
@@ -15,30 +16,29 @@ import {
   Tooltip,
   message,
 } from 'antd';
-import { history, useAccess, useModel, useParams } from '@umijs/max';
 import { useEffect, useRef, useState } from 'react';
 
-import BasicInfo from './BasicInfo';
-import { Checkbox } from '@oceanbase/design';
-import { DownOutlined } from '@ant-design/icons';
+import { obcluster } from '@/api';
 import EventsTable from '@/components/EventsTable';
 import IconTip from '@/components/IconTip';
-import NFSInfoModal from './NFSInfoModal';
 import OperateModal from '@/components/customModal/OperateModal';
-import { PageContainer } from '@ant-design/pro-components';
-import ParametersModal from './ParametersModal';
+import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { REFRESH_CLUSTER_TIME } from '@/constants';
+import { getClusterDetailReq } from '@/services';
+import { deleteClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
+import { floorToTwoDecimalPlaces } from '@/utils/helper';
+import { intl } from '@/utils/intl';
+import { DownOutlined } from '@ant-design/icons';
+import { PageContainer } from '@ant-design/pro-components';
+import { Checkbox } from '@oceanbase/design';
+import { useRequest } from 'ahooks';
+import { isEmpty } from 'lodash';
+import BasicInfo from './BasicInfo';
+import NFSInfoModal from './NFSInfoModal';
+import ParametersModal from './ParametersModal';
 import ResourceDrawer from './ResourceDrawer';
 import ServerTable from './ServerTable';
 import ZoneTable from './ZoneTable';
-import { deleteClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
-import { floorToTwoDecimalPlaces } from '@/utils/helper';
-import { getClusterDetailReq } from '@/services';
-import { intl } from '@/utils/intl';
-import { isEmpty } from 'lodash';
-import { obcluster } from '@/api';
-import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
-import { useRequest } from 'ahooks';
 
 const ClusterOverview: React.FC = () => {
   const { setChooseClusterName } = useModel('global');
@@ -444,7 +444,7 @@ const ClusterOverview: React.FC = () => {
       width: 100,
       render: (text: boolean, record: any) => {
         if (!record?.controlParameter) {
-          return "-"
+          return '-';
         }
         const tagColor = text ? 'green' : 'gold';
         const tagContent = text
