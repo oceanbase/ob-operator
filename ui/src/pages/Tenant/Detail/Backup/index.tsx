@@ -1,39 +1,33 @@
-import EmptyImg from '@/assets/empty.svg';
 import { BACKUP_RESULT_STATUS, REFRESH_TENANT_TIME } from '@/constants';
-import { getBackupPolicy, getTenant } from '@/services/tenant';
-import { intl } from '@/utils/intl';
-import { PageContainer } from '@ant-design/pro-components';
-import { history, useAccess, useParams } from '@umijs/max';
-import { useRequest } from 'ahooks';
 import { Button, Card, Col, Row } from 'antd';
+import { getBackupPolicy, getTenant } from '@/services/tenant';
+import { history, useAccess, useParams } from '@umijs/max';
 import { useEffect, useRef, useState } from 'react';
-import BasicInfo from '../Overview/BasicInfo';
+
 import BackupConfiguration from './BackupConfiguration';
 import BackupJobs from './BackupJobs';
+import BasicInfo from '../Overview/BasicInfo';
+import EmptyImg from '@/assets/empty.svg';
+import { PageContainer } from '@ant-design/pro-components';
+import { intl } from '@/utils/intl';
+import { useRequest } from 'ahooks';
 
 export default function Backup() {
   const { ns, name, tenantName } = useParams();
   const access = useAccess();
   const [backupPolicy, setBackupPolicy] = useState<API.BackupPolicy>();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
 
   const { refresh: backupPolicyRefresh, loading } = useRequest(
     getBackupPolicy,
     {
       defaultParams: [{ ns: ns!, name: name! }],
+      pollingInterval: REFRESH_TENANT_TIME,
+      ready: !backupPolicy || (!isEditing && !BACKUP_RESULT_STATUS.includes(backupPolicy.status)),
       onSuccess: ({ successful, data }) => {
         if (successful) {
           setBackupPolicy(data);
-          if (!BACKUP_RESULT_STATUS.includes(data.status)) {
-            if (!timerRef.current) {
-              timerRef.current = setInterval(() => {
-                backupPolicyRefresh();
-              }, REFRESH_TENANT_TIME);
-            }
-          } else if (timerRef.current) {
-            clearInterval(timerRef.current);
-            timerRef.current = null;
-          }
         }
       },
     },
@@ -53,7 +47,7 @@ export default function Backup() {
   }, []);
 
   return (
-    <PageContainer loading={loading}>
+    <PageContainer>
       {!backupPolicy ? (
         <Card
           style={{
@@ -116,6 +110,16 @@ export default function Backup() {
 
           <Col span={24}>
             <BackupConfiguration
+              loading={loading}
+              onDelete={() => {
+                if (timerRef.current) {
+                  clearInterval(timerRef.current);
+                  timerRef.current = null;
+                }
+                backupPolicyRefresh();
+              }}
+              isEditing={isEditing}
+              setIsEditing={setIsEditing}
               backupPolicy={backupPolicy}
               setBackupPolicy={setBackupPolicy}
               backupPolicyRefresh={backupPolicyRefresh}
