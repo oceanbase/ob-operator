@@ -13,7 +13,6 @@ export default function SelectWithTooltip({
   selectList,
   form,
   name,
-  type,
   TooltipItemContent,
 }: SelectWithTooltipProps) {
   const filterOption = (
@@ -61,11 +60,7 @@ export default function SelectWithTooltip({
       filterOption={filterOption}
       options={formatData(selectList)}
       onChange={selectChange}
-      value={
-        type === 'observer' && formatData(selectList)?.length !== 1
-          ? ''
-          : form.getFieldValue(name)
-      }
+      value={form.getFieldValue(name)}
       // dropdownRender={DropDownComponent}
     />
   );

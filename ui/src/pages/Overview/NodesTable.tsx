@@ -4,7 +4,7 @@ import { getNodeInfoReq } from '@/services';
 import { intl } from '@/utils/intl';
 import { findByValue } from '@oceanbase/util';
 import { useRequest } from 'ahooks';
-import { Card, Col, Progress, Table, Tag } from 'antd';
+import { Card, Col, Progress, Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 interface DataType {
@@ -23,6 +23,21 @@ interface DataType {
   memory: string;
 }
 
+const progressContent = (value: number, resource: number) => {
+  return resource === 0 ? (
+    <Tooltip
+      title={intl.formatMessage({
+        id: 'src.pages.Overview.E15A1FED',
+        defaultMessage:
+          'K8s 集群中尚未安装 metrics-server，无法获取节点资源用量',
+      })}
+    >
+      - / -
+    </Tooltip>
+  ) : (
+    <Progress status="normal" strokeLinecap="butt" percent={value} />
+  );
+};
 const columns: ColumnsType<DataType> = [
   {
     title: intl.formatMessage({
@@ -132,9 +147,7 @@ const columns: ColumnsType<DataType> = [
     }),
     dataIndex: 'cpu',
     key: 'cpu',
-    render: (value) => (
-      <Progress status="normal" strokeLinecap="butt" percent={value} />
-    ),
+    render: (value, record) => progressContent(value, record.cpuTotal),
   },
   {
     title: intl.formatMessage({
@@ -143,9 +156,7 @@ const columns: ColumnsType<DataType> = [
     }),
     dataIndex: 'memory',
     key: 'memory',
-    render: (value) => (
-      <Progress status="normal" strokeLinecap="butt" percent={value} />
-    ),
+    render: (value, record) => progressContent(value, record.memoryTotal),
   },
 ];
 
