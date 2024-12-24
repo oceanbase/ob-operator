@@ -127,9 +127,9 @@ export default function BasicInfo({
               onChange={(e) => {
                 const body = {} as API.ParamPatchTenant;
                 if (!e.target.checked) {
-                  body.removeDeletionProtection = e.target.checked;
+                  body.removeDeletionProtection = true;
                 } else {
-                  body.addDeletionProtection = e.target.checked;
+                  body.addDeletionProtection = true;
                 }
                 patchTenant(ns, name, body);
               }}

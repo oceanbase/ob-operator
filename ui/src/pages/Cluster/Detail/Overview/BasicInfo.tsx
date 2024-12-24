@@ -124,9 +124,9 @@ export default function BasicInfo({
             onChange={(e) => {
               const body = {} as API.ParamPatchOBClusterParam;
               if (!e.target.checked) {
-                body.removeDeletionProtection = e.target.checked;
+                body.removeDeletionProtection = true;
               } else {
-                body.addDeletionProtection = e.target.checked;
+                body.addDeletionProtection = true;
               }
               patchOBCluster(namespace, name, body);
             }}
