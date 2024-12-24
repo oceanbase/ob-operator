@@ -73,3 +73,11 @@ var DestPathPatternMapping = map[types.BackupDestType]*regexp.Regexp{
 	BackupDestTypeS3Compatible: regexp.MustCompile(`^s3://[^/]+/[^/].*\\?host=.+$`),
 	BackupDestTypeNFS:          regexp.MustCompile(`^\S+$`),
 }
+
+var DestPathPrefixMapping = map[types.BackupDestType]string{
+	BackupDestTypeOSS:          "oss://",
+	BackupDestTypeCOS:          "cos://",
+	BackupDestTypeS3:           "s3://",
+	BackupDestTypeS3Compatible: "s3://",
+	BackupDestTypeNFS:          "file://",
+}

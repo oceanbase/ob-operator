@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
 
+	"github.com/oceanbase/ob-operator/api/constants"
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -358,6 +359,9 @@ func CreateTenantBackupPolicy(ctx context.Context, nn types.NamespacedName, p *p
 		ossSecretName := nn.Name + "-backup-" + strings.ToLower(strings.ReplaceAll(string(p.DestType), "_", "-")) + "-secret-" + rand.String(6)
 		backupPolicy.Spec.LogArchive.Destination.OSSAccessSecret = ossSecretName
 		backupPolicy.Spec.DataBackup.Destination.OSSAccessSecret = ossSecretName
+
+		backupPolicy.Spec.LogArchive.Destination.Path = constants.DestPathPrefixMapping[apitypes.BackupDestType(p.DestType)] + p.ArchivePath + "?host=" + p.Host
+		backupPolicy.Spec.DataBackup.Destination.Path = constants.DestPathPrefixMapping[apitypes.BackupDestType(p.DestType)] + p.BakDataPath + "?host=" + p.Host
 		secret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      ossSecretName,
