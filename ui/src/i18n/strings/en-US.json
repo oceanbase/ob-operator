@@ -1244,5 +1244,8 @@
   "src.components.TopoComponent.96A4C193": "Are you sure you want to restart the server?",
   "src.components.TopoComponent.601BE33A": "Unlimited",
   "src.components.TopoComponent.0E4AAB80": "Unlimited",
-  "src.components.TopoComponent.2494A473": "Restart the server"
+  "src.components.TopoComponent.2494A473": "Restart the server",
+  "src.pages.Tenant.Detail.Overview.892E62C7": "Delete protection modified successfully",
+  "src.pages.Tenant.Detail.Overview.EE772326": "Delete protection",
+  "src.pages.Overview.E15A1FED": "metrics-server has not been installed in the K8s cluster, and the usage of node resources cannot be obtained."
 }

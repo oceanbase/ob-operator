@@ -85,7 +85,12 @@ export default function BasicInfo({
       manual: true,
       onSuccess: (res) => {
         if (res.successful) {
-          message.success('修改删除保护已成功');
+          message.success(
+            intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.Overview.892E62C7',
+              defaultMessage: '修改删除保护已成功',
+            }),
+          );
         }
       },
     },
@@ -119,7 +124,12 @@ export default function BasicInfo({
           );
         })}
         {deletionProtection && (
-          <Descriptions.Item label={'删除保护'}>
+          <Descriptions.Item
+            label={intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.Overview.EE772326',
+              defaultMessage: '删除保护',
+            })}
+          >
             <Checkbox
               // loading 态禁止操作，防止重复操作
               disabled={patchTenantLoading}

@@ -24,135 +24,141 @@ interface DataType {
 }
 
 const progressContent = (value: number, resource: number) => {
-  return resource === 0 ?
-  <Tooltip title={intl.formatMessage({ id: "src.pages.Overview.E15A1FED", defaultMessage: "K8s 集群中尚未安装 metrics-server，无法获取节点资源用量" })}>
+  return resource === 0 ? (
+    <Tooltip
+      title={intl.formatMessage({
+        id: 'src.pages.Overview.E15A1FED',
+        defaultMessage:
+          'K8s 集群中尚未安装 metrics-server，无法获取节点资源用量',
+      })}
+    >
       - / -
-    </Tooltip> :
-
-  <Progress status="normal" strokeLinecap="butt" percent={value} />;
-
+    </Tooltip>
+  ) : (
+    <Progress status="normal" strokeLinecap="butt" percent={value} />
+  );
 };
 const columns: ColumnsType<DataType> = [
-{
-  title: intl.formatMessage({
-    id: 'OBDashboard.pages.Overview.NodesTable.NodeName',
-    defaultMessage: '节点名'
-  }),
-  dataIndex: 'name',
-  key: 'name',
-  width: 120,
-  render: (val) => <CustomTooltip text={val} width={100} />
-},
-{
-  title: intl.formatMessage({
-    id: 'OBDashboard.pages.Overview.NodesTable.Status',
-    defaultMessage: '状态'
-  }),
-  dataIndex: 'status',
-  key: 'status',
-  width: 100,
-  render: (text) => {
-    const value = findByValue(NODESTABLE_STATUS_LIST, text);
-    return <Tag color={value.badgeStatus}>{value.label}</Tag>;
-  }
-},
-{
-  title: intl.formatMessage({
-    id: 'OBDashboard.pages.Overview.NodesTable.Role',
-    defaultMessage: '角色'
-  }),
-  dataIndex: 'roles',
-  key: 'roles',
-  width: 120,
-  render: (val) => {
-    return val.length !== 0 ? <CustomTooltip text={val} width={100} /> : '-';
-  }
-},
-{
-  title: intl.formatMessage({
-    id: 'OBDashboard.pages.Overview.NodesTable.RunningTime',
-    defaultMessage: '启动时间'
-  }),
-  dataIndex: 'uptime',
-  key: 'uptime',
-  width: 120
-},
-{
-  title: intl.formatMessage({
-    id: 'OBDashboard.pages.Overview.NodesTable.Version',
-    defaultMessage: '版本'
-  }),
-  dataIndex: 'version',
-  key: 'version',
-  width: 120
-},
-{
-  title: intl.formatMessage({
-    id: 'OBDashboard.pages.Overview.NodesTable.InternalIpAddress',
-    defaultMessage: '内部IP'
-  }),
-  dataIndex: 'internalIP',
-  key: 'internalIP',
-  width: 120
-},
-{
-  title: intl.formatMessage({
-    id: 'OBDashboard.pages.Overview.NodesTable.ExternalIpAddress',
-    defaultMessage: '外部IP'
-  }),
-  dataIndex: 'externalIP',
-  key: 'externalIP',
-  width: 120,
-  render: (text) => <span>{text || '-'}</span>
-},
-{
-  title: intl.formatMessage({
-    id: 'OBDashboard.pages.Overview.NodesTable.OperatingSystem',
-    defaultMessage: '操作系统'
-  }),
-  dataIndex: 'os',
-  key: 'os',
-  width: 140,
-  render: (val) => <CustomTooltip text={val} width={100} />
-},
-{
-  title: intl.formatMessage({
-    id: 'OBDashboard.pages.Overview.NodesTable.KernelVersion',
-    defaultMessage: '内核版本'
-  }),
-  dataIndex: 'kernel',
-  key: 'kernel',
-  width: 140,
-  render: (val) => <CustomTooltip text={val} width={100} />
-},
-{
-  title: intl.formatMessage({
-    id: 'OBDashboard.pages.Overview.NodesTable.ContainerRuntime',
-    defaultMessage: '容器运行时'
-  }),
-  dataIndex: 'cri',
-  key: 'cri',
-  width: 140
-},
-{
-  title: intl.formatMessage({
-    id: 'OBDashboard.pages.Overview.NodesTable.AllocatedCpu',
-    defaultMessage: '已分配CPU'
-  }),
-  dataIndex: 'cpu',
-  key: 'cpu',
-  render: (value, record) => progressContent(value, record.cpuTotal)
-},
-{
-  title: intl.formatMessage({
-    id: 'OBDashboard.pages.Overview.NodesTable.AllocatedMemory',
-    defaultMessage: '已分配内存'
-  }),
-  dataIndex: 'memory',
-  key: 'memory',
-  render: (value, record) => progressContent(value, record.memoryTotal)
-}];
-
+  {
+    title: intl.formatMessage({
+      id: 'OBDashboard.pages.Overview.NodesTable.NodeName',
+      defaultMessage: '节点名',
+    }),
+    dataIndex: 'name',
+    key: 'name',
+    width: 120,
+    render: (val) => <CustomTooltip text={val} width={100} />,
+  },
+  {
+    title: intl.formatMessage({
+      id: 'OBDashboard.pages.Overview.NodesTable.Status',
+      defaultMessage: '状态',
+    }),
+    dataIndex: 'status',
+    key: 'status',
+    width: 100,
+    render: (text) => {
+      const value = findByValue(NODESTABLE_STATUS_LIST, text);
+      return <Tag color={value.badgeStatus}>{value.label}</Tag>;
+    },
+  },
+  {
+    title: intl.formatMessage({
+      id: 'OBDashboard.pages.Overview.NodesTable.Role',
+      defaultMessage: '角色',
+    }),
+    dataIndex: 'roles',
+    key: 'roles',
+    width: 120,
+    render: (val) => {
+      return val.length !== 0 ? <CustomTooltip text={val} width={100} /> : '-';
+    },
+  },
+  {
+    title: intl.formatMessage({
+      id: 'OBDashboard.pages.Overview.NodesTable.RunningTime',
+      defaultMessage: '启动时间',
+    }),
+    dataIndex: 'uptime',
+    key: 'uptime',
+    width: 120,
+  },
+  {
+    title: intl.formatMessage({
+      id: 'OBDashboard.pages.Overview.NodesTable.Version',
+      defaultMessage: '版本',
+    }),
+    dataIndex: 'version',
+    key: 'version',
+    width: 120,
+  },
+  {
+    title: intl.formatMessage({
+      id: 'OBDashboard.pages.Overview.NodesTable.InternalIpAddress',
+      defaultMessage: '内部IP',
+    }),
+    dataIndex: 'internalIP',
+    key: 'internalIP',
+    width: 120,
+  },
+  {
+    title: intl.formatMessage({
+      id: 'OBDashboard.pages.Overview.NodesTable.ExternalIpAddress',
+      defaultMessage: '外部IP',
+    }),
+    dataIndex: 'externalIP',
+    key: 'externalIP',
+    width: 120,
+    render: (text) => <span>{text || '-'}</span>,
+  },
+  {
+    title: intl.formatMessage({
+      id: 'OBDashboard.pages.Overview.NodesTable.OperatingSystem',
+      defaultMessage: '操作系统',
+    }),
+    dataIndex: 'os',
+    key: 'os',
+    width: 140,
+    render: (val) => <CustomTooltip text={val} width={100} />,
+  },
+  {
+    title: intl.formatMessage({
+      id: 'OBDashboard.pages.Overview.NodesTable.KernelVersion',
+      defaultMessage: '内核版本',
+    }),
+    dataIndex: 'kernel',
+    key: 'kernel',
+    width: 140,
+    render: (val) => <CustomTooltip text={val} width={100} />,
+  },
+  {
+    title: intl.formatMessage({
+      id: 'OBDashboard.pages.Overview.NodesTable.ContainerRuntime',
+      defaultMessage: '容器运行时',
+    }),
+    dataIndex: 'cri',
+    key: 'cri',
+    width: 140,
+  },
+  {
+    title: intl.formatMessage({
+      id: 'OBDashboard.pages.Overview.NodesTable.AllocatedCpu',
+      defaultMessage: '已分配CPU',
+    }),
+    dataIndex: 'cpu',
+    key: 'cpu',
+    render: (value, record) => progressContent(value, record.cpuTotal),
+  },
+  {
+    title: intl.formatMessage({
+      id: 'OBDashboard.pages.Overview.NodesTable.AllocatedMemory',
+      defaultMessage: '已分配内存',
+    }),
+    dataIndex: 'memory',
+    key: 'memory',
+    render: (value, record) => progressContent(value, record.memoryTotal),
+  },
+];
 
 export default function NodesTable() {
   const { data, loading } = useRequest(getNodeInfoReq);
@@ -161,23 +167,23 @@ export default function NodesTable() {
       <Card
         loading={loading}
         title={
-        <h2 style={{ marginBottom: 0 }}>
+          <h2 style={{ marginBottom: 0 }}>
             {intl.formatMessage({
-            id: 'OBDashboard.pages.Overview.NodesTable.Node',
-            defaultMessage: '节点'
-          })}
+              id: 'OBDashboard.pages.Overview.NodesTable.Node',
+              defaultMessage: '节点',
+            })}
           </h2>
-        }>
-
+        }
+      >
         <Table
           columns={columns}
           dataSource={data}
           rowKey="name"
           pagination={{ simple: true }}
           scroll={{ x: 1500 }}
-          sticky />
-
+          sticky
+        />
       </Card>
-    </Col>);
-
+    </Col>
+  );
 }
