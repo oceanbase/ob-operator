@@ -103,7 +103,7 @@ export default function Topo({ form }) {
       const promise = getNodeLabelsReq();
       promise.then((data) => {
         setKeyList(data.key);
-        setValList(data.value);
+        setValList(data.value?.filter((item) => item.label !== ''));
       });
     }
   }, []);
