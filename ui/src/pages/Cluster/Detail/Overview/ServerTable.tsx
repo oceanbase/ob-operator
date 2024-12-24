@@ -20,7 +20,12 @@ export default function ServerTable({
     manual: true,
     onSuccess: (res) => {
       if (res.successful) {
-        message.success('删除 Server 已成功');
+        message.success(
+          intl.formatMessage({
+            id: 'src.pages.Cluster.Detail.Overview.D01DC5A6',
+            defaultMessage: '删除 Server 已成功',
+          }),
+        );
         clusterDetailRefresh();
       }
     },
@@ -30,7 +35,12 @@ export default function ServerTable({
       manual: true,
       onSuccess: (res) => {
         if (res.successful) {
-          message.success('重启 Server 已成功');
+          message.success(
+            intl.formatMessage({
+              id: 'src.pages.Cluster.Detail.Overview.2A1DB242',
+              defaultMessage: '重启 Server 已成功',
+            }),
+          );
           clusterDetailRefresh();
         }
       },
@@ -74,7 +84,10 @@ export default function ServerTable({
       },
     },
     {
-      title: '操作',
+      title: intl.formatMessage({
+        id: 'src.pages.Cluster.Detail.Overview.64ED384A',
+        defaultMessage: '操作',
+      }),
       dataIndex: 'operation',
       render: (_, record) => {
         // 任何 zone 里面只剩一个 server 就不能删了
@@ -93,7 +106,10 @@ export default function ServerTable({
               }
               onClick={() => {
                 Modal.confirm({
-                  title: '确定要重启当前 server 吗?',
+                  title: intl.formatMessage({
+                    id: 'src.pages.Cluster.Detail.Overview.EFF8446F',
+                    defaultMessage: '确定要重启当前 server 吗?',
+                  }),
                   onOk: () => {
                     restartOBServers(namespace, name, {
                       observers: [record?.name],
@@ -102,7 +118,10 @@ export default function ServerTable({
                 });
               }}
             >
-              重启
+              {intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.E0965DEE',
+                defaultMessage: '重启',
+              })}
             </Button>
             <Button
               danger
@@ -114,7 +133,10 @@ export default function ServerTable({
               }
               onClick={() => {
                 Modal.confirm({
-                  title: '确定要删除当前 server 吗?',
+                  title: intl.formatMessage({
+                    id: 'src.pages.Cluster.Detail.Overview.1FE7273F',
+                    defaultMessage: '确定要删除当前 server 吗?',
+                  }),
                   okType: 'danger',
                   onOk: () => {
                     deleteOBServers(namespace, name, {
@@ -124,7 +146,10 @@ export default function ServerTable({
                 });
               }}
             >
-              删除
+              {intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.9DCE1679',
+                defaultMessage: '删除',
+              })}
             </Button>
           </>
         );

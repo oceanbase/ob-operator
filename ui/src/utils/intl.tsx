@@ -1,6 +1,6 @@
-import { createIntl } from 'react-intl';
 import en_US from '@/i18n/strings/en-US.json';
 import zh_CN from '@/i18n/strings/zh-CN.json';
+import { createIntl } from 'react-intl';
 
 const messages = {
   'en-US': en_US,

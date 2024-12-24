@@ -146,7 +146,7 @@ export const formatShieldSubmitData = (
     const temp = selectList.find(
       (item) => item?.clusterName === cloneFormData.instances.obcluster[0],
     ) as Alert.ServersList & Alert.TenantsList;
-    
+
     cloneFormData.instances[cloneFormData.instances.type] =
       temp?.tenants || temp?.servers || [];
     selectInstance = temp?.tenants || temp?.servers || [];

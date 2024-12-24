@@ -3,8 +3,8 @@ import { formatClusterData } from '@/pages/Cluster/Detail/Overview/helper';
 import { floorToTwoDecimalPlaces, formatStatisticData } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { request } from '@umijs/max';
-import _ from 'lodash';
 import dayjs from 'dayjs';
+import _ from 'lodash';
 
 const obClusterPrefix = '/api/v1/obclusters';
 const clusterPrefix = '/api/v1/cluster';
@@ -50,9 +50,7 @@ export async function getEventsReq(params: API.EventParams) {
       event.firstOccur = dayjs
         .unix(event.firstOccur)
         .format('YYYY-MM-DD HH:mm:ss');
-      event.lastSeen = dayjs
-        .unix(event.lastSeen)
-        .format('YYYY-MM-DD HH:mm:ss');
+      event.lastSeen = dayjs.unix(event.lastSeen).format('YYYY-MM-DD HH:mm:ss');
     }
   }
   return r.data;
@@ -435,7 +433,8 @@ export async function queryMetricsReq({
           } else {
             item.name =
               metric.metric.labels.find(
-                (label) => label.key === 'ob_cluster_name' || label.key === 'cluster',
+                (label) =>
+                  label.key === 'ob_cluster_name' || label.key === 'cluster',
               ).value || '';
           }
         } else {

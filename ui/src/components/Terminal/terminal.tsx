@@ -1,8 +1,8 @@
 import { Button, Modal } from 'antd';
 
-import React from 'react';
-import { Terminal } from '@xterm/xterm';
 import { intl } from '@/utils/intl';
+import { Terminal } from '@xterm/xterm';
+import React from 'react';
 
 export interface ITerminal {
   terminalId: string;
@@ -37,7 +37,7 @@ export const OBTerminal: React.FC<ITerminal> = (props) => {
         term.resize(cols, rows);
 
         const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-        
+
         const ws = new WebSocket(
           `${protocol}://${location.host}/api/v1/terminal/${terminalId}?cols=${cols}&rows=${rows}`,
         );

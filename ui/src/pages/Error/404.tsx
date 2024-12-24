@@ -1,3 +1,3 @@
-export default ()=>{
-    return <h1>404</h1>
-}
+export default () => {
+  return <h1>404</h1>;
+};

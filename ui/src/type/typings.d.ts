@@ -445,7 +445,6 @@ declare namespace API {
     | 'svr_ip'
     | 'obzone'
     | 'cluster';
-     
 
   type BackupType = 'Full' | 'Incremental';
   type ScheduleType = 'Weekly' | 'Monthly';

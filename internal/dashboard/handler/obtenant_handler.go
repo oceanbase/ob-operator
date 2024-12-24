@@ -243,9 +243,6 @@ func PatchTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	if patch.UnitNumber == nil && patch.UnitConfig == nil {
-		return nil, httpErr.NewBadRequest("unitNumber or unitConfig is required")
-	}
 	logger.Infof("Patch obtenant with param: %+v", patch)
 	tenant, err := oceanbase.PatchTenant(c, types.NamespacedName{
 		Namespace: nn.Namespace,

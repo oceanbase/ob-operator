@@ -1,4 +1,5 @@
 import globalAxios, { AxiosInstance, AxiosPromise } from 'axios';
+import { errorHandling } from './errorHandling';
 import {
   AccessControlApiFactory,
   AlarmApiFactory,
@@ -11,14 +12,10 @@ import {
   TerminalApiFactory,
   UserApiFactory,
 } from './generated/index';
-import { errorHandling } from './errorHandling';
 
-globalAxios.interceptors.response.use(
-  (res) => {
-    return res.data;
-  },
-  errorHandling
-);
+globalAxios.interceptors.response.use((res) => {
+  return res.data;
+}, errorHandling);
 
 const config = new Configuration({
   basePath: location.origin,

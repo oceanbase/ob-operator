@@ -1,14 +1,14 @@
-import { POINT_NUMBER,REFRESH_FREQUENCY } from '@/constants';
+import { POINT_NUMBER, REFRESH_FREQUENCY } from '@/constants';
 import { intl } from '@/utils/intl';
 import { useUpdateEffect } from 'ahooks';
-import { Card,Col,DatePicker,Row,Select,Switch } from 'antd';
+import { Card, Col, DatePicker, Row, Select, Switch } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker';
 import localeEn from 'antd/es/date-picker/locale/en_US';
 import localeZn from 'antd/es/date-picker/locale/zh_CN';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import 'dayjs/locale/zh-cn';
-import { useEffect,useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getLocale } from 'umi';
 import { caculateStep } from './helper';
 import styles from './index.less';
@@ -153,9 +153,14 @@ export default function DataFilter({
     );
   };
 
-  const clearLabel = (current: Monitor.LabelType[], key: Monitor.Label): Monitor.LabelType[] => {
+  const clearLabel = (
+    current: Monitor.LabelType[],
+    key: Monitor.Label,
+  ): Monitor.LabelType[] => {
     const newLable = [...current];
-    const idx = newLable.findIndex((item: Monitor.LabelType) => item.key === key);
+    const idx = newLable.findIndex(
+      (item: Monitor.LabelType) => item.key === key,
+    );
     if (idx !== -1) {
       newLable.splice(idx, 1);
     }
@@ -169,7 +174,9 @@ export default function DataFilter({
     value: string,
   ): Monitor.LabelType[] => {
     const newLable = [...current];
-    const idx = newLable.findIndex((item: Monitor.LabelType) => item.key === key);
+    const idx = newLable.findIndex(
+      (item: Monitor.LabelType) => item.key === key,
+    );
     if (idx !== -1) {
       newLable[idx] = { key, value };
     } else {
@@ -311,7 +318,7 @@ export default function DataFilter({
     <Card
       style={{ marginTop: 12 }}
       title={
-        <h2 style={{marginBottom: 0}}>
+        <h2 style={{ marginBottom: 0 }}>
           {intl.formatMessage({
             id: 'OBDashboard.Detail.Monitor.DataFilter.DataFiltering',
             defaultMessage: '数据筛选',

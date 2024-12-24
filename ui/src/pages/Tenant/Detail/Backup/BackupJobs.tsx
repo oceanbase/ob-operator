@@ -1,6 +1,6 @@
-import { useParams } from '@umijs/max';
 import { getBackupJobs } from '@/services/tenant';
 import { intl } from '@/utils/intl';
+import { useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import type { TabsProps } from 'antd';
 import { Card, Col, Tabs } from 'antd';
@@ -12,7 +12,7 @@ export default function BackupJobs() {
   const [curSelect, setCurSelect] = useState<API.JobType>('FULL');
   const { data: backupJobsResponse } = useRequest(
     () => {
-      return getBackupJobs({ ns:ns!, name:name!, type: curSelect });
+      return getBackupJobs({ ns: ns!, name: name!, type: curSelect });
     },
     {
       refreshDeps: [curSelect],
@@ -53,7 +53,7 @@ export default function BackupJobs() {
         defaultMessage: '数据清理',
       }),
       children: <JobTable curSelect={curSelect} dataSource={backupJobs} />,
-    }, 
+    },
   ];
 
   return (

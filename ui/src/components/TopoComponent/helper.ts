@@ -67,8 +67,20 @@ function getTooltipInfo(
       maxCPU: targetZone.maxCPU,
       minCPU: targetZone.minCPU,
       memorySize: targetZone.memorySize,
-      minIops: targetZone.minIops >= MAX_IOPS ? '无限制' : targetZone.minIops,
-      maxIops: targetZone.maxIops >= MAX_IOPS ? '无限制' : targetZone.maxIops,
+      minIops:
+        targetZone.minIops >= MAX_IOPS
+          ? intl.formatMessage({
+              id: 'src.components.TopoComponent.601BE33A',
+              defaultMessage: '无限制',
+            })
+          : targetZone.minIops,
+      maxIops:
+        targetZone.maxIops >= MAX_IOPS
+          ? intl.formatMessage({
+              id: 'src.components.TopoComponent.0E4AAB80',
+              defaultMessage: '无限制',
+            })
+          : targetZone.maxIops,
     };
   }
   return;

@@ -41,8 +41,8 @@ export default function BakMethodsList({
             label={
               dataSource?.mode === 'Monthly' ? day : WEEK_TEXT_MAP.get(day)
             }
-            labelCol={{span:6}}
-            wrapperCol={{span:18}}
+            labelCol={{ span: 6 }}
+            wrapperCol={{ span: 18 }}
             style={{ marginBottom: 0 }}
             key={index}
           >
