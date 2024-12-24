@@ -25,6 +25,8 @@ export default [
       '**/G6register.tsx',
       '**/.umi/*',
       '**/.umi-production/*',
+      '**/dist/*',
+      '**/generated/*',
     ],
   },
 ];
