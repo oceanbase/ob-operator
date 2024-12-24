@@ -22,9 +22,7 @@ type Parameter struct {
 	EditLevel string `json:"edit_level" db:"edit_level"`
 	TenantID  int64  `json:"tenant_id" db:"tenant_id"`
 
-	DataType     string `json:"dataType" db:"data_type"`
-	Info         string `json:"info"`
-	Section      string `json:"section"`
-	DefaultValue string `json:"defaultValue" db:"default_value"`
-	IsDefault    string `json:"isDefault" db:"isdefault"`
+	DataType string `json:"dataType" db:"data_type"`
+	Info     string `json:"info"`
+	Section  string `json:"section"`
 }
