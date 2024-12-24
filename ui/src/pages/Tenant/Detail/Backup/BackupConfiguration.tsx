@@ -1,13 +1,8 @@
-import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
-import { BACKUP_RESULT_STATUS } from '@/constants';
-import { usePublicKey } from '@/hook/usePublicKey';
 import {
   deleteBackupReportWrap,
   editBackupReportWrap,
 } from '@/services/reportRequest/backupReportReq';
-import { intl } from '@/utils/intl';
 import { useAccess, useParams } from '@umijs/max';
-import { useRequest } from 'ahooks';
 import {
   Button,
   Card,
@@ -20,17 +15,23 @@ import {
   Typography,
   message,
 } from 'antd';
-import dayjs from 'dayjs';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import {
   checkIsSame,
   checkScheduleDatesHaveFull,
   formatBackupForm,
   formatBackupPolicyData,
 } from '../../helper';
+
+import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
+import { BACKUP_RESULT_STATUS } from '@/constants';
+import { usePublicKey } from '@/hook/usePublicKey';
+import { intl } from '@/utils/intl';
+import dayjs from 'dayjs';
 import BakMethodsList from '../NewBackup/BakMethodsList';
 import SchduleSelectFormItem from '../NewBackup/SchduleSelectFormItem';
 import ScheduleTimeFormItem from '../NewBackup/ScheduleTimeFormItem';
+
 interface BackupConfigurationProps {
   backupPolicy: API.BackupPolicy;
   setBackupPolicy: React.Dispatch<
@@ -38,6 +39,10 @@ interface BackupConfigurationProps {
   >;
 
   backupPolicyRefresh: () => void;
+  isEditing: boolean;
+  setIsEditing: (open: boolean) => void;
+  onDelete?: () => void;
+  loading: boolean;
 }
 
 const { Text } = Typography;
@@ -46,11 +51,14 @@ export default function BackupConfiguration({
   backupPolicy,
   setBackupPolicy,
   backupPolicyRefresh,
+  isEditing,
+  setIsEditing,
+  onDelete,
+  loading,
 }: BackupConfigurationProps) {
   const [form] = Form.useForm();
   const access = useAccess();
   const scheduleValue = Form.useWatch(['scheduleDates'], form);
-  const [isEdit, setIsEdit] = useState<boolean>(false);
   const curConfig = useRef({});
   const { ns, name } = useParams();
   const publicKey = usePublicKey();
@@ -116,15 +124,6 @@ export default function BackupConfiguration({
       : '',
   };
 
-  const { run: deleteBackupPolicyReq } = useRequest(deleteBackupReportWrap, {
-    manual: true,
-    onSuccess: ({ successful }) => {
-      if (successful) {
-        backupPolicyRefresh();
-      }
-    },
-  });
-
   const changeStatus = async () => {
     const param = {
       ns,
@@ -147,8 +146,8 @@ export default function BackupConfiguration({
   };
 
   const changeEditBtnStatus = () => {
-    if (!isEdit) {
-      setIsEdit(!isEdit);
+    if (!isEditing) {
+      setIsEditing(true);
       return;
     }
 
@@ -164,7 +163,7 @@ export default function BackupConfiguration({
           defaultMessage: '未检测到配置更改',
         }),
       );
-      setIsEdit(!isEdit);
+      setIsEditing(!isEditing);
       return;
     }
 
@@ -193,7 +192,7 @@ export default function BackupConfiguration({
         backupPolicyRefresh();
       }
       setBackupPolicy(data);
-      setIsEdit(false);
+      setIsEditing(false);
       message.success(
         intl.formatMessage({
           id: 'Dashboard.Detail.Backup.BackupConfiguration.OperationSucceeded.2',
@@ -205,6 +204,7 @@ export default function BackupConfiguration({
 
   return (
     <Card
+      loading={loading}
       title={intl.formatMessage({
         id: 'Dashboard.Detail.Backup.BackupConfiguration.BackupPolicyConfiguration',
         defaultMessage: '备份策略配置',
@@ -214,7 +214,7 @@ export default function BackupConfiguration({
         access.obclusterwrite ? (
           <Space>
             <Button type="primary" onClick={changeEditBtnStatus}>
-              {isEdit
+              {isEditing
                 ? intl.formatMessage({
                     id: 'Dashboard.Detail.Backup.BackupConfiguration.UpdateConfiguration',
                     defaultMessage: '更新配置',
@@ -247,7 +247,16 @@ export default function BackupConfiguration({
               danger
               onClick={() =>
                 showDeleteConfirm({
-                  onOk: () => deleteBackupPolicyReq({ ns, name }),
+                  onOk: async () => {
+                    await deleteBackupReportWrap({ ns: ns!, name: name! });
+                    message.success(
+                      intl.formatMessage({
+                        id: 'OBDashboard.Detail.Overview.DeletedSuccessfully',
+                        defaultMessage: '删除成功！',
+                      }),
+                    );
+                    onDelete?.();
+                  },
                   title: intl.formatMessage({
                     id: 'Dashboard.Detail.Backup.BackupConfiguration.AreYouSureYouWant',
                     defaultMessage: '确定要删除该备份策略吗？',
@@ -287,17 +296,19 @@ export default function BackupConfiguration({
         <Row>
           <Col span={12}>
             <SchduleSelectFormItem
-              disable={!isEdit || !access.obclusterwrite}
+              disable={!isEditing || !access.obclusterwrite}
               form={form}
               scheduleValue={scheduleValue}
             />
           </Col>
           <Col span={12}>
-            <ScheduleTimeFormItem disable={!isEdit || !access.obclusterwrite} />
+            <ScheduleTimeFormItem
+              disable={!isEditing || !access.obclusterwrite}
+            />
           </Col>
           <Col span={12}>
             <BakMethodsList
-              disable={!isEdit || !access.obclusterwrite}
+              disable={!isEditing || !access.obclusterwrite}
               form={form}
             />
           </Col>
@@ -316,7 +327,7 @@ export default function BackupConfiguration({
             </Descriptions>
           </Col>
 
-          {isEdit || !access.obclusterwrite ? (
+          {isEditing || !access.obclusterwrite ? (
             Object.keys(DATE_CONFIG).map((key, index) => (
               <Col span={8} key={index}>
                 <Form.Item label={DATE_CONFIG[key]} name={key}>

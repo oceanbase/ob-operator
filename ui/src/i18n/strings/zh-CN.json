@@ -355,7 +355,7 @@
   "Dashboard.Detail.NewBackup.DataRecoveryWindow": "数据恢复窗口",
   "Dashboard.Detail.NewBackup.EnterTheDataRecoveryWindow": "请输入数据恢复窗口",
   "Dashboard.Detail.NewBackup.ArchiveSliceInterval": "归档切片间隔",
-  "Dashboard.Detail.Overview.Backups.FilePath": "档案路径",
+  "Dashboard.Detail.Overview.Backups.FilePath": "日志归档路径",
   "Dashboard.Detail.Overview.Backups.PlanType": "计划类型",
   "Dashboard.Detail.Overview.Backups.PlannedDate": "计划日期",
   "Dashboard.Detail.Overview.Backups.ScheduledTime": "计划时间",

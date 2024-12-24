@@ -12,19 +12,36 @@ interface BackupsProps {
 
 const { Text } = Typography;
 
+interface policyDisplay {
+  key: keyof API.BackupPolicy;
+  text: string;
+  render?: (value: any) => React.ReactNode;
+  span?: number;
+}
+
 export default function Backups({
   backupPolicy,
   backupJobs,
   loading,
 }: BackupsProps) {
-  const PolicyConfig = {
-    destType: {
+  const basics: policyDisplay[] = [
+    {
+      key: 'status',
+      text: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.Backups.Status',
+        defaultMessage: '备份状态',
+      }),
+      span: 3,
+    },
+    {
+      key: 'destType',
       text: intl.formatMessage({
         id: 'Dashboard.Detail.Overview.Backups.BackupMediaType',
         defaultMessage: '备份介质类型',
       }),
     },
-    archivePath: {
+    {
+      key: 'archivePath',
       text: intl.formatMessage({
         id: 'Dashboard.Detail.Overview.Backups.FilePath',
         defaultMessage: '日志归档路径',
@@ -35,7 +52,8 @@ export default function Backups({
         </Text>
       ),
     },
-    bakDataPath: {
+    {
+      key: 'bakDataPath',
       text: intl.formatMessage({
         id: 'Dashboard.Detail.Overview.Backups.DataBackupPath',
         defaultMessage: '数据备份路径',
@@ -46,7 +64,8 @@ export default function Backups({
         </Text>
       ),
     },
-    scheduleType: {
+    {
+      key: 'scheduleType',
       text: intl.formatMessage({
         id: 'Dashboard.Detail.Overview.Backups.PlanType',
         defaultMessage: '计划类型',
@@ -65,7 +84,8 @@ export default function Backups({
         </span>
       ),
     },
-    scheduleDates: {
+    {
+      key: 'scheduleDates',
       text: intl.formatMessage({
         id: 'Dashboard.Detail.Overview.Backups.PlannedDate',
         defaultMessage: '计划日期',
@@ -140,13 +160,14 @@ export default function Backups({
         );
       },
     },
-    scheduleTime: {
+    {
+      key: 'scheduleTime',
       text: intl.formatMessage({
         id: 'Dashboard.Detail.Overview.Backups.ScheduledTime',
         defaultMessage: '计划时间',
       }),
     },
-  };
+  ];
 
   const columns: ColumnsType<API.BackupJob> = [
     {
@@ -244,13 +265,17 @@ export default function Backups({
               defaultMessage: '备份策略',
             })}
           >
-            {Object.keys(PolicyConfig).map((key, index) => {
+            {basics.map((item, index) => {
               return (
-                <Descriptions.Item label={PolicyConfig[key].text} key={index}>
-                  {PolicyConfig[key].render ? (
-                    PolicyConfig[key]?.render(backupPolicy[key])
+                <Descriptions.Item
+                  label={item.text}
+                  key={index}
+                  span={item?.span ?? 1}
+                >
+                  {item.render ? (
+                    item.render(backupPolicy[item.key])
                   ) : (
-                    <span>{backupPolicy[key]}</span>
+                    <span>{backupPolicy[item.key] as string}</span>
                   )}
                 </Descriptions.Item>
               );
