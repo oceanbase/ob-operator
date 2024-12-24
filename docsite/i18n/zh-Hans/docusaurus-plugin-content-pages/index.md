@@ -84,6 +84,10 @@ terraform apply
 你可以通过 releases 页面下载 CLI 工具，或者通过以下命令下载：
 
 ```shell
+# 使用代理
+curl -sL https://gh.wewell.org/https://github.com/oceanbase/ob-operator/blob/master/scripts/install-okctl.sh | bash -s -- --proxy CN
+
+# 不使用代理
 curl -sL https://raw.githubusercontent.com/oceanbase/ob-operator/master/scripts/install-okctl.sh | bash
 ```
 

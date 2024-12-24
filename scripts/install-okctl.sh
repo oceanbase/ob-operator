@@ -11,6 +11,7 @@ VERSION="0.1.0"
 OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 ARCH=$(uname -m)
 BINARY_NAME="okctl"
+PROXY=
 
 # Map architecture names
 case ${ARCH} in
@@ -56,6 +57,11 @@ while [[ $# -gt 0 ]]; do
             usage
             exit 0
             ;;
+        -p|--proxy)
+            PROXY="$2"
+            shift
+            shift
+            ;;
         *)
             echo "Unknown option: $1"
             usage
@@ -86,6 +92,9 @@ check_requirements() {
 install_binary() {
     local version=$1
     local BINARY_NAME="okctl"
+    if [ "$PROXY" == "CN" ]; then
+        GITHUB_HOST="https://gh.wewell.org/https://github.com"
+    fi
     local download_url="${GITHUB_HOST}/${GITHUB_REPO}/releases/download/cli-${version}/${BINARY_NAME}_${version}_${OS}_${ARCH}.tar.gz"
     
     echo "Downloading ${BINARY_NAME} ${version}..."
