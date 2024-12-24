@@ -108,7 +108,6 @@ export default function TenantOverview() {
       }
     },
   });
-
   const { data: backupPolicyResponse } = useRequest(getBackupPolicy, {
     defaultParams: [{ name: name!, ns: ns! }],
   });
@@ -117,7 +116,6 @@ export default function TenantOverview() {
   });
 
   const tenantDetail = tenantDetailResponse?.data;
-
   const backupPolicy = backupPolicyResponse?.data;
   const backupJobs = backupJobsResponse?.data;
   const essentialParameter = essentialParameterRes?.data;
@@ -297,6 +295,8 @@ export default function TenantOverview() {
                   loading={loading}
                   info={tenantDetail?.info}
                   source={tenantDetail?.source}
+                  name={name}
+                  ns={ns}
                 />
               </Col>
             );
