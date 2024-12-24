@@ -14,6 +14,8 @@ interface BasicInfoProps {
   clusterList: API.SimpleClusterList;
   setSelectClusterId: React.Dispatch<React.SetStateAction<number | undefined>>;
   setPasswordVal: React.Dispatch<React.SetStateAction<string>>;
+  deleteValue: boolean;
+  setDeleteValue: (e: boolean) => void;
 }
 export default function BasicInfo({
   form,
@@ -21,6 +23,8 @@ export default function BasicInfo({
   clusterList,
   setPasswordVal,
   setSelectClusterId,
+  deleteValue,
+  setDeleteValue,
 }: BasicInfoProps) {
   const clusterOptions = clusterList
     .filter((cluster) => cluster.status !== 'failed')
@@ -186,7 +190,7 @@ export default function BasicInfo({
         <Col span={8}>
           <Form.Item
             label={'优化场景'}
-            name={'scenario'}
+            name={['scenario']}
             initialValue="HTAP"
             rules={[
               {
@@ -206,10 +210,15 @@ export default function BasicInfo({
         </Col>
 
         <Col span={8}>
-          <Form.Item name={['deletionProtection']} label={<></>}>
+          <Form.Item label={<></>}>
             <Space>
               删除保护
-              <Checkbox defaultChecked={true} />
+              <Checkbox
+                defaultChecked={deleteValue}
+                onChange={(e) => {
+                  setDeleteValue(e.target.value);
+                }}
+              />
             </Space>
           </Form.Item>
         </Col>

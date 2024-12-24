@@ -1,13 +1,17 @@
+import { obtenant } from '@/api';
 import { STATUS_LIST } from '@/constants';
 import { intl } from '@/utils/intl';
 import { findByValue } from '@oceanbase/util';
-import { Card, Descriptions, Tag } from 'antd';
+import { useRequest } from 'ahooks';
+import { Card, Checkbox, Descriptions, Tag, message } from 'antd';
 
 export default function BasicInfo({
   info = {},
   source = {},
   loading,
   style,
+  name,
+  ns,
 }: API.TenantBasicInfo & { style?: React.CSSProperties; loading: boolean }) {
   const InfoConfig = {
     name: intl.formatMessage({
@@ -75,6 +79,19 @@ export default function BasicInfo({
     return false;
   };
 
+  const { runAsync: patchTenant, loading: patchTenantLoading } = useRequest(
+    obtenant.patchTenant,
+    {
+      manual: true,
+      onSuccess: (res) => {
+        if (res.successful) {
+          message.success('修改删除保护已成功');
+        }
+      },
+    },
+  );
+  const { deletionProtection } = info;
+
   return (
     <Card
       loading={loading}
@@ -101,7 +118,26 @@ export default function BasicInfo({
             </Descriptions.Item>
           );
         })}
+        {deletionProtection && (
+          <Descriptions.Item label={'删除保护'}>
+            <Checkbox
+              // loading 态禁止操作，防止重复操作
+              disabled={patchTenantLoading}
+              defaultChecked={deletionProtection}
+              onChange={(e) => {
+                const body = {} as API.ParamPatchTenant;
+                if (!e.target.checked) {
+                  body.removeDeletionProtection = e.target.checked;
+                } else {
+                  body.addDeletionProtection = e.target.checked;
+                }
+                patchTenant(ns, name, body);
+              }}
+            />
+          </Descriptions.Item>
+        )}
       </Descriptions>
+
       {checkSource(source) && (
         <Descriptions
           title={intl.formatMessage({

@@ -24,6 +24,8 @@ export default function New() {
   const [passwordVal, setPasswordVal] = useState('');
   const [selectClusterId, setSelectClusterId] = useState<string>();
   const [clusterList, setClusterList] = useState<API.SimpleClusterList>([]);
+  // 删除保护 默认勾选
+  const [deleteValue, setDeleteValue] = useState<boolean>(true);
   useRequest(getSimpleClusterList, {
     onSuccess: ({ successful, data }) => {
       if (successful) {
@@ -65,8 +67,10 @@ export default function New() {
     const ns = clusterList.filter(
       (cluster) => cluster.id === selectClusterId,
     )[0]?.namespace;
+
     const res = await createTenantReportWrap({
       namespace: ns,
+      deletionProtection: deleteValue,
       ...reqData,
     });
     if (res.successful) {
@@ -149,6 +153,8 @@ export default function New() {
               setSelectClusterId={setSelectClusterId}
               setPasswordVal={setPasswordVal}
               form={form}
+              deleteValue={deleteValue}
+              setDeleteValue={setDeleteValue}
             />
           </Col>
           <Col span={24}>
