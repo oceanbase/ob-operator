@@ -85,7 +85,7 @@ terraform apply
 
 ```shell
 # 使用代理
-curl -sL https://gh.wewell.org/https://github.com/oceanbase/ob-operator/blob/master/scripts/install-okctl.sh | bash -s -- --proxy CN
+curl -sL https://gh.wewell.org/https://github.com/oceanbase/ob-operator/blob/master/scripts/install-okctl.sh | bash -s -- --proxy
 
 # 不使用代理
 curl -sL https://raw.githubusercontent.com/oceanbase/ob-operator/master/scripts/install-okctl.sh | bash
