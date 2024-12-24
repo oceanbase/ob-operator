@@ -77,6 +77,28 @@ terraform init
 terraform apply
 ```
 
+#### Using CLI tool (okctl)
+
+You can also use the CLI tool, okctl, to deploy ob-operator, it is a convenient way to deploy ob-operator and manage OceanBase clusters.
+
+You can download okctl from the releases page or through the following command:
+
+```shell
+curl -sL https://raw.githubusercontent.com/oceanbase/ob-operator/master/scripts/install-okctl.sh | bash
+```
+
+After downloading okctl, you can deploy ob-operator by executing the following command:
+
+```shell
+./okctl install
+```
+
+By the way, we recommend you to add okctl to your PATH environment variable like this:
+
+```shell
+mv ./okctl /usr/local/bin
+```
+
 #### Verify deployment
 
 After deployment/installation is complete, you can use the following command to verify if ob-operator is deployed successfully:
