@@ -1,9 +1,10 @@
+import { Card, Col, Tabs } from 'antd';
+
 import { getBackupJobs } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import type { TabsProps } from 'antd';
-import { Card, Col, Tabs } from 'antd';
 import { useState } from 'react';
 import JobTable from './JobTable';
 
@@ -16,6 +17,7 @@ export default function BackupJobs() {
     },
     {
       refreshDeps: [curSelect],
+      pollingInterval: 10000,
     },
   );
 

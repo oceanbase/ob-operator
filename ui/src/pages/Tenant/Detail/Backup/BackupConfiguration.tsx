@@ -249,6 +249,12 @@ export default function BackupConfiguration({
                 showDeleteConfirm({
                   onOk: async () => {
                     await deleteBackupReportWrap({ ns: ns!, name: name! });
+                    message.success(
+                      intl.formatMessage({
+                        id: 'OBDashboard.Detail.Overview.DeletedSuccessfully',
+                        defaultMessage: '删除成功！',
+                      }),
+                    );
                     onDelete?.();
                   },
                   title: intl.formatMessage({

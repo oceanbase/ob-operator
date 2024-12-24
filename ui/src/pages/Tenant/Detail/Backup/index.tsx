@@ -118,7 +118,12 @@ export default function Backup() {
                   clearInterval(timerRef.current);
                   timerRef.current = null;
                 }
-                backupPolicyRefresh();
+                setBackupPolicy((prev) => {
+                  if (!prev) {
+                    return prev;
+                  }
+                  return { ...prev, status: 'DELETING' };
+                });
               }}
               isEditing={isEditing}
               setIsEditing={setIsEditing}
