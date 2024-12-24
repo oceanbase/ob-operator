@@ -2,6 +2,19 @@
 . "$(dirname "$0")/_/husky.sh"
 CHANGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep "ui/" || true) 
 if [ -n "$CHANGED_FILES" ]; then
-  cd ui && npm run check-style && npm run lint
+  cd ui && npm run check-style
+  if [ $? -ne 0 ]; then
+    echo "Style check failed (npm run check-style), please fix the errors before committing."
+    exit 1
+  else
+    echo "Style check passed."
+  fi
+  npm run lint
+  if [ $? -ne 0 ]; then
+    echo "Lint check failed (npm run lint), please fix the errors before committing."
+    exit 1
+  else
+    echo "Lint check passed."
+  fi
 fi
 exit 0

@@ -1,18 +1,4 @@
-import { obcluster } from '@/api';
-import EventsTable from '@/components/EventsTable';
-import IconTip from '@/components/IconTip';
-import OperateModal from '@/components/customModal/OperateModal';
-import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
-import { REFRESH_CLUSTER_TIME } from '@/constants';
-import { getClusterDetailReq } from '@/services';
-import { deleteClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
-import { floorToTwoDecimalPlaces } from '@/utils/helper';
-import { intl } from '@/utils/intl';
-import { DownOutlined } from '@ant-design/icons';
-import { PageContainer } from '@ant-design/pro-components';
-import { Checkbox } from '@oceanbase/design';
 import { history, useAccess, useModel, useParams } from '@umijs/max';
-import { useRequest } from 'ahooks';
 import {
   Button,
   Card,
@@ -30,8 +16,23 @@ import {
   Tooltip,
   message,
 } from 'antd';
-import { isEmpty } from 'lodash';
 import { useEffect, useRef, useState } from 'react';
+
+import { obcluster } from '@/api';
+import EventsTable from '@/components/EventsTable';
+import IconTip from '@/components/IconTip';
+import OperateModal from '@/components/customModal/OperateModal';
+import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
+import { REFRESH_CLUSTER_TIME } from '@/constants';
+import { getClusterDetailReq } from '@/services';
+import { deleteClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
+import { floorToTwoDecimalPlaces } from '@/utils/helper';
+import { intl } from '@/utils/intl';
+import { DownOutlined } from '@ant-design/icons';
+import { PageContainer } from '@ant-design/pro-components';
+import { Checkbox } from '@oceanbase/design';
+import { useRequest } from 'ahooks';
+import { isEmpty } from 'lodash';
 import BasicInfo from './BasicInfo';
 import NFSInfoModal from './NFSInfoModal';
 import ParametersModal from './ParametersModal';
@@ -401,6 +402,7 @@ const ClusterOverview: React.FC = () => {
         id: 'src.pages.Cluster.Detail.Overview.4FCF90AF',
         defaultMessage: '托管 operator',
       }),
+      width: 140,
       dataIndex: 'controlParameter',
       filters: controlParameters.map(({ label, value }) => ({
         text: label,
@@ -440,7 +442,10 @@ const ClusterOverview: React.FC = () => {
       ),
       dataIndex: 'accordance',
       width: 100,
-      render: (text: boolean) => {
+      render: (text: boolean, record: any) => {
+        if (!record?.controlParameter) {
+          return '-';
+        }
         const tagColor = text ? 'green' : 'gold';
         const tagContent = text
           ? intl.formatMessage({
@@ -461,6 +466,7 @@ const ClusterOverview: React.FC = () => {
         defaultMessage: '操作',
       }),
       dataIndex: 'controlParameter',
+      align: 'center',
       render: (text, record) => {
         return (
           <Space size={1}>
