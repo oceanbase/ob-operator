@@ -1247,5 +1247,6 @@
   "src.components.TopoComponent.2494A473": "Restart the server",
   "src.pages.Tenant.Detail.Overview.892E62C7": "Delete protection modified successfully",
   "src.pages.Tenant.Detail.Overview.EE772326": "Delete protection",
-  "src.pages.Overview.E15A1FED": "metrics-server has not been installed in the K8s cluster, and the usage of node resources cannot be obtained."
+  "src.pages.Overview.E15A1FED": "metrics-server has not been installed in the K8s cluster, and the usage of node resources cannot be obtained.",
+  "src.pages.Cluster.Detail.Overview.FF85D01F": "Unmanaged Successfully"
 }

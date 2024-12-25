@@ -1269,5 +1269,6 @@
   "src.components.TopoComponent.2494A473": "重启server",
   "src.pages.Tenant.Detail.Overview.892E62C7": "修改删除保护已成功",
   "src.pages.Tenant.Detail.Overview.EE772326": "删除保护",
-  "src.pages.Overview.E15A1FED": "K8s 集群中尚未安装 metrics-server，无法获取节点资源用量"
+  "src.pages.Overview.E15A1FED": "K8s 集群中尚未安装 metrics-server，无法获取节点资源用量",
+  "src.pages.Cluster.Detail.Overview.FF85D01F": "解除托管已成功"
 }

@@ -119,6 +119,23 @@ const ClusterOverview: React.FC = () => {
     },
   });
 
+  const { runAsync: patchOBCluster, loading: patchOBClusterloading } =
+    useRequest(obcluster.patchOBCluster, {
+      manual: true,
+      onSuccess: (res) => {
+        if (res.successful) {
+          message.success(
+            intl.formatMessage({
+              id: 'src.pages.Cluster.Detail.Overview.FF85D01F',
+              defaultMessage: '解除托管已成功',
+            }),
+          );
+          refresh();
+          clusterDetailRefresh();
+        }
+      },
+    });
+
   const handleDelete = async () => {
     const res = await deleteClusterReportWrap({ ns: ns!, name: name! });
     if (res.successful) {
@@ -189,6 +206,10 @@ const ClusterOverview: React.FC = () => {
       label: (
         <Button
           type="text"
+          disabled={
+            !isEmpty(clusterDetail) &&
+            (clusterDetail?.status !== 'running' || deletionProtection)
+          }
           onClick={() =>
             showDeleteConfirm({
               onOk: handleDelete,
@@ -262,7 +283,8 @@ const ClusterOverview: React.FC = () => {
     };
   };
 
-  const { parameters, storage, resource } = clusterDetail?.info || {};
+  const { parameters, storage, resource, deletionProtection } =
+    clusterDetail?.info || {};
 
   const resourceinit = [
     {
@@ -348,6 +370,7 @@ const ClusterOverview: React.FC = () => {
           })}
         </Tag>
       ),
+
       value: true,
     },
     {
@@ -359,6 +382,7 @@ const ClusterOverview: React.FC = () => {
           })}
         </Tag>
       ),
+
       value: false,
     },
   ];
@@ -438,6 +462,7 @@ const ClusterOverview: React.FC = () => {
           })}
         />
       ),
+
       dataIndex: 'accordance',
       width: 100,
       render: (text: boolean) => {
@@ -478,7 +503,15 @@ const ClusterOverview: React.FC = () => {
               })}
             </Button>
             {text && (
-              <Button type="link" onClick={() => {}}>
+              <Button
+                type="link"
+                loading={patchOBClusterloading}
+                onClick={() => {
+                  patchOBCluster(ns, name, {
+                    deletedParameters: [record.name],
+                  });
+                }}
+              >
                 {intl.formatMessage({
                   id: 'src.pages.Cluster.Detail.Overview.5FACF7C0',
                   defaultMessage: '解除托管',
