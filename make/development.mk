@@ -36,6 +36,7 @@ test-package:
 
 .PHONY: test-internal
 test-internal:
+	KUBEBUILDER_ASSETS="$(shell $(ENVTEST) use $(ENVTEST_K8S_VERSION) --bin-dir $(LOCALBIN) -p path)" \
 	go test -v ./internal/cli/... \
 	./internal/clients/... \
 	./internal/cmds/... \
