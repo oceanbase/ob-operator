@@ -13,7 +13,6 @@ See the Mulan PSL v2 for more details.
 package v1alpha1
 
 import (
-	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -22,6 +21,7 @@ import (
 
 	apiconsts "github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
 
 var _ = Describe("Test OBTenant Webhook", Label("webhook"), Serial, func() {

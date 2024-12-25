@@ -40,5 +40,5 @@ jobs:
         run: make tools
 
       - name: test webhooks
-        run: make test-webhooks
+        run: make test
       
