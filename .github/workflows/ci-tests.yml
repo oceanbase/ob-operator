@@ -39,6 +39,6 @@ jobs:
       - name: install tools
         run: make tools
 
-      - name: test webhooks
+      - name: run test
         run: make test
       

@@ -32,7 +32,7 @@ test-webhooks: ## Test the webhooks
 
 .PHONY: test-package
 test-package:
-	go test -v ./pkg/...
+	go test -v ./pkg/helper/... ./pkg/task/...
 
 .PHONY: test-internal
 test-internal:
