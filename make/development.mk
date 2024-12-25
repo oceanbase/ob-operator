@@ -36,9 +36,7 @@ test-package:
 
 .PHONY: test-internal
 test-internal:
-	go test -v ./internal/cli/... \
-	./internal/cmds/... \
-	./internal/config/...
+	go test -v ./internal/cmds/... ./internal/config/...
 
 REPORT_PORT ?= 8480
 
