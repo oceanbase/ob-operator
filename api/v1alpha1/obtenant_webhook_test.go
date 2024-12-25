@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package v1alpha1
 
 import (
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -164,5 +165,22 @@ var _ = Describe("Test OBTenant Webhook", Label("webhook"), Serial, func() {
 		t2.Spec.TenantRole = "Standby"
 
 		Expect(k8sClient.Create(ctx, t2)).ShouldNot(Succeed())
+	})
+
+	It("Check validating delete webhook", func() {
+		clusterName := clusterName + "-test-deletion-validate"
+		cluster := newOBCluster(clusterName, 1, 1)
+		cluster.Annotations = map[string]string{
+			oceanbaseconst.AnnotationsIgnoreDeletion: "true",
+		}
+		Expect(k8sClient.Create(ctx, cluster)).Should(Succeed())
+		Expect(k8sClient.Delete(ctx, cluster)).ShouldNot(Succeed())
+		tenantName := tenantName + "-test-deletion-validate"
+		t := newOBTenant(tenantName, clusterName)
+		t.Annotations = map[string]string{
+			oceanbaseconst.AnnotationsIgnoreDeletion: "true",
+		}
+		Expect(k8sClient.Create(ctx, t)).Should(Succeed())
+		Expect(k8sClient.Delete(ctx, t)).ShouldNot(Succeed())
 	})
 })

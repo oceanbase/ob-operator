@@ -33,3 +33,5 @@ jobs:
           args: --verbose --timeout=10m --max-same-issues=30
           only-new-issues: true
           skip-cache: true
+      - name: make test
+        run: make test
