@@ -208,7 +208,7 @@ const ClusterOverview: React.FC = () => {
           type="text"
           disabled={
             !isEmpty(clusterDetail) &&
-            (clusterDetail?.status !== 'running' || deletionProtection)
+            (clusterDetail?.status === 'deleting' || deletionProtection)
           }
           onClick={() =>
             showDeleteConfirm({
