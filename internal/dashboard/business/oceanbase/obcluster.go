@@ -921,23 +921,15 @@ func ListOBClusterParameters(ctx context.Context, nn *param.K8sObjectIdentity) (
 	if err != nil {
 		return nil, errors.Wrapf(err, "Get obcluster %s %s", nn.Namespace, nn.Name)
 	}
-	observerList := v1alpha1.OBServerList{}
-	err = clients.ServerClient.List(ctx, nn.Namespace, &observerList, metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("%s=%s", oceanbaseconst.LabelRefOBCluster, nn.Name),
-	})
-	if err != nil {
-		logger.WithError(err).Error("Failed to list observers")
-		return nil, errors.Wrap(err, "List observers")
-	}
 	conn, err := utils.GetOBConnection(ctx, obcluster, "root", "sys", obcluster.Spec.UserSecrets.Root)
 	if err != nil {
-		logger.Info("Failed to get OceanBase database connection")
-		return nil, errors.Wrap(err, "Get OceanBase database connection")
+		logger.WithError(err).Info("Failed to get OceanBase database connection")
+		return nil, nil
 	}
 	parameters, err := conn.ListClusterParameters(ctx)
 	if err != nil {
 		logger.WithError(err).Error("Failed to query parameters")
-		return nil, errors.Wrap(err, "Query parameters")
+		return nil, errors.New("Failed to list obcluster parameters")
 	}
 	return parameters, nil
 }
