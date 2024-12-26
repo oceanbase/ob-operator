@@ -119,6 +119,23 @@ const ClusterOverview: React.FC = () => {
     },
   });
 
+  const { runAsync: patchOBCluster, loading: patchOBClusterloading } =
+    useRequest(obcluster.patchOBCluster, {
+      manual: true,
+      onSuccess: (res) => {
+        if (res.successful) {
+          message.success(
+            intl.formatMessage({
+              id: 'src.pages.Cluster.Detail.Overview.FF85D01F',
+              defaultMessage: '解除托管已成功',
+            }),
+          );
+          refresh();
+          clusterDetailRefresh();
+        }
+      },
+    });
+
   const handleDelete = async () => {
     const res = await deleteClusterReportWrap({ ns: ns!, name: name! });
     if (res.successful) {
@@ -156,8 +173,7 @@ const ClusterOverview: React.FC = () => {
         <Button
           onClick={handleAddZone}
           disabled={
-            clusterDetail?.status === 'operating' ||
-            clusterDetail?.status === 'failed'
+            !isEmpty(clusterDetail) && clusterDetail?.status !== 'running'
           }
           type="text"
         >
@@ -174,8 +190,7 @@ const ClusterOverview: React.FC = () => {
         <Button
           type="text"
           disabled={
-            clusterDetail?.status === 'operating' ||
-            clusterDetail?.status === 'failed'
+            !isEmpty(clusterDetail) && clusterDetail?.status !== 'running'
           }
           onClick={handleUpgrade}
         >
@@ -191,6 +206,10 @@ const ClusterOverview: React.FC = () => {
       label: (
         <Button
           type="text"
+          disabled={
+            !isEmpty(clusterDetail) &&
+            (clusterDetail?.status === 'deleting' || deletionProtection)
+          }
           onClick={() =>
             showDeleteConfirm({
               onOk: handleDelete,
@@ -264,7 +283,8 @@ const ClusterOverview: React.FC = () => {
     };
   };
 
-  const { parameters, storage, resource } = clusterDetail?.info || {};
+  const { parameters, storage, resource, deletionProtection } =
+    clusterDetail?.info || {};
 
   const resourceinit = [
     {
@@ -350,6 +370,7 @@ const ClusterOverview: React.FC = () => {
           })}
         </Tag>
       ),
+
       value: true,
     },
     {
@@ -361,6 +382,7 @@ const ClusterOverview: React.FC = () => {
           })}
         </Tag>
       ),
+
       value: false,
     },
   ];
@@ -440,12 +462,10 @@ const ClusterOverview: React.FC = () => {
           })}
         />
       ),
+
       dataIndex: 'accordance',
       width: 100,
-      render: (text: boolean, record: any) => {
-        if (!record?.controlParameter) {
-          return '-';
-        }
+      render: (text: boolean) => {
         const tagColor = text ? 'green' : 'gold';
         const tagContent = text
           ? intl.formatMessage({
@@ -483,7 +503,15 @@ const ClusterOverview: React.FC = () => {
               })}
             </Button>
             {text && (
-              <Button type="link" onClick={() => {}}>
+              <Button
+                type="link"
+                loading={patchOBClusterloading}
+                onClick={() => {
+                  patchOBCluster(ns, name, {
+                    deletedParameters: [record.name],
+                  });
+                }}
+              >
                 {intl.formatMessage({
                   id: 'src.pages.Cluster.Detail.Overview.5FACF7C0',
                   defaultMessage: '解除托管',
@@ -641,15 +669,14 @@ const ClusterOverview: React.FC = () => {
                           const newParametersData = getNewData(
                             listOBClusterParameters?.data,
                           );
-
-                          if (name) {
+                          if (name !== undefined) {
                             setParametersData(
                               newParametersData?.filter((item) =>
                                 item.name?.includes(name),
                               ),
                             );
                           }
-                          if (controlParameter) {
+                          if (controlParameter !== undefined) {
                             setParametersData(
                               newParametersData?.filter(
                                 (item) =>
@@ -657,14 +684,17 @@ const ClusterOverview: React.FC = () => {
                               ),
                             );
                           }
-                          if (accordance) {
+                          if (accordance !== undefined) {
                             setParametersData(
                               newParametersData?.filter(
                                 (item) => item.accordance === accordance,
                               ),
                             );
                           }
-                          if (!!name && !!controlParameter) {
+                          if (
+                            name !== undefined &&
+                            controlParameter !== undefined
+                          ) {
                             setParametersData(
                               newParametersData?.filter(
                                 (item) =>
@@ -673,7 +703,7 @@ const ClusterOverview: React.FC = () => {
                               ),
                             );
                           }
-                          if (!!name && !!accordance) {
+                          if (name !== undefined && accordance !== undefined) {
                             setParametersData(
                               newParametersData?.filter(
                                 (item) =>
@@ -682,7 +712,11 @@ const ClusterOverview: React.FC = () => {
                               ),
                             );
                           }
-                          if (!!name && !!controlParameter && !!accordance) {
+                          if (
+                            name !== undefined &&
+                            controlParameter !== undefined &&
+                            accordance !== undefined
+                          ) {
                             setParametersData(
                               newParametersData?.filter(
                                 (item) =>
