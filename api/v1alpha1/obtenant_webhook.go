@@ -98,7 +98,7 @@ func (r *OBTenant) Default() {
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-oceanbase-oceanbase-com-v1alpha1-obtenant,mutating=false,failurePolicy=fail,sideEffects=None,groups=oceanbase.oceanbase.com,resources=obtenants,verbs=create;update,versions=v1alpha1,name=vobtenant.kb.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/validate-oceanbase-oceanbase-com-v1alpha1-obtenant,mutating=false,failurePolicy=fail,sideEffects=None,groups=oceanbase.oceanbase.com,resources=obtenants,verbs=create;update;delete,versions=v1alpha1,name=vobtenant.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &OBTenant{}
 
@@ -311,7 +311,9 @@ func (r *OBTenant) validateMutation() error {
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *OBTenant) ValidateDelete() (admission.Warnings, error) {
-	// TODO(user): fill in your validation logic upon object deletion.
+	if r.Annotations[oceanbaseconst.AnnotationsIgnoreDeletion] == "true" {
+		return nil, apierrors.NewBadRequest("OBTenant " + r.Name + " is protected from deletion by annotation " + oceanbaseconst.AnnotationsIgnoreDeletion)
+	}
 	return nil, nil
 }
 
