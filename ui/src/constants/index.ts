@@ -93,6 +93,7 @@ const TOPO_INFO_CONFIG = [
   'image',
   'mode',
   'rootPasswordSecret',
+  'deletionProtection',
 ];
 
 // use for tenant name or zone name

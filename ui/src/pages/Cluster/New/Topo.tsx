@@ -27,8 +27,8 @@ export default function Topo({ form }) {
   const [showTopology, setShowTopology] = useState<boolean>(false);
   const [formsubIndex, setFromSubIndex] = useState({});
 
-  const [keyList, setKeyList] = useState<ListType[]>([]);
-  const [valList, setValList] = useState<ListType[]>([]);
+  const [keyList, setKeyList] = useState([]);
+  const [valList, setValList] = useState([]);
 
   const access = useAccess();
 
@@ -103,7 +103,7 @@ export default function Topo({ form }) {
       const promise = getNodeLabelsReq();
       promise.then((data) => {
         setKeyList(data.key);
-        setValList(data.value);
+        setValList(data.value?.filter((item) => item.label !== ''));
       });
     }
   }, []);
