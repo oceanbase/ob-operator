@@ -178,6 +178,11 @@ export default function Topo({ form }) {
                         />
                       </Form.Item>
                     </Col>
+                    <Form.Item
+                      noStyle
+                      name={[name, 'type']}
+                      initialValue={'NODE'}
+                    />
                     <DeleteOutlined onClick={() => remove(name)} />
                   </Row>
                 </div>

@@ -52,6 +52,15 @@ export default function New() {
     values.rootPassword = encryptText(values.rootPassword, publicKey) as string;
     values.deletionProtection = deleteValue;
     values.pvcIndependent = pvcValue;
+
+    const topologyValue = strTrim(values)?.topology?.map((item) => ({
+      ...item,
+      nodeSelector: undefined,
+      affinities: item?.affinities?.concat(item?.nodeSelector),
+    }));
+
+    values.topology = topologyValue;
+
     const res = await createClusterReportWrap({ ...strTrim(values) });
     if (res.successful) {
       message.success(res.message, 3);
