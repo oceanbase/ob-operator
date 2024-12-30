@@ -120,6 +120,7 @@ function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
     temp.children = zone.observers.map((server: Topo.TopoServer) => {
       return {
         id: server.name + server.namespace,
+        name: server.name,
         label: server.address,
         status: server.status,
         type: 'server',
