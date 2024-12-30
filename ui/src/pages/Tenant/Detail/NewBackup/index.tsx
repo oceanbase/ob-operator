@@ -33,7 +33,7 @@ export default function NewBackup() {
     { label: 'OSS', value: 'OSS' },
     { label: 'COS', value: 'COS' },
     { label: 'S3', value: 'S3' },
-    { label: 'S3-Compatible', value: 'S3-Compatible' },
+    { label: 'S3-Compatible', value: 'S3_Compatible' },
   ];
 
   const handleSubmit = async (values: API.NewBackupForm) => {
