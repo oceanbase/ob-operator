@@ -22,7 +22,7 @@ export default function New() {
   const [passwordVal, setPasswordVal] = useState<string>('');
   const [pvcValue, setPvcValue] = useState<boolean>(false);
   // 默认勾选
-  const [deleteValue, setDeleteValue] = useState<boolean>(true);
+  const [deleteValue, setDeleteValue] = useState<boolean>(false);
   const { data: storageClassesRes, run: fetchStorageClasses } = useRequest(
     getStorageClasses,
     {
