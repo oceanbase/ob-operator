@@ -270,7 +270,7 @@ export default function BasicInfo({
         </Descriptions.Item>
         <Descriptions.Item
           label={intl.formatMessage({
-            id: 'Dashboard.Detail.Overview.BasicInfo.ClusterConfiguration',
+            id: 'Dashboard.pages.Cluster.ClusterList.NumberOfZones',
             defaultMessage: 'Zone 数量',
           })}
         >
