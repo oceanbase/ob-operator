@@ -102,6 +102,7 @@ export default function TopoComponent({
     data: originTopoData,
     run: getTopoData,
     loading: clusterTopoLoading,
+    refresh: refreshTopoData,
   } = useRequest(getClusterDetailReq, {
     manual: true,
     onBefore: () => {
@@ -156,7 +157,7 @@ export default function TopoComponent({
             ? clusterStatus.current !== 'running' ||
               tenantStatus.current !== 'running'
             : clusterStatus.current !== 'running';
-          const server = evt.item?._cfg?.model?.label as string;
+          const server = evt.item?._cfg?.model?.name as string;
           const serverZone = evt.item?._cfg?.model?.zone as string;
           setOprateList(
             getServerOperateOfCluster(
@@ -277,6 +278,7 @@ export default function TopoComponent({
             defaultMessage: '删除成功',
           }),
       );
+      refreshTopoData();
     }
   };
 
@@ -290,6 +292,7 @@ export default function TopoComponent({
             defaultMessage: '删除 Server 已成功',
           }),
         );
+        refreshTopoData();
       }
     },
   });
@@ -306,6 +309,7 @@ export default function TopoComponent({
               defaultMessage: '重启 Server 已成功',
             }),
           );
+          refreshTopoData();
         }
       },
     },

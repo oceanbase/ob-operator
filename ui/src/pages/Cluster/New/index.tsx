@@ -21,8 +21,7 @@ export default function New() {
   const [form] = Form.useForm<API.CreateClusterData>();
   const [passwordVal, setPasswordVal] = useState<string>('');
   const [pvcValue, setPvcValue] = useState<boolean>(false);
-  // 默认勾选
-  const [deleteValue, setDeleteValue] = useState<boolean>(true);
+  const [deleteValue, setDeleteValue] = useState<boolean>(false);
   const { data: storageClassesRes, run: fetchStorageClasses } = useRequest(
     getStorageClasses,
     {
@@ -52,6 +51,15 @@ export default function New() {
     values.rootPassword = encryptText(values.rootPassword, publicKey) as string;
     values.deletionProtection = deleteValue;
     values.pvcIndependent = pvcValue;
+
+    const topologyValue = strTrim(values)?.topology?.map((item) => ({
+      ...item,
+      nodeSelector: undefined,
+      affinities: item?.affinities?.concat(item?.nodeSelector),
+    }));
+
+    values.topology = topologyValue;
+
     const res = await createClusterReportWrap({ ...strTrim(values) });
     if (res.successful) {
       message.success(res.message, 3);

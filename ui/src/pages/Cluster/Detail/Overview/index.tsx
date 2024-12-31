@@ -669,6 +669,7 @@ const ClusterOverview: React.FC = () => {
                           const newParametersData = getNewData(
                             listOBClusterParameters?.data,
                           );
+
                           if (name !== undefined) {
                             setParametersData(
                               newParametersData?.filter((item) =>
@@ -737,9 +738,9 @@ const ClusterOverview: React.FC = () => {
                     <Button
                       onClick={() => {
                         setFieldsValue({
-                          name: '',
-                          controlParameter: '',
-                          accordance: '',
+                          name: undefined,
+                          controlParameter: undefined,
+                          accordance: undefined,
                         });
                         refresh();
                       }}

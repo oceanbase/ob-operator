@@ -34,21 +34,39 @@ export default function Topo({ form }) {
 
   const basicFrom = (topologyConfiguration, name) => (
     <>
-      <Col span={5} style={{ paddingBottom: 24 }}>
+      <Col
+        span={topologyConfiguration === 'nodeSelector' ? 7 : 5}
+        style={{ paddingBottom: 24 }}
+      >
         <Form.Item label={'Key'} name={[name, 'key']}>
-          <Input
-            placeholder={intl.formatMessage({
-              id: 'OBDashboard.Cluster.New.Topo.PleaseEnter',
-              defaultMessage: '请输入',
-            })}
-          />
+          {topologyConfiguration === 'nodeSelector' ? (
+            <Select
+              showSearch
+              placeholder={intl.formatMessage({
+                id: 'OBDashboard.components.NodeSelector.PleaseSelect',
+                defaultMessage: '请选择',
+              })}
+              optionFilterProp="label"
+              //@ts-expect-error Custom option component type is incompatible
+              filterOption={filterOption}
+              options={keyList}
+              allowClear
+            />
+          ) : (
+            <Input
+              placeholder={intl.formatMessage({
+                id: 'OBDashboard.Cluster.New.Topo.PleaseEnter',
+                defaultMessage: '请输入',
+              })}
+            />
+          )}
         </Form.Item>
       </Col>
-      <Col span={6}>
+      <Col span={topologyConfiguration === 'nodeSelector' ? 8 : 6}>
         <Form.Item label={'Operator'} name={[name, 'operator']}>
           <Select
             options={[
-              ...(topologyConfiguration !== 'Pod Affinity'
+              ...(topologyConfiguration !== 'PodAffinity'
                 ? [
                     {
                       value: 'Equal',
@@ -80,14 +98,37 @@ export default function Topo({ form }) {
           />
         </Form.Item>
       </Col>
-      <Col span={6}>
-        <Form.Item label={'Value'} name={[name, 'value']}>
-          <Input
-            placeholder={intl.formatMessage({
-              id: 'OBDashboard.Cluster.New.Topo.PleaseEnter',
-              defaultMessage: '请输入',
-            })}
-          />
+      <Col span={topologyConfiguration === 'nodeSelector' ? 8 : 6}>
+        <Form.Item label={'Value'} name={[name, 'values']}>
+          {topologyConfiguration === 'nodeSelector' ? (
+            <Select
+              showSearch
+              mode="multiple"
+              placeholder={intl.formatMessage({
+                id: 'OBDashboard.components.NodeSelector.PleaseSelect',
+                defaultMessage: '请选择',
+              })}
+              optionFilterProp="label"
+              //@ts-expect-error Custom option component type is incompatible
+              filterOption={filterOption}
+              options={valList}
+              allowClear
+            />
+          ) : topologyConfiguration === 'PodAffinity' ? (
+            <Select
+              mode="tags"
+              style={{ width: '100%' }}
+              tokenSeparators={[',']}
+              options={[]}
+            />
+          ) : (
+            <Input
+              placeholder={intl.formatMessage({
+                id: 'OBDashboard.Cluster.New.Topo.PleaseEnter',
+                defaultMessage: '请输入',
+              })}
+            />
+          )}
         </Form.Item>
       </Col>
     </>
@@ -109,7 +150,7 @@ export default function Topo({ form }) {
   }, []);
 
   const NodeSelectorFrom: React.FC = ({ fieldName }) => (
-    <Form.Item label="nodeSelector">
+    <Form.Item label="NodeSelector">
       <Form.List name={[fieldName, 'nodeSelector']}>
         {(subFields, { add, remove }) => (
           <>
@@ -117,68 +158,16 @@ export default function Topo({ form }) {
               return (
                 <div key={key}>
                   <Row gutter={8}>
-                    <Col span={7}>
-                      <Form.Item label={'Key'} name={[name, 'key']}>
-                        <Select
-                          showSearch
-                          placeholder={intl.formatMessage({
-                            id: 'OBDashboard.components.NodeSelector.PleaseSelect',
-                            defaultMessage: '请选择',
-                          })}
-                          optionFilterProp="label"
-                          //@ts-expect-error Custom option component type is incompatible
-                          filterOption={filterOption}
-                          options={keyList}
-                          allowClear
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col span={8}>
-                      <Form.Item label={'Operator'} name={[name, 'operator']}>
-                        <Select
-                          options={[
-                            {
-                              value: 'Equal',
-                              label: 'Equal',
-                            },
-
-                            {
-                              value: 'In',
-                              label: 'In',
-                            },
-                            {
-                              value: 'NotIn',
-                              label: 'NotIn',
-                            },
-                            {
-                              value: 'Exist',
-                              label: 'Exist',
-                            },
-                            {
-                              value: 'DoesNoExist',
-                              label: 'DoesNoExist',
-                            },
-                          ]}
-                        />
-                      </Form.Item>
-                    </Col>
-                    <Col span={8}>
-                      <Form.Item label={'Value'} name={[name, 'value']}>
-                        <Select
-                          showSearch
-                          placeholder={intl.formatMessage({
-                            id: 'OBDashboard.components.NodeSelector.PleaseSelect',
-                            defaultMessage: '请选择',
-                          })}
-                          optionFilterProp="label"
-                          //@ts-expect-error Custom option component type is incompatible
-                          filterOption={filterOption}
-                          options={valList}
-                          allowClear
-                        />
-                      </Form.Item>
-                    </Col>
-                    <DeleteOutlined onClick={() => remove(name)} />
+                    {basicFrom('nodeSelector', name)}
+                    <Form.Item
+                      noStyle
+                      name={[name, 'type']}
+                      initialValue={'NODE'}
+                    />
+                    <DeleteOutlined
+                      onClick={() => remove(name)}
+                      style={{ marginBottom: 15 }}
+                    />
                   </Row>
                 </div>
               );
@@ -191,7 +180,7 @@ export default function Topo({ form }) {
                 block
                 icon={<PlusOutlined />}
               >
-                Add nodeSelector
+                Add NodeSelector
               </Button>
             </Form.Item>
           </>
@@ -214,19 +203,21 @@ export default function Topo({ form }) {
                       <Select
                         options={[
                           {
-                            value: 'Affinity',
+                            value: 'POD',
                             label: 'Affinity',
                           },
                           {
-                            value: 'AntiAffinity',
+                            value: 'POD_ANTI',
                             label: 'AntiAffinity',
                           },
                         ]}
                       />
                     </Form.Item>
                   </Col>
-
-                  <DeleteOutlined onClick={() => remove(name)} />
+                  <DeleteOutlined
+                    onClick={() => remove(name)}
+                    style={{ marginBottom: 15 }}
+                  />
                 </Row>
               </div>
             ))}
@@ -287,7 +278,10 @@ export default function Topo({ form }) {
                       />
                     </Form.Item>
                   </Col>
-                  <DeleteOutlined onClick={() => remove(name)} />
+                  <DeleteOutlined
+                    onClick={() => remove(name)}
+                    style={{ marginBottom: 15 }}
+                  />
                 </Row>
               </div>
             ))}
@@ -374,13 +368,20 @@ export default function Topo({ form }) {
                               !!tolerations ? (
                                 <>
                                   <div>
-                                    {!!nodeSelector && '- nodeSelector'}
+                                    {!!nodeSelector &&
+                                      `- ${nodeSelector?.length} node selector`}
                                   </div>
-                                  <div>{!!affinities && '- affinities'}</div>
-                                  <div>{!!tolerations && '- tolerations'}</div>
+                                  <div>
+                                    {!!affinities &&
+                                      `- ${affinities?.length} pod affinity`}
+                                  </div>
+                                  <div>
+                                    {!!tolerations &&
+                                      `- ${tolerations?.length} tolerations`}
+                                  </div>
                                 </>
                               ) : (
-                                '-'
+                                '(empty)'
                               )}
                             </div>
                           );

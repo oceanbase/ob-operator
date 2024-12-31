@@ -50,12 +50,12 @@ export function appenAutoShapeListener(graph: Graph) {
   });
 }
 
-function getZoneTypeText(
-  zone: Pick<API.ReplicaDetailType, 'zone'>,
-  tenantTopoData: API.ReplicaDetailType[],
-) {
-  return tenantTopoData.find((item) => item.zone === zone.zone)?.type;
-}
+// function getZoneTypeText(
+//   zone: Pick<API.ReplicaDetailType, 'zone'>,
+//   tenantTopoData: API.ReplicaDetailType[],
+// ) {
+//   return tenantTopoData.find((item) => item.zone === zone.zone)?.type;
+// }
 
 function getTooltipInfo(
   zone: Pick<API.ReplicaDetailType, 'zone'>,
@@ -98,16 +98,17 @@ function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
       badgeImg: '',
       disable: false,
     };
-    const typeText = getZoneTypeText(zone, tenantReplicas || []);
+    // const typeText = getZoneTypeText(zone, tenantReplicas || []);
     const tooltipInfo = getTooltipInfo(zone, tenantReplicas || []);
     temp.id = zone.name + zone.namespace; //In k8s, resources are queried through name+ns, so ns+name is unique.
     temp.label = zone.zone;
     temp.status = zone.status;
     temp.img = ZONE_IMG_MAP.get(zone.status);
     temp.badgeImg = BADGE_IMG_MAP.get(zone.status);
-    if (typeText) {
-      temp.typeText = typeText;
-    }
+    // topo 图展示不需要此字段，先注释掉
+    // if (typeText) {
+    //   temp.typeText = typeText;
+    // }
     if (tooltipInfo) {
       temp.tooltipInfo = tooltipInfo;
     }
@@ -120,6 +121,7 @@ function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
     temp.children = zone.observers.map((server: Topo.TopoServer) => {
       return {
         id: server.name + server.namespace,
+        name: server.name,
         label: server.address,
         status: server.status,
         type: 'server',
