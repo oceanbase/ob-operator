@@ -4,6 +4,7 @@ import { intl } from '@/utils/intl';
 import { findByValue } from '@oceanbase/util';
 import { useRequest } from 'ahooks';
 import { Card, Checkbox, Descriptions, Tag, message } from 'antd';
+import { isEmpty } from 'lodash';
 
 export default function BasicInfo({
   info = {},
@@ -112,13 +113,15 @@ export default function BasicInfo({
     >
       <Descriptions column={5}>
         {Object.keys(InfoConfig).map((key, index) => {
-          const statusItem = findByValue(STATUS_LIST, info[key]);
+          const statusItem = findByValue(STATUS_LIST, info.status);
           return (
             <Descriptions.Item key={index} label={InfoConfig[key]}>
               {key !== 'status' ? (
                 info[key]
-              ) : (
+              ) : !isEmpty(statusItem) ? (
                 <Tag color={statusItem.badgeStatus}>{statusItem.label}</Tag>
+              ) : (
+                '-'
               )}
             </Descriptions.Item>
           );
