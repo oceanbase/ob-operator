@@ -470,14 +470,20 @@ const ClusterOverview: React.FC = () => {
 
       dataIndex: 'accordance',
       width: 100,
-      render: (text: boolean) => {
-        return text ? (
-          <Tag color={'green'}>
-            {intl.formatMessage({
+      render: (text: boolean, record) => {
+        const tagColor = text ? 'green' : 'gold';
+        const tagContent = text
+          ? intl.formatMessage({
               id: 'src.pages.Cluster.Detail.Overview.9A3A4407',
               defaultMessage: '已匹配',
-            })}
-          </Tag>
+            })
+          : intl.formatMessage({
+              id: 'src.pages.Cluster.Detail.Overview.D6588C55',
+              defaultMessage: '不匹配',
+            });
+
+        return record?.controlParameter ? (
+          <Tag color={tagColor}>{tagContent}</Tag>
         ) : (
           '/'
         );
