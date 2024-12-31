@@ -58,7 +58,7 @@ function config(width: number, height: number) {
         return 40;
       },
       getHGap: function getHGap() {
-        return 70;
+        return 90;
       },
     },
     defaultEdge: {
