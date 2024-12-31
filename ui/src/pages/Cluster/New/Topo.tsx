@@ -359,13 +359,20 @@ export default function Topo({ form }) {
                               !!tolerations ? (
                                 <>
                                   <div>
-                                    {!!nodeSelector && '- nodeSelector'}
+                                    {!!nodeSelector &&
+                                      `- ${nodeSelector?.length} node selector`}
                                   </div>
-                                  <div>{!!affinities && '- affinities'}</div>
-                                  <div>{!!tolerations && '- tolerations'}</div>
+                                  <div>
+                                    {!!affinities &&
+                                      `- ${affinities?.length} pod affinity`}
+                                  </div>
+                                  <div>
+                                    {!!tolerations &&
+                                      `- ${tolerations?.length} tolerations`}
+                                  </div>
                                 </>
                               ) : (
-                                '-'
+                                '(empty)'
                               )}
                             </div>
                           );
