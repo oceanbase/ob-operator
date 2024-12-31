@@ -105,7 +105,6 @@ function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
     temp.status = zone.status;
     temp.img = ZONE_IMG_MAP.get(zone.status);
     temp.badgeImg = BADGE_IMG_MAP.get(zone.status);
-    // https://project.alipay.com/project/W24001004950/P24001006922/bug?workItemView=b622c099e2199bc034401fbe&openWorkItemId=2024122500106649710&status=status
     // topo 图展示不需要此字段，先注释掉
     // if (typeText) {
     //   temp.typeText = typeText;
