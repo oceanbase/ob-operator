@@ -130,6 +130,11 @@ const ClusterOverview: React.FC = () => {
               defaultMessage: '解除托管已成功',
             }),
           );
+          setFieldsValue({
+            name: undefined,
+            controlParameter: undefined,
+            accordance: undefined,
+          });
           refresh();
           clusterDetailRefresh();
         }
@@ -465,7 +470,7 @@ const ClusterOverview: React.FC = () => {
 
       dataIndex: 'accordance',
       width: 100,
-      render: (text: boolean) => {
+      render: (text: boolean, record) => {
         const tagColor = text ? 'green' : 'gold';
         const tagContent = text
           ? intl.formatMessage({
@@ -477,7 +482,11 @@ const ClusterOverview: React.FC = () => {
               defaultMessage: '不匹配',
             });
 
-        return <Tag color={tagColor}>{tagContent}</Tag>;
+        return record?.controlParameter ? (
+          <Tag color={tagColor}>{tagContent}</Tag>
+        ) : (
+          '/'
+        );
       },
     },
     {
@@ -488,6 +497,14 @@ const ClusterOverview: React.FC = () => {
       dataIndex: 'controlParameter',
       align: 'center',
       render: (text, record) => {
+        const disableUnescrow = [
+          'memory_limit',
+          'datafile_maxsize',
+          'datafile_next',
+          'enable_syslog_recycle',
+          'max_syslog_file_count',
+        ];
+
         return (
           <Space size={1}>
             <Button
@@ -505,6 +522,7 @@ const ClusterOverview: React.FC = () => {
             {text && (
               <Button
                 type="link"
+                disabled={disableUnescrow.includes(record.name)}
                 loading={patchOBClusterloading}
                 onClick={() => {
                   patchOBCluster(ns, name, {
@@ -673,7 +691,7 @@ const ClusterOverview: React.FC = () => {
                           if (name !== undefined) {
                             setParametersData(
                               newParametersData?.filter((item) =>
-                                item.name?.includes(name),
+                                item.name?.includes(name.trim()),
                               ),
                             );
                           }
@@ -699,7 +717,7 @@ const ClusterOverview: React.FC = () => {
                             setParametersData(
                               newParametersData?.filter(
                                 (item) =>
-                                  item.name?.includes(name) &&
+                                  item.name?.includes(name.trim()) &&
                                   item.controlParameter === controlParameter,
                               ),
                             );
@@ -708,7 +726,7 @@ const ClusterOverview: React.FC = () => {
                             setParametersData(
                               newParametersData?.filter(
                                 (item) =>
-                                  item.name?.includes(name) &&
+                                  item.name?.includes(name.trim()) &&
                                   item.accordance === accordance,
                               ),
                             );
@@ -721,7 +739,19 @@ const ClusterOverview: React.FC = () => {
                             setParametersData(
                               newParametersData?.filter(
                                 (item) =>
-                                  item.name?.includes(name) &&
+                                  item.name?.includes(name.trim()) &&
+                                  item.controlParameter === controlParameter &&
+                                  item.accordance === accordance,
+                              ),
+                            );
+                          }
+                          if (
+                            controlParameter !== undefined &&
+                            accordance !== undefined
+                          ) {
+                            setParametersData(
+                              newParametersData?.filter(
+                                (item) =>
                                   item.controlParameter === controlParameter &&
                                   item.accordance === accordance,
                               ),

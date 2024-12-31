@@ -99,7 +99,14 @@ export default function Topo({ form }) {
         </Form.Item>
       </Col>
       <Col span={topologyConfiguration === 'nodeSelector' ? 8 : 6}>
-        <Form.Item label={'Value'} name={[name, 'values']}>
+        <Form.Item
+          label={'Value'}
+          name={
+            topologyConfiguration === 'Toleration'
+              ? [name, 'value']
+              : [name, 'values']
+          }
+        >
           {topologyConfiguration === 'nodeSelector' ? (
             <Select
               showSearch
