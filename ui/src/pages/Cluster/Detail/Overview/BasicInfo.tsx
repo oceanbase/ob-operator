@@ -1,11 +1,104 @@
 import { obcluster } from '@/api';
+import {
+  CommonAffinitySpec,
+  CommonAffinityType,
+  CommonTolerationSpec,
+  ResponseOBCluster,
+} from '@/api/generated';
 import { MODE_MAP, STATUS_LIST } from '@/constants';
 import { intl } from '@/utils/intl';
 import { findByValue } from '@oceanbase/util';
 import { useRequest } from 'ahooks';
-import { Card, Checkbox, Descriptions, Tag, Typography, message } from 'antd';
+import {
+  Card,
+  Checkbox,
+  Descriptions,
+  Table,
+  Tag,
+  Typography,
+  message,
+} from 'antd';
+import { ColumnsType } from 'antd/es/table';
+import { useMemo } from 'react';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
+
+interface ExtendedAffinity extends CommonAffinitySpec {
+  zones: string;
+}
+
+interface ExtendedToleration extends CommonTolerationSpec {
+  zones: string;
+}
+
+const nodeSelectorColumns: ColumnsType<ExtendedAffinity> = [
+  {
+    title: 'Zones',
+    dataIndex: 'zones',
+  },
+  {
+    title: 'Key',
+    dataIndex: 'key',
+  },
+  {
+    title: 'Operator',
+    dataIndex: 'operator',
+  },
+  {
+    title: 'Values',
+    dataIndex: 'values',
+  },
+  {
+    title: 'Weight',
+    dataIndex: 'weight',
+  },
+];
+
+const affinityColumns: ColumnsType<ExtendedAffinity> = [
+  {
+    title: 'Type',
+    dataIndex: 'type',
+  },
+  ...nodeSelectorColumns,
+];
+
+const tolerationColumns: ColumnsType<ExtendedToleration> = [
+  {
+    title: 'Zones',
+    dataIndex: 'zones',
+  },
+  {
+    title: 'Key',
+    dataIndex: 'key',
+  },
+  {
+    title: 'Operator',
+    dataIndex: 'operator',
+  },
+  {
+    title: 'Value',
+    dataIndex: 'value',
+  },
+  {
+    title: 'Effect',
+    dataIndex: 'effect',
+  },
+  {
+    title: 'TolerationSeconds',
+    dataIndex: 'tolerationSeconds',
+    render(value) {
+      return value || '-';
+    },
+  },
+];
+
+interface ITopologyRendering {
+  show: boolean;
+  nodeSelectors: ExtendedAffinity[];
+  affinities: ExtendedAffinity[];
+  tolerations: ExtendedToleration[];
+}
+
 export default function BasicInfo({
   name,
   namespace,
@@ -19,9 +112,52 @@ export default function BasicInfo({
   clusterName,
   style,
   deletionProtection,
-}: API.ClusterInfo & { style?: React.CSSProperties; extra?: boolean }) {
+  ...props
+}: ResponseOBCluster & { style?: React.CSSProperties; extra?: boolean }) {
   const statusItem = findByValue(STATUS_LIST, status);
   const statusDetailItem = findByValue(STATUS_LIST, statusDetail);
+
+  const topologyRendering: ITopologyRendering = useMemo(() => {
+    const rendering: ITopologyRendering = {
+      show: false,
+      nodeSelectors: [],
+      affinities: [],
+      tolerations: [],
+    };
+    if (!props.topology) {
+      return rendering;
+    }
+    props.topology.forEach((zone) => {
+      if (zone.affinities) {
+        zone.affinities.forEach((affinity) => {
+          if (affinity.type === CommonAffinityType.NodeAffinityType) {
+            rendering.nodeSelectors.push({
+              ...affinity,
+              zones: zone.name,
+            });
+          } else {
+            rendering.affinities.push({
+              ...affinity,
+              zones: zone.name,
+            });
+          }
+        });
+      }
+      if (zone.tolerations) {
+        zone.tolerations.forEach((toleration) => {
+          rendering.tolerations.push({
+            ...toleration,
+            zones: zone.name,
+          });
+        });
+      }
+    });
+    rendering.show =
+      rendering.nodeSelectors.length > 0 ||
+      rendering.affinities.length > 0 ||
+      rendering.tolerations.length > 0;
+    return rendering;
+  }, [props.topology]);
 
   const { runAsync: patchOBCluster, loading } = useRequest(
     obcluster.patchOBCluster,
@@ -133,17 +269,17 @@ export default function BasicInfo({
           />
         </Descriptions.Item>
         <Descriptions.Item
-          span={2}
           label={intl.formatMessage({
-            id: 'OBDashboard.Detail.Overview.BasicInfo.Image',
-            defaultMessage: '镜像',
+            id: 'Dashboard.pages.Cluster.ClusterList.NumberOfZones',
+            defaultMessage: 'Zone 数量',
           })}
         >
-          {image}
+          {(
+            props.topology?.map((zone) => zone.observers?.length ?? ' / ') ?? []
+          ).join('-')}
         </Descriptions.Item>
-
         <Descriptions.Item
-          span={2}
+          span={3}
           label={intl.formatMessage({
             id: 'Dashboard.Detail.Overview.BasicInfo.RootPasswordSecret',
             defaultMessage: 'root 用户密码 Secret',
@@ -151,7 +287,71 @@ export default function BasicInfo({
         >
           {rootPasswordSecret || '-'}
         </Descriptions.Item>
+        <Descriptions.Item
+          span={5}
+          label={intl.formatMessage({
+            id: 'OBDashboard.Detail.Overview.BasicInfo.Image',
+            defaultMessage: '镜像',
+          })}
+        >
+          {image}
+        </Descriptions.Item>
       </Descriptions>
+      {topologyRendering.show && (
+        <>
+          <Title level={5}>
+            {intl.formatMessage({
+              id: 'dashboard.Cluster.New.Topo.Topology',
+              defaultMessage: '拓扑',
+            })}
+          </Title>
+          {topologyRendering.nodeSelectors.length > 0 && (
+            <>
+              <Text style={{ marginBottom: 8, display: 'block' }}>
+                Node Selector
+              </Text>
+              <Table
+                columns={nodeSelectorColumns}
+                rowKey={'zones'}
+                dataSource={topologyRendering.nodeSelectors}
+                pagination={false}
+                size="small"
+                locale={{ emptyText: <span>/</span> }}
+              />
+            </>
+          )}
+          {topologyRendering.affinities.length > 0 && (
+            <>
+              <Text style={{ marginBottom: 8, display: 'block' }}>
+                Pod Affinity
+              </Text>
+              <Table
+                columns={affinityColumns}
+                rowKey={'zones'}
+                dataSource={topologyRendering.affinities}
+                pagination={false}
+                size="small"
+                locale={{ emptyText: <span>/</span> }}
+              />
+            </>
+          )}
+          {topologyRendering.tolerations.length > 0 && (
+            <>
+              <Text style={{ marginBottom: 8, display: 'block' }}>
+                Tolerations
+              </Text>
+              <Table
+                columns={tolerationColumns}
+                rowKey={'zones'}
+                dataSource={topologyRendering.tolerations}
+                pagination={false}
+                size="small"
+                locale={{ emptyText: <span>/</span> }}
+              />
+            </>
+          )}
+        </>
+      )}
 
       {monitor && (
         <Descriptions

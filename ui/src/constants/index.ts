@@ -82,6 +82,7 @@ const CLUSTER_INFO_CONFIG = [
   'mode',
   'parameters',
   'deletionProtection',
+  'topology',
 ];
 
 const TOPO_INFO_CONFIG = [
