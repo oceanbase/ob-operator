@@ -148,9 +148,6 @@ export default function NewBackup() {
                         defaultMessage: '请选择',
                       })}
                       options={distTypes}
-                      onChange={(e) => {
-                        console.log('distTypes value', e);
-                      }}
                     />
                   </Form.Item>
                 </Col>
