@@ -1,3 +1,4 @@
+import { ParamBackupDestType } from '@/api/generated/api';
 import { usePublicKey } from '@/hook/usePublicKey';
 import { createBackupReportWrap } from '@/services/reportRequest/backupReportReq';
 import { getTenant } from '@/services/tenant';
@@ -28,12 +29,15 @@ export default function NewBackup() {
   const publicKey = usePublicKey();
   const scheduleValue = Form.useWatch(['scheduleDates'], form);
 
-  const distTypes = [
-    { label: 'NFS', value: 'NFS' },
-    { label: 'OSS', value: 'OSS' },
-    { label: 'COS', value: 'COS' },
-    { label: 'S3', value: 'S3' },
-    { label: 'S3-Compatible', value: 'S3_Compatible' },
+  const distTypes: ParamBackupDestType[] = [
+    { label: 'NFS', value: ParamBackupDestType.BackupDestNFS },
+    { label: 'OSS', value: ParamBackupDestType.BackupDestOSS },
+    { label: 'COS', value: ParamBackupDestType.BackupDestCOS },
+    { label: 'S3', value: ParamBackupDestType.BackupDestS3 },
+    {
+      label: 'S3_COMPATIBLE',
+      value: ParamBackupDestType.BackupDestS3Compatible,
+    },
   ];
 
   const handleSubmit = async (values: API.NewBackupForm) => {
@@ -144,6 +148,9 @@ export default function NewBackup() {
                         defaultMessage: '请选择',
                       })}
                       options={distTypes}
+                      onChange={(e) => {
+                        console.log('distTypes value', e);
+                      }}
                     />
                   </Form.Item>
                 </Col>

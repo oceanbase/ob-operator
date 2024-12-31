@@ -21,7 +21,6 @@ export default function New() {
   const [form] = Form.useForm<API.CreateClusterData>();
   const [passwordVal, setPasswordVal] = useState<string>('');
   const [pvcValue, setPvcValue] = useState<boolean>(false);
-  // 默认勾选
   const [deleteValue, setDeleteValue] = useState<boolean>(false);
   const { data: storageClassesRes, run: fetchStorageClasses } = useRequest(
     getStorageClasses,
