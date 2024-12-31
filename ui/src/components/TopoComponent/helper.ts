@@ -50,12 +50,12 @@ export function appenAutoShapeListener(graph: Graph) {
   });
 }
 
-function getZoneTypeText(
-  zone: Pick<API.ReplicaDetailType, 'zone'>,
-  tenantTopoData: API.ReplicaDetailType[],
-) {
-  return tenantTopoData.find((item) => item.zone === zone.zone)?.type;
-}
+// function getZoneTypeText(
+//   zone: Pick<API.ReplicaDetailType, 'zone'>,
+//   tenantTopoData: API.ReplicaDetailType[],
+// ) {
+//   return tenantTopoData.find((item) => item.zone === zone.zone)?.type;
+// }
 
 function getTooltipInfo(
   zone: Pick<API.ReplicaDetailType, 'zone'>,
@@ -98,16 +98,18 @@ function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
       badgeImg: '',
       disable: false,
     };
-    const typeText = getZoneTypeText(zone, tenantReplicas || []);
+    // const typeText = getZoneTypeText(zone, tenantReplicas || []);
     const tooltipInfo = getTooltipInfo(zone, tenantReplicas || []);
     temp.id = zone.name + zone.namespace; //In k8s, resources are queried through name+ns, so ns+name is unique.
     temp.label = zone.zone;
     temp.status = zone.status;
     temp.img = ZONE_IMG_MAP.get(zone.status);
     temp.badgeImg = BADGE_IMG_MAP.get(zone.status);
-    if (typeText) {
-      temp.typeText = typeText;
-    }
+    // https://project.alipay.com/project/W24001004950/P24001006922/bug?workItemView=b622c099e2199bc034401fbe&openWorkItemId=2024122500106649710&status=status
+    // topo 图展示不需要此字段，先注释掉
+    // if (typeText) {
+    //   temp.typeText = typeText;
+    // }
     if (tooltipInfo) {
       temp.tooltipInfo = tooltipInfo;
     }
