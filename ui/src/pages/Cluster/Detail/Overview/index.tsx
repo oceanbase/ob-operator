@@ -491,6 +491,14 @@ const ClusterOverview: React.FC = () => {
       dataIndex: 'controlParameter',
       align: 'center',
       render: (text, record) => {
+        const disableUnescrow = [
+          'memory_limit',
+          'datafile_maxsize',
+          'datafile_next',
+          'enable_syslog_recycle',
+          'max_syslog_file_count',
+        ];
+
         return (
           <Space size={1}>
             <Button
@@ -508,6 +516,7 @@ const ClusterOverview: React.FC = () => {
             {text && (
               <Button
                 type="link"
+                disabled={disableUnescrow.includes(record.name)}
                 loading={patchOBClusterloading}
                 onClick={() => {
                   patchOBCluster(ns, name, {
