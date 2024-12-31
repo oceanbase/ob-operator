@@ -164,7 +164,10 @@ export default function Topo({ form }) {
                       name={[name, 'type']}
                       initialValue={'NODE'}
                     />
-                    <DeleteOutlined onClick={() => remove(name)} />
+                    <DeleteOutlined
+                      onClick={() => remove(name)}
+                      style={{ marginBottom: 15 }}
+                    />
                   </Row>
                 </div>
               );
@@ -211,7 +214,10 @@ export default function Topo({ form }) {
                       />
                     </Form.Item>
                   </Col>
-                  <DeleteOutlined onClick={() => remove(name)} />
+                  <DeleteOutlined
+                    onClick={() => remove(name)}
+                    style={{ marginBottom: 15 }}
+                  />
                 </Row>
               </div>
             ))}
@@ -272,7 +278,10 @@ export default function Topo({ form }) {
                       />
                     </Form.Item>
                   </Col>
-                  <DeleteOutlined onClick={() => remove(name)} />
+                  <DeleteOutlined
+                    onClick={() => remove(name)}
+                    style={{ marginBottom: 15 }}
+                  />
                 </Row>
               </div>
             ))}
