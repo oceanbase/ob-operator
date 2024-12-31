@@ -130,6 +130,11 @@ const ClusterOverview: React.FC = () => {
               defaultMessage: '解除托管已成功',
             }),
           );
+          setFieldsValue({
+            name: undefined,
+            controlParameter: undefined,
+            accordance: undefined,
+          });
           refresh();
           clusterDetailRefresh();
         }
@@ -673,7 +678,7 @@ const ClusterOverview: React.FC = () => {
                           if (name !== undefined) {
                             setParametersData(
                               newParametersData?.filter((item) =>
-                                item.name?.includes(name),
+                                item.name?.includes(name.trim()),
                               ),
                             );
                           }
@@ -699,7 +704,7 @@ const ClusterOverview: React.FC = () => {
                             setParametersData(
                               newParametersData?.filter(
                                 (item) =>
-                                  item.name?.includes(name) &&
+                                  item.name?.includes(name.trim()) &&
                                   item.controlParameter === controlParameter,
                               ),
                             );
@@ -708,7 +713,7 @@ const ClusterOverview: React.FC = () => {
                             setParametersData(
                               newParametersData?.filter(
                                 (item) =>
-                                  item.name?.includes(name) &&
+                                  item.name?.includes(name.trim()) &&
                                   item.accordance === accordance,
                               ),
                             );
@@ -721,7 +726,19 @@ const ClusterOverview: React.FC = () => {
                             setParametersData(
                               newParametersData?.filter(
                                 (item) =>
-                                  item.name?.includes(name) &&
+                                  item.name?.includes(name.trim()) &&
+                                  item.controlParameter === controlParameter &&
+                                  item.accordance === accordance,
+                              ),
+                            );
+                          }
+                          if (
+                            controlParameter !== undefined &&
+                            accordance !== undefined
+                          ) {
+                            setParametersData(
+                              newParametersData?.filter(
+                                (item) =>
                                   item.controlParameter === controlParameter &&
                                   item.accordance === accordance,
                               ),
