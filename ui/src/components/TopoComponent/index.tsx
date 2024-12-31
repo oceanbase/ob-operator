@@ -29,6 +29,7 @@ import { ReactNode, config } from './G6register';
 import {
   clusterOperate,
   clusterOperateOfTenant,
+  getClusterOperates,
   getServerOperateOfCluster,
   getZoneOperateOfCluster,
   getZoneOperateOfTenant,
