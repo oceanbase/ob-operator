@@ -61,6 +61,7 @@ type OBClusterMeta struct {
 
 	SupportStaticIP    bool `json:"supportStaticIP" binding:"required"`
 	DeletionProtection bool `json:"deletionProtection" binding:"required"`
+	PvcIndependent     bool `json:"pvcIndependent" binding:"required"`
 }
 
 type OBClusterOverview struct {
