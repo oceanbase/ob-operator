@@ -763,11 +763,9 @@ const ClusterOverview: React.FC = () => {
                           ) {
                             if (controlParameter === true) {
                               setParametersData(
-                                newParametersData?.filter(
+                                controlParameterContent?.filter(
                                   (item) =>
                                     item.name?.includes(name.trim()) &&
-                                    item.controlParameter ===
-                                      controlParameter &&
                                     item.accordance === accordance,
                                 ),
                               );
@@ -776,22 +774,10 @@ const ClusterOverview: React.FC = () => {
                                 newParametersData?.filter(
                                   (item) =>
                                     item.name?.includes(name.trim()) &&
-                                    item.controlParameter === controlParameter,
+                                    item.controlParameter === false,
                                 ),
                               );
                             }
-                          }
-                          if (
-                            controlParameter !== undefined &&
-                            accordance !== undefined
-                          ) {
-                            setParametersData(
-                              controlParameterContent?.filter(
-                                (item) =>
-                                  item.controlParameter === controlParameter &&
-                                  item.accordance === accordance,
-                              ),
-                            );
                           }
                         });
                       }}
