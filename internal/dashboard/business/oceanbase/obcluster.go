@@ -172,6 +172,16 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 			},
 		}
 	}
+	if obcluster.Annotations != nil {
+		annotations := make([]modelcommon.KVPair, 0)
+		for k, v := range obcluster.Annotations {
+			annotations = append(annotations, modelcommon.KVPair{
+				Key:   k,
+				Value: v,
+			})
+		}
+		respCluster.OBClusterExtra.Annotations = annotations
+	}
 
 	return respCluster, nil
 }

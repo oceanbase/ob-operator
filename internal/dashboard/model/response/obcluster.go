@@ -101,6 +101,7 @@ type OBClusterExtra struct {
 	Parameters         []ParameterSpec `json:"parameters" binding:"required"`
 	Monitor            *MonitorSpec    `json:"monitor"`
 	BackupVolume       *NFSVolumeSpec  `json:"backupVolume"`
+	Annotations        []common.KVPair `json:"annotations"`
 }
 
 type MonitorSpec struct {

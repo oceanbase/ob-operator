@@ -12,6 +12,8 @@ See the Mulan PSL v2 for more details.
 
 package response
 
+import "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
+
 // @Description Brief information about OBTenant
 type OBTenantOverview struct {
 	UID         string            `json:"uid" binding:"required"`                 // Unique identifier of the resource
@@ -37,8 +39,9 @@ type OBTenantDetail struct {
 	StandbyROCredential string `json:"standbyROCredential"`
 	Version             string `json:"version"`
 
-	PrimaryTenant string         `json:"primaryTenant"`
-	RestoreSource *RestoreSource `json:"restoreSource,omitempty"`
+	PrimaryTenant string          `json:"primaryTenant"`
+	RestoreSource *RestoreSource  `json:"restoreSource,omitempty"`
+	Annotations   []common.KVPair `json:"annotations,omitempty"`
 }
 
 type OBTenantReplica struct {

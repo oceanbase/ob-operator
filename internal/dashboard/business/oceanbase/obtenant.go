@@ -33,6 +33,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/clients/schema"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
@@ -192,6 +193,16 @@ func buildDetailFromApiType(t *v1alpha1.OBTenant) *response.OBTenantDetail {
 		if !t.Spec.Source.Restore.Until.Unlimited {
 			rt.RestoreSource.Until = *t.Spec.Source.Restore.Until.Timestamp
 		}
+	}
+	if t.Annotations != nil {
+		annotations := make([]common.KVPair, 0, len(t.Annotations))
+		for k, v := range t.Annotations {
+			rt.Annotations = append(rt.Annotations, common.KVPair{
+				Key:   k,
+				Value: v,
+			})
+		}
+		rt.Annotations = annotations
 	}
 
 	return rt
