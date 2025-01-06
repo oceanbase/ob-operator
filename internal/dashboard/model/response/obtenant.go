@@ -41,7 +41,7 @@ type OBTenantDetail struct {
 
 	PrimaryTenant string          `json:"primaryTenant"`
 	RestoreSource *RestoreSource  `json:"restoreSource,omitempty"`
-	Annotations   []common.KVPair `json:"annotations,omitempty"`
+	Annotations   []common.KVPair `json:"annotations"`
 }
 
 type OBTenantReplica struct {
