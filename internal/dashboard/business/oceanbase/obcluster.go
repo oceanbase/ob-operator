@@ -77,6 +77,7 @@ func buildOBClusterOverview(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 	clusterMode := modelcommon.ClusterModeNormal
 	annotations := obcluster.GetAnnotations()
 	deletionProtection := false
+	pvcIndependent := false
 	if annotations != nil {
 		if mode, ok := annotations[oceanbaseconst.AnnotationsMode]; ok {
 			switch mode {
@@ -88,6 +89,7 @@ func buildOBClusterOverview(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 			}
 		}
 		deletionProtection = annotations[oceanbaseconst.AnnotationsIgnoreDeletion] == "true"
+		pvcIndependent = annotations[oceanbaseconst.AnnotationsIndependentPVCLifecycle] == "true"
 	}
 	return &response.OBClusterOverview{
 		OBClusterMeta: response.OBClusterMeta{
@@ -99,6 +101,7 @@ func buildOBClusterOverview(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 			Mode:               clusterMode,
 			SupportStaticIP:    obcluster.SupportStaticIP(),
 			DeletionProtection: deletionProtection,
+			PvcIndependent:     pvcIndependent,
 		},
 		Status:       getStatisticStatus(obcluster),
 		StatusDetail: obcluster.Status.Status,
@@ -168,6 +171,16 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 				Size:         obcluster.Spec.OBServerTemplate.Storage.LogStorage.Size.Value(),
 			},
 		}
+	}
+	if obcluster.Annotations != nil {
+		annotations := make([]modelcommon.KVPair, 0)
+		for k, v := range obcluster.Annotations {
+			annotations = append(annotations, modelcommon.KVPair{
+				Key:   k,
+				Value: v,
+			})
+		}
+		respCluster.OBClusterExtra.Annotations = annotations
 	}
 
 	return respCluster, nil
