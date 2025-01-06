@@ -116,7 +116,6 @@ export default function BasicInfo({
 }: ResponseOBCluster & { style?: React.CSSProperties; extra?: boolean }) {
   const statusItem = findByValue(STATUS_LIST, status);
   const statusDetailItem = findByValue(STATUS_LIST, statusDetail);
-
   const topologyRendering: ITopologyRendering = useMemo(() => {
     const rendering: ITopologyRendering = {
       show: false,

@@ -288,7 +288,7 @@ const ClusterOverview: React.FC = () => {
     };
   };
 
-  const { parameters, storage, resource, deletionProtection } =
+  const { parameters, storage, resource, deletionProtection, pvcIndependent } =
     clusterDetail?.info || {};
 
   const resourceinit = [
@@ -611,7 +611,7 @@ const ClusterOverview: React.FC = () => {
                   defaultMessage: '只能在创建时指定，不支持修改',
                 })}
               >
-                <Checkbox disabled />
+                <Checkbox defaultChecked={pvcIndependent} disabled />
               </Tooltip>
             </Space>
             <Descriptions>
@@ -703,9 +703,14 @@ const ClusterOverview: React.FC = () => {
                               ),
                             );
                           }
+                          // 已托管的参数才有托管状态
+                          const controlParameterContent =
+                            newParametersData?.filter(
+                              (item) => item.controlParameter === true,
+                            );
                           if (accordance !== undefined) {
                             setParametersData(
-                              newParametersData?.filter(
+                              controlParameterContent?.filter(
                                 (item) => item.accordance === accordance,
                               ),
                             );
@@ -724,7 +729,7 @@ const ClusterOverview: React.FC = () => {
                           }
                           if (name !== undefined && accordance !== undefined) {
                             setParametersData(
-                              newParametersData?.filter(
+                              controlParameterContent?.filter(
                                 (item) =>
                                   item.name?.includes(name.trim()) &&
                                   item.accordance === accordance,
@@ -736,21 +741,32 @@ const ClusterOverview: React.FC = () => {
                             controlParameter !== undefined &&
                             accordance !== undefined
                           ) {
-                            setParametersData(
-                              newParametersData?.filter(
-                                (item) =>
-                                  item.name?.includes(name.trim()) &&
-                                  item.controlParameter === controlParameter &&
-                                  item.accordance === accordance,
-                              ),
-                            );
+                            if (controlParameter === true) {
+                              setParametersData(
+                                newParametersData?.filter(
+                                  (item) =>
+                                    item.name?.includes(name.trim()) &&
+                                    item.controlParameter ===
+                                      controlParameter &&
+                                    item.accordance === accordance,
+                                ),
+                              );
+                            } else {
+                              setParametersData(
+                                newParametersData?.filter(
+                                  (item) =>
+                                    item.name?.includes(name.trim()) &&
+                                    item.controlParameter === controlParameter,
+                                ),
+                              );
+                            }
                           }
                           if (
                             controlParameter !== undefined &&
                             accordance !== undefined
                           ) {
                             setParametersData(
-                              newParametersData?.filter(
+                              controlParameterContent?.filter(
                                 (item) =>
                                   item.controlParameter === controlParameter &&
                                   item.accordance === accordance,
