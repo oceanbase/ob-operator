@@ -197,7 +197,7 @@ func buildDetailFromApiType(t *v1alpha1.OBTenant) *response.OBTenantDetail {
 	if t.Annotations != nil {
 		annotations := make([]common.KVPair, 0, len(t.Annotations))
 		for k, v := range t.Annotations {
-			rt.Annotations = append(rt.Annotations, common.KVPair{
+			annotations = append(annotations, common.KVPair{
 				Key:   k,
 				Value: v,
 			})
