@@ -61,6 +61,7 @@ type OBClusterMeta struct {
 
 	SupportStaticIP    bool `json:"supportStaticIP" binding:"required"`
 	DeletionProtection bool `json:"deletionProtection" binding:"required"`
+	PvcIndependent     bool `json:"pvcIndependent" binding:"required"`
 }
 
 type OBClusterOverview struct {
@@ -100,6 +101,7 @@ type OBClusterExtra struct {
 	Parameters         []ParameterSpec `json:"parameters" binding:"required"`
 	Monitor            *MonitorSpec    `json:"monitor"`
 	BackupVolume       *NFSVolumeSpec  `json:"backupVolume"`
+	Annotations        []common.KVPair `json:"annotations"`
 }
 
 type MonitorSpec struct {
