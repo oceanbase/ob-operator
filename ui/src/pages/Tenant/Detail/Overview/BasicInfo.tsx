@@ -126,29 +126,28 @@ export default function BasicInfo({
             </Descriptions.Item>
           );
         })}
-        {deletionProtection && (
-          <Descriptions.Item
-            label={intl.formatMessage({
-              id: 'src.pages.Tenant.Detail.Overview.EE772326',
-              defaultMessage: '删除保护',
-            })}
-          >
-            <Checkbox
-              // loading 态禁止操作，防止重复操作
-              disabled={patchTenantLoading}
-              defaultChecked={deletionProtection}
-              onChange={(e) => {
-                const body = {} as API.ParamPatchTenant;
-                if (!e.target.checked) {
-                  body.removeDeletionProtection = true;
-                } else {
-                  body.addDeletionProtection = true;
-                }
-                patchTenant(ns, name, body);
-              }}
-            />
-          </Descriptions.Item>
-        )}
+
+        <Descriptions.Item
+          label={intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.Overview.EE772326',
+            defaultMessage: '删除保护',
+          })}
+        >
+          <Checkbox
+            // loading 态禁止操作，防止重复操作
+            disabled={patchTenantLoading}
+            defaultChecked={deletionProtection}
+            onChange={(e) => {
+              const body = {} as API.ParamPatchTenant;
+              if (!e.target.checked) {
+                body.removeDeletionProtection = true;
+              } else {
+                body.addDeletionProtection = true;
+              }
+              patchTenant(ns, name, body);
+            }}
+          />
+        </Descriptions.Item>
       </Descriptions>
 
       {checkSource(source) && (
