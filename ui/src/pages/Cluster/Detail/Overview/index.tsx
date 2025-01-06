@@ -7,6 +7,7 @@ import {
   Dropdown,
   Form,
   Input,
+  Menu,
   MenuProps,
   Row,
   Select,
@@ -171,12 +172,33 @@ const ClusterOverview: React.FC = () => {
   // 不为空即为绑定了NFS
   const removeNFS = !!clusterDetail?.info?.backupVolume;
 
+  const menuChange = ({ key }) => {
+    if (key === 'AddZone') {
+      return handleAddZone();
+    } else if (key === 'Upgrade') {
+      return handleUpgrade();
+    } else if (key === 'delete') {
+      return showDeleteConfirm({
+        onOk: handleDelete,
+        title: intl.formatMessage({
+          id: 'OBDashboard.Detail.Overview.AreYouSureYouWant',
+          defaultMessage: '你确定要删除该集群吗？',
+        }),
+      });
+    } else if (key === 'nfs') {
+      if (removeNFS) {
+        setRemoveNFSModal(true);
+      } else {
+        setMountNFSModal(true);
+      }
+    }
+  };
+
   const items: MenuProps['items'] = [
     {
-      key: '1',
+      key: 'AddZone',
       label: (
         <Button
-          onClick={handleAddZone}
           disabled={
             !isEmpty(clusterDetail) && clusterDetail?.status !== 'running'
           }
@@ -190,14 +212,13 @@ const ClusterOverview: React.FC = () => {
       ),
     },
     {
-      key: '2',
+      key: 'Upgrade',
       label: (
         <Button
           type="text"
           disabled={
             !isEmpty(clusterDetail) && clusterDetail?.status !== 'running'
           }
-          onClick={handleUpgrade}
         >
           {intl.formatMessage({
             id: 'OBDashboard.Detail.Overview.Upgrade',
@@ -207,22 +228,13 @@ const ClusterOverview: React.FC = () => {
       ),
     },
     {
-      key: '3',
+      key: 'delete',
       label: (
         <Button
           type="text"
           disabled={
             !isEmpty(clusterDetail) &&
             (clusterDetail?.status === 'deleting' || deletionProtection)
-          }
-          onClick={() =>
-            showDeleteConfirm({
-              onOk: handleDelete,
-              title: intl.formatMessage({
-                id: 'OBDashboard.Detail.Overview.AreYouSureYouWant',
-                defaultMessage: '你确定要删除该集群吗？',
-              }),
-            })
           }
           danger
         >
@@ -234,7 +246,7 @@ const ClusterOverview: React.FC = () => {
       ),
     },
     {
-      key: '4',
+      key: 'nfs',
       label: (
         <Button
           type="text"
@@ -243,13 +255,6 @@ const ClusterOverview: React.FC = () => {
             (clusterDetail?.status !== 'running' ||
               !clusterDetail?.supportStaticIP)
           }
-          onClick={() => {
-            if (removeNFS) {
-              setRemoveNFSModal(true);
-            } else {
-              setMountNFSModal(true);
-            }
-          }}
         >
           {removeNFS
             ? intl.formatMessage({
@@ -273,7 +278,22 @@ const ClusterOverview: React.FC = () => {
       }),
       extra: access.obclusterwrite
         ? [
-            <Dropdown menu={{ items }} placement="bottomRight">
+            <Dropdown
+              overlayStyle={{ marginRight: 24 }}
+              placement="bottomRight"
+              overlay={
+                <Menu>
+                  {items.map((item) => (
+                    <Menu.Item
+                      key={`${item.key}`}
+                      onClick={() => menuChange(item)}
+                    >
+                      {item.label}
+                    </Menu.Item>
+                  ))}
+                </Menu>
+              }
+            >
               <Button>
                 {intl.formatMessage({
                   id: 'src.pages.Cluster.Detail.Overview.A0A43F50',
