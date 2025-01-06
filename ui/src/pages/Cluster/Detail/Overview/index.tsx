@@ -542,7 +542,7 @@ const ClusterOverview: React.FC = () => {
             {text && (
               <Button
                 type="link"
-                disabled={disableUnescrow.includes(record.name)}
+                disabled={disableUnescrow.some((item) => item === record.name)}
                 loading={patchOBClusterloading}
                 onClick={() => {
                   patchOBCluster(ns, name, {
