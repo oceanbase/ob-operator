@@ -779,11 +779,7 @@ const ClusterOverview: React.FC = () => {
                                 ),
                               );
                             } else {
-                              setParametersData(
-                                newParametersData?.filter(
-                                  (item) => item.controlParameter === false,
-                                ),
-                              );
+                              setParametersData([]);
                             }
                           }
 
@@ -801,13 +797,8 @@ const ClusterOverview: React.FC = () => {
                                 ),
                               );
                             } else {
-                              setParametersData(
-                                newParametersData?.filter(
-                                  (item) =>
-                                    item.name?.includes(name.trim()) &&
-                                    item.controlParameter === false,
-                                ),
-                              );
+                              // 未托管的，没有状态，因此为空
+                              setParametersData([]);
                             }
                           }
                         });

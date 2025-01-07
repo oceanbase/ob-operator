@@ -33,8 +33,8 @@ export default function BackUp() {
             >
               <Input
                 placeholder={intl.formatMessage({
-                  id: 'OBDashboard.Cluster.New.BackUp.PleaseEnter',
-                  defaultMessage: '请输入',
+                  id: 'OBDashboard.Cluster.New.BackUp.PleaseEnter.A',
+                  defaultMessage: '例如 172.17.x.x',
                 })}
               />
             </Form.Item>
@@ -58,8 +58,8 @@ export default function BackUp() {
             >
               <Input
                 placeholder={intl.formatMessage({
-                  id: 'OBDashboard.Cluster.New.BackUp.PleaseEnter',
-                  defaultMessage: '请输入',
+                  id: 'OBDashboard.Cluster.New.BackUp.PleaseEnter.B',
+                  defaultMessage: '例如 /opt/nfs',
                 })}
               />
             </Form.Item>
