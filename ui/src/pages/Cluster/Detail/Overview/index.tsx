@@ -170,8 +170,14 @@ const ClusterOverview: React.FC = () => {
     setOperateModalVisible(true);
   };
 
-  const { parameters, storage, resource, deletionProtection, backupVolume } =
-    clusterDetail?.info || {};
+  const {
+    parameters,
+    storage,
+    resource,
+    deletionProtection,
+    backupVolume,
+    pvcIndependent,
+  } = clusterDetail?.info || {};
 
   // 不为空即为绑定了NFS
   const removeNFS = !!backupVolume;
