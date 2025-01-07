@@ -55,11 +55,13 @@ export default function New() {
     const topologyValue = strTrim(values)?.topology?.map((item) => ({
       ...item,
       nodeSelector: undefined,
-      affinities: item?.affinities?.concat(item?.nodeSelector),
+      affinities:
+        item?.affinities?.concat(item?.nodeSelector) ||
+        item?.nodeSelector ||
+        item?.affinities,
     }));
 
     values.topology = topologyValue;
-
     const res = await createClusterReportWrap({ ...strTrim(values) });
     if (res.successful) {
       message.success(res.message, 3);

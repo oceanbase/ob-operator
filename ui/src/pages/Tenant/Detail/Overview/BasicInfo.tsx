@@ -4,6 +4,7 @@ import { intl } from '@/utils/intl';
 import { findByValue } from '@oceanbase/util';
 import { useRequest } from 'ahooks';
 import { Card, Checkbox, Descriptions, Tag, message } from 'antd';
+import { isEmpty } from 'lodash';
 
 export default function BasicInfo({
   info = {},
@@ -112,40 +113,41 @@ export default function BasicInfo({
     >
       <Descriptions column={5}>
         {Object.keys(InfoConfig).map((key, index) => {
-          const statusItem = findByValue(STATUS_LIST, info[key]);
+          const statusItem = findByValue(STATUS_LIST, info.status);
           return (
             <Descriptions.Item key={index} label={InfoConfig[key]}>
               {key !== 'status' ? (
                 info[key]
-              ) : (
+              ) : !isEmpty(statusItem) ? (
                 <Tag color={statusItem.badgeStatus}>{statusItem.label}</Tag>
+              ) : (
+                '-'
               )}
             </Descriptions.Item>
           );
         })}
-        {deletionProtection && (
-          <Descriptions.Item
-            label={intl.formatMessage({
-              id: 'src.pages.Tenant.Detail.Overview.EE772326',
-              defaultMessage: '删除保护',
-            })}
-          >
-            <Checkbox
-              // loading 态禁止操作，防止重复操作
-              disabled={patchTenantLoading}
-              defaultChecked={deletionProtection}
-              onChange={(e) => {
-                const body = {} as API.ParamPatchTenant;
-                if (!e.target.checked) {
-                  body.removeDeletionProtection = true;
-                } else {
-                  body.addDeletionProtection = true;
-                }
-                patchTenant(ns, name, body);
-              }}
-            />
-          </Descriptions.Item>
-        )}
+
+        <Descriptions.Item
+          label={intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.Overview.EE772326',
+            defaultMessage: '删除保护',
+          })}
+        >
+          <Checkbox
+            // loading 态禁止操作，防止重复操作
+            disabled={patchTenantLoading}
+            defaultChecked={deletionProtection}
+            onChange={(e) => {
+              const body = {} as API.ParamPatchTenant;
+              if (!e.target.checked) {
+                body.removeDeletionProtection = true;
+              } else {
+                body.addDeletionProtection = true;
+              }
+              patchTenant(ns, name, body);
+            }}
+          />
+        </Descriptions.Item>
       </Descriptions>
 
       {checkSource(source) && (

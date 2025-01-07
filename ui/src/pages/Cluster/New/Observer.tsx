@@ -283,7 +283,7 @@ export default function Observer({
               >
                 <SelectWithTooltip
                   type="observer"
-                  name={['observer', 'storage', 'data', 'storageClass']}
+                  name={['observer', 'storage', 'log', 'storageClass']}
                   form={form}
                   selectList={storageClasses}
                   TooltipItemContent={TooltipItemContent}
@@ -315,7 +315,7 @@ export default function Observer({
               >
                 <SelectWithTooltip
                   type="observer"
-                  name={['observer', 'storage', 'data', 'storageClass']}
+                  name={['observer', 'storage', 'redoLog', 'storageClass']}
                   form={form}
                   selectList={storageClasses}
                   TooltipItemContent={TooltipItemContent}
