@@ -105,7 +105,7 @@ const NFSInfoModal: React.FC<NFSInfoModalProps> = ({
             <Input
               placeholder={intl.formatMessage({
                 id: 'src.pages.Cluster.Detail.Overview.D16F4B6E',
-                defaultMessage: '请输入',
+                defaultMessage: '例如 172.17.x.x',
               })}
             />
           </Form.Item>
@@ -128,7 +128,7 @@ const NFSInfoModal: React.FC<NFSInfoModalProps> = ({
             <Input
               placeholder={intl.formatMessage({
                 id: 'src.pages.Cluster.Detail.Overview.D0356ACB',
-                defaultMessage: '请输入',
+                defaultMessage: '例如 /opt/nfs',
               })}
             />
           </Form.Item>
