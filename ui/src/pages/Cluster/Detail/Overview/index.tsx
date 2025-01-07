@@ -169,8 +169,11 @@ const ClusterOverview: React.FC = () => {
     setOperateModalVisible(true);
   };
 
+  const { parameters, storage, resource, deletionProtection, backupVolume } =
+    clusterDetail?.info || {};
+
   // 不为空即为绑定了NFS
-  const removeNFS = !!clusterDetail?.info?.backupVolume;
+  const removeNFS = !!backupVolume;
 
   const menuChange = ({ key }) => {
     if (key === 'AddZone') {
@@ -307,9 +310,6 @@ const ClusterOverview: React.FC = () => {
         : [],
     };
   };
-
-  const { parameters, storage, resource, deletionProtection, pvcIndependent } =
-    clusterDetail?.info || {};
 
   const resourceinit = [
     {
@@ -567,7 +567,12 @@ const ClusterOverview: React.FC = () => {
       <Row gutter={[16, 16]}>
         {clusterDetail && (
           <Col span={24}>
-            <BasicInfo {...(clusterDetail?.info as API.ClusterInfo)} />
+            <BasicInfo
+              {...(clusterDetail?.info as API.ClusterInfo)}
+              clusterDetailRefresh={() => {
+                clusterDetailRefresh();
+              }}
+            />
           </Col>
         )}
         <Col span={24}>

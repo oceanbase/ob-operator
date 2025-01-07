@@ -24,7 +24,6 @@ export default function New() {
   const [passwordVal, setPasswordVal] = useState('');
   const [selectClusterId, setSelectClusterId] = useState<string>();
   const [clusterList, setClusterList] = useState<API.SimpleClusterList>([]);
-  // 删除保护 默认勾选
   const [deleteValue, setDeleteValue] = useState<boolean>(false);
   useRequest(getSimpleClusterList, {
     onSuccess: ({ successful, data }) => {

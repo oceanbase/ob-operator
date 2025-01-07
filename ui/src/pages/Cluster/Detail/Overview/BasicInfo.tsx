@@ -112,6 +112,7 @@ export default function BasicInfo({
   clusterName,
   style,
   deletionProtection,
+  clusterDetailRefresh,
   ...props
 }: ResponseOBCluster & { style?: React.CSSProperties; extra?: boolean }) {
   const statusItem = findByValue(STATUS_LIST, status);
@@ -170,6 +171,7 @@ export default function BasicInfo({
               defaultMessage: '修改删除保护已成功',
             }),
           );
+          clusterDetailRefresh();
         }
       },
     },
