@@ -112,11 +112,11 @@ export default function BasicInfo({
   clusterName,
   style,
   deletionProtection,
+  clusterDetailRefresh,
   ...props
 }: ResponseOBCluster & { style?: React.CSSProperties; extra?: boolean }) {
   const statusItem = findByValue(STATUS_LIST, status);
   const statusDetailItem = findByValue(STATUS_LIST, statusDetail);
-
   const topologyRendering: ITopologyRendering = useMemo(() => {
     const rendering: ITopologyRendering = {
       show: false,
@@ -171,6 +171,7 @@ export default function BasicInfo({
               defaultMessage: '修改删除保护已成功',
             }),
           );
+          clusterDetailRefresh();
         }
       },
     },

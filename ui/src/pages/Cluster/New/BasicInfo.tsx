@@ -188,7 +188,7 @@ export default function BasicInfo({
         <Checkbox
           defaultChecked={deleteValue}
           onChange={(e) => {
-            setDeleteValue(e.target.value);
+            setDeleteValue(e.target.checked);
           }}
         />
       </Space>

@@ -2161,12 +2161,6 @@ export interface ModelParameter {
      * @type {string}
      * @memberof ModelParameter
      */
-    'defaultValue'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ModelParameter
-     */
     'edit_level'?: string;
     /**
      * 
@@ -2174,12 +2168,6 @@ export interface ModelParameter {
      * @memberof ModelParameter
      */
     'info'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ModelParameter
-     */
-    'isDefault'?: string;
     /**
      * 
      * @type {string}
@@ -5563,6 +5551,12 @@ export interface ResponseNamespace {
 export interface ResponseOBCluster {
     /**
      * 
+     * @type {Array<CommonKVPair>}
+     * @memberof ResponseOBCluster
+     */
+    'annotations'?: Array<CommonKVPair>;
+    /**
+     * 
      * @type {ResponseNFSVolumeSpec}
      * @memberof ResponseOBCluster
      */
@@ -5585,6 +5579,12 @@ export interface ResponseOBCluster {
      * @memberof ResponseOBCluster
      */
     'createTime': number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ResponseOBCluster
+     */
+    'deletionProtection': boolean;
     /**
      * 
      * @type {string}
@@ -5627,6 +5627,12 @@ export interface ResponseOBCluster {
      * @memberof ResponseOBCluster
      */
     'parameters': Array<ResponseParameterSpec>;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ResponseOBCluster
+     */
+    'pvcIndependent': boolean;
     /**
      * 
      * @type {ResponseResourceSpecRender}
@@ -5704,6 +5710,12 @@ export interface ResponseOBClusterMeta {
     'clusterName': string;
     /**
      * 
+     * @type {boolean}
+     * @memberof ResponseOBClusterMeta
+     */
+    'deletionProtection': boolean;
+    /**
+     * 
      * @type {CommonClusterMode}
      * @memberof ResponseOBClusterMeta
      */
@@ -5720,6 +5732,12 @@ export interface ResponseOBClusterMeta {
      * @memberof ResponseOBClusterMeta
      */
     'namespace': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ResponseOBClusterMeta
+     */
+    'pvcIndependent': boolean;
     /**
      * 
      * @type {boolean}
@@ -5761,6 +5779,12 @@ export interface ResponseOBClusterOverview {
     'createTime': number;
     /**
      * 
+     * @type {boolean}
+     * @memberof ResponseOBClusterOverview
+     */
+    'deletionProtection': boolean;
+    /**
+     * 
      * @type {string}
      * @memberof ResponseOBClusterOverview
      */
@@ -5783,6 +5807,12 @@ export interface ResponseOBClusterOverview {
      * @memberof ResponseOBClusterOverview
      */
     'namespace': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ResponseOBClusterOverview
+     */
+    'pvcIndependent': boolean;
     /**
      * 
      * @type {string}
@@ -6064,6 +6094,12 @@ export interface ResponseOBServerStorage {
  */
 export interface ResponseOBTenantDetail {
     /**
+     * 
+     * @type {Array<CommonKVPair>}
+     * @memberof ResponseOBTenantDetail
+     */
+    'annotations'?: Array<CommonKVPair>;
+    /**
      * Charset of the tenant
      * @type {string}
      * @memberof ResponseOBTenantDetail
@@ -6081,6 +6117,12 @@ export interface ResponseOBTenantDetail {
      * @memberof ResponseOBTenantDetail
      */
     'createTime': string;
+    /**
+     * Whether the tenant is protected from deletion
+     * @type {boolean}
+     * @memberof ResponseOBTenantDetail
+     */
+    'deletionProtection': boolean;
     /**
      * Locality of the tenant units
      * @type {string}
@@ -6196,6 +6238,12 @@ export interface ResponseOBTenantOverview {
      * @memberof ResponseOBTenantOverview
      */
     'createTime': string;
+    /**
+     * Whether the tenant is protected from deletion
+     * @type {boolean}
+     * @memberof ResponseOBTenantOverview
+     */
+    'deletionProtection': boolean;
     /**
      * Locality of the tenant units
      * @type {string}
