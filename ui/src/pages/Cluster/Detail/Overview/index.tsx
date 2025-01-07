@@ -79,7 +79,8 @@ const ClusterOverview: React.FC = () => {
         // obcluster 的 parameters 里面加了个 specValue 的字段，
         // 如果 specValue 不等于 value，状态写 "不匹配" (黄色tag)，如果两个值相等，写"已匹配"(绿色tag)
         const findSpec = parameters?.find(
-          (item: any) => element.value === item.specValue,
+          (item: any) =>
+            element.value.toLowerCase() === item.specValue.toLowerCase(),
         );
         if (!isEmpty(findSpec)) {
           return { ...element, accordance: true };
@@ -90,7 +91,7 @@ const ClusterOverview: React.FC = () => {
       ?.map((element: any) => {
         // 在 obcluster 的 parameters  里面的就是托管给 operator
         const findName = parameters?.find(
-          (item: any) => element.name === item.name,
+          (item: any) => element.name.toLowerCase() === item.name.toLowerCase(),
         );
         if (!isEmpty(findName)) {
           return { ...element, controlParameter: true };
@@ -761,6 +762,25 @@ const ClusterOverview: React.FC = () => {
                               ),
                             );
                           }
+                          if (
+                            controlParameter !== undefined &&
+                            accordance !== undefined
+                          ) {
+                            if (controlParameter === true) {
+                              setParametersData(
+                                controlParameterContent?.filter(
+                                  (item) => item.accordance === accordance,
+                                ),
+                              );
+                            } else {
+                              setParametersData(
+                                newParametersData?.filter(
+                                  (item) => item.controlParameter === false,
+                                ),
+                              );
+                            }
+                          }
+
                           if (
                             name !== undefined &&
                             controlParameter !== undefined &&
