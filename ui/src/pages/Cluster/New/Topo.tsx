@@ -35,11 +35,26 @@ export default function Topo({ form }) {
   const basicFrom = (topologyConfiguration, name) => (
     <>
       <Col
-        span={topologyConfiguration === 'nodeSelector' ? 7 : 5}
+        span={topologyConfiguration === 'NodeSelector' ? 7 : 5}
         style={{ paddingBottom: 24 }}
       >
-        <Form.Item label={'Key'} name={[name, 'key']}>
-          {topologyConfiguration === 'nodeSelector' ? (
+        <Form.Item
+          label={'Key'}
+          name={[name, 'key']}
+          rules={[
+            {
+              required: true,
+              message: intl.formatMessage(
+                {
+                  id: 'src.pages.Cluster.New.AE7F8E70',
+                  defaultMessage: '请选择 ${topologyConfiguration} Key',
+                },
+                { topologyConfiguration: topologyConfiguration },
+              ),
+            },
+          ]}
+        >
+          {topologyConfiguration === 'NodeSelector' ? (
             <Select
               showSearch
               placeholder={intl.formatMessage({
@@ -62,8 +77,23 @@ export default function Topo({ form }) {
           )}
         </Form.Item>
       </Col>
-      <Col span={topologyConfiguration === 'nodeSelector' ? 8 : 6}>
-        <Form.Item label={'Operator'} name={[name, 'operator']}>
+      <Col span={topologyConfiguration === 'NodeSelector' ? 8 : 6}>
+        <Form.Item
+          label={'Operator'}
+          name={[name, 'operator']}
+          rules={[
+            {
+              required: true,
+              message: intl.formatMessage(
+                {
+                  id: 'src.pages.Cluster.New.5344AD47',
+                  defaultMessage: '请选择 ${topologyConfiguration} Operator',
+                },
+                { topologyConfiguration: topologyConfiguration },
+              ),
+            },
+          ]}
+        >
           <Select
             options={[
               ...(topologyConfiguration !== 'PodAffinity'
@@ -98,7 +128,7 @@ export default function Topo({ form }) {
           />
         </Form.Item>
       </Col>
-      <Col span={topologyConfiguration === 'nodeSelector' ? 8 : 6}>
+      <Col span={topologyConfiguration === 'NodeSelector' ? 8 : 6}>
         <Form.Item
           label={'Value'}
           name={
@@ -106,8 +136,20 @@ export default function Topo({ form }) {
               ? [name, 'value']
               : [name, 'values']
           }
+          rules={[
+            {
+              required: true,
+              message: intl.formatMessage(
+                {
+                  id: 'src.pages.Cluster.New.870724D5',
+                  defaultMessage: '请选择 ${topologyConfiguration} Value',
+                },
+                { topologyConfiguration: topologyConfiguration },
+              ),
+            },
+          ]}
         >
-          {topologyConfiguration === 'nodeSelector' ? (
+          {topologyConfiguration === 'NodeSelector' ? (
             <Select
               showSearch
               mode="multiple"
@@ -165,7 +207,7 @@ export default function Topo({ form }) {
               return (
                 <div key={key}>
                   <Row gutter={8}>
-                    {basicFrom('nodeSelector', name)}
+                    {basicFrom('NodeSelector', name)}
                     <Form.Item
                       noStyle
                       name={[name, 'type']}
@@ -206,7 +248,19 @@ export default function Topo({ form }) {
                 <Row gutter={8}>
                   {basicFrom('PodAffinity', name)}
                   <Col span={6}>
-                    <Form.Item label={'Type'} name={[name, 'type']}>
+                    <Form.Item
+                      label={'Type'}
+                      name={[name, 'type']}
+                      rules={[
+                        {
+                          required: true,
+                          message: intl.formatMessage({
+                            id: 'src.pages.Cluster.New.AC56EBD8',
+                            defaultMessage: '请选择 PodAffinity Type',
+                          }),
+                        },
+                      ]}
+                    >
                       <Select
                         options={[
                           {
@@ -253,9 +307,21 @@ export default function Topo({ form }) {
             {tolerationfields.map(({ key, name }) => (
               <div key={key}>
                 <Row gutter={8}>
-                  {basicFrom('Toleration', name)}
+                  {basicFrom('Tolerations', name)}
                   <Col span={4}>
-                    <Form.Item label={'Effect'} name={[name, 'Effect']}>
+                    <Form.Item
+                      label={'Effect'}
+                      name={[name, 'effect']}
+                      rules={[
+                        {
+                          required: true,
+                          message: intl.formatMessage({
+                            id: 'src.pages.Cluster.New.9DDB4176',
+                            defaultMessage: '请选择 Tolerations Effect',
+                          }),
+                        },
+                      ]}
+                    >
                       <Select
                         options={[
                           {
@@ -275,7 +341,10 @@ export default function Topo({ form }) {
                     </Form.Item>
                   </Col>
                   <Col span={2}>
-                    <Form.Item label={'Seconds'} name={[name, 'seconds']}>
+                    <Form.Item
+                      label={'Seconds'}
+                      name={[name, 'tolerationSeconds']}
+                    >
                       <InputNumber
                         min={1}
                         placeholder={intl.formatMessage({
