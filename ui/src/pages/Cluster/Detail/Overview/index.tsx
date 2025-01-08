@@ -7,7 +7,6 @@ import {
   Dropdown,
   Form,
   Input,
-  Menu,
   MenuProps,
   Row,
   Select,
@@ -206,65 +205,36 @@ const ClusterOverview: React.FC = () => {
   const items: MenuProps['items'] = [
     {
       key: 'AddZone',
-      label: (
-        <Button
-          disabled={
-            !isEmpty(clusterDetail) && clusterDetail?.status !== 'running'
-          }
-          type="text"
-        >
-          {intl.formatMessage({
-            id: 'dashboard.Detail.Overview.AddZone',
-            defaultMessage: '新增Zone',
-          })}
-        </Button>
-      ),
+      label: intl.formatMessage({
+        id: 'dashboard.Detail.Overview.AddZone',
+        defaultMessage: '新增Zone',
+      }),
+
+      disabled: !isEmpty(clusterDetail) && clusterDetail?.status !== 'running',
     },
     {
       key: 'Upgrade',
-      label: (
-        <Button
-          type="text"
-          disabled={
-            !isEmpty(clusterDetail) && clusterDetail?.status !== 'running'
-          }
-        >
-          {intl.formatMessage({
-            id: 'OBDashboard.Detail.Overview.Upgrade',
-            defaultMessage: '升级',
-          })}
-        </Button>
-      ),
+      label: intl.formatMessage({
+        id: 'OBDashboard.Detail.Overview.Upgrade',
+        defaultMessage: '升级',
+      }),
+      disabled: !isEmpty(clusterDetail) && clusterDetail?.status !== 'running',
     },
     {
       key: 'delete',
-      label: (
-        <Button
-          type="text"
-          disabled={
-            !isEmpty(clusterDetail) &&
-            (clusterDetail?.status === 'deleting' || deletionProtection)
-          }
-          danger
-        >
-          {intl.formatMessage({
-            id: 'OBDashboard.Detail.Overview.Delete',
-            defaultMessage: '删除',
-          })}
-        </Button>
-      ),
+      label: intl.formatMessage({
+        id: 'OBDashboard.Detail.Overview.Delete',
+        defaultMessage: '删除',
+      }),
+      danger: true,
+      disabled:
+        !isEmpty(clusterDetail) &&
+        (clusterDetail?.status === 'deleting' || deletionProtection),
     },
     {
       key: 'nfs',
       label: (
-        <Button
-          type="text"
-          disabled={
-            !isEmpty(clusterDetail) &&
-            (clusterDetail?.status !== 'running' ||
-              !clusterDetail?.supportStaticIP)
-          }
-        >
+        <span>
           {removeNFS
             ? intl.formatMessage({
                 id: 'src.pages.Cluster.Detail.Overview.C47B9DA4',
@@ -274,8 +244,12 @@ const ClusterOverview: React.FC = () => {
                 id: 'src.pages.Cluster.Detail.Overview.6B97ABB6',
                 defaultMessage: '挂载 NFS 资源',
               })}
-        </Button>
+        </span>
       ),
+      disabled:
+        isEmpty(clusterDetail) ||
+        clusterDetail?.status !== 'running' ||
+        !clusterDetail?.supportStaticIP,
     },
   ];
 
@@ -287,29 +261,15 @@ const ClusterOverview: React.FC = () => {
       }),
       extra: access.obclusterwrite
         ? [
-            <Dropdown
-              overlayStyle={{ marginRight: 24 }}
-              placement="bottomRight"
-              overlay={
-                <Menu>
-                  {items.map((item) => (
-                    <Menu.Item
-                      key={`${item.key}`}
-                      onClick={() => menuChange(item)}
-                    >
-                      {item.label}
-                    </Menu.Item>
-                  ))}
-                </Menu>
-              }
-            >
+            <Dropdown menu={{ items, onClick: menuChange }}>
               <Button>
-                {intl.formatMessage({
-                  id: 'src.pages.Cluster.Detail.Overview.A0A43F50',
-                  defaultMessage: '集群管理',
-                })}
-
-                <DownOutlined />
+                <Space>
+                  {intl.formatMessage({
+                    id: 'src.pages.Cluster.Detail.Overview.A0A43F50',
+                    defaultMessage: '集群管理',
+                  })}
+                  <DownOutlined />
+                </Space>
               </Button>
             </Dropdown>,
           ]
