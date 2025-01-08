@@ -44,7 +44,13 @@ export default function Topo({ form }) {
           rules={[
             {
               required: true,
-              message: `请选择 ${topologyConfiguration} Key`,
+              message: intl.formatMessage(
+                {
+                  id: 'src.pages.Cluster.New.AE7F8E70',
+                  defaultMessage: '请选择 ${topologyConfiguration} Key',
+                },
+                { topologyConfiguration: topologyConfiguration },
+              ),
             },
           ]}
         >
@@ -78,7 +84,13 @@ export default function Topo({ form }) {
           rules={[
             {
               required: true,
-              message: `请选择 ${topologyConfiguration} Operator`,
+              message: intl.formatMessage(
+                {
+                  id: 'src.pages.Cluster.New.5344AD47',
+                  defaultMessage: '请选择 ${topologyConfiguration} Operator',
+                },
+                { topologyConfiguration: topologyConfiguration },
+              ),
             },
           ]}
         >
@@ -127,7 +139,13 @@ export default function Topo({ form }) {
           rules={[
             {
               required: true,
-              message: `请选择 ${topologyConfiguration} Value`,
+              message: intl.formatMessage(
+                {
+                  id: 'src.pages.Cluster.New.870724D5',
+                  defaultMessage: '请选择 ${topologyConfiguration} Value',
+                },
+                { topologyConfiguration: topologyConfiguration },
+              ),
             },
           ]}
         >
@@ -236,7 +254,10 @@ export default function Topo({ form }) {
                       rules={[
                         {
                           required: true,
-                          message: '请选择 PodAffinity Type',
+                          message: intl.formatMessage({
+                            id: 'src.pages.Cluster.New.AC56EBD8',
+                            defaultMessage: '请选择 PodAffinity Type',
+                          }),
                         },
                       ]}
                     >
@@ -294,7 +315,10 @@ export default function Topo({ form }) {
                       rules={[
                         {
                           required: true,
-                          message: '请选择 Tolerations Effect',
+                          message: intl.formatMessage({
+                            id: 'src.pages.Cluster.New.9DDB4176',
+                            defaultMessage: '请选择 Tolerations Effect',
+                          }),
                         },
                       ]}
                     >

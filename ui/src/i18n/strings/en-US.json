@@ -1249,5 +1249,10 @@
   "src.pages.Tenant.Detail.Overview.892E62C7": "Deletion protection modified successfully",
   "src.pages.Tenant.Detail.Overview.EE772326": "Deletion protection",
   "src.pages.Overview.E15A1FED": "metrics-server has not been installed in the K8s cluster, and the usage of node resources cannot be obtained.",
-  "src.pages.Cluster.Detail.Overview.FF85D01F": "Unmanaged Successfully"
+  "src.pages.Cluster.Detail.Overview.FF85D01F": "Unmanaged Successfully",
+  "src.pages.Cluster.New.AE7F8E70": "Please select {topologyConfiguration} Key",
+  "src.pages.Cluster.New.5344AD47": "Please select {topologyConfiguration} Operator",
+  "src.pages.Cluster.New.870724D5": "Please select {topologyConfiguration} Value",
+  "src.pages.Cluster.New.AC56EBD8": "Please select PodAffinity Type",
+  "src.pages.Cluster.New.9DDB4176": "Please select the Tolerations Effect"
 }

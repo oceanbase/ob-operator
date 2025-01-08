@@ -1271,5 +1271,10 @@
   "src.pages.Tenant.Detail.Overview.892E62C7": "修改删除保护已成功",
   "src.pages.Tenant.Detail.Overview.EE772326": "删除保护",
   "src.pages.Overview.E15A1FED": "K8s 集群中尚未安装 metrics-server，无法获取节点资源用量",
-  "src.pages.Cluster.Detail.Overview.FF85D01F": "解除托管已成功"
+  "src.pages.Cluster.Detail.Overview.FF85D01F": "解除托管已成功",
+  "src.pages.Cluster.New.AE7F8E70": "请选择 {topologyConfiguration} Key",
+  "src.pages.Cluster.New.5344AD47": "请选择 {topologyConfiguration} Operator",
+  "src.pages.Cluster.New.870724D5": "请选择 {topologyConfiguration} Value",
+  "src.pages.Cluster.New.AC56EBD8": "请选择 PodAffinity Type",
+  "src.pages.Cluster.New.9DDB4176": "请选择 Tolerations Effect"
 }
