@@ -34,7 +34,7 @@ type CreateOBTenantParam struct {
 	Source     *TenantSourceSpec `json:"source,omitempty"`
 
 	// Enum: express_oltp, express_oltp, olap, kv, htap, express_oltp_perf
-	Scenario           string          `json:"scenario"`
+	Scenario           string          `json:"scenario" binding:"required"`
 	DeletionProtection bool            `json:"deletionProtection"`
 	Parameters         []common.KVPair `json:"parameters"`
 	Variables          []common.KVPair `json:"variables"`
