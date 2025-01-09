@@ -503,10 +503,11 @@ func buildOBClusterTopology(topology []param.ZoneTopology) []apitypes.OBZoneTopo
 			topo.Tolerations = make([]corev1.Toleration, 0)
 			for _, kv := range zone.Tolerations {
 				toleration := corev1.Toleration{
-					Key:      kv.Key,
-					Operator: corev1.TolerationOpEqual,
-					Value:    kv.Value,
-					Effect:   corev1.TaintEffectNoSchedule,
+					Key:               kv.Key,
+					Operator:          corev1.TolerationOperator(kv.Operator),
+					Value:             kv.Value,
+					Effect:            corev1.TaintEffect(kv.Effect),
+					TolerationSeconds: kv.TolerationSeconds,
 				}
 				topo.Tolerations = append(topo.Tolerations, toleration)
 			}
