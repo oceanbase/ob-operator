@@ -60,43 +60,24 @@ const ClusterOverview: React.FC = () => {
 
   const { setFieldsValue, validateFields } = form;
 
-  const {
-    data: listOBClusterParameters,
-    loading,
-    refresh,
-  } = useRequest(obcluster.listOBClusterParameters, {
-    defaultParams: [ns, name],
-    onSuccess: (res) => {
-      const newData = getNewData(res?.data);
-      setParametersData(newData);
-    },
-  });
-
   const getNewData = (data) => {
-    const obt = data
-      ?.map((element) => {
-        // obcluster 的 parameters 里面加了个 specValue 的字段，
-        // 如果 specValue 不等于 value，状态写 "不匹配" (黄色tag)，如果两个值相等，写"已匹配"(绿色tag)
-        const findSpec = parameters?.find(
-          (item: any) => item.value === item.specValue,
-        );
-        if (!isEmpty(findSpec)) {
-          return { ...element, accordance: true };
-        } else if (isEmpty(findSpec)) {
-          return { ...element, accordance: false };
-        }
-      })
-      ?.map((element: any) => {
-        // 在 obcluster 的 parameters  里面的就是托管给 operator
-        const findName = parameters?.find(
-          (item: any) => element.name === item.name,
-        );
-        if (!isEmpty(findName)) {
-          return { ...element, controlParameter: true };
-        } else if (isEmpty(findName)) {
-          return { ...element, controlParameter: false };
-        }
-      });
+    const obt = data?.map((element: any) => {
+      // 在 obcluster 的 parameters  里面的就是托管给 operator
+      const findName = parameters?.find(
+        (item: any) => element.name === item.name,
+      );
+
+      if (!isEmpty(findName)) {
+        return {
+          ...element,
+          controlParameter: true,
+          accordance: findName?.value === findName?.specValue,
+        };
+      } else if (isEmpty(findName)) {
+        return { ...element, controlParameter: false, accordance: undefined };
+      }
+    });
+
     return obt;
   };
 
@@ -112,10 +93,24 @@ const ClusterOverview: React.FC = () => {
       if (data.status === 'operating') {
         timerRef.current = setTimeout(() => {
           getClusterDetail({ ns: ns!, name: name! });
+          refresh();
         }, REFRESH_CLUSTER_TIME);
       } else if (timerRef.current) {
         clearTimeout(timerRef.current);
       }
+    },
+  });
+
+  const {
+    data: listOBClusterParameters,
+    loading,
+    refresh,
+  } = useRequest(obcluster.listOBClusterParameters, {
+    defaultParams: [ns, name],
+    refreshDeps: [clusterDetail?.status],
+    onSuccess: (res) => {
+      const newData = getNewData(res?.data);
+      setParametersData(newData);
     },
   });
 
@@ -402,6 +397,12 @@ const ClusterOverview: React.FC = () => {
         defaultMessage: '参数值',
       }),
       dataIndex: 'value',
+      render: (text: string, record) => {
+        const content =
+          parameters?.find((item) => item.name === record.name)?.value || text;
+
+        return <span>{content}</span>;
+      },
     },
     {
       title: intl.formatMessage({
@@ -456,7 +457,7 @@ const ClusterOverview: React.FC = () => {
 
       dataIndex: 'accordance',
       width: 100,
-      render: (text: boolean, record) => {
+      render: (text) => {
         const tagColor = text ? 'green' : 'gold';
         const tagContent = text
           ? intl.formatMessage({
@@ -468,10 +469,10 @@ const ClusterOverview: React.FC = () => {
               defaultMessage: '不匹配',
             });
 
-        return record?.controlParameter ? (
-          <Tag color={tagColor}>{tagContent}</Tag>
-        ) : (
+        return text === undefined ? (
           '/'
+        ) : (
+          <Tag color={tagColor}>{tagContent}</Tag>
         );
       },
     },
@@ -491,13 +492,20 @@ const ClusterOverview: React.FC = () => {
           'max_syslog_file_count',
         ];
 
+        const valueContent =
+          parameters?.find((item) => item.name === record.name)?.value ||
+          record?.value;
+
         return (
           <Space size={1}>
             <Button
               type="link"
               onClick={() => {
                 setIsDrawerOpen(true);
-                setParametersRecord(record);
+                setParametersRecord({
+                  ...record,
+                  value: valueContent,
+                });
               }}
             >
               {intl.formatMessage({
@@ -839,6 +847,13 @@ const ClusterOverview: React.FC = () => {
         onSuccess={() => {
           setIsDrawerOpen(false);
           clusterDetailRefresh();
+          // 编辑成功后，清空搜索条件，刷新参数列表
+          setFieldsValue({
+            name: undefined,
+            controlParameter: undefined,
+            accordance: undefined,
+          });
+          refresh();
         }}
         initialValues={parametersRecord}
         {...(clusterDetail?.info as API.ClusterInfo)}
