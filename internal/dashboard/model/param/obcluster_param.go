@@ -18,17 +18,17 @@ import (
 )
 
 type ZoneTopology struct {
-	Zone         string                  `json:"zone"`
-	Replicas     int                     `json:"replicas"`
+	Zone         string                  `json:"zone" binding:"required"`
+	Replicas     int                     `json:"replicas" binding:"required"`
 	NodeSelector []common.KVPair         `json:"nodeSelector,omitempty"`
 	Tolerations  []common.TolerationSpec `json:"tolerations,omitempty"`
 	Affinities   []common.AffinitySpec   `json:"affinities,omitempty"`
 }
 
 type OBServerStorageSpec struct {
-	Data    common.StorageSpec `json:"data"`
-	RedoLog common.StorageSpec `json:"redoLog"`
-	Log     common.StorageSpec `json:"log"`
+	Data    common.StorageSpec `json:"data" binding:"required"`
+	RedoLog common.StorageSpec `json:"redoLog" binding:"required"`
+	Log     common.StorageSpec `json:"log" binding:"required"`
 }
 
 type MonitorStorageSpec struct {
@@ -36,14 +36,14 @@ type MonitorStorageSpec struct {
 }
 
 type OBServerSpec struct {
-	Image    string               `json:"image"`
-	Resource common.ResourceSpec  `json:"resource"`
-	Storage  *OBServerStorageSpec `json:"storage"`
+	Image    string               `json:"image" binding:"required"`
+	Resource common.ResourceSpec  `json:"resource" binding:"required"`
+	Storage  *OBServerStorageSpec `json:"storage" binding:"required"`
 }
 
 type MonitorSpec struct {
-	Image    string              `json:"image"`
-	Resource common.ResourceSpec `json:"resource"`
+	Image    string              `json:"image" binding:"required"`
+	Resource common.ResourceSpec `json:"resource" binding:"required"`
 }
 
 type NFSVolumeSpec struct {
@@ -52,30 +52,30 @@ type NFSVolumeSpec struct {
 }
 
 type CreateOBClusterParam struct {
-	Namespace    string             `json:"namespace"`
-	Name         string             `json:"name"`
-	ClusterName  string             `json:"clusterName"`
-	ClusterId    int64              `json:"clusterId"`
-	RootPassword string             `json:"rootPassword"`
+	Namespace    string             `json:"namespace" binding:"required"`
+	Name         string             `json:"name" binding:"required"`
+	ClusterName  string             `json:"clusterName" binding:"required"`
+	ClusterId    int64              `json:"clusterId" binding:"required"`
+	RootPassword string             `json:"rootPassword" binding:"required"`
 	Topology     []ZoneTopology     `json:"topology"`
-	OBServer     *OBServerSpec      `json:"observer"`
+	OBServer     *OBServerSpec      `json:"observer" binding:"required"`
 	Monitor      *MonitorSpec       `json:"monitor"`
 	Parameters   []common.KVPair    `json:"parameters"`
 	BackupVolume *NFSVolumeSpec     `json:"backupVolume"`
-	Mode         common.ClusterMode `json:"mode"`
+	Mode         common.ClusterMode `json:"mode" binding:"required"`
 
 	// Enum: express_oltp, express_oltp, olap, kv, htap, express_oltp_perf
-	Scenario           string `json:"scenario"`
+	Scenario           string `json:"scenario" binding:"required"`
 	DeletionProtection bool   `json:"deletionProtection"`
 	PvcIndependent     bool   `json:"pvcIndependent"`
 }
 
 type UpgradeOBClusterParam struct {
-	Image string `json:"image"`
+	Image string `json:"image" binding:"required"`
 }
 
 type ScaleOBServerParam struct {
-	Replicas int `json:"replicas"`
+	Replicas int `json:"replicas" binding:"required"`
 }
 
 type K8sObjectIdentity struct {
