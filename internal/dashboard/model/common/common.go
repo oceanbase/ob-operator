@@ -13,13 +13,13 @@ See the Mulan PSL v2 for more details.
 package common
 
 type KVPair struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+	Key   string `json:"key" binding:"required"`
+	Value string `json:"value" binding:"required"`
 }
 
 type ResourceSpec struct {
-	Cpu      int64 `json:"cpu"`
-	MemoryGB int64 `json:"memory"`
+	Cpu      int64 `json:"cpu" binding:"required"`
+	MemoryGB int64 `json:"memory" binding:"required"`
 }
 
 type StorageSpec struct {
@@ -28,8 +28,9 @@ type StorageSpec struct {
 }
 
 type SelectorExpression struct {
-	Key      string   `json:"key"`
-	Operator string   `json:"operator,omitempty"`
+	Key string `json:"key" binding:"required"`
+	// Enum: In, NotIn, Exists, DoesNotExist
+	Operator string   `json:"operator,omitempty" binding:"required"`
 	Values   []string `json:"values,omitempty"`
 }
 
@@ -38,15 +39,17 @@ type AffinityType string
 type AffinitySpec struct {
 	SelectorExpression `json:",inline"`
 	// Enum: NODE, POD, POD_ANTI
-	Type      AffinityType `json:"type"`
+	Type      AffinityType `json:"type" binding:"required"`
 	Weight    int32        `json:"weight,omitempty"`
 	Preferred bool         `json:"preferred,omitempty"`
 }
 
 type TolerationSpec struct {
-	KVPair            `json:",inline"`
-	Operator          string `json:"operator"`
-	Effect            string `json:"effect"`
+	KVPair `json:",inline"`
+	// Enum: Exists, Equal
+	Operator string `json:"operator" binding:"required"`
+	// Enum: PreferNoSchedule, NoSchedule, NoExecute
+	Effect            string `json:"effect" binding:"required"`
 	TolerationSeconds *int64 `json:"tolerationSeconds,omitempty"`
 }
 
