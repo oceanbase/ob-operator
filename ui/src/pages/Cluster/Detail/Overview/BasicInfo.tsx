@@ -47,10 +47,16 @@ const nodeSelectorColumns: ColumnsType<ExtendedAffinity> = [
   {
     title: 'Values',
     dataIndex: 'values',
+    render(value: string[] | undefined) {
+      return value?.join(', ') || '-';
+    },
   },
   {
     title: 'Weight',
     dataIndex: 'weight',
+    render(value: number | undefined) {
+      return value || '-';
+    },
   },
 ];
 
@@ -78,6 +84,9 @@ const tolerationColumns: ColumnsType<ExtendedToleration> = [
   {
     title: 'Value',
     dataIndex: 'value',
+    render(value: string | undefined) {
+      return value || '-';
+    },
   },
   {
     title: 'Effect',
@@ -308,7 +317,7 @@ export default function BasicInfo({
           </Title>
           {topologyRendering.nodeSelectors.length > 0 && (
             <>
-              <Text style={{ marginBottom: 8, display: 'block' }}>
+              <Text style={{ marginBottom: 8, marginTop: 8, display: 'block' }}>
                 Node Selector
               </Text>
               <Table
@@ -323,7 +332,7 @@ export default function BasicInfo({
           )}
           {topologyRendering.affinities.length > 0 && (
             <>
-              <Text style={{ marginBottom: 8, display: 'block' }}>
+              <Text style={{ marginBottom: 8, marginTop: 8, display: 'block' }}>
                 Pod Affinity
               </Text>
               <Table
@@ -338,7 +347,7 @@ export default function BasicInfo({
           )}
           {topologyRendering.tolerations.length > 0 && (
             <>
-              <Text style={{ marginBottom: 8, display: 'block' }}>
+              <Text style={{ marginBottom: 8, marginTop: 8, display: 'block' }}>
                 Tolerations
               </Text>
               <Table
