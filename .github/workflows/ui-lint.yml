@@ -24,3 +24,5 @@ jobs:
         run: cd ui && yarn check-style
       - name: Lint
         run: cd ui && yarn lint
+      - name: build
+        run: cd ui && yarn build
