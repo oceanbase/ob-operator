@@ -14,6 +14,7 @@ export default function BasicInfo({
   name,
   ns,
 }: API.TenantBasicInfo & { style?: React.CSSProperties; loading: boolean }) {
+  const deletionProtection = info?.deletionProtection;
   const InfoConfig = {
     name: intl.formatMessage({
       id: 'Dashboard.Detail.Overview.BasicInfo.ResourceName',
@@ -96,8 +97,6 @@ export default function BasicInfo({
       },
     },
   );
-  const { deletionProtection } = info;
-
   return (
     <Card
       loading={loading}
