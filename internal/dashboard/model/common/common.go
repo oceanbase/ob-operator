@@ -28,7 +28,8 @@ type StorageSpec struct {
 }
 
 type SelectorExpression struct {
-	Key      string   `json:"key" binding:"required"`
+	Key string `json:"key" binding:"required"`
+	// Enum: In, NotIn, Exists, DoesNotExist
 	Operator string   `json:"operator,omitempty" binding:"required"`
 	Values   []string `json:"values,omitempty"`
 }
@@ -44,8 +45,10 @@ type AffinitySpec struct {
 }
 
 type TolerationSpec struct {
-	KVPair            `json:",inline"`
-	Operator          string `json:"operator" binding:"required"`
+	KVPair `json:",inline"`
+	// Enum: Exists, Equal
+	Operator string `json:"operator" binding:"required"`
+	// Enum: PreferNoSchedule, NoSchedule, NoExecute
 	Effect            string `json:"effect" binding:"required"`
 	TolerationSeconds *int64 `json:"tolerationSeconds,omitempty"`
 }
