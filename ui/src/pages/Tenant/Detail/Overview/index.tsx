@@ -14,7 +14,7 @@ import { PageContainer } from '@ant-design/pro-components';
 import { history, useAccess, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Col, Row, Tooltip, message } from 'antd';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   getClusterFromTenant,
   getOriginResourceUsages,
@@ -288,19 +288,15 @@ export default function TenantOverview() {
     <div id="tenant-detail-container" className={styles.tenantContainer}>
       <PageContainer header={header()}>
         <Row justify="start" gutter={[16, 16]}>
-          {useMemo(() => {
-            return (
-              <Col span={24}>
-                <BasicInfo
-                  loading={loading}
-                  info={tenantDetail?.info}
-                  source={tenantDetail?.source}
-                  name={name}
-                  ns={ns}
-                />
-              </Col>
-            );
-          }, [tenantDetail])}
+          <Col span={24}>
+            <BasicInfo
+              loading={loading}
+              info={tenantDetail?.info}
+              source={tenantDetail?.source}
+              name={name}
+              ns={ns}
+            />
+          </Col>
 
           {tenantDetail && tenantDetail.replicas && (
             <Replicas

@@ -32,6 +32,34 @@ export default function Topo({ form }) {
 
   const access = useAccess();
 
+  const affinitiesOperatorList = [
+    {
+      value: 'In',
+      label: 'In',
+    },
+    {
+      value: 'NotIn',
+      label: 'NotIn',
+    },
+    {
+      value: 'Exists',
+      label: 'Exists',
+    },
+    {
+      value: 'DoesNoExist',
+      label: 'DoesNoExist',
+    },
+  ];
+  const tolerationsOperatorList = [
+    {
+      value: 'Equal',
+      label: 'Equal',
+    },
+    {
+      value: 'Exists',
+      label: 'Exists',
+    },
+  ];
   const basicFrom = (topologyConfiguration, name) => (
     <>
       <Col
@@ -95,44 +123,23 @@ export default function Topo({ form }) {
           ]}
         >
           <Select
-            options={[
-              ...(topologyConfiguration !== 'PodAffinity'
-                ? [
-                    {
-                      value: 'Equal',
-                      label: 'Equal',
-                    },
-                  ]
-                : []),
-              ...(topologyConfiguration !== 'Toleration'
-                ? [
-                    {
-                      value: 'In',
-                      label: 'In',
-                    },
-                    {
-                      value: 'NotIn',
-                      label: 'NotIn',
-                    },
-                    {
-                      value: 'Exist',
-                      label: 'Exist',
-                    },
-                  ]
-                : []),
-              {
-                value: 'DoesNoExist',
-                label: 'DoesNoExist',
-              },
-            ]}
+            placeholder={intl.formatMessage({
+              id: 'OBDashboard.components.NodeSelector.PleaseSelect',
+              defaultMessage: '请选择',
+            })}
+            options={
+              topologyConfiguration === 'Tolerations'
+                ? tolerationsOperatorList
+                : affinitiesOperatorList
+            }
           />
         </Form.Item>
       </Col>
       <Col span={topologyConfiguration === 'NodeSelector' ? 8 : 6}>
         <Form.Item
-          label={'Value'}
+          label={topologyConfiguration === 'Tolerations' ? 'Value' : 'Values'}
           name={
-            topologyConfiguration === 'Toleration'
+            topologyConfiguration === 'Tolerations'
               ? [name, 'value']
               : [name, 'values']
           }
@@ -142,7 +149,7 @@ export default function Topo({ form }) {
               message: intl.formatMessage(
                 {
                   id: 'src.pages.Cluster.New.870724D5',
-                  defaultMessage: '请选择 ${topologyConfiguration} Value',
+                  defaultMessage: '请输入 ${topologyConfiguration} Value',
                 },
                 { topologyConfiguration: topologyConfiguration },
               ),
@@ -169,6 +176,17 @@ export default function Topo({ form }) {
               style={{ width: '100%' }}
               tokenSeparators={[',']}
               options={[]}
+              placeholder={intl.formatMessage({
+                id: 'src.pages.Cluster.New.DB6FD585',
+                defaultMessage: '输入后按回车添加',
+              })}
+              // 下拉框不展示
+              dropdownStyle={{
+                display: 'none',
+                height: 0,
+              }}
+              // 下拉 icon 不展示
+              suffixIcon={<></>}
             />
           ) : (
             <Input
@@ -246,7 +264,6 @@ export default function Topo({ form }) {
             {Podfields.map(({ key, name }) => (
               <div key={key}>
                 <Row gutter={8}>
-                  {basicFrom('PodAffinity', name)}
                   <Col span={6}>
                     <Form.Item
                       label={'Type'}
@@ -262,6 +279,10 @@ export default function Topo({ form }) {
                       ]}
                     >
                       <Select
+                        placeholder={intl.formatMessage({
+                          id: 'OBDashboard.components.NodeSelector.PleaseSelect',
+                          defaultMessage: '请选择',
+                        })}
                         options={[
                           {
                             value: 'POD',
@@ -275,6 +296,7 @@ export default function Topo({ form }) {
                       />
                     </Form.Item>
                   </Col>
+                  {basicFrom('PodAffinity', name)}
                   <DeleteOutlined
                     onClick={() => remove(name)}
                     style={{ marginBottom: 15 }}
@@ -323,6 +345,10 @@ export default function Topo({ form }) {
                       ]}
                     >
                       <Select
+                        placeholder={intl.formatMessage({
+                          id: 'OBDashboard.components.NodeSelector.PleaseSelect',
+                          defaultMessage: '请选择',
+                        })}
                         options={[
                           {
                             value: 'NoSchedule',
