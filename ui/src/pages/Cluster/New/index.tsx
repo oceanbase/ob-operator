@@ -61,6 +61,7 @@ export default function New() {
         item?.affinities,
     }));
 
+    console.log('strTrim values', strTrim(values));
     values.topology = topologyValue;
     const res = await createClusterReportWrap({ ...strTrim(values) });
     if (res.successful) {

@@ -111,7 +111,12 @@ export default function NewBackup() {
       <Form initialValues={initialValues} form={form} onFinish={handleSubmit}>
         {tenantDetail && (
           <Col span={24}>
-            <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
+            <BasicInfo
+              info={tenantDetail.info}
+              source={tenantDetail.source}
+              ns={ns}
+              name={name}
+            />
           </Col>
         )}
 
