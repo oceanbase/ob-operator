@@ -37,7 +37,9 @@ func GetOBClusterUsages(ctx context.Context, nn *param.K8sObjectIdentity) (*resp
 	}
 	clt := client.GetClient()
 	serverList := &v1alpha1.OBServerList{}
-	err = clients.ServerClient.List(ctx, nn.Namespace, serverList, metav1.ListOptions{})
+	err = clients.ServerClient.List(ctx, nn.Namespace, serverList, metav1.ListOptions{
+		LabelSelector: oceanbaseconst.LabelRefOBCluster + "=" + obcluster.Name,
+	})
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
