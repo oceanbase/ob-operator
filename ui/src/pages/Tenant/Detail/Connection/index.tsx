@@ -54,6 +54,8 @@ const TenantConnection: React.FC = () => {
               info={tenantDetail.info}
               source={tenantDetail.source}
               loading={loading}
+              ns={ns}
+              name={name}
             />
           </Col>
         )}

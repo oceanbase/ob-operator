@@ -97,6 +97,8 @@ export default function Topo() {
             <BasicInfo
               info={tenantTopoData.info}
               source={tenantTopoData.source}
+              ns={ns}
+              name={name}
               style={{ backgroundColor: 'rgb(245, 248, 254)', border: 'none' }}
             />
           }
