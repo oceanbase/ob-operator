@@ -32,6 +32,34 @@ export default function Topo({ form }) {
 
   const access = useAccess();
 
+  const affinitiesOperatorList = [
+    {
+      value: 'In',
+      label: 'In',
+    },
+    {
+      value: 'NotIn',
+      label: 'NotIn',
+    },
+    {
+      value: 'Exists',
+      label: 'Exists',
+    },
+    {
+      value: 'DoesNoExist',
+      label: 'DoesNoExist',
+    },
+  ];
+  const tolerationsOperatorList = [
+    {
+      value: 'Equal',
+      label: 'Equal',
+    },
+    {
+      value: 'Exists',
+      label: 'Exists',
+    },
+  ];
   const basicFrom = (topologyConfiguration, name) => (
     <>
       <Col
@@ -99,42 +127,17 @@ export default function Topo({ form }) {
               id: 'OBDashboard.components.NodeSelector.PleaseSelect',
               defaultMessage: '请选择',
             })}
-            options={[
-              ...(topologyConfiguration === 'Tolerations'
-                ? [
-                    {
-                      value: 'Equal',
-                      label: 'Equal',
-                    },
-                  ]
-                : []),
-              ...(topologyConfiguration !== 'Tolerations'
-                ? [
-                    {
-                      value: 'In',
-                      label: 'In',
-                    },
-                    {
-                      value: 'NotIn',
-                      label: 'NotIn',
-                    },
-                    {
-                      value: 'Exists',
-                      label: 'Exists',
-                    },
-                  ]
-                : []),
-              {
-                value: 'DoesNoExist',
-                label: 'DoesNoExist',
-              },
-            ]}
+            options={
+              topologyConfiguration === 'Tolerations'
+                ? tolerationsOperatorList
+                : affinitiesOperatorList
+            }
           />
         </Form.Item>
       </Col>
       <Col span={topologyConfiguration === 'NodeSelector' ? 8 : 6}>
         <Form.Item
-          label={'Value'}
+          label={topologyConfiguration === 'Tolerations' ? 'Value' : 'Values'}
           name={
             topologyConfiguration === 'Tolerations'
               ? [name, 'value']

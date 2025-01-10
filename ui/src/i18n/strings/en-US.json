@@ -1252,8 +1252,8 @@
   "src.pages.Cluster.Detail.Overview.FF85D01F": "Unmanaged Successfully",
   "src.pages.Cluster.New.AE7F8E70": "Please select {topologyConfiguration} Key",
   "src.pages.Cluster.New.5344AD47": "Please select {topologyConfiguration} Operator",
-  "src.pages.Cluster.New.870724D5": "Please Enter {topologyConfiguration} Value",
+  "src.pages.Cluster.New.870724D5": "Please enter {topologyConfiguration} Value",
   "src.pages.Cluster.New.AC56EBD8": "Please select PodAffinity Type",
   "src.pages.Cluster.New.9DDB4176": "Please select the Tolerations Effect",
-  "src.pages.Cluster.New.DB6FD585": "Enter and press Enter to add"
+  "src.pages.Cluster.New.DB6FD585": "Input content and press Enter to add"
 }
