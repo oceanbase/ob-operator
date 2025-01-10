@@ -47,7 +47,12 @@ export default function Monitor() {
         groupLabels={['tenant_name']}
         basicInfo={
           tenantDetail && (
-            <BasicInfo info={tenantDetail.info} source={tenantDetail.source} />
+            <BasicInfo
+              info={tenantDetail.info}
+              source={tenantDetail.source}
+              ns={ns}
+              name={name}
+            />
           )
         }
       />

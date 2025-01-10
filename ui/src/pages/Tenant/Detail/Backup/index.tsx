@@ -106,6 +106,8 @@ export default function Backup() {
               <BasicInfo
                 info={tenantDetail.info}
                 source={tenantDetail.source}
+                ns={ns}
+                name={name}
               />
             </Col>
           )}
