@@ -3,7 +3,7 @@ import G6, { IG6GraphEvent } from '@antv/g6';
 import { createNodeFromReact } from '@antv/g6-react-node';
 import { useAccess, useParams } from '@umijs/max';
 import { useRequest, useUpdateEffect } from 'ahooks';
-import { message } from 'antd';
+import { Spin, message } from 'antd';
 import _ from 'lodash';
 import { ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -24,7 +24,6 @@ import {
 } from '@/services/reportRequest/clusterReportReq';
 import { deleteObtenantPool } from '@/services/tenant';
 import type { Topo } from '@/type/topo';
-import { PageContainer } from '@ant-design/pro-components';
 import MoreModal from '../moreModal';
 import { ReactNode, config } from './G6register';
 import {
@@ -40,6 +39,7 @@ import {
   checkTopoDataIsSame,
   getServerNumber,
 } from './helper';
+import styles from './index.less';
 
 interface TopoProps {
   tenantReplicas?: API.ReplicaDetailType[];
@@ -487,74 +487,70 @@ export default function TopoComponent({
 
   // Use different pictures for nodes in different states
   return (
-    <PageContainer
-      loading={loading || clusterTopoLoading}
-      // 去除原有组件自带 header 间距，与项目内样式保持一致
-      style={{
-        margin: -32,
-        marginLeft: -40,
-      }}
-    >
-      <div style={{ position: 'relative', height: '100vh' }}>
-        {header
-          ? header
-          : originTopoData && (
-              <BasicInfo
-                extra={false}
-                style={{ backgroundColor: '#f5f8fe', border: 'none' }}
-                {...(originTopoData.basicInfo as API.ClusterInfo)}
-              />
-            )}
-
-        <div style={{ height: '100%' }} id="topoContainer"></div>
-        {useMemo(
-          () => (
-            <MoreModal
-              innerRef={modelRef}
-              visible={visible}
-              list={operateList}
-              ItemClick={ItemClickOperate}
+    <div style={{ position: 'relative', height: '100vh' }}>
+      {header
+        ? header
+        : originTopoData && (
+            <BasicInfo
+              extra={false}
+              style={{ backgroundColor: '#f5f8fe', border: 'none' }}
+              {...(originTopoData.basicInfo as API.ClusterInfo)}
             />
-          ),
+          )}
 
-          [operateList, visible, status],
-        )}
+      <div style={{ height: '100%' }} id="topoContainer"></div>
+      {useMemo(
+        () => (
+          <MoreModal
+            innerRef={modelRef}
+            visible={visible}
+            list={operateList}
+            ItemClick={ItemClickOperate}
+          />
+        ),
 
-        <OperateModal
-          type={modalType.current}
-          visible={operateModalVisible}
-          setVisible={setOperateModalVisible}
-          successCallback={() => {
-            if (refreshTenant) refreshTenant();
-            operateSuccess();
-          }}
-          params={{
-            zoneName: chooseZoneName.current,
-            defaultValue: chooseServerNum,
-            defaultUnitCount: defaultUnitCount,
-            ...resourcePoolDefaultValue,
-            essentialParameter: isCreateResourcePool
-              ? resourcePoolDefaultValue?.essentialParameter
-              : getOriginResourceUsages(
-                  resourcePoolDefaultValue?.essentialParameter,
-                  resourcePoolDefaultValue?.replicaList?.find(
-                    (replica) =>
-                      replica.zone === resourcePoolDefaultValue.editZone,
-                  ),
+        [operateList, visible, status],
+      )}
+
+      <OperateModal
+        type={modalType.current}
+        visible={operateModalVisible}
+        setVisible={setOperateModalVisible}
+        successCallback={() => {
+          if (refreshTenant) refreshTenant();
+          operateSuccess();
+        }}
+        params={{
+          zoneName: chooseZoneName.current,
+          defaultValue: chooseServerNum,
+          defaultUnitCount: defaultUnitCount,
+          ...resourcePoolDefaultValue,
+          essentialParameter: isCreateResourcePool
+            ? resourcePoolDefaultValue?.essentialParameter
+            : getOriginResourceUsages(
+                resourcePoolDefaultValue?.essentialParameter,
+                resourcePoolDefaultValue?.replicaList?.find(
+                  (replica) =>
+                    replica.zone === resourcePoolDefaultValue.editZone,
                 ),
-            newResourcePool: isCreateResourcePool,
-            zonesOptions: isCreateResourcePool
-              ? getZonesOptions(
-                  getClusterFromTenant(
-                    resourcePoolDefaultValue?.clusterList,
-                    resourcePoolDefaultValue?.clusterResourceName,
-                  ),
-                  resourcePoolDefaultValue?.replicaList,
-                )
-              : undefined,
-          }}
-        />
-      </div>
-    </PageContainer>
+              ),
+          newResourcePool: isCreateResourcePool,
+          zonesOptions: isCreateResourcePool
+            ? getZonesOptions(
+                getClusterFromTenant(
+                  resourcePoolDefaultValue?.clusterList,
+                  resourcePoolDefaultValue?.clusterResourceName,
+                ),
+                resourcePoolDefaultValue?.replicaList,
+              )
+            : undefined,
+        }}
+      />
+      <Spin
+        spinning={Boolean(clusterTopoLoading || loading)}
+        size="large"
+        className={styles.topoSpin}
+      />
+    </div>
   );
 }
