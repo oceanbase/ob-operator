@@ -180,7 +180,7 @@ export default function BasicInfo({
               defaultMessage: '修改删除保护已成功',
             }),
           );
-          clusterDetailRefresh();
+          clusterDetailRefresh?.();
         }
       },
     },
