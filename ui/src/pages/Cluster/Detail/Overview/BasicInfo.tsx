@@ -123,7 +123,11 @@ export default function BasicInfo({
   deletionProtection,
   clusterDetailRefresh,
   ...props
-}: ResponseOBCluster & { style?: React.CSSProperties; extra?: boolean }) {
+}: ResponseOBCluster & {
+  style?: React.CSSProperties;
+  extra?: boolean;
+  clusterDetailRefresh?: () => void;
+}) {
   const statusItem = findByValue(STATUS_LIST, status);
   const statusDetailItem = findByValue(STATUS_LIST, statusDetail);
   const topologyRendering: ITopologyRendering = useMemo(() => {
