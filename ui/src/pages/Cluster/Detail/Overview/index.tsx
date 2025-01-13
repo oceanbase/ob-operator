@@ -662,7 +662,14 @@ const ClusterOverview: React.FC = () => {
                     })}
                     name={'controlParameter'}
                   >
-                    <Select options={controlParameters} allowClear={true} />
+                    <Select
+                      options={controlParameters}
+                      allowClear={true}
+                      placeholder={intl.formatMessage({
+                        id: 'src.pages.Cluster.Detail.Overview.A89209B9',
+                        defaultMessage: '请选择',
+                      })}
+                    />
                   </Form.Item>
                 </Col>
                 <Col span={6}>
@@ -673,7 +680,14 @@ const ClusterOverview: React.FC = () => {
                     })}
                     name={'accordance'}
                   >
-                    <Select options={accordanceList} allowClear={true} />
+                    <Select
+                      options={accordanceList}
+                      allowClear={true}
+                      placeholder={intl.formatMessage({
+                        id: 'src.pages.Cluster.Detail.Overview.5C55A022',
+                        defaultMessage: '请选择',
+                      })}
+                    />
                   </Form.Item>
                 </Col>
                 <Col>

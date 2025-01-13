@@ -1255,5 +1255,7 @@
   "src.pages.Cluster.New.870724D5": "Please enter {topologyConfiguration} Value",
   "src.pages.Cluster.New.AC56EBD8": "Please select PodAffinity Type",
   "src.pages.Cluster.New.9DDB4176": "Please select the Tolerations Effect",
-  "src.pages.Cluster.New.DB6FD585": "Input content and press Enter to add"
+  "src.pages.Cluster.New.DB6FD585": "Input content and press Enter to add",
+  "src.pages.Cluster.Detail.Overview.A89209B9": "Please select",
+  "src.pages.Cluster.Detail.Overview.5C55A022": "Please select"
 }

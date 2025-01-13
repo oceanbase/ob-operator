@@ -1277,5 +1277,7 @@
   "src.pages.Cluster.New.870724D5": "请输入 {topologyConfiguration} Value",
   "src.pages.Cluster.New.AC56EBD8": "请选择 PodAffinity Type",
   "src.pages.Cluster.New.9DDB4176": "请选择 Tolerations Effect",
-  "src.pages.Cluster.New.DB6FD585": "输入后按回车添加"
+  "src.pages.Cluster.New.DB6FD585": "输入后按回车添加",
+  "src.pages.Cluster.Detail.Overview.A89209B9": "请选择",
+  "src.pages.Cluster.Detail.Overview.5C55A022": "请选择"
 }
