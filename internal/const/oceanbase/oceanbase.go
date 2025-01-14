@@ -82,5 +82,6 @@ const (
 )
 
 const (
-	CmdVersion = "rpm -q --queryformat '%{VERSION}-%{RELEASE}' oceanbase-ce | sed 's/\\.[^.]*$//'"
+	CmdVersion                 = "rpm -q --queryformat '%{VERSION}-%{RELEASE}' oceanbase-ce | sed 's/\\.[^.]*$//'"
+	CmdUpgradeValidateTemplate = "/home/admin/oceanbase/bin/oceanbase-helper upgrade validate -s %s"
 )
