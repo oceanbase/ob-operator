@@ -14,53 +14,117 @@ See the Mulan PSL v2 for more details.
 package config
 
 import (
-	"bytes"
-	"fmt"
+	"errors"
+	"io"
+	"net/http"
 
-	"github.com/spf13/viper"
+	"gopkg.in/yaml.v2"
 
-	"github.com/oceanbase/ob-operator/internal/cli/generated/bindata"
 	"github.com/oceanbase/ob-operator/internal/cli/utils"
 )
 
-// component config for test
-var confPath = "internal/assets/cli-templates/component_config.yaml"
+// Chart struct to parse the chart.yaml
+type Chart struct {
+	apiVersion  string `yaml:"apiVersion"`
+	AppVersion  string `yaml:"appVersion"`
+	description string `yaml:"description"`
+	name        string `yaml:"name"`
+	chartType   string `yaml:"type"`
+	version     string `yaml:"version"`
+}
 
-func readComponentConf(path string) map[string]string {
-	components := make(map[string]string)
-	fileobj, err := bindata.Asset(path)
-	// panic if file not exists
+const (
+	stableVersion = "stable"
+	devVersion    = "master"
+)
+
+// ComponentList is the list of components that can be installed
+var ComponentList = []string{
+	"cert-manager", "ob-operator", "ob-dashboard", "local-path-provisioner", "ob-operator-dev",
+}
+
+// ComponentUpdateList is the list of components that can be updated
+var ComponentUpdateList = []string{
+	"cert-manager", "ob-operator", "ob-dashboard", "local-path-provisioner",
+}
+
+var versionURLs = map[string]string{
+	"ob-dashboard":           "https://raw.githubusercontent.com/oceanbase/ob-operator/refs/heads/stable/charts/oceanbase-dashboard/Chart.yaml",
+	"local-path-provisioner": "https://raw.githubusercontent.com/rancher/local-path-provisioner/refs/tags/v0.0.30/deploy/chart/local-path-provisioner/Chart.yaml",
+}
+
+func getVersionFromChart(component string) (string, error) {
+	url, ok := versionURLs[component]
+	if !ok {
+		return "", errors.New("url not found for the component")
+	}
+
+	// get the yaml
+	resp, err := http.Get(url)
 	if err != nil {
-		panic(fmt.Errorf("Error reading component config file: %v", err))
+		return "", err
 	}
-	viper.SetConfigType("yaml")
-	err = viper.ReadConfig(bytes.NewBuffer(fileobj))
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", errors.New("failed to fetch chart: " + resp.Status)
+	}
+
+	// parse the yaml
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		panic(fmt.Errorf("Read Config err:%v", err))
+		return "", err
 	}
-	if err := viper.UnmarshalKey("components", &components); err != nil {
-		panic(fmt.Errorf("Error decoding component config file: %v", err))
+	var chart Chart
+	err = yaml.Unmarshal(body, &chart)
+	if err != nil {
+		return "", err
 	}
-	return components
+
+	return chart.AppVersion, nil
+}
+
+func getVersion(component string) (string, error) {
+	switch component {
+	case "ob-dashboard", "local-path-provisioner":
+		return getVersionFromChart(component)
+	case "cert-manager", "ob-operator":
+		return stableVersion, nil
+	case "ob-operator-dev":
+		return devVersion, nil
+	default:
+		return "", errors.New("version not found for the component")
+	}
 }
 
 // GetAllComponents returns all the components
-func GetAllComponents() map[string]string {
-	return readComponentConf(confPath)
+func GetAllComponents() (map[string]string, error) {
+	components := make(map[string]string)
+	for _, component := range ComponentList {
+		version, err := getVersion(component)
+		if err != nil {
+			return nil, err
+		}
+		components[component] = version
+	}
+	return components, nil
 }
 
-// GetDefaultComponents returns the default components to be installed
-func GetDefaultComponents() map[string]string {
-	var componentsList []string
-	components := GetAllComponents()
-	defaultComponents := make(map[string]string) // Initialize the map
-	if !utils.CheckIfComponentExists("cert-manager") {
-		componentsList = []string{"cert-manager", "ob-operator", "ob-dashboard"}
-	} else {
-		componentsList = []string{"ob-operator", "ob-dashboard"}
+// GetDefaultComponents returns the default components to be installed if not specified
+func GetDefaultComponents() (map[string]string, error) {
+	var installList []string
+	components, err := GetAllComponents()
+	if err != nil {
+		return nil, err
 	}
-	for _, component := range componentsList {
+	defaultComponents := make(map[string]string)
+	if !utils.CheckIfComponentExists("cert-manager") {
+		installList = []string{"cert-manager", "ob-operator", "ob-dashboard"}
+	} else {
+		installList = []string{"ob-operator", "ob-dashboard"}
+	}
+	for _, component := range installList {
 		defaultComponents[component] = components[component]
 	}
-	return defaultComponents
+	return defaultComponents, nil
 }

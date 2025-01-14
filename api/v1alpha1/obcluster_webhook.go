@@ -162,7 +162,7 @@ func (r *OBCluster) Default() {
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-oceanbase-oceanbase-com-v1alpha1-obcluster,mutating=false,failurePolicy=fail,sideEffects=None,groups=oceanbase.oceanbase.com,resources=obclusters,verbs=create;update,versions=v1alpha1,name=vobcluster.kb.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/validate-oceanbase-oceanbase-com-v1alpha1-obcluster,mutating=false,failurePolicy=fail,sideEffects=None,groups=oceanbase.oceanbase.com,resources=obclusters,verbs=create;update;delete,versions=v1alpha1,name=vobcluster.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &OBCluster{}
 
@@ -267,6 +267,9 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *OBCluster) ValidateDelete() (admission.Warnings, error) {
+	if r.Annotations[oceanbaseconst.AnnotationsIgnoreDeletion] == "true" {
+		return nil, apierrors.NewBadRequest("OBCluster " + r.Name + " is protected from deletion by annotation " + oceanbaseconst.AnnotationsIgnoreDeletion)
+	}
 	return nil, nil
 }
 

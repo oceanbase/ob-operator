@@ -1,7 +1,7 @@
 ##@ Build
 
 .PHONY: build
-build: dashboard-doc-gen dashboard-bindata-gen cli-bindata-gen manifests generate fmt vet ## Build manager binary.
+build: dashboard-doc-gen dashboard-bindata-gen manifests generate fmt vet ## Build manager binary.
 	CGO_ENABLED=0 GOOS=linux go build -o bin/manager cmd/operator/main.go
 
 # If you wish built the manager image targeting other platforms you can use the --platform flag.

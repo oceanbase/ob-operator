@@ -187,6 +187,7 @@ webhooks:
     operations:
     - CREATE
     - UPDATE
+    - DELETE
     resources:
     - obclusters
   sideEffects: None
@@ -247,6 +248,7 @@ webhooks:
     operations:
     - CREATE
     - UPDATE
+    - DELETE
     resources:
     - obtenants
   sideEffects: None

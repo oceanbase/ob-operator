@@ -74,6 +74,32 @@ terraform init
 terraform apply
 ```
 
+#### 使用命令行工具 (okctl)
+
+您还可以使用命令行工具 okctl 来部署 ob-operator，okctl 是可以用来部署 ob-operator 和管理 OceanBase 集群的方便的工具。
+
+你可以通过 releases 页面下载 CLI 工具，或者通过以下命令下载：
+
+```shell
+# 使用代理
+curl -sL https://gh.wewell.org/https://github.com/oceanbase/ob-operator/blob/master/scripts/install-okctl.sh | bash -s -- --proxy
+
+# 不使用代理
+curl -sL https://raw.githubusercontent.com/oceanbase/ob-operator/master/scripts/install-okctl.sh | bash
+```
+
+下载完成之后，可以通过以下命令来部署 ob-operator，
+
+```shell
+./okctl install
+```
+
+另外，我们推荐将 CLI 工具添加到 PATH 环境变量中，
+
+```shell
+mv ./okctl /usr/local/bin
+```
+
 #### 验证部署结果
 
 安装完成之后，可以使用以下命令验证 ob-operator 是否部署成功：

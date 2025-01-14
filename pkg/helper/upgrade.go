@@ -177,7 +177,7 @@ func FindShortestUpgradePath(nodeMap map[string]*VersionDep, startVersionFull, t
 					v.Precursor = node
 					queue = append(queue, v)
 					visited.Add(v)
-					log.Println("Visited", v.Version, len(v.Next))
+					log.Printf("Visited version %s, next versions: %d \n", v.Version, len(v.Next))
 				}
 			}
 		}
@@ -220,6 +220,14 @@ func FindShortestUpgradePath(nodeMap map[string]*VersionDep, startVersionFull, t
 	}
 	if len(res) == 1 {
 		res = append([]VersionDep{*startNode}, res...)
+	}
+	result := make([]string, 0)
+	for _, v := range res {
+		result = append(result, v.Version)
+	}
+	log.Println("final result", result)
+	if len(result) == 0 || result[len(result)-1] != targetVersion {
+		return res, errors.New("There is no route to target version")
 	}
 	return res, nil
 }
