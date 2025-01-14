@@ -639,6 +639,9 @@ func PatchTenant(ctx context.Context, nn types.NamespacedName, p *param.PatchTen
 	if alreadyIgnoreDeletion && p.RemoveDeletionProtection {
 		delete(tenant.Annotations, oceanbaseconst.AnnotationsIgnoreDeletion)
 	} else if !alreadyIgnoreDeletion && p.AddDeletionProtection {
+		if tenant.Annotations == nil {
+			tenant.Annotations = make(map[string]string)
+		}
 		tenant.Annotations[oceanbaseconst.AnnotationsIgnoreDeletion] = "true"
 	}
 	if len(p.Variables) > 0 {
