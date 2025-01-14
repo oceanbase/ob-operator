@@ -81,6 +81,9 @@ type OBTenantOperationStatus struct {
 //+kubebuilder:printcolumn:name="Cluster",type=string,JSONPath=".status.primaryTenant.spec.obcluster"
 //+kubebuilder:printcolumn:name="PrimaryTenant",type=string,JSONPath=".status.primaryTenant.spec.tenantName"
 //+kubebuilder:printcolumn:name="SecondaryTenant",type=string,JSONPath=".status.secondaryTenant.spec.tenantName",priority=1
+//+kubebuilder:printcolumn:name="Tasks",type="string",JSONPath=".status.operationContext.tasks",priority=1
+//+kubebuilder:printcolumn:name="Task",type="string",JSONPath=".status.operationContext.task",priority=1
+//+kubebuilder:printcolumn:name="TaskStatus",type="string",JSONPath=".status.operationContext.taskStatus",priority=1
 
 // OBTenantOperation is the Schema for the obtenantoperations API
 type OBTenantOperation struct {

@@ -141,6 +141,10 @@ spec:
       name: Task
       priority: 1
       type: string
+    - jsonPath: .status.operationContext.taskStatus
+      name: TaskStatus
+      priority: 1
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -6814,6 +6818,10 @@ spec:
       name: Task
       priority: 1
       type: string
+    - jsonPath: .status.operationContext.taskStatus
+      name: TaskStatus
+      priority: 1
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -10520,6 +10528,10 @@ spec:
       name: Task
       priority: 1
       type: string
+    - jsonPath: .status.operationContext.taskStatus
+      name: TaskStatus
+      priority: 1
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -13627,6 +13639,10 @@ spec:
       name: Task
       priority: 1
       type: string
+    - jsonPath: .status.operationContext.taskStatus
+      name: TaskStatus
+      priority: 1
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -15064,6 +15080,18 @@ spec:
       type: string
     - jsonPath: .status.secondaryTenant.spec.tenantName
       name: SecondaryTenant
+      priority: 1
+      type: string
+    - jsonPath: .status.operationContext.tasks
+      name: Tasks
+      priority: 1
+      type: string
+    - jsonPath: .status.operationContext.task
+      name: Task
+      priority: 1
+      type: string
+    - jsonPath: .status.operationContext.taskStatus
+      name: TaskStatus
       priority: 1
       type: string
     name: v1alpha1
@@ -16829,6 +16857,18 @@ spec:
       name: charset
       priority: 1
       type: string
+    - jsonPath: .status.operationContext.tasks
+      name: Tasks
+      priority: 1
+      type: string
+    - jsonPath: .status.operationContext.task
+      name: Task
+      priority: 1
+      type: string
+    - jsonPath: .status.operationContext.taskStatus
+      name: TaskStatus
+      priority: 1
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -17588,6 +17628,10 @@ spec:
       type: string
     - jsonPath: .status.operationContext.task
       name: Task
+      priority: 1
+      type: string
+    - jsonPath: .status.operationContext.taskStatus
+      name: TaskStatus
       priority: 1
       type: string
     name: v1alpha1

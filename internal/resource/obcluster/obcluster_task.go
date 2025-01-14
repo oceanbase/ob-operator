@@ -344,64 +344,14 @@ func ValidateUpgradeInfo(m *OBClusterManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrapf(err, "Failed to get version of obcluster %s", m.OBCluster.Name)
 	}
-	// Get target version and patch
-	jobName := fmt.Sprintf("%s-%s", "oceanbase-upgrade", rand.String(6))
-	var backoffLimit int32
-	var ttl int32 = 300
-	container := corev1.Container{
-		Name:    "ob-upgrade-validator",
-		Image:   m.OBCluster.Spec.OBServerTemplate.Image,
-		Command: []string{"bash", "-c", fmt.Sprintf("/home/admin/oceanbase/bin/oceanbase-helper upgrade validate -s %s", version.String())},
-	}
-	job := batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      jobName,
-			Namespace: m.OBCluster.Namespace,
-			OwnerReferences: []metav1.OwnerReference{{
-				Kind:       m.OBCluster.Kind,
-				APIVersion: m.OBCluster.APIVersion,
-				Name:       m.OBCluster.Name,
-				UID:        m.OBCluster.UID,
-			}},
-		},
-		Spec: batchv1.JobSpec{
-			Template: corev1.PodTemplateSpec{
-				Spec: corev1.PodSpec{
-					Containers:    []corev1.Container{container},
-					RestartPolicy: corev1.RestartPolicyNever,
-					SchedulerName: resourceutils.GetSchedulerName(m.OBCluster.Spec.OBServerTemplate.PodFields),
-				},
-			},
-			BackoffLimit:            &backoffLimit,
-			TTLSecondsAfterFinished: &ttl,
-		},
-	}
 
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Create validate upgrade job", "job", jobName)
-	err = m.Client.Create(m.Ctx, &job)
+	_, _, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+		fmt.Sprintf("%s-upgrade-validate", m.OBCluster.Name),
+		m.OBCluster.Spec.OBServerTemplate.Image,
+		m.OBCluster.Spec.OBServerTemplate.PodFields,
+		fmt.Sprintf(oceanbaseconst.CmdUpgradeValidateTemplate, version.String()))
 	if err != nil {
-		return errors.Wrapf(err, "Failed to create validate job for obcluster %s", m.OBCluster.Name)
-	}
-
-	var jobObject *batchv1.Job
-	check := func() (bool, error) {
-		jobObject, err = resourceutils.GetJob(m.Ctx, m.Client, m.OBCluster.Namespace, jobName)
-		if err != nil {
-			return false, errors.Wrap(err, "Failed to get job")
-		}
-		if jobObject.Status.Succeeded == 0 && jobObject.Status.Failed == 0 {
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job is still running")
-			return false, nil
-		} else if jobObject.Status.Succeeded == 1 {
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Job succeeded")
-			return true, nil
-		} else {
-			return false, errors.Wrap(err, "Failed to run validate job")
-		}
-	}
-	err = resourceutils.CheckJobWithTimeout(check, time.Second*time.Duration(obcfg.GetConfig().Time.WaitForJobTimeoutSeconds))
-	if err != nil {
-		return errors.Wrap(err, "Failed to run validate job")
+		return errors.Wrap(err, "Upgrade is unsupported")
 	}
 	return nil
 }
