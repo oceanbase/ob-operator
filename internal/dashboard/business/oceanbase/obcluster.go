@@ -852,6 +852,9 @@ func PatchOBCluster(ctx context.Context, nn *param.K8sObjectIdentity, param *par
 
 	if param.AddDeletionProtection && !alreadyIgnoredDeletion {
 		// Update deletion protection if specified
+		if obcluster.Annotations == nil {
+			obcluster.Annotations = make(map[string]string)
+		}
 		obcluster.Annotations[oceanbaseconst.AnnotationsIgnoreDeletion] = "true"
 	} else if param.RemoveDeletionProtection && alreadyIgnoredDeletion {
 		delete(obcluster.Annotations, oceanbaseconst.AnnotationsIgnoreDeletion)
