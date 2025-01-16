@@ -9,6 +9,7 @@ on:
       - "dashboard-[0-9]+.[0-9]+.[0-9]+"
     branches:
       - master
+      - "*_release"
 
 jobs:
   release-chart:
