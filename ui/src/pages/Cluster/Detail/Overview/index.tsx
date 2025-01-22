@@ -503,7 +503,7 @@ const ClusterOverview: React.FC = () => {
               onClick={() => {
                 setIsDrawerOpen(true);
                 setParametersRecord({
-                  ...record,
+                  key: record.name,
                   value: valueContent,
                 });
               }}

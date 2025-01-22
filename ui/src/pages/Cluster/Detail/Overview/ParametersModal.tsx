@@ -2,13 +2,18 @@ import { obcluster } from '@/api';
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { Button, Col, Form, Input, message, Modal, Row, Space } from 'antd';
-import React from 'react';
+import React, { useEffect } from 'react';
+
+interface kvPair {
+  key: string;
+  value: string;
+}
 
 export interface ParametersModalProps {
   visible: boolean;
   onCancel: () => void;
   onSuccess: () => void;
-  initialValues: any[];
+  initialValues: kvPair;
   name: string;
   namespace: string;
 }
@@ -21,8 +26,14 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
   name,
   namespace,
 }) => {
-  const [form] = Form.useForm<API.CreateClusterData>();
+  const [form] = Form.useForm<kvPair>();
   const { validateFields, resetFields } = form;
+
+  useEffect(() => {
+    if (visible) {
+      form.setFieldsValue(initialValues);
+    }
+  }, [visible]);
 
   const { runAsync: updateParameters, loading } = useRequest(
     obcluster.patchOBCluster,
@@ -48,11 +59,10 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
         id: 'src.pages.Cluster.Detail.Overview.849E8956',
         defaultMessage: '参数编辑',
       })}
+      maskClosable={false}
       open={visible}
-      destroyOnClose
       onCancel={() => {
         onCancel();
-        resetFields();
       }}
       width={520}
       footer={
@@ -104,7 +114,6 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
                 id: 'src.pages.Cluster.Detail.Overview.0F9AD89D',
                 defaultMessage: '参数名',
               })}
-              initialValue={initialValues?.name}
               name={'key'}
             >
               <Input disabled={true} />
@@ -117,7 +126,6 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
                 defaultMessage: '参数值',
               })}
               name={'value'}
-              initialValue={initialValues?.value}
               rules={[
                 {
                   required: true,
