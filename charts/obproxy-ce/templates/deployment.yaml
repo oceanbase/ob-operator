@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    obproxy.oceanbase.com/for-namespace: {{ .Release.Namespace | quote }}
+    obproxy.oceanbase.com/for-obcluster: {{ .Values.obcluster }}
+    obproxy.oceanbase.com/obproxy-from-setup: {{ .Release.Name }}
+    obproxy.oceanbase.com/with-config-map: cm-obproxy-{{ .Release.Name }}
+  name: {{ .Release.Name }}
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: obproxy-{{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: obproxy-{{ .Release.Name }}
+    spec:
+      containers:
+      - name: obproxy
+        image: {{ .Values.image }}
+        env:
+        - name: APP_NAME
+          value: {{ .Values.name | default .Release.Name | quote }}
+        - name: OB_CLUSTER
+          value: {{ (lookup "oceanbase.oceanbase.com/v1alpha1" "OBCluster" .Release.Namespace .Values.obcluster).spec.clusterName }}
+        - name: RS_LIST
+          {{- $obcluster := .Values.obcluster }}
+          {{- $namespace := .Release.Namespace }}
+          {{- $rootservices := list }}
+          {{- $obclusterCR := lookup "oceanbase.oceanbase.com/v1alpha1" "OBCluster" $namespace $obcluster }}
+          {{- if and (hasKey $obclusterCR.metadata.annotations "oceanbase.oceanbase.com/mode") (eq (index $obclusterCR.metadata.annotations "oceanbase.oceanbase.com/mode") "service") }}
+            {{- $services := lookup "v1" "Service" $namespace "" }}
+            {{- range $service := $services.items }}
+              {{- if $service.metadata.labels }}
+                {{- if eq (get $service.metadata.labels "ref-obcluster") $obcluster }}
+                  {{- $rootservices = append $rootservices (printf "%s:2881" $service.spec.clusterIP) }}
+                {{- end }}
+              {{- end }}
+            {{- end }}
+          {{- else }}
+            {{- $pods := lookup "v1" "Pod" $namespace "" }}
+            {{- range $pod := $pods.items }}
+              {{- if $pod.metadata.labels }}
+                {{- if eq (get $pod.metadata.labels "ref-obcluster") $obcluster }}
+                  {{- $rootservices = append $rootservices (printf "%s:2881" $pod.status.podIP) }}
+                {{- end }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          value: {{ join ";" $rootservices | quote }}
+        - name: PROXYRO_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ (lookup "oceanbase.oceanbase.com/v1alpha1" "OBCluster" .Release.Namespace .Values.obcluster).spec.userSecrets.proxyro }}
+              key: password
+        envFrom:
+        - configMapRef:
+            name: cm-obproxy-{{ .Release.Name }}
+        ports:
+        - containerPort: 2883
+          name: sql
+          protocol: TCP
+        - containerPort: 2884
+          name: prometheus
+          protocol: TCP
+        resources:
+          limits:
+            cpu: {{ .Values.resources.limits.cpu }}
+            memory: {{ .Values.resources.limits.memory }}
+          requests:
+            cpu: {{ .Values.resources.requests.cpu }}
+            memory: {{ .Values.resources.requests.memory }}

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cm-obproxy-{{ .Release.Name }}
+  namespace: {{ .Release.Namespace }}
+data:
+  DEPLOYED_TIME: {{ now | quote }}
+  {{- range $key, $value := .Values.parameters }}
+  {{ $key | upper | printf "ODP_%s" }}: "{{ $value }}"
+  {{- end }}
+
