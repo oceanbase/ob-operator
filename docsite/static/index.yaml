@@ -91,6 +91,17 @@ entries:
     urls:
     - https://github.com/oceanbase/ob-operator/releases/download/ob-operator-2.0.0/ob-operator-2.0.0.tgz
     version: 2.0.0
+  obproxy-ce:
+  - apiVersion: v2
+    appVersion: 4.3.3.0-5
+    created: "2025-01-26T08:58:16.330701202Z"
+    description: A Helm chart for obproxy-ce
+    digest: 1785943423291e54728bacbc266e63814d89938a8fe971f2d6c9daa39a06b83b
+    name: obproxy-ce
+    type: application
+    urls:
+    - https://github.com/oceanbase/ob-operator/releases/download/obproxy-ce-0.1.0/obproxy-ce-0.1.0.tgz
+    version: 0.1.0
   oceanbase-cluster:
   - apiVersion: v2
     appVersion: 4.3.1.0-100000032024051615
@@ -243,4 +254,4 @@ entries:
     urls:
     - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-dashboard-0.1.0/oceanbase-dashboard-0.1.0.tgz
     version: 0.1.0
-generated: "2025-01-16T11:49:38.243502018Z"
+generated: "2025-01-26T08:58:16.451168316Z"
