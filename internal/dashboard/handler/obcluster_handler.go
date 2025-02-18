@@ -26,7 +26,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
-	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
@@ -115,7 +114,7 @@ func CreateOBCluster(c *gin.Context) (*response.OBCluster, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	param.RootPassword, err = crypto.DecryptWithPrivateKey(param.RootPassword)
+	err = extractPassword(param)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
