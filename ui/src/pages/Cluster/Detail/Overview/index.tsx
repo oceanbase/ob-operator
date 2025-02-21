@@ -35,7 +35,7 @@ import { useRequest } from 'ahooks';
 import { isEmpty } from 'lodash';
 import BasicInfo from './BasicInfo';
 import NFSInfoModal from './NFSInfoModal';
-import ParametersModal from './ParametersModal';
+// import ParametersModal from './ParametersModal';
 import ResourceDrawer from './ResourceDrawer';
 import ServerTable from './ServerTable';
 import ZoneTable from './ZoneTable';
@@ -46,8 +46,8 @@ const ClusterOverview: React.FC = () => {
   const [form] = Form.useForm();
   const [operateModalVisible, setOperateModalVisible] =
     useState<boolean>(false);
-  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
-  const [parametersRecord, setParametersRecord] = useState({});
+  // const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
+  // const [parametersRecord, setParametersRecord] = useState({});
   const [resourceDrawerOpen, setResourceDrawerOpen] = useState<boolean>(false);
   const { ns, name } = useParams();
   const chooseZoneName = useRef<string>('');
@@ -492,20 +492,20 @@ const ClusterOverview: React.FC = () => {
           'max_syslog_file_count',
         ];
 
-        const valueContent =
-          parameters?.find((item) => item.name === record.name)?.value ||
-          record?.value;
+        // const valueContent =
+        //   parameters?.find((item) => item.name === record.name)?.value ||
+        //   record?.value;
 
         return (
           <Space size={1}>
             <Button
               type="link"
               onClick={() => {
-                setIsDrawerOpen(true);
-                setParametersRecord({
-                  key: record.name,
-                  value: valueContent,
-                });
+                // setIsDrawerOpen(true);
+                // setParametersRecord({
+                //   key: record.name,
+                //   value: valueContent,
+                // });
               }}
             >
               {intl.formatMessage({
@@ -855,7 +855,7 @@ const ClusterOverview: React.FC = () => {
         }}
       />
 
-      <ParametersModal
+      {/* <ParametersModal
         visible={isDrawerOpen}
         onCancel={() => setIsDrawerOpen(false)}
         onSuccess={() => {
@@ -871,7 +871,7 @@ const ClusterOverview: React.FC = () => {
         }}
         initialValues={parametersRecord}
         {...(clusterDetail?.info as API.ClusterInfo)}
-      />
+      /> */}
 
       <ResourceDrawer
         visible={resourceDrawerOpen}
