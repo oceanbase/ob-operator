@@ -28,11 +28,7 @@ export default function Parameters() {
               defaultMessage: '解除托管已成功',
             }),
           );
-          //   setFieldsValue({
-          //     name: undefined,
-          //     controlParameter: undefined,
-          //     accordance: undefined,
-          //   });
+
           refresh();
         }
       },
@@ -318,12 +314,6 @@ export default function Parameters() {
         onSuccess={() => {
           setIsDrawerOpen(false);
           clusterDetailRefresh();
-          // 编辑成功后，清空搜索条件，刷新参数列表
-          //   setFieldsValue({
-          //     name: undefined,
-          //     controlParameter: undefined,
-          //     accordance: undefined,
-          //   });
           refresh();
         }}
         initialValues={parametersRecord}
