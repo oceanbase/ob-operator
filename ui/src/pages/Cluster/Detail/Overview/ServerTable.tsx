@@ -64,10 +64,7 @@ export default function ServerTable({
       key: 'namespace',
     },
     {
-      title: intl.formatMessage({
-        id: 'OBDashboard.Detail.Overview.ServerTable.Address',
-        defaultMessage: '地址',
-      }),
+      title: 'observer 地址',
       dataIndex: 'address',
       key: 'address',
     },
@@ -82,6 +79,14 @@ export default function ServerTable({
         const value = findByValue(STATUS_LIST, text);
         return <Tag color={value.badgeStatus}>{value.label}</Tag>;
       },
+    },
+    {
+      title: 'K8s Node',
+      dataIndex: 'address',
+    },
+    {
+      title: 'K8s Node Ip',
+      dataIndex: 'address',
     },
     {
       title: intl.formatMessage({
