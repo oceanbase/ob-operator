@@ -209,10 +209,22 @@ export default function BasicInfo({
         onClick={() => setshowProxyro(!showProxyro)}
       >
         高级配置
-        {showProxyro ? <DownOutlined /> : <RightOutlined />}
+        {showProxyro ? (
+          <DownOutlined
+            style={{
+              marginLeft: 8,
+            }}
+          />
+        ) : (
+          <RightOutlined
+            style={{
+              marginLeft: 8,
+            }}
+          />
+        )}
       </div>
       {showProxyro && (
-        <Row gutter={[16, 32]} style={{ marginTop: 16 }}>
+        <Row gutter={[16, 32]} style={{ marginTop: 24, marginLeft: 32 }}>
           <Col span={8}>
             <PasswordInput
               title="proxyro 密码"
