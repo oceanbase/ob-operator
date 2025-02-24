@@ -85,7 +85,7 @@ export default function ServerTable({
       dataIndex: 'address',
     },
     {
-      title: 'K8s Node Ip',
+      title: 'K8s Node IP',
       dataIndex: 'address',
     },
     {
