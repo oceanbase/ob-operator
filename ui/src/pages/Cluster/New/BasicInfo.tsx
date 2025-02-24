@@ -42,14 +42,7 @@ export default function BasicInfo({
         <Col span={8} style={{ height: 48 }}>
           <SelectNSFromItem form={form} />
         </Col>
-        <Col span={8} style={{ height: 48 }}>
-          <PasswordInput
-            value={passwordVal}
-            onChange={setPasswordVal}
-            form={form}
-            name="rootPassword"
-          />
-        </Col>
+
         <Col span={8} style={{ height: 48 }}>
           <TooltipPretty
             title={intl.formatMessage({
@@ -185,6 +178,15 @@ export default function BasicInfo({
               ))}
             </Select>
           </Form.Item>
+        </Col>
+        <Col span={8} style={{ height: 48 }}>
+          <PasswordInput
+            title={'root 密码'}
+            value={passwordVal}
+            onChange={setPasswordVal}
+            form={form}
+            name="rootPassword"
+          />
         </Col>
       </Row>
       <Space>
