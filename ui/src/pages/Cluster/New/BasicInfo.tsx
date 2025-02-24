@@ -7,13 +7,17 @@ import SelectNSFromItem from '@/components/SelectNSFromItem';
 import TooltipPretty from '@/components/TooltipPretty';
 import { LOADTYPE_LIST, MODE_MAP } from '@/constants';
 import { resourceNameRule } from '@/constants/rules';
+import { DownOutlined, RightOutlined } from '@ant-design/icons';
+import { useState } from 'react';
 
 const { Option } = Select;
 
 interface BasicInfoProps {
   form: FormInstance<API.CreateClusterData>;
   passwordVal: string;
+  proxyroPasswordVal: string;
   setPasswordVal: React.Dispatch<React.SetStateAction<string>>;
+  setProxyroPasswordVal: React.Dispatch<React.SetStateAction<string>>;
 }
 
 export default function BasicInfo({
@@ -22,7 +26,11 @@ export default function BasicInfo({
   deleteValue,
   setPasswordVal,
   setDeleteValue,
+  proxyroPasswordVal,
+  setProxyroPasswordVal,
 }: BasicInfoProps) {
+  const [showProxyro, setshowProxyro] = useState<boolean>(false);
+
   return (
     <Card
       title={intl.formatMessage({
@@ -192,6 +200,28 @@ export default function BasicInfo({
           }}
         />
       </Space>
+      <div
+        style={{
+          marginTop: 16,
+        }}
+        onClick={() => setshowProxyro(!showProxyro)}
+      >
+        高级配置
+        {showProxyro ? <DownOutlined /> : <RightOutlined />}
+      </div>
+      {showProxyro && (
+        <Row gutter={[16, 32]} style={{ marginTop: 16 }}>
+          <Col span={8}>
+            <PasswordInput
+              title="proxyro 密码"
+              value={proxyroPasswordVal}
+              onChange={setProxyroPasswordVal}
+              form={form}
+              name="proxyroPassword"
+            />
+          </Col>
+        </Row>
+      )}
     </Card>
   );
 }
