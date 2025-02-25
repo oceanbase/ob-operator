@@ -224,7 +224,7 @@ export default function BasicInfo({
         )}
       </div>
       {showProxyro && (
-        <Row gutter={[16, 32]} style={{ marginTop: 24, marginLeft: 32 }}>
+        <Row gutter={[16, 32]} style={{ marginTop: 24 }}>
           <Col span={8}>
             <PasswordInput
               title="proxyro 密码"
