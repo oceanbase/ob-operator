@@ -2,7 +2,7 @@ import { obcluster } from '@/api';
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { Button, Col, Form, Input, message, Modal, Row, Space } from 'antd';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 export interface ParametersModalProps {
   visible: boolean;
@@ -41,6 +41,15 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
       },
     },
   );
+
+  useEffect(() => {
+    if (visible) {
+      form.setFieldsValue({
+        key: initialValues?.name,
+        value: initialValues?.value,
+      });
+    }
+  }, [initialValues, visible]);
 
   return (
     <Modal
@@ -104,7 +113,6 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
                 id: 'src.pages.Cluster.Detail.Overview.0F9AD89D',
                 defaultMessage: '参数名',
               })}
-              initialValue={initialValues?.name}
               name={'key'}
             >
               <Input disabled={true} />
@@ -117,7 +125,6 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
                 defaultMessage: '参数值',
               })}
               name={'value'}
-              initialValue={initialValues?.value}
               rules={[
                 {
                   required: true,
