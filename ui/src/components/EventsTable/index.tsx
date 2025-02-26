@@ -105,10 +105,6 @@ export default function EventsTable({
           }
         : {}),
 
-      // filters: namespaceFilterList,
-      // onFilter: (value: any, record) => {
-      //   return record.namespace === value;
-      // },
       render: (text) => <span>{text}</span>,
     },
     {
