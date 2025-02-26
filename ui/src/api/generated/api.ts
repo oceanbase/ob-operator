@@ -13947,7 +13947,7 @@ export const OBTenantApiAxiosParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         * Delete an obtenant in a specific namespace, ask user to confrim the deletion carefully
+         * Delete an obtenant in a specific namespace, ask user to confirm the deletion carefully
          * @summary Delete tenant
          * @param {string} namespace obtenant namespace
          * @param {string} name obtenant name
@@ -14666,7 +14666,7 @@ export const OBTenantApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Delete an obtenant in a specific namespace, ask user to confrim the deletion carefully
+         * Delete an obtenant in a specific namespace, ask user to confirm the deletion carefully
          * @summary Delete tenant
          * @param {string} namespace obtenant namespace
          * @param {string} name obtenant name
@@ -14960,7 +14960,7 @@ export const OBTenantApiFactory = function (configuration?: Configuration, baseP
             return localVarFp.deleteOBTenantPool(namespace, name, zoneName, options).then((request) => request(axios, basePath));
         },
         /**
-         * Delete an obtenant in a specific namespace, ask user to confrim the deletion carefully
+         * Delete an obtenant in a specific namespace, ask user to confirm the deletion carefully
          * @summary Delete tenant
          * @param {string} namespace obtenant namespace
          * @param {string} name obtenant name
@@ -15226,7 +15226,7 @@ export class OBTenantApi extends BaseAPI {
     }
 
     /**
-     * Delete an obtenant in a specific namespace, ask user to confrim the deletion carefully
+     * Delete an obtenant in a specific namespace, ask user to confirm the deletion carefully
      * @summary Delete tenant
      * @param {string} namespace obtenant namespace
      * @param {string} name obtenant name

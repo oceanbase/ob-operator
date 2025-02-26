@@ -25,7 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-// NewShowCmd shows the backup policie and backup jobs of the tenant
+// NewShowCmd shows the backup policies and backup jobs of the tenant
 func NewShowCmd() *cobra.Command {
 	o := backup.NewShowOptions()
 	tbw, tbLog := utils.GetTableLoggerInstance()
