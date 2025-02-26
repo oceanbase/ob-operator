@@ -18,8 +18,9 @@ import Topo from './Topo';
 
 export default function New() {
   const navigate = useNavigate();
-  const [form] = Form.useForm<API.CreateClusterData>();
   const [passwordVal, setPasswordVal] = useState<string>('');
+  const [proxyroPasswordVal, setProxyroPasswordVal] = useState<string>('');
+  const [form] = Form.useForm<API.CreateClusterData>();
   const [pvcValue, setPvcValue] = useState<boolean>(false);
   const [deleteValue, setDeleteValue] = useState<boolean>(false);
   const { data: storageClassesRes, run: fetchStorageClasses } = useRequest(
@@ -67,6 +68,7 @@ export default function New() {
       message.success(res.message, 3);
       form.resetFields();
       setPasswordVal('');
+      setProxyroPasswordVal('');
       setPvcValue(false);
       setDeleteValue(true);
       history.back();
@@ -130,8 +132,10 @@ export default function New() {
           <Col span={24}>
             <BasicInfo
               passwordVal={passwordVal}
+              proxyroPasswordVal={proxyroPasswordVal}
               deleteValue={deleteValue}
               setPasswordVal={setPasswordVal}
+              setProxyroPasswordVal={setProxyroPasswordVal}
               setDeleteValue={setDeleteValue}
               form={form}
             />
