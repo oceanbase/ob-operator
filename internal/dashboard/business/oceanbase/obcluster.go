@@ -978,23 +978,18 @@ func aggregrateParameterByName(parameters []*model.Parameter) response.Aggregate
 			TenantID: parameter.TenantID,
 		}
 		match := false
-		for _, aggValue := range aggValues {
+		for idx, aggValue := range aggValues {
 			if parameter.Value == aggValue.Value {
 				match = true
 				metas := append(aggValue.Metas, meta)
-				aggValue.Metas = metas
-				aggValue.MetasStr = generateMetaStr(metas)
+				aggValues[idx].Metas = metas
+				aggValues[idx].MetasStr = generateMetaStr(metas)
 				break
 			}
 		}
 		if !match {
 			metas := make([]response.ParameterMeta, 0)
-			metas = append(metas, response.ParameterMeta{
-				Zone:     parameter.Zone,
-				SvrIp:    parameter.SvrIp,
-				SvrPort:  parameter.SvrPort,
-				TenantID: parameter.TenantID,
-			})
+			metas = append(metas, meta)
 			aggValues = append(aggValues, response.AggregratedParameterValue{
 				Value:    parameter.Value,
 				Metas:    metas,
@@ -1021,6 +1016,7 @@ func aggregrateParametersByName(parameters []*model.Parameter) []response.Aggreg
 			parameterList = make([]*model.Parameter, 0)
 		}
 		parameterList = append(parameterList, parameter)
+		aggMap[parameter.Name] = parameterList
 	}
 	aggParameters := make([]response.AggregatedParameter, 0)
 	for _, parameterList := range aggMap {
