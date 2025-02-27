@@ -23,4 +23,5 @@ const (
 	ListParametersWithTenantID = "select name, value, IFNULL(data_type, 'unknown') as data_type, info, section, edit_level, scope from GV$OB_PARAMETERS where tenant_id = ?"
 	SelectCompatibleOfTenants  = "select name, value, tenant_id from GV$OB_PARAMETERS where name = 'compatible'"
 	ListParametersGroupByName  = "select name, value, IFNULL(data_type, 'unknown') as data_type, info, section, edit_level, scope, svr_ip, zone, svr_port, IFNULL(tenant_id, 0) as tenant_id from GV$OB_PARAMETERS group by name"
+	ListAllParameters          = "select name, value, IFNULL(data_type, 'unknown') as data_type, info, section, edit_level, scope, svr_ip, zone, svr_port, IFNULL(tenant_id, 0) as tenant_id from GV$OB_PARAMETERS"
 )

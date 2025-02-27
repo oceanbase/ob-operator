@@ -14,15 +14,15 @@ package model
 
 type Parameter struct {
 	Zone      string `json:"zone" db:"zone"`
-	SvrIp     string `json:"svr_ip" db:"svr_ip"`
-	SvrPort   int64  `json:"svr_port" db:"svr_port"`
+	SvrIp     string `json:"svrIp" db:"svr_ip"`
+	SvrPort   int64  `json:"svrPort" db:"svr_port"`
 	Name      string `json:"name" db:"name"`
 	Value     string `json:"value" db:"value"`
 	Scope     string `json:"scope" db:"scope"`
-	EditLevel string `json:"edit_level" db:"edit_level"`
-	TenantID  int64  `json:"tenant_id" db:"tenant_id"`
+	EditLevel string `json:"editLevel" db:"edit_level"`
+	TenantID  int64  `json:"tenantId" db:"tenant_id"`
 
 	DataType string `json:"dataType" db:"data_type"`
-	Info     string `json:"info"`
-	Section  string `json:"section"`
+	Info     string `json:"info" db:"info"`
+	Section  string `json:"section" db:"section"`
 }
