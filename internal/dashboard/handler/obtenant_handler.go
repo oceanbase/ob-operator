@@ -187,7 +187,7 @@ func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 // @ID DeleteTenant
 // @Tags OBTenant
 // @Summary Delete tenant
-// @Description Delete an obtenant in a specific namespace, ask user to confrim the deletion carefully
+// @Description Delete an obtenant in a specific namespace, ask user to confirm the deletion carefully
 // @Accept application/json
 // @Produce application/json
 // @Param namespace path string true "obtenant namespace"

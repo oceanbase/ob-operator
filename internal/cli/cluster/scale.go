@@ -47,7 +47,7 @@ func NewScaleOptions() *ScaleOptions {
 	}
 }
 
-// GetScaleOperation creates scale opertaions
+// GetScaleOperation creates scale operations
 func GetScaleOperation(o *ScaleOptions) *v1alpha1.OBClusterOperation {
 	scaleOp := &v1alpha1.OBClusterOperation{
 		ObjectMeta: v1.ObjectMeta{
@@ -168,6 +168,6 @@ func (o *ScaleOptions) Validate() error {
 // AddFlags for scale options
 func (o *ScaleOptions) AddFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&o.Namespace, FLAG_NAMESPACE, SHORTHAND_NAMESPACE, DEFAULT_NAMESPACE, "namespace of ob cluster")
-	cmd.Flags().StringToStringVarP(&o.Zones, FLAG_ZONES, SHORTHAND_ZONES, nil, "The zone of the cluster, e.g. '--zones=<zone>=<replica>', set replicas to 0 to delete the zone, only one operation of adding, deleting or modifying is allowd at a time, required")
+	cmd.Flags().StringToStringVarP(&o.Zones, FLAG_ZONES, SHORTHAND_ZONES, nil, "The zone of the cluster, e.g. '--zones=<zone>=<replica>', set replicas to 0 to delete the zone, only one operation of adding, deleting or modifying is allowed at a time, required")
 	_ = cmd.MarkFlagRequired(FLAG_ZONES)
 }

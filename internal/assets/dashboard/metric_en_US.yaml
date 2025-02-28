@@ -363,13 +363,13 @@ OBTENANT:
       name: cpu_rate
       unit: '%'
     name: CPU Utilization
-  - description: Tenant memory usage pecent
+  - description: Tenant memory usage percent
     metrics:
-    - description: Tenant memory usage pecent
+    - description: Tenant memory usage percent
       key: ob_memory_percent
       name: memory_usage
       unit: '%'
-    name: memroy usage pecent
+    name: memory usage percent
   - description: MEMStore usage percent
     metrics:
     - description: MEMStore usage percent
@@ -768,7 +768,7 @@ OBPROXY:
       key: request_cost_prepare_send_request_time
       unit: "μs"
     - name: server_process_request
-      description: average elapsed time for server to precess request
+      description: average elapsed time for server to process request
       key: request_cost_server_process_request_time
       unit: "μs"
     - name: select
