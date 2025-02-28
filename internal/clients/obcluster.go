@@ -155,3 +155,13 @@ func ListOBServersOfOBZone(ctx context.Context, obzone *v1alpha1.OBZone) (*v1alp
 	}
 	return &observerList, nil
 }
+
+func GetPodOfOBServer(ctx context.Context, observer *v1alpha1.OBServer) (*corev1.Pod, error) {
+	// this label always exists
+	client := client.GetClient()
+	pod, err := client.ClientSet.CoreV1().Pods(observer.Namespace).Get(ctx, observer.Name, metav1.GetOptions{})
+	if err != nil {
+		return nil, errors.Wrap(err, "get pod")
+	}
+	return pod, nil
+}
