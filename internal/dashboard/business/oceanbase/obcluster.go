@@ -209,7 +209,7 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 			// compatible with old version CRD
 			nodeName := observer.Status.NodeName
 			if nodeName == "" {
-				pod, err := clients.GetPodOfOBServer(&observer)
+				pod, err := clients.GetPodOfOBServer(ctx, &observer)
 				if err == nil {
 					nodeName = pod.Spec.NodeName
 				}
