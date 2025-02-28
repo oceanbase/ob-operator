@@ -981,7 +981,8 @@ func aggregrateParameterByName(parameters []*model.Parameter) response.Aggregate
 		for idx, aggValue := range aggValues {
 			if parameter.Value == aggValue.Value {
 				match = true
-				metas := append(aggValue.Metas, meta)
+				metas := aggValue.Metas
+				metas = append(metas, meta)
 				aggValues[idx].Metas = metas
 				aggValues[idx].MetasStr = generateMetaStr(metas)
 				break
