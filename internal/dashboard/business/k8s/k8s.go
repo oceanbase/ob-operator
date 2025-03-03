@@ -214,11 +214,20 @@ func ListNodes(ctx context.Context) ([]response.K8sNode, error) {
 	if err == nil {
 		for _, node := range nodeList.Items {
 			internalAddress, externalAddress := extractNodeAddress(&node)
+			taints := make([]response.Taint, 0)
+			for _, taint := range node.Spec.Taints {
+				taints = append(taints, response.Taint{
+					Key:    taint.Key,
+					Value:  taint.Value,
+					Effect: string(taint.Effect),
+				})
+			}
 			nodeInfo := &response.K8sNodeInfo{
 				Name:       node.Name,
 				Status:     extractNodeStatus(&node),
 				Roles:      extractNodeRoles(&node),
 				Labels:     common.MapToKVs(node.Labels),
+				Taints:     taints,
 				Conditions: extractNodeConditions(&node),
 				Uptime:     node.CreationTimestamp.Unix(),
 				InternalIP: internalAddress,
