@@ -609,7 +609,7 @@ func generateOBClusterInstance(param *param.CreateOBClusterParam) *v1alpha1.OBCl
 
 func CreateOBCluster(ctx context.Context, param *param.CreateOBClusterParam) (*response.OBCluster, error) {
 	obcluster := generateOBClusterInstance(param)
-	err := clients.CreateSecretsForOBCluster(ctx, obcluster, param.RootPassword)
+	err := clients.CreateSecretsForOBCluster(ctx, obcluster, param)
 	if err != nil {
 		return nil, errors.Wrap(err, "Create secrets for obcluster")
 	}

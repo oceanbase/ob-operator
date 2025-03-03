@@ -22,6 +22,7 @@ import (
 
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/auth"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
+	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
@@ -103,4 +104,14 @@ func generateOdcParam(c *gin.Context, host, user, passwd string) (string, error)
 	}
 	paramStr := base64.StdEncoding.EncodeToString(jsonData)
 	return paramStr, nil
+}
+
+func extractPassword(param *param.CreateOBClusterParam) error {
+	var err error
+	param.RootPassword, err = crypto.DecryptWithPrivateKey(param.RootPassword)
+	if err != nil {
+		return err
+	}
+	param.ProxyroPassword, err = crypto.DecryptWithPrivateKey(param.ProxyroPassword)
+	return err
 }

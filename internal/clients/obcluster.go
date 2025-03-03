@@ -26,6 +26,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/clients/schema"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
@@ -53,19 +54,23 @@ func createPasswordSecret(ctx context.Context, namespace, name, password string)
 	return err
 }
 
-func CreateSecretsForOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluster, rootPass string) error {
+func CreateSecretsForOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluster, param *param.CreateOBClusterParam) error {
 	logger.Info("Create secrets for obcluster")
-	err := createPasswordSecret(ctx, obcluster.Namespace, obcluster.Spec.UserSecrets.Root, rootPass)
+	err := createPasswordSecret(ctx, obcluster.Namespace, obcluster.Spec.UserSecrets.Root, param.RootPassword)
 	if err != nil {
 		return errors.Wrap(err, "Create secret for user root")
+	}
+	proxyroPassword := param.ProxyroPassword
+	if proxyroPassword == "" {
+		proxyroPassword = generatePassword()
+	}
+	err = createPasswordSecret(ctx, obcluster.Namespace, obcluster.Spec.UserSecrets.ProxyRO, proxyroPassword)
+	if err != nil {
+		return errors.Wrap(err, "Create secret for user proxyro")
 	}
 	err = createPasswordSecret(ctx, obcluster.Namespace, obcluster.Spec.UserSecrets.Monitor, generatePassword())
 	if err != nil {
 		return errors.Wrap(err, "Create secret for user monitor")
-	}
-	err = createPasswordSecret(ctx, obcluster.Namespace, obcluster.Spec.UserSecrets.ProxyRO, generatePassword())
-	if err != nil {
-		return errors.Wrap(err, "Create secret for user proxyro")
 	}
 	err = createPasswordSecret(ctx, obcluster.Namespace, obcluster.Spec.UserSecrets.Operator, generatePassword())
 	if err != nil {
