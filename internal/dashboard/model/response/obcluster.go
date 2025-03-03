@@ -144,3 +144,26 @@ type OBZoneAvailableResource struct {
 	AvailableMemory   int64  `json:"availableMemory" example:"5368709120" binding:"required"`
 	AvailableCPU      int64  `json:"availableCPU" example:"12" binding:"required"`
 }
+
+type ParameterMeta struct {
+	Zone     string `json:"zone"`
+	SvrIp    string `json:"svr_ip"`
+	SvrPort  int64  `json:"svr_port"`
+	TenantID int64  `json:"tenant_id"`
+}
+
+type AggregratedParameterValue struct {
+	Value    string          `json:"value"`
+	Metas    []ParameterMeta `json:"metas"`
+	MetasStr string          `json:"metasStr"`
+}
+
+type AggregatedParameter struct {
+	Name      string                      `json:"name"`
+	Values    []AggregratedParameterValue `json:"values"`
+	Scope     string                      `json:"scope"`
+	EditLevel string                      `json:"editLevel"`
+	DataType  string                      `json:"dataType"`
+	Info      string                      `json:"info"`
+	Section   string                      `json:"section"`
+}

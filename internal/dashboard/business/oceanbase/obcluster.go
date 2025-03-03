@@ -38,7 +38,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/internal/dashboard/utils"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
-	models "github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 
 const (
@@ -933,7 +933,7 @@ func DeleteOBServers(ctx context.Context, nn *param.K8sObjectIdentity, param *pa
 	return buildOBClusterResponse(ctx, obcluster)
 }
 
-func ListOBClusterParameters(ctx context.Context, nn *param.K8sObjectIdentity) ([]*models.Parameter, error) {
+func ListOBClusterParameters(ctx context.Context, nn *param.K8sObjectIdentity) ([]response.AggregatedParameter, error) {
 	obcluster, err := clients.GetOBCluster(ctx, nn.Namespace, nn.Name)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Get obcluster %s %s", nn.Namespace, nn.Name)
@@ -948,5 +948,81 @@ func ListOBClusterParameters(ctx context.Context, nn *param.K8sObjectIdentity) (
 		logger.WithError(err).Error("Failed to query parameters")
 		return nil, errors.New("Failed to list obcluster parameters")
 	}
-	return parameters, nil
+	// convert to response data structure
+	aggParameters := aggregrateParametersByName(parameters)
+	return aggParameters, nil
+}
+
+func generateMetaStr(metas []response.ParameterMeta) string {
+	metaStrs := make([]string, 0)
+	for _, meta := range metas {
+		if meta.TenantID != 0 {
+			metaStrs = append(metaStrs, fmt.Sprintf("observer: %s, tenantId: %d", meta.SvrIp, meta.TenantID))
+		} else {
+			metaStrs = append(metaStrs, fmt.Sprintf("observer: %s", meta.SvrIp))
+		}
+	}
+	return strings.Join(metaStrs, "; ")
+}
+
+func aggregrateParameterByName(parameters []*model.Parameter) response.AggregatedParameter {
+	if len(parameters) == 0 {
+		return response.AggregatedParameter{}
+	}
+	aggValues := make([]response.AggregratedParameterValue, 0)
+	for _, parameter := range parameters {
+		meta := response.ParameterMeta{
+			Zone:     parameter.Zone,
+			SvrIp:    parameter.SvrIp,
+			SvrPort:  parameter.SvrPort,
+			TenantID: parameter.TenantID,
+		}
+		match := false
+		for idx, aggValue := range aggValues {
+			if parameter.Value == aggValue.Value {
+				match = true
+				metas := aggValue.Metas
+				metas = append(metas, meta)
+				aggValues[idx].Metas = metas
+				aggValues[idx].MetasStr = generateMetaStr(metas)
+				break
+			}
+		}
+		if !match {
+			metas := make([]response.ParameterMeta, 0)
+			metas = append(metas, meta)
+			aggValues = append(aggValues, response.AggregratedParameterValue{
+				Value:    parameter.Value,
+				Metas:    metas,
+				MetasStr: generateMetaStr(metas),
+			})
+		}
+	}
+	return response.AggregatedParameter{
+		Name:      parameters[0].Name,
+		Values:    aggValues,
+		Scope:     parameters[0].Scope,
+		EditLevel: parameters[0].EditLevel,
+		DataType:  parameters[0].DataType,
+		Info:      parameters[0].Info,
+		Section:   parameters[0].Section,
+	}
+}
+
+func aggregrateParametersByName(parameters []*model.Parameter) []response.AggregatedParameter {
+	aggMap := make(map[string][]*model.Parameter)
+	for _, parameter := range parameters {
+		parameterList, exists := aggMap[parameter.Name]
+		if !exists {
+			parameterList = make([]*model.Parameter, 0)
+		}
+		parameterList = append(parameterList, parameter)
+		aggMap[parameter.Name] = parameterList
+	}
+	aggParameters := make([]response.AggregatedParameter, 0)
+	for _, parameterList := range aggMap {
+		aggParameter := aggregrateParameterByName(parameterList)
+		aggParameters = append(aggParameters, aggParameter)
+	}
+	return aggParameters
 }

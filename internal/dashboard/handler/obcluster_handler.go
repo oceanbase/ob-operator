@@ -28,7 +28,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 
 // @ID GetOBClusterStatistic
@@ -487,7 +486,7 @@ func DeleteOBServers(c *gin.Context) (*response.OBCluster, error) {
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/namespace/{namespace}/name/{name}/parameters [GET]
-func ListOBClusterParameters(c *gin.Context) ([]*model.Parameter, error) {
+func ListOBClusterParameters(c *gin.Context) ([]response.AggregatedParameter, error) {
 	nn := &param.K8sObjectIdentity{}
 	err := c.BindUri(nn)
 	if err != nil {

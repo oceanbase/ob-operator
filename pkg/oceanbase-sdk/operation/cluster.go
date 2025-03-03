@@ -63,7 +63,7 @@ func (m *OceanbaseOperationManager) GetVersion(ctx context.Context) (*model.OBVe
 
 func (m *OceanbaseOperationManager) ListClusterParameters(ctx context.Context) ([]*model.Parameter, error) {
 	params := make([]*model.Parameter, 0)
-	err := m.QueryList(ctx, &params, sql.ListParametersGroupByName)
+	err := m.QueryList(ctx, &params, sql.ListAllParameters)
 	if err != nil {
 		return nil, errors.Wrap(err, "List cluster parameters")
 	}
