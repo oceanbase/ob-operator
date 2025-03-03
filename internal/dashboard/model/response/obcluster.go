@@ -27,6 +27,8 @@ type OBServer struct {
 	Status       string     `json:"status" binding:"required"`
 	StatusDetail string     `json:"statusDetail" binding:"required"`
 	Address      string     `json:"address" binding:"required"`
+	NodeName     string     `json:"nodeName" binding:"required"`
+	NodeIp       string     `json:"nodeIp" binding:"required"`
 	Metrics      *OBMetrics `json:"metrics"`
 }
 

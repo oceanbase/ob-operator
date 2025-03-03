@@ -206,12 +206,22 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 		})
 		for _, observer := range observerList.Items {
 			logger.Debugf("add observer %s to result", observer.Name)
+			// compatible with old version CRD
+			nodeName := observer.Status.NodeName
+			if nodeName == "" {
+				pod, err := clients.GetPodOfOBServer(ctx, &observer)
+				if err == nil {
+					nodeName = pod.Spec.NodeName
+				}
+			}
 			observers = append(observers, response.OBServer{
 				Namespace:    observer.Namespace,
 				Name:         observer.Name,
 				Status:       convertStatus(observer.Status.Status),
 				StatusDetail: observer.Status.Status,
 				Address:      observer.Status.GetConnectAddr(),
+				NodeIp:       observer.Status.NodeIp,
+				NodeName:     nodeName,
 				// TODO: add metrics
 				Metrics: nil,
 			})
