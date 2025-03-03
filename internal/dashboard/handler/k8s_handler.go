@@ -74,6 +74,27 @@ func ListK8sNodes(c *gin.Context) ([]response.K8sNode, error) {
 	return nodes, nil
 }
 
+// @ID PutK8sNodeLabels
+// @Summary put k8s node labels
+// @Description overwrite k8s nodes
+// @Tags Cluster
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=response.K8sNode}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/cluster/nodes/{name}/labels [GET]
+// @Security ApiKeyAuth
+func PutK8sNodeLabels(c *gin.Context) (*response.K8sNode, error) {
+	node, err := k8s.UpdateLabels(c, labels)
+	if err != nil {
+		return nil, err
+	}
+	logger.Debugf("List k8s nodes: %v", nodes)
+	return node, nil
+}
+
 // @ID ListK8sNamespaces
 // @Summary list k8s namespaces
 // @Description list k8s namespaces

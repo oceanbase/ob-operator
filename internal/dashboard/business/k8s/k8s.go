@@ -27,6 +27,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/obproxy"
+	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
@@ -205,6 +206,62 @@ func ListEvents(ctx context.Context, queryEventParam *param.QueryEventParam) ([]
 		}
 	}
 	return events, err
+}
+
+func GetNode(ctx context.Context, name string) (*response.K8sNode, error) {
+	node, err := resource.GetNode(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	return NewK8sNodeResponse(node), nil
+}
+
+func NewK8sNodeResponse(node *corev1.Node) *response.K8sNode {
+	if node == nil {
+		return nil
+	}
+	internalAddress, externalAddress := extractNodeAddress(node)
+	taints := make([]response.Taint, 0)
+	for _, taint := range node.Spec.Taints {
+		taints = append(taints, response.Taint{
+			Key:    taint.Key,
+			Value:  taint.Value,
+			Effect: string(taint.Effect),
+		})
+	}
+	nodeInfo := &response.K8sNodeInfo{
+		Name:       node.Name,
+		Status:     extractNodeStatus(node),
+		Roles:      extractNodeRoles(node),
+		Labels:     common.MapToKVs(node.Labels),
+		Taints:     taints,
+		Conditions: extractNodeConditions(node),
+		Uptime:     node.CreationTimestamp.Unix(),
+		InternalIP: internalAddress,
+		ExternalIP: externalAddress,
+		Version:    node.Status.NodeInfo.KubeletVersion,
+		OS:         node.Status.NodeInfo.OSImage,
+		Kernel:     node.Status.NodeInfo.KernelVersion,
+		CRI:        node.Status.NodeInfo.ContainerRuntimeVersion,
+	}
+
+	nodeResource := &response.K8sNodeResource{}
+	nodeResp := &response.K8sNode{
+		Info:     nodeInfo,
+		Resource: nodeResource,
+	}
+	return nodeResp
+}
+
+func UpdateNodeLabels(ctx context.Context, name string, labels []modelcommon.KVPair) (*response.K8sNode, error) {
+	node, err := resource.GetNode(ctx, name)
+	if err != nil {
+		return nil, err
+	} else {
+		node.Labels = common.KVsToMap(labels)
+		node, err = resource.UpdateNode(ctx, node)
+		return NewK8sNodeResponse(node), err
+	}
 }
 
 func ListNodes(ctx context.Context) ([]response.K8sNode, error) {
