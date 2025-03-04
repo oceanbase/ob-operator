@@ -1,0 +1,67 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenant
+metadata:
+  name: ${OBTENANT_RESTORE_S3}
+  namespace: ${NAMESPACE} 
+spec:
+  obcluster: ${OBCLUSTER_NAME}
+  tenantName: ${OBTENANT_RESTORE_S3}
+  unitNum: 1
+  charset: utf8mb4
+  connectWhiteList: '%'
+  forceDelete: true
+  source:
+    restore:
+      bakDataSource:
+        type: "S3"
+        path: s3://${S3_BUCKET_NAME}/${S3_BACKUP_PATH}?host=${S3_HOST}
+        ossAccessSecret: ${S3_ACCESS}
+      archiveSource:
+        type: "S3"
+        path: s3://${S3_BUCKET_NAME}/${S3_ARCHIVE_PATH}?host=${S3_HOST}
+        ossAccessSecret: ${S3_ACCESS}
+      until:
+        unlimited: true
+      replayEnabled: false
+      replayLogUntil:
+        unlimited: true
+    tenant: ${OBTENANT_NAME}
+  pools:
+    - zone: zone1
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 1000m
+        memorySize: 2Gi
+        minCPU: 1
+        maxIops: 1024
+        minIops: 1024
+        logDiskSize: 5Gi
+    - zone: zone2
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 1000m
+        memorySize: 2Gi
+        minCPU: 1
+        maxIops: 1024
+        minIops: 1024
+        logDiskSize: 5Gi
+    - zone: zone3
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 1000m
+        memorySize: 2Gi
+        minCPU: 1
+        maxIops: 1024
+        minIops: 1024
+        logDiskSize: 5Gi
+
+

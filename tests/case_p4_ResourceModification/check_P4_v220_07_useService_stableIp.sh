@@ -90,7 +90,7 @@ check_service_ip() {
         counter=$((counter+1))
 	cluster_ip=$(kubectl get svc -n $NAMESPACE -l ref-obcluster=$OBCLUSTER_NAME | grep $OBCLUSTER_NAME-1-zone1 | awk -F' ' '{print $3}' | awk 'NR==1')
 	echo "Service Cluster IP: $cluster_ip"
-	db_result=$(obclient -uroot -h $ip -P2881 -p$PASSWORD -Doceanbase -e "select * from oceanbase.DBA_OB_SERVERS;" | grep zone1 | awk -F' ' '{print $1}' | awk 'NR==1')
+	db_result=$(mysql -uroot -h $ip -P2881 -p$PASSWORD -Doceanbase -e "select * from oceanbase.DBA_OB_SERVERS;" | grep zone1 | awk -F' ' '{print $1}' | awk 'NR==1')
 	echo "Database query result: $db_result"
 	if [ "$cluster_ip" = "$db_result" ]; then
             echo "Cluster IP and DB query result match, continue execution"
@@ -103,7 +103,7 @@ check_service_ip() {
 	    echo "New Pod name: $new_pod_name"
  	    new_cluster_ip=$(kubectl get svc -n $NAMESPACE -l ref-obcluster=$OBCLUSTER_NAME | grep $OBCLUSTER_NAME-1-zone1 | awk -F' ' '{print $3}' | awk 'NR==1')
 	    echo "New service Cluster IP: $new_cluster_ip"
-	    db_result=$(obclient -uroot -h $ip -P2881 -p$PASSWORD -Doceanbase -e "select * from oceanbase.DBA_OB_SERVERS;" | grep zone1 | awk -F' ' '{print $1}' | awk 'NR==1')
+	    db_result=$(mysql -uroot -h $ip -P2881 -p$PASSWORD -Doceanbase -e "select * from oceanbase.DBA_OB_SERVERS;" | grep zone1 | awk -F' ' '{print $1}' | awk 'NR==1')
 	    if [ "$cluster_ip" = "$new_cluster_ip" ]  && [ "$pod_name" = "$new_pod_name" ]; then
 		SERVICE_IP_ACTIVE='true'
 	    fi

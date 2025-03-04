@@ -161,7 +161,7 @@ check_operation() {
         echo 'check operation resource'
 	counter=$((counter+1))
 	op_upgrade_tenant=`kubectl get obtenantoperation -n $NAMESPACE |grep $OP_UPGRADE_TENANT |awk -F' ' '{print $3}'| awk 'NR==1'`
-	tenant421version=`obclient -uroot -h $ip -P 2881 -Doceanbase -p$PASSWORD -e 'SELECT * FROM oceanbase.DBA_OB_TENANTS;'|grep $OBTENANT_STANDBY_OSS|awk -F' ' '{print $25}'| awk 'NR==1'`
+	tenant421version=`mysql -uroot -h $ip -P 2881 -Doceanbase -p$PASSWORD -e 'SELECT * FROM oceanbase.DBA_OB_TENANTS;'|grep $OBTENANT_STANDBY_OSS|awk -F' ' '{print $25}'| awk 'NR==1'`
 	echo $op_upgrade_tenant $tenant421version
 	if [[ $op_upgrade_tenant = "SUCCESSFUL" && $tenant421version = "4.2.1.1" ]];then
 	    OPERATION_RUNNING='true'

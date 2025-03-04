@@ -1,0 +1,10 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenantOperation
+metadata:
+  generateName: ${TOP_DELETE_POOLS}
+  namespace: ${NAMESPACE}
+spec:
+  type: "DELETE_RESOURCE_POOLS"
+  targetTenant: ${OBTENANT_NAME}
+  deleteResourcePools:
+    - zone1

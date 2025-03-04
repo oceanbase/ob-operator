@@ -1,0 +1,11 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenantOperation
+metadata:
+  generateName: ${TOP_SET_CHARSET}
+  namespace: ${NAMESPACE}
+spec:
+  type: "SET_CHARSET"
+  targetTenant: ${OBTENANT_NAME}
+  charset: "utf8mb4"
+  force: true
+
