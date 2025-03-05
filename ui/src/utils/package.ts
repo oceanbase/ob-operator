@@ -126,12 +126,11 @@ export function buildVersionCompare(
 /**
  * 判断版本是否 >= 4.2.0
  */
-export function isGte4_2(version?: string): boolean {
+export const isGte4_2 = (version?: string) => {
   return buildVersionCompare(version, '4.2.0', 'gte');
-}
+};
 
 /** 判断版本是否 >= 4.3.3.0 */
-
-export function isGte4_3_3(version?: string): boolean {
+export const isGte4_3_3 = (version?: string) => {
   return buildVersionCompare(version, '4.3.3.0', 'gte');
-}
+};
