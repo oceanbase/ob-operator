@@ -1,0 +1,39 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBCluster
+metadata:
+  name: ${OBCLUSTER_NAME}
+  namespace: ${NAMESPACE}
+  annotations:
+    "oceanbase.oceanbase.com/mode": "standalone"
+spec:
+  clusterId: 1
+  clusterName: ${OBCLUSTER_NAME}
+  observer:
+    image: ${OB_IMAGE_STANDALONE}
+    resource:
+      cpu: 2
+      memory: 10Gi
+    storage:
+      dataStorage:
+        size: 50Gi
+        storageClass: local-path
+      logStorage:
+        size: 20Gi
+        storageClass: local-path
+      redoLogStorage:
+        size: 50Gi
+        storageClass: local-path
+  topology:
+  - replica: 1
+    zone: zone1
+  userSecrets:
+    root: ${OB_ROOT_SECRET}
+  monitor:
+    image: ${OBAGENT_IMAGE_MONITOR}
+    resource:
+      cpu: 1
+      memory: 1Gi
+  parameters:
+    - name: system_memory
+      value: 2G
+

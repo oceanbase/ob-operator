@@ -1,0 +1,11 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenantOperation
+metadata:
+  generateName: ${TOP_SET_UNIT_NUMBER}
+  namespace: ${NAMESPACE}
+spec:
+  type: "SET_UNIT_NUMBER"
+  targetTenant: ${OBTENANT_NAME}
+  unitNumber: 1
+  force: true
+

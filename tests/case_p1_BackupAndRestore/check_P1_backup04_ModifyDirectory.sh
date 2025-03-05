@@ -129,7 +129,7 @@ check_backup_mod_running() {
     while true; do
         echo 'check backup mod resource'
         counter=$((counter+1))
-	db_data_backup_dest=`obclient -uroot@$OBTENANT_NAME -h $ip -A -P2881 -p$PASSWORD -Doceanbase -e "select name, value from DBA_OB_BACKUP_PARAMETER" | awk '$1=="data_backup_dest" {print $2}'`
+	db_data_backup_dest=`mysql -uroot@$OBTENANT_NAME -h $ip -A -P2881 -p$PASSWORD -Doceanbase -e "select name, value from DBA_OB_BACKUP_PARAMETER" | awk '$1=="data_backup_dest" {print $2}'`
         if [[ $db_data_backup_dest = "file:///ob-backup/${DATA_BACKUP_CUSTOM_MODIFY}" ]];then
 	    echo "db_data_backup_dest $db_data_backup_dest"
             BACKUP_MOD_RUNNING='true'

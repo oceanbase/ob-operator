@@ -1,0 +1,26 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenantBackupPolicy
+metadata:
+  name: ${OBTENANT_BP_S3}
+  namespace: ${NAMESPACE}
+spec:
+  obClusterName: ${OBCLUSTER_NAME}
+  tenantCRName: ${OBTENANT_NAME}
+  jobKeepWindow: "1d"
+  dataClean:
+    recoveryWindow: "8d"
+  logArchive:
+    destination:
+      type: "S3"
+      path: s3://${S3_BUCKET_NAME}/${S3_ARCHIVE_PATH}?host=${S3_HOST}
+      ossAccessSecret: ${S3_ACCESS}
+    switchPieceInterval: "1d"
+  dataBackup:
+    destination:
+      type: "S3"
+      path: s3://${S3_BUCKET_NAME}/${S3_BACKUP_PATH}?host=${S3_HOST}
+      ossAccessSecret: ${S3_ACCESS}
+    fullCrontab: "30 0 * * 6"
+    incrementalCrontab: "30 1 * * *"
+
+

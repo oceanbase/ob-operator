@@ -1,0 +1,23 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenantOperation
+metadata:
+  generateName: ${TOP_ADD_POOLS}
+  namespace: ${NAMESPACE}
+spec:
+  type: "ADD_RESOURCE_POOLS"
+  targetTenant: ${OBTENANT_NAME}
+  addResourcePools:
+    - zone: zone1
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 6 #
+        memorySize: 2Gi
+        minCPU: 5 #
+        maxIops: 2048 #
+        minIops: 2048 #
+        iopsWeight: 2
+        logDiskSize: 5Gi #
+

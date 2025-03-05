@@ -1,0 +1,26 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenantBackupPolicy
+metadata:
+  name: ${OBTENANT_BP_GCS}
+  namespace: ${NAMESPACE}
+spec:
+  obClusterName: ${OBCLUSTER_NAME}
+  tenantCRName: ${OBTENANT_NAME}
+  jobKeepWindow: "1d"
+  dataClean:
+    recoveryWindow: "8d"
+  logArchive:
+    destination:
+      type: "S3_COMPATIBLE"
+      path: s3://${GCS_BUCKET_NAME}/${GCS_ARCHIVE_PATH}?host=${GCS_HOST}
+      ossAccessSecret: ${GCS_ACCESS}
+    switchPieceInterval: "1d"
+  dataBackup:
+    destination:
+      type: "S3_COMPATIBLE"
+      path: s3://${GCS_BUCKET_NAME}/${GCS_BACKUP_PATH}?host=${GCS_HOST}
+      ossAccessSecret: ${GCS_ACCESS}
+    fullCrontab: "30 0 * * 6"
+    incrementalCrontab: "30 1 * * *"
+
+

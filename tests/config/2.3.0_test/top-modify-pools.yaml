@@ -1,0 +1,25 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenantOperation
+metadata:
+  generateName: ${TOP_MODIFY_POOLS}
+  namespace: ${NAMESPACE}
+spec:
+  type: "MODIFY_RESOURCE_POOLS"
+  targetTenant: ${OBTENANT_NAME}
+  modifyResourcePools:
+    - zone: zone1
+      priority: 10
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 6
+        memorySize: 2Gi
+        minCPU: 5
+        maxIops: 1024
+        minIops: 1024
+        iopsWeight: 2
+        logDiskSize: 4Gi
+
+
