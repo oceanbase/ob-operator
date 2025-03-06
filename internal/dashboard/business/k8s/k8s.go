@@ -14,7 +14,6 @@ package k8s
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -259,30 +258,28 @@ func UpdateNodeTaints(ctx context.Context, name string, taints []k8s.Taint) (*re
 	node, err := resource.GetNode(ctx, name)
 	if err != nil {
 		return nil, err
-	} else {
-		nodeTaints := make([]corev1.Taint, 0)
-		for _, taint := range taints {
-			nodeTaints = append(nodeTaints, corev1.Taint{
-				Key:    taint.Key,
-				Value:  taint.Value,
-				Effect: corev1.TaintEffect(taint.Effect),
-			})
-		}
-		node.Spec.Taints = nodeTaints
-		node, err = resource.UpdateNode(ctx, node)
-		return NewK8sNodeResponse(node), err
 	}
+	nodeTaints := make([]corev1.Taint, 0)
+	for _, taint := range taints {
+		nodeTaints = append(nodeTaints, corev1.Taint{
+			Key:    taint.Key,
+			Value:  taint.Value,
+			Effect: corev1.TaintEffect(taint.Effect),
+		})
+	}
+	node.Spec.Taints = nodeTaints
+	node, err = resource.UpdateNode(ctx, node)
+	return NewK8sNodeResponse(node), err
 }
 
 func UpdateNodeLabels(ctx context.Context, name string, labels []modelcommon.KVPair) (*response.K8sNode, error) {
 	node, err := resource.GetNode(ctx, name)
 	if err != nil {
 		return nil, err
-	} else {
-		node.Labels = common.KVsToMap(labels)
-		node, err = resource.UpdateNode(ctx, node)
-		return NewK8sNodeResponse(node), err
 	}
+	node.Labels = common.KVsToMap(labels)
+	node, err = resource.UpdateNode(ctx, node)
+	return NewK8sNodeResponse(node), err
 }
 
 func BatchUpdateNodes(ctx context.Context, updateNodesParam *param.BatchUpdateNodesParam) error {
@@ -336,14 +333,14 @@ func BatchUpdateNodes(ctx context.Context, updateNodesParam *param.BatchUpdateNo
 		node.Spec.Taints = taints
 
 		// update node
-		node, err = resource.UpdateNode(ctx, node)
+		_, err = resource.UpdateNode(ctx, node)
 		if err != nil {
 			failedNodes = append(failedNodes, nodeName)
 			logger.Errorf("Got error when update node %s, %v", nodeName, err)
 		}
 	}
 	if len(failedNodes) > 0 {
-		return errors.New(fmt.Sprintf("Update nodes failed, failed nodes: %s", strings.Join(failedNodes, ",")))
+		return fmt.Errorf("Update nodes failed, failed nodes: %s", strings.Join(failedNodes, ","))
 	}
 	return nil
 }
