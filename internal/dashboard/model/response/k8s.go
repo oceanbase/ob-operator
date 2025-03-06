@@ -14,6 +14,7 @@ package response
 
 import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/k8s"
 )
 
 type K8sEvent struct {
@@ -33,19 +34,13 @@ type K8sNodeCondition struct {
 	Message string `json:"message" binding:"required"`
 }
 
-type Taint struct {
-	Key    string `json:"key" binding:"required"`
-	Value  string `json:"value,omitempty"`
-	Effect string `json:"effect" binding:"required"`
-}
-
 type K8sNodeInfo struct {
 	Name       string             `json:"name" binding:"required"`
 	Status     string             `json:"status" binding:"required"`
 	Conditions []K8sNodeCondition `json:"conditions" binding:"required"`
 	Roles      []string           `json:"roles" binding:"required"`
 	Labels     []common.KVPair    `json:"labels" binding:"required"`
-	Taints     []Taint            `json:"taints" binding:"required"`
+	Taints     []k8s.Taint        `json:"taints" binding:"required"`
 	Uptime     int64              `json:"uptime" binding:"required"`
 	Version    string             `json:"version" binding:"required"`
 	InternalIP string             `json:"internalIP" binding:"required"`
