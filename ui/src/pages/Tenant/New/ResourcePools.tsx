@@ -44,10 +44,21 @@ export default function ResourcePools({
       }),
     );
   };
-  const targetZoneList = clusterList
-    .filter((cluster) => cluster.id === selectClusterId)[0]
-    ?.topology.map((zone) => ({ zone: zone.zone, checked: zone.checked }));
+  // const targetZoneList = clusterList
+  //   .filter((cluster) => cluster.id === selectClusterId)[0]
+  //   ?.topology.map((zone) => ({ zone: zone.zone, checked: zone.checked }));
 
+  const targetZoneList = [
+    {
+      zone: '1',
+      checked: true,
+    },
+  ];
+
+  // const realCluster = clusterList.find((item) => item.id === selectClusterId);
+
+  const obversion = '4.3.3';
+  // const obversion = realCluster?.version;
   useEffect(() => {
     if (essentialParameter) {
       if (selectZones.length === 0) {
@@ -86,21 +97,21 @@ export default function ResourcePools({
       })}
     >
       <div>
-        {targetZoneList && essentialParameter && (
+        {/* targetZoneList && essentialParameter  */}
+        {targetZoneList && (
           <Row>
-            <h3>
-              {intl.formatMessage({
-                id: 'Dashboard.Tenant.New.ResourcePools.SelectTheZoneToDeploy',
-                defaultMessage: '选择要部署资源池的 Zone',
-              })}
-            </h3>
+            <h3>副本发布</h3>
             {targetZoneList.map((item, index) => (
               <ZoneItem
                 key={index}
+                type="new"
                 name={item.zone}
                 checked={item.checked!}
                 checkedFormName={['pools', item.zone, 'checked']}
-                obZoneResource={essentialParameter.obZoneResourceMap[item.zone]}
+                //  obZoneResource={essentialParameter.obZoneResourceMap[item.zone]}
+
+                obZoneResource={'1'}
+                obversion={obversion}
                 checkBoxOnChange={checkBoxOnChange}
               />
             ))}
