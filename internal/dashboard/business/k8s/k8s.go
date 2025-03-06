@@ -27,6 +27,8 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/obproxy"
+	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/k8s"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
@@ -207,6 +209,142 @@ func ListEvents(ctx context.Context, queryEventParam *param.QueryEventParam) ([]
 	return events, err
 }
 
+func GetNode(ctx context.Context, name string) (*response.K8sNode, error) {
+	node, err := resource.GetNode(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	return NewK8sNodeResponse(node), nil
+}
+
+func NewK8sNodeResponse(node *corev1.Node) *response.K8sNode {
+	if node == nil {
+		return nil
+	}
+	internalAddress, externalAddress := extractNodeAddress(node)
+	taints := make([]k8s.Taint, 0)
+	for _, taint := range node.Spec.Taints {
+		taints = append(taints, k8s.Taint{
+			Key:    taint.Key,
+			Value:  taint.Value,
+			Effect: string(taint.Effect),
+		})
+	}
+	nodeInfo := &response.K8sNodeInfo{
+		Name:       node.Name,
+		Status:     extractNodeStatus(node),
+		Roles:      extractNodeRoles(node),
+		Labels:     common.MapToKVs(node.Labels),
+		Taints:     taints,
+		Conditions: extractNodeConditions(node),
+		Uptime:     node.CreationTimestamp.Unix(),
+		InternalIP: internalAddress,
+		ExternalIP: externalAddress,
+		Version:    node.Status.NodeInfo.KubeletVersion,
+		OS:         node.Status.NodeInfo.OSImage,
+		Kernel:     node.Status.NodeInfo.KernelVersion,
+		CRI:        node.Status.NodeInfo.ContainerRuntimeVersion,
+	}
+
+	nodeResource := &response.K8sNodeResource{}
+	nodeResp := &response.K8sNode{
+		Info:     nodeInfo,
+		Resource: nodeResource,
+	}
+	return nodeResp
+}
+
+func UpdateNodeTaints(ctx context.Context, name string, taints []k8s.Taint) (*response.K8sNode, error) {
+	node, err := resource.GetNode(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	nodeTaints := make([]corev1.Taint, 0)
+	for _, taint := range taints {
+		nodeTaints = append(nodeTaints, corev1.Taint{
+			Key:    taint.Key,
+			Value:  taint.Value,
+			Effect: corev1.TaintEffect(taint.Effect),
+		})
+	}
+	node.Spec.Taints = nodeTaints
+	node, err = resource.UpdateNode(ctx, node)
+	return NewK8sNodeResponse(node), err
+}
+
+func UpdateNodeLabels(ctx context.Context, name string, labels []modelcommon.KVPair) (*response.K8sNode, error) {
+	node, err := resource.GetNode(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	node.Labels = common.KVsToMap(labels)
+	node, err = resource.UpdateNode(ctx, node)
+	return NewK8sNodeResponse(node), err
+}
+
+func BatchUpdateNodes(ctx context.Context, updateNodesParam *param.BatchUpdateNodesParam) error {
+	failedNodes := make([]string, 0)
+	for _, nodeName := range updateNodesParam.Nodes {
+		node, err := resource.GetNode(ctx, nodeName)
+		if err != nil {
+			failedNodes = append(failedNodes, nodeName)
+			continue
+		}
+		// update node labels
+		for _, labelOperation := range updateNodesParam.LabelOperations {
+			switch labelOperation.Operation {
+			case param.OperationOverwrite:
+				node.Labels[labelOperation.Key] = labelOperation.Value
+			case param.OperationDelete:
+				_, exists := node.Labels[labelOperation.Key]
+				if exists {
+					delete(node.Labels, labelOperation.Key)
+				}
+			default:
+				logger.Errorf("Got unexpected node label operation: %s", labelOperation.Operation)
+			}
+		}
+		// update node taints
+		taintMap := make(map[string]*corev1.Taint)
+		for idx, taint := range node.Spec.Taints {
+			taintMap[taint.Key] = &node.Spec.Taints[idx]
+		}
+		for _, taintOperation := range updateNodesParam.TaintOperations {
+			switch taintOperation.Operation {
+			case param.OperationOverwrite:
+				taintMap[taintOperation.Key] = &corev1.Taint{
+					Key:    taintOperation.Key,
+					Value:  taintOperation.Value,
+					Effect: corev1.TaintEffect(taintOperation.Effect),
+				}
+			case param.OperationDelete:
+				_, exists := taintMap[taintOperation.Key]
+				if exists {
+					delete(taintMap, taintOperation.Key)
+				}
+			default:
+				logger.Errorf("Got unexpected node taint operation: %s", taintOperation.Operation)
+			}
+		}
+		taints := make([]corev1.Taint, 0)
+		for _, taint := range taintMap {
+			taints = append(taints, *taint)
+		}
+		node.Spec.Taints = taints
+
+		// update node
+		_, err = resource.UpdateNode(ctx, node)
+		if err != nil {
+			failedNodes = append(failedNodes, nodeName)
+			logger.Errorf("Got error when update node %s, %v", nodeName, err)
+		}
+	}
+	if len(failedNodes) > 0 {
+		return fmt.Errorf("Update nodes failed, failed nodes: %s", strings.Join(failedNodes, ","))
+	}
+	return nil
+}
+
 func ListNodes(ctx context.Context) ([]response.K8sNode, error) {
 	nodes := make([]response.K8sNode, 0)
 	nodeList, err := resource.ListNodes(ctx)
@@ -214,11 +352,20 @@ func ListNodes(ctx context.Context) ([]response.K8sNode, error) {
 	if err == nil {
 		for _, node := range nodeList.Items {
 			internalAddress, externalAddress := extractNodeAddress(&node)
+			taints := make([]k8s.Taint, 0)
+			for _, taint := range node.Spec.Taints {
+				taints = append(taints, k8s.Taint{
+					Key:    taint.Key,
+					Value:  taint.Value,
+					Effect: string(taint.Effect),
+				})
+			}
 			nodeInfo := &response.K8sNodeInfo{
 				Name:       node.Name,
 				Status:     extractNodeStatus(&node),
 				Roles:      extractNodeRoles(&node),
 				Labels:     common.MapToKVs(node.Labels),
+				Taints:     taints,
 				Conditions: extractNodeConditions(&node),
 				Uptime:     node.CreationTimestamp.Unix(),
 				InternalIP: internalAddress,

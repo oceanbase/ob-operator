@@ -12,7 +12,10 @@ See the Mulan PSL v2 for more details.
 
 package response
 
-import "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
+import (
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/k8s"
+)
 
 type K8sEvent struct {
 	Namespace  string `json:"namespace" binding:"required"`
@@ -37,6 +40,7 @@ type K8sNodeInfo struct {
 	Conditions []K8sNodeCondition `json:"conditions" binding:"required"`
 	Roles      []string           `json:"roles" binding:"required"`
 	Labels     []common.KVPair    `json:"labels" binding:"required"`
+	Taints     []k8s.Taint        `json:"taints" binding:"required"`
 	Uptime     int64              `json:"uptime" binding:"required"`
 	Version    string             `json:"version" binding:"required"`
 	InternalIP string             `json:"internalIP" binding:"required"`

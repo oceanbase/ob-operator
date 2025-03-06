@@ -481,7 +481,7 @@ func DeleteOBServers(c *gin.Context) (*response.OBCluster, error) {
 // @Produce application/json
 // @Param namespace path string true "namespace of obcluster resource"
 // @Param name path string true "name of obcluster resource"
-// @Success 200 object response.APIResponse{data=[]model.Parameter}
+// @Success 200 object response.APIResponse{data=[]response.AggregatedParameter}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
