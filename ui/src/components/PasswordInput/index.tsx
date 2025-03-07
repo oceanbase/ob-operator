@@ -40,8 +40,8 @@ export default function PasswordInput({
   const genaretaPassword = () => {
     const password = generateRandomPassword();
     onChange(password);
-    setFieldValue('rootPassword', password);
-    form.validateFields(['rootPassword']);
+    setFieldValue(name, password);
+    form.validateFields([name]);
   };
   const passwordCopy = () => {
     if (value) {
@@ -96,7 +96,7 @@ export default function PasswordInput({
             defaultMessage: '密码',
           })
         }
-        name="rootPassword"
+        name={name}
         rules={passwordRules}
         className={styles.passwordFormItem}
         validateFirst

@@ -50,6 +50,9 @@ export default function New() {
   const onFinish = async (values: API.CreateClusterData) => {
     values.clusterId = new Date().getTime() % 4294901759;
     values.rootPassword = encryptText(values.rootPassword, publicKey) as string;
+    values.proxyroPassword = values.proxyroPassword
+      ? (encryptText(values.proxyroPassword, publicKey) as string)
+      : undefined;
     values.deletionProtection = deleteValue;
     values.pvcIndependent = pvcValue;
 
