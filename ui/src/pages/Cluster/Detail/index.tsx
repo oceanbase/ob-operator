@@ -39,6 +39,12 @@ export default () => {
       link: `/cluster/${ns}/${name}/${clusterName}/tenant`,
     },
     {
+      title: '集群参数',
+      key: 'parameters',
+      link: `/cluster/${ns}/${name}/${clusterName}/parameters`,
+      accessible: access.obclusterwrite,
+    },
+    {
       title: intl.formatMessage({
         id: 'Dashboard.Cluster.Detail.Connection1',
         defaultMessage: '连接集群',

@@ -4,16 +4,11 @@ import { useRequest } from 'ahooks';
 import { Button, Col, Form, Input, message, Modal, Row, Space } from 'antd';
 import React, { useEffect } from 'react';
 
-interface kvPair {
-  key: string;
-  value: string;
-}
-
 export interface ParametersModalProps {
   visible: boolean;
   onCancel: () => void;
   onSuccess: () => void;
-  initialValues: kvPair;
+  initialValues: any[];
   name: string;
   namespace: string;
 }
@@ -26,14 +21,8 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
   name,
   namespace,
 }) => {
-  const [form] = Form.useForm<kvPair>();
+  const [form] = Form.useForm<API.CreateClusterData>();
   const { validateFields, resetFields } = form;
-
-  useEffect(() => {
-    if (visible) {
-      form.setFieldsValue(initialValues);
-    }
-  }, [visible]);
 
   const { runAsync: updateParameters, loading } = useRequest(
     obcluster.patchOBCluster,
@@ -53,16 +42,26 @@ const ParametersModal: React.FC<ParametersModalProps> = ({
     },
   );
 
+  useEffect(() => {
+    if (visible) {
+      form.setFieldsValue({
+        key: initialValues?.name,
+        value: initialValues?.value,
+      });
+    }
+  }, [initialValues, visible]);
+
   return (
     <Modal
       title={intl.formatMessage({
         id: 'src.pages.Cluster.Detail.Overview.849E8956',
         defaultMessage: '参数编辑',
       })}
-      maskClosable={false}
       open={visible}
+      destroyOnClose
       onCancel={() => {
         onCancel();
+        resetFields();
       }}
       width={520}
       footer={
