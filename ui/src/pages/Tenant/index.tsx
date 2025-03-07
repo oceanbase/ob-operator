@@ -70,7 +70,11 @@ export default function TenantPage() {
           />
         </Col>
         <Col span={24}>
-          <EventsTable objectType="OBTENANT" collapsible={false} />
+          <EventsTable
+            objectType="OBTENANT"
+            collapsible={false}
+            overView={true}
+          />
         </Col>
       </Row>
       <MonitorComp

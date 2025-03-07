@@ -40,7 +40,7 @@ const ClusterPage: React.FC = () => {
           />
         </Col>
         <Col span={24}>
-          <EventsTable objectType="OBCLUSTER" />
+          <EventsTable objectType="OBCLUSTER" overView={true} />
         </Col>
       </Row>
       <MonitorComp
