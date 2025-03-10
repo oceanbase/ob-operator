@@ -82,11 +82,11 @@ export default function ServerTable({
     },
     {
       title: 'K8s Node',
-      dataIndex: 'address',
+      dataIndex: 'nodeName',
     },
     {
       title: 'K8s Node IP',
-      dataIndex: 'address',
+      dataIndex: 'nodeIp',
     },
     {
       title: intl.formatMessage({
