@@ -205,10 +205,11 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 			return observerList.Items[i].Name < observerList.Items[j].Name
 		})
 		for _, observer := range observerList.Items {
-			logger.Debugf("add observer %s to result", observer.Name)
+			logger.Debugf("Add observer %s to result", observer.Name)
 			// compatible with old version CRD
 			nodeName := observer.Status.NodeName
 			if nodeName == "" {
+				logger.Debugf("Get node name of observer %s", observer.Name)
 				pod, err := clients.GetPodOfOBServer(ctx, &observer)
 				if err == nil {
 					nodeName = pod.Spec.NodeName
