@@ -120,7 +120,7 @@ func PutK8sNodeTaints(c *gin.Context) (*response.K8sNode, error) {
 	return k8s.UpdateNodeTaints(c, name, nodeTaints.Taints)
 }
 
-// @ID BatchUpdateK8sNode
+// @ID BatchUpdateK8sNodes
 // @Summary update k8s nodes
 // @Description update k8s nodes taints and labels
 // @Tags Cluster
@@ -133,7 +133,7 @@ func PutK8sNodeTaints(c *gin.Context) (*response.K8sNode, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/cluster/nodes/update [POST]
 // @Security ApiKeyAuth
-func BatchUpdateK8sNode(c *gin.Context) (any, error) {
+func BatchUpdateK8sNodes(c *gin.Context) (any, error) {
 	updateNodesParam := &param.BatchUpdateNodesParam{}
 	err := c.Bind(updateNodesParam)
 	if err != nil {

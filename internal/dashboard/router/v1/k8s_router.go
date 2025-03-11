@@ -36,6 +36,9 @@ var k8sResourceGuard = acbiz.OR(
 func InitK8sRoutes(g *gin.RouterGroup) {
 	g.GET("/cluster/events", h.Wrap(h.ListK8sEvents, eventGuard))
 	g.GET("/cluster/nodes", h.Wrap(h.ListK8sNodes, acbiz.PathGuard("system", "*", "read")))
+	g.PUT("/cluster/nodes/:name/labels", h.Wrap(h.PutK8sNodeLabels, acbiz.PathGuard("system", "*", "write")))
+	g.PUT("/cluster/nodes/:name/taints", h.Wrap(h.PutK8sNodeTaints, acbiz.PathGuard("system", "*", "write")))
+	g.POST("/cluster/nodes/update", h.Wrap(h.BatchUpdateK8sNodes, acbiz.PathGuard("system", "*", "write")))
 	g.GET("/cluster/namespaces", h.Wrap(h.ListK8sNamespaces, k8sResourceGuard))
 	g.GET("/cluster/storageClasses", h.Wrap(h.ListK8sStorageClasses, k8sResourceGuard))
 	g.POST("/cluster/namespaces", h.Wrap(h.CreateK8sNamespace, acbiz.PathGuard("system", "*", "write")))
