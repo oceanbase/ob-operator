@@ -9,6 +9,7 @@ import { findMinParameter, modifyZoneCheckedStatus } from '../helper';
 import styles from './index.less';
 
 interface ResourcePoolsProps {
+  type?: string;
   selectClusterId?: string;
   clusterList: API.SimpleClusterList;
   form: FormInstance<API.NewTenantForm>;
@@ -22,6 +23,7 @@ export default function ResourcePools({
   essentialParameter,
   setClusterList,
   form,
+  type,
 }: ResourcePoolsProps) {
   const [minResource, setMinResource] = useState<OBTenant.MinResourceConfig>(
     getMinResource(),
@@ -44,21 +46,12 @@ export default function ResourcePools({
       }),
     );
   };
-  // const targetZoneList = clusterList
-  //   .filter((cluster) => cluster.id === selectClusterId)[0]
-  //   ?.topology.map((zone) => ({ zone: zone.zone, checked: zone.checked }));
+  const targetZoneList = clusterList
+    .filter((cluster) => cluster.id === selectClusterId)[0]
+    ?.topology.map((zone) => ({ zone: zone.zone, checked: zone.checked }));
 
-  const targetZoneList = [
-    {
-      zone: '1',
-      checked: true,
-    },
-  ];
-
-  // const realCluster = clusterList.find((item) => item.id === selectClusterId);
-
+  // TODO: 暂时写死 集群详情缺少该参数
   const obversion = '4.3.3';
-  // const obversion = realCluster?.version;
   useEffect(() => {
     if (essentialParameter) {
       if (selectZones.length === 0) {
@@ -89,32 +82,43 @@ export default function ResourcePools({
     }
   }, [essentialParameter]);
 
-  return (
-    <Card
-      title={intl.formatMessage({
-        id: 'Dashboard.Tenant.New.ResourcePools.ResourcePool',
-        defaultMessage: '资源池',
-      })}
-    >
+  const content = () => {
+    return (
       <div>
-        {/* targetZoneList && essentialParameter  */}
-        {targetZoneList && (
+        {targetZoneList && essentialParameter && (
           <Row>
             <h3>副本发布</h3>
             {targetZoneList.map((item, index) => (
               <ZoneItem
                 key={index}
-                type="new"
+                type={type || 'new'}
                 name={item.zone}
                 checked={item.checked!}
                 checkedFormName={['pools', item.zone, 'checked']}
-                //  obZoneResource={essentialParameter.obZoneResourceMap[item.zone]}
-
-                obZoneResource={'1'}
+                obZoneResource={
+                  essentialParameter?.obZoneResourceMap[item.zone]
+                }
                 obversion={obversion}
                 checkBoxOnChange={checkBoxOnChange}
               />
             ))}
+            <Col span={8}>
+              <Form.Item
+                name={['unitNum']}
+                rules={[
+                  {
+                    required: true,
+                    message: intl.formatMessage({
+                      id: 'Dashboard.Tenant.New.BasicInfo.PleaseEnterTheNumberOf',
+                      defaultMessage: '请输入Unit 数量',
+                    }),
+                  },
+                ]}
+                label={'每 zone unit 数量'}
+              >
+                <InputNumber min={1} />
+              </Form.Item>
+            </Col>
           </Row>
         )}
 
@@ -345,6 +349,22 @@ export default function ResourcePools({
           </Row>
         </div>
       </div>
-    </Card>
+    );
+  };
+  return (
+    <>
+      {type === 'tenantBackup' ? (
+        <> {content()}</>
+      ) : (
+        <Card
+          title={intl.formatMessage({
+            id: 'Dashboard.Tenant.New.ResourcePools.ResourcePool',
+            defaultMessage: '资源池',
+          })}
+        >
+          {content()}
+        </Card>
+      )}
+    </>
   );
 }

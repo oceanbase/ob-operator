@@ -23,10 +23,7 @@ export default () => {
       link: `/tenant/${ns}/${name}/${tenantName}/topo`,
     },
     {
-      title: intl.formatMessage({
-        id: 'Dashboard.Tenant.Detail.Backup',
-        defaultMessage: '备份',
-      }),
+      title: '备份/恢复',
       link: `/tenant/${ns}/${name}/${tenantName}/backup`,
     },
     {
