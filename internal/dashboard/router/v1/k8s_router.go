@@ -19,24 +19,12 @@ import (
 	h "github.com/oceanbase/ob-operator/internal/dashboard/handler"
 )
 
-// Users with read permission for cluster and obproxy can list events, too
-var eventGuard = acbiz.OR(
-	acbiz.PathGuard(string(acbiz.DomainSystem), "*", string(acbiz.ActionRead)),
-	acbiz.PathGuard(string(acbiz.DomainOBCluster), "*", string(acbiz.ActionRead)),
-	acbiz.PathGuard(string(acbiz.DomainOBProxy), "*", string(acbiz.ActionRead)),
+var k8sClusterGuard = acbiz.OR(
+	acbiz.PathGuard(string(acbiz.DomainK8sCluster), "*", string(acbiz.ActionRead)),
 )
 
-// Users with write permission for cluster and obproxy can list namespaces and storage classes
-var k8sResourceGuard = acbiz.OR(
-	acbiz.PathGuard(string(acbiz.DomainSystem), "*", string(acbiz.ActionRead)),
-	acbiz.PathGuard(string(acbiz.DomainOBCluster), "*", string(acbiz.ActionWrite)),
-	acbiz.PathGuard(string(acbiz.DomainOBProxy), "*", string(acbiz.ActionWrite)),
-)
-
-func InitK8sRoutes(g *gin.RouterGroup) {
-	g.GET("/cluster/events", h.Wrap(h.ListK8sEvents, eventGuard))
-	g.GET("/cluster/nodes", h.Wrap(h.ListK8sNodes, acbiz.PathGuard("system", "*", "read")))
-	g.GET("/cluster/namespaces", h.Wrap(h.ListK8sNamespaces, k8sResourceGuard))
-	g.GET("/cluster/storageClasses", h.Wrap(h.ListK8sStorageClasses, k8sResourceGuard))
-	g.POST("/cluster/namespaces", h.Wrap(h.CreateK8sNamespace, acbiz.PathGuard("system", "*", "write")))
+func InitK8sClusterRoutes(g *gin.RouterGroup) {
+	g.GET("/k8s/clusters", h.Wrap(h.ListK8sClusters, k8sClusterGuard))
+	g.GET("/k8s/clusters/:name", h.Wrap(h.GetK8sCluster, k8sClusterGuard))
+	g.POST("/k8s/clusters", h.Wrap(h.CreateK8sCluster, k8sClusterGuard))
 }
