@@ -120,9 +120,13 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 	conn, err := utils.GetOBConnection(ctx, obcluster, "root", "sys", obcluster.Spec.UserSecrets.Root)
 	if err != nil {
 		logger.WithError(err).Info("Failed to get OceanBase database connection")
-		return nil, errors.Wrapf(err, "Failed to get connection go obcluster")
+		return nil, errors.Wrapf(err, "Failed to get connection of obcluster")
 	}
 	version, err := conn.GetVersion(ctx)
+	if err != nil {
+		logger.WithError(err).Info("Failed to get OceanBase database version")
+		return nil, errors.Wrapf(err, "Failed to get version of obcluster")
+	}
 
 	respCluster := &response.OBCluster{
 		OBClusterOverview: *overview,
