@@ -22,7 +22,8 @@ type CreateOBTenantParam struct {
 	ClusterName      string `json:"obcluster" binding:"required"`
 	TenantName       string `json:"tenantName" binding:"required"`
 	UnitNumber       int    `json:"unitNum" binding:"required"`
-	RootPassword     string `json:"rootPassword" binding:"required"`
+	RootPassword     string `json:"rootPassword,omitempty"`
+	RootCredential   string `json:"rootCredential,omitempty"`
 	ConnectWhiteList string `json:"connectWhiteList,omitempty"`
 	Charset          string `json:"charset,omitempty"`
 

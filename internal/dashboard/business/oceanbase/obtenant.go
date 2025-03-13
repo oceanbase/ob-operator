@@ -284,11 +284,21 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 	if err != nil {
 		return nil, err
 	}
+	k8sclient := client.GetClient()
+
+	// use password from root credential
+	if p.RootCredential != "" {
+		rootSecret, err := k8sclient.ClientSet.CoreV1().Secrets(t.Namespace).Get(ctx, p.RootCredential, v1.GetOptions{})
+		if err != nil {
+			return nil, oberr.NewInternal(err.Error())
+		}
+		if pwd, ok := rootSecret.Data["password"]; ok {
+			p.RootPassword = string(pwd)
+		}
+	}
 	if p.RootPassword != "" {
 		t.Spec.Credentials.Root = p.Name + "-root-" + rand.String(6)
 	}
-
-	k8sclient := client.GetClient()
 
 	if p.Source != nil && p.Source.Tenant != nil {
 		// Check primary tenant
