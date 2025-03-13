@@ -24,7 +24,13 @@ var k8sClusterGuard = acbiz.OR(
 )
 
 func InitK8sClusterRoutes(g *gin.RouterGroup) {
-	g.GET("/k8s/clusters", h.Wrap(h.ListK8sClusters, k8sClusterGuard))
-	g.GET("/k8s/clusters/:name", h.Wrap(h.GetK8sCluster, k8sClusterGuard))
-	g.POST("/k8s/clusters", h.Wrap(h.CreateK8sCluster, k8sClusterGuard))
+	g.GET("/k8s/clusters", h.Wrap(h.ListRemoteK8sClusters, k8sClusterGuard))
+	g.GET("/k8s/clusters/:name", h.Wrap(h.GetRemoteK8sCluster, k8sClusterGuard))
+	g.PUT("/k8s/clusters/:name", h.Wrap(h.GetRemoteK8sCluster, k8sClusterGuard))
+	g.POST("/k8s/clusters", h.Wrap(h.CreateRemoteK8sCluster, k8sClusterGuard))
+	g.GET("/k8s/clusters/:name/events", h.Wrap(h.ListRemoteK8sEvents, k8sClusterGuard))
+	g.GET("/k8s/clusters/:name/nodes", h.Wrap(h.ListRemoteK8sNodes, k8sClusterGuard))
+	g.PUT("/k8s/clusters/:clusterName/nodes/:nodeName/labels", h.Wrap(h.PutRemoteK8sNodeLabels, k8sClusterGuard))
+	g.PUT("/k8s/clusters/:clusterName/nodes/:nodeName/taints", h.Wrap(h.PutRemoteK8sNodeTaints, k8sClusterGuard))
+	g.POST("/k8s/clusters/:name/nodes/update", h.Wrap(h.BatchUpdateRemoteK8sNode, k8sClusterGuard))
 }
