@@ -77,11 +77,8 @@ type OBClusterOverview struct {
 
 type OBCluster struct {
 	OBClusterOverview `json:",inline"`
-
-	Metrics *OBMetrics `json:"metrics"`
-	Version string     `json:"version"`
-
-	OBClusterExtra `json:",inline"`
+	Metrics           *OBMetrics `json:"metrics"`
+	OBClusterExtra    `json:",inline"`
 }
 
 type ResourceSpecRender struct {
@@ -96,6 +93,7 @@ type ParameterSpec struct {
 }
 
 type OBClusterExtra struct {
+	Version  string             `json:"version"`
 	Resource ResourceSpecRender `json:"resource" binding:"required"`
 	Storage  OBServerStorage    `json:"storage" binding:"required"`
 

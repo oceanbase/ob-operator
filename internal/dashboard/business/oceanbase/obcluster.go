@@ -116,13 +116,25 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to build obcluster overview")
 	}
+
+	conn, err := utils.GetOBConnection(ctx, obcluster, "root", "sys", obcluster.Spec.UserSecrets.Root)
+	if err != nil {
+		logger.WithError(err).Info("Failed to get OceanBase database connection")
+		return nil, errors.Wrapf(err, "Failed to get connection of obcluster")
+	}
+	version, err := conn.GetVersion(ctx)
+	if err != nil {
+		logger.WithError(err).Info("Failed to get OceanBase database version")
+		return nil, errors.Wrapf(err, "Failed to get version of obcluster")
+	}
+
 	respCluster := &response.OBCluster{
 		OBClusterOverview: *overview,
 		OBClusterExtra: response.OBClusterExtra{
 			RootPasswordSecret: obcluster.Spec.UserSecrets.Root,
+			Version:            version.Version,
 			Parameters:         nil,
 		},
-		// TODO: add metrics
 		Metrics: nil,
 	}
 	var parameters []response.ParameterSpec
@@ -951,7 +963,7 @@ func ListOBClusterParameters(ctx context.Context, nn *param.K8sObjectIdentity) (
 	conn, err := utils.GetOBConnection(ctx, obcluster, "root", "sys", obcluster.Spec.UserSecrets.Root)
 	if err != nil {
 		logger.WithError(err).Info("Failed to get OceanBase database connection")
-		return nil, nil
+		return nil, errors.Wrapf(err, "Failed to get connection go obcluster")
 	}
 	parameters, err := conn.ListClusterParameters(ctx)
 	if err != nil {
