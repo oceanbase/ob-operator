@@ -183,9 +183,7 @@ export default function TenantOverview() {
   const menuChange = ({ key }) => {
     if (key === 'createBackupPolicy') {
       history.push(
-        `/tenant/${ns}/${name}/${
-          tenantDetail?.info?.name
-        }/backup/new?overview=${true}`,
+        `/tenant/${ns}/${name}/${tenantDetail?.info?.name}/backup/new?overview=true`,
       );
     } else if (key === 'deleteTenant') {
       showDeleteConfirm({
