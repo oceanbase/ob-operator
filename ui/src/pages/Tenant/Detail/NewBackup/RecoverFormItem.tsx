@@ -5,10 +5,9 @@ import {
   getSimpleClusterList,
 } from '@/services';
 import { intl } from '@/utils/intl';
-import { useRequest, useUpdateEffect } from 'ahooks';
+import { useDeepCompareEffect, useRequest, useUpdateEffect } from 'ahooks';
 import { Col, DatePicker, Form, Input, Row, Select, TimePicker } from 'antd';
 import dayjs from 'dayjs';
-import { useEffect } from 'react';
 import ResourcePools from '../../New/ResourcePools';
 
 export default function RecoverFormItem({
@@ -21,8 +20,8 @@ export default function RecoverFormItem({
   useRequest(getSimpleClusterList, {
     onSuccess: ({ successful, data }) => {
       if (successful) {
-        data.forEach((cluster) => {
-          cluster.topology.forEach((zone) => {
+        data?.forEach((cluster) => {
+          cluster?.topology?.forEach((zone) => {
             zone.checked = false;
           });
         });
@@ -50,7 +49,7 @@ export default function RecoverFormItem({
     }
   }, [selectClusterId]);
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     if (clusterList) {
       const cluster = clusterList.find(
         (cluster) => cluster.id === selectClusterId,

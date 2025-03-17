@@ -100,7 +100,7 @@ export default function Backup() {
         rootCredential: tenantDetail?.info?.rootCredential,
         ...reqData,
       });
-      if (res.successful) {
+      if (res?.successful) {
         message.success('创建恢复租户成功', 3);
         form.resetFields();
         history.replace('/tenant');
