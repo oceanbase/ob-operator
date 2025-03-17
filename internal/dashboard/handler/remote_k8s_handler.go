@@ -14,9 +14,11 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/oceanbase/ob-operator/internal/dashboard/business/k8s"
+	k8sbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/k8s"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/k8s"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
+	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 	logger "github.com/sirupsen/logrus"
 )
@@ -27,14 +29,14 @@ import (
 // @Tags K8sCluster
 // @Accept application/json
 // @Produce application/json
-// @Success 200 object response.APIResponse{data=[]response.K8sCluster}
+// @Success 200 object response.APIResponse{data=[]k8s.K8sClusterInfo}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/k8s/clusters [GET]
 // @Security ApiKeyAuth
-func ListRemoteK8sClusters(c *gin.Context) (any, error) {
-	return nil, nil
+func ListRemoteK8sClusters(c *gin.Context) ([]k8s.K8sClusterInfo, error) {
+	return k8sbiz.ListRemoteK8sClusters(c)
 }
 
 // @ID GetRemoteK8sCluster
@@ -43,30 +45,44 @@ func ListRemoteK8sClusters(c *gin.Context) (any, error) {
 // @Tags K8sCluster
 // @Accept application/json
 // @Produce application/json
-// @Success 200 object response.APIResponse{data=response.K8sCluster}
+// @Param name path string true "k8s cluster name"
+// @Success 200 object response.APIResponse{data=k8s.K8sClusterInfo}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/k8s/clusters/{name} [GET]
 // @Security ApiKeyAuth
-func GetRemoteK8sCluster(c *gin.Context) (any, error) {
-	return nil, nil
+func GetRemoteK8sCluster(c *gin.Context) (*k8s.K8sClusterInfo, error) {
+	name := c.Param("name")
+	return k8sbiz.GetRemoteK8sCluster(c, name)
 }
 
-// @ID PutRemoteK8sCluster
+// @ID PatchRemoteK8sCluster
 // @Summary put remote k8s cluster
 // @Description put remote k8s cluster
 // @Tags K8sCluster
 // @Accept application/json
 // @Produce application/json
-// @Success 200 object response.APIResponse{data=response.K8sCluster}
+// @Param name path string true "k8s cluster name"
+// @Param body body k8s.UpdateK8sClusterParam true "update k8s cluster request body"
+// @Success 200 object response.APIResponse{data=k8s.K8sClusterInfo}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/k8s/clusters/{name} [PUT]
+// @Router /api/v1/k8s/clusters/{name} [PATCH]
 // @Security ApiKeyAuth
-func PutRemoteK8sCluster(c *gin.Context) (any, error) {
-	return nil, nil
+func PatchRemoteK8sCluster(c *gin.Context) (*k8s.K8sClusterInfo, error) {
+	body := &k8s.UpdateK8sClusterParam{}
+	err := c.Bind(body)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	body.KubeConfig, err = crypto.DecryptWithPrivateKey(body.KubeConfig)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	name := c.Param("name")
+	return k8sbiz.UpdateRemoteK8sCluster(c, name, body)
 }
 
 // @ID CreateRemoteK8sCluster
@@ -75,14 +91,24 @@ func PutRemoteK8sCluster(c *gin.Context) (any, error) {
 // @Tags K8sCluster
 // @Accept application/json
 // @Produce application/json
-// @Success 200 object response.APIResponse
+// @Param body body k8s.CreateK8sClusterParam true "create k8s cluster request body"
+// @Success 200 object response.APIResponse{data=k8s.K8sClusterInfo}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/k8s/clusters [POST]
 // @Security ApiKeyAuth
-func CreateRemoteK8sCluster(c *gin.Context) (any, error) {
-	return nil, nil
+func CreateRemoteK8sCluster(c *gin.Context) (*k8s.K8sClusterInfo, error) {
+	body := &k8s.CreateK8sClusterParam{}
+	err := c.Bind(body)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	body.KubeConfig, err = crypto.DecryptWithPrivateKey(body.KubeConfig)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return k8sbiz.CreateRemoteK8sCluster(c, body)
 }
 
 // @ID ListRemoteK8sEvents
@@ -108,7 +134,7 @@ func ListRemoteK8sEvents(c *gin.Context) ([]response.K8sEvent, error) {
 		Name:       c.Query("name"),
 		Namespace:  c.Query("namespace"),
 	}
-	events, err := k8s.ListEvents(c, queryEventParam)
+	events, err := k8sbiz.ListEvents(c, queryEventParam)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +155,7 @@ func ListRemoteK8sEvents(c *gin.Context) ([]response.K8sEvent, error) {
 // @Router /api/v1/k8s/clusters/{name}/nodes [GET]
 // @Security ApiKeyAuth
 func ListRemoteK8sNodes(c *gin.Context) ([]response.K8sNode, error) {
-	nodes, err := k8s.ListNodes(c)
+	nodes, err := k8sbiz.ListNodes(c)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +183,7 @@ func PutRemoteK8sNodeLabels(c *gin.Context) (*response.K8sNode, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	return k8s.UpdateNodeLabels(c, name, nodeLabels.Labels)
+	return k8sbiz.UpdateNodeLabels(c, name, nodeLabels.Labels)
 }
 
 // @ID PutRemoteK8sNodeTaints
@@ -180,7 +206,7 @@ func PutRemoteK8sNodeTaints(c *gin.Context) (*response.K8sNode, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	return k8s.UpdateNodeTaints(c, name, nodeTaints.Taints)
+	return k8sbiz.UpdateNodeTaints(c, name, nodeTaints.Taints)
 }
 
 // @ID BatchUpdateRemoteK8sNode
@@ -202,5 +228,5 @@ func BatchUpdateRemoteK8sNode(c *gin.Context) (any, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	return nil, k8s.BatchUpdateNodes(c, updateNodesParam)
+	return nil, k8sbiz.BatchUpdateNodes(c, updateNodesParam)
 }
