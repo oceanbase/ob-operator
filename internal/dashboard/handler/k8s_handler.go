@@ -80,6 +80,7 @@ func ListK8sNodes(c *gin.Context) ([]response.K8sNode, error) {
 // @Tags Cluster
 // @Accept application/json
 // @Produce application/json
+// @Param name path string true "node name"
 // @Param body body param.NodeLabels true "update node labels request body"
 // @Success 200 object response.APIResponse{data=response.K8sNode}
 // @Failure 400 object response.APIResponse
@@ -103,6 +104,7 @@ func PutK8sNodeLabels(c *gin.Context) (*response.K8sNode, error) {
 // @Tags Cluster
 // @Accept application/json
 // @Produce application/json
+// @Param name path string true "node name"
 // @Param body body param.NodeTaints true "update node taints request body"
 // @Success 200 object response.APIResponse{data=response.K8sNode}
 // @Failure 400 object response.APIResponse
