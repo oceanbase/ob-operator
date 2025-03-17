@@ -54,7 +54,7 @@ export default function OBProxy() {
           />
         </Col>
         <Col span={24}>
-          <EventsTable objectType="OBPROXY" />
+          <EventsTable objectType="OBPROXY" overView={true} />
         </Col>
       </Row>
       <MonitorComp
