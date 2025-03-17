@@ -125,6 +125,11 @@ export default [
                 name: '集群下的租户',
               },
               {
+                path: 'parameters',
+                component: 'Cluster/Detail/Parameters',
+                name: '集群参数',
+              },
+              {
                 path: 'connection',
                 component: 'Cluster/Detail/Connection',
                 name: '连接集群',
