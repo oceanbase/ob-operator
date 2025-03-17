@@ -1,16 +1,22 @@
 import { BACKUP_RESULT_STATUS, REFRESH_TENANT_TIME } from '@/constants';
 import { getBackupPolicy, getTenant } from '@/services/tenant';
 import { history, useAccess, useParams } from '@umijs/max';
-import { Button, Card, Col, Row } from 'antd';
+import { Button, Card, Col, Form, Row, message } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 
 import EmptyImg from '@/assets/empty.svg';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useRequest } from 'ahooks';
+import { formatNewTenantForm } from '../../helper';
+import RecoverFormItem from '../NewBackup/RecoverFormItem';
 import BasicInfo from '../Overview/BasicInfo';
 import BackupConfiguration from './BackupConfiguration';
 import BackupJobs from './BackupJobs';
+
+import { usePublicKey } from '@/hook/usePublicKey';
+import { createTenantReportWrap } from '@/services/reportRequest/tenantReportReq';
+import { strTrim } from '@/utils/helper';
 
 export default function Backup() {
   const { ns, name, tenantName } = useParams();
@@ -18,6 +24,14 @@ export default function Backup() {
   const [backupPolicy, setBackupPolicy] = useState<API.BackupPolicy>();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
+
+  const [activeTabKey, setActiveTabKey] = useState<string>('recover');
+  const [form] = Form.useForm<FormData>();
+  const publicKey = usePublicKey();
+  const [clusterList, setClusterList] = useState<API.SimpleClusterList>([]);
+  const [selectClusterId, setSelectClusterId] = useState<string>();
+  const { name: clusterName, namespace } =
+    clusterList.filter((cluster) => cluster.id === selectClusterId)[0] || {};
 
   const { refresh: backupPolicyRefresh, loading } = useRequest(
     getBackupPolicy,
@@ -47,6 +61,97 @@ export default function Backup() {
       }
     };
   }, []);
+
+  const tabList = [
+    {
+      key: 'backup',
+      label: '备份',
+    },
+    {
+      key: 'recover',
+      label: '恢复',
+    },
+  ];
+
+  const onTabChange = (key: string) => {
+    setActiveTabKey(key);
+    form.resetFields();
+  };
+
+  const onFinish = () => {
+    form.validateFields().then(async (values) => {
+      const reqData = formatNewTenantForm(
+        strTrim(values),
+        clusterName,
+        publicKey,
+      );
+
+      if (!reqData.pools?.length) {
+        message.warning(
+          intl.formatMessage({
+            id: 'Dashboard.Tenant.New.SelectAtLeastOneZone',
+            defaultMessage: '至少选择一个Zone',
+          }),
+        );
+        return;
+      }
+      const res = await createTenantReportWrap({
+        namespace,
+        rootCredential: tenantDetail?.info?.rootCredential,
+        ...reqData,
+      });
+      if (res?.successful) {
+        message.success('创建恢复租户成功', 3);
+        form.resetFields();
+        history.replace('/tenant');
+      }
+    });
+  };
+
+  const contentList: Record<string, React.ReactNode> = {
+    backup: (
+      <BackupConfiguration
+        loading={loading}
+        onDelete={() => {
+          if (timerRef.current) {
+            clearInterval(timerRef.current);
+            timerRef.current = null;
+          }
+          setBackupPolicy((prev) => {
+            if (!prev) {
+              return prev;
+            }
+            return { ...prev, status: 'DELETING' };
+          });
+        }}
+        isEditing={isEditing}
+        setIsEditing={setIsEditing}
+        backupPolicy={backupPolicy}
+        setBackupPolicy={setBackupPolicy}
+        backupPolicyRefresh={backupPolicyRefresh}
+      />
+    ),
+    recover: (
+      <Card
+        title="创建恢复"
+        extra={
+          <Button type="primary" onClick={onFinish}>
+            提交
+          </Button>
+        }
+      >
+        <Form form={form}>
+          <RecoverFormItem
+            form={form}
+            clusterList={clusterList}
+            setSelectClusterId={setSelectClusterId}
+            setClusterList={setClusterList}
+            selectClusterId={selectClusterId}
+          />
+        </Form>
+      </Card>
+    ),
+  };
 
   return (
     <PageContainer>
@@ -111,29 +216,17 @@ export default function Backup() {
               />
             </Col>
           )}
-
-          <Col span={24}>
-            <BackupConfiguration
-              loading={loading}
-              onDelete={() => {
-                if (timerRef.current) {
-                  clearInterval(timerRef.current);
-                  timerRef.current = null;
-                }
-                setBackupPolicy((prev) => {
-                  if (!prev) {
-                    return prev;
-                  }
-                  return { ...prev, status: 'DELETING' };
-                });
-              }}
-              isEditing={isEditing}
-              setIsEditing={setIsEditing}
-              backupPolicy={backupPolicy}
-              setBackupPolicy={setBackupPolicy}
-              backupPolicyRefresh={backupPolicyRefresh}
-            />
-          </Col>
+          <Card
+            style={{ marginTop: 24, marginBottom: 24 }}
+            tabList={tabList}
+            activeTabKey={activeTabKey}
+            onTabChange={onTabChange}
+            tabProps={{
+              size: 'middle',
+            }}
+          >
+            {contentList[activeTabKey]}
+          </Card>
           <BackupJobs />
         </Row>
       )}

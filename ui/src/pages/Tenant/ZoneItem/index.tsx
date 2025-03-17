@@ -27,12 +27,12 @@ export default function ZoneItem({
   obversion,
 }: ZoneItemProps) {
   const REPLICA_TYPE_LIST = [
-    { value: 'FULL', label: '全能型副本' },
+    { value: 'Full', label: '全能型副本' },
     ...(isGte4_2(obversion)
-      ? [{ value: 'READONLY', label: '只读型副本' }]
+      ? [{ value: 'Readonly', label: '只读型副本' }]
       : []),
     ...(isGte4_3_3(obversion)
-      ? [{ value: 'READONLY_LOGONLY', label: '只读日志型副本' }]
+      ? [{ value: 'Column', label: '只读日志型副本' }]
       : []),
   ];
 
@@ -63,7 +63,10 @@ export default function ZoneItem({
           onChange={(e) => checkBoxOnChange(e.target.checked, name)}
         />
       )}
-      <Col span={type === 'new' ? 2 : 4}>
+      <Col
+        span={type === 'new' ? 2 : 4}
+        style={type === 'tenantBackup' ? { marginTop: 24 } : {}}
+      >
         <Form.Item
           name={priorityName}
           label={intl.formatMessage({
@@ -77,9 +80,9 @@ export default function ZoneItem({
           />
         </Form.Item>
       </Col>
-      <Col span={5}>
-        <Form.Item name={'replicaType'} label={'副本类型'}>
-          <Select options={REPLICA_TYPE_LIST} defaultValue={'FULL'} />
+      <Col span={5} style={type === 'tenantBackup' ? { marginTop: 24 } : {}}>
+        <Form.Item name={['pools', name, 'type']} label={'副本类型'}>
+          <Select options={REPLICA_TYPE_LIST} defaultValue={'Full'} />
         </Form.Item>
       </Col>
 

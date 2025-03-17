@@ -84,6 +84,7 @@ const CLUSTER_INFO_CONFIG = [
   'deletionProtection',
   'topology',
   'pvcIndependent',
+  'version',
 ];
 
 const TOPO_INFO_CONFIG = [
