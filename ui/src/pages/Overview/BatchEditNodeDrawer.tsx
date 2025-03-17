@@ -74,6 +74,7 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
           );
           onSuccess();
           resetFields();
+          setTabKey('labels');
         }
       },
     },

@@ -177,13 +177,11 @@ export default function NodesTable() {
   ];
 
   const rowSelection: TableRowSelection<DataType> = {
-    // selectedRowKeys,
-    onChange: (newSelectedRowKeys: React.Key[], record) => {
-      // console.log('newSelectedRowKeys', newSelectedRowKeys, record);
+    onChange: (_, record) => {
       setSelectedRowKeys(record);
     },
   };
-  console.log('selectedRowKeys', selectedRowKeys);
+
   return (
     <Col span={24}>
       <Card

@@ -219,11 +219,11 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
   const items: TabsProps['items'] = [
     {
       key: 'labels',
-      label: 'labels',
+      label: 'Labels',
     },
     {
       key: 'taints',
-      label: 'taints',
+      label: 'Taints',
     },
   ];
 
