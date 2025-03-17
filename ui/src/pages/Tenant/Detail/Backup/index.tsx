@@ -80,7 +80,6 @@ export default function Backup() {
 
   const onFinish = () => {
     form.validateFields().then(async (values) => {
-      console.log('values', values);
       const reqData = formatNewTenantForm(
         strTrim(values),
         clusterName,
@@ -98,6 +97,7 @@ export default function Backup() {
       }
       const res = await createTenantReportWrap({
         namespace,
+        rootCredential: tenantDetail?.info?.rootCredential,
         ...reqData,
       });
       if (res.successful) {

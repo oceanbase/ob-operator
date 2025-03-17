@@ -1,6 +1,8 @@
 import InputNumber from '@/components/InputNumber';
 import { MAX_IOPS, SUFFIX_UNIT, getMinResource } from '@/constants';
+import { getClusterDetailReq } from '@/services';
 import { intl } from '@/utils/intl';
+import { useRequest } from 'ahooks';
 import { Card, Col, Form, Row, Tooltip } from 'antd';
 import { FormInstance } from 'antd/lib/form';
 import { useEffect, useState } from 'react';
@@ -30,6 +32,7 @@ export default function ResourcePools({
   );
   const [maxResource, setMaxResource] = useState<OBTenant.MaxResourceType>({});
   const [selectZones, setSelectZones] = useState<string[]>([]);
+  const [obversion, setObversion] = useState<string>('');
 
   const checkBoxOnChange = (checked: boolean, name: string) => {
     form.setFieldValue(['pools', name, 'checked'], checked);
@@ -50,8 +53,24 @@ export default function ResourcePools({
     .filter((cluster) => cluster.id === selectClusterId)[0]
     ?.topology.map((zone) => ({ zone: zone.zone, checked: zone.checked }));
 
-  // TODO: 暂时写死 集群详情缺少该参数
-  const obversion = '4.3.3';
+  const { run: getClusterDetail } = useRequest(getClusterDetailReq, {
+    manual: true,
+    onSuccess: (res) => {
+      if (res?.info?.version) {
+        setObversion(res?.info?.version);
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (selectClusterId) {
+      const dp = clusterList
+        .filter((cluster) => cluster.id === selectClusterId)
+        ?.map((item) => ({ name: item.name, ns: item.namespace }));
+      getClusterDetail(dp[0]);
+    }
+  }, [selectClusterId]);
+
   useEffect(() => {
     if (essentialParameter) {
       if (selectZones.length === 0) {
