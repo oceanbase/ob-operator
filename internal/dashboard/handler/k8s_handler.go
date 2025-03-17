@@ -80,6 +80,7 @@ func ListK8sNodes(c *gin.Context) ([]response.K8sNode, error) {
 // @Tags Cluster
 // @Accept application/json
 // @Produce application/json
+// @Param name path string true "node name"
 // @Param body body param.NodeLabels true "update node labels request body"
 // @Success 200 object response.APIResponse{data=response.K8sNode}
 // @Failure 400 object response.APIResponse
@@ -103,6 +104,7 @@ func PutK8sNodeLabels(c *gin.Context) (*response.K8sNode, error) {
 // @Tags Cluster
 // @Accept application/json
 // @Produce application/json
+// @Param name path string true "node name"
 // @Param body body param.NodeTaints true "update node taints request body"
 // @Success 200 object response.APIResponse{data=response.K8sNode}
 // @Failure 400 object response.APIResponse
@@ -120,7 +122,7 @@ func PutK8sNodeTaints(c *gin.Context) (*response.K8sNode, error) {
 	return k8s.UpdateNodeTaints(c, name, nodeTaints.Taints)
 }
 
-// @ID BatchUpdateK8sNode
+// @ID BatchUpdateK8sNodes
 // @Summary update k8s nodes
 // @Description update k8s nodes taints and labels
 // @Tags Cluster
@@ -133,7 +135,7 @@ func PutK8sNodeTaints(c *gin.Context) (*response.K8sNode, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/cluster/nodes/update [POST]
 // @Security ApiKeyAuth
-func BatchUpdateK8sNode(c *gin.Context) (any, error) {
+func BatchUpdateK8sNodes(c *gin.Context) (any, error) {
 	updateNodesParam := &param.BatchUpdateNodesParam{}
 	err := c.Bind(updateNodesParam)
 	if err != nil {

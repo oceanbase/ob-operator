@@ -9,11 +9,11 @@ import {
 import { deleteTenantReportWrap } from '@/services/reportRequest/tenantReportReq';
 import { getBackupJobs, getBackupPolicy, getTenant } from '@/services/tenant';
 import { intl } from '@/utils/intl';
-import { EllipsisOutlined } from '@ant-design/icons';
+import { DownOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { history, useAccess, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Col, Row, Tooltip, message } from 'antd';
+import { Button, Col, Dropdown, MenuProps, Row, Space, message } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import {
   getClusterFromTenant,
@@ -24,14 +24,6 @@ import Backups from './Backups';
 import BasicInfo from './BasicInfo';
 import Replicas from './Replicas';
 import styles from './index.less';
-
-type OperateItemConfigType = {
-  text: string;
-  onClick: () => void;
-  show: boolean;
-  isMore: boolean;
-  danger?: boolean;
-};
 
 export default function TenantOverview() {
   const [operateModalVisible, setOperateModalVisible] =
@@ -119,101 +111,93 @@ export default function TenantOverview() {
   const backupPolicy = backupPolicyResponse?.data;
   const backupJobs = backupJobsResponse?.data;
   const essentialParameter = essentialParameterRes?.data;
-  const operateListConfig: OperateItemConfigType[] = [
-    // {
-    //   text: intl.formatMessage({
-    //     id: 'Dashboard.Detail.Overview.UnitSpecificationManagement',
-    //     defaultMessage: 'Unit规格管理',
-    //   }),
-    //   onClick: () => openOperateModal('editResourcePools'),
-    //   show: tenantDetail?.info.tenantRole === 'PRIMARY',
-    //   isMore: false,
-    // },
-    {
-      text: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.ChangePassword',
-        defaultMessage: '修改密码',
-      }),
-      onClick: () => openOperateModal('changePassword'),
-      show: tenantDetail?.info.tenantRole === 'PRIMARY',
-      isMore: false,
-    },
-    {
-      text: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.DeleteTenant',
-        defaultMessage: '删除租户',
-      }),
-      onClick: () =>
-        showDeleteConfirm({
-          onOk: handleDelete,
-          title: intl.formatMessage({
-            id: 'Dashboard.Detail.Overview.AreYouSureYouWant',
-            defaultMessage: '你确定要删除该租户吗？',
-          }),
-        }),
-      show: true,
-      isMore: false,
-      danger: true,
-    },
-    {
-      text: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.ActivateASecondaryTenant',
-        defaultMessage: '激活备租户',
-      }),
-      onClick: () => openOperateModal('activateTenant'),
-      show: tenantDetail?.info.tenantRole === 'STANDBY',
-      isMore: true,
-    },
-    {
-      text: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.ActiveStandbySwitchover',
-        defaultMessage: '主备切换',
-      }),
-      onClick: () => openOperateModal('switchTenant'),
-      show: Boolean(tenantDetail?.source?.primaryTenant),
-      isMore: true,
-    },
-    {
-      text: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.StandbyTenantPlaybackLog',
-        defaultMessage: '备租户回放日志',
-      }),
-      onClick: () => openOperateModal('logReplay'),
-      show: tenantDetail?.info.tenantRole === 'STANDBY',
-      isMore: true,
-    },
-    {
-      text: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.AdjustTheNumberOfUnits',
-        defaultMessage: '调整 Unit 数量',
-      }),
-      onClick: () => openOperateModal('changeUnitCount'),
-      show: tenantDetail?.info.tenantRole === 'PRIMARY',
-      isMore: true,
-    },
-  ];
-
-  const OperateListModal = () => (
-    <div className={styles.operateModalContainer}>
-      <ul>
-        {operateListConfig
-          .filter((item) => item.isMore && item.show)
-          .map((operateItem, index) => (
-            <li key={index} onClick={operateItem.onClick}>
-              {operateItem.text}
-            </li>
-          ))}
-      </ul>
-    </div>
-  );
 
   const operateSuccess = () => {
     setTimeout(() => {
       getTenantDetail({ ns: ns!, name: name! });
     }, 1000);
   };
+
+  const items: MenuProps['items'] = [
+    ...(tenantDetail?.info.tenantRole === 'PRIMARY'
+      ? [
+          {
+            label: intl.formatMessage({
+              id: 'Dashboard.Detail.Overview.ChangePassword',
+              defaultMessage: '修改密码',
+            }),
+            key: 'changePassword',
+          },
+          {
+            label: intl.formatMessage({
+              id: 'Dashboard.Detail.Overview.AdjustTheNumberOfUnits',
+              defaultMessage: '调整 Unit 数量',
+            }),
+            key: 'changeUnitCount',
+          },
+          {
+            label: '创建租户恢复策略',
+            key: 'createBackupPolicy',
+          },
+        ]
+      : []),
+    ...(tenantDetail?.info.tenantRole === 'STANDBY'
+      ? [
+          {
+            label: intl.formatMessage({
+              id: 'Dashboard.Detail.Overview.ActivateASecondaryTenant',
+              defaultMessage: '激活备租户',
+            }),
+            key: 'activateTenant',
+            onClick: () => openOperateModal('activateTenant'),
+          },
+          {
+            label: intl.formatMessage({
+              id: 'Dashboard.Detail.Overview.StandbyTenantPlaybackLog',
+              defaultMessage: '备租户回放日志',
+            }),
+            key: 'logReplay',
+          },
+        ]
+      : []),
+    ...(tenantDetail?.source?.primaryTenant
+      ? [
+          {
+            label: intl.formatMessage({
+              id: 'Dashboard.Detail.Overview.ActiveStandbySwitchover',
+              defaultMessage: '主备切换',
+            }),
+            key: 'switchTenant',
+          },
+        ]
+      : []),
+    {
+      label: intl.formatMessage({
+        id: 'Dashboard.Detail.Overview.DeleteTenant',
+        defaultMessage: '删除租户',
+      }),
+      key: 'deleteTenant',
+      danger: true,
+    },
+  ];
+  const menuChange = ({ key }) => {
+    if (key === 'createBackupPolicy') {
+      history.push(
+        `/tenant/${ns}/${name}/${tenantDetail?.info?.name}/backup/new?overview=true`,
+      );
+    } else if (key === 'deleteTenant') {
+      showDeleteConfirm({
+        onOk: handleDelete,
+        title: intl.formatMessage({
+          id: 'Dashboard.Detail.Overview.AreYouSureYouWant',
+          defaultMessage: '你确定要删除该租户吗？',
+        }),
+      });
+    } else if (key) {
+      openOperateModal(key);
+    }
+  };
   const header = () => {
-    const container = document.getElementById('tenant-detail-container');
     return {
       title: intl.formatMessage({
         id: 'Dashboard.Detail.Overview.TenantOverview',
@@ -221,36 +205,14 @@ export default function TenantOverview() {
       }),
       extra: access.obclusterwrite
         ? [
-            ...operateListConfig
-              .filter((item) => item.show && !item.isMore)
-              .map((item, index) => (
-                <Button
-                  type={
-                    item.text !==
-                    intl.formatMessage({
-                      id: 'Dashboard.Detail.Overview.ChangePassword',
-                      defaultMessage: '修改密码',
-                    })
-                      ? 'primary'
-                      : 'default'
-                  }
-                  onClick={item.onClick}
-                  danger={item.danger}
-                  key={index}
-                >
-                  {item.text}
-                </Button>
-              )),
-            <Tooltip
-              getPopupContainer={() => container}
-              title={<OperateListModal />}
-              placement="bottomLeft"
-              key={4}
-            >
+            <Dropdown menu={{ items, onClick: menuChange }}>
               <Button>
-                <EllipsisOutlined />
+                <Space>
+                  租户管理
+                  <DownOutlined />
+                </Space>
               </Button>
-            </Tooltip>,
+            </Dropdown>,
           ]
         : [],
     };

@@ -479,13 +479,13 @@ export interface CommonAffinitySpec {
      * @type {string}
      * @memberof CommonAffinitySpec
      */
-    'key'?: string;
+    'key': string;
     /**
-     * 
+     * Enum: In, NotIn, Exists, DoesNotExist
      * @type {string}
      * @memberof CommonAffinitySpec
      */
-    'operator'?: string;
+    'operator': string;
     /**
      * 
      * @type {boolean}
@@ -497,7 +497,7 @@ export interface CommonAffinitySpec {
      * @type {CommonAffinityType}
      * @memberof CommonAffinitySpec
      */
-    'type'?: CommonAffinityType;
+    'type': CommonAffinityType;
     /**
      * 
      * @type {Array<string>}
@@ -554,13 +554,13 @@ export interface CommonKVPair {
      * @type {string}
      * @memberof CommonKVPair
      */
-    'key'?: string;
+    'key': string;
     /**
      * 
      * @type {string}
      * @memberof CommonKVPair
      */
-    'value'?: string;
+    'value': string;
 }
 /**
  * 
@@ -573,13 +573,13 @@ export interface CommonResourceSpec {
      * @type {number}
      * @memberof CommonResourceSpec
      */
-    'cpu'?: number;
+    'cpu': number;
     /**
      * 
      * @type {number}
      * @memberof CommonResourceSpec
      */
-    'memory'?: number;
+    'memory': number;
 }
 /**
  * 
@@ -607,23 +607,23 @@ export interface CommonStorageSpec {
  */
 export interface CommonTolerationSpec {
     /**
-     * 
+     * Enum: PreferNoSchedule, NoSchedule, NoExecute
      * @type {string}
      * @memberof CommonTolerationSpec
      */
-    'effect'?: string;
+    'effect': string;
     /**
      * 
      * @type {string}
      * @memberof CommonTolerationSpec
      */
-    'key'?: string;
+    'key': string;
     /**
-     * 
+     * Enum: Exists, Equal
      * @type {string}
      * @memberof CommonTolerationSpec
      */
-    'operator'?: string;
+    'operator': string;
     /**
      * 
      * @type {number}
@@ -635,7 +635,7 @@ export interface CommonTolerationSpec {
      * @type {string}
      * @memberof CommonTolerationSpec
      */
-    'value'?: string;
+    'value': string;
 }
 /**
  * 
@@ -1497,6 +1497,31 @@ export type JobJobStatus = typeof JobJobStatus[keyof typeof JobJobStatus];
 /**
  * 
  * @export
+ * @interface K8sTaint
+ */
+export interface K8sTaint {
+    /**
+     * 
+     * @type {string}
+     * @memberof K8sTaint
+     */
+    'effect': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof K8sTaint
+     */
+    'key': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof K8sTaint
+     */
+    'value'?: string;
+}
+/**
+ * 
+ * @export
  * @interface ListAlerts200Response
  */
 export interface ListAlerts200Response {
@@ -1827,10 +1852,10 @@ export interface ListK8sStorageClasses200Response {
 export interface ListOBClusterParameters200Response {
     /**
      * 
-     * @type {Array<ModelParameter>}
+     * @type {Array<ResponseAggregatedParameter>}
      * @memberof ListOBClusterParameters200Response
      */
-    'data': Array<ModelParameter>;
+    'data': Array<ResponseAggregatedParameter>;
     /**
      * 
      * @type {string}
@@ -2143,79 +2168,6 @@ export interface ListSuspiciousSqls200Response {
      * @memberof ListSuspiciousSqls200Response
      */
     'successful': boolean;
-}
-/**
- * 
- * @export
- * @interface ModelParameter
- */
-export interface ModelParameter {
-    /**
-     * 
-     * @type {string}
-     * @memberof ModelParameter
-     */
-    'dataType'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ModelParameter
-     */
-    'edit_level'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ModelParameter
-     */
-    'info'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ModelParameter
-     */
-    'name'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ModelParameter
-     */
-    'scope'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ModelParameter
-     */
-    'section'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ModelParameter
-     */
-    'svr_ip'?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof ModelParameter
-     */
-    'svr_port'?: number;
-    /**
-     * 
-     * @type {number}
-     * @memberof ModelParameter
-     */
-    'tenant_id'?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof ModelParameter
-     */
-    'value'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof ModelParameter
-     */
-    'zone'?: string;
 }
 /**
  * 
@@ -3334,6 +3286,31 @@ export type ParamBackupDestType = typeof ParamBackupDestType[keyof typeof ParamB
 /**
  * 
  * @export
+ * @interface ParamBatchUpdateNodesParam
+ */
+export interface ParamBatchUpdateNodesParam {
+    /**
+     * 
+     * @type {Array<ParamLabelOperation>}
+     * @memberof ParamBatchUpdateNodesParam
+     */
+    'labelOperations'?: Array<ParamLabelOperation>;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof ParamBatchUpdateNodesParam
+     */
+    'nodes': Array<string>;
+    /**
+     * 
+     * @type {Array<ParamTaintOperation>}
+     * @memberof ParamBatchUpdateNodesParam
+     */
+    'taintOperations'?: Array<ParamTaintOperation>;
+}
+/**
+ * 
+ * @export
  * @interface ParamChangeTenantRole
  */
 export interface ParamChangeTenantRole {
@@ -3511,13 +3488,13 @@ export interface ParamCreateOBClusterParam {
      * @type {number}
      * @memberof ParamCreateOBClusterParam
      */
-    'clusterId'?: number;
+    'clusterId': number;
     /**
      * 
      * @type {string}
      * @memberof ParamCreateOBClusterParam
      */
-    'clusterName'?: string;
+    'clusterName': string;
     /**
      * 
      * @type {boolean}
@@ -3529,7 +3506,7 @@ export interface ParamCreateOBClusterParam {
      * @type {CommonClusterMode}
      * @memberof ParamCreateOBClusterParam
      */
-    'mode'?: CommonClusterMode;
+    'mode': CommonClusterMode;
     /**
      * 
      * @type {ParamMonitorSpec}
@@ -3541,25 +3518,31 @@ export interface ParamCreateOBClusterParam {
      * @type {string}
      * @memberof ParamCreateOBClusterParam
      */
-    'name'?: string;
+    'name': string;
     /**
      * 
      * @type {string}
      * @memberof ParamCreateOBClusterParam
      */
-    'namespace'?: string;
+    'namespace': string;
     /**
      * 
      * @type {ParamOBServerSpec}
      * @memberof ParamCreateOBClusterParam
      */
-    'observer'?: ParamOBServerSpec;
+    'observer': ParamOBServerSpec;
     /**
      * 
      * @type {Array<CommonKVPair>}
      * @memberof ParamCreateOBClusterParam
      */
     'parameters'?: Array<CommonKVPair>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ParamCreateOBClusterParam
+     */
+    'proxyroPassword'?: string;
     /**
      * 
      * @type {boolean}
@@ -3571,13 +3554,13 @@ export interface ParamCreateOBClusterParam {
      * @type {string}
      * @memberof ParamCreateOBClusterParam
      */
-    'rootPassword'?: string;
+    'rootPassword': string;
     /**
      * Enum: express_oltp, express_oltp, olap, kv, htap, express_oltp_perf
      * @type {string}
      * @memberof ParamCreateOBClusterParam
      */
-    'scenario'?: string;
+    'scenario': string;
     /**
      * 
      * @type {Array<ParamZoneTopology>}
@@ -3646,13 +3629,19 @@ export interface ParamCreateOBTenantParam {
      * @type {string}
      * @memberof ParamCreateOBTenantParam
      */
-    'rootPassword': string;
+    'rootCredential'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ParamCreateOBTenantParam
+     */
+    'rootPassword'?: string;
     /**
      * Enum: express_oltp, express_oltp, olap, kv, htap, express_oltp_perf
      * @type {string}
      * @memberof ParamCreateOBTenantParam
      */
-    'scenario'?: string;
+    'scenario': string;
     /**
      * 
      * @type {ParamTenantSourceSpec}
@@ -3703,6 +3692,33 @@ export interface ParamDeleteOBServersParam {
      */
     'observers'?: Array<string>;
 }
+/**
+ * 
+ * @export
+ * @interface ParamLabelOperation
+ */
+export interface ParamLabelOperation {
+    /**
+     * 
+     * @type {string}
+     * @memberof ParamLabelOperation
+     */
+    'key': string;
+    /**
+     * 
+     * @type {ParamNodeOperation}
+     * @memberof ParamLabelOperation
+     */
+    'operation': ParamNodeOperation;
+    /**
+     * 
+     * @type {string}
+     * @memberof ParamLabelOperation
+     */
+    'value'?: string;
+}
+
+
 /**
  * 
  * @export
@@ -3764,13 +3780,13 @@ export interface ParamMonitorSpec {
      * @type {string}
      * @memberof ParamMonitorSpec
      */
-    'image'?: string;
+    'image': string;
     /**
      * 
      * @type {CommonResourceSpec}
      * @memberof ParamMonitorSpec
      */
-    'resource'?: CommonResourceSpec;
+    'resource': CommonResourceSpec;
 }
 /**
  * 
@@ -3794,6 +3810,46 @@ export interface ParamNFSVolumeSpec {
 /**
  * 
  * @export
+ * @interface ParamNodeLabels
+ */
+export interface ParamNodeLabels {
+    /**
+     * 
+     * @type {Array<CommonKVPair>}
+     * @memberof ParamNodeLabels
+     */
+    'labels'?: Array<CommonKVPair>;
+}
+/**
+ * 
+ * @export
+ * @enum {string}
+ */
+
+export const ParamNodeOperation = {
+    OperationOverwrite: 'overwrite',
+    OperationDelete: 'delete'
+} as const;
+
+export type ParamNodeOperation = typeof ParamNodeOperation[keyof typeof ParamNodeOperation];
+
+
+/**
+ * 
+ * @export
+ * @interface ParamNodeTaints
+ */
+export interface ParamNodeTaints {
+    /**
+     * 
+     * @type {Array<K8sTaint>}
+     * @memberof ParamNodeTaints
+     */
+    'taints'?: Array<K8sTaint>;
+}
+/**
+ * 
+ * @export
  * @interface ParamOBServerSpec
  */
 export interface ParamOBServerSpec {
@@ -3802,19 +3858,19 @@ export interface ParamOBServerSpec {
      * @type {string}
      * @memberof ParamOBServerSpec
      */
-    'image'?: string;
+    'image': string;
     /**
      * 
      * @type {CommonResourceSpec}
      * @memberof ParamOBServerSpec
      */
-    'resource'?: CommonResourceSpec;
+    'resource': CommonResourceSpec;
     /**
      * 
      * @type {ParamOBServerStorageSpec}
      * @memberof ParamOBServerSpec
      */
-    'storage'?: ParamOBServerStorageSpec;
+    'storage': ParamOBServerStorageSpec;
 }
 /**
  * 
@@ -3827,19 +3883,19 @@ export interface ParamOBServerStorageSpec {
      * @type {CommonStorageSpec}
      * @memberof ParamOBServerStorageSpec
      */
-    'data'?: CommonStorageSpec;
+    'data': CommonStorageSpec;
     /**
      * 
      * @type {CommonStorageSpec}
      * @memberof ParamOBServerStorageSpec
      */
-    'log'?: CommonStorageSpec;
+    'log': CommonStorageSpec;
     /**
      * 
      * @type {CommonStorageSpec}
      * @memberof ParamOBServerStorageSpec
      */
-    'redoLog'?: CommonStorageSpec;
+    'redoLog': CommonStorageSpec;
 }
 /**
  * 
@@ -4052,7 +4108,7 @@ export interface ParamResourcePoolSpec {
      */
     'priority'?: number;
     /**
-     * Enum: Readonly, Full
+     * Enum: Full, Readonly, Column
      * @type {string}
      * @memberof ParamResourcePoolSpec
      */
@@ -4182,7 +4238,7 @@ export interface ParamScaleOBServerParam {
      * @type {number}
      * @memberof ParamScaleOBServerParam
      */
-    'replicas'?: number;
+    'replicas': number;
 }
 /**
  * 
@@ -4203,6 +4259,39 @@ export interface ParamScheduleDate {
      */
     'day': number;
 }
+/**
+ * 
+ * @export
+ * @interface ParamTaintOperation
+ */
+export interface ParamTaintOperation {
+    /**
+     * 
+     * @type {string}
+     * @memberof ParamTaintOperation
+     */
+    'effect': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ParamTaintOperation
+     */
+    'key': string;
+    /**
+     * 
+     * @type {ParamNodeOperation}
+     * @memberof ParamTaintOperation
+     */
+    'operation': ParamNodeOperation;
+    /**
+     * 
+     * @type {string}
+     * @memberof ParamTaintOperation
+     */
+    'value'?: string;
+}
+
+
 /**
  * 
  * @export
@@ -4344,7 +4433,7 @@ export interface ParamUpgradeOBClusterParam {
      * @type {string}
      * @memberof ParamUpgradeOBClusterParam
      */
-    'image'?: string;
+    'image': string;
 }
 /**
  * 
@@ -4369,7 +4458,7 @@ export interface ParamZoneTopology {
      * @type {number}
      * @memberof ParamZoneTopology
      */
-    'replicas'?: number;
+    'replicas': number;
     /**
      * 
      * @type {Array<CommonTolerationSpec>}
@@ -4381,7 +4470,7 @@ export interface ParamZoneTopology {
      * @type {string}
      * @memberof ParamZoneTopology
      */
-    'zone'?: string;
+    'zone': string;
 }
 /**
  * 
@@ -4486,6 +4575,31 @@ export interface PayloadWebhookPayload {
      * @memberof PayloadWebhookPayload
      */
     'version'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface PutK8sNodeLabels200Response
+ */
+export interface PutK8sNodeLabels200Response {
+    /**
+     * 
+     * @type {ResponseK8sNode}
+     * @memberof PutK8sNodeLabels200Response
+     */
+    'data': ResponseK8sNode;
+    /**
+     * 
+     * @type {string}
+     * @memberof PutK8sNodeLabels200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof PutK8sNodeLabels200Response
+     */
+    'successful': boolean;
 }
 /**
  * 
@@ -4684,6 +4798,80 @@ export interface ResponseAPIResponse {
      * @memberof ResponseAPIResponse
      */
     'successful': boolean;
+}
+/**
+ * 
+ * @export
+ * @interface ResponseAggregatedParameter
+ */
+export interface ResponseAggregatedParameter {
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseAggregatedParameter
+     */
+    'dataType'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseAggregatedParameter
+     */
+    'editLevel'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseAggregatedParameter
+     */
+    'info'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseAggregatedParameter
+     */
+    'name'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseAggregatedParameter
+     */
+    'scope'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseAggregatedParameter
+     */
+    'section'?: string;
+    /**
+     * 
+     * @type {Array<ResponseAggregratedParameterValue>}
+     * @memberof ResponseAggregatedParameter
+     */
+    'values'?: Array<ResponseAggregratedParameterValue>;
+}
+/**
+ * 
+ * @export
+ * @interface ResponseAggregratedParameterValue
+ */
+export interface ResponseAggregratedParameterValue {
+    /**
+     * 
+     * @type {Array<ResponseParameterMeta>}
+     * @memberof ResponseAggregratedParameterValue
+     */
+    'metas'?: Array<ResponseParameterMeta>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseAggregratedParameterValue
+     */
+    'metasStr'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseAggregratedParameterValue
+     */
+    'value'?: string;
 }
 /**
  * 
@@ -5157,6 +5345,12 @@ export interface ResponseK8sNodeInfo {
      * @memberof ResponseK8sNodeInfo
      */
     'status': string;
+    /**
+     * 
+     * @type {Array<K8sTaint>}
+     * @memberof ResponseK8sNodeInfo
+     */
+    'taints': Array<K8sTaint>;
     /**
      * 
      * @type {number}
@@ -6005,6 +6199,18 @@ export interface ResponseOBServer {
      * @type {string}
      * @memberof ResponseOBServer
      */
+    'nodeIp': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseOBServer
+     */
+    'nodeName': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseOBServer
+     */
     'status': string;
     /**
      * 
@@ -6506,6 +6712,37 @@ export interface ResponseOBZoneAvailableResource {
      * @memberof ResponseOBZoneAvailableResource
      */
     'serverCount': number;
+}
+/**
+ * 
+ * @export
+ * @interface ResponseParameterMeta
+ */
+export interface ResponseParameterMeta {
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseParameterMeta
+     */
+    'svr_ip'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof ResponseParameterMeta
+     */
+    'svr_port'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof ResponseParameterMeta
+     */
+    'tenant_id'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseParameterMeta
+     */
+    'zone'?: string;
 }
 /**
  * 
@@ -10309,6 +10546,45 @@ export class AlarmApi extends BaseAPI {
 export const ClusterApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
+         * update k8s nodes taints and labels
+         * @summary update k8s nodes
+         * @param {ParamBatchUpdateNodesParam} body batch update nodes request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        batchUpdateK8sNodes: async (body: ParamBatchUpdateNodesParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('batchUpdateK8sNodes', 'body', body)
+            const localVarPath = `/api/v1/cluster/nodes/update`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * create k8s namespace
          * @summary create k8s namespace
          * @param {ParamCreateNamespaceParam} body create obcluster request body
@@ -10499,6 +10775,92 @@ export const ClusterApiAxiosParamCreator = function (configuration?: Configurati
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * update k8s node labels
+         * @summary update k8s node labels
+         * @param {string} name node name
+         * @param {ParamNodeLabels} body update node labels request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putK8sNodeLabels: async (name: string, body: ParamNodeLabels, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('putK8sNodeLabels', 'name', name)
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('putK8sNodeLabels', 'body', body)
+            const localVarPath = `/api/v1/cluster/nodes/{name}/labels`
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * update k8s node taints
+         * @summary update k8s node taints
+         * @param {string} name node name
+         * @param {ParamNodeTaints} body update node taints request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putK8sNodeTaints: async (name: string, body: ParamNodeTaints, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('putK8sNodeTaints', 'name', name)
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('putK8sNodeTaints', 'body', body)
+            const localVarPath = `/api/v1/cluster/nodes/{name}/taints`
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -10509,6 +10871,19 @@ export const ClusterApiAxiosParamCreator = function (configuration?: Configurati
 export const ClusterApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = ClusterApiAxiosParamCreator(configuration)
     return {
+        /**
+         * update k8s nodes taints and labels
+         * @summary update k8s nodes
+         * @param {ParamBatchUpdateNodesParam} body batch update nodes request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async batchUpdateK8sNodes(body: ParamBatchUpdateNodesParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseAPIResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.batchUpdateK8sNodes(body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ClusterApi.batchUpdateK8sNodes']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
         /**
          * create k8s namespace
          * @summary create k8s namespace
@@ -10574,6 +10949,34 @@ export const ClusterApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['ClusterApi.listK8sStorageClasses']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * update k8s node labels
+         * @summary update k8s node labels
+         * @param {string} name node name
+         * @param {ParamNodeLabels} body update node labels request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async putK8sNodeLabels(name: string, body: ParamNodeLabels, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PutK8sNodeLabels200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.putK8sNodeLabels(name, body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ClusterApi.putK8sNodeLabels']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * update k8s node taints
+         * @summary update k8s node taints
+         * @param {string} name node name
+         * @param {ParamNodeTaints} body update node taints request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async putK8sNodeTaints(name: string, body: ParamNodeTaints, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<PutK8sNodeLabels200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.putK8sNodeTaints(name, body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ClusterApi.putK8sNodeTaints']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -10584,6 +10987,16 @@ export const ClusterApiFp = function(configuration?: Configuration) {
 export const ClusterApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = ClusterApiFp(configuration)
     return {
+        /**
+         * update k8s nodes taints and labels
+         * @summary update k8s nodes
+         * @param {ParamBatchUpdateNodesParam} body batch update nodes request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        batchUpdateK8sNodes(body: ParamBatchUpdateNodesParam, options?: any): AxiosPromise<ResponseAPIResponse> {
+            return localVarFp.batchUpdateK8sNodes(body, options).then((request) => request(axios, basePath));
+        },
         /**
          * create k8s namespace
          * @summary create k8s namespace
@@ -10634,6 +11047,28 @@ export const ClusterApiFactory = function (configuration?: Configuration, basePa
         listK8sStorageClasses(options?: any): AxiosPromise<ListK8sStorageClasses200Response> {
             return localVarFp.listK8sStorageClasses(options).then((request) => request(axios, basePath));
         },
+        /**
+         * update k8s node labels
+         * @summary update k8s node labels
+         * @param {string} name node name
+         * @param {ParamNodeLabels} body update node labels request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putK8sNodeLabels(name: string, body: ParamNodeLabels, options?: any): AxiosPromise<PutK8sNodeLabels200Response> {
+            return localVarFp.putK8sNodeLabels(name, body, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * update k8s node taints
+         * @summary update k8s node taints
+         * @param {string} name node name
+         * @param {ParamNodeTaints} body update node taints request body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putK8sNodeTaints(name: string, body: ParamNodeTaints, options?: any): AxiosPromise<PutK8sNodeLabels200Response> {
+            return localVarFp.putK8sNodeTaints(name, body, options).then((request) => request(axios, basePath));
+        },
     };
 };
 
@@ -10644,6 +11079,18 @@ export const ClusterApiFactory = function (configuration?: Configuration, basePa
  * @extends {BaseAPI}
  */
 export class ClusterApi extends BaseAPI {
+    /**
+     * update k8s nodes taints and labels
+     * @summary update k8s nodes
+     * @param {ParamBatchUpdateNodesParam} body batch update nodes request body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ClusterApi
+     */
+    public batchUpdateK8sNodes(body: ParamBatchUpdateNodesParam, options?: RawAxiosRequestConfig) {
+        return ClusterApiFp(this.configuration).batchUpdateK8sNodes(body, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * create k8s namespace
      * @summary create k8s namespace
@@ -10702,6 +11149,32 @@ export class ClusterApi extends BaseAPI {
      */
     public listK8sStorageClasses(options?: RawAxiosRequestConfig) {
         return ClusterApiFp(this.configuration).listK8sStorageClasses(options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * update k8s node labels
+     * @summary update k8s node labels
+     * @param {string} name node name
+     * @param {ParamNodeLabels} body update node labels request body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ClusterApi
+     */
+    public putK8sNodeLabels(name: string, body: ParamNodeLabels, options?: RawAxiosRequestConfig) {
+        return ClusterApiFp(this.configuration).putK8sNodeLabels(name, body, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * update k8s node taints
+     * @summary update k8s node taints
+     * @param {string} name node name
+     * @param {ParamNodeTaints} body update node taints request body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ClusterApi
+     */
+    public putK8sNodeTaints(name: string, body: ParamNodeTaints, options?: RawAxiosRequestConfig) {
+        return ClusterApiFp(this.configuration).putK8sNodeTaints(name, body, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
