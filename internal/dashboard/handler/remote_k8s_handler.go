@@ -57,6 +57,24 @@ func GetRemoteK8sCluster(c *gin.Context) (*k8s.K8sClusterInfo, error) {
 	return k8sbiz.GetRemoteK8sCluster(c, name)
 }
 
+// @ID DeleteRemoteK8sCluster
+// @Summary delete remote k8s cluster
+// @Description delete remote k8s cluster
+// @Tags K8sCluster
+// @Accept application/json
+// @Produce application/json
+// @Param name path string true "k8s cluster name"
+// @Success 200 object response.APIResponse
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/k8s/clusters/{name} [DELETE]
+// @Security ApiKeyAuth
+func DeleteRemoteK8sCluster(c *gin.Context) (any, error) {
+	name := c.Param("name")
+	return nil, k8sbiz.DeleteRemoteK8sCluster(c, name)
+}
+
 // @ID PatchRemoteK8sCluster
 // @Summary put remote k8s cluster
 // @Description put remote k8s cluster
@@ -117,6 +135,7 @@ func CreateRemoteK8sCluster(c *gin.Context) (*k8s.K8sClusterInfo, error) {
 // @Tags K8sCluster
 // @Accept application/json
 // @Produce application/json
+// @Param name path string true "k8s cluster name"
 // @Param objectType query string false "related object types" Enums(OBCLUSTER, OBTENANT, OBBACKUPPOLICY, OBPROXY)
 // @Param type query string false "event level" Enums(NORMAL, WARNING)
 // @Param name query string false "Object name" string
@@ -134,7 +153,8 @@ func ListRemoteK8sEvents(c *gin.Context) ([]response.K8sEvent, error) {
 		Name:       c.Query("name"),
 		Namespace:  c.Query("namespace"),
 	}
-	events, err := k8sbiz.ListEvents(c, queryEventParam)
+	k8sClusterName := c.Param("name")
+	events, err := k8sbiz.ListRemoteK8sClusterEvents(c, k8sClusterName, queryEventParam)
 	if err != nil {
 		return nil, err
 	}
@@ -148,6 +168,7 @@ func ListRemoteK8sEvents(c *gin.Context) ([]response.K8sEvent, error) {
 // @Tags K8sCluster
 // @Accept application/json
 // @Produce application/json
+// @Param name path string true "k8s cluster name"
 // @Success 200 object response.APIResponse{data=[]response.K8sNode}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
@@ -169,6 +190,8 @@ func ListRemoteK8sNodes(c *gin.Context) ([]response.K8sNode, error) {
 // @Tags K8sCluster
 // @Accept application/json
 // @Produce application/json
+// @Param clusterName path string true "k8s cluster name"
+// @Param nodeName path string true "node name"
 // @Param body body param.NodeLabels true "update node labels request body"
 // @Success 200 object response.APIResponse{data=response.K8sNode}
 // @Failure 400 object response.APIResponse
@@ -192,6 +215,8 @@ func PutRemoteK8sNodeLabels(c *gin.Context) (*response.K8sNode, error) {
 // @Tags K8sCluster
 // @Accept application/json
 // @Produce application/json
+// @Param clusterName path string true "k8s cluster name"
+// @Param nodeName path string true "node name"
 // @Param body body param.NodeTaints true "update node taints request body"
 // @Success 200 object response.APIResponse{data=response.K8sNode}
 // @Failure 400 object response.APIResponse
@@ -215,6 +240,7 @@ func PutRemoteK8sNodeTaints(c *gin.Context) (*response.K8sNode, error) {
 // @Tags K8sCluster
 // @Accept application/json
 // @Produce application/json
+// @Param name path string true "k8s cluster name"
 // @Param body body param.BatchUpdateNodesParam true "batch update nodes request body"
 // @Success 200 object response.APIResponse
 // @Failure 400 object response.APIResponse

@@ -38,6 +38,10 @@ func ListAllK8sClusters(ctx context.Context) (*k8sv1alpha1.K8sClusterList, error
 	return &k8sClusterList, nil
 }
 
+func DeleteK8sCluster(ctx context.Context, name string) error {
+	return K8sClusterClient.Delete(ctx, "", name, metav1.DeleteOptions{})
+}
+
 func GetK8sCluster(ctx context.Context, name string) (*k8sv1alpha1.K8sCluster, error) {
 	client := client.GetClient()
 	var k8sCluster k8sv1alpha1.K8sCluster

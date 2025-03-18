@@ -15,11 +15,15 @@ package k8s
 import (
 	"context"
 
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	k8sv1alpha1 "github.com/oceanbase/ob-operator/api/k8sv1alpha1"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/k8s"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
+	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
 func ListRemoteK8sClusters(ctx context.Context) ([]k8s.K8sClusterInfo, error) {
@@ -48,6 +52,10 @@ func GetRemoteK8sCluster(ctx context.Context, name string) (*k8s.K8sClusterInfo,
 		Description: k8sCluster.Spec.Description,
 		CreatedAt:   k8sCluster.CreationTimestamp.Unix(),
 	}, nil
+}
+
+func DeleteRemoteK8sCluster(ctx context.Context, name string) error {
+	return clients.DeleteK8sCluster(ctx, name)
 }
 
 func UpdateRemoteK8sCluster(ctx context.Context, name string, param *k8s.UpdateK8sClusterParam) (*k8s.K8sClusterInfo, error) {
@@ -93,4 +101,13 @@ func CreateRemoteK8sCluster(ctx context.Context, param *k8s.CreateK8sClusterPara
 		CreatedAt:   createdK8sCluster.CreationTimestamp.Unix(),
 	}
 	return k8sInfo, nil
+}
+
+func ListRemoteK8sClusterEvents(ctx context.Context, clusterName string, queryEventParam *param.QueryEventParam) ([]response.K8sEvent, error) {
+	k8sCluster, err := clients.GetK8sCluster(ctx, clusterName)
+	if err != nil {
+		return nil, errors.Wrap(err, "Get k8s cluster")
+	}
+	c, err := client.GetClientFromBytes([]byte(k8sCluster.Spec.KubeConfig))
+	return ListK8sClusterEvents(ctx, c, queryEventParam)
 }

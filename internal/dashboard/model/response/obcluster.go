@@ -37,6 +37,7 @@ type OBZone struct {
 	Name         string          `json:"name" binding:"required"`
 	Zone         string          `json:"zone" binding:"required"`
 	Replicas     int             `json:"replicas" binding:"required"`
+	K8sCluster   string          `json:"k8sCluster,omitempty"`
 	Status       string          `json:"status" binding:"required"`
 	StatusDetail string          `json:"statusDetail" binding:"required"`
 	RootService  string          `json:"rootService,omitempty"`

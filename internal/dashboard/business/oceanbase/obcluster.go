@@ -359,6 +359,7 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 			Name:         obzone.Name,
 			Zone:         obzone.Spec.Topology.Zone,
 			Replicas:     obzone.Spec.Topology.Replica,
+			K8sCluster:   obzone.Spec.Topology.K8sCluster,
 			Status:       convertStatus(obzone.Status.Status),
 			StatusDetail: obzone.Status.Status,
 			RootService:  "",
