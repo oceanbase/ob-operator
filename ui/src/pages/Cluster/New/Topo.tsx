@@ -18,6 +18,7 @@ import {
   Space,
 } from 'antd';
 
+import { EFFECT_LIST, OPERATOR_LIST } from '@/constants/node';
 import { RULER_ZONE } from '@/constants/rules';
 import { getNodeLabelsReq } from '@/services';
 import { useAccess } from '@umijs/max';
@@ -50,16 +51,7 @@ export default function Topo({ form }) {
       label: 'DoesNoExist',
     },
   ];
-  const tolerationsOperatorList = [
-    {
-      value: 'Equal',
-      label: 'Equal',
-    },
-    {
-      value: 'Exists',
-      label: 'Exists',
-    },
-  ];
+
   const basicFrom = (topologyConfiguration, name) => (
     <>
       <Col
@@ -129,7 +121,7 @@ export default function Topo({ form }) {
             })}
             options={
               topologyConfiguration === 'Tolerations'
-                ? tolerationsOperatorList
+                ? OPERATOR_LIST
                 : affinitiesOperatorList
             }
           />
@@ -349,20 +341,7 @@ export default function Topo({ form }) {
                           id: 'OBDashboard.components.NodeSelector.PleaseSelect',
                           defaultMessage: '请选择',
                         })}
-                        options={[
-                          {
-                            value: 'NoSchedule',
-                            label: 'NoSchedule',
-                          },
-                          {
-                            value: 'PerferNoSchedule',
-                            label: 'PerferNoSchedule',
-                          },
-                          {
-                            value: 'NoExecute',
-                            label: 'NoExecute',
-                          },
-                        ]}
+                        options={EFFECT_LIST}
                       />
                     </Form.Item>
                   </Col>
