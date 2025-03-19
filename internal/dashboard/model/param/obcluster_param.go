@@ -20,6 +20,7 @@ import (
 type ZoneTopology struct {
 	Zone         string                  `json:"zone" binding:"required"`
 	Replicas     int                     `json:"replicas" binding:"required"`
+	K8sCluster   string                  `json:"k8sCluster,omitempty"`
 	NodeSelector []common.KVPair         `json:"nodeSelector,omitempty"`
 	Tolerations  []common.TolerationSpec `json:"tolerations,omitempty"`
 	Affinities   []common.AffinitySpec   `json:"affinities,omitempty"`
@@ -58,7 +59,7 @@ type CreateOBClusterParam struct {
 	ClusterId       int64              `json:"clusterId" binding:"required"`
 	RootPassword    string             `json:"rootPassword" binding:"required"`
 	ProxyroPassword string             `json:"proxyroPassword"`
-	Topology        []ZoneTopology     `json:"topology"`
+	Topology        []ZoneTopology     `json:"topology" binding:"required"`
 	OBServer        *OBServerSpec      `json:"observer" binding:"required"`
 	Monitor         *MonitorSpec       `json:"monitor"`
 	Parameters      []common.KVPair    `json:"parameters"`

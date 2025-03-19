@@ -30,6 +30,5 @@ var (
 	RescueClient           = client.NewDynamicResourceClient[*v1alpha1.OBResourceRescue](schema.OBResourceRescueGVR, schema.OBResourceRescueKind)
 	RestoreJobClient       = client.NewDynamicResourceClient[*v1alpha1.OBTenantRestore](schema.OBTenantRestoreGVR, schema.OBTenantRestoreKind)
 	ClusterOperationClient = client.NewDynamicResourceClient[*v1alpha1.OBClusterOperation](schema.OBClusterOperationGVR, schema.OBClusterOperationKind)
-
-	K8sClusterClient = client.NewDynamicResourceClient[*k8sv1alpha1.K8sCluster](schema.K8sClusterGVR, schema.K8sClusterKind)
+	K8sClusterClient       = client.NewDynamicResourceClient[*k8sv1alpha1.K8sCluster](schema.K8sClusterGVR, schema.K8sClusterKind)
 )
