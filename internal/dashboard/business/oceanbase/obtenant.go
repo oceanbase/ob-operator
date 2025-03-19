@@ -222,6 +222,7 @@ func buildOverviewFromApiType(t *v1alpha1.OBTenant) *response.OBTenantOverview {
 	rt.Charset = t.Spec.Charset
 	rt.Locality = t.Status.TenantRecordInfo.Locality
 	rt.PrimaryZone = t.Status.TenantRecordInfo.PrimaryZone
+	rt.Scenario = t.Spec.Scenario
 	rt.DeletionProtection = t.Annotations[oceanbaseconst.AnnotationsIgnoreDeletion] == "true"
 
 	for i := range t.Status.Pools {
