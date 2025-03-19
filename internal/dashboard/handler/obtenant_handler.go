@@ -150,9 +150,11 @@ func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 		return nil, httpErr.New(httpErr.ErrPermissionDenied, "Permission denied")
 	}
 
-	tenantParam.RootPassword, err = crypto.DecryptWithPrivateKey(tenantParam.RootPassword)
-	if err != nil {
-		return nil, httpErr.NewBadRequest(err.Error())
+	if tenantParam.RootPassword != "" {
+		tenantParam.RootPassword, err = crypto.DecryptWithPrivateKey(tenantParam.RootPassword)
+		if err != nil {
+			return nil, httpErr.NewBadRequest(err.Error())
+		}
 	}
 	if tenantParam.Source != nil && tenantParam.Source.Restore != nil {
 		if tenantParam.Source.Restore.Type == "OSS" {
