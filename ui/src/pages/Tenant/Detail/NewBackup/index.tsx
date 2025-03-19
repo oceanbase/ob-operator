@@ -40,7 +40,7 @@ export default function NewBackup() {
   const scheduleValue = Form.useWatch(['scheduleDates'], form);
   const [clusterList, setClusterList] = useState<API.SimpleClusterList>([]);
   const [selectClusterId, setSelectClusterId] = useState<string>();
-  const [activeTabKey, setActiveTabKey] = useState<string>('recover');
+  const [activeTabKey, setActiveTabKey] = useState<string>('backup');
 
   const distTypes: ParamBackupDestType[] = [
     { label: 'NFS', value: ParamBackupDestType.BackupDestNFS },

@@ -25,7 +25,7 @@ export default function Backup() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
-  const [activeTabKey, setActiveTabKey] = useState<string>('recover');
+  const [activeTabKey, setActiveTabKey] = useState<string>('backup');
   const [form] = Form.useForm<FormData>();
   const publicKey = usePublicKey();
   const [clusterList, setClusterList] = useState<API.SimpleClusterList>([]);
