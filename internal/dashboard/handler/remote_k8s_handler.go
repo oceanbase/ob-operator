@@ -20,7 +20,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
-	logger "github.com/sirupsen/logrus"
 )
 
 // @ID ListRemoteK8sClusters
@@ -154,12 +153,7 @@ func ListRemoteK8sEvents(c *gin.Context) ([]response.K8sEvent, error) {
 		Namespace:  c.Query("namespace"),
 	}
 	k8sClusterName := c.Param("name")
-	events, err := k8sbiz.ListRemoteK8sClusterEvents(c, k8sClusterName, queryEventParam)
-	if err != nil {
-		return nil, err
-	}
-	logger.Debugf("List k8s events: %v", events)
-	return events, nil
+	return k8sbiz.ListRemoteK8sClusterEvents(c, k8sClusterName, queryEventParam)
 }
 
 // @ID ListRemoteK8sNodes
@@ -176,12 +170,8 @@ func ListRemoteK8sEvents(c *gin.Context) ([]response.K8sEvent, error) {
 // @Router /api/v1/k8s/clusters/{name}/nodes [GET]
 // @Security ApiKeyAuth
 func ListRemoteK8sNodes(c *gin.Context) ([]response.K8sNode, error) {
-	nodes, err := k8sbiz.ListNodes(c)
-	if err != nil {
-		return nil, err
-	}
-	logger.Debugf("List k8s nodes: %v", nodes)
-	return nodes, nil
+	k8sClusterName := c.Param("name")
+	return k8sbiz.ListRemoteK8sClusterNodes(c, k8sClusterName)
 }
 
 // @ID PutRemoteK8sNodeLabels
@@ -200,13 +190,14 @@ func ListRemoteK8sNodes(c *gin.Context) ([]response.K8sNode, error) {
 // @Router /api/v1/k8s/clusters/{clusterName}/nodes/{nodeName}/labels [PUT]
 // @Security ApiKeyAuth
 func PutRemoteK8sNodeLabels(c *gin.Context) (*response.K8sNode, error) {
-	name := c.Param("name")
+	clusterName := c.Param("clusterName")
+	nodeName := c.Param("nodeName")
 	nodeLabels := &param.NodeLabels{}
 	err := c.Bind(nodeLabels)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	return k8sbiz.UpdateNodeLabels(c, name, nodeLabels.Labels)
+	return k8sbiz.UpdateRemoteK8sClusterNodeLabels(c, clusterName, nodeName, nodeLabels.Labels)
 }
 
 // @ID PutRemoteK8sNodeTaints
@@ -225,13 +216,14 @@ func PutRemoteK8sNodeLabels(c *gin.Context) (*response.K8sNode, error) {
 // @Router /api/v1/k8s/clusters/{clusterName}/nodes/{nodeName}/taints [PUT]
 // @Security ApiKeyAuth
 func PutRemoteK8sNodeTaints(c *gin.Context) (*response.K8sNode, error) {
-	name := c.Param("name")
+	clusterName := c.Param("clusterName")
+	nodeName := c.Param("nodeName")
 	nodeTaints := &param.NodeTaints{}
 	err := c.Bind(nodeTaints)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	return k8sbiz.UpdateNodeTaints(c, name, nodeTaints.Taints)
+	return k8sbiz.UpdateRemoteK8sClusterNodeTaints(c, clusterName, nodeName, nodeTaints.Taints)
 }
 
 // @ID BatchUpdateRemoteK8sNode
@@ -249,10 +241,11 @@ func PutRemoteK8sNodeTaints(c *gin.Context) (*response.K8sNode, error) {
 // @Router /api/v1/k8s/clusters/{name}/nodes/update [POST]
 // @Security ApiKeyAuth
 func BatchUpdateRemoteK8sNode(c *gin.Context) (any, error) {
+	clusterName := c.Param("name")
 	updateNodesParam := &param.BatchUpdateNodesParam{}
 	err := c.Bind(updateNodesParam)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	return nil, k8sbiz.BatchUpdateNodes(c, updateNodesParam)
+	return nil, k8sbiz.BatchUpdateRemoteK8sClusterNodes(c, clusterName, updateNodesParam)
 }

@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/oceanbase/ob-operator/internal/clients"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/obproxy"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/k8s"
@@ -24,11 +25,20 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 	"github.com/oceanbase/ob-operator/pkg/k8s/resource"
+	"github.com/pkg/errors"
 	logger "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
+
+func GetClientForK8sCluster(ctx context.Context, clusterName string) (*client.Client, error) {
+	k8sCluster, err := clients.GetK8sCluster(ctx, clusterName)
+	if err != nil {
+		return nil, errors.Wrap(err, "Get k8s cluster")
+	}
+	return client.GetClientFromBytes([]byte(k8sCluster.Spec.KubeConfig))
+}
 
 func ListK8sClusterEvents(ctx context.Context, c *client.Client, queryEventParam *param.QueryEventParam) ([]response.K8sEvent, error) {
 	events := make([]response.K8sEvent, 0)
@@ -157,4 +167,67 @@ func ListK8sClusterNodes(ctx context.Context, c *client.Client) ([]response.K8sN
 		}
 	}
 	return nodes, err
+}
+
+func BatchUpdateK8sClusterNodes(ctx context.Context, c *client.Client, updateNodesParam *param.BatchUpdateNodesParam) error {
+	failedNodes := make([]string, 0)
+	for _, nodeName := range updateNodesParam.Nodes {
+		node, err := c.ClientSet.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+		if err != nil {
+			failedNodes = append(failedNodes, nodeName)
+			continue
+		}
+		// update node labels
+		for _, labelOperation := range updateNodesParam.LabelOperations {
+			switch labelOperation.Operation {
+			case param.OperationOverwrite:
+				node.Labels[labelOperation.Key] = labelOperation.Value
+			case param.OperationDelete:
+				_, exists := node.Labels[labelOperation.Key]
+				if exists {
+					delete(node.Labels, labelOperation.Key)
+				}
+			default:
+				logger.Errorf("Got unexpected node label operation: %s", labelOperation.Operation)
+			}
+		}
+		// update node taints
+		taintMap := make(map[string]*corev1.Taint)
+		for idx, taint := range node.Spec.Taints {
+			taintMap[taint.Key] = &node.Spec.Taints[idx]
+		}
+		for _, taintOperation := range updateNodesParam.TaintOperations {
+			switch taintOperation.Operation {
+			case param.OperationOverwrite:
+				taintMap[taintOperation.Key] = &corev1.Taint{
+					Key:    taintOperation.Key,
+					Value:  taintOperation.Value,
+					Effect: corev1.TaintEffect(taintOperation.Effect),
+				}
+			case param.OperationDelete:
+				_, exists := taintMap[taintOperation.Key]
+				if exists {
+					delete(taintMap, taintOperation.Key)
+				}
+			default:
+				logger.Errorf("Got unexpected node taint operation: %s", taintOperation.Operation)
+			}
+		}
+		taints := make([]corev1.Taint, 0)
+		for _, taint := range taintMap {
+			taints = append(taints, *taint)
+		}
+		node.Spec.Taints = taints
+
+		// update node
+		_, err = c.ClientSet.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
+		if err != nil {
+			failedNodes = append(failedNodes, nodeName)
+			logger.Errorf("Got error when update node %s, %v", nodeName, err)
+		}
+	}
+	if len(failedNodes) > 0 {
+		return fmt.Errorf("Update nodes failed, failed nodes: %s", strings.Join(failedNodes, ","))
+	}
+	return nil
 }

@@ -14,16 +14,19 @@ package k8s
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	k8sv1alpha1 "github.com/oceanbase/ob-operator/api/k8sv1alpha1"
 	"github.com/oceanbase/ob-operator/internal/clients"
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
+	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/k8s"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
-	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
 func ListRemoteK8sClusters(ctx context.Context) ([]k8s.K8sClusterInfo, error) {
@@ -103,11 +106,62 @@ func CreateRemoteK8sCluster(ctx context.Context, param *k8s.CreateK8sClusterPara
 	return k8sInfo, nil
 }
 
-func ListRemoteK8sClusterEvents(ctx context.Context, clusterName string, queryEventParam *param.QueryEventParam) ([]response.K8sEvent, error) {
-	k8sCluster, err := clients.GetK8sCluster(ctx, clusterName)
+func ListRemoteK8sClusterNodes(ctx context.Context, clusterName string) ([]response.K8sNode, error) {
+	c, err := GetClientForK8sCluster(ctx, clusterName)
 	if err != nil {
-		return nil, errors.Wrap(err, "Get k8s cluster")
+		return nil, errors.Wrap(err, fmt.Sprintf("Get client for k8s cluster %s", clusterName))
 	}
-	c, err := client.GetClientFromBytes([]byte(k8sCluster.Spec.KubeConfig))
+	return ListK8sClusterNodes(ctx, c)
+}
+
+func ListRemoteK8sClusterEvents(ctx context.Context, clusterName string, queryEventParam *param.QueryEventParam) ([]response.K8sEvent, error) {
+	c, err := GetClientForK8sCluster(ctx, clusterName)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("Get client for k8s cluster %s", clusterName))
+	}
 	return ListK8sClusterEvents(ctx, c, queryEventParam)
+}
+
+func UpdateRemoteK8sClusterNodeLabels(ctx context.Context, clusterName string, nodeName string, labels []modelcommon.KVPair) (*response.K8sNode, error) {
+	c, err := GetClientForK8sCluster(ctx, clusterName)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("Get client for k8s cluster %s", clusterName))
+	}
+
+	node, err := c.ClientSet.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	node.Labels = common.KVsToMap(labels)
+	node, err = c.ClientSet.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
+	return NewK8sNodeResponse(node), err
+}
+
+func UpdateRemoteK8sClusterNodeTaints(ctx context.Context, clusterName string, nodeName string, taints []k8s.Taint) (*response.K8sNode, error) {
+	c, err := GetClientForK8sCluster(ctx, clusterName)
+	if err != nil {
+		return nil, errors.Wrap(err, fmt.Sprintf("Get client for k8s cluster %s", clusterName))
+	}
+	node, err := c.ClientSet.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+	nodeTaints := make([]corev1.Taint, 0)
+	for _, taint := range taints {
+		nodeTaints = append(nodeTaints, corev1.Taint{
+			Key:    taint.Key,
+			Value:  taint.Value,
+			Effect: corev1.TaintEffect(taint.Effect),
+		})
+	}
+	node.Spec.Taints = nodeTaints
+	node, err = c.ClientSet.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
+	return NewK8sNodeResponse(node), err
+}
+func BatchUpdateRemoteK8sClusterNodes(ctx context.Context, clusterName string, updateNodesParam *param.BatchUpdateNodesParam) error {
+	c, err := GetClientForK8sCluster(ctx, clusterName)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("Get client for k8s cluster %s", clusterName))
+	}
+	return BatchUpdateK8sClusterNodes(ctx, c, updateNodesParam)
 }
