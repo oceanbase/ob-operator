@@ -3020,6 +3020,8 @@ spec:
                 type: string
               nodeIp:
                 type: string
+              nodeName:
+                type: string
               obStatus:
                 type: string
               operationContext:

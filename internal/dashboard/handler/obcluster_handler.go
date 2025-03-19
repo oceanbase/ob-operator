@@ -101,13 +101,13 @@ func GetOBCluster(c *gin.Context) (*response.OBCluster, error) {
 // @Accept application/json
 // @Produce application/json
 // @Param body body param.CreateOBClusterParam true "create obcluster request body"
-// @Success 200 object response.APIResponse{data=response.OBCluster}
+// @Success 200 object response.APIResponse
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters [POST]
 // @Security ApiKeyAuth
-func CreateOBCluster(c *gin.Context) (*response.OBCluster, error) {
+func CreateOBCluster(c *gin.Context) (any, error) {
 	param := &param.CreateOBClusterParam{}
 	err := c.Bind(param)
 	if err != nil {
@@ -118,7 +118,7 @@ func CreateOBCluster(c *gin.Context) (*response.OBCluster, error) {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	loggingCreateOBClusterParam(param)
-	return oceanbase.CreateOBCluster(c, param)
+	return nil, oceanbase.CreateOBCluster(c, param)
 }
 
 // @ID UpgradeOBCluster

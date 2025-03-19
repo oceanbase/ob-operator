@@ -629,18 +629,18 @@ func generateOBClusterInstance(param *param.CreateOBClusterParam) *v1alpha1.OBCl
 	return obcluster
 }
 
-func CreateOBCluster(ctx context.Context, param *param.CreateOBClusterParam) (*response.OBCluster, error) {
+func CreateOBCluster(ctx context.Context, param *param.CreateOBClusterParam) error {
 	obcluster := generateOBClusterInstance(param)
 	err := clients.CreateSecretsForOBCluster(ctx, obcluster, param)
 	if err != nil {
-		return nil, errors.Wrap(err, "Create secrets for obcluster")
+		return oberr.NewInternal(err.Error())
 	}
 	logger.Infof("Generated obcluster instance:%v", obcluster)
-	cluster, err := clients.CreateOBCluster(ctx, obcluster)
+	_, err = clients.CreateOBCluster(ctx, obcluster)
 	if err != nil {
-		return nil, oberr.NewInternal(err.Error())
+		return oberr.NewInternal(err.Error())
 	}
-	return buildOBClusterResponse(ctx, cluster)
+	return nil
 }
 
 func UpgradeObCluster(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity, updateParam *param.UpgradeOBClusterParam) (*response.OBCluster, error) {
