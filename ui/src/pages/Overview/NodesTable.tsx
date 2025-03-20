@@ -127,7 +127,9 @@ export default function NodesTable() {
         ));
 
         const content = text?.map((item) => `${item.key}=${item.value}`);
-        return (
+        return content.length === 0 ? (
+          '-'
+        ) : (
           <CustomTooltip
             text={content}
             tooltipTittle={tooltipTittle}
@@ -154,7 +156,9 @@ export default function NodesTable() {
           ),
         );
 
-        return (
+        return content.length === 0 ? (
+          '-'
+        ) : (
           <CustomTooltip
             text={content}
             tooltipTittle={tooltipTittle}
