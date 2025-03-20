@@ -1224,7 +1224,7 @@
   "src.pages.Cluster.Detail.Overview.05F3B008": "存储资源",
   "src.pages.Cluster.Detail.Overview.F4D80804": "PVC 独立生命周期",
   "src.pages.Cluster.Detail.Overview.21732CE3": "只能在创建时指定，不支持修改",
-  "src.pages.Cluster.Detail.Overview.BFE7CA02": "集群参数设置",
+  "src.pages.Cluster.Detail.Overview.BFE7CA02": "集群参数",
   "src.pages.Cluster.Detail.Overview.BF489BCE": "参数名",
   "src.pages.Cluster.Detail.Overview.E5E4E6B5": "请输入",
   "src.pages.Cluster.Detail.Overview.4F7F81B0": "托管状态",

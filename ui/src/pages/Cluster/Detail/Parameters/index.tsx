@@ -296,11 +296,7 @@ export default function Parameters() {
   ];
 
   return (
-    <PageContainer
-      header={{
-        title: '集群参数',
-      }}
-    >
+    <PageContainer>
       <Row>
         <Col span={24}>
           <Card
@@ -308,7 +304,7 @@ export default function Parameters() {
               <h2 style={{ marginBottom: 0 }}>
                 {intl.formatMessage({
                   id: 'src.pages.Cluster.Detail.Overview.BFE7CA02',
-                  defaultMessage: '集群参数设置',
+                  defaultMessage: '集群参数',
                 })}
               </h2>
             }
@@ -334,7 +330,6 @@ export default function Parameters() {
         initialValues={parametersRecord}
         name={name}
         namespace={ns}
-        // {...(clusterDetail?.info as API.ClusterInfo)}
       />
     </PageContainer>
   );
