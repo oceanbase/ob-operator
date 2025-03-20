@@ -39,4 +39,7 @@ func InitClusterRoutes(g *gin.RouterGroup) {
 	g.GET("/cluster/namespaces", h.Wrap(h.ListK8sNamespaces, clusterResourceGuard))
 	g.GET("/cluster/storageClasses", h.Wrap(h.ListK8sStorageClasses, clusterResourceGuard))
 	g.POST("/cluster/namespaces", h.Wrap(h.CreateK8sNamespace, acbiz.PathGuard("system", "*", "write")))
+	g.PUT("/cluster/nodes/:name/labels", h.Wrap(h.PutK8sNodeLabels, k8sClusterWriteGuard))
+	g.PUT("/cluster/nodes/:name/taints", h.Wrap(h.PutK8sNodeTaints, k8sClusterWriteGuard))
+	g.POST("/cluster/nodes/update", h.Wrap(h.BatchUpdateK8sNodes, k8sClusterWriteGuard))
 }
