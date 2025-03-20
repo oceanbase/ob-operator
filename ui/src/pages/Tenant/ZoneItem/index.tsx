@@ -32,7 +32,7 @@ export default function ZoneItem({
       ? [{ value: 'Readonly', label: '只读型副本' }]
       : []),
     ...(isGte4_3_3(obversion)
-      ? [{ value: 'Column', label: '只读日志型副本' }]
+      ? [{ value: 'Column', label: '只读列存型副本' }]
       : []),
   ];
 
@@ -81,8 +81,12 @@ export default function ZoneItem({
         </Form.Item>
       </Col>
       <Col span={5} style={type === 'tenantBackup' ? { marginTop: 24 } : {}}>
-        <Form.Item name={['pools', name, 'type']} label={'副本类型'}>
-          <Select options={REPLICA_TYPE_LIST} defaultValue={'Full'} />
+        <Form.Item
+          name={['pools', name, 'type']}
+          label={'副本类型'}
+          initialValue={'Full'}
+        >
+          <Select options={REPLICA_TYPE_LIST} />
         </Form.Item>
       </Col>
 

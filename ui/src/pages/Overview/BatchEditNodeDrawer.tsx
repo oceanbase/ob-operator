@@ -44,21 +44,6 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
   };
 
   const labels = flattenDeep(selectedRowKeys?.map((item) => item.labels));
-  const taints = flattenDeep(selectedRowKeys?.map((item) => item.taints));
-
-  const labelsin = labels?.map((item) => ({
-    key: item.key,
-    value: item.value,
-    operation: 'overwrite',
-  }));
-
-  const taintsin = taints?.map((item) => ({
-    key: item.key,
-    value: item.value,
-    operator: item.value ? 'Equal' : 'Exists',
-    effect: item.effect,
-    operation: 'overwrite',
-  }));
 
   const { runAsync: batchUpdateK8sNodes, loading } = useRequest(
     cluster.batchUpdateK8sNodes,
@@ -92,7 +77,6 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                   <Col span={fromName ? 6 : 4}>
                     <Form.Item {...restField} name={[name, 'operation']}>
                       <Select
-                        defaultValue={'overwrite'}
                         options={[
                           {
                             value: 'overwrite',
@@ -113,7 +97,15 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                       name={[name, 'key']}
                       rules={[{ required: true, message: '请输入 Keys' }]}
                     >
-                      <Input placeholder="请输入 Keys" />
+                      <Select
+                        showSearch
+                        placeholder="请输入 Keys"
+                        optionFilterProp="label"
+                        options={labels?.map((item) => ({
+                          label: item.key,
+                          value: item.key,
+                        }))}
+                      />
                     </Form.Item>
                   </Col>
                   <Col span={fromName ? 10 : 16}>
@@ -124,10 +116,10 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                     >
                       {({ getFieldValue }) => {
                         return (
-                          <>
-                            {getFieldValue(title)[key]?.opaetor !==
-                              'delete' && (
-                              <Row gutter={8}>
+                          <Row gutter={8}>
+                            {getFieldValue(title)[key]?.operation !==
+                            'delete' ? (
+                              <>
                                 {fromName && (
                                   <Col span={2}>
                                     <Form.Item {...restField}>=</Form.Item>
@@ -137,27 +129,14 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                                 {!fromName && (
                                   <Col span={5}>
                                     <Form.Item
-                                      noStyle
+                                      {...restField}
+                                      name={[name, 'operator']}
                                       dependencies={[name, 'value']}
                                     >
-                                      {({ getFieldValue }) => {
-                                        return (
-                                          <Form.Item
-                                            {...restField}
-                                            name={[name, 'operator']}
-                                          >
-                                            <Select
-                                              placeholder={'请选择'}
-                                              defaultValue={
-                                                getFieldValue(title)[key]?.value
-                                                  ? 'Equal'
-                                                  : 'Exists'
-                                              }
-                                              options={OPERATOR_LIST}
-                                            />
-                                          </Form.Item>
-                                        );
-                                      }}
+                                      <Select
+                                        placeholder={'请选择'}
+                                        options={OPERATOR_LIST}
+                                      />
                                     </Form.Item>
                                   </Col>
                                 )}
@@ -169,8 +148,9 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                                   {({ getFieldValue }) => {
                                     return (
                                       <Col span={fromName ? 18 : 8}>
-                                        {getFieldValue(title)[key]?.operator !==
-                                          'Exists' && (
+                                        {(getFieldValue(title)[key]
+                                          ?.operator === 'Equal' ||
+                                          fromName) && (
                                           <Form.Item
                                             {...restField}
                                             name={[name, 'value']}
@@ -211,17 +191,16 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                                     </Form.Item>
                                   </Col>
                                 )}
-
-                                <Col span={1}>
-                                  <Form.Item {...restField}>
-                                    <DeleteOutlined
-                                      onClick={() => remove(name)}
-                                    />
-                                  </Form.Item>
-                                </Col>
-                              </Row>
+                              </>
+                            ) : (
+                              <Col span={20}></Col>
                             )}
-                          </>
+                            <Col span={1}>
+                              <Form.Item {...restField}>
+                                <DeleteOutlined onClick={() => remove(name)} />
+                              </Form.Item>
+                            </Col>
+                          </Row>
                         );
                       }}
                     </Form.Item>
@@ -314,7 +293,10 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
       <Form
         form={form}
         layout="vertical"
-        initialValues={{ labels: labelsin, taints: taintsin }}
+        initialValues={{
+          labels: [{ operation: 'overwrite' }],
+          taints: [{ operation: 'overwrite', operator: 'Equal' }],
+        }}
       >
         {basicForm(tabKey)}
       </Form>

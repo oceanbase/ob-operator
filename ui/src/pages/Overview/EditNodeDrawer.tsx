@@ -32,20 +32,21 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
   onCancel,
   nodeRecord,
   onSuccess,
-  labels,
-  taints,
 }) => {
   const [form] = Form.useForm<API.CreateClusterData>();
-  const { validateFields, resetFields } = form;
+  const { validateFields, resetFields, setFieldsValue } = form;
   const update = useUpdate();
   const [tabKey, setTabKey] = useState<string>('labels');
+  const { labels, taints } = nodeRecord;
 
-  const taintsIn = taints?.map((item) => ({
-    key: item.key,
-    value: item.value,
-    operator: item.value ? 'Equal' : 'Exists',
-    effect: item.effect,
-  }));
+  const formatTaints = (value) => {
+    return value?.map((item) => ({
+      key: item.key,
+      value: item.value,
+      operator: item.value ? 'Equal' : 'Exists',
+      effect: item.effect,
+    }));
+  };
 
   const { runAsync: putK8sNodeLabels, loading } = useRequest(
     cluster.putK8sNodeLabels,
@@ -61,6 +62,9 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
           );
           onSuccess();
           resetFields();
+          setFieldsValue({
+            labels: res?.data?.info?.labels,
+          });
         }
       },
     },
@@ -80,6 +84,11 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
           );
           onSuccess();
           resetFields();
+          setFieldsValue({
+            labels: res?.data?.info?.labels,
+            taints: formatTaints(res?.data?.info?.taints),
+          });
+          setTabKey('labels');
         }
       },
     },
@@ -148,7 +157,9 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
                     {({ getFieldValue }) => {
                       return (
                         <Col span={fromName ? 10 : 5}>
-                          {getFieldValue(title)[key]?.operator !== 'Exists' && (
+                          {(fromName ||
+                            getFieldValue(title)[key]?.operator ===
+                              'Equal') && (
                             <Form.Item
                               {...restField}
                               name={[name, 'value']}
@@ -283,7 +294,7 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
       <Form
         form={form}
         layout="vertical"
-        initialValues={{ labels: labels, taints: taintsIn }}
+        initialValues={{ labels: labels, taints: formatTaints(taints) }}
         onValuesChange={() => {
           update();
         }}

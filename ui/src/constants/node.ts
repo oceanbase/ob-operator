@@ -14,8 +14,8 @@ export const EFFECT_LIST = [
     label: 'NoSchedule',
   },
   {
-    value: 'PerferNoSchedule',
-    label: 'PerferNoSchedule',
+    value: 'PreferNoSchedule',
+    label: 'PreferNoSchedule',
   },
   {
     value: 'NoExecute',

@@ -218,14 +218,6 @@ export default function Backups({
     },
     {
       title: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.Backups.EncryptionKeySecret',
-        defaultMessage: '加密密钥 Secret',
-      }),
-      dataIndex: 'encryptionSecret',
-      key: 'encryptionSecret',
-    },
-    {
-      title: intl.formatMessage({
         id: 'Dashboard.Detail.Overview.Backups.StartTime',
         defaultMessage: '开始时间',
       }),

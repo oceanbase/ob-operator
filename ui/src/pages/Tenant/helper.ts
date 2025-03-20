@@ -36,15 +36,16 @@ export function formatNewTenantForm(
         })
         .map((zoneName) => {
           const priority = originFormData[key]?.[zoneName]?.priority;
+          const type = originFormData[key]?.[zoneName]?.type;
           return priority || priority === 0
             ? {
                 zone: zoneName,
                 priority,
-                type: 'Full',
+                type,
               }
             : {
                 zone: zoneName,
-                type: 'Full',
+                type,
               };
         });
     } else if (key === 'source') {
