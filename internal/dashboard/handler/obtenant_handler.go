@@ -158,13 +158,17 @@ func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 	}
 	if tenantParam.Source != nil && tenantParam.Source.Restore != nil {
 		if tenantParam.Source.Restore.Type == "OSS" {
-			tenantParam.Source.Restore.OSSAccessID, err = crypto.DecryptWithPrivateKey(tenantParam.Source.Restore.OSSAccessID)
-			if err != nil {
-				return nil, httpErr.NewBadRequest(err.Error())
+			if tenantParam.Source.Restore.OSSAccessID != "" {
+				tenantParam.Source.Restore.OSSAccessID, err = crypto.DecryptWithPrivateKey(tenantParam.Source.Restore.OSSAccessID)
+				if err != nil {
+					return nil, httpErr.NewBadRequest(err.Error())
+				}
 			}
-			tenantParam.Source.Restore.OSSAccessKey, err = crypto.DecryptWithPrivateKey(tenantParam.Source.Restore.OSSAccessKey)
-			if err != nil {
-				return nil, httpErr.NewBadRequest(err.Error())
+			if tenantParam.Source.Restore.OSSAccessKey != "" {
+				tenantParam.Source.Restore.OSSAccessKey, err = crypto.DecryptWithPrivateKey(tenantParam.Source.Restore.OSSAccessKey)
+				if err != nil {
+					return nil, httpErr.NewBadRequest(err.Error())
+				}
 			}
 		}
 		if tenantParam.Source.Restore.BakEncryptionPassword != "" {
