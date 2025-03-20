@@ -122,7 +122,7 @@ export default function NodesTable() {
       ellipsis: true,
       width: 160,
       render: (text) => {
-        const tooltipTittle = text?.map((item) => (
+        const tooltipTitle = text?.map((item) => (
           <div>{`${item.key}=${item.value}`}</div>
         ));
 
@@ -132,7 +132,7 @@ export default function NodesTable() {
         ) : (
           <CustomTooltip
             text={content}
-            tooltipTittle={tooltipTittle}
+            tooltipTitle={tooltipTitle}
             width={150}
           />
         );
@@ -148,7 +148,7 @@ export default function NodesTable() {
             ? `${item.key}=${item.value}:${item.effect}`
             : `${item.key}:${item.effect}`,
         );
-        const tooltipTittle = text?.map((item) =>
+        const tooltipTitle = text?.map((item) =>
           item.value ? (
             <div>{`${item.key}=${item.value}:${item.effect}`}</div>
           ) : (
@@ -161,7 +161,7 @@ export default function NodesTable() {
         ) : (
           <CustomTooltip
             text={content}
-            tooltipTittle={tooltipTittle}
+            tooltipTitle={tooltipTitle}
             width={150}
           />
         );
