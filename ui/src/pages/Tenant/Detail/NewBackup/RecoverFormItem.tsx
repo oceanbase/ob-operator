@@ -36,7 +36,6 @@ export default function RecoverFormItem({
             zone.checked = false;
           });
         });
-
         setClusterList(data);
       }
     },
@@ -209,7 +208,7 @@ export default function RecoverFormItem({
           setClusterList={setClusterList}
         />
       </Col>
-      {type && (
+      {type === 'detail' && (
         <>
           <Col span={22}></Col>
           <Col span={2}>

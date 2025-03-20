@@ -9,7 +9,6 @@ import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useRequest } from 'ahooks';
 import { formatNewTenantForm } from '../../helper';
-import RecoverFormItem from '../NewBackup/RecoverFormItem';
 import BasicInfo from '../Overview/BasicInfo';
 import BackupConfiguration from './BackupConfiguration';
 import BackupJobs from './BackupJobs';
@@ -17,6 +16,7 @@ import BackupJobs from './BackupJobs';
 import { usePublicKey } from '@/hook/usePublicKey';
 import { createTenantReportWrap } from '@/services/reportRequest/tenantReportReq';
 import { strTrim } from '@/utils/helper';
+import RecoverFormItem from '../NewBackup/RecoverFormItem';
 
 export default function Backup() {
   const { ns, name, tenantName } = useParams();
@@ -30,7 +30,7 @@ export default function Backup() {
   const publicKey = usePublicKey();
   const [clusterList, setClusterList] = useState<API.SimpleClusterList>([]);
   const [selectClusterId, setSelectClusterId] = useState<string>();
-  const { name: clusterName, namespace } =
+  const { name: clusterName } =
     clusterList.filter((cluster) => cluster.id === selectClusterId)[0] || {};
 
   const { refresh: backupPolicyRefresh, loading } = useRequest(
@@ -52,6 +52,9 @@ export default function Backup() {
     defaultParams: [{ ns: ns!, name: name! }],
   });
   const tenantDetail = tenantDetailResponse?.data;
+
+  const { charset, deletionProtection, rootCredential, tenantRole, scenario } =
+    tenantDetail?.info || {};
 
   useEffect(() => {
     return () => {
@@ -78,10 +81,39 @@ export default function Backup() {
     form.resetFields();
   };
 
+  const {
+    destType: type,
+    archivePath: archiveSource,
+    bakDataPath: bakDataSource,
+    ossAccessSecret,
+    bakEncryptionSecret,
+  } = backupPolicy || {};
   const onFinish = () => {
     form.validateFields().then(async (values) => {
+      const { source } = values;
+      const obj = {
+        charset,
+        deletionProtection,
+        rootCredential,
+        namespace: ns,
+        tenantRole,
+        scenario,
+      };
+      const restore = {
+        restore: {
+          ...source.restore,
+          type,
+          archiveSource,
+          bakDataSource,
+          ossAccessSecret,
+          bakEncryptionSecret,
+        },
+      };
+      if (source) {
+        values.source = restore;
+      }
       const reqData = formatNewTenantForm(
-        strTrim(values),
+        strTrim({ ...values, ...obj }),
         clusterName,
         publicKey,
       );
@@ -96,8 +128,6 @@ export default function Backup() {
         return;
       }
       const res = await createTenantReportWrap({
-        namespace,
-        rootCredential: tenantDetail?.info?.rootCredential,
         ...reqData,
       });
       if (res?.successful) {
@@ -132,21 +162,16 @@ export default function Backup() {
       />
     ),
     recover: (
-      <Card
-        title="创建恢复"
-        extra={
-          <Button type="primary" onClick={onFinish}>
-            提交
-          </Button>
-        }
-      >
+      <Card title="创建恢复">
         <Form form={form}>
           <RecoverFormItem
             form={form}
+            type="detail"
             clusterList={clusterList}
             setSelectClusterId={setSelectClusterId}
             setClusterList={setClusterList}
             selectClusterId={selectClusterId}
+            onFinish={onFinish}
           />
         </Form>
       </Card>
@@ -227,7 +252,7 @@ export default function Backup() {
           >
             {contentList[activeTabKey]}
           </Card>
-          <BackupJobs />
+          {activeTabKey === 'backup' && <BackupJobs />}
         </Row>
       )}
     </PageContainer>
