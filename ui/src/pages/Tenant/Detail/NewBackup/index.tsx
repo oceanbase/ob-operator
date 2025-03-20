@@ -8,7 +8,7 @@ import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Col, Form, Input, Row, Select, message } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   checkScheduleDatesHaveFull,
   formatBackupForm,
@@ -401,6 +401,11 @@ export default function NewBackup() {
     ),
   };
 
+  useEffect(() => {
+    if (location.search) {
+      setActiveTabKey('recover');
+    }
+  }, []);
   return (
     <PageContainer
       style={{ paddingBottom: 70 }}

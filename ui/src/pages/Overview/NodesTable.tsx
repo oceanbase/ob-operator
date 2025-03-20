@@ -46,7 +46,7 @@ export default function NodesTable() {
   const { data, loading, refresh } = useRequest(getNodeInfoReq);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
-  const [nodeRecord, setNodeRecord] = useState<string[]>([]);
+  const [nodeRecord, setNodeRecord] = useState({});
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [batchNodeDrawerOpen, setBatchNodeDrawerOpen] =
     useState<boolean>(false);
@@ -122,9 +122,18 @@ export default function NodesTable() {
       ellipsis: true,
       width: 160,
       render: (text) => {
-        const content = text?.map((item) => `${item.key}=${item.value}`);
+        const tooltipTittle = text?.map((item) => (
+          <div>{`${item.key}=${item.value}`}</div>
+        ));
 
-        return <CustomTooltip text={content} width={150} />;
+        const content = text?.map((item) => `${item.key}=${item.value}`);
+        return (
+          <CustomTooltip
+            text={content}
+            tooltipTittle={tooltipTittle}
+            width={150}
+          />
+        );
       },
     },
     {
@@ -137,8 +146,21 @@ export default function NodesTable() {
             ? `${item.key}=${item.value}:${item.effect}`
             : `${item.key}:${item.effect}`,
         );
+        const tooltipTittle = text?.map((item) =>
+          item.value ? (
+            <div>{`${item.key}=${item.value}:${item.effect}`}</div>
+          ) : (
+            <div>{`${item.key}:${item.effect}`}</div>
+          ),
+        );
 
-        return <CustomTooltip text={content} width={150} />;
+        return (
+          <CustomTooltip
+            text={content}
+            tooltipTittle={tooltipTittle}
+            width={150}
+          />
+        );
       },
     },
     {
@@ -217,8 +239,6 @@ export default function NodesTable() {
         visible={batchNodeDrawerOpen}
         onCancel={() => {
           setBatchNodeDrawerOpen(false);
-          // refresh();
-          // setSelectedRowKeys([]);
         }}
         onSuccess={() => {
           setBatchNodeDrawerOpen(false);
@@ -231,13 +251,14 @@ export default function NodesTable() {
         visible={isDrawerOpen}
         onCancel={() => {
           setIsDrawerOpen(false);
+          setNodeRecord({});
         }}
         onSuccess={() => {
           setIsDrawerOpen(false);
           refresh();
+          setNodeRecord({});
         }}
         nodeRecord={nodeRecord}
-        {...nodeRecord}
       />
     </Col>
   );

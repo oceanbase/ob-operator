@@ -6,7 +6,16 @@ import {
 } from '@/services';
 import { intl } from '@/utils/intl';
 import { useDeepCompareEffect, useRequest, useUpdateEffect } from 'ahooks';
-import { Col, DatePicker, Form, Input, Row, Select, TimePicker } from 'antd';
+import {
+  Button,
+  Col,
+  DatePicker,
+  Form,
+  Input,
+  Row,
+  Select,
+  TimePicker,
+} from 'antd';
 import dayjs from 'dayjs';
 import ResourcePools from '../../New/ResourcePools';
 
@@ -16,6 +25,8 @@ export default function RecoverFormItem({
   selectClusterId,
   setSelectClusterId,
   setClusterList,
+  onFinish,
+  type,
 }) {
   useRequest(getSimpleClusterList, {
     onSuccess: ({ successful, data }) => {
@@ -166,7 +177,7 @@ export default function RecoverFormItem({
       </Col>
       <Col span={8}>
         <Form.Item
-          name={['tenanteName']}
+          name={['tenantName']}
           label={'租户名'}
           rules={[
             {
@@ -198,6 +209,16 @@ export default function RecoverFormItem({
           setClusterList={setClusterList}
         />
       </Col>
+      {type && (
+        <>
+          <Col span={22}></Col>
+          <Col span={2}>
+            <Button type="primary" onClick={() => onFinish()}>
+              提交
+            </Button>
+          </Col>
+        </>
+      )}
     </Row>
   );
 }

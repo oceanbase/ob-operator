@@ -3,12 +3,13 @@ import { Tooltip } from 'antd';
 export default function CustomTooltip({
   text,
   width,
+  tooltipTittle,
 }: {
   text: string;
   width: number;
 }) {
   return (
-    <Tooltip title={text}>
+    <Tooltip title={tooltipTittle || text}>
       <p
         style={{
           overflow: 'hidden',

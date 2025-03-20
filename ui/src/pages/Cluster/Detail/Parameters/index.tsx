@@ -1,4 +1,5 @@
 import { obcluster } from '@/api';
+import CustomTooltip from '@/components/CustomTooltip';
 import IconTip from '@/components/IconTip';
 import { getClusterDetailReq } from '@/services';
 import { getColumnSearchProps } from '@/utils/component';
@@ -138,11 +139,25 @@ export default function Parameters() {
         defaultMessage: '参数值',
       }),
       dataIndex: 'value',
+      width: 160,
       render: (text: string, record) => {
-        const content =
-          parameters?.find((item) => item.name === record.name)?.value || text;
+        const values = record?.values;
 
-        return <span>{content}</span>;
+        const singleValue = values?.map((item) => item.value);
+        const MultipleValue = values?.map(
+          (item) => `${item.value} {${item.metasStr}}`,
+        );
+        const content = values?.length !== 1 ? MultipleValue : singleValue;
+
+        return (
+          <>
+            {content?.join('') ? (
+              <CustomTooltip text={content} width={150} />
+            ) : (
+              <span>-</span>
+            )}
+          </>
+        );
       },
     },
     {
