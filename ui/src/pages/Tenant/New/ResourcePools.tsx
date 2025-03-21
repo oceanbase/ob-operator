@@ -27,8 +27,7 @@ export default function ResourcePools({
   setClusterList,
   form,
   type,
-}: // obVersion,
-ResourcePoolsProps) {
+}: ResourcePoolsProps) {
   const [minResource, setMinResource] = useState<OBTenant.MinResourceConfig>(
     getMinResource(),
   );
