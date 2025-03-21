@@ -43,21 +43,17 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
     setTabKey(key);
   };
 
-  const labelsOption = flattenDeep(
-    uniqBy(
-      selectedRowKeys?.map((item) => item.labels),
-      'key',
-    ),
-  )?.map((item) => ({
+  const labelsOption = uniqBy(
+    flattenDeep(selectedRowKeys?.map((item) => item.labels)),
+    'key',
+  ).map((item) => ({
     label: item.key,
     value: item.key,
   }));
 
-  const taintsOption = flattenDeep(
-    uniqBy(
-      selectedRowKeys?.map((item) => item.taints),
-      'key',
-    ),
+  const taintsOption = uniqBy(
+    flattenDeep(selectedRowKeys?.map((item) => item.taints)),
+    'key',
   )?.map((item) => ({
     label: item.key,
     value: item.key,
