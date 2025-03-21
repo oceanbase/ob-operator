@@ -43,7 +43,18 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
     setTabKey(key);
   };
 
-  const labels = flattenDeep(selectedRowKeys?.map((item) => item.labels));
+  const labelsOption = flattenDeep(
+    selectedRowKeys?.map((item) => item.labels),
+  )?.map((item) => ({
+    label: item.key,
+    value: item.key,
+  }));
+  const taintsOption = flattenDeep(
+    selectedRowKeys?.map((item) => item.taints),
+  )?.map((item) => ({
+    label: item.key,
+    value: item.key,
+  }));
 
   const { runAsync: batchUpdateK8sNodes, loading } = useRequest(
     cluster.batchUpdateK8sNodes,
@@ -101,10 +112,9 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                         showSearch
                         placeholder="请输入 Keys"
                         optionFilterProp="label"
-                        options={labels?.map((item) => ({
-                          label: item.key,
-                          value: item.key,
-                        }))}
+                        options={
+                          tabKey === 'labels' ? labelsOption : taintsOption
+                        }
                       />
                     </Form.Item>
                   </Col>
