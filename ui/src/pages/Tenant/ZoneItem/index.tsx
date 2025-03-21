@@ -32,7 +32,7 @@ export default function ZoneItem({
       ? [{ value: 'Readonly', label: '只读型副本' }]
       : []),
     ...(isGte4_3_3(obVersion)
-      ? [{ value: 'Column', label: '只读列存型副本' }]
+      ? [{ value: 'Columnstore', label: '只读列存型副本' }]
       : []),
   ];
 
