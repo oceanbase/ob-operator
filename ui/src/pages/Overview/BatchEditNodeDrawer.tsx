@@ -16,7 +16,7 @@ import {
   TabsProps,
   message,
 } from 'antd';
-import { flattenDeep } from 'lodash';
+import { flattenDeep, uniqBy } from 'lodash';
 import React, { useState } from 'react';
 
 export interface BatchEditNodeDrawerProps {
@@ -44,13 +44,20 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
   };
 
   const labelsOption = flattenDeep(
-    selectedRowKeys?.map((item) => item.labels),
+    uniqBy(
+      selectedRowKeys?.map((item) => item.labels),
+      'key',
+    ),
   )?.map((item) => ({
     label: item.key,
     value: item.key,
   }));
+
   const taintsOption = flattenDeep(
-    selectedRowKeys?.map((item) => item.taints),
+    uniqBy(
+      selectedRowKeys?.map((item) => item.taints),
+      'key',
+    ),
   )?.map((item) => ({
     label: item.key,
     value: item.key,
