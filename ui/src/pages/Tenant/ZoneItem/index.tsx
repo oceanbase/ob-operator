@@ -6,7 +6,7 @@ import { Checkbox, Col, Form, Select } from 'antd';
 interface ZoneItemProps {
   name: string;
   type: string;
-  obversion: string;
+  obVersion: string;
   checked: boolean;
   obZoneResource: API.ZoneResource;
   checkBoxOnChange: (checked: boolean, name: string) => void;
@@ -24,15 +24,15 @@ export default function ZoneItem({
   type,
   priorityName = ['pools', name, 'priority'],
   checkedFormName,
-  obversion,
+  obVersion,
 }: ZoneItemProps) {
   const REPLICA_TYPE_LIST = [
     { value: 'Full', label: '全能型副本' },
-    ...(isGte4_2(obversion)
+    ...(isGte4_2(obVersion)
       ? [{ value: 'Readonly', label: '只读型副本' }]
       : []),
-    ...(isGte4_3_3(obversion)
-      ? [{ value: 'Column', label: '只读列存型副本' }]
+    ...(isGte4_3_3(obVersion)
+      ? [{ value: 'Columnstore', label: '只读列存型副本' }]
       : []),
   ];
 

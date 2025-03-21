@@ -324,6 +324,7 @@ export default function TenantOverview() {
                   tenantDetail?.replicas,
                 )
               : undefined,
+            obVersion: tenantDetail?.info?.version,
           }}
         />
       </PageContainer>

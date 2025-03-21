@@ -79,7 +79,9 @@ const columns: ColumnsType<API.TenantDetail> = [
     width: '20%',
     dataIndex: 'locality',
     key: 'locality',
-    render: (value) => <Text ellipsis={{ tooltip: value }}>{value}</Text>,
+    render: (value) => (
+      <Text ellipsis={{ tooltip: value }}>{value || '-'}</Text>
+    ),
   },
   {
     title: intl.formatMessage({

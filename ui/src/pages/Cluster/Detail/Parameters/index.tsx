@@ -134,10 +134,7 @@ export default function Parameters() {
       }),
     },
     {
-      title: intl.formatMessage({
-        id: 'src.pages.Cluster.Detail.Overview.FA0D096B',
-        defaultMessage: '参数值',
-      }),
+      title: '当前值',
       dataIndex: 'value',
       width: 160,
       render: (text: string, record) => {
@@ -166,6 +163,11 @@ export default function Parameters() {
         defaultMessage: '参数说明',
       }),
       dataIndex: 'info',
+      width: 200,
+      render: (text) => {
+        console.log('text', text);
+        return <CustomTooltip text={text} width={190} />;
+      },
     },
     {
       title: intl.formatMessage({

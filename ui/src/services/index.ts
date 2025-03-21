@@ -162,6 +162,7 @@ export async function getSimpleClusterList(): Promise<API.SimpleClusterListRespo
         topology: clusterDetail.topology,
         clusterName: clusterDetail.clusterName,
         status: clusterDetail.status,
+        version: clusterDetail.version,
       })),
     };
   }
@@ -475,4 +476,13 @@ export async function getEssentialParameters({
     return r;
   }
   return r;
+}
+
+export async function getK8sObclusterListReq(): Promise<API.StatisticDataResponse> {
+  const r = await request('/api/v1/k8s/clusters', {
+    method: 'GET',
+  });
+  return {
+    ...r,
+  };
 }

@@ -390,6 +390,7 @@ const ClusterOverview: React.FC = () => {
         params={{
           zoneName: chooseZoneName.current,
           defaultValue: chooseServerNum,
+          obVersion: clusterDetail?.info?.version,
         }}
       />
 
