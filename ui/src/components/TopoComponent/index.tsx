@@ -109,7 +109,6 @@ export default function TopoComponent({
       preTopoData.current = originTopoData?.topoData;
     },
   });
-  console.log('originTopoData', originTopoData);
   const clusterStatus = useRef(originTopoData?.basicInfo?.status);
   const tenantStatus = useRef(status);
   //Node more icon click event
@@ -485,7 +484,6 @@ export default function TopoComponent({
     };
   }, []);
   const isCreateResourcePool = modalType.current === 'createResourcePools';
-  console.log('originTopoData.basicInfo', originTopoData?.basicInfo);
   // Use different pictures for nodes in different states
   return (
     <div style={{ position: 'relative', height: '100vh' }}>

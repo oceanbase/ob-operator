@@ -87,7 +87,7 @@ export default function ModifyUnitDetailModal({
   const [minResource, setMinResource] = useState<OBTenant.MinResourceConfig>(
     getMinResource({ minMemory: essentialParameter?.minPoolMemory }),
   );
-  console.log('params', obVersion);
+  console.log('ModifyUnitDetailModal params', obVersion);
   const [selectZones, setSelectZones] = useState<string[]>(
     editZone ? [editZone] : [],
   );
