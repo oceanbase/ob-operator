@@ -117,7 +117,7 @@ export default function TenantOverview() {
       getTenantDetail({ ns: ns!, name: name! });
     }, 1000);
   };
-
+  console.log('tenantDetail?.info?.version', tenantDetail);
   const items: MenuProps['items'] = [
     ...(tenantDetail?.info.tenantRole === 'PRIMARY'
       ? [
@@ -324,6 +324,7 @@ export default function TenantOverview() {
                   tenantDetail?.replicas,
                 )
               : undefined,
+            obVersion: tenantDetail?.info?.version,
           }}
         />
       </PageContainer>

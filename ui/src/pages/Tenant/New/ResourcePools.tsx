@@ -12,6 +12,7 @@ import styles from './index.less';
 
 interface ResourcePoolsProps {
   type?: string;
+  obVersion?: string;
   selectClusterId?: string;
   clusterList: API.SimpleClusterList;
   form: FormInstance<API.NewTenantForm>;
@@ -26,7 +27,8 @@ export default function ResourcePools({
   setClusterList,
   form,
   type,
-}: ResourcePoolsProps) {
+}: // obVersion,
+ResourcePoolsProps) {
   const [minResource, setMinResource] = useState<OBTenant.MinResourceConfig>(
     getMinResource(),
   );
@@ -117,7 +119,7 @@ export default function ResourcePools({
                 obZoneResource={
                   essentialParameter?.obZoneResourceMap[item.zone]
                 }
-                obversion={obversion}
+                obVersion={obversion}
                 checkBoxOnChange={checkBoxOnChange}
               />
             ))}

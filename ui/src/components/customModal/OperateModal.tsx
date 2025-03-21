@@ -48,6 +48,7 @@ export default function OperateModal({
   }
 
   if (type === 'editResourcePools') {
+    console.log('first', props);
     return <ModifyUnitDetailModal {...props} />;
   }
 
