@@ -117,7 +117,7 @@ export default function TenantOverview() {
       getTenantDetail({ ns: ns!, name: name! });
     }, 1000);
   };
- 
+
   const items: MenuProps['items'] = [
     ...(tenantDetail?.info.tenantRole === 'PRIMARY'
       ? [
