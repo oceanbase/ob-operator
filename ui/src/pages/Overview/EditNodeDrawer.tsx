@@ -47,7 +47,7 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
       effect: item.effect,
     }));
   };
-  console.log('labels', labels);
+
   useEffect(() => {
     if (visible) {
       setFieldsValue({
