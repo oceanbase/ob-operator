@@ -411,6 +411,7 @@ declare namespace API {
     topology: Topology[];
     status: string;
     id: string;
+    version: string;
   };
 
   type SimpleClusterList = SimpleCluster[];
@@ -845,6 +846,7 @@ declare namespace API {
     };
     pools: {
       [T: string]: {
+        type: any;
         checked: boolean;
         priority: number | undefined;
       };

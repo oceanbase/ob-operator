@@ -16,7 +16,7 @@ import {
   TabsProps,
   message,
 } from 'antd';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 export interface ParametersModalProps {
   visible: boolean;
@@ -47,6 +47,15 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
       effect: item.effect,
     }));
   };
+
+  useEffect(() => {
+    if (visible) {
+      setFieldsValue({
+        labels: labels,
+        taints: formatTaints(taints),
+      });
+    }
+  }, [visible]);
 
   const { runAsync: putK8sNodeLabels, loading } = useRequest(
     cluster.putK8sNodeLabels,
@@ -164,18 +173,6 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
                               {...restField}
                               name={[name, 'value']}
                               label={key === 0 && 'Value'}
-                              rules={[
-                                ...((fromName &&
-                                  getFieldValue(title)[key]?.value) ||
-                                getFieldValue(title)[key]?.operator === 'Equal'
-                                  ? [
-                                      {
-                                        required: true,
-                                        message: '请输入 Values',
-                                      },
-                                    ]
-                                  : []),
-                              ]}
                             >
                               <Input placeholder="请输入" />
                             </Form.Item>
@@ -294,7 +291,6 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
       <Form
         form={form}
         layout="vertical"
-        initialValues={{ labels: labels, taints: formatTaints(taints) }}
         onValuesChange={() => {
           update();
         }}

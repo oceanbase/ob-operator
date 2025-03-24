@@ -16,7 +16,7 @@ import {
   TabsProps,
   message,
 } from 'antd';
-import { flattenDeep } from 'lodash';
+import { flattenDeep, uniqBy } from 'lodash';
 import React, { useState } from 'react';
 
 export interface BatchEditNodeDrawerProps {
@@ -43,7 +43,21 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
     setTabKey(key);
   };
 
-  const labels = flattenDeep(selectedRowKeys?.map((item) => item.labels));
+  const labelsOption = uniqBy(
+    flattenDeep(selectedRowKeys?.map((item) => item.labels)),
+    'key',
+  ).map((item) => ({
+    label: item.key,
+    value: item.key,
+  }));
+
+  const taintsOption = uniqBy(
+    flattenDeep(selectedRowKeys?.map((item) => item.taints)),
+    'key',
+  )?.map((item) => ({
+    label: item.key,
+    value: item.key,
+  }));
 
   const { runAsync: batchUpdateK8sNodes, loading } = useRequest(
     cluster.batchUpdateK8sNodes,
@@ -90,22 +104,42 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                       />
                     </Form.Item>
                   </Col>
-
                   <Col span={fromName ? 8 : 4}>
                     <Form.Item
-                      {...restField}
-                      name={[name, 'key']}
-                      rules={[{ required: true, message: '请输入 Keys' }]}
+                      noStyle
+                      dependencies={[name, 'operation']}
+                      shouldUpdate
                     >
-                      <Select
-                        showSearch
-                        placeholder="请输入 Keys"
-                        optionFilterProp="label"
-                        options={labels?.map((item) => ({
-                          label: item.key,
-                          value: item.key,
-                        }))}
-                      />
+                      {({ getFieldValue }) => {
+                        return (
+                          <Form.Item
+                            {...restField}
+                            name={[name, 'key']}
+                            rules={[
+                              {
+                                required: true,
+                                message: '请输入 Keys',
+                              },
+                            ]}
+                          >
+                            {getFieldValue(title)[key]?.operation ===
+                            'delete' ? (
+                              <Select
+                                showSearch
+                                placeholder="请输入 Keys"
+                                optionFilterProp="label"
+                                options={
+                                  tabKey === 'labels'
+                                    ? labelsOption
+                                    : taintsOption
+                                }
+                              />
+                            ) : (
+                              <Input placeholder="请输入 Keys" />
+                            )}
+                          </Form.Item>
+                        );
+                      }}
                     </Form.Item>
                   </Col>
                   <Col span={fromName ? 10 : 16}>
@@ -154,20 +188,6 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                                           <Form.Item
                                             {...restField}
                                             name={[name, 'value']}
-                                            rules={[
-                                              ...((fromName &&
-                                                getFieldValue(title)[key]
-                                                  ?.value) ||
-                                              getFieldValue(title)[key]
-                                                ?.operator === 'Equal'
-                                                ? [
-                                                    {
-                                                      required: true,
-                                                      message: '请输入 Values',
-                                                    },
-                                                  ]
-                                                : []),
-                                            ]}
                                           >
                                             <Input placeholder="请输入" />
                                           </Form.Item>

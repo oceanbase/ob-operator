@@ -484,7 +484,6 @@ export default function TopoComponent({
     };
   }, []);
   const isCreateResourcePool = modalType.current === 'createResourcePools';
-
   // Use different pictures for nodes in different states
   return (
     <div style={{ position: 'relative', height: '100vh' }}>
@@ -544,6 +543,7 @@ export default function TopoComponent({
                 resourcePoolDefaultValue?.replicaList,
               )
             : undefined,
+          obVersion: originTopoData?.basicInfo?.version,
         }}
       />
       <Spin
