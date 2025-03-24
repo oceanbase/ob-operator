@@ -38,7 +38,11 @@ func GetClientForK8sCluster(ctx context.Context, clusterName string) (*client.Cl
 	if err != nil {
 		return nil, errors.Wrap(err, "Get k8s cluster")
 	}
-	return client.GetClientFromBytes([]byte(k8sCluster.Spec.KubeConfig))
+	kubeConfig, err := k8sCluster.DecodeKubeConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "Decode kubeconfig")
+	}
+	return client.GetClientFromBytes(kubeConfig)
 }
 
 func ListK8sClusterEvents(ctx context.Context, c *client.Client, queryEventParam *param.QueryEventParam) ([]response.K8sEvent, error) {
