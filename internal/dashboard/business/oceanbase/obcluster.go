@@ -382,7 +382,7 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 			Tolerations:  tolerations,
 		}
 		if len(obzone.Status.OBServerStatus) > 0 {
-			respZone.RootService = obzone.Status.OBServerStatus[0].Server
+			respZone.RootService = obzone.Status.OBServerStatus[0].GetConnectAddr()
 		}
 		topology = append(topology, respZone)
 	}
