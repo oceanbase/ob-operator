@@ -44,7 +44,7 @@ type CreateOBTenantParam struct {
 type ResourcePoolSpec struct {
 	Zone     string `json:"zone" binding:"required"`
 	Priority int    `json:"priority,omitempty"`
-	// Enum: Full, Readonly, Column
+	// Enum: Full, Readonly, Columnstore
 	Type string `json:"type,omitempty"`
 }
 
