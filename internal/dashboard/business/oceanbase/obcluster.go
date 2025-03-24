@@ -39,6 +39,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/internal/dashboard/utils"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
+	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 
@@ -219,11 +220,13 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 		sort.Slice(observerList.Items, func(i, j int) bool {
 			return observerList.Items[i].Name < observerList.Items[j].Name
 		})
-		c, err := k8s.GetClientForK8sCluster(ctx, obzone.Spec.Topology.K8sCluster)
-		if err != nil {
-			return nil, errors.Wrap(err, fmt.Sprintf("Get client for k8s cluster %s", obzone.Spec.Topology.K8sCluster))
+		c := client.GetClient()
+		if obzone.Spec.Topology.K8sCluster != "" {
+			c, err = k8s.GetClientForK8sCluster(ctx, obzone.Spec.Topology.K8sCluster)
+			if err != nil {
+				return nil, errors.Wrap(err, fmt.Sprintf("Get client for k8s cluster %s", obzone.Spec.Topology.K8sCluster))
+			}
 		}
-
 		for _, observer := range observerList.Items {
 			logger.Debugf("Add observer %s to result", observer.Name)
 			// compatible with old version CRD
