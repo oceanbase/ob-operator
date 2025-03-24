@@ -47,7 +47,7 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
       effect: item.effect,
     }));
   };
-
+  console.log('labels', labels);
   useEffect(() => {
     if (visible) {
       setFieldsValue({
@@ -173,18 +173,6 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
                               {...restField}
                               name={[name, 'value']}
                               label={key === 0 && 'Value'}
-                              rules={[
-                                ...((fromName &&
-                                  getFieldValue(title)[key]?.value) ||
-                                getFieldValue(title)[key]?.operator === 'Equal'
-                                  ? [
-                                      {
-                                        required: true,
-                                        message: '请输入 Values',
-                                      },
-                                    ]
-                                  : []),
-                              ]}
                             >
                               <Input placeholder="请输入" />
                             </Form.Item>

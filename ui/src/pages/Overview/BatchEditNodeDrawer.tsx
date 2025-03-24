@@ -188,20 +188,6 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                                           <Form.Item
                                             {...restField}
                                             name={[name, 'value']}
-                                            rules={[
-                                              ...((fromName &&
-                                                getFieldValue(title)[key]
-                                                  ?.value) ||
-                                              getFieldValue(title)[key]
-                                                ?.operator === 'Equal'
-                                                ? [
-                                                    {
-                                                      required: true,
-                                                      message: '请输入 Values',
-                                                    },
-                                                  ]
-                                                : []),
-                                            ]}
                                           >
                                             <Input placeholder="请输入" />
                                           </Form.Item>
