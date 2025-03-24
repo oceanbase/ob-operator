@@ -236,3 +236,7 @@ func BatchUpdateK8sClusterNodes(ctx context.Context, c *client.Client, updateNod
 	}
 	return nil
 }
+
+func GetPod(ctx context.Context, c *client.Client, namespace string, name string) (*corev1.Pod, error) {
+	return c.ClientSet.CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
+}

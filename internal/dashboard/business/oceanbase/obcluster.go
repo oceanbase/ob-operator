@@ -33,6 +33,7 @@ import (
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/k8s"
 	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
@@ -122,17 +123,19 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		logger.WithError(err).Info("Failed to get OceanBase database connection")
 		return nil, errors.Wrapf(err, "Failed to get connection of obcluster")
 	}
+	versionStr := ""
 	version, err := conn.GetVersion(ctx)
 	if err != nil {
 		logger.WithError(err).Info("Failed to get OceanBase database version")
-		return nil, errors.Wrapf(err, "Failed to get version of obcluster")
+	} else {
+		versionStr = version.Version
 	}
 
 	respCluster := &response.OBCluster{
 		OBClusterOverview: *overview,
 		OBClusterExtra: response.OBClusterExtra{
 			RootPasswordSecret: obcluster.Spec.UserSecrets.Root,
-			Version:            version.Version,
+			Version:            versionStr,
 			Parameters:         nil,
 		},
 		Metrics: nil,
@@ -216,13 +219,19 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 		sort.Slice(observerList.Items, func(i, j int) bool {
 			return observerList.Items[i].Name < observerList.Items[j].Name
 		})
+		c, err := k8s.GetClientForK8sCluster(ctx, obzone.Spec.Topology.K8sCluster)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("Get client for k8s cluster %s", obzone.Spec.Topology.K8sCluster))
+		}
+
 		for _, observer := range observerList.Items {
 			logger.Debugf("Add observer %s to result", observer.Name)
 			// compatible with old version CRD
 			nodeName := observer.Status.NodeName
 			if nodeName == "" {
 				logger.Debugf("Get node name of observer %s", observer.Name)
-				pod, err := clients.GetPodOfOBServer(ctx, &observer)
+				// pod name is the same as observer's name
+				pod, err := k8s.GetPod(ctx, c, observer.Namespace, observer.Name)
 				if err == nil {
 					nodeName = pod.Spec.NodeName
 				}
