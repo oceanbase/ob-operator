@@ -106,7 +106,7 @@ export default function ResourcePools({
       <div>
         {targetZoneList && essentialParameter && (
           <Row>
-            <h3>副本发布</h3>
+            <h3>副本分布</h3>
             {targetZoneList.map((item, index) => (
               <ZoneItem
                 key={index}
