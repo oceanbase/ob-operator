@@ -10,7 +10,7 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package handler
+package crypto
 
 import (
 	"crypto/rand"
