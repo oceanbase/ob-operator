@@ -95,9 +95,13 @@ func PatchRemoteK8sCluster(c *gin.Context) (*k8s.K8sClusterInfo, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	body.KubeConfig, err = crypto.DecryptWithPrivateKey(body.KubeConfig)
-	if err != nil {
-		return nil, httpErr.NewBadRequest(err.Error())
+	encryptedKey := c.GetHeader(HEADER_ENCRYPTED_KEY)
+	if encryptedKey != "" {
+		key, err := crypto.DecryptWithPrivateKey(encryptedKey)
+		if err != nil {
+			return nil, httpErr.NewBadRequest(err.Error())
+		}
+		body.KubeConfig, err = crypto.AESDescrypt(key, body.KubeConfig)
 	}
 	name := c.Param("name")
 	return k8sbiz.UpdateRemoteK8sCluster(c, name, body)
@@ -122,9 +126,13 @@ func CreateRemoteK8sCluster(c *gin.Context) (*k8s.K8sClusterInfo, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	body.KubeConfig, err = crypto.DecryptWithPrivateKey(body.KubeConfig)
-	if err != nil {
-		return nil, httpErr.NewBadRequest(err.Error())
+	encryptedKey := c.GetHeader(HEADER_ENCRYPTED_KEY)
+	if encryptedKey != "" {
+		key, err := crypto.DecryptWithPrivateKey(encryptedKey)
+		if err != nil {
+			return nil, httpErr.NewBadRequest(err.Error())
+		}
+		body.KubeConfig, err = crypto.AESDescrypt(key, body.KubeConfig)
 	}
 	return k8sbiz.CreateRemoteK8sCluster(c, body)
 }
