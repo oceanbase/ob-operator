@@ -479,6 +479,7 @@ func buildOBClusterTopology(topology []param.ZoneTopology) []apitypes.OBZoneTopo
 			Zone:         zone.Zone,
 			NodeSelector: common.KVsToMap(zone.NodeSelector),
 			Replica:      zone.Replicas,
+			K8sCluster:   zone.K8sCluster,
 		}
 		if len(zone.Affinities) > 0 {
 			topo.Affinity = &corev1.Affinity{}
@@ -754,6 +755,7 @@ func AddOBZone(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity, 
 		Zone:         zone.Zone,
 		NodeSelector: common.KVsToMap(zone.NodeSelector),
 		Replica:      zone.Replicas,
+		K8sCluster:   zone.K8sCluster,
 	})
 	cluster, err := clients.UpdateOBCluster(ctx, obcluster)
 	if err != nil {

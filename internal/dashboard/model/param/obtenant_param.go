@@ -55,17 +55,17 @@ type TenantSourceSpec struct {
 
 type RestoreSourceSpec struct {
 	// Enum: OSS, NFS, COS, S3, S3_COMPATIBLE
-	Type          BackupDestType `json:"type" binding:"required"`
-	ArchiveSource string         `json:"archiveSource" binding:"required"`
-	BakDataSource string         `json:"bakDataSource" binding:"required"`
-	OSSAccessID   string         `json:"ossAccessId,omitempty"`
-	OSSAccessKey  string         `json:"ossAccessKey,omitempty"`
-
+	Type                  BackupDestType      `json:"type" binding:"required"`
+	ArchiveSource         string              `json:"archiveSource" binding:"required"`
+	BakDataSource         string              `json:"bakDataSource" binding:"required"`
+	OSSAccessID           string              `json:"ossAccessId,omitempty"`
+	OSSAccessKey          string              `json:"ossAccessKey,omitempty"`
 	BakEncryptionPassword string              `json:"bakEncryptionPassword,omitempty"`
+	OSSAccessSecret       string              `json:"ossAccessSecret,omitempty"`
+	BakEncryptionSecret   string              `json:"bakEncryptionSecret,omitempty"`
 	Until                 *RestoreUntilConfig `json:"until,omitempty"`
-
-	AppID  string `json:"appId,omitempty"`
-	Region string `json:"region,omitempty"`
+	AppID                 string              `json:"appId,omitempty"`
+	Region                string              `json:"region,omitempty"`
 }
 
 type UnitConfig struct {
