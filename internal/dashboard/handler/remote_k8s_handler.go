@@ -102,6 +102,9 @@ func PatchRemoteK8sCluster(c *gin.Context) (*k8s.K8sClusterInfo, error) {
 			return nil, httpErr.NewBadRequest(err.Error())
 		}
 		body.KubeConfig, err = crypto.AESDescrypt(key, body.KubeConfig)
+		if err != nil {
+			return nil, httpErr.NewBadRequest(err.Error())
+		}
 	}
 	name := c.Param("name")
 	return k8sbiz.UpdateRemoteK8sCluster(c, name, body)
@@ -133,6 +136,9 @@ func CreateRemoteK8sCluster(c *gin.Context) (*k8s.K8sClusterInfo, error) {
 			return nil, httpErr.NewBadRequest(err.Error())
 		}
 		body.KubeConfig, err = crypto.AESDescrypt(key, body.KubeConfig)
+		if err != nil {
+			return nil, httpErr.NewBadRequest(err.Error())
+		}
 	}
 	return k8sbiz.CreateRemoteK8sCluster(c, body)
 }
