@@ -101,7 +101,7 @@ func PatchRemoteK8sCluster(c *gin.Context) (*k8s.K8sClusterInfo, error) {
 		if err != nil {
 			return nil, httpErr.NewBadRequest(err.Error())
 		}
-		body.KubeConfig, err = crypto.AESDescrypt(key, body.KubeConfig)
+		body.KubeConfig, err = crypto.AESDecrypt(key, body.KubeConfig)
 		if err != nil {
 			return nil, httpErr.NewBadRequest(err.Error())
 		}
