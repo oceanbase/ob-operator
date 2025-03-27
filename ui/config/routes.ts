@@ -73,6 +73,11 @@ export default [
                 name: '权限控制',
               },
               {
+                path: 'k8scluster',
+                component: 'K8sCluster',
+                name: 'K8s 集群管理',
+              },
+              {
                 path: 'overview',
                 component: 'Overview',
                 name: '系统概览页',
@@ -200,6 +205,24 @@ export default [
               },
               {
                 path: '/obproxy/:ns/:name',
+                redirect: 'overview',
+                name: '概览页',
+              },
+            ],
+          },
+          {
+            path: 'k8scluster/:k8sclusterName',
+            component: 'K8sCluster/Detail',
+            name: 'K8s 集群详情',
+            routes: [
+              {
+                path: 'overview',
+                component: 'K8sCluster/Detail/Overview',
+                name: '概览页',
+              },
+
+              {
+                path: '/k8scluster/:k8sclusterName',
                 redirect: 'overview',
                 name: '概览页',
               },

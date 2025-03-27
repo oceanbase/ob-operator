@@ -29,6 +29,7 @@ interface EventsTableProps {
   defaultExpand?: boolean;
   overView?: boolean; // 多个资源需要加上fiilter
   name?: string;
+  type?: string;
 }
 
 export default function EventsTable({
@@ -38,6 +39,9 @@ export default function EventsTable({
   defaultExpand = false,
   name,
   overView,
+  externalData,
+  type,
+  externaLoading,
 }: EventsTableProps) {
   const defaultParams: API.EventParams = {};
   if (objectType) {
@@ -49,7 +53,10 @@ export default function EventsTable({
 
   const { data, loading } = useRequest(getEventsReq, {
     defaultParams: [defaultParams],
+    ready: !!objectType || !!name,
   });
+
+  const dataList = type === 'k8s' ? externalData : data;
 
   const CustomCard = (props) => {
     const { title, loading } = props;
@@ -74,7 +81,7 @@ export default function EventsTable({
     );
   };
 
-  const namespaceList = data?.map((item) => ({
+  const namespaceList = dataList?.map((item) => ({
     text: item.namespace,
     value: item.namespace,
   }));
@@ -136,6 +143,7 @@ export default function EventsTable({
       },
       render: (text) => {
         const value = findByValue(EVENTSTABLE_STATUS_LIST, text);
+
         return <Tag color={value.badgeStatus}>{value.label}</Tag>;
       },
       width: 120,
@@ -201,7 +209,7 @@ export default function EventsTable({
 
   return (
     <CustomCard
-      loading={loading}
+      loading={loading || externaLoading}
       title={
         <h2 style={{ marginBottom: 0 }}>
           {intl.formatMessage({
@@ -215,7 +223,7 @@ export default function EventsTable({
         rowKey="id"
         pagination={{ simple: true }}
         columns={columns}
-        dataSource={data}
+        dataSource={dataList}
       />
     </CustomCard>
   );

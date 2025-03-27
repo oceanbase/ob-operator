@@ -56,6 +56,25 @@ export async function getEventsReq(params: API.EventParams) {
   return r.data;
 }
 
+export async function getK8sEventsReq(params: API.EventParams) {
+  const r = await request(`/api/v1/k8s/cluster/${name}/events`, {
+    method: 'GET',
+    params,
+  });
+  if (r.successful) {
+    let count = 0;
+    r.data.sort((pre, next) => next.lastSeen - pre.lastSeen);
+    for (const event of r.data) {
+      event.id = ++count;
+      event.firstOccur = dayjs
+        .unix(event.firstOccur)
+        .format('YYYY-MM-DD HH:mm:ss');
+      event.lastSeen = dayjs.unix(event.lastSeen).format('YYYY-MM-DD HH:mm:ss');
+    }
+  }
+  return r.data;
+}
+
 export async function getNodeInfoReq() {
   const r = await request(`${clusterPrefix}/nodes`, { method: 'GET' });
   const res = [];

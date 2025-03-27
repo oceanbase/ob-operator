@@ -54,6 +54,13 @@ export default function ZoneTable({
         key: 'zone',
       },
       {
+        title: 'K8s 集群',
+        dataIndex: 'k8sCluster',
+        render: (text) => {
+          return <span>{text || '-'}</span>;
+        },
+      },
+      {
         title: intl.formatMessage({
           id: 'OBDashboard.Detail.Overview.ZoneTable.NumberOfMachines',
           defaultMessage: '机器数量',

@@ -1,4 +1,4 @@
-import { cluster } from '@/api';
+import { cluster, K8sClusterApi } from '@/api';
 import { EFFECT_LIST, OPERATOR_LIST } from '@/constants/node';
 import { intl } from '@/utils/intl';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
@@ -9,15 +9,15 @@ import {
   Drawer,
   Form,
   Input,
+  message,
   Row,
   Select,
   Space,
   Tabs,
   TabsProps,
-  message,
 } from 'antd';
 import { flattenDeep, uniqBy } from 'lodash';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 export interface BatchEditNodeDrawerProps {
   visible: boolean;
@@ -27,6 +27,7 @@ export interface BatchEditNodeDrawerProps {
   name: string;
   namespace: string;
   selectedRowKeys: string[];
+  k8sClusterName: string;
 }
 
 const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
@@ -34,6 +35,7 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
   onCancel,
   onSuccess,
   selectedRowKeys,
+  k8sClusterName,
 }) => {
   const [form] = Form.useForm<API.CreateClusterData>();
   const { validateFields, resetFields } = form;
@@ -73,12 +75,33 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
           );
           onSuccess();
           resetFields();
-          setTabKey('labels');
         }
       },
     },
   );
 
+  const {
+    runAsync: batchUpdateRemoteK8sNode,
+    loading: batchUpdateK8sNodeLoading,
+  } = useRequest(K8sClusterApi.batchUpdateRemoteK8sNode, {
+    manual: true,
+    onSuccess: (res) => {
+      if (res.successful) {
+        message.success(
+          intl.formatMessage({
+            id: 'src.pages.Cluster.Detail.Overview.E908AA54',
+            defaultMessage: '编辑参数已成功',
+          }),
+        );
+        onSuccess();
+        resetFields();
+      }
+    },
+  });
+
+  useEffect(() => {
+    setTabKey('labels');
+  }, [visible]);
   const basicForm = (title) => {
     const fromName = title === 'labels';
     return (
@@ -89,7 +112,11 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
               return (
                 <Row gutter={8}>
                   <Col span={fromName ? 6 : 4}>
-                    <Form.Item {...restField} name={[name, 'operation']}>
+                    <Form.Item
+                      {...restField}
+                      name={[name, 'operation']}
+                      initialValue={'overwrite'}
+                    >
                       <Select
                         options={[
                           {
@@ -166,6 +193,7 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                                       {...restField}
                                       name={[name, 'operator']}
                                       dependencies={[name, 'value']}
+                                      initialValue={'Equal'}
                                     >
                                       <Select
                                         placeholder={'请选择'}
@@ -263,7 +291,6 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
       onClose={() => {
         onCancel();
         resetFields();
-        setTabKey('labels');
       }}
       width={800}
       footer={
@@ -272,7 +299,6 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
             onClick={() => {
               onCancel();
               resetFields();
-              setTabKey('labels');
             }}
           >
             {intl.formatMessage({
@@ -282,7 +308,7 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
           </Button>
           <Button
             type="primary"
-            loading={loading}
+            loading={k8sClusterName ? batchUpdateK8sNodeLoading : loading}
             onClick={() => {
               validateFields().then((values) => {
                 const { labels, taints } = values;
@@ -297,7 +323,11 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                 const nodes = selectedRowKeys.map((item) => item.name);
                 const final = { nodes, labelOperations, taintOperations };
 
-                batchUpdateK8sNodes(final);
+                if (k8sClusterName) {
+                  batchUpdateRemoteK8sNode(k8sClusterName, final);
+                } else {
+                  batchUpdateK8sNodes(final);
+                }
               });
             }}
           >

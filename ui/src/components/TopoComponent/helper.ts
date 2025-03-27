@@ -96,12 +96,15 @@ function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
       type: 'zone',
       img: '',
       badgeImg: '',
+      k8sCluster: '',
       disable: false,
     };
     // const typeText = getZoneTypeText(zone, tenantReplicas || []);
     const tooltipInfo = getTooltipInfo(zone, tenantReplicas || []);
     temp.id = zone.name + zone.namespace; //In k8s, resources are queried through name+ns, so ns+name is unique.
-    temp.label = zone.zone;
+    temp.label = zone.k8sCluster
+      ? `${zone.zone}:${zone.k8sCluster} `
+      : zone.zone;
     temp.status = zone.status;
     temp.img = ZONE_IMG_MAP.get(zone.status);
     temp.badgeImg = BADGE_IMG_MAP.get(zone.status);
