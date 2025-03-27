@@ -107,7 +107,7 @@ export default function ResourcePools({
       <div>
         {targetZoneList && essentialParameter && (
           <Row>
-            <h3>副本发布</h3>
+            <h3>副本分布</h3>
             {targetZoneList.map((item, index) => (
               <ZoneItem
                 key={index}
@@ -135,6 +135,7 @@ export default function ResourcePools({
                   },
                 ]}
                 label={'每 zone unit 数量'}
+                initialValue={1}
               >
                 <InputNumber min={1} />
               </Form.Item>
