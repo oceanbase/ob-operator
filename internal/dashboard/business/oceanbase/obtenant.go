@@ -289,7 +289,7 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 
 	// use password from root credential
 	if p.RootCredential != "" {
-		rootSecret, err := k8sclient.ClientSet.CoreV1().Secrets(t.SecretNamespace).Get(ctx, p.RootCredential, v1.GetOptions{})
+		rootSecret, err := k8sclient.ClientSet.CoreV1().Secrets(p.SecretNamespace).Get(ctx, p.RootCredential, v1.GetOptions{})
 		if err != nil {
 			return nil, oberr.NewInternal(err.Error())
 		}
@@ -384,7 +384,7 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 	if p.Source != nil && p.Source.Restore != nil {
 		// extract BakEncryptionPassword and OSS ak/sk
 		if p.Source.Restore.BakEncryptionSecret != "" {
-			bakEncryptionSecret, err := k8sclient.ClientSet.CoreV1().Secrets(t.SecretNamespace).Get(ctx, p.Source.Restore.BakEncryptionSecret, v1.GetOptions{})
+			bakEncryptionSecret, err := k8sclient.ClientSet.CoreV1().Secrets(p.SecretNamespace).Get(ctx, p.Source.Restore.BakEncryptionSecret, v1.GetOptions{})
 			if err != nil {
 				return nil, oberr.NewInternal(err.Error())
 			}
@@ -393,7 +393,7 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 			}
 		}
 		if p.Source.Restore.OSSAccessSecret != "" {
-			ossAccessSecret, err := k8sclient.ClientSet.CoreV1().Secrets(t.SecretNamespace).Get(ctx, p.Source.Restore.OSSAccessSecret, v1.GetOptions{})
+			ossAccessSecret, err := k8sclient.ClientSet.CoreV1().Secrets(p.SecretNamespace).Get(ctx, p.Source.Restore.OSSAccessSecret, v1.GetOptions{})
 			if err != nil {
 				return nil, oberr.NewInternal(err.Error())
 			}
