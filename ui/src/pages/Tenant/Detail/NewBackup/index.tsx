@@ -1,7 +1,7 @@
 import { ParamBackupDestType } from '@/api/generated/api';
 import { usePublicKey } from '@/hook/usePublicKey';
 import { createBackupReportWrap } from '@/services/reportRequest/backupReportReq';
-import { getTenant } from '@/services/tenant';
+import { getBackupPolicy, getTenant } from '@/services/tenant';
 import { strTrim } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
@@ -52,6 +52,7 @@ export default function NewBackup() {
       value: ParamBackupDestType.BackupDestS3Compatible,
     },
   ];
+
   const { name: clusterName, namespace } =
     clusterList.filter((cluster) => cluster.id === selectClusterId)[0] || {};
 
@@ -86,8 +87,32 @@ export default function NewBackup() {
     }
 
     if (activeTabKey === 'recover') {
+      const { source } = values;
+      const obj = {
+        charset,
+        deletionProtection,
+        rootCredential,
+        namespace,
+        tenantRole,
+        scenario,
+      };
+
+      const restore = {
+        restore: {
+          ...source.restore,
+          type,
+          archiveSource,
+          bakDataSource,
+          ossAccessSecret,
+          bakEncryptionSecret,
+        },
+      };
+      if (source) {
+        values.source = restore;
+      }
+
       const reqData = formatNewTenantForm(
-        strTrim(values),
+        strTrim({ ...values, ...obj }),
         clusterName,
         publicKey,
       );
@@ -123,7 +148,21 @@ export default function NewBackup() {
     defaultParams: [{ ns: ns!, name: name! }],
   });
 
+  const { data: getBackupData } = useRequest(getBackupPolicy, {
+    defaultParams: [{ ns: ns!, name: name! }],
+  });
   const tenantDetail = tenantDetailResponse?.data;
+  const backupPolicy = getBackupData?.data;
+  const {
+    destType: type,
+    archivePath: archiveSource,
+    bakDataPath: bakDataSource,
+    ossAccessSecret,
+    bakEncryptionSecret,
+  } = backupPolicy || {};
+
+  const { charset, deletionProtection, rootCredential, tenantRole, scenario } =
+    tenantDetail?.info || {};
 
   const tabList = [
     // 租户总览跳转的，只支持恢复操作

@@ -42,8 +42,16 @@ const progressContent = (value: number, resource: number) => {
   );
 };
 
-export default function NodesTable() {
-  const { data, loading, refresh } = useRequest(getNodeInfoReq);
+export default function NodesTable({
+  type,
+  nodeLoading,
+  onSuccess,
+  k8sClusterName,
+  K8sClustersNodeList,
+}) {
+  const { data, loading, refresh } = useRequest(getNodeInfoReq, {
+    ready: type !== 'k8s',
+  });
 
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [nodeRecord, setNodeRecord] = useState({});
@@ -68,7 +76,7 @@ export default function NodesTable() {
       key: 'roles',
       width: 120,
       render: (val) => {
-        return val.length !== 0 ? (
+        return val?.length !== 0 ? (
           <CustomTooltip text={val} width={100} />
         ) : (
           '-'
@@ -127,7 +135,7 @@ export default function NodesTable() {
         ));
 
         const content = text?.map((item) => `${item.key}=${item.value}`);
-        return content.length === 0 ? (
+        return content?.length === 0 ? (
           '-'
         ) : (
           <CustomTooltip
@@ -156,7 +164,7 @@ export default function NodesTable() {
           ),
         );
 
-        return content.length === 0 ? (
+        return content?.length === 0 ? (
           '-'
         ) : (
           <CustomTooltip
@@ -211,7 +219,7 @@ export default function NodesTable() {
   return (
     <Col span={24}>
       <Card
-        loading={loading}
+        loading={loading || nodeLoading}
         title={
           <h2 style={{ marginBottom: 0 }}>
             {intl.formatMessage({
@@ -231,7 +239,7 @@ export default function NodesTable() {
         <Table
           rowSelection={rowSelection}
           columns={columns}
-          dataSource={data}
+          dataSource={type === 'k8s' ? K8sClustersNodeList : data}
           rowKey="name"
           pagination={{ simple: true }}
           scroll={{ x: 1500 }}
@@ -240,18 +248,26 @@ export default function NodesTable() {
       </Card>
 
       <BatchEditNodeDrawer
+        type={'k8s'}
+        k8sClusterName={k8sClusterName}
+        selectedRowKeys={selectedRowKeys}
         visible={batchNodeDrawerOpen}
         onCancel={() => {
           setBatchNodeDrawerOpen(false);
         }}
         onSuccess={() => {
+          if (type === 'k8s') {
+            onSuccess();
+          } else {
+            refresh();
+          }
           setBatchNodeDrawerOpen(false);
-          refresh();
           setSelectedRowKeys([]);
         }}
-        selectedRowKeys={selectedRowKeys}
       />
       <EditNodeDrawer
+        type={'k8s'}
+        k8sClusterName={k8sClusterName}
         visible={isDrawerOpen}
         onCancel={() => {
           setIsDrawerOpen(false);
@@ -259,8 +275,12 @@ export default function NodesTable() {
         }}
         onSuccess={() => {
           setIsDrawerOpen(false);
-          refresh();
           setNodeRecord({});
+          if (type === 'k8s') {
+            onSuccess();
+          } else {
+            refresh();
+          }
         }}
         nodeRecord={nodeRecord}
       />

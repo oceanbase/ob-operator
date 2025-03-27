@@ -54,6 +54,5 @@ export default () => {
       accessible: access.obclusterwrite,
     },
   ];
-
   return <DetailLayout menus={menus} subSideSelectKey="cluster" />;
 };

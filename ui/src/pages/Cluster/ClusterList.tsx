@@ -74,13 +74,18 @@ const columns: ColumnsType<DataType> = [
     ),
   },
   {
-    title: intl.formatMessage({
-      id: 'Dashboard.pages.Cluster.ClusterList.NumberOfZones',
-      defaultMessage: 'Zone 数量',
-    }),
-    dataIndex: 'zoneCount',
-    key: 'zoneCount',
-    render: (_, record) => <span>{record?.topology?.length}</span>,
+    title: 'Zone 分布',
+    dataIndex: 'topology',
+    render: (text) => {
+      const content = text
+        ?.map((item) =>
+          item.k8sCluster
+            ? `${item.zone}:${item.k8sCluster}:1`
+            : `${item.zone}:1`,
+        )
+        .join(' - ');
+      return <Text ellipsis={{ tooltip: content }}>{content}</Text>;
+    },
   },
   {
     title: intl.formatMessage({

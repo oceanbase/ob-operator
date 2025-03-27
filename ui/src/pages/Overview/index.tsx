@@ -27,7 +27,7 @@ const OverviewPage: React.FC = () => {
             <Col span={24}>
               <EventsTable overView={true} />
             </Col>
-            <NodesTable />
+            <NodesTable type="overview" />
           </>
         ) : null}
       </Row>
