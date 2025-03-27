@@ -134,6 +134,7 @@ export default function ResourcePools({
                   },
                 ]}
                 label={'每 zone unit 数量'}
+                initialValue={1}
               >
                 <InputNumber min={1} />
               </Form.Item>
