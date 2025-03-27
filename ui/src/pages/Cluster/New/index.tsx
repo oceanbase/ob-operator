@@ -66,6 +66,7 @@ export default function New() {
     }));
 
     values.topology = topologyValue;
+
     const res = await createClusterReportWrap({ ...strTrim(values) });
     if (res.successful) {
       message.success(res.message, 3);

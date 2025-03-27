@@ -18,7 +18,7 @@ export const getInitialObjOfKeys = <T>(targetObj: T, keys: (keyof T)[]) => {
 };
 
 export const formatStatisticData = (
-  type: 'cluster' | 'tenant',
+  type: 'cluster' | 'tenant' | 'k8sCluster',
   data: StatisticDataType,
 ) => {
   const r: API.StatisticData = {
@@ -29,10 +29,12 @@ export const formatStatisticData = (
             id: 'Dashboard.src.utils.helper.OceanbaseCluster',
             defaultMessage: 'OceanBase集群',
           })
-        : intl.formatMessage({
+        : type === 'tenant'
+        ? intl.formatMessage({
             id: 'Dashboard.src.utils.helper.OceanbaseTenants',
             defaultMessage: 'OceanBase租户',
-          }),
+          })
+        : 'K8s集群',
     type,
     deleting: 0,
     operating: 0,

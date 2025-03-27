@@ -20,11 +20,14 @@ import {
 
 import { EFFECT_LIST, OPERATOR_LIST } from '@/constants/node';
 import { RULER_ZONE } from '@/constants/rules';
-import { getNodeLabelsReq } from '@/services';
+import { getK8sObclusterListReq, getNodeLabelsReq } from '@/services';
 import { useAccess } from '@umijs/max';
+import { useRequest } from 'ahooks';
 import { useEffect, useState } from 'react';
 
 export default function Topo({ form }) {
+  const { data: K8sClustersList } = useRequest(getK8sObclusterListReq);
+
   const [showTopology, setShowTopology] = useState<boolean>(false);
   const [formsubIndex, setFromSubIndex] = useState({});
 
@@ -382,6 +385,11 @@ export default function Topo({ form }) {
     </Form.Item>
   );
 
+  const options = (K8sClustersList?.data || [])?.map((item) => ({
+    value: item.name,
+    label: item.name,
+  }));
+
   return (
     <Col span={24}>
       <Card
@@ -414,7 +422,7 @@ export default function Topo({ form }) {
                         />
                       </Form.Item>
                     </Col>
-                    <Col span={6}>
+                    <Col span={3}>
                       <Form.Item
                         label={intl.formatMessage({
                           id: 'OBDashboard.Cluster.New.Topo.NumberOfServers',
@@ -427,11 +435,25 @@ export default function Topo({ form }) {
                             id: 'OBDashboard.Cluster.New.Topo.PleaseEnter',
                             defaultMessage: '请输入',
                           })}
+                          style={{ width: '100%' }}
                           min={1}
                         />
                       </Form.Item>
                     </Col>
                     <Col span={5}>
+                      <Form.Item
+                        label={'K8s 集群'}
+                        name={[field.name, 'k8sCluster']}
+                      >
+                        <Select
+                          showSearch
+                          placeholder="请选择 K8s 集群"
+                          optionFilterProp="label"
+                          options={options}
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col span={3}>
                       <Form.Item label={'Topology summary'} shouldUpdate>
                         {() => {
                           const { topology } = form.getFieldsValue();
