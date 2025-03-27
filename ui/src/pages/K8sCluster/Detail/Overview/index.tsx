@@ -15,6 +15,7 @@ const K8sClusterOverview: React.FC = () => {
   const { data: K8sClustersData, loading } = useRequest(
     K8sClusterApi.getRemoteK8sCluster,
     {
+      ready: !!k8sclusterName,
       defaultParams: [k8sclusterName],
     },
   );
@@ -46,6 +47,7 @@ const K8sClusterOverview: React.FC = () => {
 
   const { data: K8sClustersEvents, loading: getK8sEventsReqLoading } =
     useRequest(K8sClusterApi.listRemoteK8sEvents, {
+      ready: !!k8sclusterName,
       defaultParams: [k8sclusterName],
       onSuccess: (r) => {
         if (r.successful) {
