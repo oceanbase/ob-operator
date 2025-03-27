@@ -19,6 +19,7 @@ import (
 type CreateOBTenantParam struct {
 	Name             string `json:"name" binding:"required"`
 	Namespace        string `json:"namespace" binding:"required"`
+	SecretNamespace  string `json:"secretNamespace,omitempty"`
 	ClusterName      string `json:"obcluster" binding:"required"`
 	TenantName       string `json:"tenantName" binding:"required"`
 	UnitNumber       int    `json:"unitNum" binding:"required"`
