@@ -32,10 +32,6 @@ func init() {
 	publicKey = &privateKey.PublicKey
 }
 
-func AESDescrypt(key string, content string) (string, error) {
-	return "", nil
-}
-
 func DecryptWithPrivateKey(plainText string) (string, error) {
 	pwdBytes, err := base64.StdEncoding.DecodeString(plainText)
 	if err != nil {
