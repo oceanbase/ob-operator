@@ -14,7 +14,7 @@ export default function Createk8sClusterModal({
   const { resetFields, validateFields, setFieldsValue } = form;
 
   const isEdit = !isEmpty(editData);
-  const { run: createK8sCluster } = useRequest(
+  const { run: createK8sCluster, loading } = useRequest(
     K8sClusterApi.createRemoteK8sCluster,
     {
       manual: true,
@@ -32,7 +32,7 @@ export default function Createk8sClusterModal({
       },
     },
   );
-  const { run: patchK8sCluster } = useRequest(
+  const { run: patchK8sCluster, loading: editLoading } = useRequest(
     K8sClusterApi.patchRemoteK8sCluster,
     {
       manual: true,
@@ -83,6 +83,7 @@ export default function Createk8sClusterModal({
         onCancel();
         resetFields();
       }}
+      confirmLoading={isEdit ? editLoading : loading}
     >
       <Form form={form} layout="vertical">
         <Form.Item

@@ -73,7 +73,7 @@ export default function K8sClusterList() {
               type="link"
               onClick={() =>
                 showDeleteConfirm({
-                  title: '确定要删除该用户吗？',
+                  title: '确定要删除该 K8s 集群吗？',
                   onOk: () => deleteK8sCluster(record.name),
                 })
               }

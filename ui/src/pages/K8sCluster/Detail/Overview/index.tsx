@@ -25,6 +25,7 @@ const K8sClusterOverview: React.FC = () => {
     refresh: K8sNodeRefresh,
   } = useRequest(K8sClusterApi.listRemoteK8sNodes, {
     defaultParams: [k8sclusterName],
+    ready: !!k8sclusterName,
   });
 
   const formatNode = () => {
@@ -110,7 +111,7 @@ const K8sClusterOverview: React.FC = () => {
         />
         <Col span={24}>
           <EventsTable
-            externaLoading={getK8sEventsReqLoading}
+            externalLoading={getK8sEventsReqLoading}
             externalData={K8sClustersEvents?.data}
             type={'k8s'}
           />

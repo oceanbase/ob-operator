@@ -41,7 +41,7 @@ export default function EventsTable({
   overView,
   externalData,
   type,
-  externaLoading,
+  externalLoading,
 }: EventsTableProps) {
   const defaultParams: API.EventParams = {};
   if (objectType) {
@@ -209,7 +209,7 @@ export default function EventsTable({
 
   return (
     <CustomCard
-      loading={loading || externaLoading}
+      loading={loading || externalLoading}
       title={
         <h2 style={{ marginBottom: 0 }}>
           {intl.formatMessage({

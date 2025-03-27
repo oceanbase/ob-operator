@@ -216,14 +216,13 @@ export default [
             name: 'K8s 集群详情',
             routes: [
               {
-                path: 'overview',
-                component: 'K8sCluster/Detail/Overview',
-                name: '概览页',
-              },
-
-              {
                 path: '/k8scluster/:k8sclusterName',
                 redirect: 'overview',
+                name: '概览页',
+              },
+              {
+                path: 'overview',
+                component: 'K8sCluster/Detail/Overview',
                 name: '概览页',
               },
             ],
