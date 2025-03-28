@@ -145,11 +145,17 @@ export default function Parameters() {
           (item) => `${item.value} {${item.metasStr}}`,
         );
         const content = values?.length !== 1 ? MultipleValue : singleValue;
-
+        const tooltip = values?.map((item) => (
+          <div>{`${item.value} {${item.metasStr}}`}</div>
+        ));
         return (
           <>
             {content?.join('') ? (
-              <CustomTooltip text={content} width={150} />
+              <CustomTooltip
+                text={content}
+                tooltipTitle={values?.length !== 1 ? tooltip : content}
+                width={150}
+              />
             ) : (
               <span>-</span>
             )}
@@ -163,9 +169,9 @@ export default function Parameters() {
         defaultMessage: '参数说明',
       }),
       dataIndex: 'info',
-      width: 200,
+      width: 300,
       render: (text) => {
-        return <CustomTooltip text={text} width={190} />;
+        return <CustomTooltip text={text} width={290} />;
       },
     },
     {
