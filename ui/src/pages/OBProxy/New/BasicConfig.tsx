@@ -1,9 +1,9 @@
 import IconTip from '@/components/IconTip';
+import PasswordInput from '@/components/PasswordInput';
 import SelectNSFromItem from '@/components/SelectNSFromItem';
 import TooltipPretty from '@/components/TooltipPretty';
 import { resourceNameRule } from '@/constants/rules';
 import { getSimpleClusterList } from '@/services';
-import { passwordRules } from '@/utils';
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { Card, Col, Form, Input, Row, Select } from 'antd';
@@ -12,9 +12,15 @@ import { useEffect } from 'react';
 
 interface BasicConfigProps {
   form: FormInstance<any>;
+  passwordVal: string;
+  setPasswordVal: (val: string) => void;
 }
 
-export default function BasicConfig({ form }: BasicConfigProps) {
+export default function BasicConfig({
+  form,
+  passwordVal,
+  setPasswordVal,
+}: BasicConfigProps) {
   const { data: clusterListRes } = useRequest(getSimpleClusterList);
   const selectCluster = Form.useWatch('obCluster');
   const clisterList = clusterListRes?.data.map((cluster) => ({
@@ -133,10 +139,15 @@ export default function BasicConfig({ form }: BasicConfigProps) {
           </Form.Item>
         </Col>
         <Col span={8}>
-          <Form.Item
-            name={'proxySysPassword'}
-            validateFirst
-            label={
+          <SelectNSFromItem form={form} />
+        </Col>
+        <Col span={10}>
+          <PasswordInput
+            value={passwordVal}
+            onChange={setPasswordVal}
+            form={form}
+            name="proxySysPassword"
+            title={
               <IconTip
                 content={intl.formatMessage({
                   id: 'src.pages.OBProxy.New.E711F60D',
@@ -148,18 +159,7 @@ export default function BasicConfig({ form }: BasicConfigProps) {
                 })}
               />
             }
-            rules={passwordRules}
-          >
-            <Input.Password
-              placeholder={intl.formatMessage({
-                id: 'src.pages.OBProxy.New.B2851499',
-                defaultMessage: '请输入',
-              })}
-            />
-          </Form.Item>
-        </Col>
-        <Col span={8}>
-          <SelectNSFromItem form={form} />
+          />
         </Col>
       </Row>
     </Card>
