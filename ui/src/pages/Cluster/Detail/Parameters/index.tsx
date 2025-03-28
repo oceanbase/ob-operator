@@ -8,7 +8,6 @@ import { PageContainer } from '@ant-design/pro-components';
 import { useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Col, message, Row, Space, Table, Tag } from 'antd';
-import { isEmpty } from 'lodash';
 import { useState } from 'react';
 import ParametersModal from './ParametersModal';
 
@@ -50,28 +49,28 @@ export default function Parameters() {
   });
 
   const parameters = clusterDetail?.info?.parameters;
-  const getNewData = (data) => {
-    const obt = data?.map((element: any) => {
-      // 在 obcluster 的 parameters  里面的就是托管给 operator
-      const findName = parameters?.find(
-        (item: any) => element.name === item.name,
-      );
+  // const getNewData = (data) => {
+  //   const obt = data?.map((element: any) => {
+  //     // 在 obcluster 的 parameters  里面的就是托管给 operator
+  //     const findName = parameters?.find(
+  //       (item: any) => element.name === item.name,
+  //     );
 
-      if (!isEmpty(findName)) {
-        return {
-          ...element,
-          controlParameter: true,
-          accordance: findName?.value === findName?.specValue,
-        };
-      } else if (isEmpty(findName)) {
-        return { ...element, controlParameter: false, accordance: 'null' };
-      }
-    });
+  //     if (!isEmpty(findName)) {
+  //       return {
+  //         ...element,
+  //         controlParameter: true,
+  //         accordance: findName?.value === findName?.specValue,
+  //       };
+  //     } else if (isEmpty(findName)) {
+  //       return { ...element, controlParameter: false, accordance: 'null' };
+  //     }
+  //   });
 
-    return obt;
-  };
+  //   return obt;
+  // };
 
-  const parametersData = getNewData(listOBClusterParameters?.data);
+  const parametersData = listOBClusterParameters?.data;
   const controlParameters = [
     {
       label: intl.formatMessage({
@@ -100,7 +99,7 @@ export default function Parameters() {
         </Tag>
       ),
 
-      value: true,
+      value: 'matched',
     },
     {
       label: (
@@ -112,12 +111,7 @@ export default function Parameters() {
         </Tag>
       ),
 
-      value: false,
-    },
-    {
-      label: '/',
-
-      value: 'null',
+      value: 'notMatched',
     },
   ];
 
@@ -180,13 +174,13 @@ export default function Parameters() {
         defaultMessage: '托管 operator',
       }),
       width: 140,
-      dataIndex: 'controlParameter',
+      dataIndex: 'isManagedByOperator',
       filters: controlParameters.map(({ label, value }) => ({
         text: label,
         value,
       })),
       onFilter: (value: any, record) => {
-        return record?.controlParameter === value;
+        return record?.isManagedByOperator === value;
       },
       render: (text: boolean) => {
         return (
@@ -218,28 +212,21 @@ export default function Parameters() {
         />
       ),
 
-      dataIndex: 'accordance',
+      dataIndex: 'status',
       width: 100,
       filters: accordanceList.map(({ label, value }) => ({
         text: label,
         value,
       })),
       onFilter: (value: any, record) => {
-        return record?.accordance === value;
+        return record?.status === value;
       },
       render: (text) => {
-        const tagColor = text ? 'green' : 'gold';
-        const tagContent = text
-          ? intl.formatMessage({
-              id: 'src.pages.Cluster.Detail.Overview.9A3A4407',
-              defaultMessage: '已匹配',
-            })
-          : intl.formatMessage({
-              id: 'src.pages.Cluster.Detail.Overview.D6588C55',
-              defaultMessage: '不匹配',
-            });
+        const content = accordanceList?.find(
+          (item) => item.value === text,
+        )?.label;
 
-        return text === 'null' ? '/' : <Tag color={tagColor}>{tagContent}</Tag>;
+        return !text ? '/' : <span>{content}</span>;
       },
     },
     {
