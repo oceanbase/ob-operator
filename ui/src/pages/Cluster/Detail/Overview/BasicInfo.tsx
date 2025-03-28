@@ -312,7 +312,7 @@ export default function BasicInfo({
         </Descriptions.Item>
       </Descriptions>
       {topologyRendering.show && (
-        <>
+        <div style={{ marginTop: 8, marginBottom: 32 }}>
           <Title level={5}>
             {intl.formatMessage({
               id: 'dashboard.Cluster.New.Topo.Topology',
@@ -364,7 +364,7 @@ export default function BasicInfo({
               />
             </>
           )}
-        </>
+        </div>
       )}
 
       {monitor && (

@@ -30,7 +30,7 @@ export default function Backup() {
   const publicKey = usePublicKey();
   const [clusterList, setClusterList] = useState<API.SimpleClusterList>([]);
   const [selectClusterId, setSelectClusterId] = useState<string>();
-  const { name: clusterName } =
+  const { name: clusterName, namespace } =
     clusterList.filter((cluster) => cluster.id === selectClusterId)[0] || {};
 
   const { refresh: backupPolicyRefresh, loading } = useRequest(
@@ -95,10 +95,11 @@ export default function Backup() {
         charset,
         deletionProtection,
         rootCredential,
-        namespace: ns,
+        namespace,
         tenantRole,
         scenario,
       };
+
       const restore = {
         restore: {
           ...source.restore,

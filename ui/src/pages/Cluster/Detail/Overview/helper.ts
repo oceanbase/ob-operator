@@ -28,6 +28,7 @@ const formatClusterData = (responseData: any): API.ClusterDetail => {
           } else {
             zone[_key].forEach((server: API.Server) => {
               server.zone = zone.zone;
+              server.k8sCluster = zone.k8sCluster;
             });
             temp.servers = zone[_key];
             servers.push(...zone[_key]);

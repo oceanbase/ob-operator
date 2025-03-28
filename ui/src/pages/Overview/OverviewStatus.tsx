@@ -3,18 +3,32 @@ import { useRequest } from 'ahooks';
 import { Badge, Card, Col, Row } from 'antd';
 
 import clusterImg from '@/assets/cluster/running.svg';
+import kubernetesImg from '@/assets/kubernetes _logo.png';
 import tenantImg from '@/assets/tenant.svg';
-import { getClusterStatisticReq } from '@/services';
+
+import { getClusterStatisticReq, getK8sObclusterListReq } from '@/services';
 import { getTenantStatisticReq } from '@/services/tenant';
+import { formatStatisticData } from '@/utils/helper';
 import styles from './index.less';
 
 export default function OverviewStatus() {
   const { data: clusterStatisticRes } = useRequest(getClusterStatisticReq);
   const { data: tenantStatisticRes } = useRequest(getTenantStatisticReq);
+  const { data: K8sClustersList } = useRequest(getK8sObclusterListReq);
   const clusterHref = '/#/cluster';
   const tenantHref = '/#/tenant';
+  const k8sClusterHref = '/#/k8scluster';
   const clusterStatistic = clusterStatisticRes?.data;
   const tenantStatistic = tenantStatisticRes?.data;
+
+  const k8sClusterData = [
+    {
+      status: 'running',
+      count: K8sClustersList?.data?.length || 0,
+    },
+  ];
+
+  const k8sClusterStatistic = formatStatisticData('k8sCluster', k8sClusterData);
 
   const CustomBadge = ({
     text,
@@ -23,7 +37,7 @@ export default function OverviewStatus() {
     status,
   }: {
     text: string;
-    type: 'cluster' | 'tenant';
+    type: 'cluster' | 'tenant' | 'k8sCluster';
     count: number;
     status: 'processing' | 'error' | 'default' | 'warning';
   }) => {
@@ -33,7 +47,13 @@ export default function OverviewStatus() {
         <a
           className={count === 0 ? styles.zeroText : ''}
           style={{ marginLeft: '8px' }}
-          href={type === 'cluster' ? clusterHref : tenantHref}
+          href={
+            type === 'cluster'
+              ? clusterHref
+              : type === 'tenant'
+              ? tenantHref
+              : k8sClusterHref
+          }
         >
           {count}
         </a>
@@ -97,55 +117,110 @@ export default function OverviewStatus() {
 
   return (
     <>
-      {clusterStatistic && tenantStatistic
-        ? [clusterStatistic, tenantStatistic].map((statistic, index) => {
-            return (
-              <Col
-                span={8}
-                className={styles.overviewStatusContainerx}
-                key={index}
-              >
-                <Card className={styles.cardContent}>
-                  <Row>
-                    <Col
-                      span={4}
-                      style={{
-                        textAlign: 'center',
-                      }}
-                    >
-                      <img
-                        src={
-                          statistic.type === 'cluster' ? clusterImg : tenantImg
-                        }
-                        className={styles.imgContent}
-                        alt="svg"
-                      />
+      {clusterStatistic && tenantStatistic && k8sClusterStatistic
+        ? [clusterStatistic, tenantStatistic, k8sClusterStatistic].map(
+            (statistic, index) => {
+              return (
+                <Col
+                  span={8}
+                  className={styles.overviewStatusContainerx}
+                  key={index}
+                >
+                  <Card className={styles.cardContent}>
+                    {statistic.type === 'k8sCluster' ? (
+                      <>
+                        <div
+                          style={{
+                            fontSize: '16px',
+                            fontWeight: 'bold',
+                            marginLeft: '30px',
+                            marginTop: '21px',
+                          }}
+                        >
+                          K8S 集群
+                        </div>
+                      </>
+                    ) : null}
+                    <Row>
+                      <Col
+                        span={4}
+                        style={{
+                          textAlign: 'center',
+                        }}
+                      >
+                        {statistic.type !== 'k8sCluster' ? (
+                          <img
+                            src={
+                              statistic.type === 'cluster'
+                                ? clusterImg
+                                : tenantImg
+                            }
+                            className={styles.imgContent}
+                            alt="svg"
+                          />
+                        ) : null}
 
-                      <div className={styles.total}>
-                        <div className={styles.totalText}>
-                          {statistic.total}
+                        <div
+                          className={styles.total}
+                          style={
+                            statistic.type === 'k8sCluster'
+                              ? { width: '88px' }
+                              : {}
+                          }
+                        >
+                          <div
+                            className={styles.totalText}
+                            style={
+                              statistic.type === 'k8sCluster'
+                                ? { marginLeft: '40px' }
+                                : {}
+                            }
+                          >
+                            {statistic.total}
+                          </div>
+                          <div
+                            className={styles.totalTitle}
+                            style={
+                              statistic.type === 'k8sCluster'
+                                ? { marginLeft: '40px' }
+                                : {}
+                            }
+                          >
+                            {intl.formatMessage({
+                              id: 'dashboard.pages.Overview.OverviewStatus.TotalQuantity',
+                              defaultMessage: '总数量',
+                            })}
+                          </div>
                         </div>
-                        <div className={styles.totalTitle}>
-                          {intl.formatMessage({
-                            id: 'dashboard.pages.Overview.OverviewStatus.TotalQuantity',
-                            defaultMessage: '总数量',
-                          })}
-                        </div>
-                      </div>
-                    </Col>
-                    <Col span={14} offset={6}>
-                      <div className={styles.name}>{statistic.name}</div>
-                      <div>
-                        {Object.keys(getStatisticConfig(statistic)).map(
-                          (key) => getStatisticConfig(statistic)[key],
+                      </Col>
+                      <Col span={14} offset={6}>
+                        {statistic?.type !== 'k8sCluster' ? (
+                          <>
+                            <div className={styles.name}>{statistic.name}</div>
+                            <div>
+                              {Object.keys(getStatisticConfig(statistic)).map(
+                                (key) => getStatisticConfig(statistic)[key],
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <img
+                            src={kubernetesImg}
+                            alt="png"
+                            style={{
+                              width: '90px',
+                              height: '90px',
+                              marginLeft: '10px',
+                            }}
+                          />
                         )}
-                      </div>
-                    </Col>
-                  </Row>
-                </Card>
-              </Col>
-            );
-          })
+                      </Col>
+                    </Row>
+                  </Card>
+                </Col>
+              );
+            },
+          )
         : null}
     </>
   );

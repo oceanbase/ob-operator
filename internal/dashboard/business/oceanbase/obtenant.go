@@ -382,6 +382,35 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 	}
 
 	if p.Source != nil && p.Source.Restore != nil {
+		// extract BakEncryptionPassword and OSS ak/sk
+		if p.Source.Restore.BakEncryptionSecret != "" {
+			bakEncryptionSecret, err := k8sclient.ClientSet.CoreV1().Secrets(t.Namespace).Get(ctx, p.Source.Restore.BakEncryptionSecret, v1.GetOptions{})
+			if err != nil {
+				return nil, oberr.NewInternal(err.Error())
+			}
+			if pwd, ok := bakEncryptionSecret.Data["password"]; ok {
+				p.Source.Restore.BakEncryptionPassword = string(pwd)
+			}
+		}
+		if p.Source.Restore.OSSAccessSecret != "" {
+			ossAccessSecret, err := k8sclient.ClientSet.CoreV1().Secrets(t.Namespace).Get(ctx, p.Source.Restore.OSSAccessSecret, v1.GetOptions{})
+			if err != nil {
+				return nil, oberr.NewInternal(err.Error())
+			}
+			if accessId, ok := ossAccessSecret.Data["accessId"]; ok {
+				p.Source.Restore.OSSAccessID = string(accessId)
+			}
+			if accessKey, ok := ossAccessSecret.Data["accessKey"]; ok {
+				p.Source.Restore.OSSAccessKey = string(accessKey)
+			}
+			if appId, ok := ossAccessSecret.Data["appId"]; ok {
+				p.Source.Restore.AppID = string(appId)
+			}
+			if s3Region, ok := ossAccessSecret.Data["s3Region"]; ok {
+				p.Source.Restore.Region = string(s3Region)
+			}
+		}
+
 		if p.Source.Restore.BakEncryptionPassword != "" {
 			secretName := p.Name + "-bak-encryption-" + rand.String(6)
 			t.Spec.Source.Restore.BakEncryptionSecret = secretName

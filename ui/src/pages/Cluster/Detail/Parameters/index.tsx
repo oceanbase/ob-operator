@@ -165,7 +165,6 @@ export default function Parameters() {
       dataIndex: 'info',
       width: 200,
       render: (text) => {
-        console.log('text', text);
         return <CustomTooltip text={text} width={190} />;
       },
     },

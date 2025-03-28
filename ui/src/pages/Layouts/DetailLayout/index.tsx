@@ -4,7 +4,11 @@ import ResetPwdModal from '@/components/customModal/ResetPwdModal';
 import { logoutReq } from '@/services';
 import { getAppInfoFromStorage } from '@/utils/helper';
 import { intl } from '@/utils/intl';
-import { AlertFilled, TeamOutlined } from '@ant-design/icons';
+import {
+  AlertFilled,
+  RadarChartOutlined,
+  TeamOutlined,
+} from '@ant-design/icons';
 import { Menu } from '@oceanbase/design';
 import type { MenuItem } from '@oceanbase/design/es/BasicLayout';
 import { BasicLayout, IconFont } from '@oceanbase/ui';
@@ -93,6 +97,12 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
       key: 'access',
       link: '/access',
       icon: <TeamOutlined style={{ color: 'rgb(109,120,147)' }} />,
+      accessible: access.acread || access.acwrite,
+    },
+    {
+      title: 'K8s 集群管理',
+      link: '/k8scluster',
+      icon: <RadarChartOutlined style={{ color: 'rgb(109,120,147)' }} />,
       accessible: access.acread || access.acwrite,
     },
   ];

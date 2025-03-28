@@ -69,6 +69,13 @@ export default function ServerTable({
       key: 'address',
     },
     {
+      title: 'K8s 集群',
+      dataIndex: 'k8sCluster',
+      render: (text) => {
+        return <span>{text || '-'}</span>;
+      },
+    },
+    {
       title: intl.formatMessage({
         id: 'OBDashboard.Detail.Overview.ServerTable.Status',
         defaultMessage: '状态',

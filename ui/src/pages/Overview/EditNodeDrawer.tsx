@@ -1,4 +1,4 @@
-import { cluster } from '@/api';
+import { cluster, K8sClusterApi } from '@/api';
 import { EFFECT_LIST, OPERATOR_LIST } from '@/constants/node';
 import { intl } from '@/utils/intl';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
@@ -9,12 +9,12 @@ import {
   Drawer,
   Form,
   Input,
+  message,
   Row,
   Select,
   Space,
   Tabs,
   TabsProps,
-  message,
 } from 'antd';
 import React, { useEffect, useState } from 'react';
 
@@ -25,6 +25,8 @@ export interface ParametersModalProps {
   initialValues: any[];
   name: string;
   namespace: string;
+  k8sClusterName: string;
+  type: string;
 }
 
 const EditNodeDrawer: React.FC<ParametersModalProps> = ({
@@ -32,6 +34,8 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
   onCancel,
   nodeRecord,
   onSuccess,
+  k8sClusterName,
+  type,
 }) => {
   const [form] = Form.useForm<API.CreateClusterData>();
   const { validateFields, resetFields, setFieldsValue } = form;
@@ -55,6 +59,7 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
         taints: formatTaints(taints),
       });
     }
+    setTabKey('labels');
   }, [visible]);
 
   const { runAsync: putK8sNodeLabels, loading } = useRequest(
@@ -102,6 +107,44 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
       },
     },
   );
+
+  const {
+    runAsync: putRemoteK8sNodeLabels,
+    loading: putRemoteK8sNodeLabelsLoading,
+  } = useRequest(K8sClusterApi.putRemoteK8sNodeLabels, {
+    manual: true,
+    onSuccess: (res) => {
+      if (res.successful) {
+        message.success(
+          intl.formatMessage({
+            id: 'src.pages.Cluster.Detail.Overview.E908AA54',
+            defaultMessage: '编辑参数已成功',
+          }),
+        );
+        onSuccess();
+        resetFields();
+      }
+    },
+  });
+
+  const {
+    runAsync: putRemoteK8sNodeTaints,
+    loading: putRemoteK8sNodeTaintsLoading,
+  } = useRequest(K8sClusterApi.putRemoteK8sNodeTaints, {
+    manual: true,
+    onSuccess: (res) => {
+      if (res.successful) {
+        message.success(
+          intl.formatMessage({
+            id: 'src.pages.Cluster.Detail.Overview.E908AA54',
+            defaultMessage: '编辑参数已成功',
+          }),
+        );
+        onSuccess();
+        resetFields();
+      }
+    },
+  });
 
   const onChange = (key: string) => {
     setTabKey(key);
@@ -262,19 +305,34 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
           </Button>
           <Button
             type="primary"
-            loading={loading || taintsLoading}
+            loading={
+              loading ||
+              taintsLoading ||
+              putRemoteK8sNodeTaintsLoading ||
+              putRemoteK8sNodeLabelsLoading
+            }
             onClick={() => {
               validateFields().then((values) => {
                 const name = nodeRecord?.name;
                 if (tabKey === 'labels') {
-                  putK8sNodeLabels(name, values);
+                  if (type === 'k8s') {
+                    putRemoteK8sNodeLabels(k8sClusterName, name, values);
+                  } else {
+                    putK8sNodeLabels(name, values);
+                  }
                 } else {
                   const obj = values.taints?.map((item) => ({
                     key: item.key,
                     value: item.operator === 'Equal' ? item.value : undefined,
                     effect: item.effect,
                   }));
-                  putK8sNodeTaints(name, { taints: obj });
+                  if (type === 'k8s') {
+                    putRemoteK8sNodeTaints(k8sClusterName, name, {
+                      taints: obj,
+                    });
+                  } else {
+                    putK8sNodeTaints(name, { taints: obj });
+                  }
                 }
               });
             }}
