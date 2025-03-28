@@ -150,6 +150,9 @@ func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 		return nil, httpErr.New(httpErr.ErrPermissionDenied, "Permission denied")
 	}
 
+	if tenantParam.SecretNamespace == "" {
+		tenantParam.SecretNamespace = "default"
+	}
 	if tenantParam.RootPassword != "" {
 		tenantParam.RootPassword, err = crypto.DecryptWithPrivateKey(tenantParam.RootPassword)
 		if err != nil {

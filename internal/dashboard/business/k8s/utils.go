@@ -38,7 +38,11 @@ func GetClientForK8sCluster(ctx context.Context, clusterName string) (*client.Cl
 	if err != nil {
 		return nil, errors.Wrap(err, "Get k8s cluster")
 	}
-	return client.GetClientFromBytes([]byte(k8sCluster.Spec.KubeConfig))
+	kubeConfig, err := k8sCluster.DecodeKubeConfig()
+	if err != nil {
+		return nil, errors.Wrap(err, "Decode kubeconfig")
+	}
+	return client.GetClientFromBytes(kubeConfig)
 }
 
 func ListK8sClusterEvents(ctx context.Context, c *client.Client, queryEventParam *param.QueryEventParam) ([]response.K8sEvent, error) {
@@ -231,4 +235,8 @@ func BatchUpdateK8sClusterNodes(ctx context.Context, c *client.Client, updateNod
 		return fmt.Errorf("Update nodes failed, failed nodes: %s", strings.Join(failedNodes, ","))
 	}
 	return nil
+}
+
+func GetPod(ctx context.Context, c *client.Client, namespace string, name string) (*corev1.Pod, error) {
+	return c.ClientSet.CoreV1().Pods(namespace).Get(ctx, name, metav1.GetOptions{})
 }

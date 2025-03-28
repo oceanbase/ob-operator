@@ -19,6 +19,7 @@ import (
 type CreateOBTenantParam struct {
 	Name             string `json:"name" binding:"required"`
 	Namespace        string `json:"namespace" binding:"required"`
+	SecretNamespace  string `json:"secretNamespace,omitempty"`
 	ClusterName      string `json:"obcluster" binding:"required"`
 	TenantName       string `json:"tenantName" binding:"required"`
 	UnitNumber       int    `json:"unitNum" binding:"required"`
@@ -44,7 +45,7 @@ type CreateOBTenantParam struct {
 type ResourcePoolSpec struct {
 	Zone     string `json:"zone" binding:"required"`
 	Priority int    `json:"priority,omitempty"`
-	// Enum: Full, Readonly, Column
+	// Enum: Full, Readonly, Columnstore
 	Type string `json:"type,omitempty"`
 }
 

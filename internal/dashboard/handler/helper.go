@@ -112,6 +112,8 @@ func extractPassword(param *param.CreateOBClusterParam) error {
 	if err != nil {
 		return err
 	}
-	param.ProxyroPassword, err = crypto.DecryptWithPrivateKey(param.ProxyroPassword)
+	if param.ProxyroPassword != "" {
+		param.ProxyroPassword, err = crypto.DecryptWithPrivateKey(param.ProxyroPassword)
+	}
 	return err
 }

@@ -13,6 +13,11 @@ rules:
       - "*"
     verbs: ["get", "list", "watch", "update", "create", "delete", "patch"]
   - apiGroups:
+      - k8s.oceanbase.com
+    resources:
+      - "*"
+    verbs: ["get", "list", "watch", "update", "create", "delete", "patch"]
+  - apiGroups:
       - ""
     resources:
       - events
