@@ -111,10 +111,15 @@ export default function ModifyUnitDetailModal({
   };
 
   const onFinish = async (values: any) => {
+    if (!newResourcePool) {
+      values.zoneName = editZone || values.zoneName;
+    }
+
     const { zoneName, ...reqData } = formatPatchPoolData(
       values,
       newResourcePool ? 'create' : 'edit',
     );
+
     const res = await obtenantPoolReq({
       ns: ns!,
       name: name!,

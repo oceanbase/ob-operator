@@ -68,7 +68,7 @@ export const formatPatchPoolData = (
   if (type === 'edit') {
     Object.keys(originUnitData).forEach((key) => {
       if (key !== 'unitConfig') {
-        newOriginUnitData.zoneName = key;
+        newOriginUnitData.zoneName = originUnitData.zoneName;
       }
       if (originUnitData[key]?.priority) {
         newOriginUnitData.priority = originUnitData[key].priority;

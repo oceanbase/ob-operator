@@ -5,6 +5,7 @@ import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useNavigate } from '@umijs/max';
 import { Button, Form, Space, message } from 'antd';
+import { useState } from 'react';
 import { filterParams } from '../helper';
 import BasicConfig from './BasicConfig';
 import DetailConfig from './DetailConfig';
@@ -17,6 +18,7 @@ export default function New() {
   const navigate = useNavigate();
   const publicKey = usePublicKey();
   const [form] = Form.useForm();
+  const [passwordVal, setPasswordVal] = useState<string>('');
   const submit = async (values: FormValues) => {
     filterParams(values);
     values.proxySysPassword = encryptText(
@@ -38,6 +40,7 @@ export default function New() {
         );
         form.resetFields();
         history.back();
+        setPasswordVal('');
       }
     } catch (err) {
       console.error('err:', err);
@@ -72,7 +75,11 @@ export default function New() {
     >
       <Form onFinish={submit} form={form}>
         <Space style={{ width: '100%' }} size={'large'} direction="vertical">
-          <BasicConfig form={form} />
+          <BasicConfig
+            form={form}
+            setPasswordVal={setPasswordVal}
+            passwordVal={passwordVal}
+          />
           <DetailConfig />
         </Space>
       </Form>
