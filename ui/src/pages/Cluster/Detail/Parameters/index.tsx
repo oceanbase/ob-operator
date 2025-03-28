@@ -1,7 +1,6 @@
 import { obcluster } from '@/api';
 import CustomTooltip from '@/components/CustomTooltip';
 import IconTip from '@/components/IconTip';
-import { getClusterDetailReq } from '@/services';
 import { getColumnSearchProps } from '@/utils/component';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
@@ -34,41 +33,13 @@ export default function Parameters() {
       },
     });
 
-  const { data: clusterDetail, refresh: clusterDetailRefresh } = useRequest(
-    getClusterDetailReq,
-    {},
-  );
-
   const {
     data: listOBClusterParameters,
     loading,
     refresh,
   } = useRequest(obcluster.listOBClusterParameters, {
     defaultParams: [ns, name],
-    refreshDeps: [clusterDetail?.status],
   });
-
-  const parameters = clusterDetail?.info?.parameters;
-  // const getNewData = (data) => {
-  //   const obt = data?.map((element: any) => {
-  //     // 在 obcluster 的 parameters  里面的就是托管给 operator
-  //     const findName = parameters?.find(
-  //       (item: any) => element.name === item.name,
-  //     );
-
-  //     if (!isEmpty(findName)) {
-  //       return {
-  //         ...element,
-  //         controlParameter: true,
-  //         accordance: findName?.value === findName?.specValue,
-  //       };
-  //     } else if (isEmpty(findName)) {
-  //       return { ...element, controlParameter: false, accordance: 'null' };
-  //     }
-  //   });
-
-  //   return obt;
-  // };
 
   const parametersData = listOBClusterParameters?.data;
   const controlParameters = [
@@ -245,10 +216,6 @@ export default function Parameters() {
           'max_syslog_file_count',
         ];
 
-        const valueContent =
-          parameters?.find((item) => item.name === record.name)?.value ||
-          record?.value;
-
         return (
           <Space size={1}>
             <Button
@@ -257,7 +224,6 @@ export default function Parameters() {
                 setIsDrawerOpen(true);
                 setParametersRecord({
                   ...record,
-                  value: valueContent,
                 });
               }}
             >
@@ -318,7 +284,6 @@ export default function Parameters() {
         onCancel={() => setIsDrawerOpen(false)}
         onSuccess={() => {
           setIsDrawerOpen(false);
-          clusterDetailRefresh();
           refresh();
         }}
         initialValues={parametersRecord}
