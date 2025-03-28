@@ -2,10 +2,7 @@ import { K8sClusterApi } from '@/api';
 import { encryptText, usePublicKey } from '@/hook/usePublicKey';
 import { useRequest } from 'ahooks';
 import { Form, Input, Modal, message } from 'antd';
-// import CryptoJS from 'crypto';
-// const CryptoJS = require("crypto-js");
 import CryptoJS from 'crypto-js';
-
 import { isEmpty } from 'lodash';
 import { useEffect } from 'react';
 
