@@ -57,18 +57,18 @@ export default function K8sClusterList() {
     {
       title: '操作',
       dataIndex: 'operation',
+
       render: (_, record) => {
         return (
           <Space>
-            <Button
+            <a
               onClick={() => {
                 setVisible(true);
                 setEditData(record);
               }}
-              type="link"
             >
               编辑
-            </Button>
+            </a>
             <Button
               type="link"
               onClick={() =>
@@ -110,7 +110,6 @@ export default function K8sClusterList() {
       <Table
         columns={columns}
         dataSource={K8sClustersList}
-        scroll={{ x: 1200 }}
         pagination={{ simple: true }}
         rowKey="name"
         bordered
