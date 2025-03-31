@@ -1,14 +1,12 @@
 import { obcluster } from '@/api';
 import CustomTooltip from '@/components/CustomTooltip';
 import IconTip from '@/components/IconTip';
-import { getClusterDetailReq } from '@/services';
 import { getColumnSearchProps } from '@/utils/component';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Card, Col, message, Row, Space, Table, Tag } from 'antd';
-import { isEmpty } from 'lodash';
 import { useState } from 'react';
 import ParametersModal from './ParametersModal';
 
@@ -35,43 +33,15 @@ export default function Parameters() {
       },
     });
 
-  const { data: clusterDetail, refresh: clusterDetailRefresh } = useRequest(
-    getClusterDetailReq,
-    {},
-  );
-
   const {
     data: listOBClusterParameters,
     loading,
     refresh,
   } = useRequest(obcluster.listOBClusterParameters, {
     defaultParams: [ns, name],
-    refreshDeps: [clusterDetail?.status],
   });
 
-  const parameters = clusterDetail?.info?.parameters;
-  const getNewData = (data) => {
-    const obt = data?.map((element: any) => {
-      // 在 obcluster 的 parameters  里面的就是托管给 operator
-      const findName = parameters?.find(
-        (item: any) => element.name === item.name,
-      );
-
-      if (!isEmpty(findName)) {
-        return {
-          ...element,
-          controlParameter: true,
-          accordance: findName?.value === findName?.specValue,
-        };
-      } else if (isEmpty(findName)) {
-        return { ...element, controlParameter: false, accordance: 'null' };
-      }
-    });
-
-    return obt;
-  };
-
-  const parametersData = getNewData(listOBClusterParameters?.data);
+  const parametersData = listOBClusterParameters?.data;
   const controlParameters = [
     {
       label: intl.formatMessage({
@@ -89,7 +59,7 @@ export default function Parameters() {
     },
   ];
 
-  const accordanceList = [
+  const statusList = [
     {
       label: (
         <Tag color={'green'}>
@@ -100,7 +70,7 @@ export default function Parameters() {
         </Tag>
       ),
 
-      value: true,
+      value: 'matched',
     },
     {
       label: (
@@ -112,12 +82,11 @@ export default function Parameters() {
         </Tag>
       ),
 
-      value: false,
+      value: 'notMatched',
     },
     {
       label: '/',
-
-      value: 'null',
+      value: '',
     },
   ];
 
@@ -145,11 +114,17 @@ export default function Parameters() {
           (item) => `${item.value} {${item.metasStr}}`,
         );
         const content = values?.length !== 1 ? MultipleValue : singleValue;
-
+        const tooltip = values?.map((item) => (
+          <div>{`${item.value} {${item.metasStr}}`}</div>
+        ));
         return (
           <>
             {content?.join('') ? (
-              <CustomTooltip text={content} width={150} />
+              <CustomTooltip
+                text={content}
+                tooltipTitle={values?.length !== 1 ? tooltip : content}
+                width={150}
+              />
             ) : (
               <span>-</span>
             )}
@@ -163,9 +138,9 @@ export default function Parameters() {
         defaultMessage: '参数说明',
       }),
       dataIndex: 'info',
-      width: 200,
+      width: 300,
       render: (text) => {
-        return <CustomTooltip text={text} width={190} />;
+        return <CustomTooltip text={text} width={290} />;
       },
     },
     {
@@ -174,13 +149,13 @@ export default function Parameters() {
         defaultMessage: '托管 operator',
       }),
       width: 140,
-      dataIndex: 'controlParameter',
+      dataIndex: 'isManagedByOperator',
       filters: controlParameters.map(({ label, value }) => ({
         text: label,
         value,
       })),
       onFilter: (value: any, record) => {
-        return record?.controlParameter === value;
+        return record?.isManagedByOperator === value;
       },
       render: (text: boolean) => {
         return (
@@ -212,28 +187,19 @@ export default function Parameters() {
         />
       ),
 
-      dataIndex: 'accordance',
+      dataIndex: 'status',
       width: 100,
-      filters: accordanceList.map(({ label, value }) => ({
+      filters: statusList.map(({ label, value }) => ({
         text: label,
         value,
       })),
       onFilter: (value: any, record) => {
-        return record?.accordance === value;
+        return record?.status === value;
       },
       render: (text) => {
-        const tagColor = text ? 'green' : 'gold';
-        const tagContent = text
-          ? intl.formatMessage({
-              id: 'src.pages.Cluster.Detail.Overview.9A3A4407',
-              defaultMessage: '已匹配',
-            })
-          : intl.formatMessage({
-              id: 'src.pages.Cluster.Detail.Overview.D6588C55',
-              defaultMessage: '不匹配',
-            });
+        const content = statusList?.find((item) => item.value === text)?.label;
 
-        return text === 'null' ? '/' : <Tag color={tagColor}>{tagContent}</Tag>;
+        return !text ? '/' : <span>{content}</span>;
       },
     },
     {
@@ -252,10 +218,6 @@ export default function Parameters() {
           'max_syslog_file_count',
         ];
 
-        const valueContent =
-          parameters?.find((item) => item.name === record.name)?.value ||
-          record?.value;
-
         return (
           <Space size={1}>
             <Button
@@ -264,7 +226,6 @@ export default function Parameters() {
                 setIsDrawerOpen(true);
                 setParametersRecord({
                   ...record,
-                  value: valueContent,
                 });
               }}
             >
@@ -325,7 +286,6 @@ export default function Parameters() {
         onCancel={() => setIsDrawerOpen(false)}
         onSuccess={() => {
           setIsDrawerOpen(false);
-          clusterDetailRefresh();
           refresh();
         }}
         initialValues={parametersRecord}

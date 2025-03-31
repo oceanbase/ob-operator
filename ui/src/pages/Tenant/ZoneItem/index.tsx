@@ -45,13 +45,12 @@ export default function ZoneItem({
         alignItems: 'center',
       }}
     >
-      <span style={{ marginRight: 8 }}>{name}</span>
       {checkedFormName ? (
         <Form.Item noStyle name={checkedFormName}>
           <Checkbox
             checked={checked}
             disabled={isEdit || !obZoneResource}
-            style={{ marginRight: 24 }}
+            style={{ marginRight: 5 }}
             onChange={(e) => checkBoxOnChange(e.target.checked, name)}
           />
         </Form.Item>
@@ -59,10 +58,11 @@ export default function ZoneItem({
         <Checkbox
           checked={checked}
           disabled={isEdit || !obZoneResource}
-          style={{ marginRight: 24 }}
+          style={{ marginRight: 5 }}
           onChange={(e) => checkBoxOnChange(e.target.checked, name)}
         />
       )}
+      <span style={{ marginRight: 8 }}>{name}</span>
       <Col
         span={type === 'new' ? 2 : 4}
         style={type === 'tenantBackup' ? { marginTop: 24 } : {}}
@@ -73,11 +73,9 @@ export default function ZoneItem({
             id: 'Dashboard.Tenant.New.ResourcePools.Priority',
             defaultMessage: '优先级',
           })}
+          initialValue={1}
         >
-          <InputNumber
-            style={type === 'new' ? {} : { width: '90%' }}
-            disabled={!checked}
-          />
+          <InputNumber style={type === 'new' ? {} : { width: '90%' }} min={1} />
         </Form.Item>
       </Col>
       <Col span={5} style={type === 'tenantBackup' ? { marginTop: 24 } : {}}>
