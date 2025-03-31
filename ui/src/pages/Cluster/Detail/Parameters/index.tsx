@@ -59,7 +59,7 @@ export default function Parameters() {
     },
   ];
 
-  const accordanceList = [
+  const statusList = [
     {
       label: (
         <Tag color={'green'}>
@@ -83,6 +83,10 @@ export default function Parameters() {
       ),
 
       value: 'notMatched',
+    },
+    {
+      label: '/',
+      value: '',
     },
   ];
 
@@ -185,7 +189,7 @@ export default function Parameters() {
 
       dataIndex: 'status',
       width: 100,
-      filters: accordanceList.map(({ label, value }) => ({
+      filters: statusList.map(({ label, value }) => ({
         text: label,
         value,
       })),
@@ -193,9 +197,7 @@ export default function Parameters() {
         return record?.status === value;
       },
       render: (text) => {
-        const content = accordanceList?.find(
-          (item) => item.value === text,
-        )?.label;
+        const content = statusList?.find((item) => item.value === text)?.label;
 
         return !text ? '/' : <span>{content}</span>;
       },
