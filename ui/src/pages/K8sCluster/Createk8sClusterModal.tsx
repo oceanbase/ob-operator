@@ -61,16 +61,6 @@ export default function Createk8sClusterModal({
     return CryptoJS.lib.WordArray.random(16).toString(CryptoJS.enc.Hex);
   }
 
-  function hexToString(hexString) {
-    let fullString = '';
-    for (let i = 0; i < hexString.length; i += 2) {
-      const hex = hexString.substr(i, 2);
-      const decimal = parseInt(hex, 16);
-      fullString += String.fromCharCode(decimal);
-    }
-    return fullString;
-  }
-
   // Function to encrypt data using AES-256
   function encryptAES(data, key, iv) {
     const encrypted = CryptoJS.AES.encrypt(data, CryptoJS.enc.Hex.parse(key), {
@@ -91,10 +81,9 @@ export default function Createk8sClusterModal({
       const key = generateAESKey();
       const iv = generateIV();
       const encryptedData = encryptAES(values.kubeConfig, key, iv);
-
       values.kubeConfig = encryptedData;
 
-      const encryptedKey = encryptText(hexToString(key), publicKey);
+      const encryptedKey = encryptText(key, publicKey);
 
       if (isEdit && !isEmpty(editData)) {
         patchK8sCluster(editData?.name, values, {

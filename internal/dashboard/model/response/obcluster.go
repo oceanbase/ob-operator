@@ -160,11 +160,13 @@ type AggregratedParameterValue struct {
 }
 
 type AggregatedParameter struct {
-	Name      string                      `json:"name"`
-	Values    []AggregratedParameterValue `json:"values"`
-	Scope     string                      `json:"scope"`
-	EditLevel string                      `json:"editLevel"`
-	DataType  string                      `json:"dataType"`
-	Info      string                      `json:"info"`
-	Section   string                      `json:"section"`
+	Name                string                      `json:"name"`
+	Values              []AggregratedParameterValue `json:"values"`
+	Scope               string                      `json:"scope"`
+	EditLevel           string                      `json:"editLevel"`
+	DataType            string                      `json:"dataType"`
+	Info                string                      `json:"info"`
+	Section             string                      `json:"section"`
+	IsManagedByOperator bool                        `json:"isManagedByOperator"`
+	Status              string                      `json:"status"`
 }

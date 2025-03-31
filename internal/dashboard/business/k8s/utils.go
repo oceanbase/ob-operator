@@ -131,7 +131,7 @@ func ListK8sClusterEvents(ctx context.Context, c *client.Client, queryEventParam
 func ListK8sClusterNodes(ctx context.Context, c *client.Client) ([]response.K8sNode, error) {
 	nodeList, err := c.ClientSet.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 	nodes := make([]response.K8sNode, 0)
-	nodeMetricsMap, metricsErr := resource.ListNodeMetrics(ctx)
+	nodeMetricsMap, metricsErr := resource.ListNodeMetrics(ctx, c)
 	if err == nil {
 		for _, node := range nodeList.Items {
 			internalAddress, externalAddress := extractNodeAddress(&node)

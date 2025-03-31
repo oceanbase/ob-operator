@@ -981,13 +981,18 @@ func ListOBClusterParameters(ctx context.Context, nn *param.K8sObjectIdentity) (
 		logger.WithError(err).Info("Failed to get OceanBase database connection")
 		return nil, errors.Wrapf(err, "Failed to get connection go obcluster")
 	}
+	parameterList, err := clients.ListOBParametersOfOBCluster(ctx, obcluster)
+	if err != nil {
+		logger.WithError(err).Error("Failed to list parameters")
+		return nil, errors.New("Failed to list obcluster parameters in k8s")
+	}
 	parameters, err := conn.ListClusterParameters(ctx)
 	if err != nil {
 		logger.WithError(err).Error("Failed to query parameters")
-		return nil, errors.New("Failed to list obcluster parameters")
+		return nil, errors.New("Failed to list obcluster parameters in obcluster")
 	}
 	// convert to response data structure
-	aggParameters := aggregrateParametersByName(parameters)
+	aggParameters := aggregrateParameters(parameterList.Items, parameters)
 	return aggParameters, nil
 }
 
@@ -1047,7 +1052,7 @@ func aggregrateParameterByName(parameters []*model.Parameter) response.Aggregate
 	}
 }
 
-func aggregrateParametersByName(parameters []*model.Parameter) []response.AggregatedParameter {
+func aggregrateParameters(obparameters []v1alpha1.OBParameter, parameters []*model.Parameter) []response.AggregatedParameter {
 	aggMap := make(map[string][]*model.Parameter)
 	for _, parameter := range parameters {
 		parameterList, exists := aggMap[parameter.Name]
@@ -1058,8 +1063,15 @@ func aggregrateParametersByName(parameters []*model.Parameter) []response.Aggreg
 		aggMap[parameter.Name] = parameterList
 	}
 	aggParameters := make([]response.AggregatedParameter, 0)
-	for _, parameterList := range aggMap {
+	for name, parameterList := range aggMap {
 		aggParameter := aggregrateParameterByName(parameterList)
+		for _, obparameter := range obparameters {
+			if name == obparameter.Spec.Parameter.Name {
+				aggParameter.IsManagedByOperator = true
+				aggParameter.Status = obparameter.Status.Status
+				break
+			}
+		}
 		aggParameters = append(aggParameters, aggParameter)
 	}
 	return aggParameters
