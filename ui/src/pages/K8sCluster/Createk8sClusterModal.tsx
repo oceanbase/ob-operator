@@ -1,6 +1,8 @@
 import { K8sClusterApi } from '@/api';
+import { encryptText, usePublicKey } from '@/hook/usePublicKey';
 import { useRequest } from 'ahooks';
 import { Form, Input, Modal, message } from 'antd';
+import CryptoJS from 'crypto-js';
 import { isEmpty } from 'lodash';
 import { useEffect } from 'react';
 
@@ -51,12 +53,50 @@ export default function Createk8sClusterModal({
     },
   );
 
+  function generateAESKey() {
+    return CryptoJS.lib.WordArray.random(32).toString(CryptoJS.enc.Hex);
+  }
+  // Function to generate a random IV
+  function generateIV() {
+    return CryptoJS.lib.WordArray.random(16).toString(CryptoJS.enc.Hex);
+  }
+
+  // Function to encrypt data using AES-256
+  function encryptAES(data, key, iv) {
+    const encrypted = CryptoJS.AES.encrypt(data, CryptoJS.enc.Hex.parse(key), {
+      iv: CryptoJS.enc.Hex.parse(iv),
+      mode: CryptoJS.mode.CBC,
+      padding: CryptoJS.pad.Pkcs7,
+    });
+
+    // Concatenate IV and ciphertext, then encode in base64
+    const ivHex = CryptoJS.enc.Hex.parse(iv);
+    const ciphertext = ivHex.clone().concat(encrypted.ciphertext);
+    return ciphertext.toString(CryptoJS.enc.Base64);
+  }
+
+  const publicKey = usePublicKey();
   const handleSubmit = () => {
     validateFields().then((values) => {
-      if (isEdit && !isEmpty(editDasta)) {
-        patchK8sCluster(editData?.name, values);
+      const key = generateAESKey();
+      const iv = generateIV();
+      const encryptedData = encryptAES(values.kubeConfig, key, iv);
+      values.kubeConfig = encryptedData;
+
+      const encryptedKey = encryptText(key, publicKey);
+
+      if (isEdit && !isEmpty(editData)) {
+        patchK8sCluster(editData?.name, values, {
+          headers: {
+            'X-Encrypted-Key': encryptedKey,
+          },
+        });
       } else {
-        createK8sCluster(values);
+        createK8sCluster(values, {
+          headers: {
+            'X-Encrypted-Key': encryptedKey,
+          },
+        });
       }
     });
   };

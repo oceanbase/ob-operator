@@ -93,6 +93,7 @@ export default function NewBackup() {
         deletionProtection,
         rootCredential,
         namespace,
+        secretNamespace: ns,
         tenantRole,
         scenario,
       };

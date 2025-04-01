@@ -7,8 +7,12 @@ export const getColumnSearchProps = ({
   frontEndSearch,
   dataIndex,
   onConfirm,
+  arraySearch,
+  symbol,
 }: {
   frontEndSearch: boolean; // 前端分页时，dataIndex 必传，该参数对后端分页无效
+  arraySearch: boolean; // 当前定位搜索的表头值是都为数组类型
+  symbol?: string; // 拼接符号，取值为符号前，主要为支持node
   dataIndex?: string;
   onConfirm?: (value?: React.Key) => void;
 }) => ({
@@ -25,12 +29,21 @@ export const getColumnSearchProps = ({
   // 前端搜索，需要定义 onFilter 函数
   ...(frontEndSearch
     ? {
-        onFilter: (value, record) =>
-          record[dataIndex] &&
-          record[dataIndex]
-            .toString()
-            .toLowerCase()
-            .includes(value && value.toLowerCase()),
+        onFilter: (value, record) => {
+          const realValue = (value && value.split(symbol)[0]).toLowerCase();
+
+          return arraySearch
+            ? record[dataIndex].some(
+                (item) =>
+                  item.key.toLowerCase().includes(realValue) ||
+                  item.value.toLowerCase().includes(realValue),
+              )
+            : record[dataIndex] &&
+                record[dataIndex]
+                  .toString()
+                  .toLowerCase()
+                  .includes(value && value.toLowerCase());
+        },
       }
     : {}),
 });

@@ -1,6 +1,7 @@
 import CustomTooltip from '@/components/CustomTooltip';
 import { NODESTABLE_STATUS_LIST } from '@/constants';
 import { getNodeInfoReq } from '@/services';
+import { getColumnSearchProps } from '@/utils/component';
 import { intl } from '@/utils/intl';
 import { findByValue } from '@oceanbase/util';
 import { useRequest } from 'ahooks';
@@ -65,6 +66,10 @@ export default function NodesTable({
       dataIndex: 'name',
       key: 'name',
       width: 120,
+      ...getColumnSearchProps({
+        frontEndSearch: true,
+        dataIndex: 'name',
+      }),
       render: (val) => <CustomTooltip text={val} width={100} />,
     },
     {
@@ -104,6 +109,10 @@ export default function NodesTable({
       dataIndex: 'internalIP',
       key: 'internalIP',
       width: 120,
+      ...getColumnSearchProps({
+        frontEndSearch: true,
+        dataIndex: 'internalIP',
+      }),
     },
 
     {
@@ -129,6 +138,12 @@ export default function NodesTable({
       dataIndex: 'labels',
       ellipsis: true,
       width: 160,
+      ...getColumnSearchProps({
+        frontEndSearch: true,
+        dataIndex: 'labels',
+        arraySearch: true,
+        symbol: '=',
+      }),
       render: (text) => {
         const tooltipTitle = text?.map((item) => (
           <div>{`${item.key}=${item.value}`}</div>
@@ -150,6 +165,12 @@ export default function NodesTable({
       title: 'taints',
       dataIndex: 'taints',
       width: 160,
+      ...getColumnSearchProps({
+        frontEndSearch: true,
+        dataIndex: 'taints',
+        arraySearch: true,
+        symbol: '=',
+      }),
       render: (text) => {
         const content = text?.map((item) =>
           item.value

@@ -33,11 +33,13 @@ import (
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/k8s"
 	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/internal/dashboard/utils"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
+	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 
@@ -122,17 +124,19 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 		logger.WithError(err).Info("Failed to get OceanBase database connection")
 		return nil, errors.Wrapf(err, "Failed to get connection of obcluster")
 	}
+	versionStr := ""
 	version, err := conn.GetVersion(ctx)
 	if err != nil {
 		logger.WithError(err).Info("Failed to get OceanBase database version")
-		return nil, errors.Wrapf(err, "Failed to get version of obcluster")
+	} else {
+		versionStr = version.Version
 	}
 
 	respCluster := &response.OBCluster{
 		OBClusterOverview: *overview,
 		OBClusterExtra: response.OBClusterExtra{
 			RootPasswordSecret: obcluster.Spec.UserSecrets.Root,
-			Version:            version.Version,
+			Version:            versionStr,
 			Parameters:         nil,
 		},
 		Metrics: nil,
@@ -216,13 +220,21 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 		sort.Slice(observerList.Items, func(i, j int) bool {
 			return observerList.Items[i].Name < observerList.Items[j].Name
 		})
+		c := client.GetClient()
+		if obzone.Spec.Topology.K8sCluster != "" {
+			c, err = k8s.GetClientForK8sCluster(ctx, obzone.Spec.Topology.K8sCluster)
+			if err != nil {
+				return nil, errors.Wrap(err, fmt.Sprintf("Get client for k8s cluster %s", obzone.Spec.Topology.K8sCluster))
+			}
+		}
 		for _, observer := range observerList.Items {
 			logger.Debugf("Add observer %s to result", observer.Name)
 			// compatible with old version CRD
 			nodeName := observer.Status.NodeName
 			if nodeName == "" {
 				logger.Debugf("Get node name of observer %s", observer.Name)
-				pod, err := clients.GetPodOfOBServer(ctx, &observer)
+				// pod name is the same as observer's name
+				pod, err := k8s.GetPod(ctx, c, observer.Namespace, observer.Name)
 				if err == nil {
 					nodeName = pod.Spec.NodeName
 				}
@@ -370,7 +382,7 @@ func buildOBClusterTopologyResp(ctx context.Context, obcluster *v1alpha1.OBClust
 			Tolerations:  tolerations,
 		}
 		if len(obzone.Status.OBServerStatus) > 0 {
-			respZone.RootService = obzone.Status.OBServerStatus[0].Server
+			respZone.RootService = obzone.Status.OBServerStatus[0].GetConnectAddr()
 		}
 		topology = append(topology, respZone)
 	}
@@ -467,6 +479,7 @@ func buildOBClusterTopology(topology []param.ZoneTopology) []apitypes.OBZoneTopo
 			Zone:         zone.Zone,
 			NodeSelector: common.KVsToMap(zone.NodeSelector),
 			Replica:      zone.Replicas,
+			K8sCluster:   zone.K8sCluster,
 		}
 		if len(zone.Affinities) > 0 {
 			topo.Affinity = &corev1.Affinity{}
@@ -742,6 +755,7 @@ func AddOBZone(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity, 
 		Zone:         zone.Zone,
 		NodeSelector: common.KVsToMap(zone.NodeSelector),
 		Replica:      zone.Replicas,
+		K8sCluster:   zone.K8sCluster,
 	})
 	cluster, err := clients.UpdateOBCluster(ctx, obcluster)
 	if err != nil {
@@ -967,13 +981,18 @@ func ListOBClusterParameters(ctx context.Context, nn *param.K8sObjectIdentity) (
 		logger.WithError(err).Info("Failed to get OceanBase database connection")
 		return nil, errors.Wrapf(err, "Failed to get connection go obcluster")
 	}
+	parameterList, err := clients.ListOBParametersOfOBCluster(ctx, obcluster)
+	if err != nil {
+		logger.WithError(err).Error("Failed to list parameters")
+		return nil, errors.New("Failed to list obcluster parameters in k8s")
+	}
 	parameters, err := conn.ListClusterParameters(ctx)
 	if err != nil {
 		logger.WithError(err).Error("Failed to query parameters")
-		return nil, errors.New("Failed to list obcluster parameters")
+		return nil, errors.New("Failed to list obcluster parameters in obcluster")
 	}
 	// convert to response data structure
-	aggParameters := aggregrateParametersByName(parameters)
+	aggParameters := aggregrateParameters(parameterList.Items, parameters)
 	return aggParameters, nil
 }
 
@@ -1033,7 +1052,7 @@ func aggregrateParameterByName(parameters []*model.Parameter) response.Aggregate
 	}
 }
 
-func aggregrateParametersByName(parameters []*model.Parameter) []response.AggregatedParameter {
+func aggregrateParameters(obparameters []v1alpha1.OBParameter, parameters []*model.Parameter) []response.AggregatedParameter {
 	aggMap := make(map[string][]*model.Parameter)
 	for _, parameter := range parameters {
 		parameterList, exists := aggMap[parameter.Name]
@@ -1044,8 +1063,15 @@ func aggregrateParametersByName(parameters []*model.Parameter) []response.Aggreg
 		aggMap[parameter.Name] = parameterList
 	}
 	aggParameters := make([]response.AggregatedParameter, 0)
-	for _, parameterList := range aggMap {
+	for name, parameterList := range aggMap {
 		aggParameter := aggregrateParameterByName(parameterList)
+		for _, obparameter := range obparameters {
+			if name == obparameter.Spec.Parameter.Name {
+				aggParameter.IsManagedByOperator = true
+				aggParameter.Status = obparameter.Status.Status
+				break
+			}
+		}
 		aggParameters = append(aggParameters, aggParameter)
 	}
 	return aggParameters

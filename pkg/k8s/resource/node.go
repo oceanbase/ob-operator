@@ -42,10 +42,9 @@ func ListNodes(ctx context.Context) (*corev1.NodeList, error) {
 	})
 }
 
-func ListNodeMetrics(ctx context.Context) (map[string]metricsv1beta1.NodeMetrics, error) {
-	client := client.GetClient()
+func ListNodeMetrics(ctx context.Context, c *client.Client) (map[string]metricsv1beta1.NodeMetrics, error) {
 	nodeMetricsMap := make(map[string]metricsv1beta1.NodeMetrics)
-	metricsList, err := client.MetricsClientset.MetricsV1beta1().NodeMetricses().List(ctx, metav1.ListOptions{
+	metricsList, err := c.MetricsClientset.MetricsV1beta1().NodeMetricses().List(ctx, metav1.ListOptions{
 		TimeoutSeconds: &timeout,
 	})
 	if err == nil {

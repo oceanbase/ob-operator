@@ -38,10 +38,8 @@ export default function ResourcePools({
   const checkBoxOnChange = (checked: boolean, name: string) => {
     form.setFieldValue(['pools', name, 'checked'], checked);
     if (!checked) {
-      form.setFieldValue(['pools', name, 'priority'], undefined);
       setSelectZones(selectZones.filter((zone) => zone !== name));
     } else {
-      // form.setFieldValue(['pools',name])
       setSelectZones([...selectZones, name]);
     }
     setClusterList(
@@ -74,7 +72,7 @@ export default function ResourcePools({
 
   useEffect(() => {
     if (essentialParameter) {
-      if (selectZones.length === 0) {
+      if (selectZones?.length === 0) {
         setMaxResource({});
         return;
       }

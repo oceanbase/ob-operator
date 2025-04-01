@@ -31,6 +31,7 @@ func InitK8sClusterRoutes(g *gin.RouterGroup) {
 	g.GET("/k8s/clusters", h.Wrap(h.ListRemoteK8sClusters, k8sClusterReadGuard))
 	g.GET("/k8s/clusters/:name", h.Wrap(h.GetRemoteK8sCluster, k8sClusterReadGuard))
 	g.PATCH("/k8s/clusters/:name", h.Wrap(h.PatchRemoteK8sCluster, k8sClusterWriteGuard))
+	g.DELETE("/k8s/clusters/:name", h.Wrap(h.DeleteRemoteK8sCluster, k8sClusterWriteGuard))
 	g.POST("/k8s/clusters", h.Wrap(h.CreateRemoteK8sCluster, k8sClusterWriteGuard))
 	g.GET("/k8s/clusters/:name/events", h.Wrap(h.ListRemoteK8sEvents, k8sClusterReadGuard))
 	g.GET("/k8s/clusters/:name/nodes", h.Wrap(h.ListRemoteK8sNodes, k8sClusterReadGuard))

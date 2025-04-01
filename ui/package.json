@@ -29,6 +29,7 @@
     "antd": "5.13.0",
     "bignumber.js": "^9.1.2",
     "copy-to-clipboard": "^3.3.3",
+    "crypto-js": "^4.2.0",
     "i18next": "^23.11.1",
     "jsencrypt": "^3.3.2",
     "lodash": "^4.17.21",
