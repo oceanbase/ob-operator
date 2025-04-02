@@ -64,10 +64,10 @@ func extractNodeStatus(node *corev1.Node) string {
 
 func extractNodeRoles(node *corev1.Node) []string {
 	roles := make([]string, 0)
-	for key, value := range node.Labels {
+	for key, _ := range node.Labels {
 		if strings.HasPrefix(key, RoleLabelPrefix) {
 			labelParts := strings.Split(key, "/")
-			if len(labelParts) >= 2 && value == "true" {
+			if len(labelParts) >= 2 {
 				roles = append(roles, labelParts[1])
 			}
 		}
