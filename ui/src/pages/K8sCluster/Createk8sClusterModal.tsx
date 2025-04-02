@@ -134,11 +134,7 @@ export default function Createk8sClusterModal({
           <Input placeholder="请输入" disabled={isEdit} />
         </Form.Item>
 
-        <Form.Item
-          name={'description'}
-          label={'描述信息'}
-          rules={[{ required: true, message: '请输入描述信息' }]}
-        >
+        <Form.Item name={'description'} label={'描述信息'}>
           <Input placeholder="请输入" />
         </Form.Item>
         <Form.Item
