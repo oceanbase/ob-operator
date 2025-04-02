@@ -325,7 +325,6 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
             }
             onClick={() => {
               validateFields().then((values) => {
-                console.log('type', type);
                 const name = nodeRecord?.name;
                 if (tabKey === 'labels') {
                   if (type === 'k8s') {

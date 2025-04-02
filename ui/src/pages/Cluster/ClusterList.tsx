@@ -80,8 +80,8 @@ const columns: ColumnsType<DataType> = [
       const content = text
         ?.map((item) =>
           item.k8sCluster
-            ? `${item.zone}:${item.k8sCluster}:1`
-            : `${item.zone}:1`,
+            ? `${item.zone}:${item.k8sCluster}:${item.replicas}`
+            : `${item.zone}:${item.replicas}`,
         )
         .join(' - ');
       return <Text ellipsis={{ tooltip: content }}>{content}</Text>;
