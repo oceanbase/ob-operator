@@ -166,7 +166,7 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
                       rules={[{ required: true, message: '请输入 Keys' }]}
                       label={key === 0 && 'Key'}
                     >
-                      <Input placeholder="First Name" />
+                      <Input placeholder="请输入 " />
                     </Form.Item>
                   </Col>
                   {fromName && (
@@ -185,6 +185,7 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
                               {...restField}
                               label={key === 0 && <></>}
                               name={[name, 'operator']}
+                              initialValue={'Equal'}
                             >
                               <Select
                                 placeholder={'请选择'}
@@ -216,6 +217,17 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
                               {...restField}
                               name={[name, 'value']}
                               label={key === 0 && 'Value'}
+                              rules={[
+                                ...(getFieldValue(title)[key]?.operator ===
+                                'Equal'
+                                  ? [
+                                      {
+                                        required: true,
+                                        message: '请输入 Value',
+                                      },
+                                    ]
+                                  : []),
+                              ]}
                             >
                               <Input placeholder="请输入" />
                             </Form.Item>
@@ -313,6 +325,7 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
             }
             onClick={() => {
               validateFields().then((values) => {
+                console.log('type', type);
                 const name = nodeRecord?.name;
                 if (tabKey === 'labels') {
                   if (type === 'k8s') {

@@ -269,7 +269,7 @@ export default function NodesTable({
       </Card>
 
       <BatchEditNodeDrawer
-        type={'k8s'}
+        type={type}
         k8sClusterName={k8sClusterName}
         selectedRowKeys={selectedRowKeys}
         visible={batchNodeDrawerOpen}
@@ -287,7 +287,7 @@ export default function NodesTable({
         }}
       />
       <EditNodeDrawer
-        type={'k8s'}
+        type={type}
         k8sClusterName={k8sClusterName}
         visible={isDrawerOpen}
         onCancel={() => {
