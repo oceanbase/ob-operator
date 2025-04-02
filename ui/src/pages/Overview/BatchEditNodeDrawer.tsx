@@ -133,40 +133,24 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                   </Col>
                   <Col span={fromName ? 8 : 4}>
                     <Form.Item
-                      noStyle
-                      dependencies={[name, 'operation']}
-                      shouldUpdate
+                      {...restField}
+                      name={[name, 'key']}
+                      rules={[
+                        {
+                          required: true,
+                          message: '请输入 Keys',
+                        },
+                      ]}
                     >
-                      {({ getFieldValue }) => {
-                        return (
-                          <Form.Item
-                            {...restField}
-                            name={[name, 'key']}
-                            rules={[
-                              {
-                                required: true,
-                                message: '请输入 Keys',
-                              },
-                            ]}
-                          >
-                            {getFieldValue(title)[key]?.operation ===
-                            'delete' ? (
-                              <Select
-                                showSearch
-                                placeholder="请输入 Keys"
-                                optionFilterProp="label"
-                                options={
-                                  tabKey === 'labels'
-                                    ? labelsOption
-                                    : taintsOption
-                                }
-                              />
-                            ) : (
-                              <Input placeholder="请输入 Keys" />
-                            )}
-                          </Form.Item>
-                        );
-                      }}
+                      <Select
+                        mode="tags"
+                        maxCount={1}
+                        optionFilterProp="label"
+                        placeholder="请输入 Keys"
+                        options={
+                          tabKey === 'labels' ? labelsOption : taintsOption
+                        }
+                      />
                     </Form.Item>
                   </Col>
                   <Col span={fromName ? 10 : 16}>

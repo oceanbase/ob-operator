@@ -485,6 +485,11 @@ export default function TopoComponent({
   }, []);
   const isCreateResourcePool = modalType.current === 'createResourcePools';
   // Use different pictures for nodes in different states
+
+  const topology = {
+    topology: originTopoData?.topoData?.children,
+    ...(originTopoData?.basicInfo as API.ClusterInfo),
+  };
   return (
     <div style={{ position: 'relative', height: '100vh' }}>
       {header
@@ -493,7 +498,7 @@ export default function TopoComponent({
             <BasicInfo
               extra={false}
               style={{ backgroundColor: '#f5f8fe', border: 'none' }}
-              {...(originTopoData.basicInfo as API.ClusterInfo)}
+              {...(topology as API.ClusterInfo)}
             />
           )}
 

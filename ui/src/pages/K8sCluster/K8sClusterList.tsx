@@ -26,6 +26,7 @@ export default function K8sClusterList() {
       onSuccess: ({ successful }) => {
         if (successful) {
           message.success('删除 k8s 集群成功');
+          refresh();
         }
       },
     },

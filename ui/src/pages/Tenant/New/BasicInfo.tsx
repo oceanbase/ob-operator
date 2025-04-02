@@ -4,6 +4,7 @@ import { resourceNameRule } from '@/constants/rules';
 import { intl } from '@/utils/intl';
 import { Card, Checkbox, Col, Form, Input, Row, Select, Space } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
+import { useEffect } from 'react';
 
 const { Option } = Select;
 
@@ -35,6 +36,17 @@ export default function BasicInfo({
   const selectClusterChange = (id: number) => {
     setSelectClusterId(id);
   };
+  const path = window.location.hash.split('=')[1];
+
+  useEffect(() => {
+    if (path) {
+      const cluster = clusterOptions?.find((item) => item.label === path);
+      setSelectClusterId(cluster?.value || undefined);
+      form.setFieldsValue({
+        obcluster: cluster?.value,
+      });
+    }
+  }, [clusterList, path]);
   return (
     <Card
       title={intl.formatMessage({
