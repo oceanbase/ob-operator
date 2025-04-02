@@ -82,7 +82,7 @@ export default function NodesTable({
       width: 120,
       render: (val) => {
         return val?.length !== 0 ? (
-          <CustomTooltip text={val} width={100} />
+          <CustomTooltip text={val.join(',')} width={100} />
         ) : (
           '-'
         );
