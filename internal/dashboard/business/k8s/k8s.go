@@ -64,7 +64,7 @@ func extractNodeStatus(node *corev1.Node) string {
 
 func extractNodeRoles(node *corev1.Node) []string {
 	roles := make([]string, 0)
-	for key, _ := range node.Labels {
+	for key := range node.Labels {
 		if strings.HasPrefix(key, RoleLabelPrefix) {
 			labelParts := strings.Split(key, "/")
 			if len(labelParts) >= 2 {
