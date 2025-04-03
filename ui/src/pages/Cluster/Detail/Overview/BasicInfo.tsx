@@ -289,7 +289,9 @@ export default function BasicInfo({
           })}
         >
           {(
-            props.topology?.map((zone) => zone.observers?.length ?? ' / ') ?? []
+            props.topology?.map(
+              (zone) => (zone.observers || zone.children)?.length ?? ' / ',
+            ) ?? []
           ).join('-')}
         </Descriptions.Item>
         <Descriptions.Item

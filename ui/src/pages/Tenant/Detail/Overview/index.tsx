@@ -13,7 +13,8 @@ import { DownOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { history, useAccess, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { Button, Col, Dropdown, MenuProps, Row, Space, message } from 'antd';
+import type { MenuProps } from 'antd';
+import { Button, Col, Dropdown, Row, Space, message } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import {
   getClusterFromTenant,
@@ -134,6 +135,7 @@ export default function TenantOverview() {
               defaultMessage: '调整 Unit 数量',
             }),
             key: 'changeUnitCount',
+            disabled: tenantDetail?.info.status !== 'running',
           },
           {
             label: intl.formatMessage({

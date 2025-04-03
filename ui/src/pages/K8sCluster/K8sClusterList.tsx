@@ -32,6 +32,7 @@ export default function K8sClusterList() {
               defaultMessage: '删除 k8s 集群成功',
             }),
           );
+          refresh();
         }
       },
     },

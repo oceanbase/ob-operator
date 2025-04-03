@@ -85,7 +85,7 @@ export default function NodesTable({
       width: 120,
       render: (val) => {
         return val?.length !== 0 ? (
-          <CustomTooltip text={val} width={100} />
+          <CustomTooltip text={val.join(',')} width={100} />
         ) : (
           '-'
         );
@@ -275,7 +275,7 @@ export default function NodesTable({
       </Card>
 
       <BatchEditNodeDrawer
-        type={'k8s'}
+        type={type}
         k8sClusterName={k8sClusterName}
         selectedRowKeys={selectedRowKeys}
         visible={batchNodeDrawerOpen}
@@ -294,7 +294,7 @@ export default function NodesTable({
       />
 
       <EditNodeDrawer
-        type={'k8s'}
+        type={type}
         k8sClusterName={k8sClusterName}
         visible={isDrawerOpen}
         onCancel={() => {

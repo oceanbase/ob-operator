@@ -2,6 +2,7 @@ import TableFilterDropdown from '@/components/TableFilterDropdown';
 import { SearchOutlined } from '@ant-design/icons';
 import { token } from '@oceanbase/design';
 import type { FilterDropdownProps } from '@oceanbase/design/es/table/interface';
+import { trim } from 'lodash';
 
 export const getColumnSearchProps = ({
   frontEndSearch,
@@ -30,7 +31,9 @@ export const getColumnSearchProps = ({
   ...(frontEndSearch
     ? {
         onFilter: (value, record) => {
-          const realValue = (value && value.split(symbol)[0]).toLowerCase();
+          const realValue = trim(
+            (value && value.split(symbol)[0]).toLowerCase(),
+          );
 
           return arraySearch
             ? record[dataIndex].some(
@@ -39,10 +42,12 @@ export const getColumnSearchProps = ({
                   item.value.toLowerCase().includes(realValue),
               )
             : record[dataIndex] &&
-                record[dataIndex]
-                  .toString()
-                  .toLowerCase()
-                  .includes(value && value.toLowerCase());
+                trim(
+                  record[dataIndex]
+                    .toString()
+                    .toLowerCase()
+                    .includes(value && value.toLowerCase()),
+                );
         },
       }
     : {}),

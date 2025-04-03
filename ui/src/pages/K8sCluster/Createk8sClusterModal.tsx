@@ -171,7 +171,6 @@ export default function Createk8sClusterModal({
             disabled={isEdit}
           />
         </Form.Item>
-
         <Form.Item
           name={'description'}
           label={intl.formatMessage({
