@@ -1,3 +1,4 @@
+import { intl } from '@/utils/intl';
 import { Button, Card, message, Space, Table, Typography } from 'antd';
 
 import { K8sClusterApi } from '@/api';
@@ -25,7 +26,12 @@ export default function K8sClusterList() {
       manual: true,
       onSuccess: ({ successful }) => {
         if (successful) {
-          message.success('删除 k8s 集群成功');
+          message.success(
+            intl.formatMessage({
+              id: 'src.pages.K8sCluster.F485EB45',
+              defaultMessage: '删除 k8s 集群成功',
+            }),
+          );
           refresh();
         }
       },
@@ -34,7 +40,10 @@ export default function K8sClusterList() {
 
   const columns: ColumnsType<API.TenantDetail> = [
     {
-      title: '名称',
+      title: intl.formatMessage({
+        id: 'src.pages.K8sCluster.2588408F',
+        defaultMessage: '名称',
+      }),
       dataIndex: 'name',
       render: (text) => (
         <Text ellipsis={{ tooltip: text }}>
@@ -43,11 +52,17 @@ export default function K8sClusterList() {
       ),
     },
     {
-      title: '描述',
+      title: intl.formatMessage({
+        id: 'src.pages.K8sCluster.22D1DE51',
+        defaultMessage: '描述',
+      }),
       dataIndex: 'description',
     },
     {
-      title: '创建时间',
+      title: intl.formatMessage({
+        id: 'src.pages.K8sCluster.0D18EFBC',
+        defaultMessage: '创建时间',
+      }),
       width: 178,
       dataIndex: 'createdAt',
       render: (text) => {
@@ -56,7 +71,10 @@ export default function K8sClusterList() {
     },
 
     {
-      title: '操作',
+      title: intl.formatMessage({
+        id: 'src.pages.K8sCluster.F4F859EC',
+        defaultMessage: '操作',
+      }),
       dataIndex: 'operation',
 
       render: (_, record) => {
@@ -68,18 +86,27 @@ export default function K8sClusterList() {
                 setEditData(record);
               }}
             >
-              编辑
+              {intl.formatMessage({
+                id: 'src.pages.K8sCluster.D6091626',
+                defaultMessage: '编辑',
+              })}
             </a>
             <Button
               type="link"
               onClick={() =>
                 showDeleteConfirm({
-                  title: '确定要删除该 K8s 集群吗？',
+                  title: intl.formatMessage({
+                    id: 'src.pages.K8sCluster.CE727163',
+                    defaultMessage: '确定要删除该 K8s 集群吗？',
+                  }),
                   onOk: () => deleteK8sCluster(record.name),
                 })
               }
             >
-              删除
+              {intl.formatMessage({
+                id: 'src.pages.K8sCluster.5C84A300',
+                defaultMessage: '删除',
+              })}
             </Button>
           </Space>
         );
@@ -92,7 +119,12 @@ export default function K8sClusterList() {
       loading={loading}
       title={
         <div>
-          <h2 style={{ marginBottom: 0 }}>K8s 集群管理</h2>
+          <h2 style={{ marginBottom: 0 }}>
+            {intl.formatMessage({
+              id: 'src.pages.K8sCluster.5689B3FE',
+              defaultMessage: 'K8s 集群管理',
+            })}
+          </h2>
         </div>
       }
       extra={
@@ -103,7 +135,10 @@ export default function K8sClusterList() {
               setVisible(true);
             }}
           >
-            创建 K8S 集群
+            {intl.formatMessage({
+              id: 'src.pages.K8sCluster.F57B4076',
+              defaultMessage: '创建 K8S 集群',
+            })}
           </Button>
         ) : null
       }
@@ -116,6 +151,7 @@ export default function K8sClusterList() {
         bordered
         sticky
       />
+
       <Createk8sClusterModal
         visible={visible}
         onSuccess={() => {

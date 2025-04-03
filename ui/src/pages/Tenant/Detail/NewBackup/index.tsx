@@ -132,7 +132,13 @@ export default function NewBackup() {
         ...reqData,
       });
       if (res.successful) {
-        message.success('创建恢复租户成功', 3);
+        message.success(
+          intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.NewBackup.E0A8CF8F',
+            defaultMessage: '创建恢复租户成功',
+          }),
+          3,
+        );
         form.resetFields();
         history.replace('/tenant');
       }
@@ -172,12 +178,19 @@ export default function NewBackup() {
       : [
           {
             key: 'backup',
-            label: '备份',
+            label: intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.NewBackup.6D21D26D',
+              defaultMessage: '备份',
+            }),
           },
         ]),
+
     {
       key: 'recover',
-      label: '恢复',
+      label: intl.formatMessage({
+        id: 'src.pages.Tenant.Detail.NewBackup.E99996A9',
+        defaultMessage: '恢复',
+      }),
     },
   ];
 

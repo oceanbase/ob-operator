@@ -64,12 +64,18 @@ export default function ServerTable({
       key: 'namespace',
     },
     {
-      title: 'observer 地址',
+      title: intl.formatMessage({
+        id: 'src.pages.Cluster.Detail.Overview.AD557262',
+        defaultMessage: 'observer 地址',
+      }),
       dataIndex: 'address',
       key: 'address',
     },
     {
-      title: 'K8s 集群',
+      title: intl.formatMessage({
+        id: 'src.pages.Cluster.Detail.Overview.13866D9B',
+        defaultMessage: 'K8s 集群',
+      }),
       dataIndex: 'k8sCluster',
       render: (text) => {
         return <span>{text || '-'}</span>;

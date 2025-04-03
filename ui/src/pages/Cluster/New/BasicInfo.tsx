@@ -181,7 +181,10 @@ export default function BasicInfo({
         </Col>
         <Col span={8} style={{ height: 48 }}>
           <PasswordInput
-            title={'root 密码'}
+            title={intl.formatMessage({
+              id: 'src.pages.Cluster.New.EDBFBA93',
+              defaultMessage: 'root 密码',
+            })}
             value={passwordVal}
             onChange={setPasswordVal}
             form={form}
@@ -208,7 +211,11 @@ export default function BasicInfo({
         }}
         onClick={() => setshowProxyro(!showProxyro)}
       >
-        高级配置
+        {intl.formatMessage({
+          id: 'src.pages.Cluster.New.34BEA310',
+          defaultMessage: '高级配置',
+        })}
+
         {showProxyro ? (
           <DownOutlined
             style={{
@@ -227,7 +234,10 @@ export default function BasicInfo({
         <Row gutter={[16, 32]} style={{ marginTop: 24 }}>
           <Col span={8}>
             <PasswordInput
-              title="proxyro 密码"
+              title={intl.formatMessage({
+                id: 'src.pages.Cluster.New.04550403',
+                defaultMessage: 'proxyro 密码',
+              })}
               value={proxyroPasswordVal}
               onChange={setProxyroPasswordVal}
               form={form}

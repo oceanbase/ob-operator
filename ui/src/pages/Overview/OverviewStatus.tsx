@@ -137,7 +137,10 @@ export default function OverviewStatus() {
                             marginTop: '21px',
                           }}
                         >
-                          K8S 集群
+                          {intl.formatMessage({
+                            id: 'src.pages.Overview.CA121E8F',
+                            defaultMessage: 'K8S 集群',
+                          })}
                         </div>
                       </>
                     ) : null}

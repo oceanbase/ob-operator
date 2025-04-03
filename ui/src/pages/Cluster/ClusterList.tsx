@@ -74,7 +74,10 @@ const columns: ColumnsType<DataType> = [
     ),
   },
   {
-    title: 'Zone 分布',
+    title: intl.formatMessage({
+      id: 'src.pages.Cluster.7B8CBD22',
+      defaultMessage: 'Zone 分布',
+    }),
     dataIndex: 'topology',
     render: (text) => {
       const content = text

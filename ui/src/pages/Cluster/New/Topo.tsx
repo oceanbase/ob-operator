@@ -226,6 +226,7 @@ export default function Topo({ form }) {
                       name={[name, 'type']}
                       initialValue={'NODE'}
                     />
+
                     <DeleteOutlined
                       onClick={() => remove(name)}
                       style={{ marginBottom: 15 }}
@@ -442,12 +443,18 @@ export default function Topo({ form }) {
                     </Col>
                     <Col span={5}>
                       <Form.Item
-                        label={'K8s 集群'}
+                        label={intl.formatMessage({
+                          id: 'src.pages.Cluster.New.6CB28C7E',
+                          defaultMessage: 'K8s 集群',
+                        })}
                         name={[field.name, 'k8sCluster']}
                       >
                         <Select
                           showSearch
-                          placeholder="请选择 K8s 集群"
+                          placeholder={intl.formatMessage({
+                            id: 'src.pages.Cluster.New.9B629F24',
+                            defaultMessage: '请选择 K8s 集群',
+                          })}
                           optionFilterProp="label"
                           options={options}
                         />

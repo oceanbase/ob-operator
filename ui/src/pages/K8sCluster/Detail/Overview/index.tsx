@@ -70,7 +70,10 @@ const K8sClusterOverview: React.FC = () => {
   return (
     <PageContainer
       header={{
-        title: 'k8s 集群概览',
+        title: intl.formatMessage({
+          id: 'src.pages.K8sCluster.Detail.Overview.8DF45B5B',
+          defaultMessage: 'k8s 集群概览',
+        }),
       }}
       loading={loading}
     >
@@ -92,10 +95,20 @@ const K8sClusterOverview: React.FC = () => {
                 >
                   {clusterDetail?.name}
                 </Descriptions.Item>
-                <Descriptions.Item label={'描述信息'}>
+                <Descriptions.Item
+                  label={intl.formatMessage({
+                    id: 'src.pages.K8sCluster.Detail.Overview.E84E07AA',
+                    defaultMessage: '描述信息',
+                  })}
+                >
                   {clusterDetail?.description || '-'}
                 </Descriptions.Item>
-                <Descriptions.Item label={'创建日期'}>
+                <Descriptions.Item
+                  label={intl.formatMessage({
+                    id: 'src.pages.K8sCluster.Detail.Overview.2FD7CD69',
+                    defaultMessage: '创建日期',
+                  })}
+                >
                   {formatTime(clusterDetail?.createdAt)}
                 </Descriptions.Item>
               </Descriptions>
@@ -111,6 +124,7 @@ const K8sClusterOverview: React.FC = () => {
             K8sNodeRefresh();
           }}
         />
+
         <Col span={24}>
           <EventsTable
             externalLoading={getK8sEventsReqLoading}

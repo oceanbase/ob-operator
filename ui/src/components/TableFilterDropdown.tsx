@@ -1,3 +1,4 @@
+import { intl } from '@/utils/intl';
 import { Button, Input, Space } from '@oceanbase/design';
 import type { FilterDropdownProps } from '@oceanbase/design/es/table/interface';
 import { useEffect, useState } from 'react';
@@ -48,6 +49,7 @@ const TableFilterDropdown: React.FC<TableFilterDropdownProps> = ({
         }}
         style={{ width: 188, marginBottom: 8, display: 'block' }}
       />
+
       <Space>
         <Button
           type="primary"
@@ -57,7 +59,10 @@ const TableFilterDropdown: React.FC<TableFilterDropdownProps> = ({
           size="small"
           style={{ width: 90 }}
         >
-          搜索
+          {intl.formatMessage({
+            id: 'src.components.333BA2EC',
+            defaultMessage: '搜索',
+          })}
         </Button>
         <Button
           onClick={() => {
@@ -70,7 +75,10 @@ const TableFilterDropdown: React.FC<TableFilterDropdownProps> = ({
           size="small"
           style={{ width: 90 }}
         >
-          重置
+          {intl.formatMessage({
+            id: 'src.components.CA97A806',
+            defaultMessage: '重置',
+          })}
         </Button>
       </Space>
     </div>

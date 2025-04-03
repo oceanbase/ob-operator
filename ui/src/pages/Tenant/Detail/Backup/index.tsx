@@ -68,11 +68,17 @@ export default function Backup() {
   const tabList = [
     {
       key: 'backup',
-      label: '备份',
+      label: intl.formatMessage({
+        id: 'src.pages.Tenant.Detail.Backup.1FDBD9D5',
+        defaultMessage: '备份',
+      }),
     },
     {
       key: 'recover',
-      label: '恢复',
+      label: intl.formatMessage({
+        id: 'src.pages.Tenant.Detail.Backup.E93AC8FD',
+        defaultMessage: '恢复',
+      }),
     },
   ];
 
@@ -133,7 +139,13 @@ export default function Backup() {
         ...reqData,
       });
       if (res?.successful) {
-        message.success('创建恢复租户成功', 3);
+        message.success(
+          intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.Backup.0A4CED66',
+            defaultMessage: '创建恢复租户成功',
+          }),
+          3,
+        );
         form.resetFields();
         history.replace('/tenant');
       }
@@ -163,8 +175,14 @@ export default function Backup() {
         backupPolicyRefresh={backupPolicyRefresh}
       />
     ),
+
     recover: (
-      <Card title="创建恢复">
+      <Card
+        title={intl.formatMessage({
+          id: 'src.pages.Tenant.Detail.Backup.D00D1710',
+          defaultMessage: '创建恢复',
+        })}
+      >
         <Form form={form}>
           <RecoverFormItem
             form={form}
