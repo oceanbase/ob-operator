@@ -27,12 +27,34 @@ export default function ZoneItem({
   obVersion,
 }: ZoneItemProps) {
   const REPLICA_TYPE_LIST = [
-    { value: 'Full', label: '全能型副本' },
+    {
+      value: 'Full',
+      label: intl.formatMessage({
+        id: 'src.pages.Tenant.ZoneItem.14D49F75',
+        defaultMessage: '全能型副本',
+      }),
+    },
     ...(isGte4_2(obVersion)
-      ? [{ value: 'Readonly', label: '只读型副本' }]
+      ? [
+          {
+            value: 'Readonly',
+            label: intl.formatMessage({
+              id: 'src.pages.Tenant.ZoneItem.BFD370B4',
+              defaultMessage: '只读型副本',
+            }),
+          },
+        ]
       : []),
     ...(isGte4_3_3(obVersion)
-      ? [{ value: 'Columnstore', label: '只读列存型副本' }]
+      ? [
+          {
+            value: 'Columnstore',
+            label: intl.formatMessage({
+              id: 'src.pages.Tenant.ZoneItem.577FB981',
+              defaultMessage: '只读列存型副本',
+            }),
+          },
+        ]
       : []),
   ];
 
@@ -81,7 +103,10 @@ export default function ZoneItem({
       <Col span={5} style={type === 'tenantBackup' ? { marginTop: 24 } : {}}>
         <Form.Item
           name={['pools', name, 'type']}
-          label={'副本类型'}
+          label={intl.formatMessage({
+            id: 'src.pages.Tenant.ZoneItem.93E193BC',
+            defaultMessage: '副本类型',
+          })}
           initialValue={'Full'}
         >
           <Select options={REPLICA_TYPE_LIST} />

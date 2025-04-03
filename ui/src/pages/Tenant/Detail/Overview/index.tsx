@@ -136,7 +136,10 @@ export default function TenantOverview() {
             key: 'changeUnitCount',
           },
           {
-            label: '创建租户恢复策略',
+            label: intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.Overview.98BA8E85',
+              defaultMessage: '创建租户恢复策略',
+            }),
             key: 'createBackupPolicy',
           },
         ]
@@ -180,6 +183,7 @@ export default function TenantOverview() {
       danger: true,
     },
   ];
+
   const menuChange = ({ key }) => {
     if (key === 'createBackupPolicy') {
       history.push(
@@ -208,7 +212,11 @@ export default function TenantOverview() {
             <Dropdown menu={{ items, onClick: menuChange }}>
               <Button>
                 <Space>
-                  租户管理
+                  {intl.formatMessage({
+                    id: 'src.pages.Tenant.Detail.Overview.52F76C8E',
+                    defaultMessage: '租户管理',
+                  })}
+
                   <DownOutlined />
                 </Space>
               </Button>

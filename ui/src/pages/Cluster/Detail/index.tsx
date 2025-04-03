@@ -39,7 +39,10 @@ export default () => {
       link: `/cluster/${ns}/${name}/${clusterName}/tenant`,
     },
     {
-      title: '集群参数',
+      title: intl.formatMessage({
+        id: 'src.pages.Cluster.Detail.C05D24A0',
+        defaultMessage: '集群参数',
+      }),
       key: 'parameters',
       link: `/cluster/${ns}/${name}/${clusterName}/parameters`,
       accessible: access.obclusterwrite,
@@ -54,5 +57,6 @@ export default () => {
       accessible: access.obclusterwrite,
     },
   ];
+
   return <DetailLayout menus={menus} subSideSelectKey="cluster" />;
 };

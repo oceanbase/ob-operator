@@ -121,11 +121,17 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                         options={[
                           {
                             value: 'overwrite',
-                            label: '新增/更新',
+                            label: intl.formatMessage({
+                              id: 'src.pages.Overview.D7DF0F23',
+                              defaultMessage: '新增/更新',
+                            }),
                           },
                           {
                             value: 'delete',
-                            label: '删除',
+                            label: intl.formatMessage({
+                              id: 'src.pages.Overview.B3589C81',
+                              defaultMessage: '删除',
+                            }),
                           },
                         ]}
                       />
@@ -145,7 +151,10 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                             rules={[
                               {
                                 required: true,
-                                message: '请输入 Keys',
+                                message: intl.formatMessage({
+                                  id: 'src.pages.Overview.8666CAD2',
+                                  defaultMessage: '请输入 Keys',
+                                }),
                               },
                             ]}
                           >
@@ -153,7 +162,10 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                             'delete' ? (
                               <Select
                                 showSearch
-                                placeholder="请输入 Keys"
+                                placeholder={intl.formatMessage({
+                                  id: 'src.pages.Overview.71AA631F',
+                                  defaultMessage: '请输入 Keys',
+                                })}
                                 optionFilterProp="label"
                                 options={
                                   tabKey === 'labels'
@@ -162,7 +174,12 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                                 }
                               />
                             ) : (
-                              <Input placeholder="请输入 Keys" />
+                              <Input
+                                placeholder={intl.formatMessage({
+                                  id: 'src.pages.Overview.8A398AD4',
+                                  defaultMessage: '请输入 Keys',
+                                })}
+                              />
                             )}
                           </Form.Item>
                         );
@@ -196,7 +213,10 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                                       initialValue={'Equal'}
                                     >
                                       <Select
-                                        placeholder={'请选择'}
+                                        placeholder={intl.formatMessage({
+                                          id: 'src.pages.Overview.AC07C9B6',
+                                          defaultMessage: '请选择',
+                                        })}
                                         options={OPERATOR_LIST}
                                       />
                                     </Form.Item>
@@ -217,7 +237,12 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                                             {...restField}
                                             name={[name, 'value']}
                                           >
-                                            <Input placeholder="请输入" />
+                                            <Input
+                                              placeholder={intl.formatMessage({
+                                                id: 'src.pages.Overview.C35F8F39',
+                                                defaultMessage: '请输入',
+                                              })}
+                                            />
                                           </Form.Item>
                                         )}
                                       </Col>
@@ -263,7 +288,10 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                 block
                 icon={<PlusOutlined />}
               >
-                添加
+                {intl.formatMessage({
+                  id: 'src.pages.Overview.4ADD12B7',
+                  defaultMessage: '添加',
+                })}
               </Button>
             </Form.Item>
           </>
@@ -285,7 +313,10 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
 
   return (
     <Drawer
-      title={'批量编辑节点'}
+      title={intl.formatMessage({
+        id: 'src.pages.Overview.684169FA',
+        defaultMessage: '批量编辑节点',
+      })}
       open={visible}
       destroyOnClose
       onClose={() => {

@@ -103,7 +103,10 @@ export default function Parameters() {
       }),
     },
     {
-      title: '当前值',
+      title: intl.formatMessage({
+        id: 'src.pages.Cluster.Detail.Parameters.B46C4AD6',
+        defaultMessage: '当前值',
+      }),
       dataIndex: 'value',
       width: 160,
       render: (text: string, record) => {
