@@ -83,25 +83,43 @@ export default function RecoverFormItem({
       <Col span={12}>
         <Form.Item
           name={['source', 'restore', 'until', 'date']}
-          label={'恢复日期'}
+          label={intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.NewBackup.0E030DEF',
+            defaultMessage: '恢复日期',
+          })}
           rules={[
             {
               required: true,
-              message: '请选择恢复日期',
+              message: intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.NewBackup.EA37229D',
+                defaultMessage: '请选择恢复日期',
+              }),
             },
           ]}
         >
-          <DatePicker style={{ width: '100%' }} placeholder={'请选择'} />
+          <DatePicker
+            style={{ width: '100%' }}
+            placeholder={intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.NewBackup.E7A9D4D4',
+              defaultMessage: '请选择',
+            })}
+          />
         </Form.Item>
       </Col>
       <Col span={12}>
         <Form.Item
           name={['source', 'restore', 'until', 'time']}
-          label={'时分秒'}
+          label={intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.NewBackup.C640369C',
+            defaultMessage: '时分秒',
+          })}
           rules={[
             {
               required: true,
-              message: '请选择时间',
+              message: intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.NewBackup.86B5A305',
+                defaultMessage: '请选择时间',
+              }),
             },
           ]}
         >
@@ -114,11 +132,17 @@ export default function RecoverFormItem({
       <Col span={8}>
         <Form.Item
           name={['obcluster']}
-          label={'集群'}
+          label={intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.NewBackup.6BE036A5',
+            defaultMessage: '集群',
+          })}
           rules={[
             {
               required: true,
-              message: '请选择集群',
+              message: intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.NewBackup.B2B37B19',
+                defaultMessage: '请选择集群',
+              }),
             },
           ]}
         >
@@ -151,7 +175,10 @@ export default function RecoverFormItem({
       <Col span={8}>
         <Form.Item
           name={['name']}
-          label={'资源名'}
+          label={intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.NewBackup.52D00A19',
+            defaultMessage: '资源名',
+          })}
           validateFirst
           rules={[
             {
@@ -171,13 +198,21 @@ export default function RecoverFormItem({
             resourceNameRule,
           ]}
         >
-          <Input placeholder="请输入" />
+          <Input
+            placeholder={intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.NewBackup.94B62FC6',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
       </Col>
       <Col span={8}>
         <Form.Item
           name={['tenantName']}
-          label={'租户名'}
+          label={intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.NewBackup.B2BF7E11',
+            defaultMessage: '租户名',
+          })}
           rules={[
             {
               required: true,
@@ -195,7 +230,12 @@ export default function RecoverFormItem({
             },
           ]}
         >
-          <Input placeholder="请输入" />
+          <Input
+            placeholder={intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.NewBackup.A1C4D885',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
       </Col>
       <Col span={24}>
@@ -213,7 +253,10 @@ export default function RecoverFormItem({
           <Col span={22}></Col>
           <Col span={2}>
             <Button type="primary" onClick={() => onFinish()}>
-              提交
+              {intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.NewBackup.314A793A',
+                defaultMessage: '提交',
+              })}
             </Button>
           </Col>
         </>

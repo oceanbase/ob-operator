@@ -62,7 +62,10 @@ export default function NodesTable({
 
   const columns: ColumnsType<DataType> = [
     {
-      title: '名称',
+      title: intl.formatMessage({
+        id: 'src.pages.Overview.06FAFC98',
+        defaultMessage: '名称',
+      }),
       dataIndex: 'name',
       key: 'name',
       width: 120,
@@ -252,7 +255,10 @@ export default function NodesTable({
         extra={
           selectedRowKeys.length > 0 && (
             <Button onClick={() => setBatchNodeDrawerOpen(true)} type="primary">
-              批量编辑
+              {intl.formatMessage({
+                id: 'src.pages.Overview.1161AAE2',
+                defaultMessage: '批量编辑',
+              })}
             </Button>
           )
         }
@@ -286,6 +292,7 @@ export default function NodesTable({
           setSelectedRowKeys([]);
         }}
       />
+
       <EditNodeDrawer
         type={type}
         k8sClusterName={k8sClusterName}

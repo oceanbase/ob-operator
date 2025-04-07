@@ -97,18 +97,27 @@ export default function AddZoneModal({
           />
         </Form.Item>
         <Form.Item
-          label={'K8s 集群'}
+          label={intl.formatMessage({
+            id: 'src.components.customModal.9CA73345',
+            defaultMessage: 'K8s 集群',
+          })}
           name={'k8sCluster'}
           rules={[
             {
               required: true,
-              message: '请选择 K8s 集群',
+              message: intl.formatMessage({
+                id: 'src.components.customModal.401CB296',
+                defaultMessage: '请选择 K8s 集群',
+              }),
             },
           ]}
         >
           <Select
             showSearch
-            placeholder="请选择 K8s 集群"
+            placeholder={intl.formatMessage({
+              id: 'src.components.customModal.7C047830',
+              defaultMessage: '请选择 K8s 集群',
+            })}
             optionFilterProp="label"
             options={options}
           />

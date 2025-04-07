@@ -1,5 +1,6 @@
 import { K8sClusterApi } from '@/api';
 import { encryptText, usePublicKey } from '@/hook/usePublicKey';
+import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { Form, Input, Modal, message } from 'antd';
 import CryptoJS from 'crypto-js';
@@ -22,7 +23,12 @@ export default function Createk8sClusterModal({
       manual: true,
       onSuccess: ({ successful }) => {
         if (successful) {
-          message.success('创建 k8s 集群成功');
+          message.success(
+            intl.formatMessage({
+              id: 'src.pages.K8sCluster.E36F7EB7',
+              defaultMessage: '创建 k8s 集群成功',
+            }),
+          );
           onSuccess();
           resetFields();
           setFieldsValue({
@@ -40,7 +46,12 @@ export default function Createk8sClusterModal({
       manual: true,
       onSuccess: ({ successful }) => {
         if (successful) {
-          message.success('编辑 k8s 集群成功');
+          message.success(
+            intl.formatMessage({
+              id: 'src.pages.K8sCluster.03B81DB9',
+              defaultMessage: '编辑 k8s 集群成功',
+            }),
+          );
           onSuccess();
           resetFields();
           setFieldsValue({
@@ -115,7 +126,17 @@ export default function Createk8sClusterModal({
 
   return (
     <Modal
-      title={isEdit ? '编辑 k8s 集群' : '创建 k8s 集群'}
+      title={
+        isEdit
+          ? intl.formatMessage({
+              id: 'src.pages.K8sCluster.8802D11A',
+              defaultMessage: '编辑 k8s 集群',
+            })
+          : intl.formatMessage({
+              id: 'src.pages.K8sCluster.60FEC7C3',
+              defaultMessage: '创建 k8s 集群',
+            })
+      }
       width={520}
       open={visible}
       onOk={() => handleSubmit()}
@@ -128,23 +149,70 @@ export default function Createk8sClusterModal({
       <Form form={form} layout="vertical">
         <Form.Item
           name={'name'}
-          label={'名称'}
-          rules={[{ required: true, message: '请输入名称' }]}
+          label={intl.formatMessage({
+            id: 'src.pages.K8sCluster.B80D0A64',
+            defaultMessage: '名称',
+          })}
+          rules={[
+            {
+              required: true,
+              message: intl.formatMessage({
+                id: 'src.pages.K8sCluster.26B8B4CC',
+                defaultMessage: '请输入名称',
+              }),
+            },
+          ]}
         >
-          <Input placeholder="请输入" disabled={isEdit} />
+          <Input
+            placeholder={intl.formatMessage({
+              id: 'src.pages.K8sCluster.241C762D',
+              defaultMessage: '请输入',
+            })}
+            disabled={isEdit}
+          />
         </Form.Item>
-
-        <Form.Item name={'description'} label={'描述信息'}>
-          <Input placeholder="请输入" />
+        <Form.Item
+          name={'description'}
+          label={intl.formatMessage({
+            id: 'src.pages.K8sCluster.01E568B6',
+            defaultMessage: '描述信息',
+          })}
+          rules={[
+            {
+              required: true,
+              message: intl.formatMessage({
+                id: 'src.pages.K8sCluster.10141AFB',
+                defaultMessage: '请输入描述信息',
+              }),
+            },
+          ]}
+        >
+          <Input
+            placeholder={intl.formatMessage({
+              id: 'src.pages.K8sCluster.30A91B48',
+              defaultMessage: '请输入',
+            })}
+          />
         </Form.Item>
         <Form.Item
           name={'kubeConfig'}
           label={'kubeConfig'}
-          rules={[{ required: true, message: '请输入 kubeConfig' }]}
+          rules={[
+            {
+              required: true,
+              message: intl.formatMessage({
+                id: 'src.pages.K8sCluster.4B6E3823',
+                defaultMessage: '请输入 kubeConfig',
+              }),
+            },
+          ]}
         >
           <Input.TextArea
             autoSize={{ minRows: 8, maxRows: 8 }}
-            placeholder="请输入"
+            placeholder={intl.formatMessage({
+              id: 'src.pages.K8sCluster.02D39AC8',
+              defaultMessage: '请输入',
+            })}
           />
         </Form.Item>
       </Form>

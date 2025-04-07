@@ -163,7 +163,15 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
                     <Form.Item
                       {...restField}
                       name={[name, 'key']}
-                      rules={[{ required: true, message: '请输入 Keys' }]}
+                      rules={[
+                        {
+                          required: true,
+                          message: intl.formatMessage({
+                            id: 'src.pages.Overview.ECC5714F',
+                            defaultMessage: '请输入 Keys',
+                          }),
+                        },
+                      ]}
                       label={key === 0 && 'Key'}
                     >
                       <Input placeholder="请输入 " />
@@ -188,7 +196,10 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
                               initialValue={'Equal'}
                             >
                               <Select
-                                placeholder={'请选择'}
+                                placeholder={intl.formatMessage({
+                                  id: 'src.pages.Overview.0736D5A2',
+                                  defaultMessage: '请选择',
+                                })}
                                 defaultValue={
                                   getFieldValue(title)[key]?.value
                                     ? 'Equal'
@@ -229,7 +240,12 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
                                   : []),
                               ]}
                             >
-                              <Input placeholder="请输入" />
+                              <Input
+                                placeholder={intl.formatMessage({
+                                  id: 'src.pages.Overview.F0C02D08',
+                                  defaultMessage: '请输入',
+                                })}
+                              />
                             </Form.Item>
                           )}
                         </Col>
@@ -270,7 +286,10 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
                 block
                 icon={<PlusOutlined />}
               >
-                添加
+                {intl.formatMessage({
+                  id: 'src.pages.Overview.833ECBA2',
+                  defaultMessage: '添加',
+                })}
               </Button>
             </Form.Item>
           </>
@@ -292,7 +311,10 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
 
   return (
     <Drawer
-      title={'编辑节点'}
+      title={intl.formatMessage({
+        id: 'src.pages.Overview.406A1FCA',
+        defaultMessage: '编辑节点',
+      })}
       open={visible}
       destroyOnClose
       onClose={() => {

@@ -100,7 +100,10 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
       accessible: access.acread || access.acwrite,
     },
     {
-      title: 'K8s 集群管理',
+      title: intl.formatMessage({
+        id: 'src.pages.Layouts.DetailLayout.B42EF2EF',
+        defaultMessage: 'K8s 集群管理',
+      }),
       link: '/k8scluster',
       icon: <RadarChartOutlined style={{ color: 'rgb(109,120,147)' }} />,
       accessible: access.acread || access.acwrite,
