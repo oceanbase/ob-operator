@@ -138,9 +138,8 @@ export default function TenantOverview() {
             disabled: tenantDetail?.info.status !== 'running',
           },
           {
-            label: '创建租户恢复策略',
+            label: '恢复租户',
             key: 'createBackupPolicy',
-            disabled: tenantDetail?.info.status !== 'running',
           },
         ]
       : []),
@@ -153,7 +152,6 @@ export default function TenantOverview() {
             }),
             key: 'activateTenant',
             onClick: () => openOperateModal('activateTenant'),
-            disabled: tenantDetail?.info.status !== 'running',
           },
           {
             label: intl.formatMessage({
@@ -161,7 +159,6 @@ export default function TenantOverview() {
               defaultMessage: '备租户回放日志',
             }),
             key: 'logReplay',
-            disabled: tenantDetail?.info.status !== 'running',
           },
         ]
       : []),
@@ -173,7 +170,6 @@ export default function TenantOverview() {
               defaultMessage: '主备切换',
             }),
             key: 'switchTenant',
-            disabled: tenantDetail?.info.status !== 'running',
           },
         ]
       : []),

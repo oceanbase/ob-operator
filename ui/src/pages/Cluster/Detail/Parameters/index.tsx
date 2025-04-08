@@ -81,12 +81,7 @@ export default function Parameters() {
           })}
         </Tag>
       ),
-
       value: 'notMatched',
-    },
-    {
-      label: '/',
-      value: '',
     },
   ];
 
@@ -193,13 +188,31 @@ export default function Parameters() {
         text: label,
         value,
       })),
-      onFilter: (value: any, record) => {
-        return record?.status === value;
+      onFilter: (value, record) => {
+        return value === 'matched'
+          ? record.status === value
+          : record.status !== 'matched';
       },
-      render: (text) => {
-        const content = statusList?.find((item) => item.value === text)?.label;
 
-        return !text ? '/' : <span>{content}</span>;
+      render: (text) => {
+        const content =
+          text === 'matched' ? (
+            <Tag color={'green'}>
+              {intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.D5CCD27D',
+                defaultMessage: '已匹配',
+              })}
+            </Tag>
+          ) : (
+            <Tag color={'gold'}>
+              {intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.DF83C06D',
+                defaultMessage: '不匹配',
+              })}
+            </Tag>
+          );
+
+        return <span>{content}</span>;
       },
     },
     {
