@@ -5,7 +5,7 @@ import { K8sClusterApi } from '@/api';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { getK8sObclusterListReq } from '@/services';
 import { formatTime, isNullValue } from '@oceanbase/util';
-import { Link, useAccess } from '@umijs/max';
+import { Link, useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { ColumnsType } from 'antd/es/table';
 import { useState } from 'react';
@@ -13,7 +13,7 @@ import Createk8sClusterModal from './Createk8sClusterModal';
 
 const { Text } = Typography;
 export default function K8sClusterList() {
-  const access = useAccess();
+  const { initialState } = useModel('@@initialState');
   const [visible, setVisible] = useState<boolean>(false);
   const [editData, setEditData] = useState<string>({});
   const { data, refresh, loading } = useRequest(getK8sObclusterListReq);
@@ -38,6 +38,16 @@ export default function K8sClusterList() {
     },
   );
 
+  const allPolicies = initialState?.policies?.filter(
+    (policy) => policy.domain === 'k8s-cluster',
+  );
+  const k8sClusterAccess = allPolicies?.map(
+    (item) => `k8sCluster${item.action}`,
+  );
+
+  const k8sClusterwrite = k8sClusterAccess?.includes('k8sClusterwrite');
+  const k8sClusterread = k8sClusterAccess?.includes('k8sClusterread');
+
   const columns: ColumnsType<API.TenantDetail> = [
     {
       title: intl.formatMessage({
@@ -47,7 +57,7 @@ export default function K8sClusterList() {
       dataIndex: 'name',
       render: (text) => (
         <Text ellipsis={{ tooltip: text }}>
-          <Link to={`${text}`}>{text}</Link>
+          {k8sClusterread ? <Link to={`${text}`}>{text}</Link> : text}
         </Text>
       ),
     },
@@ -78,7 +88,7 @@ export default function K8sClusterList() {
       dataIndex: 'operation',
 
       render: (_, record) => {
-        return (
+        return k8sClusterwrite ? (
           <Space>
             <a
               onClick={() => {
@@ -109,7 +119,7 @@ export default function K8sClusterList() {
               })}
             </Button>
           </Space>
-        );
+        ) : null;
       },
     },
   ];
@@ -128,7 +138,7 @@ export default function K8sClusterList() {
         </div>
       }
       extra={
-        access.obclusterwrite ? (
+        k8sClusterwrite ? (
           <Button
             type="primary"
             onClick={() => {

@@ -42,12 +42,10 @@ export const getColumnSearchProps = ({
                   item.value.toLowerCase().includes(realValue),
               )
             : record[dataIndex] &&
-                trim(
-                  record[dataIndex]
-                    .toString()
-                    .toLowerCase()
-                    .includes(value && value.toLowerCase()),
-                );
+                record[dataIndex]
+                  .toString()
+                  .toLowerCase()
+                  .includes(trim(value && value.toLowerCase()));
         },
       }
     : {}),

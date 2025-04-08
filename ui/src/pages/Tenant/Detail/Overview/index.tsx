@@ -140,8 +140,9 @@ export default function TenantOverview() {
           {
             label: intl.formatMessage({
               id: 'src.pages.Tenant.Detail.Overview.98BA8E85',
-              defaultMessage: '创建租户恢复策略',
+              defaultMessage: '恢复租户',
             }),
+
             key: 'createBackupPolicy',
           },
         ]
