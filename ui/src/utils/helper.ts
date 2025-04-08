@@ -34,7 +34,11 @@ export const formatStatisticData = (
             id: 'Dashboard.src.utils.helper.OceanbaseTenants',
             defaultMessage: 'OceanBase租户',
           })
-        : 'K8s集群',
+        : intl.formatMessage({
+            id: 'src.utils.50939F01',
+            defaultMessage: 'K8s集群',
+          }),
+
     type,
     deleting: 0,
     operating: 0,

@@ -105,7 +105,12 @@ export default function ResourcePools({
       <div>
         {targetZoneList && essentialParameter && (
           <Row>
-            <h3>副本分布</h3>
+            <h3>
+              {intl.formatMessage({
+                id: 'src.pages.Tenant.New.4D8784EB',
+                defaultMessage: '副本分布',
+              })}
+            </h3>
             {targetZoneList.map((item, index) => (
               <ZoneItem
                 key={index}
@@ -132,7 +137,10 @@ export default function ResourcePools({
                     }),
                   },
                 ]}
-                label={'每 zone unit 数量'}
+                label={intl.formatMessage({
+                  id: 'src.pages.Tenant.New.36ED4D55',
+                  defaultMessage: '每 zone unit 数量',
+                })}
                 initialValue={1}
               >
                 <InputNumber min={1} />

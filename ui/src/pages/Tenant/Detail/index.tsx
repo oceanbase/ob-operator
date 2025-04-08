@@ -23,7 +23,10 @@ export default () => {
       link: `/tenant/${ns}/${name}/${tenantName}/topo`,
     },
     {
-      title: '备份/恢复',
+      title: intl.formatMessage({
+        id: 'src.pages.Tenant.Detail.AACEF9DE',
+        defaultMessage: '备份/恢复',
+      }),
       link: `/tenant/${ns}/${name}/${tenantName}/backup`,
     },
     {
@@ -44,5 +47,6 @@ export default () => {
       accessible: access.obclusterwrite,
     },
   ];
+
   return <DetailLayout menus={menus} subSideSelectKey="tenant" />;
 };

@@ -53,7 +53,7 @@ export default function EventsTable({
 
   const { data, loading } = useRequest(getEventsReq, {
     defaultParams: [defaultParams],
-    ready: !!objectType || !!name,
+    ready: type !== 'k8s',
   });
 
   const dataList = type === 'k8s' ? externalData : data;

@@ -285,7 +285,7 @@ export default function BasicInfo({
         <Descriptions.Item
           label={intl.formatMessage({
             id: 'Dashboard.pages.Cluster.ClusterList.NumberOfZones',
-            defaultMessage: 'Zone 数量',
+            defaultMessage: '拓扑结构',
           })}
         >
           {(
