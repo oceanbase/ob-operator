@@ -296,9 +296,13 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
             onClick={() => {
               validateFields().then((values) => {
                 const { labels, taints } = values;
-                const labelOperations = labels;
+                const labelOperations = labels?.map((item) => ({
+                  key: item.key.join(),
+                  value: item.value,
+                  operation: item.operation,
+                }));
                 const taintOperations = taints?.map((item) => ({
-                  key: item.key,
+                  key: item.key.join(),
                   value: item.operator === 'Equal' ? item.value : undefined,
                   effect: item.effect,
                   operation: item.operation,
