@@ -3,12 +3,6 @@ import { message } from 'antd';
 
 export const errorHandling = (error: any) => {
   if (error?.response?.status === 401) {
-    message.warning(
-      intl.formatMessage({
-        id: 'src.api.2CA64FC6',
-        defaultMessage: '登录已过期',
-      }),
-    );
     location.href = '/#/login';
   } else {
     const { response } = error;
