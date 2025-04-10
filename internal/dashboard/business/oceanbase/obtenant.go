@@ -14,11 +14,11 @@ package oceanbase
 
 import (
 	"context"
-	"errors"
 	"math"
 	"sort"
 	"strings"
 
+	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -36,8 +36,10 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
+	"github.com/oceanbase/ob-operator/internal/dashboard/utils"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
+	logger "github.com/sirupsen/logrus"
 )
 
 func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam) (*v1alpha1.OBTenant, error) {
@@ -171,7 +173,7 @@ func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam)
 	return t, nil
 }
 
-func buildDetailFromApiType(t *v1alpha1.OBTenant) *response.OBTenantDetail {
+func buildDetailFromApiType(ctx context.Context, t *v1alpha1.OBTenant) *response.OBTenantDetail {
 	rt := &response.OBTenantDetail{
 		OBTenantOverview: *buildOverviewFromApiType(t),
 	}
@@ -204,7 +206,25 @@ func buildDetailFromApiType(t *v1alpha1.OBTenant) *response.OBTenantDetail {
 		}
 		rt.Annotations = annotations
 	}
-
+	// query tenant compatible version from oceanbase cluster
+	obcluster, err := clients.GetOBCluster(ctx, t.Namespace, t.Spec.ClusterName)
+	if err != nil {
+		logger.Errorf("Get obcluster %s %s", t.Namespace, t.Spec.ClusterName)
+	} else {
+		versionStr := ""
+		conn, err := utils.GetOBConnection(ctx, obcluster, "root", "sys", obcluster.Spec.UserSecrets.Root)
+		if err != nil {
+			logger.WithError(err).Info("Failed to get OceanBase database connection")
+		} else {
+			version, err := conn.GetVersion(ctx)
+			if err != nil {
+				logger.WithError(err).Info("Failed to get OceanBase database version")
+			} else {
+				versionStr = version.Version
+			}
+		}
+		rt.Version = versionStr
+	}
 	return rt
 }
 
@@ -263,7 +283,7 @@ func updateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 		return nil, err
 	}
 
-	return buildDetailFromApiType(tenant), nil
+	return buildDetailFromApiType(ctx, tenant), nil
 }
 
 func createPasswordSecret(ctx context.Context, nn types.NamespacedName, password string) error {
@@ -454,7 +474,7 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 	if err != nil {
 		return nil, err
 	}
-	return buildDetailFromApiType(tenant), nil
+	return buildDetailFromApiType(ctx, tenant), nil
 }
 
 func ListAllOBTenants(ctx context.Context, ns string, listOptions v1.ListOptions) ([]*response.OBTenantOverview, error) {
@@ -479,7 +499,7 @@ func GetOBTenant(ctx context.Context, nn types.NamespacedName) (*response.OBTena
 	if err != nil {
 		return nil, err
 	}
-	return buildDetailFromApiType(tenant), nil
+	return buildDetailFromApiType(ctx, tenant), nil
 }
 
 func DeleteOBTenant(ctx context.Context, nn types.NamespacedName) error {
@@ -525,7 +545,7 @@ func ModifyOBTenantRootPassword(ctx context.Context, nn types.NamespacedName, ro
 	if err != nil {
 		return nil, err
 	}
-	return buildDetailFromApiType(tenant), nil
+	return buildDetailFromApiType(ctx, tenant), nil
 }
 
 func ReplayStandbyLog(ctx context.Context, nn types.NamespacedName, param *param.ReplayStandbyLog) (*response.OBTenantDetail, error) {
@@ -555,7 +575,7 @@ func ReplayStandbyLog(ctx context.Context, nn types.NamespacedName, param *param
 	if err != nil {
 		return nil, err
 	}
-	return buildDetailFromApiType(tenant), nil
+	return buildDetailFromApiType(ctx, tenant), nil
 }
 
 func UpgradeTenantVersion(ctx context.Context, nn types.NamespacedName) (*response.OBTenantDetail, error) {
@@ -581,7 +601,7 @@ func UpgradeTenantVersion(ctx context.Context, nn types.NamespacedName) (*respon
 	if err != nil {
 		return nil, err
 	}
-	return buildDetailFromApiType(tenant), nil
+	return buildDetailFromApiType(ctx, tenant), nil
 }
 
 func ChangeTenantRole(ctx context.Context, nn types.NamespacedName, p *param.ChangeTenantRole) (*response.OBTenantDetail, error) {
@@ -619,7 +639,7 @@ func ChangeTenantRole(ctx context.Context, nn types.NamespacedName, p *param.Cha
 	if err != nil {
 		return nil, err
 	}
-	return buildDetailFromApiType(tenant), nil
+	return buildDetailFromApiType(ctx, tenant), nil
 }
 
 func PatchTenant(ctx context.Context, nn types.NamespacedName, p *param.PatchTenant) (*response.OBTenantDetail, error) {
@@ -708,7 +728,7 @@ func PatchTenant(ctx context.Context, nn types.NamespacedName, p *param.PatchTen
 	if err != nil {
 		return nil, err
 	}
-	return buildDetailFromApiType(tenant), nil
+	return buildDetailFromApiType(ctx, tenant), nil
 }
 
 // GetOBTenantStatistics returns the statistics of all tenants
