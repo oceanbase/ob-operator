@@ -87,7 +87,7 @@ func CreateTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.Ten
 			if err != nil {
 				return nil, err
 			}
-			return buildDetailFromApiType(newTenant), nil
+			return buildDetailFromApiType(ctx, newTenant), nil
 		}
 	}
 	return nil, oberr.NewBadRequest("zone not found in the cluster")
@@ -123,7 +123,7 @@ func DeleteTenantPool(ctx context.Context, nn param.TenantPoolName) (*response.O
 	if err != nil {
 		return nil, err
 	}
-	return buildDetailFromApiType(newTenant), nil
+	return buildDetailFromApiType(ctx, newTenant), nil
 }
 
 func PatchTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.TenantPoolSpec) (*response.OBTenantDetail, error) {
@@ -174,7 +174,7 @@ func PatchTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.Tena
 			if err != nil {
 				return nil, err
 			}
-			return buildDetailFromApiType(newTenant), nil
+			return buildDetailFromApiType(ctx, newTenant), nil
 		}
 	}
 	return nil, oberr.NewBadRequest("pool not found")
