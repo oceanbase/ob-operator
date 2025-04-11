@@ -126,11 +126,12 @@ export default function TopoComponent({
 
         case 'zone': {
           const zone = evt.item?._cfg?.model?.label as string;
+          const zoneName = zone.split(':')[0];
           if (tenantReplicas) {
             const { setEditZone } = resourcePoolDefaultValue;
-            if (setEditZone) setEditZone(zone);
+            if (setEditZone) setEditZone(zoneName);
             const haveResourcePool = !!tenantReplicas?.find(
-              (replica) => replica.zone === zone,
+              (replica) => replica.zone === zoneName,
             );
             setOprateList(
               getZoneOperateOfTenant(
@@ -148,7 +149,7 @@ export default function TopoComponent({
               ),
             );
           }
-          chooseZoneName.current = zone;
+          chooseZoneName.current = zoneName;
           break;
         }
 

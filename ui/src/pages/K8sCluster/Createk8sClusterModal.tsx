@@ -177,15 +177,6 @@ export default function Createk8sClusterModal({
             id: 'src.pages.K8sCluster.01E568B6',
             defaultMessage: '描述信息',
           })}
-          rules={[
-            {
-              required: true,
-              message: intl.formatMessage({
-                id: 'src.pages.K8sCluster.10141AFB',
-                defaultMessage: '请输入描述信息',
-              }),
-            },
-          ]}
         >
           <Input
             placeholder={intl.formatMessage({
