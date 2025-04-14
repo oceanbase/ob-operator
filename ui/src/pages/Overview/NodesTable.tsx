@@ -1,15 +1,17 @@
 import CustomTooltip from '@/components/CustomTooltip';
 import { NODESTABLE_STATUS_LIST } from '@/constants';
 import { getNodeInfoReq } from '@/services';
-import { getColumnSearchProps } from '@/utils/component';
 import { intl } from '@/utils/intl';
 import { findByValue } from '@oceanbase/util';
 import { useRequest } from 'ahooks';
 import { Button, Card, Col, Progress, Space, Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import BatchEditNodeDrawer from './BatchEditNodeDrawer';
 import EditNodeDrawer from './EditNodeDrawer';
+
+import { getColumnSearchProps } from '@/utils/component';
+import type { InputRef } from 'antd';
 
 interface DataType {
   key: React.Key;
@@ -60,6 +62,10 @@ export default function NodesTable({
   const [batchNodeDrawerOpen, setBatchNodeDrawerOpen] =
     useState<boolean>(false);
 
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef<InputRef>(null);
+
   const columns: ColumnsType<DataType> = [
     {
       title: intl.formatMessage({
@@ -70,8 +76,12 @@ export default function NodesTable({
       key: 'name',
       width: 120,
       ...getColumnSearchProps({
-        frontEndSearch: true,
         dataIndex: 'name',
+        searchInput: searchInput,
+        setSearchText: setSearchText,
+        setSearchedColumn: setSearchedColumn,
+        searchText: searchText,
+        searchedColumn: searchedColumn,
       }),
       render: (val) => <CustomTooltip text={val} width={100} />,
     },
@@ -113,8 +123,12 @@ export default function NodesTable({
       key: 'internalIP',
       width: 120,
       ...getColumnSearchProps({
-        frontEndSearch: true,
         dataIndex: 'internalIP',
+        searchInput: searchInput,
+        setSearchText: setSearchText,
+        setSearchedColumn: setSearchedColumn,
+        searchText: searchText,
+        searchedColumn: searchedColumn,
       }),
     },
 
@@ -142,8 +156,12 @@ export default function NodesTable({
       ellipsis: true,
       width: 160,
       ...getColumnSearchProps({
-        frontEndSearch: true,
         dataIndex: 'labels',
+        searchInput: searchInput,
+        setSearchText: setSearchText,
+        setSearchedColumn: setSearchedColumn,
+        searchText: searchText,
+        searchedColumn: searchedColumn,
         arraySearch: true,
         symbol: '=',
       }),
@@ -169,8 +187,12 @@ export default function NodesTable({
       dataIndex: 'taints',
       width: 160,
       ...getColumnSearchProps({
-        frontEndSearch: true,
         dataIndex: 'taints',
+        searchInput: searchInput,
+        setSearchText: setSearchText,
+        setSearchedColumn: setSearchedColumn,
+        searchText: searchText,
+        searchedColumn: searchedColumn,
         arraySearch: true,
         symbol: '=',
       }),

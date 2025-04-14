@@ -6,8 +6,9 @@ import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
+import type { InputRef } from 'antd';
 import { Button, Card, Col, message, Row, Space, Table, Tag } from 'antd';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import ParametersModal from './ParametersModal';
 
 export default function Parameters() {
@@ -15,6 +16,10 @@ export default function Parameters() {
 
   const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
   const [parametersRecord, setParametersRecord] = useState({});
+
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef<InputRef>(null);
 
   const { runAsync: patchOBCluster, loading: patchOBClusterloading } =
     useRequest(obcluster.patchOBCluster, {
@@ -93,8 +98,12 @@ export default function Parameters() {
       }),
       dataIndex: 'name',
       ...getColumnSearchProps({
-        frontEndSearch: true,
         dataIndex: 'name',
+        searchInput: searchInput,
+        setSearchText: setSearchText,
+        setSearchedColumn: setSearchedColumn,
+        searchText: searchText,
+        searchedColumn: searchedColumn,
       }),
     },
     {
