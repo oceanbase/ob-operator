@@ -156,7 +156,7 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
       <Form.List name={title}>
         {(fields, { add, remove }) => (
           <>
-            {fields.map(({ key, name, ...restField }) => {
+            {fields.map(({ key, name, ...restField }, index) => {
               return (
                 <Row gutter={16}>
                   <Col span={fromName ? 10 : 6}>
@@ -218,19 +218,20 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
                     dependencies={[name, 'operator']}
                     shouldUpdate
                   >
-                    {({ getFieldValue }) => {
+                    {() => {
+                      const currentValues = form.getFieldsValue();
                       return (
                         <Col span={fromName ? 10 : 5}>
                           {(fromName ||
-                            getFieldValue(title)[key]?.operator ===
+                            currentValues?.[title]?.[index]?.operator ===
                               'Equal') && (
                             <Form.Item
                               {...restField}
                               name={[name, 'value']}
                               label={key === 0 && 'Value'}
                               rules={[
-                                ...(getFieldValue(title)[key]?.operator ===
-                                'Equal'
+                                ...(currentValues?.[title]?.[index]
+                                  ?.operator === 'Equal'
                                   ? [
                                       {
                                         required: true,
