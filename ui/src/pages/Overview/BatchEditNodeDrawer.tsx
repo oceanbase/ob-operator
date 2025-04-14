@@ -108,7 +108,7 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
       <Form.List name={title}>
         {(fields, { add, remove }) => (
           <>
-            {fields.map(({ key, name, ...restField }) => {
+            {fields.map(({ key, name, ...restField }, index) => {
               return (
                 <Row gutter={8}>
                   <Col span={fromName ? 6 : 4}>
@@ -182,8 +182,8 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                                     <Form.Item
                                       {...restField}
                                       name={[name, 'operator']}
-                                      dependencies={[name, 'value']}
                                       initialValue={'Equal'}
+                                      dependencies={[name, 'value']}
                                     >
                                       <Select
                                         placeholder={intl.formatMessage({
@@ -200,10 +200,11 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                                   dependencies={[name, 'operator']}
                                   shouldUpdate
                                 >
-                                  {({ getFieldValue }) => {
+                                  {() => {
+                                    const currentValues = form.getFieldsValue();
                                     return (
                                       <Col span={fromName ? 18 : 8}>
-                                        {(getFieldValue(title)[key]
+                                        {(currentValues?.[title]?.[index]
                                           ?.operator === 'Equal' ||
                                           fromName) && (
                                           <Form.Item
