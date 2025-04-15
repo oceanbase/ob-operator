@@ -74,8 +74,13 @@ export const formatPatchPoolData = (
       if (key !== 'unitConfig') {
         newOriginUnitData.zoneName = originUnitData.zoneName;
       }
+      if (key === 'pools') {
+        newOriginUnitData.type =
+          originUnitData?.pools[originUnitData.zoneName].type;
+      }
       if (originUnitData[key]?.priority) {
         newOriginUnitData.priority = originUnitData[key].priority;
+        newOriginUnitData.type = originUnitData[key].type;
       }
     });
   }
