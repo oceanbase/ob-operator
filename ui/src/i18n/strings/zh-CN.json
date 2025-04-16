@@ -1287,7 +1287,7 @@
   "src.pages.Tenant.New.4D8784EB": "副本分布",
   "src.pages.Tenant.New.36ED4D55": "每 zone unit 数量",
   "src.pages.Tenant.Detail.AACEF9DE": "备份/恢复",
-  "src.pages.Tenant.Detail.Overview.98BA8E85": "创建租户恢复策略",
+  "src.pages.Tenant.Detail.Overview.98BA8E85": "租户恢复",
   "src.pages.Tenant.Detail.Overview.52F76C8E": "租户管理",
   "src.pages.Tenant.Detail.NewBackup.E0A8CF8F": "创建恢复租户成功",
   "src.pages.Tenant.Detail.NewBackup.6D21D26D": "备份",
