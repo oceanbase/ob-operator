@@ -199,7 +199,16 @@ export const getServerNumber = (
   zoneName: string,
 ): number => {
   const zones = topoData.children || [];
-  for (const zone of zones) {
+  const newZones = zones?.map((item) => {
+    if (item.label.includes(':')) {
+      return {
+        ...item,
+        label: item.label.split(':')[0],
+      };
+    }
+    return item;
+  });
+  for (const zone of newZones) {
     if (zone.label === zoneName) {
       return zone.children?.length || 0;
     }
