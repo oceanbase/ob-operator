@@ -114,7 +114,9 @@ type PatchTenant struct {
 }
 
 type TenantPoolSpec struct {
-	Priority   int        `json:"priority"`
+	Priority int `json:"priority"`
+	// Enum: Full, Readonly, Columnstore
+	Type       string     `json:"type,omitempty"`
 	UnitConfig UnitConfig `json:"unitConfig"`
 }
 
