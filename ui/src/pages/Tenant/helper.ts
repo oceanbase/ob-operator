@@ -312,6 +312,7 @@ export const getOriginResourceUsages = (
         current.logDiskSize;
       originResourceUsages.obZoneResourceMap[key].availableMemory +=
         current.memorySize;
+      originResourceUsages.obZoneResourceMap[key].type = current.type;
     }
   });
   return originResourceUsages;
