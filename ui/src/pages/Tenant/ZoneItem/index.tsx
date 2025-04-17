@@ -107,7 +107,9 @@ export default function ZoneItem({
             id: 'src.pages.Tenant.ZoneItem.93E193BC',
             defaultMessage: '副本类型',
           })}
-          initialValue={isEdit ? obZoneResource['type'] : 'Full'}
+          initialValue={
+            isEdit && obZoneResource['type'] ? obZoneResource['type'] : 'Full'
+          }
         >
           <Select options={REPLICA_TYPE_LIST} />
         </Form.Item>
