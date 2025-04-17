@@ -57,7 +57,7 @@ export default function ZoneItem({
         ]
       : []),
   ];
-
+  console.log('obZoneResource', obZoneResource);
   return (
     <div
       style={{
@@ -107,7 +107,7 @@ export default function ZoneItem({
             id: 'src.pages.Tenant.ZoneItem.93E193BC',
             defaultMessage: '副本类型',
           })}
-          initialValue={'Full'}
+          initialValue={isEdit ? obZoneResource['type'] : 'Full'}
         >
           <Select options={REPLICA_TYPE_LIST} />
         </Form.Item>
