@@ -76,15 +76,21 @@ export const getColumnSearchProps = ({
     <SearchOutlined style={{ color: filtered ? '#1677ff' : undefined }} />
   ),
   onFilter: (value, record) => {
-    const safeValue = value ? value.split(symbol)[0] : '';
-    const realValue = trim(safeValue.toLowerCase());
+    const allvalue1 = trim(
+      (value ? value.split(symbol)[0] : '')?.toLowerCase(),
+    );
+    const allvalue2 = trim(
+      (value ? value.split(symbol)[1] : '')?.toLowerCase(),
+    );
 
     return arraySearch
       ? record[dataIndex] &&
-          record[dataIndex].some(
+          record[dataIndex]?.some(
             (item) =>
-              (item.key && item.key.toLowerCase().includes(realValue)) ||
-              (item.value && item.value.toLowerCase().includes(realValue)),
+              item.key &&
+              item.key.toLowerCase().includes(allvalue1) &&
+              item.value &&
+              item.value.toLowerCase().includes(allvalue2),
           )
       : record[dataIndex] &&
           record[dataIndex]

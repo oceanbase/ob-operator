@@ -58,6 +58,9 @@ export default function ZoneItem({
       : []),
   ];
 
+  const replica = REPLICA_TYPE_LIST?.find((item) =>
+    item.value?.toLowerCase().includes(obZoneResource['type']?.toLowerCase()),
+  );
   return (
     <div
       style={{
@@ -107,7 +110,7 @@ export default function ZoneItem({
             id: 'src.pages.Tenant.ZoneItem.93E193BC',
             defaultMessage: '副本类型',
           })}
-          initialValue={'Full'}
+          initialValue={isEdit ? replica?.value : 'Full'}
         >
           <Select options={REPLICA_TYPE_LIST} />
         </Form.Item>
