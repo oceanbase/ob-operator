@@ -49,7 +49,7 @@ func ListInspectionPolicies(_ *gin.Context) ([]inspection.Policy, error) {
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/inspection/policies [PUT]
+// @Router /api/v1/inspection/policies [POST]
 // @Security ApiKeyAuth
 func CreateOrUpdateInspectionPolicy(_ *gin.Context) (*inspection.Policy, error) {
 	return nil, errors.NewNotImplemented("")

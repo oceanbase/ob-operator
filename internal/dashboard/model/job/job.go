@@ -28,8 +28,8 @@ type JobResult struct {
 }
 
 type Job struct {
-	Id         string     `json:"id" binding:"required"`
 	Name       string     `json:"name" binding:"required"`
+	Namespace  string     `json:"namespace" binding:"required"`
 	Status     JobStatus  `json:"status" binding:"required"`
 	StartTime  int64      `json:"startTime,omitempty"`
 	FinishTime int64      `json:"finishTime,omitempty"`
