@@ -10,11 +10,7 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package monitor
-
-const (
-	LocalHostAddress = "127.0.0.1"
-)
+package obagent
 
 const (
 	HttpPort  = 8088
