@@ -355,9 +355,11 @@ func WaitOBServerActiveInCluster(m *OBServerManager) tasktypes.TaskError {
 	}
 	active := false
 	for i := 0; i < obcfg.GetConfig().Time.DefaultStateWaitTimeout; i++ {
+		time.Sleep(time.Second)
 		operationManager, err := m.getOceanbaseOperationManager()
 		if err != nil {
-			return errors.Wrapf(err, "Get oceanbase operation manager failed")
+			m.Logger.Error(err, "Get oceanbase operation manager failed")
+			continue
 		}
 		observer, _ := operationManager.GetServer(m.Ctx, observerInfo)
 		if observer != nil {
@@ -368,7 +370,6 @@ func WaitOBServerActiveInCluster(m *OBServerManager) tasktypes.TaskError {
 		} else {
 			m.Logger.V(oceanbaseconst.LogLevelTrace).Info("OBServer is nil, check next time")
 		}
-		time.Sleep(time.Second)
 	}
 	if !active {
 		m.Logger.Info("Wait for observer to become active, timeout")

@@ -32,6 +32,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	cmdconst "github.com/oceanbase/ob-operator/internal/const/cmd"
+	hostconst "github.com/oceanbase/ob-operator/internal/const/host"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	k8sclient "github.com/oceanbase/ob-operator/pkg/k8s/client"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
@@ -175,13 +176,18 @@ func ExecuteUpgradeScript(ctx context.Context, c client.Client, logger *logr.Log
 		}
 	}
 
+	address := rootserver.Ip
+	if address == hostconst.LocalHostAddress {
+		address = oceanbaseOperationManager.Connector.DataSource().GetAddress()
+	}
+
 	jobName := fmt.Sprintf("%s-%s", "script-runner", rand.String(6))
 	var backoffLimit int32
 	var ttl int32 = 300
 	container := corev1.Container{
 		Name:    "script-runner",
 		Image:   obcluster.Spec.OBServerTemplate.Image,
-		Command: []string{"bash", "-c", fmt.Sprintf("if [[ `command -v python2` ]]; then ln -sf /usr/bin/python2 /usr/bin/python; fi && python %s -h%s -P%d -uroot -p'%s' %s", filepath, rootserver.Ip, rootserver.SqlPort, password, extraOpt)},
+		Command: []string{"bash", "-c", fmt.Sprintf("if [[ `command -v python2` ]]; then ln -sf /usr/bin/python2 /usr/bin/python; fi && python %s -h%s -P%d -uroot -p'%s' %s", filepath, address, rootserver.SqlPort, password, extraOpt)},
 	}
 	job := batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{

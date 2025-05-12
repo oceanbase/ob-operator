@@ -29,6 +29,7 @@ import (
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
+	hostconst "github.com/oceanbase/ob-operator/internal/const/host"
 	obagentconst "github.com/oceanbase/ob-operator/internal/const/obagent"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	secretconst "github.com/oceanbase/ob-operator/internal/const/secret"
@@ -402,7 +403,7 @@ func (m *OBServerManager) createMonitorContainer(obcluster *v1alpha1.OBCluster) 
 		case oceanbaseconst.ModeStandalone:
 			envHostIp := corev1.EnvVar{
 				Name:  obagentconst.EnvHostIp,
-				Value: obagentconst.LocalHostAddress,
+				Value: hostconst.LocalHostAddress,
 			}
 			env = append(env, envHostIp)
 		case oceanbaseconst.ModeService:
