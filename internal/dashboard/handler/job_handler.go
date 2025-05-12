@@ -29,7 +29,7 @@ import (
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/jobs/{id} [GET]
+// @Router /api/v1/jobs/{namespace}/{name} [GET]
 // @Security ApiKeyAuth
 func GetJob(_ *gin.Context) (*job.Job, error) {
 	return nil, errors.NewNotImplemented("")
@@ -45,7 +45,7 @@ func GetJob(_ *gin.Context) (*job.Job, error) {
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/jobs/{id} [DELETE]
+// @Router /api/v1/jobs/{namespace}/{name} [DELETE]
 // @Security ApiKeyAuth
 func DeleteJob(_ *gin.Context) (bool, error) {
 	return true, errors.NewNotImplemented("")
