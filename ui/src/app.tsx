@@ -26,7 +26,8 @@ export const request: RequestConfig = {
     },
     errorHandler: (err) => {
       console.log('errorHandler', err);
-      const { options: { HIDE_ERROR_MESSAGE } = {} } = err.request || {};
+      const { options: { HIDE_ERROR_MESSAGE } = {} } = err.config || {};
+
       if (err?.response?.status === 401) {
         location.href = '/#/login';
       } else {
