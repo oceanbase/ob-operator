@@ -151,5 +151,8 @@ export async function reportData({
       }),
       component: appInfo.appName,
     },
+    options: {
+      HIDE_ERROR_MESSAGE: true,
+    },
   });
 }
