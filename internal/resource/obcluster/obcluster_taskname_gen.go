@@ -36,4 +36,5 @@ const (
 	tAnnotateOBCluster          ttypes.TaskName = "annotate obcluster"
 	tOptimizeClusterByScenario  ttypes.TaskName = "optimize cluster by scenario"
 	tAdjustParameters           ttypes.TaskName = "adjust parameters"
+	tCheckAndCreateNs           ttypes.TaskName = "check and create ns"
 )
