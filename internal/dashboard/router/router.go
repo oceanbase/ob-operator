@@ -26,6 +26,7 @@ import (
 
 	docs "github.com/oceanbase/ob-operator/internal/dashboard/generated/swagger"
 	"github.com/oceanbase/ob-operator/internal/dashboard/middleware"
+	"github.com/oceanbase/ob-operator/internal/dashboard/router/monitor"
 	v1 "github.com/oceanbase/ob-operator/internal/dashboard/router/v1"
 	"github.com/oceanbase/ob-operator/internal/dashboard/server/constant"
 )
@@ -64,6 +65,7 @@ func InitRoutes(router *gin.Engine) {
 	}
 
 	v1Group := router.Group("/api/v1")
+	monitorGroup := router.Group("/api/monitor")
 	// login api does not require login
 	if os.Getenv("DEBUG_DASHBOARD") != "true" {
 		v1Group = router.Group("/api/v1",
@@ -71,6 +73,8 @@ func InitRoutes(router *gin.Engine) {
 			middleware.RefreshExpiration(),
 		)
 	}
+
+	monitor.InitMonitorRoutes(monitorGroup)
 
 	// init all routes under /api/v1
 	v1.InitWebhookRoutes(v1Group)
