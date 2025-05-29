@@ -22,16 +22,15 @@ import (
 
 // @ID ListEndpoints
 // @Summary list all endpoints
-// @Description list all endpoints to query metrics
-// @Tags Metric
+// @Description list all endpoints to query metrics data
+// @Tags Monitor
 // @Accept application/json
 // @Produce application/json
 // @Success 200 object response.APIResponse{data=[]response.MonitorEndpoint}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/metrics/endpoints [GET]
-// @Security ApiKeyAuth
+// @Router /api/v1/monitor/endpoints [GET]
 func ListEndpoints(c *gin.Context) {
 	endpoints, err := monitor.ListEndpoints(c)
 	if err != nil {

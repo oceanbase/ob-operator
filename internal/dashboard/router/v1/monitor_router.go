@@ -10,7 +10,7 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package monitor
+package v1
 
 import (
 	"github.com/gin-gonic/gin"
@@ -19,5 +19,5 @@ import (
 )
 
 func InitMonitorRoutes(g *gin.RouterGroup) {
-	g.GET("/endpoints", h.ListEndpoints)
+	g.GET("/monitor/endpoints", h.ListEndpoints)
 }

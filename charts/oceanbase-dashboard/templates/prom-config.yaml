@@ -23,11 +23,11 @@ data:
     scrape_configs:
       - job_name: 'obagent-monitor-basic'
         http_sd_configs:
-          - url: 'http://127.0.0.1:8080/monitor/endpoints'
+          - url: 'http://127.0.0.1:8080/api/v1/monitor/endpoints'
         metrics_path: '/metrics/ob/basic'
       - job_name: 'obagent-monitor-extra'
         http_sd_configs:
-          - url: 'http://127.0.0.1:8080/monitor/endpoints'
+          - url: 'http://127.0.0.1:8080/api/v1/monitor/endpoints'
         metrics_path: '/metrics/ob/extra'
       - job_name: 'obproxy'
         kubernetes_sd_configs:
