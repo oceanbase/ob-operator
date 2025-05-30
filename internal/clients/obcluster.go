@@ -129,20 +129,6 @@ func ListAllOBClusters(ctx context.Context) (*v1alpha1.OBClusterList, error) {
 	return &obclusterList, nil
 }
 
-func ListAllOBServers(ctx context.Context) (*v1alpha1.OBClusterList, error) {
-	client := client.GetClient()
-	obj, err := client.DynamicClient.Resource(schema.OBClusterGVR).List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return nil, err
-	}
-	var obclusterList v1alpha1.OBClusterList
-	err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), &obclusterList)
-	if err != nil {
-		return nil, err
-	}
-	return &obclusterList, nil
-}
-
 func ListOBZonesOfOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluster) (*v1alpha1.OBZoneList, error) {
 	client := client.GetClient()
 	var obzoneList v1alpha1.OBZoneList
