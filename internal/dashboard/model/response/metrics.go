@@ -14,6 +14,11 @@ package response
 
 import "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 
+type MonitorEndpoint struct {
+	Targets []string          `json:"targets" binding:"required"`
+	Labels  map[string]string `json:"labels"`
+}
+
 type MetricClass struct {
 	Name         string        `json:"name" yaml:"name" binding:"required"`
 	Description  string        `json:"description" yaml:"description" binding:"required"`
