@@ -61,6 +61,7 @@ var _ = Describe("Config", func() {
 			Expect(got.Time.WaitForJobTimeoutSeconds).To(BeEquivalentTo(defaultConfigMap["time.waitForJobTimeoutSeconds"]))
 			Expect(got.Time.ServerDeleteTimeoutSeconds).To(BeEquivalentTo(defaultConfigMap["time.serverDeleteTimeoutSeconds"]))
 			Expect(got.Telemetry.Disabled).To(BeEquivalentTo(defaultConfigMap["telemetry.disabled"]))
+			Expect(got.Telemetry.Reporter).To(BeEquivalentTo(defaultConfigMap["telemetry.reporter"]))
 			Expect(got.Telemetry.Debug).To(BeEquivalentTo(defaultConfigMap["telemetry.debug"]))
 			Expect(got.Telemetry.Host).To(BeEquivalentTo(defaultConfigMap["telemetry.host"]))
 			Expect(got.Telemetry.ThrottlerBufferSize).To(BeEquivalentTo(defaultConfigMap["telemetry.throttlerBufferSize"]))
