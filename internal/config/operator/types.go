@@ -49,6 +49,7 @@ type Telemetry struct {
 	Disabled             bool          `mapstructure:"disabled" yaml:"disabled"`
 	Debug                bool          `mapstructure:"debug" yaml:"debug"`
 	Host                 string        `mapstructure:"host" yaml:"host"`
+	Reporter             string        `mapstructure:"reporter" yaml:"reporter"`
 	ThrottlerBufferSize  int           `mapstructure:"throttlerBufferSize" yaml:"throttlerBufferSize"`
 	ThrottlerWorkerCount int           `mapstructure:"throttlerWorkerCount" yaml:"throttlerWorkerCount"`
 	FilterSize           int           `mapstructure:"filterSize" yaml:"filterSize"`

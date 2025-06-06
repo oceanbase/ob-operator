@@ -37,6 +37,7 @@ var defaultConfigMap = map[string]any{
 
 	"telemetry.disabled":             false,
 	"telemetry.debug":                false,
+	"telemetry.reporter":             "ob-operator",
 	"telemetry.host":                 "https://openwebapi.oceanbase.com",
 	"telemetry.throttlerBufferSize":  30,
 	"telemetry.throttlerWorkerCount": 30,
