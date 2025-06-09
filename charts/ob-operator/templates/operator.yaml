@@ -21800,6 +21800,9 @@ spec:
         - --leader-elect
         - --manager-namespace={{ .Release.Namespace }}
         - --log-verbosity=0
+        env:
+        - name: TELEMETRY_REPORTER
+          value: {{ .Values.reporter }}
         command:
         - /manager
         image: quay.io/oceanbase/ob-operator:2.3.1
