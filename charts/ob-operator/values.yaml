@@ -3,6 +3,4 @@
 # Declare variables to be passed into your templates.
 #
 reporter: "ob-operator"
-cert-manager:
-  enabled: true
 
