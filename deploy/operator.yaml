@@ -21861,6 +21861,9 @@ spec:
         - --log-verbosity=0
         command:
         - /manager
+        env:
+        - name: TELEMETRY_REPORTER
+          value: ob-operator
         image: quay.io/oceanbase/ob-operator:2.3.1
         livenessProbe:
           httpGet:
