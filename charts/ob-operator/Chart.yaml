@@ -4,8 +4,3 @@ description: A Helm chart for OB-Operator
 name: ob-operator
 type: application
 version: 2.3.1
-dependencies:
-  - name: cert-manager
-    version: "v1.17.2"
-    repository: "https://charts.jetstack.io"
-    condition: cert-manager.enabled
