@@ -545,44 +545,6 @@ func ModifySysTenantReplica(m *OBClusterManager) tasktypes.TaskError {
 	})
 }
 
-func CreateServiceForMonitor(m *OBClusterManager) tasktypes.TaskError {
-	ownerReferenceList := make([]metav1.OwnerReference, 0)
-	ownerReference := metav1.OwnerReference{
-		APIVersion: m.OBCluster.APIVersion,
-		Kind:       m.OBCluster.Kind,
-		Name:       m.OBCluster.Name,
-		UID:        m.OBCluster.GetUID(),
-	}
-	ownerReferenceList = append(ownerReferenceList, ownerReference)
-	selector := make(map[string]string)
-	selector[oceanbaseconst.LabelRefOBCluster] = m.OBCluster.Name
-	monitorService := corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace:       m.OBCluster.Namespace,
-			Name:            fmt.Sprintf("svc-monitor-%s-%s", m.OBCluster.Name, rand.String(6)),
-			OwnerReferences: ownerReferenceList,
-		},
-		Spec: corev1.ServiceSpec{
-			Ports: []corev1.ServicePort{
-				{
-					Name:       obagentconst.HttpPortName,
-					Protocol:   corev1.ProtocolTCP,
-					Port:       obagentconst.HttpPort,
-					TargetPort: intstr.FromInt(obagentconst.HttpPort),
-				},
-			},
-			Selector: selector,
-			Type:     corev1.ServiceTypeClusterIP,
-		},
-	}
-	err := m.Client.Create(m.Ctx, &monitorService)
-	if err != nil {
-		return errors.Wrap(err, "Create monitor service")
-	}
-	m.Recorder.Event(m.OBCluster, "MaintainedAfterBootstrap", "", "Create monitor service successfully")
-	return nil
-}
-
 func RestoreEssentialParameters(m *OBClusterManager) tasktypes.TaskError {
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
