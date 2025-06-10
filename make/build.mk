@@ -9,7 +9,7 @@ build: dashboard-doc-gen dashboard-bindata-gen manifests generate fmt vet ## Bui
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
 .PHONY: docker-build
 docker-build: generate fmt ## Build docker image with the manager.
-	docker build -t ${IMG} --build-arg GOPROXY=${GOPROXY} --build-arg GOSUMDB=${GOSUMDB} --build-arg RACE=${RACE} -f build/Dockerfile.operator .
+	docker build -t ${IMG} --build-arg GOPROXY=${GOPROXY} --build-arg GOSUMDB=${GOSUMDB} --build-arg RACE=${RACE} --no-cache -f build/Dockerfile.operator .
 
 .PHONY: docker-push
 docker-push: ## Push docker image with the manager.
