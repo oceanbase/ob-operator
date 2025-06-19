@@ -24,8 +24,8 @@ export default () => {
     },
     {
       title: intl.formatMessage({
-        id: 'Dashboard.Tenant.Detail.Backup',
-        defaultMessage: '备份',
+        id: 'src.pages.Tenant.Detail.AACEF9DE',
+        defaultMessage: '备份/恢复',
       }),
       link: `/tenant/${ns}/${name}/${tenantName}/backup`,
     },
@@ -47,5 +47,6 @@ export default () => {
       accessible: access.obclusterwrite,
     },
   ];
+
   return <DetailLayout menus={menus} subSideSelectKey="tenant" />;
 };

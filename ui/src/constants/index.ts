@@ -84,6 +84,7 @@ const CLUSTER_INFO_CONFIG = [
   'deletionProtection',
   'topology',
   'pvcIndependent',
+  'version',
 ];
 
 const TOPO_INFO_CONFIG = [
@@ -96,6 +97,7 @@ const TOPO_INFO_CONFIG = [
   'mode',
   'rootPasswordSecret',
   'deletionProtection',
+  'version',
 ];
 
 // use for tenant name or zone name

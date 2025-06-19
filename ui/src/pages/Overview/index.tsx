@@ -25,9 +25,9 @@ const OverviewPage: React.FC = () => {
         {access.systemread || access.systemwrite ? (
           <>
             <Col span={24}>
-              <EventsTable />
+              <EventsTable overView={true} />
             </Col>
-            <NodesTable />
+            <NodesTable type="overview" />
           </>
         ) : null}
       </Row>

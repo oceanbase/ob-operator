@@ -101,6 +101,6 @@ var _ = Describe("Telemetry", Label("telemetry"), Ordered, func() {
 					StandbyRO: "standby-ro",
 				},
 			}}
-		telemetry.GenerateTelemetryRecord(tenant, "arbitrary", "generateTelemetryRecord", "some reason", "test", nil)
+		telemetry.GenerateTelemetryRecord(tenant, "ob-operator", "arbitrary", "generateTelemetryRecord", "some reason", "test", nil)
 	})
 })

@@ -40,6 +40,15 @@ export default () => {
     },
     {
       title: intl.formatMessage({
+        id: 'src.pages.Cluster.Detail.C05D24A0',
+        defaultMessage: '集群参数',
+      }),
+      key: 'parameters',
+      link: `/cluster/${ns}/${name}/${clusterName}/parameters`,
+      accessible: access.obclusterwrite,
+    },
+    {
+      title: intl.formatMessage({
         id: 'Dashboard.Cluster.Detail.Connection1',
         defaultMessage: '连接集群',
       }),

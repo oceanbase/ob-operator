@@ -292,7 +292,7 @@ func main() {
 	}
 
 	rcd := telemetry.NewRecorder(ctx, mgr.GetEventRecorderFor("ob-operator"))
-	rcd.GenerateTelemetryRecord(nil, telemetry.ObjectTypeOperator, "Start", "", "Start ob-operator", nil)
+	rcd.GenerateTelemetryRecord(nil, obcfg.GetConfig().Telemetry.Reporter, telemetry.ObjectTypeOperator, "Start", "", "Start ob-operator", nil)
 
 	setupLog.WithValues(
 		"configs", cfg,

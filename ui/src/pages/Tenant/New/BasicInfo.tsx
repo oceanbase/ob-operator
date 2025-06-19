@@ -1,10 +1,10 @@
-import InputNumber from '@/components/InputNumber';
 import PasswordInput from '@/components/PasswordInput';
 import { LOADTYPE_LIST, TZ_NAME_REG } from '@/constants';
 import { resourceNameRule } from '@/constants/rules';
 import { intl } from '@/utils/intl';
 import { Card, Checkbox, Col, Form, Input, Row, Select, Space } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
+import { useEffect } from 'react';
 
 const { Option } = Select;
 
@@ -36,6 +36,17 @@ export default function BasicInfo({
   const selectClusterChange = (id: number) => {
     setSelectClusterId(id);
   };
+  const path = window.location.hash.split('=')[1];
+
+  useEffect(() => {
+    if (path) {
+      const cluster = clusterOptions?.find((item) => item.label === path);
+      setSelectClusterId(cluster?.value || undefined);
+      form.setFieldsValue({
+        obcluster: cluster?.value,
+      });
+    }
+  }, [clusterList, path]);
   return (
     <Card
       title={intl.formatMessage({
@@ -158,37 +169,6 @@ export default function BasicInfo({
         </Col>
         <Col span={8}>
           <Form.Item
-            name={['unitNum']}
-            rules={[
-              {
-                required: true,
-                message: intl.formatMessage({
-                  id: 'Dashboard.Tenant.New.BasicInfo.PleaseEnterTheNumberOf',
-                  defaultMessage: '请输入Unit 数量',
-                }),
-              },
-            ]}
-            label={intl.formatMessage({
-              id: 'Dashboard.Tenant.New.BasicInfo.NumberOfUnits',
-              defaultMessage: 'Unit 数量',
-            })}
-          >
-            <InputNumber min={1} style={{ width: '100%' }} />
-          </Form.Item>
-        </Col>
-        <Col span={8}>
-          <Form.Item
-            name={['connectWhiteList']}
-            label={intl.formatMessage({
-              id: 'Dashboard.Tenant.New.BasicInfo.ConnectionWhitelist',
-              defaultMessage: '连接白名单',
-            })}
-          >
-            <Select mode="tags" />
-          </Form.Item>
-        </Col>
-        <Col span={8}>
-          <Form.Item
             label={intl.formatMessage({
               id: 'src.pages.Tenant.New.6071B46A',
               defaultMessage: '优化场景',
@@ -214,28 +194,32 @@ export default function BasicInfo({
             </Select>
           </Form.Item>
         </Col>
-
         <Col span={8}>
-          <Form.Item label={<></>}>
-            <Space>
-              {intl.formatMessage({
-                id: 'src.pages.Tenant.New.3979BAB6',
-                defaultMessage: '删除保护',
-              })}
-              <Checkbox
-                defaultChecked={deleteValue}
-                onChange={(e) => {
-                  setDeleteValue(e.target.checked);
-                }}
-              />
-            </Space>
+          <Form.Item
+            name={['connectWhiteList']}
+            label={intl.formatMessage({
+              id: 'Dashboard.Tenant.New.BasicInfo.ConnectionWhitelist',
+              defaultMessage: '连接白名单',
+            })}
+          >
+            <Select mode="tags" />
           </Form.Item>
         </Col>
-        {/* <Col span={8}>
-               <Form.Item name={["charset"]} label="字符集">
-                 <Select />
-               </Form.Item>
-              </Col> */}
+
+        <Col span={8}>
+          <Space>
+            {intl.formatMessage({
+              id: 'src.pages.Tenant.New.3979BAB6',
+              defaultMessage: '删除保护',
+            })}
+            <Checkbox
+              defaultChecked={deleteValue}
+              onChange={(e) => {
+                setDeleteValue(e.target.checked);
+              }}
+            />
+          </Space>
+        </Col>
       </Row>
     </Card>
   );

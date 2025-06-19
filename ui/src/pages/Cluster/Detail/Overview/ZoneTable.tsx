@@ -55,8 +55,18 @@ export default function ZoneTable({
       },
       {
         title: intl.formatMessage({
+          id: 'src.pages.Cluster.Detail.Overview.70F96FAD',
+          defaultMessage: 'K8s 集群',
+        }),
+        dataIndex: 'k8sCluster',
+        render: (text) => {
+          return <span>{text || '-'}</span>;
+        },
+      },
+      {
+        title: intl.formatMessage({
           id: 'OBDashboard.Detail.Overview.ZoneTable.NumberOfMachines',
-          defaultMessage: '机器数量',
+          defaultMessage: 'observer 数量',
         }),
         dataIndex: 'replicas',
         key: 'replicas',

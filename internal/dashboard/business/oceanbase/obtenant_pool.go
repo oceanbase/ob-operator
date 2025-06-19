@@ -63,13 +63,17 @@ func CreateTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.Ten
 		maxIops = int(p.UnitConfig.MaxIops)
 	}
 
+	replicaType := "Full"
+	if p.Type != "" {
+		replicaType = p.Type
+	}
 	for _, zone := range clusterCR.Spec.Topology {
 		if zone.Zone == nn.ZoneName {
 			tenantCR.Spec.Pools = append(tenantCR.Spec.Pools, v1alpha1.ResourcePoolSpec{
 				Zone:     nn.ZoneName,
 				Priority: p.Priority,
 				Type: &v1alpha1.LocalityType{
-					Name:     "Full",
+					Name:     replicaType,
 					Replica:  1,
 					IsActive: true,
 				},
@@ -87,7 +91,7 @@ func CreateTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.Ten
 			if err != nil {
 				return nil, err
 			}
-			return buildDetailFromApiType(newTenant), nil
+			return buildDetailFromApiType(ctx, newTenant), nil
 		}
 	}
 	return nil, oberr.NewBadRequest("zone not found in the cluster")
@@ -123,7 +127,7 @@ func DeleteTenantPool(ctx context.Context, nn param.TenantPoolName) (*response.O
 	if err != nil {
 		return nil, err
 	}
-	return buildDetailFromApiType(newTenant), nil
+	return buildDetailFromApiType(ctx, newTenant), nil
 }
 
 func PatchTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.TenantPoolSpec) (*response.OBTenantDetail, error) {
@@ -149,6 +153,9 @@ func PatchTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.Tena
 	for i, pool := range tenantCR.Spec.Pools {
 		if pool.Zone == nn.ZoneName {
 			tenantCR.Spec.Pools[i].Priority = p.Priority
+			if p.Type != "" {
+				tenantCR.Spec.Pools[i].Type.Name = p.Type
+			}
 			if tenantCR.Spec.Pools[i].UnitConfig != nil {
 				if cpuCount, err := resource.ParseQuantity(p.UnitConfig.CPUCount); err == nil {
 					tenantCR.Spec.Pools[i].UnitConfig.MaxCPU = cpuCount
@@ -174,7 +181,7 @@ func PatchTenantPool(ctx context.Context, nn param.TenantPoolName, p *param.Tena
 			if err != nil {
 				return nil, err
 			}
-			return buildDetailFromApiType(newTenant), nil
+			return buildDetailFromApiType(ctx, newTenant), nil
 		}
 	}
 	return nil, oberr.NewBadRequest("pool not found")

@@ -33,6 +33,7 @@ import (
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/clientcache"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	cmdconst "github.com/oceanbase/ob-operator/internal/const/cmd"
 	obagentconst "github.com/oceanbase/ob-operator/internal/const/obagent"
@@ -652,6 +653,41 @@ func CheckAndCreateUserSecrets(m *OBClusterManager) tasktypes.TaskError {
 			}
 		}
 	}
+	masterMonitorSecret := &corev1.Secret{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{Namespace: m.OBCluster.Namespace, Name: m.OBCluster.Spec.UserSecrets.Monitor}, masterMonitorSecret)
+	if err != nil {
+		return errors.Wrapf(err, "Failed to get secret %s in namespace %s", m.OBCluster.Namespace, m.OBCluster.Spec.UserSecrets.Monitor)
+	}
+	// create secret for monitor in remote K8s cluster if necessary
+	for _, zone := range m.OBCluster.Spec.Topology {
+		if zone.K8sCluster != "" {
+			resClient, err := clientcache.GetCtrlRuntimeClientFromK8sName(m.Ctx, zone.K8sCluster)
+			if err != nil {
+				return errors.Wrapf(err, "Failed to get get client from k8s cluster: %s", zone.K8sCluster)
+			}
+			monitorSecret := &corev1.Secret{}
+			err = resClient.Get(m.Ctx, types.NamespacedName{Namespace: m.OBCluster.Namespace, Name: m.OBCluster.Spec.UserSecrets.Monitor}, monitorSecret)
+			if err != nil {
+				if kubeerrors.IsNotFound(err) {
+					// get the secret in master cluster
+					monitorSecret = &corev1.Secret{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      m.OBCluster.Spec.UserSecrets.Monitor,
+							Namespace: m.OBCluster.Namespace,
+						},
+						Data: masterMonitorSecret.Data,
+					}
+					m.Logger.Info("Create monitor secret", "namespace", monitorSecret.Namespace, "secret", monitorSecret.Name, "k8sCluster", zone.K8sCluster)
+					err = resClient.Create(m.Ctx, monitorSecret)
+					if err != nil {
+						return errors.Wrapf(err, "Failed to create secret %s/%s with credential of k8s cluster %s", monitorSecret.Namespace, monitorSecret.Name, zone.K8sCluster)
+					}
+				} else {
+					return errors.Wrapf(err, "Failed to get secret %s/%s with credential of k8s cluster %s", m.OBCluster.Namespace, m.OBCluster.Spec.UserSecrets.Monitor, zone.K8sCluster)
+				}
+			}
+		}
+	}
 	return nil
 }
 
@@ -1206,6 +1242,36 @@ func AdjustParameters(m *OBClusterManager) tasktypes.TaskError {
 	if err != nil {
 		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Patch obcluster", "obcluster", m.OBCluster.Name)
 		return errors.Wrap(err, "Patch obcluster")
+	}
+	return nil
+}
+
+func CheckAndCreateNs(m *OBClusterManager) tasktypes.TaskError {
+	for _, zone := range m.OBCluster.Spec.Topology {
+		if zone.K8sCluster != "" {
+			// create namespace if not exists
+			resClient, err := clientcache.GetCtrlRuntimeClientFromK8sName(m.Ctx, zone.K8sCluster)
+			if err != nil {
+				return errors.Wrapf(err, "Failed to get get client from k8s cluster: %s", zone.K8sCluster)
+			}
+			ns := &corev1.Namespace{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: m.OBCluster.Namespace,
+				},
+			}
+			err = resClient.Get(m.Ctx, types.NamespacedName{Name: m.OBCluster.Namespace}, ns)
+			if err != nil {
+				if kubeerrors.IsNotFound(err) {
+					m.Logger.Info("Create namespace", "namespace", m.OBCluster.Namespace, "k8sCluster", zone.K8sCluster)
+					err = resClient.Create(m.Ctx, ns)
+					if err != nil {
+						return errors.Wrapf(err, "Failed to create namespace %s with credential of k8s cluster %s", m.OBCluster.Namespace, zone.K8sCluster)
+					}
+				} else {
+					return errors.Wrapf(err, "Failed to get namespace %s with credential of k8s cluster %s", m.OBCluster.Namespace, zone.K8sCluster)
+				}
+			}
+		}
 	}
 	return nil
 }

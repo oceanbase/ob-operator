@@ -26,7 +26,7 @@ import (
 
 type Recorder interface {
 	record.EventRecorder
-	GenerateTelemetryRecord(object any, objectType, eventType, reason, message string, annotations map[string]string, extra ...models.ExtraField)
+	GenerateTelemetryRecord(object any, reporter, objectType, eventType, reason, message string, annotations map[string]string, extra ...models.ExtraField)
 	GetHostMetrics() *hostMetrics
 	Done()
 }
@@ -38,12 +38,14 @@ type recorder struct {
 
 	ctx               context.Context
 	telemetryDisabled bool
+	telemetryReporter string
 }
 
 func NewRecorder(ctx context.Context, er record.EventRecorder) Recorder {
 	clt := &recorder{
-		ctx:           ctx,
-		EventRecorder: er,
+		ctx:               ctx,
+		EventRecorder:     er,
+		telemetryReporter: obcfg.GetConfig().Telemetry.Reporter,
 	}
 
 	// if telemetry is disabled, return a dummy recorder as original event recorder
@@ -75,13 +77,13 @@ func (t *recorder) AnnotatedEventf(object runtime.Object, annotations map[string
 }
 
 // Use Event, Eventf, AnnotatedEventf first
-func (t *recorder) GenerateTelemetryRecord(object any, objectType, eventType, reason, message string, annotations map[string]string, extra ...models.ExtraField) {
+func (t *recorder) GenerateTelemetryRecord(object any, reporter, objectType, eventType, reason, message string, annotations map[string]string, extra ...models.ExtraField) {
 	if t.telemetryDisabled {
 		return
 	}
 	go func(ctx context.Context, ch chan<- *models.TelemetryRecord) {
 		objectSentry(object)
-		record := newRecordFromEvent(object, objectType, eventType, reason, message, annotations, extra...)
+		record := newRecordFromEvent(object, reporter, objectType, eventType, reason, message, annotations, extra...)
 		record.IpHashes = t.hostMetrics.IPHashes
 		if object == nil && objectType == ObjectTypeOperator {
 			record.Resource = t.hostMetrics
@@ -109,9 +111,9 @@ func (t *recorder) generateFromEvent(object runtime.Object, annotations map[stri
 		return
 	}
 	if object == nil {
-		t.GenerateTelemetryRecord(nil, ObjectTypeUnknown, eventType, reason, fmt.Sprintf(messageFmt, args...), annotations)
+		t.GenerateTelemetryRecord(nil, t.telemetryReporter, ObjectTypeUnknown, eventType, reason, fmt.Sprintf(messageFmt, args...), annotations)
 	} else {
-		t.GenerateTelemetryRecord(object.DeepCopyObject(), object.GetObjectKind().GroupVersionKind().Kind, eventType, reason, fmt.Sprintf(messageFmt, args...), annotations)
+		t.GenerateTelemetryRecord(object.DeepCopyObject(), t.telemetryReporter, object.GetObjectKind().GroupVersionKind().Kind, eventType, reason, fmt.Sprintf(messageFmt, args...), annotations)
 	}
 }
 

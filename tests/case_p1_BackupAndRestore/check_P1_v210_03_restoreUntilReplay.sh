@@ -148,7 +148,7 @@ check_restore_db_running() {
     while true; do
         echo 'check restore db resource'
         counter=$((counter+1))
-        tenant_role=`obclient -h $ip -P2881 -A -uroot -p$PASSWORD -Doceanbase -e "select * from DBA_OB_TENANTS;"| grep $OBTENANT_STANDBY_OSS|awk -F' ' '{print $15}'`
+        tenant_role=`mysql -h $ip -P2881 -A -uroot -p$PASSWORD -Doceanbase -e "select * from DBA_OB_TENANTS;"| grep $OBTENANT_STANDBY_OSS|awk -F' ' '{print $15}'`
         if [[ $tenant_role = "STANDBY" ]];then
             echo "tenant_role $tenant_role"
             RESTORE_DB_RUNNING='true'
@@ -170,8 +170,8 @@ check_restore_data() {
     while true; do
         echo 'check dbdata resource'
         counter=$((counter+1))
-	obclient  -uroot@$OBTENANT_NAME -h $ip -P2881 -p$PASSWORD -Dtest -e " select * from students;" > result1.txt
-	obclient  -uroot@$OBTENANT_STANDBY_OSS -h $ip -P2881 -p$PASSWORD -Dtest -e " select * from students;" > result2.txt
+	mysql  -uroot@$OBTENANT_NAME -h $ip -P2881 -p$PASSWORD -Dtest -e " select * from students;" > result1.txt
+	mysql  -uroot@$OBTENANT_STANDBY_OSS -h $ip -P2881 -p$PASSWORD -Dtest -e " select * from students;" > result2.txt
 	diff result1.txt result2.txt > /dev/null
         if [ $? -eq 0 ]; then
 	    cat result1.txt && cat result2.txt

@@ -96,12 +96,15 @@ function getChildren(zoneList: any, tenantReplicas?: API.ReplicaDetailType[]) {
       type: 'zone',
       img: '',
       badgeImg: '',
+      k8sCluster: '',
       disable: false,
     };
     // const typeText = getZoneTypeText(zone, tenantReplicas || []);
     const tooltipInfo = getTooltipInfo(zone, tenantReplicas || []);
     temp.id = zone.name + zone.namespace; //In k8s, resources are queried through name+ns, so ns+name is unique.
-    temp.label = zone.zone;
+    temp.label = zone.k8sCluster
+      ? `${zone.zone}:${zone.k8sCluster} `
+      : zone.zone;
     temp.status = zone.status;
     temp.img = ZONE_IMG_MAP.get(zone.status);
     temp.badgeImg = BADGE_IMG_MAP.get(zone.status);
@@ -196,7 +199,16 @@ export const getServerNumber = (
   zoneName: string,
 ): number => {
   const zones = topoData.children || [];
-  for (const zone of zones) {
+  const newZones = zones?.map((item) => {
+    if (item.label.includes(':')) {
+      return {
+        ...item,
+        label: item.label.split(':')[0],
+      };
+    }
+    return item;
+  });
+  for (const zone of newZones) {
     if (zone.label === zoneName) {
       return zone.children?.length || 0;
     }

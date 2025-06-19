@@ -8,6 +8,7 @@ import copy from 'copy-to-clipboard';
 import { useState } from 'react';
 import styles from './index.less';
 interface PasswordInputProps {
+  title: string;
   value: string;
   onChange: (val: string) => void;
   name: string;
@@ -23,6 +24,7 @@ export default function PasswordInput({
   onChange,
   name,
   form,
+  title,
 }: PasswordInputProps) {
   const { setFieldValue } = form;
   const [textVisile, setTextVisible] = useState<boolean>(false);
@@ -38,8 +40,8 @@ export default function PasswordInput({
   const genaretaPassword = () => {
     const password = generateRandomPassword();
     onChange(password);
-    setFieldValue('rootPassword', password);
-    form.validateFields(['rootPassword']);
+    setFieldValue(name, password);
+    form.validateFields([name]);
   };
   const passwordCopy = () => {
     if (value) {
@@ -87,11 +89,14 @@ export default function PasswordInput({
       }
     >
       <Form.Item
-        label={intl.formatMessage({
-          id: 'Dashboard.components.PasswordInput.Password',
-          defaultMessage: '密码',
-        })}
-        name="rootPassword"
+        label={
+          title ||
+          intl.formatMessage({
+            id: 'Dashboard.components.PasswordInput.Password',
+            defaultMessage: '密码',
+          })
+        }
+        name={name}
         rules={passwordRules}
         className={styles.passwordFormItem}
         validateFirst

@@ -25,20 +25,20 @@ cleanrestore(){
 writedata(){
     echo 'write data'
     ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-    obclient -h $ip -P2881 -A -uroot@$OBTENANT_NAME -p$PASSWORD  -Dtest -e "create table if not exists demo (id int, value varchar(32));"
-    obclient -h $ip -P2881 -A -uroot@$OBTENANT_NAME -p$PASSWORD  -Dtest -e "insert into demo values (1, '321'), (2, '123');"
+    mysql -h $ip -P2881 -A -uroot@$OBTENANT_NAME -p$PASSWORD  -Dtest -e "create table if not exists demo (id int, value varchar(32));"
+    mysql -h $ip -P2881 -A -uroot@$OBTENANT_NAME -p$PASSWORD  -Dtest -e "insert into demo values (1, '321'), (2, '123');"
 }
 
 compared_data(){
     ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-    obclient -h $ip -P2881 -A -uroot@$OBTENANT_NAME -p$PASSWORD -Dtest -e "select * from demo;" > result1.txt
+    mysql -h $ip -P2881 -A -uroot@$OBTENANT_NAME -p$PASSWORD -Dtest -e "select * from demo;" > result1.txt
     counter=0
     timeout=100  
     COMPARED_DATA='false'
     while true; do
         echo 'compared data'
         counter=$((counter+1))
-        obclient -h $ip -P2881 -A -uroot@$OBTENANT_STANDBY_EMPTY -p$PASSWORD -Dtest -e "select * from demo;" > result2.txt
+        mysql -h $ip -P2881 -A -uroot@$OBTENANT_STANDBY_EMPTY -p$PASSWORD -Dtest -e "select * from demo;" > result2.txt
         diff result1.txt result2.txt > /dev/null
         if [ $? -eq 0 ]; then
             cat result1.txt
@@ -163,7 +163,7 @@ check_backup_db_running() {
     while true; do
         echo 'check backup resource'
         counter=$((counter+1))
-        recovery_window=`obclient -h $ip -uroot@$OBTENANT_NAME -A -P2881 -p$PASSWORD  -Doceanbase -e "select policy_name,recovery_window from DBA_OB_BACKUP_DELETE_POLICY"|grep 8d |awk -F' ' '{print $2}'`
+        recovery_window=`mysql -h $ip -uroot@$OBTENANT_NAME -A -P2881 -p$PASSWORD  -Doceanbase -e "select policy_name,recovery_window from DBA_OB_BACKUP_DELETE_POLICY"|grep 8d |awk -F' ' '{print $2}'`
         if [[ $recovery_window = "8d" ]];then
             echo "recovery_window $recovery_window"
             BACKUP_DB_RUNNING='true'

@@ -6,6 +6,7 @@ import {
   ClusterApiFactory,
   Configuration,
   InfoApiFactory,
+  K8sClusterApiFactory,
   OBClusterApiFactory,
   OBProxyApiFactory,
   OBTenantApiFactory,
@@ -44,6 +45,7 @@ type PromiseWrapperType<T> = {
 
 export const info = wrapper(InfoApiFactory, config);
 export const cluster = wrapper(ClusterApiFactory, config);
+export const K8sClusterApi = wrapper(K8sClusterApiFactory, config);
 export const obcluster = wrapper(OBClusterApiFactory, config);
 export const obtenant = wrapper(OBTenantApiFactory, config);
 export const terminal = wrapper(TerminalApiFactory, config);

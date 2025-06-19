@@ -19,10 +19,12 @@ import (
 type CreateOBTenantParam struct {
 	Name             string `json:"name" binding:"required"`
 	Namespace        string `json:"namespace" binding:"required"`
+	SecretNamespace  string `json:"secretNamespace,omitempty"`
 	ClusterName      string `json:"obcluster" binding:"required"`
 	TenantName       string `json:"tenantName" binding:"required"`
 	UnitNumber       int    `json:"unitNum" binding:"required"`
-	RootPassword     string `json:"rootPassword" binding:"required"`
+	RootPassword     string `json:"rootPassword,omitempty"`
+	RootCredential   string `json:"rootCredential,omitempty"`
 	ConnectWhiteList string `json:"connectWhiteList,omitempty"`
 	Charset          string `json:"charset,omitempty"`
 
@@ -43,7 +45,7 @@ type CreateOBTenantParam struct {
 type ResourcePoolSpec struct {
 	Zone     string `json:"zone" binding:"required"`
 	Priority int    `json:"priority,omitempty"`
-	// Enum: Readonly, Full
+	// Enum: Full, Readonly, Columnstore
 	Type string `json:"type,omitempty"`
 }
 
@@ -54,17 +56,17 @@ type TenantSourceSpec struct {
 
 type RestoreSourceSpec struct {
 	// Enum: OSS, NFS, COS, S3, S3_COMPATIBLE
-	Type          BackupDestType `json:"type" binding:"required"`
-	ArchiveSource string         `json:"archiveSource" binding:"required"`
-	BakDataSource string         `json:"bakDataSource" binding:"required"`
-	OSSAccessID   string         `json:"ossAccessId,omitempty"`
-	OSSAccessKey  string         `json:"ossAccessKey,omitempty"`
-
+	Type                  BackupDestType      `json:"type" binding:"required"`
+	ArchiveSource         string              `json:"archiveSource" binding:"required"`
+	BakDataSource         string              `json:"bakDataSource" binding:"required"`
+	OSSAccessID           string              `json:"ossAccessId,omitempty"`
+	OSSAccessKey          string              `json:"ossAccessKey,omitempty"`
 	BakEncryptionPassword string              `json:"bakEncryptionPassword,omitempty"`
+	OSSAccessSecret       string              `json:"ossAccessSecret,omitempty"`
+	BakEncryptionSecret   string              `json:"bakEncryptionSecret,omitempty"`
 	Until                 *RestoreUntilConfig `json:"until,omitempty"`
-
-	AppID  string `json:"appId,omitempty"`
-	Region string `json:"region,omitempty"`
+	AppID                 string              `json:"appId,omitempty"`
+	Region                string              `json:"region,omitempty"`
 }
 
 type UnitConfig struct {
@@ -112,7 +114,9 @@ type PatchTenant struct {
 }
 
 type TenantPoolSpec struct {
-	Priority   int        `json:"priority"`
+	Priority int `json:"priority"`
+	// Enum: Full, Readonly, Columnstore
+	Type       string     `json:"type,omitempty"`
 	UnitConfig UnitConfig `json:"unitConfig"`
 }
 

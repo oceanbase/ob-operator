@@ -75,7 +75,9 @@ func InitRoutes(router *gin.Engine) {
 	// init all routes under /api/v1
 	v1.InitWebhookRoutes(v1Group)
 	v1.InitInfoRoutes(v1Group)
-	v1.InitK8sRoutes(v1Group)
+	v1.InitMonitorRoutes(v1Group)
+	v1.InitClusterRoutes(v1Group)
+	v1.InitK8sClusterRoutes(v1Group)
 	v1.InitMetricRoutes(v1Group)
 	v1.InitOBClusterRoutes(v1Group)
 	v1.InitUserRoutes(v1Group)

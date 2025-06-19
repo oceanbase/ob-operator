@@ -68,7 +68,7 @@ check_resource_modify_running() {
         echo 'check resource modify'
         counter=$((counter+1))
 	ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-	cpu_value_1_zone1=`obclient -uroot -h $ip -P 2881 -Doceanbase -p$PASSWORD -e "show parameters like 'system_memory';"|grep zone1|awk -F' ' '{print $7}'| awk 'NR==1'`
+	cpu_value_1_zone1=`mysql -uroot -h $ip -P 2881 -Doceanbase -p$PASSWORD -e "show parameters like 'system_memory';"|grep zone1|awk -F' ' '{print $7}'| awk 'NR==1'`
 	crd_cpu_value=`kubectl get obparameter $OBCLUSTER_NAME-1-system-memory -n $NAMESPACE -o yaml | grep "value" | awk 'NR==1'| sed 's/ //g'`
         if [[  $cpu_value_1_zone1 = "1G" && $crd_cpu_value = "value:1G"  ]];then
             echo "cpu_value_1_zone1 $cpu_value_1_zone1"

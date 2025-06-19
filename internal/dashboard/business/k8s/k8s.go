@@ -14,19 +14,16 @@ package k8s
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
-	logger "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
-	"github.com/oceanbase/ob-operator/internal/dashboard/business/obproxy"
+	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/k8s"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
@@ -67,10 +64,10 @@ func extractNodeStatus(node *corev1.Node) string {
 
 func extractNodeRoles(node *corev1.Node) []string {
 	roles := make([]string, 0)
-	for key, value := range node.Labels {
+	for key := range node.Labels {
 		if strings.HasPrefix(key, RoleLabelPrefix) {
 			labelParts := strings.Split(key, "/")
-			if len(labelParts) >= 2 && value == "true" {
+			if len(labelParts) >= 2 {
 				roles = append(roles, labelParts[1])
 			}
 		}
@@ -125,123 +122,88 @@ func extractNodeResource(metricsMap map[string]metricsv1beta1.NodeMetrics, node 
 }
 
 func ListEvents(ctx context.Context, queryEventParam *param.QueryEventParam) ([]response.K8sEvent, error) {
-	events := make([]response.K8sEvent, 0)
-	listOptions := &metav1.ListOptions{}
-	var selectors []string
-	if queryEventParam.Name != "" {
-		selectors = append(selectors, fmt.Sprintf("involvedObject.name=%s", queryEventParam.Name))
+	return ListK8sClusterEvents(ctx, client.GetClient(), queryEventParam)
+}
+
+func GetNode(ctx context.Context, name string) (*response.K8sNode, error) {
+	node, err := resource.GetNode(ctx, name)
+	if err != nil {
+		return nil, err
 	}
-	if queryEventParam.ObjectType != "" {
-		var kind string
-		switch queryEventParam.ObjectType {
-		case "OBCLUSTER":
-			kind = "OBCluster"
-		case "OBTENANT":
-			kind = "OBTenant"
-		case "OBBACKUPPOLICY":
-			kind = "OBTenantBackupPolicy"
-		case "OBPROXY":
-			kind = "Deployment"
-		default:
-			kind = queryEventParam.ObjectType
-		}
-		selectors = append(selectors, fmt.Sprintf("involvedObject.kind=%s", kind))
+	return NewK8sNodeResponse(node), nil
+}
+
+func NewK8sNodeResponse(node *corev1.Node) *response.K8sNode {
+	if node == nil {
+		return nil
 	}
-	if queryEventParam.Type != "" {
-		var eventType string
-		switch queryEventParam.Type {
-		case "NORMAL":
-			eventType = "Normal"
-		case "WARNING":
-			eventType = "Warning"
-		}
-		selectors = append(selectors, fmt.Sprintf("type=%s", eventType))
-	}
-	ns := corev1.NamespaceAll
-	if queryEventParam.Namespace != "" {
-		ns = queryEventParam.Namespace
-	}
-	if len(selectors) > 0 {
-		listOptions.FieldSelector = strings.Join(selectors, ",")
-	}
-	var filterMap map[string]struct{}
-	if queryEventParam.ObjectType == "OBPROXY" {
-		// Filter events by obproxy deployments
-		filterMap = make(map[string]struct{})
-		deployments, err := client.GetClient().MetaClient.Resource(schema.GroupVersionResource{
-			Group:    "apps",
-			Version:  "v1",
-			Resource: "deployments",
-		}).Namespace(ns).List(ctx, metav1.ListOptions{
-			LabelSelector: obproxy.LabelOBProxy,
+	internalAddress, externalAddress := extractNodeAddress(node)
+	taints := make([]k8s.Taint, 0)
+	for _, taint := range node.Spec.Taints {
+		taints = append(taints, k8s.Taint{
+			Key:    taint.Key,
+			Value:  taint.Value,
+			Effect: string(taint.Effect),
 		})
-		logger.Debugf("List deployments: %+v", deployments.Items)
-		if err != nil {
-			return nil, err
-		}
-		for _, deploy := range deployments.Items {
-			filterMap[deploy.Name] = struct{}{}
-		}
 	}
-	eventList, err := resource.ListEvents(ctx, ns, listOptions)
-	logger.Infof("Query events with param: %+v", queryEventParam)
-	if err == nil {
-		for _, event := range eventList.Items {
-			if filterMap != nil {
-				if _, ok := filterMap[event.InvolvedObject.Name]; !ok {
-					continue
-				}
-			}
-			events = append(events, response.K8sEvent{
-				Namespace:  event.Namespace,
-				Type:       event.Type,
-				Count:      event.Count,
-				FirstOccur: event.FirstTimestamp.Unix(),
-				LastSeen:   event.LastTimestamp.Unix(),
-				Reason:     event.Reason,
-				Message:    event.Message,
-				Object:     fmt.Sprintf("%s/%s", event.InvolvedObject.Kind, event.InvolvedObject.Name),
-			})
-		}
+	nodeInfo := &response.K8sNodeInfo{
+		Name:       node.Name,
+		Status:     extractNodeStatus(node),
+		Roles:      extractNodeRoles(node),
+		Labels:     common.MapToKVs(node.Labels),
+		Taints:     taints,
+		Conditions: extractNodeConditions(node),
+		Uptime:     node.CreationTimestamp.Unix(),
+		InternalIP: internalAddress,
+		ExternalIP: externalAddress,
+		Version:    node.Status.NodeInfo.KubeletVersion,
+		OS:         node.Status.NodeInfo.OSImage,
+		Kernel:     node.Status.NodeInfo.KernelVersion,
+		CRI:        node.Status.NodeInfo.ContainerRuntimeVersion,
 	}
-	return events, err
+
+	nodeResource := &response.K8sNodeResource{}
+	nodeResp := &response.K8sNode{
+		Info:     nodeInfo,
+		Resource: nodeResource,
+	}
+	return nodeResp
+}
+
+func UpdateNodeTaints(ctx context.Context, name string, taints []k8s.Taint) (*response.K8sNode, error) {
+	node, err := resource.GetNode(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	nodeTaints := make([]corev1.Taint, 0)
+	for _, taint := range taints {
+		nodeTaints = append(nodeTaints, corev1.Taint{
+			Key:    taint.Key,
+			Value:  taint.Value,
+			Effect: corev1.TaintEffect(taint.Effect),
+		})
+	}
+	node.Spec.Taints = nodeTaints
+	node, err = resource.UpdateNode(ctx, node)
+	return NewK8sNodeResponse(node), err
+}
+
+func UpdateNodeLabels(ctx context.Context, name string, labels []modelcommon.KVPair) (*response.K8sNode, error) {
+	node, err := resource.GetNode(ctx, name)
+	if err != nil {
+		return nil, err
+	}
+	node.Labels = common.KVsToMap(labels)
+	node, err = resource.UpdateNode(ctx, node)
+	return NewK8sNodeResponse(node), err
+}
+
+func BatchUpdateNodes(ctx context.Context, updateNodesParam *param.BatchUpdateNodesParam) error {
+	return BatchUpdateK8sClusterNodes(ctx, client.GetClient(), updateNodesParam)
 }
 
 func ListNodes(ctx context.Context) ([]response.K8sNode, error) {
-	nodes := make([]response.K8sNode, 0)
-	nodeList, err := resource.ListNodes(ctx)
-	nodeMetricsMap, metricsErr := resource.ListNodeMetrics(ctx)
-	if err == nil {
-		for _, node := range nodeList.Items {
-			internalAddress, externalAddress := extractNodeAddress(&node)
-			nodeInfo := &response.K8sNodeInfo{
-				Name:       node.Name,
-				Status:     extractNodeStatus(&node),
-				Roles:      extractNodeRoles(&node),
-				Labels:     common.MapToKVs(node.Labels),
-				Conditions: extractNodeConditions(&node),
-				Uptime:     node.CreationTimestamp.Unix(),
-				InternalIP: internalAddress,
-				ExternalIP: externalAddress,
-				Version:    node.Status.NodeInfo.KubeletVersion,
-				OS:         node.Status.NodeInfo.OSImage,
-				Kernel:     node.Status.NodeInfo.KernelVersion,
-				CRI:        node.Status.NodeInfo.ContainerRuntimeVersion,
-			}
-
-			nodeResource := &response.K8sNodeResource{}
-			if metricsErr == nil {
-				nodeResource = extractNodeResource(nodeMetricsMap, &node)
-			} else {
-				logger.Errorf("Got error when list node metrics, err: %v", metricsErr)
-			}
-			nodes = append(nodes, response.K8sNode{
-				Info:     nodeInfo,
-				Resource: nodeResource,
-			})
-		}
-	}
-	return nodes, err
+	return ListK8sClusterNodes(ctx, client.GetClient())
 }
 
 func ListStorageClasses(ctx context.Context) ([]response.StorageClass, error) {

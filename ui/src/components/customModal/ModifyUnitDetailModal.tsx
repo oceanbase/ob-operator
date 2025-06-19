@@ -59,6 +59,7 @@ type UnitConfigType = {
     setEditZone?: React.Dispatch<React.SetStateAction<string>>;
     zonesOptions?: API.OptionsType;
     zoneName?: string;
+    obVersion?: string;
   };
 };
 
@@ -77,6 +78,7 @@ export default function ModifyUnitDetailModal({
     setEditZone,
     zonesOptions,
     zoneName,
+    obVersion,
   },
 }: API.CommonModalType & UnitConfigType) {
   const [form] = Form.useForm<PoolDetailType>();
@@ -85,7 +87,6 @@ export default function ModifyUnitDetailModal({
   const [minResource, setMinResource] = useState<OBTenant.MinResourceConfig>(
     getMinResource({ minMemory: essentialParameter?.minPoolMemory }),
   );
-
   const [selectZones, setSelectZones] = useState<string[]>(
     editZone ? [editZone] : [],
   );
@@ -110,10 +111,15 @@ export default function ModifyUnitDetailModal({
   };
 
   const onFinish = async (values: any) => {
+    if (!newResourcePool) {
+      values.zoneName = editZone || values.zoneName;
+    }
+
     const { zoneName, ...reqData } = formatPatchPoolData(
       values,
       newResourcePool ? 'create' : 'edit',
     );
+
     const res = await obtenantPoolReq({
       ns: ns!,
       name: name!,
@@ -339,6 +345,7 @@ export default function ModifyUnitDetailModal({
                         essentialParameter.obZoneResourceMap[item.zone]
                       }
                       checkBoxOnChange={checkBoxOnChange}
+                      obVersion={obVersion}
                     />
                   </div>
                 ))}

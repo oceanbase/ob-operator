@@ -21,13 +21,13 @@ spec:
   logArchive:
     destination:
       type: "OSS"
-      path: "${OSS_HOST}/${OSS_ARCHIVE_PATH}?host=${OSS_AREA}"
+      path: "s3://${OSS_BUCKET_NAME}/${OSS_ARCHIVE_PATH}?host=${OSS_HOST}"
       ossAccessSecret: "${OSS_ACCESS}"
     switchPieceInterval: "1d"
   dataBackup:
     destination:
       type: "OSS"
-      path: "${OSS_HOST}/${OSS_BACPUP_PATH}?host=${OSS_AREA}"
+      path: "s3://${OSS_BUCKET_NAME}/${OSS_BACPUP_PATH}?host=${OSS_HOST}"
       ossAccessSecret: "${OSS_ACCESS}"
     fullCrontab: "30 0 * * 6"
     incrementalCrontab: "30 1 * * *"

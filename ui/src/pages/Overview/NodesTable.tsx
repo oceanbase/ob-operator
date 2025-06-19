@@ -4,8 +4,14 @@ import { getNodeInfoReq } from '@/services';
 import { intl } from '@/utils/intl';
 import { findByValue } from '@oceanbase/util';
 import { useRequest } from 'ahooks';
-import { Card, Col, Progress, Table, Tag, Tooltip } from 'antd';
+import { Button, Card, Col, Progress, Space, Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { useRef, useState } from 'react';
+import BatchEditNodeDrawer from './BatchEditNodeDrawer';
+import EditNodeDrawer from './EditNodeDrawer';
+
+import { getColumnSearchProps } from '@/utils/component';
+import type { InputRef } from 'antd';
 
 interface DataType {
   key: React.Key;
@@ -38,134 +44,228 @@ const progressContent = (value: number, resource: number) => {
     <Progress status="normal" strokeLinecap="butt" percent={value} />
   );
 };
-const columns: ColumnsType<DataType> = [
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.pages.Overview.NodesTable.NodeName',
-      defaultMessage: '节点名',
-    }),
-    dataIndex: 'name',
-    key: 'name',
-    width: 120,
-    render: (val) => <CustomTooltip text={val} width={100} />,
-  },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.pages.Overview.NodesTable.Status',
-      defaultMessage: '状态',
-    }),
-    dataIndex: 'status',
-    key: 'status',
-    width: 100,
-    render: (text) => {
-      const value = findByValue(NODESTABLE_STATUS_LIST, text);
-      return <Tag color={value.badgeStatus}>{value.label}</Tag>;
-    },
-  },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.pages.Overview.NodesTable.Role',
-      defaultMessage: '角色',
-    }),
-    dataIndex: 'roles',
-    key: 'roles',
-    width: 120,
-    render: (val) => {
-      return val.length !== 0 ? <CustomTooltip text={val} width={100} /> : '-';
-    },
-  },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.pages.Overview.NodesTable.RunningTime',
-      defaultMessage: '启动时间',
-    }),
-    dataIndex: 'uptime',
-    key: 'uptime',
-    width: 120,
-  },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.pages.Overview.NodesTable.Version',
-      defaultMessage: '版本',
-    }),
-    dataIndex: 'version',
-    key: 'version',
-    width: 120,
-  },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.pages.Overview.NodesTable.InternalIpAddress',
-      defaultMessage: '内部IP',
-    }),
-    dataIndex: 'internalIP',
-    key: 'internalIP',
-    width: 120,
-  },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.pages.Overview.NodesTable.ExternalIpAddress',
-      defaultMessage: '外部IP',
-    }),
-    dataIndex: 'externalIP',
-    key: 'externalIP',
-    width: 120,
-    render: (text) => <span>{text || '-'}</span>,
-  },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.pages.Overview.NodesTable.OperatingSystem',
-      defaultMessage: '操作系统',
-    }),
-    dataIndex: 'os',
-    key: 'os',
-    width: 140,
-    render: (val) => <CustomTooltip text={val} width={100} />,
-  },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.pages.Overview.NodesTable.KernelVersion',
-      defaultMessage: '内核版本',
-    }),
-    dataIndex: 'kernel',
-    key: 'kernel',
-    width: 140,
-    render: (val) => <CustomTooltip text={val} width={100} />,
-  },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.pages.Overview.NodesTable.ContainerRuntime',
-      defaultMessage: '容器运行时',
-    }),
-    dataIndex: 'cri',
-    key: 'cri',
-    width: 140,
-  },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.pages.Overview.NodesTable.AllocatedCpu',
-      defaultMessage: '已分配CPU',
-    }),
-    dataIndex: 'cpu',
-    key: 'cpu',
-    render: (value, record) => progressContent(value, record.cpuTotal),
-  },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.pages.Overview.NodesTable.AllocatedMemory',
-      defaultMessage: '已分配内存',
-    }),
-    dataIndex: 'memory',
-    key: 'memory',
-    render: (value, record) => progressContent(value, record.memoryTotal),
-  },
-];
 
-export default function NodesTable() {
-  const { data, loading } = useRequest(getNodeInfoReq);
+export default function NodesTable({
+  type,
+  nodeLoading,
+  onSuccess,
+  k8sClusterName,
+  K8sClustersNodeList,
+}) {
+  const { data, loading, refresh } = useRequest(getNodeInfoReq, {
+    ready: type !== 'k8s',
+  });
+
+  const [isDrawerOpen, setIsDrawerOpen] = useState<boolean>(false);
+  const [nodeRecord, setNodeRecord] = useState({});
+  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [batchNodeDrawerOpen, setBatchNodeDrawerOpen] =
+    useState<boolean>(false);
+
+  const [searchText, setSearchText] = useState('');
+  const [searchedColumn, setSearchedColumn] = useState('');
+  const searchInput = useRef<InputRef>(null);
+
+  const columns: ColumnsType<DataType> = [
+    {
+      title: intl.formatMessage({
+        id: 'src.pages.Overview.06FAFC98',
+        defaultMessage: '名称',
+      }),
+      dataIndex: 'name',
+      key: 'name',
+      width: 120,
+      ...getColumnSearchProps({
+        dataIndex: 'name',
+        searchInput: searchInput,
+        setSearchText: setSearchText,
+        setSearchedColumn: setSearchedColumn,
+        searchText: searchText,
+        searchedColumn: searchedColumn,
+      }),
+      render: (val) => <CustomTooltip text={val} width={100} />,
+    },
+    {
+      title: intl.formatMessage({
+        id: 'OBDashboard.pages.Overview.NodesTable.Role',
+        defaultMessage: '角色',
+      }),
+      dataIndex: 'roles',
+      key: 'roles',
+      width: 120,
+      render: (val) => {
+        return val?.length !== 0 ? (
+          <CustomTooltip text={val.join(',')} width={100} />
+        ) : (
+          '-'
+        );
+      },
+    },
+    {
+      title: intl.formatMessage({
+        id: 'OBDashboard.pages.Overview.NodesTable.Status',
+        defaultMessage: '状态',
+      }),
+      dataIndex: 'status',
+      key: 'status',
+      width: 100,
+      render: (text) => {
+        const value = findByValue(NODESTABLE_STATUS_LIST, text);
+        return <Tag color={value.badgeStatus}>{value.label}</Tag>;
+      },
+    },
+    {
+      title: intl.formatMessage({
+        id: 'OBDashboard.pages.Overview.NodesTable.InternalIpAddress',
+        defaultMessage: 'IP',
+      }),
+      dataIndex: 'internalIP',
+      key: 'internalIP',
+      width: 120,
+      ...getColumnSearchProps({
+        dataIndex: 'internalIP',
+        searchInput: searchInput,
+        setSearchText: setSearchText,
+        setSearchedColumn: setSearchedColumn,
+        searchText: searchText,
+        searchedColumn: searchedColumn,
+      }),
+    },
+
+    {
+      title: intl.formatMessage({
+        id: 'OBDashboard.pages.Overview.NodesTable.AllocatedCpu',
+        defaultMessage: '已分配CPU',
+      }),
+      dataIndex: 'cpu',
+      key: 'cpu',
+      render: (value, record) => progressContent(value, record.cpuTotal),
+    },
+    {
+      title: intl.formatMessage({
+        id: 'OBDashboard.pages.Overview.NodesTable.AllocatedMemory',
+        defaultMessage: '已分配内存',
+      }),
+      dataIndex: 'memory',
+      key: 'memory',
+      render: (value, record) => progressContent(value, record.memoryTotal),
+    },
+    {
+      title: 'labels',
+      dataIndex: 'labels',
+      ellipsis: true,
+      width: 160,
+      ...getColumnSearchProps({
+        dataIndex: 'labels',
+        searchInput: searchInput,
+        setSearchText: setSearchText,
+        setSearchedColumn: setSearchedColumn,
+        searchText: searchText,
+        searchedColumn: searchedColumn,
+        arraySearch: true,
+        symbol: '=',
+      }),
+      render: (text) => {
+        const tooltipTitle = text?.map((item) => (
+          <div>{`${item.key}=${item.value}`}</div>
+        ));
+
+        const content = text?.map((item) => `${item.key}=${item.value}`);
+        return content?.length === 0 ? (
+          '-'
+        ) : (
+          <CustomTooltip
+            text={content}
+            tooltipTitle={tooltipTitle}
+            width={150}
+          />
+        );
+      },
+    },
+    {
+      title: 'taints',
+      dataIndex: 'taints',
+      width: 160,
+      ...getColumnSearchProps({
+        dataIndex: 'taints',
+        searchInput: searchInput,
+        setSearchText: setSearchText,
+        setSearchedColumn: setSearchedColumn,
+        searchText: searchText,
+        searchedColumn: searchedColumn,
+        arraySearch: true,
+        symbol: '=',
+      }),
+      render: (text) => {
+        const content = text?.map((item) =>
+          item.value
+            ? `${item.key}=${item.value}:${item.effect}`
+            : `${item.key}:${item.effect}`,
+        );
+        const tooltipTitle = text?.map((item) =>
+          item.value ? (
+            <div>{`${item.key}=${item.value}:${item.effect}`}</div>
+          ) : (
+            <div>{`${item.key}:${item.effect}`}</div>
+          ),
+        );
+
+        return content?.length === 0 ? (
+          '-'
+        ) : (
+          <CustomTooltip
+            text={content}
+            tooltipTitle={tooltipTitle}
+            width={150}
+          />
+        );
+      },
+    },
+    {
+      title: intl.formatMessage({
+        id: 'OBDashboard.pages.Overview.NodesTable.RunningTime',
+        defaultMessage: '启动时间',
+      }),
+      dataIndex: 'uptime',
+      key: 'uptime',
+    },
+    {
+      title: intl.formatMessage({
+        id: 'src.pages.Cluster.Detail.Overview.1B9EA477',
+        defaultMessage: '操作',
+      }),
+      align: 'center',
+      render: (text, record) => {
+        return (
+          <Space size={1}>
+            <Button
+              type="link"
+              onClick={() => {
+                setIsDrawerOpen(true);
+                setNodeRecord(record);
+              }}
+            >
+              {intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.F5A088FB',
+                defaultMessage: '编辑',
+              })}
+            </Button>
+          </Space>
+        );
+      },
+    },
+  ];
+
+  const rowSelection: TableRowSelection<DataType> = {
+    onChange: (_, record) => {
+      setSelectedRowKeys(record);
+    },
+  };
+
   return (
     <Col span={24}>
       <Card
-        loading={loading}
+        loading={loading || nodeLoading}
         title={
           <h2 style={{ marginBottom: 0 }}>
             {intl.formatMessage({
@@ -174,16 +274,66 @@ export default function NodesTable() {
             })}
           </h2>
         }
+        extra={
+          selectedRowKeys.length > 0 && (
+            <Button onClick={() => setBatchNodeDrawerOpen(true)} type="primary">
+              {intl.formatMessage({
+                id: 'src.pages.Overview.1161AAE2',
+                defaultMessage: '批量编辑',
+              })}
+            </Button>
+          )
+        }
       >
         <Table
+          rowSelection={rowSelection}
           columns={columns}
-          dataSource={data}
+          dataSource={type === 'k8s' ? K8sClustersNodeList : data}
           rowKey="name"
           pagination={{ simple: true }}
           scroll={{ x: 1500 }}
           sticky
         />
       </Card>
+
+      <BatchEditNodeDrawer
+        type={type}
+        k8sClusterName={k8sClusterName}
+        selectedRowKeys={selectedRowKeys}
+        visible={batchNodeDrawerOpen}
+        onCancel={() => {
+          setBatchNodeDrawerOpen(false);
+        }}
+        onSuccess={() => {
+          if (type === 'k8s') {
+            onSuccess();
+          } else {
+            refresh();
+          }
+          setBatchNodeDrawerOpen(false);
+          setSelectedRowKeys([]);
+        }}
+      />
+
+      <EditNodeDrawer
+        type={type}
+        k8sClusterName={k8sClusterName}
+        visible={isDrawerOpen}
+        onCancel={() => {
+          setIsDrawerOpen(false);
+          setNodeRecord({});
+        }}
+        onSuccess={() => {
+          setIsDrawerOpen(false);
+          setNodeRecord({});
+          if (type === 'k8s') {
+            onSuccess();
+          } else {
+            refresh();
+          }
+        }}
+        nodeRecord={nodeRecord}
+      />
     </Col>
   );
 }

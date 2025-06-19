@@ -93,6 +93,7 @@ func (m *OBServerManager) UpdateStatus() error {
 			m.OBServer.Status.PodPhase = pod.Status.Phase
 			m.OBServer.Status.PodIp = pod.Status.PodIP
 			m.OBServer.Status.NodeIp = pod.Status.HostIP
+			m.OBServer.Status.NodeName = pod.Spec.NodeName
 			// TODO update from obcluster
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("OBServer pod info", "pod", pod)
 			m.OBServer.Status.CNI = resourceutils.GetCNIFromAnnotation(pod)

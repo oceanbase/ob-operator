@@ -18,12 +18,16 @@ import {
   Space,
 } from 'antd';
 
+import { EFFECT_LIST, OPERATOR_LIST } from '@/constants/node';
 import { RULER_ZONE } from '@/constants/rules';
-import { getNodeLabelsReq } from '@/services';
+import { getK8sObclusterListReq, getNodeLabelsReq } from '@/services';
 import { useAccess } from '@umijs/max';
+import { useRequest } from 'ahooks';
 import { useEffect, useState } from 'react';
 
 export default function Topo({ form }) {
+  const { data: K8sClustersList } = useRequest(getK8sObclusterListReq);
+
   const [showTopology, setShowTopology] = useState<boolean>(false);
   const [formsubIndex, setFromSubIndex] = useState({});
 
@@ -50,16 +54,7 @@ export default function Topo({ form }) {
       label: 'DoesNoExist',
     },
   ];
-  const tolerationsOperatorList = [
-    {
-      value: 'Equal',
-      label: 'Equal',
-    },
-    {
-      value: 'Exists',
-      label: 'Exists',
-    },
-  ];
+
   const basicFrom = (topologyConfiguration, name) => (
     <>
       <Col
@@ -129,7 +124,7 @@ export default function Topo({ form }) {
             })}
             options={
               topologyConfiguration === 'Tolerations'
-                ? tolerationsOperatorList
+                ? OPERATOR_LIST
                 : affinitiesOperatorList
             }
           />
@@ -231,6 +226,7 @@ export default function Topo({ form }) {
                       name={[name, 'type']}
                       initialValue={'NODE'}
                     />
+
                     <DeleteOutlined
                       onClick={() => remove(name)}
                       style={{ marginBottom: 15 }}
@@ -349,20 +345,7 @@ export default function Topo({ form }) {
                           id: 'OBDashboard.components.NodeSelector.PleaseSelect',
                           defaultMessage: '请选择',
                         })}
-                        options={[
-                          {
-                            value: 'NoSchedule',
-                            label: 'NoSchedule',
-                          },
-                          {
-                            value: 'PerferNoSchedule',
-                            label: 'PerferNoSchedule',
-                          },
-                          {
-                            value: 'NoExecute',
-                            label: 'NoExecute',
-                          },
-                        ]}
+                        options={EFFECT_LIST}
                       />
                     </Form.Item>
                   </Col>
@@ -403,6 +386,11 @@ export default function Topo({ form }) {
     </Form.Item>
   );
 
+  const options = (K8sClustersList?.data || [])?.map((item) => ({
+    value: item.name,
+    label: item.name,
+  }));
+
   return (
     <Col span={24}>
       <Card
@@ -435,7 +423,7 @@ export default function Topo({ form }) {
                         />
                       </Form.Item>
                     </Col>
-                    <Col span={6}>
+                    <Col span={3}>
                       <Form.Item
                         label={intl.formatMessage({
                           id: 'OBDashboard.Cluster.New.Topo.NumberOfServers',
@@ -448,11 +436,31 @@ export default function Topo({ form }) {
                             id: 'OBDashboard.Cluster.New.Topo.PleaseEnter',
                             defaultMessage: '请输入',
                           })}
+                          style={{ width: '100%' }}
                           min={1}
                         />
                       </Form.Item>
                     </Col>
                     <Col span={5}>
+                      <Form.Item
+                        label={intl.formatMessage({
+                          id: 'src.pages.Cluster.New.6CB28C7E',
+                          defaultMessage: 'K8s 集群',
+                        })}
+                        name={[field.name, 'k8sCluster']}
+                      >
+                        <Select
+                          showSearch
+                          placeholder={intl.formatMessage({
+                            id: 'src.pages.Cluster.New.9B629F24',
+                            defaultMessage: '请选择 K8s 集群',
+                          })}
+                          optionFilterProp="label"
+                          options={options}
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col span={3}>
                       <Form.Item label={'Topology summary'} shouldUpdate>
                         {() => {
                           const { topology } = form.getFieldsValue();

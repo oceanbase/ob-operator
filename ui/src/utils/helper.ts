@@ -18,7 +18,7 @@ export const getInitialObjOfKeys = <T>(targetObj: T, keys: (keyof T)[]) => {
 };
 
 export const formatStatisticData = (
-  type: 'cluster' | 'tenant',
+  type: 'cluster' | 'tenant' | 'k8sCluster',
   data: StatisticDataType,
 ) => {
   const r: API.StatisticData = {
@@ -29,10 +29,16 @@ export const formatStatisticData = (
             id: 'Dashboard.src.utils.helper.OceanbaseCluster',
             defaultMessage: 'OceanBase集群',
           })
-        : intl.formatMessage({
+        : type === 'tenant'
+        ? intl.formatMessage({
             id: 'Dashboard.src.utils.helper.OceanbaseTenants',
             defaultMessage: 'OceanBase租户',
+          })
+        : intl.formatMessage({
+            id: 'src.utils.50939F01',
+            defaultMessage: 'K8s集群',
           }),
+
     type,
     deleting: 0,
     operating: 0,
@@ -66,10 +72,15 @@ export const formatPatchPoolData = (
   if (type === 'edit') {
     Object.keys(originUnitData).forEach((key) => {
       if (key !== 'unitConfig') {
-        newOriginUnitData.zoneName = key;
+        newOriginUnitData.zoneName = originUnitData.zoneName;
+      }
+      if (key === 'pools') {
+        newOriginUnitData.type =
+          originUnitData?.pools[originUnitData.zoneName].type;
       }
       if (originUnitData[key]?.priority) {
         newOriginUnitData.priority = originUnitData[key].priority;
+        newOriginUnitData.type = originUnitData[key].type;
       }
     });
   }

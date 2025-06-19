@@ -26,10 +26,8 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
-	crypto "github.com/oceanbase/ob-operator/pkg/crypto"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 
 // @ID GetOBClusterStatistic
@@ -103,24 +101,24 @@ func GetOBCluster(c *gin.Context) (*response.OBCluster, error) {
 // @Accept application/json
 // @Produce application/json
 // @Param body body param.CreateOBClusterParam true "create obcluster request body"
-// @Success 200 object response.APIResponse{data=response.OBCluster}
+// @Success 200 object response.APIResponse
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters [POST]
 // @Security ApiKeyAuth
-func CreateOBCluster(c *gin.Context) (*response.OBCluster, error) {
+func CreateOBCluster(c *gin.Context) (any, error) {
 	param := &param.CreateOBClusterParam{}
 	err := c.Bind(param)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
-	param.RootPassword, err = crypto.DecryptWithPrivateKey(param.RootPassword)
+	err = extractPassword(param)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	loggingCreateOBClusterParam(param)
-	return oceanbase.CreateOBCluster(c, param)
+	return nil, oceanbase.CreateOBCluster(c, param)
 }
 
 // @ID UpgradeOBCluster
@@ -483,12 +481,12 @@ func DeleteOBServers(c *gin.Context) (*response.OBCluster, error) {
 // @Produce application/json
 // @Param namespace path string true "namespace of obcluster resource"
 // @Param name path string true "name of obcluster resource"
-// @Success 200 object response.APIResponse{data=[]model.Parameter}
+// @Success 200 object response.APIResponse{data=[]response.AggregatedParameter}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/obclusters/namespace/{namespace}/name/{name}/parameters [GET]
-func ListOBClusterParameters(c *gin.Context) ([]*model.Parameter, error) {
+func ListOBClusterParameters(c *gin.Context) ([]response.AggregatedParameter, error) {
 	nn := &param.K8sObjectIdentity{}
 	err := c.BindUri(nn)
 	if err != nil {

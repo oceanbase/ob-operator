@@ -150,19 +150,28 @@ func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 		return nil, httpErr.New(httpErr.ErrPermissionDenied, "Permission denied")
 	}
 
-	tenantParam.RootPassword, err = crypto.DecryptWithPrivateKey(tenantParam.RootPassword)
-	if err != nil {
-		return nil, httpErr.NewBadRequest(err.Error())
+	if tenantParam.SecretNamespace == "" {
+		tenantParam.SecretNamespace = "default"
+	}
+	if tenantParam.RootPassword != "" {
+		tenantParam.RootPassword, err = crypto.DecryptWithPrivateKey(tenantParam.RootPassword)
+		if err != nil {
+			return nil, httpErr.NewBadRequest(err.Error())
+		}
 	}
 	if tenantParam.Source != nil && tenantParam.Source.Restore != nil {
 		if tenantParam.Source.Restore.Type == "OSS" {
-			tenantParam.Source.Restore.OSSAccessID, err = crypto.DecryptWithPrivateKey(tenantParam.Source.Restore.OSSAccessID)
-			if err != nil {
-				return nil, httpErr.NewBadRequest(err.Error())
+			if tenantParam.Source.Restore.OSSAccessID != "" {
+				tenantParam.Source.Restore.OSSAccessID, err = crypto.DecryptWithPrivateKey(tenantParam.Source.Restore.OSSAccessID)
+				if err != nil {
+					return nil, httpErr.NewBadRequest(err.Error())
+				}
 			}
-			tenantParam.Source.Restore.OSSAccessKey, err = crypto.DecryptWithPrivateKey(tenantParam.Source.Restore.OSSAccessKey)
-			if err != nil {
-				return nil, httpErr.NewBadRequest(err.Error())
+			if tenantParam.Source.Restore.OSSAccessKey != "" {
+				tenantParam.Source.Restore.OSSAccessKey, err = crypto.DecryptWithPrivateKey(tenantParam.Source.Restore.OSSAccessKey)
+				if err != nil {
+					return nil, httpErr.NewBadRequest(err.Error())
+				}
 			}
 		}
 		if tenantParam.Source.Restore.BakEncryptionPassword != "" {
@@ -187,7 +196,7 @@ func CreateTenant(c *gin.Context) (*response.OBTenantDetail, error) {
 // @ID DeleteTenant
 // @Tags OBTenant
 // @Summary Delete tenant
-// @Description Delete an obtenant in a specific namespace, ask user to confrim the deletion carefully
+// @Description Delete an obtenant in a specific namespace, ask user to confirm the deletion carefully
 // @Accept application/json
 // @Produce application/json
 // @Param namespace path string true "obtenant namespace"

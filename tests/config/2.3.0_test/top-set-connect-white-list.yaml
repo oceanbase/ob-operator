@@ -1,0 +1,11 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenantOperation
+metadata:
+  generateName: ${TOP_SET_CONNECT_WHITE_LIST}
+  namespace: ${NAMESPACE}
+spec:
+  type: "SET_CONNECT_WHITE_LIST"
+  targetTenant: ${OBTENANT_NAME}
+  connectWhiteList: "%,11.161.204.4"
+  force: true
+

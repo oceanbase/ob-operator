@@ -132,7 +132,7 @@ check_backup_db_running() {
     while true; do
         echo 'check backup resource'
         counter=$((counter+1))
-        recovery_window=`obclient -h $ip -uroot@$OBTENANT_NAME -A -P2881 -p$PASSWORD  -Doceanbase -e "select policy_name,recovery_window from DBA_OB_BACKUP_DELETE_POLICY"|grep 8d |awk -F' ' '{print $2}'`
+        recovery_window=`mysql -h $ip -uroot@$OBTENANT_NAME -A -P2881 -p$PASSWORD  -Doceanbase -e "select policy_name,recovery_window from DBA_OB_BACKUP_DELETE_POLICY"|grep 8d |awk -F' ' '{print $2}'`
         if [[ $recovery_window = "8d" ]];then
             echo "recovery_window $recovery_window"
             BACKUP_DB_RUNNING='true'
@@ -176,7 +176,7 @@ check_restore_db_running() {
     while true; do
         echo 'check restore db resource'
         counter=$((counter+1))
-        tenant_role=`obclient -h $ip -P2881 -A -uroot -p$PASSWORD -Doceanbase -e "select * from DBA_OB_TENANTS;"| grep $OBTENANT_STANDBY|awk -F' ' '{print $15}'`
+        tenant_role=`mysql -h $ip -P2881 -A -uroot -p$PASSWORD -Doceanbase -e "select * from DBA_OB_TENANTS;"| grep $OBTENANT_STANDBY|awk -F' ' '{print $15}'`
         if [[ $tenant_role = "STANDBY" ]];then
             echo "tenant_role $tenant_role"
             RESTORE_DB_RUNNING='true'

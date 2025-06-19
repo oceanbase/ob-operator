@@ -27,111 +27,10 @@ interface EventsTableProps {
   cardType?: 'card' | 'proCard';
   collapsible?: boolean;
   defaultExpand?: boolean;
+  overView?: boolean; // 多个资源需要加上fiilter
   name?: string;
+  type?: string;
 }
-
-const columns: ColumnsType<DataType> = [
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.components.EventsTable.Namespace',
-      defaultMessage: '命名空间',
-    }),
-    dataIndex: 'namespace',
-    key: 'namespace',
-    width: 120,
-    render: (text) => <span>{text}</span>,
-  },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.components.EventsTable.Type',
-      defaultMessage: '类型',
-    }),
-    dataIndex: 'type',
-    key: 'type',
-    filters: [
-      {
-        text: intl.formatMessage({
-          id: 'OBDashboard.components.EventsTable.Normal',
-          defaultMessage: '正常',
-        }),
-        value: 'Normal',
-      },
-      {
-        text: intl.formatMessage({
-          id: 'OBDashboard.components.EventsTable.Warning',
-          defaultMessage: '警告',
-        }),
-        value: 'Warning',
-      },
-    ],
-
-    onFilter: (value: any, record) => {
-      return record.type === value;
-    },
-    render: (text) => {
-      const value = findByValue(EVENTSTABLE_STATUS_LIST, text);
-      return <Tag color={value.badgeStatus}>{value.label}</Tag>;
-    },
-    width: 120,
-  },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.components.EventsTable.NumberOfOccurrences',
-      defaultMessage: '发生次数',
-    }),
-    dataIndex: 'count',
-    key: 'count',
-    width: 130,
-  },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.components.EventsTable.FirstOccurrenceTime',
-      defaultMessage: '第一次发生时间',
-    }),
-    dataIndex: 'firstOccur',
-    key: 'firstOccur',
-    width: 210,
-  },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.components.EventsTable.RecentOccurrenceTime',
-      defaultMessage: '最近发生时间',
-    }),
-    dataIndex: 'lastSeen',
-    key: 'lastSeen',
-    width: 210,
-  },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.components.EventsTable.Cause',
-      defaultMessage: '原因',
-    }),
-    dataIndex: 'reason',
-    key: 'reason',
-    width: 160,
-    render: (text) => <span>{text || '-'}</span>,
-  },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.components.EventsTable.AssociatedObjects',
-      defaultMessage: '关联对象',
-    }),
-    dataIndex: 'object',
-    key: 'object',
-    width: 150,
-    render: (val) => <CustomTooltip text={val} width={120} />,
-  },
-  {
-    title: intl.formatMessage({
-      id: 'OBDashboard.components.EventsTable.Information',
-      defaultMessage: '信息',
-    }),
-    dataIndex: 'message',
-    key: 'message',
-    width: 220,
-    render: (val) => <CustomTooltip text={val} width={200} />,
-  },
-];
 
 export default function EventsTable({
   objectType,
@@ -139,6 +38,10 @@ export default function EventsTable({
   collapsible = false,
   defaultExpand = false,
   name,
+  overView,
+  externalData,
+  type,
+  externalLoading,
 }: EventsTableProps) {
   const defaultParams: API.EventParams = {};
   if (objectType) {
@@ -150,7 +53,10 @@ export default function EventsTable({
 
   const { data, loading } = useRequest(getEventsReq, {
     defaultParams: [defaultParams],
+    ready: type !== 'k8s',
   });
+
+  const dataList = type === 'k8s' ? externalData : data;
 
   const CustomCard = (props) => {
     const { title, loading } = props;
@@ -175,9 +81,135 @@ export default function EventsTable({
     );
   };
 
+  const namespaceList = dataList?.map((item) => ({
+    text: item.namespace,
+    value: item.namespace,
+  }));
+
+  const namespaceFilterList = namespaceList?.reduce((prev, curr) => {
+    const found = prev.find(
+      (item) => item.text === curr.text && item.value === curr.value,
+    );
+    return found ? prev : [...prev, curr];
+  }, []);
+
+  const columns: ColumnsType<DataType> = [
+    {
+      title: intl.formatMessage({
+        id: 'OBDashboard.components.EventsTable.Namespace',
+        defaultMessage: '命名空间',
+      }),
+      dataIndex: 'namespace',
+      key: 'namespace',
+      width: 120,
+
+      ...(overView
+        ? {
+            filters: namespaceFilterList,
+            onFilter: (value: any, record) => {
+              return record.namespace === value;
+            },
+          }
+        : {}),
+
+      render: (text) => <span>{text}</span>,
+    },
+    {
+      title: intl.formatMessage({
+        id: 'OBDashboard.components.EventsTable.Type',
+        defaultMessage: '类型',
+      }),
+      dataIndex: 'type',
+      key: 'type',
+      filters: [
+        {
+          text: intl.formatMessage({
+            id: 'OBDashboard.components.EventsTable.Normal',
+            defaultMessage: '正常',
+          }),
+          value: 'Normal',
+        },
+        {
+          text: intl.formatMessage({
+            id: 'OBDashboard.components.EventsTable.Warning',
+            defaultMessage: '警告',
+          }),
+          value: 'Warning',
+        },
+      ],
+
+      onFilter: (value: any, record) => {
+        return record.type === value;
+      },
+      render: (text) => {
+        const value = findByValue(EVENTSTABLE_STATUS_LIST, text);
+
+        return <Tag color={value.badgeStatus}>{value.label}</Tag>;
+      },
+      width: 120,
+    },
+    {
+      title: intl.formatMessage({
+        id: 'OBDashboard.components.EventsTable.NumberOfOccurrences',
+        defaultMessage: '发生次数',
+      }),
+      dataIndex: 'count',
+      key: 'count',
+      width: 130,
+    },
+    {
+      title: intl.formatMessage({
+        id: 'OBDashboard.components.EventsTable.FirstOccurrenceTime',
+        defaultMessage: '第一次发生时间',
+      }),
+      dataIndex: 'firstOccur',
+      key: 'firstOccur',
+      width: 210,
+    },
+    {
+      title: intl.formatMessage({
+        id: 'OBDashboard.components.EventsTable.RecentOccurrenceTime',
+        defaultMessage: '最近发生时间',
+      }),
+      dataIndex: 'lastSeen',
+      key: 'lastSeen',
+      width: 210,
+    },
+    {
+      title: intl.formatMessage({
+        id: 'OBDashboard.components.EventsTable.Cause',
+        defaultMessage: '原因',
+      }),
+      dataIndex: 'reason',
+      key: 'reason',
+      width: 160,
+      render: (text) => <span>{text || '-'}</span>,
+    },
+    {
+      title: intl.formatMessage({
+        id: 'OBDashboard.components.EventsTable.AssociatedObjects',
+        defaultMessage: '关联对象',
+      }),
+      dataIndex: 'object',
+      key: 'object',
+      width: 150,
+      render: (val) => <CustomTooltip text={val} width={120} />,
+    },
+    {
+      title: intl.formatMessage({
+        id: 'OBDashboard.components.EventsTable.Information',
+        defaultMessage: '信息',
+      }),
+      dataIndex: 'message',
+      key: 'message',
+      width: 220,
+      render: (val) => <CustomTooltip text={val} width={200} />,
+    },
+  ];
+
   return (
     <CustomCard
-      loading={loading}
+      loading={loading || externalLoading}
       title={
         <h2 style={{ marginBottom: 0 }}>
           {intl.formatMessage({
@@ -191,7 +223,7 @@ export default function EventsTable({
         rowKey="id"
         pagination={{ simple: true }}
         columns={columns}
-        dataSource={data}
+        dataSource={dataList}
       />
     </CustomCard>
   );

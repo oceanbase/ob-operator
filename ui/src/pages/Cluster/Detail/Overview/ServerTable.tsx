@@ -65,11 +65,21 @@ export default function ServerTable({
     },
     {
       title: intl.formatMessage({
-        id: 'OBDashboard.Detail.Overview.ServerTable.Address',
-        defaultMessage: '地址',
+        id: 'src.pages.Cluster.Detail.Overview.AD557262',
+        defaultMessage: 'observer 地址',
       }),
       dataIndex: 'address',
       key: 'address',
+    },
+    {
+      title: intl.formatMessage({
+        id: 'src.pages.Cluster.Detail.Overview.13866D9B',
+        defaultMessage: 'K8s 集群',
+      }),
+      dataIndex: 'k8sCluster',
+      render: (text) => {
+        return <span>{text || '-'}</span>;
+      },
     },
     {
       title: intl.formatMessage({
@@ -82,6 +92,14 @@ export default function ServerTable({
         const value = findByValue(STATUS_LIST, text);
         return <Tag color={value.badgeStatus}>{value.label}</Tag>;
       },
+    },
+    {
+      title: 'K8s Node',
+      dataIndex: 'nodeName',
+    },
+    {
+      title: 'K8s Node IP',
+      dataIndex: 'nodeIp',
     },
     {
       title: intl.formatMessage({

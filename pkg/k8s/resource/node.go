@@ -25,6 +25,16 @@ import (
 
 var timeout int64 = k8sconst.DefaultClientListTimeoutSeconds
 
+func UpdateNode(ctx context.Context, node *corev1.Node) (*corev1.Node, error) {
+	client := client.GetClient()
+	return client.ClientSet.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
+}
+
+func GetNode(ctx context.Context, name string) (*corev1.Node, error) {
+	client := client.GetClient()
+	return client.ClientSet.CoreV1().Nodes().Get(ctx, name, metav1.GetOptions{})
+}
+
 func ListNodes(ctx context.Context) (*corev1.NodeList, error) {
 	client := client.GetClient()
 	return client.ClientSet.CoreV1().Nodes().List(ctx, metav1.ListOptions{
@@ -32,10 +42,9 @@ func ListNodes(ctx context.Context) (*corev1.NodeList, error) {
 	})
 }
 
-func ListNodeMetrics(ctx context.Context) (map[string]metricsv1beta1.NodeMetrics, error) {
-	client := client.GetClient()
+func ListNodeMetrics(ctx context.Context, c *client.Client) (map[string]metricsv1beta1.NodeMetrics, error) {
 	nodeMetricsMap := make(map[string]metricsv1beta1.NodeMetrics)
-	metricsList, err := client.MetricsClientset.MetricsV1beta1().NodeMetricses().List(ctx, metav1.ListOptions{
+	metricsList, err := c.MetricsClientset.MetricsV1beta1().NodeMetricses().List(ctx, metav1.ListOptions{
 		TimeoutSeconds: &timeout,
 	})
 	if err == nil {

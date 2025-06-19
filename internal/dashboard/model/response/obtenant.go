@@ -29,6 +29,7 @@ type OBTenantOverview struct {
 	Locality    string            `json:"locality" binding:"required"`            // Locality of the tenant units
 	Charset     string            `json:"charset" binding:"required"`             // Charset of the tenant
 	PrimaryZone string            `json:"primaryZone" binding:"required"`         // Primary zone of the tenant
+	Scenario    string            `json:"scenario,omitempty"`
 
 	DeletionProtection bool `json:"deletionProtection" binding:"required"` // Whether the tenant is protected from deletion
 }

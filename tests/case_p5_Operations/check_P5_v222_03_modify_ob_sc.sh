@@ -34,7 +34,7 @@ run() {
 
 check_resource_running() {
     counter=0
-    timeout=100  
+    timeout=200  
     RESOURCE_RUNNING='false'
     while true; do
         echo 'check resource'
@@ -97,8 +97,8 @@ validate() {
         check_in_obcluster
 	run "obcluster_template_new_sc.yaml"
 	sleep 3s
- 	check_in_obcluster
-        if [[ $NOCHANGE_OB_RUNNING == 'false' ]]; then
+	check_resource_running
+        if [[ $RESOURCE_RUNNING == 'false' ]]; then
             echo "case failed"
             #cleanup
 	    #prepare

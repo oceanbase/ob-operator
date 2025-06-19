@@ -46,6 +46,9 @@ export async function getTenant({
     'locality',
     'primaryZone',
     'deletionProtection',
+    'rootCredential',
+    'scenario',
+    'version',
   ];
   const res: API.TenantBasicInfo = {
     info: {},

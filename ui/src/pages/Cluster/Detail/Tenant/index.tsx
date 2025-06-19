@@ -27,7 +27,7 @@ export default function Tenant() {
     },
   });
   const tenantsList = tenantsListResponse?.data;
-  const handleAddCluster = () => navigate('/tenant/new');
+  const handleAddCluster = () => navigate(`/tenant/new?clusterName=${name}`);
   return (
     <PageContainer>
       <Row gutter={[16, 16]}>

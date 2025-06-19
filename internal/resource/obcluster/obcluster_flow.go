@@ -29,6 +29,7 @@ func genMigrateOBClusterFromExistingFlow(_ *OBClusterManager) *tasktypes.TaskFlo
 				tCheckImageReady,
 				tCheckEnvironment,
 				tCheckClusterMode,
+				tCheckAndCreateNs,
 				tCheckAndCreateUserSecrets,
 				tCreateOBZone,
 				tWaitOBZoneRunning,
@@ -54,6 +55,7 @@ func genBootstrapOBClusterFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 				tCheckImageReady,
 				tCheckEnvironment,
 				tCheckClusterMode,
+				tCheckAndCreateNs,
 				tCheckAndCreateUserSecrets,
 				tCreateOBZone,
 				tWaitOBZoneBootstrapReady,
@@ -90,6 +92,7 @@ func genAddOBZoneFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 		OperationContext: &tasktypes.OperationContext{
 			Name: "add obzone",
 			Tasks: []tasktypes.TaskName{
+				tCheckAndCreateNs,
 				tCreateOBZone,
 				tWaitOBZoneRunning,
 				tModifySysTenantReplica,

@@ -676,7 +676,7 @@ func (m *OBTenantManager) TenantDeletePool(poolDelete v1alpha1.ResourcePoolStatu
 
 	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to get sql operator when prcoessing tenant '%s' -- delete pool ", tenantName))
+		return errors.Wrap(err, fmt.Sprintf("Failed to get sql operator when processing tenant '%s' -- delete pool ", tenantName))
 	}
 	var zoneList []v1alpha1.ResourcePoolStatus
 	for _, zone := range m.OBTenant.Status.Pools {

@@ -93,7 +93,7 @@ export default function BackupConfiguration({
       value: 'bakDataPath',
     },
   ];
-  if (backupPolicy.ossAccessSecret) {
+  if (backupPolicy?.ossAccessSecret) {
     INFO_CONFIG_ARR.splice(2, 0, {
       value: 'ossAccessSecret',
       label: 'OSS Access Secret',
@@ -119,8 +119,8 @@ export default function BackupConfiguration({
     scheduleDates: {
       ...formatBackupPolicyData(backupPolicy),
     },
-    scheduleTime: backupPolicy.scheduleTime
-      ? dayjs(backupPolicy.scheduleTime, 'HH:mm')
+    scheduleTime: backupPolicy?.scheduleTime
+      ? dayjs(backupPolicy?.scheduleTime, 'HH:mm')
       : '',
   };
 
@@ -128,11 +128,11 @@ export default function BackupConfiguration({
     const param = {
       ns,
       name,
-      status: backupPolicy.status === 'PAUSED' ? 'RUNNING' : 'PAUSED',
+      status: backupPolicy?.status === 'PAUSED' ? 'RUNNING' : 'PAUSED',
     };
     const { successful, data } = await editBackupReportWrap(param);
     if (successful) {
-      if (data.status === backupPolicy.status) {
+      if (data.status === backupPolicy?.status) {
         backupPolicyRefresh();
       } else {
         message.success(
@@ -226,13 +226,13 @@ export default function BackupConfiguration({
             </Button>
             <Button
               disabled={
-                backupPolicy.status !== 'RUNNING' &&
-                backupPolicy.status !== 'PAUSED'
+                backupPolicy?.status !== 'RUNNING' &&
+                backupPolicy?.status !== 'PAUSED'
               }
               onClick={changeStatus}
             >
-              {backupPolicy.status === 'PAUSING' ||
-              backupPolicy.status === 'PAUSED'
+              {backupPolicy?.status === 'PAUSING' ||
+              backupPolicy?.status === 'PAUSED'
                 ? intl.formatMessage({
                     id: 'Dashboard.Detail.Backup.BackupConfiguration.Recovery',
                     defaultMessage: '恢复',
@@ -286,9 +286,9 @@ export default function BackupConfiguration({
               </span>
               <Text
                 style={{ width: 316 }}
-                ellipsis={{ tooltip: backupPolicy[infoItem.value] }}
+                ellipsis={{ tooltip: backupPolicy[infoItem?.value] }}
               >
-                {backupPolicy[infoItem.value]}
+                {backupPolicy[infoItem?.value]}
               </Text>
             </Col>
           ))}

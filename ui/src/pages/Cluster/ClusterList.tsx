@@ -75,12 +75,20 @@ const columns: ColumnsType<DataType> = [
   },
   {
     title: intl.formatMessage({
-      id: 'Dashboard.pages.Cluster.ClusterList.NumberOfZones',
-      defaultMessage: 'Zone 数量',
+      id: 'src.pages.Cluster.7B8CBD22',
+      defaultMessage: 'Zone 分布',
     }),
-    dataIndex: 'zoneCount',
-    key: 'zoneCount',
-    render: (_, record) => <span>{record?.topology?.length}</span>,
+    dataIndex: 'topology',
+    render: (text) => {
+      const content = text
+        ?.map((item) =>
+          item.k8sCluster
+            ? `${item.zone}:${item.k8sCluster}:${item.replicas}`
+            : `${item.zone}:${item.replicas}`,
+        )
+        .join(' - ');
+      return <Text ellipsis={{ tooltip: content }}>{content}</Text>;
+    },
   },
   {
     title: intl.formatMessage({

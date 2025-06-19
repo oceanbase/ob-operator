@@ -19,24 +19,23 @@ import (
 	h "github.com/oceanbase/ob-operator/internal/dashboard/handler"
 )
 
-// Users with read permission for cluster and obproxy can list events, too
-var eventGuard = acbiz.OR(
-	acbiz.PathGuard(string(acbiz.DomainSystem), "*", string(acbiz.ActionRead)),
-	acbiz.PathGuard(string(acbiz.DomainOBCluster), "*", string(acbiz.ActionRead)),
-	acbiz.PathGuard(string(acbiz.DomainOBProxy), "*", string(acbiz.ActionRead)),
+var k8sClusterReadGuard = acbiz.OR(
+	acbiz.PathGuard(string(acbiz.DomainK8sCluster), "*", string(acbiz.ActionRead)),
 )
 
-// Users with write permission for cluster and obproxy can list namespaces and storage classes
-var k8sResourceGuard = acbiz.OR(
-	acbiz.PathGuard(string(acbiz.DomainSystem), "*", string(acbiz.ActionRead)),
-	acbiz.PathGuard(string(acbiz.DomainOBCluster), "*", string(acbiz.ActionWrite)),
-	acbiz.PathGuard(string(acbiz.DomainOBProxy), "*", string(acbiz.ActionWrite)),
+var k8sClusterWriteGuard = acbiz.OR(
+	acbiz.PathGuard(string(acbiz.DomainK8sCluster), "*", string(acbiz.ActionWrite)),
 )
 
-func InitK8sRoutes(g *gin.RouterGroup) {
-	g.GET("/cluster/events", h.Wrap(h.ListK8sEvents, eventGuard))
-	g.GET("/cluster/nodes", h.Wrap(h.ListK8sNodes, acbiz.PathGuard("system", "*", "read")))
-	g.GET("/cluster/namespaces", h.Wrap(h.ListK8sNamespaces, k8sResourceGuard))
-	g.GET("/cluster/storageClasses", h.Wrap(h.ListK8sStorageClasses, k8sResourceGuard))
-	g.POST("/cluster/namespaces", h.Wrap(h.CreateK8sNamespace, acbiz.PathGuard("system", "*", "write")))
+func InitK8sClusterRoutes(g *gin.RouterGroup) {
+	g.GET("/k8s/clusters", h.Wrap(h.ListRemoteK8sClusters, k8sClusterReadGuard))
+	g.GET("/k8s/clusters/:name", h.Wrap(h.GetRemoteK8sCluster, k8sClusterReadGuard))
+	g.PATCH("/k8s/clusters/:name", h.Wrap(h.PatchRemoteK8sCluster, k8sClusterWriteGuard))
+	g.DELETE("/k8s/clusters/:name", h.Wrap(h.DeleteRemoteK8sCluster, k8sClusterWriteGuard))
+	g.POST("/k8s/clusters", h.Wrap(h.CreateRemoteK8sCluster, k8sClusterWriteGuard))
+	g.GET("/k8s/clusters/:name/events", h.Wrap(h.ListRemoteK8sEvents, k8sClusterReadGuard))
+	g.GET("/k8s/clusters/:name/nodes", h.Wrap(h.ListRemoteK8sNodes, k8sClusterReadGuard))
+	g.PUT("/k8s/clusters/:clusterName/nodes/:nodeName/labels", h.Wrap(h.PutRemoteK8sNodeLabels, k8sClusterWriteGuard))
+	g.PUT("/k8s/clusters/:clusterName/nodes/:nodeName/taints", h.Wrap(h.PutRemoteK8sNodeTaints, k8sClusterWriteGuard))
+	g.POST("/k8s/clusters/:name/nodes/update", h.Wrap(h.BatchUpdateRemoteK8sNode, k8sClusterWriteGuard))
 }

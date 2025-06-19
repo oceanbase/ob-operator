@@ -16,10 +16,10 @@ RUN make dashboard-build
 # start build docker image
 FROM openanolis/anolisos:8.8
 WORKDIR /root
+RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+RUN yum update -y && yum install -y mysql && yum clean all
 COPY --from=builder-be /workspace/bin/oceanbase-dashboard .
 COPY --from=builder-fe /workspace/dist ./ui/dist
-RUN yum update -y && yum install -y mysql && yum clean all
-RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 USER root
 
 ENTRYPOINT ["/root/oceanbase-dashboard"]

@@ -1,6 +1,8 @@
 import InputNumber from '@/components/InputNumber';
 import { MAX_IOPS, SUFFIX_UNIT, getMinResource } from '@/constants';
+import { getClusterDetailReq } from '@/services';
 import { intl } from '@/utils/intl';
+import { useRequest } from 'ahooks';
 import { Card, Col, Form, Row, Tooltip } from 'antd';
 import { FormInstance } from 'antd/lib/form';
 import { useEffect, useState } from 'react';
@@ -9,6 +11,8 @@ import { findMinParameter, modifyZoneCheckedStatus } from '../helper';
 import styles from './index.less';
 
 interface ResourcePoolsProps {
+  type?: string;
+  obVersion?: string;
   selectClusterId?: string;
   clusterList: API.SimpleClusterList;
   form: FormInstance<API.NewTenantForm>;
@@ -22,20 +26,20 @@ export default function ResourcePools({
   essentialParameter,
   setClusterList,
   form,
+  type,
 }: ResourcePoolsProps) {
   const [minResource, setMinResource] = useState<OBTenant.MinResourceConfig>(
     getMinResource(),
   );
   const [maxResource, setMaxResource] = useState<OBTenant.MaxResourceType>({});
   const [selectZones, setSelectZones] = useState<string[]>([]);
+  const [obversion, setObversion] = useState<string>('');
 
   const checkBoxOnChange = (checked: boolean, name: string) => {
     form.setFieldValue(['pools', name, 'checked'], checked);
     if (!checked) {
-      form.setFieldValue(['pools', name, 'priority'], undefined);
       setSelectZones(selectZones.filter((zone) => zone !== name));
     } else {
-      // form.setFieldValue(['pools',name])
       setSelectZones([...selectZones, name]);
     }
     setClusterList(
@@ -48,9 +52,27 @@ export default function ResourcePools({
     .filter((cluster) => cluster.id === selectClusterId)[0]
     ?.topology.map((zone) => ({ zone: zone.zone, checked: zone.checked }));
 
+  const { run: getClusterDetail } = useRequest(getClusterDetailReq, {
+    manual: true,
+    onSuccess: (res) => {
+      if (res?.info?.version) {
+        setObversion(res?.info?.version);
+      }
+    },
+  });
+
+  useEffect(() => {
+    if (selectClusterId) {
+      const dp = clusterList
+        .filter((cluster) => cluster.id === selectClusterId)
+        ?.map((item) => ({ name: item.name, ns: item.namespace }));
+      getClusterDetail(dp[0]);
+    }
+  }, [selectClusterId]);
+
   useEffect(() => {
     if (essentialParameter) {
-      if (selectZones.length === 0) {
+      if (selectZones?.length === 0) {
         setMaxResource({});
         return;
       }
@@ -78,32 +100,52 @@ export default function ResourcePools({
     }
   }, [essentialParameter]);
 
-  return (
-    <Card
-      title={intl.formatMessage({
-        id: 'Dashboard.Tenant.New.ResourcePools.ResourcePool',
-        defaultMessage: '资源池',
-      })}
-    >
+  const content = () => {
+    return (
       <div>
         {targetZoneList && essentialParameter && (
           <Row>
             <h3>
               {intl.formatMessage({
-                id: 'Dashboard.Tenant.New.ResourcePools.SelectTheZoneToDeploy',
-                defaultMessage: '选择要部署资源池的 Zone',
+                id: 'src.pages.Tenant.New.4D8784EB',
+                defaultMessage: '副本分布',
               })}
             </h3>
             {targetZoneList.map((item, index) => (
               <ZoneItem
                 key={index}
+                type={type || 'new'}
                 name={item.zone}
                 checked={item.checked!}
                 checkedFormName={['pools', item.zone, 'checked']}
-                obZoneResource={essentialParameter.obZoneResourceMap[item.zone]}
+                obZoneResource={
+                  essentialParameter?.obZoneResourceMap[item.zone]
+                }
+                obVersion={obversion}
                 checkBoxOnChange={checkBoxOnChange}
               />
             ))}
+            <Col span={8}>
+              <Form.Item
+                name={['unitNum']}
+                rules={[
+                  {
+                    required: true,
+                    message: intl.formatMessage({
+                      id: 'Dashboard.Tenant.New.BasicInfo.PleaseEnterTheNumberOf',
+                      defaultMessage: '请输入Unit 数量',
+                    }),
+                  },
+                ]}
+                label={intl.formatMessage({
+                  id: 'src.pages.Tenant.New.36ED4D55',
+                  defaultMessage: '每 zone unit 数量',
+                })}
+                initialValue={1}
+              >
+                <InputNumber min={1} />
+              </Form.Item>
+            </Col>
           </Row>
         )}
 
@@ -334,6 +376,22 @@ export default function ResourcePools({
           </Row>
         </div>
       </div>
-    </Card>
+    );
+  };
+  return (
+    <>
+      {type === 'tenantBackup' ? (
+        <> {content()}</>
+      ) : (
+        <Card
+          title={intl.formatMessage({
+            id: 'Dashboard.Tenant.New.ResourcePools.ResourcePool',
+            defaultMessage: '资源池',
+          })}
+        >
+          {content()}
+        </Card>
+      )}
+    </>
   );
 }

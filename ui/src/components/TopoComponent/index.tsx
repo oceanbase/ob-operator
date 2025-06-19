@@ -126,11 +126,12 @@ export default function TopoComponent({
 
         case 'zone': {
           const zone = evt.item?._cfg?.model?.label as string;
+          const zoneName = zone.split(':')[0];
           if (tenantReplicas) {
             const { setEditZone } = resourcePoolDefaultValue;
-            if (setEditZone) setEditZone(zone);
+            if (setEditZone) setEditZone(zoneName);
             const haveResourcePool = !!tenantReplicas?.find(
-              (replica) => replica.zone === zone,
+              (replica) => replica.zone === zoneName,
             );
             setOprateList(
               getZoneOperateOfTenant(
@@ -148,7 +149,7 @@ export default function TopoComponent({
               ),
             );
           }
-          chooseZoneName.current = zone;
+          chooseZoneName.current = zoneName;
           break;
         }
 
@@ -484,8 +485,12 @@ export default function TopoComponent({
     };
   }, []);
   const isCreateResourcePool = modalType.current === 'createResourcePools';
-
   // Use different pictures for nodes in different states
+
+  const topology = {
+    topology: originTopoData?.topoData?.children,
+    ...(originTopoData?.basicInfo as API.ClusterInfo),
+  };
   return (
     <div style={{ position: 'relative', height: '100vh' }}>
       {header
@@ -494,7 +499,7 @@ export default function TopoComponent({
             <BasicInfo
               extra={false}
               style={{ backgroundColor: '#f5f8fe', border: 'none' }}
-              {...(originTopoData.basicInfo as API.ClusterInfo)}
+              {...(topology as API.ClusterInfo)}
             />
           )}
 
@@ -544,6 +549,7 @@ export default function TopoComponent({
                 resourcePoolDefaultValue?.replicaList,
               )
             : undefined,
+          obVersion: originTopoData?.basicInfo?.version,
         }}
       />
       <Spin

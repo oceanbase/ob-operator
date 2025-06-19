@@ -23,12 +23,13 @@ const (
 )
 
 const (
-	DomainAc        acmodel.Domain = "ac"
-	DomainAlarm     acmodel.Domain = "alarm"
-	DomainSystem    acmodel.Domain = "system"
-	DomainOBCluster acmodel.Domain = "obcluster"
-	DomainOBTenant  acmodel.Domain = "obtenant"
-	DomainOBProxy   acmodel.Domain = "obproxy"
+	DomainAc         acmodel.Domain = "ac"
+	DomainAlarm      acmodel.Domain = "alarm"
+	DomainSystem     acmodel.Domain = "system"
+	DomainK8sCluster acmodel.Domain = "k8s-cluster"
+	DomainOBCluster  acmodel.Domain = "obcluster"
+	DomainOBTenant   acmodel.Domain = "obtenant"
+	DomainOBProxy    acmodel.Domain = "obproxy"
 )
 
 var AllPolicies = []acmodel.Policy{
@@ -78,6 +79,14 @@ var AllPolicies = []acmodel.Policy{
 	},
 	{
 		Domain: DomainAc,
+		Action: ActionWrite,
+	},
+	{
+		Domain: DomainK8sCluster,
+		Action: ActionRead,
+	},
+	{
+		Domain: DomainK8sCluster,
 		Action: ActionWrite,
 	},
 }

@@ -129,7 +129,7 @@ check_backup_db_running() {
     while true; do
         echo 'check backup resource'
         counter=$((counter+1))
-	recovery_window=`obclient -h $ip -uroot@$OBTENANT_NAME -A -P2881 -p$PASSWORD  -Doceanbase -e "select policy_name,recovery_window from DBA_OB_BACKUP_DELETE_POLICY"|grep 14d |awk -F' ' '{print $2}'`
+	recovery_window=`mysql -h $ip -uroot@$OBTENANT_NAME -A -P2881 -p$PASSWORD  -Doceanbase -e "select policy_name,recovery_window from DBA_OB_BACKUP_DELETE_POLICY"|grep 14d |awk -F' ' '{print $2}'`
         if [[ $recovery_window = "14d" ]];then
 	    echo "recovery_window $recovery_window"
             BACKUP_DB_RUNNING='true'

@@ -285,11 +285,13 @@ export default function BasicInfo({
         <Descriptions.Item
           label={intl.formatMessage({
             id: 'Dashboard.pages.Cluster.ClusterList.NumberOfZones',
-            defaultMessage: 'Zone 数量',
+            defaultMessage: '拓扑结构',
           })}
         >
           {(
-            props.topology?.map((zone) => zone.observers?.length ?? ' / ') ?? []
+            props.topology?.map(
+              (zone) => (zone.observers || zone.children)?.length ?? ' / ',
+            ) ?? []
           ).join('-')}
         </Descriptions.Item>
         <Descriptions.Item
@@ -312,7 +314,7 @@ export default function BasicInfo({
         </Descriptions.Item>
       </Descriptions>
       {topologyRendering.show && (
-        <>
+        <div style={{ marginTop: 8, marginBottom: 32 }}>
           <Title level={5}>
             {intl.formatMessage({
               id: 'dashboard.Cluster.New.Topo.Topology',
@@ -364,7 +366,7 @@ export default function BasicInfo({
               />
             </>
           )}
-        </>
+        </div>
       )}
 
       {monitor && (

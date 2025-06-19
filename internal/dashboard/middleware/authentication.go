@@ -30,6 +30,7 @@ func LoginRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if strings.HasSuffix(c.Request.RequestURI, "login") ||
 			strings.HasSuffix(c.Request.RequestURI, "info") ||
+			strings.HasSuffix(c.Request.RequestURI, "monitor/endpoints") ||
 			strings.HasSuffix(c.Request.RequestURI, "webhook/alert/log") ||
 			strings.HasPrefix(c.Request.RequestURI, "/api/v1/auth/") {
 			c.Next()

@@ -59,6 +59,7 @@ type OBServerStatus struct {
 	PodIp            string                      `json:"podIp"`
 	ServiceIp        string                      `json:"serviceIp,omitempty"`
 	NodeIp           string                      `json:"nodeIp"`
+	NodeName         string                      `json:"nodeName,omitempty"`
 	OBStatus         string                      `json:"obStatus,omitempty"`
 	StartServiceTime int64                       `json:"startServiceTime,omitempty"`
 	CNI              string                      `json:"cni,omitempty"`

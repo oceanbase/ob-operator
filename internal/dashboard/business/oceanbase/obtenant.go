@@ -14,11 +14,12 @@ package oceanbase
 
 import (
 	"context"
-	"errors"
 	"math"
 	"sort"
 	"strings"
 
+	"github.com/pkg/errors"
+	logger "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -36,6 +37,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
+	"github.com/oceanbase/ob-operator/internal/dashboard/utils"
 	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
@@ -171,7 +173,7 @@ func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam)
 	return t, nil
 }
 
-func buildDetailFromApiType(t *v1alpha1.OBTenant) *response.OBTenantDetail {
+func buildDetailFromApiType(ctx context.Context, t *v1alpha1.OBTenant) *response.OBTenantDetail {
 	rt := &response.OBTenantDetail{
 		OBTenantOverview: *buildOverviewFromApiType(t),
 	}
@@ -204,7 +206,25 @@ func buildDetailFromApiType(t *v1alpha1.OBTenant) *response.OBTenantDetail {
 		}
 		rt.Annotations = annotations
 	}
-
+	// query tenant compatible version from oceanbase cluster
+	obcluster, err := clients.GetOBCluster(ctx, t.Namespace, t.Spec.ClusterName)
+	if err != nil {
+		logger.Errorf("Get obcluster %s %s", t.Namespace, t.Spec.ClusterName)
+	} else {
+		versionStr := ""
+		conn, err := utils.GetOBConnection(ctx, obcluster, "root", "sys", obcluster.Spec.UserSecrets.Root)
+		if err != nil {
+			logger.WithError(err).Info("Failed to get OceanBase database connection")
+		} else {
+			version, err := conn.GetVersion(ctx)
+			if err != nil {
+				logger.WithError(err).Info("Failed to get OceanBase database version")
+			} else {
+				versionStr = version.Version
+			}
+		}
+		rt.Version = versionStr
+	}
 	return rt
 }
 
@@ -222,6 +242,7 @@ func buildOverviewFromApiType(t *v1alpha1.OBTenant) *response.OBTenantOverview {
 	rt.Charset = t.Spec.Charset
 	rt.Locality = t.Status.TenantRecordInfo.Locality
 	rt.PrimaryZone = t.Status.TenantRecordInfo.PrimaryZone
+	rt.Scenario = t.Spec.Scenario
 	rt.DeletionProtection = t.Annotations[oceanbaseconst.AnnotationsIgnoreDeletion] == "true"
 
 	for i := range t.Status.Pools {
@@ -262,7 +283,7 @@ func updateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 		return nil, err
 	}
 
-	return buildDetailFromApiType(tenant), nil
+	return buildDetailFromApiType(ctx, tenant), nil
 }
 
 func createPasswordSecret(ctx context.Context, nn types.NamespacedName, password string) error {
@@ -284,11 +305,21 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 	if err != nil {
 		return nil, err
 	}
+	k8sclient := client.GetClient()
+
+	// use password from root credential
+	if p.RootCredential != "" {
+		rootSecret, err := k8sclient.ClientSet.CoreV1().Secrets(p.SecretNamespace).Get(ctx, p.RootCredential, v1.GetOptions{})
+		if err != nil {
+			return nil, oberr.NewInternal(err.Error())
+		}
+		if pwd, ok := rootSecret.Data["password"]; ok {
+			p.RootPassword = string(pwd)
+		}
+	}
 	if p.RootPassword != "" {
 		t.Spec.Credentials.Root = p.Name + "-root-" + rand.String(6)
 	}
-
-	k8sclient := client.GetClient()
 
 	if p.Source != nil && p.Source.Tenant != nil {
 		// Check primary tenant
@@ -371,6 +402,35 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 	}
 
 	if p.Source != nil && p.Source.Restore != nil {
+		// extract BakEncryptionPassword and OSS ak/sk
+		if p.Source.Restore.BakEncryptionSecret != "" {
+			bakEncryptionSecret, err := k8sclient.ClientSet.CoreV1().Secrets(p.SecretNamespace).Get(ctx, p.Source.Restore.BakEncryptionSecret, v1.GetOptions{})
+			if err != nil {
+				return nil, oberr.NewInternal(err.Error())
+			}
+			if pwd, ok := bakEncryptionSecret.Data["password"]; ok {
+				p.Source.Restore.BakEncryptionPassword = string(pwd)
+			}
+		}
+		if p.Source.Restore.OSSAccessSecret != "" {
+			ossAccessSecret, err := k8sclient.ClientSet.CoreV1().Secrets(p.SecretNamespace).Get(ctx, p.Source.Restore.OSSAccessSecret, v1.GetOptions{})
+			if err != nil {
+				return nil, oberr.NewInternal(err.Error())
+			}
+			if accessId, ok := ossAccessSecret.Data["accessId"]; ok {
+				p.Source.Restore.OSSAccessID = string(accessId)
+			}
+			if accessKey, ok := ossAccessSecret.Data["accessKey"]; ok {
+				p.Source.Restore.OSSAccessKey = string(accessKey)
+			}
+			if appId, ok := ossAccessSecret.Data["appId"]; ok {
+				p.Source.Restore.AppID = string(appId)
+			}
+			if s3Region, ok := ossAccessSecret.Data["s3Region"]; ok {
+				p.Source.Restore.Region = string(s3Region)
+			}
+		}
+
 		if p.Source.Restore.BakEncryptionPassword != "" {
 			secretName := p.Name + "-bak-encryption-" + rand.String(6)
 			t.Spec.Source.Restore.BakEncryptionSecret = secretName
@@ -414,7 +474,7 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 	if err != nil {
 		return nil, err
 	}
-	return buildDetailFromApiType(tenant), nil
+	return buildDetailFromApiType(ctx, tenant), nil
 }
 
 func ListAllOBTenants(ctx context.Context, ns string, listOptions v1.ListOptions) ([]*response.OBTenantOverview, error) {
@@ -439,7 +499,7 @@ func GetOBTenant(ctx context.Context, nn types.NamespacedName) (*response.OBTena
 	if err != nil {
 		return nil, err
 	}
-	return buildDetailFromApiType(tenant), nil
+	return buildDetailFromApiType(ctx, tenant), nil
 }
 
 func DeleteOBTenant(ctx context.Context, nn types.NamespacedName) error {
@@ -485,7 +545,7 @@ func ModifyOBTenantRootPassword(ctx context.Context, nn types.NamespacedName, ro
 	if err != nil {
 		return nil, err
 	}
-	return buildDetailFromApiType(tenant), nil
+	return buildDetailFromApiType(ctx, tenant), nil
 }
 
 func ReplayStandbyLog(ctx context.Context, nn types.NamespacedName, param *param.ReplayStandbyLog) (*response.OBTenantDetail, error) {
@@ -515,7 +575,7 @@ func ReplayStandbyLog(ctx context.Context, nn types.NamespacedName, param *param
 	if err != nil {
 		return nil, err
 	}
-	return buildDetailFromApiType(tenant), nil
+	return buildDetailFromApiType(ctx, tenant), nil
 }
 
 func UpgradeTenantVersion(ctx context.Context, nn types.NamespacedName) (*response.OBTenantDetail, error) {
@@ -541,7 +601,7 @@ func UpgradeTenantVersion(ctx context.Context, nn types.NamespacedName) (*respon
 	if err != nil {
 		return nil, err
 	}
-	return buildDetailFromApiType(tenant), nil
+	return buildDetailFromApiType(ctx, tenant), nil
 }
 
 func ChangeTenantRole(ctx context.Context, nn types.NamespacedName, p *param.ChangeTenantRole) (*response.OBTenantDetail, error) {
@@ -579,7 +639,7 @@ func ChangeTenantRole(ctx context.Context, nn types.NamespacedName, p *param.Cha
 	if err != nil {
 		return nil, err
 	}
-	return buildDetailFromApiType(tenant), nil
+	return buildDetailFromApiType(ctx, tenant), nil
 }
 
 func PatchTenant(ctx context.Context, nn types.NamespacedName, p *param.PatchTenant) (*response.OBTenantDetail, error) {
@@ -668,7 +728,7 @@ func PatchTenant(ctx context.Context, nn types.NamespacedName, p *param.PatchTen
 	if err != nil {
 		return nil, err
 	}
-	return buildDetailFromApiType(tenant), nil
+	return buildDetailFromApiType(ctx, tenant), nil
 }
 
 // GetOBTenantStatistics returns the statistics of all tenants

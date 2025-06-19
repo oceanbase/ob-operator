@@ -1,0 +1,26 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenantBackupPolicy
+metadata:
+  name: ${OBTENANT_BP_COS}
+  namespace: ${NAMESPACE}
+spec:
+  obClusterName: ${OBCLUSTER_NAME}
+  tenantCRName: ${OBTENANT_NAME}
+  jobKeepWindow: "1d"
+  dataClean:
+    recoveryWindow: "8d"
+  logArchive:
+    destination:
+      type: "COS"
+      path: cos://${COS_BUCKET_NAME}/${COS_ARCHIVE_PATH}?host=${COS_HOST}
+      ossAccessSecret: ${COS_ACCESS}
+    switchPieceInterval: "1d"
+  dataBackup:
+    destination:
+      type: "COS"
+      path: cos://${COS_BUCKET_NAME}/${COS_BACKUP_PATH}?host=${COS_HOST}
+      ossAccessSecret: ${COS_ACCESS}
+    fullCrontab: "30 0 * * 6"
+    incrementalCrontab: "30 1 * * *"
+
+

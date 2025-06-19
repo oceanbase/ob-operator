@@ -27,6 +27,8 @@ type OBServer struct {
 	Status       string     `json:"status" binding:"required"`
 	StatusDetail string     `json:"statusDetail" binding:"required"`
 	Address      string     `json:"address" binding:"required"`
+	NodeName     string     `json:"nodeName" binding:"required"`
+	NodeIp       string     `json:"nodeIp" binding:"required"`
 	Metrics      *OBMetrics `json:"metrics"`
 }
 
@@ -35,6 +37,7 @@ type OBZone struct {
 	Name         string          `json:"name" binding:"required"`
 	Zone         string          `json:"zone" binding:"required"`
 	Replicas     int             `json:"replicas" binding:"required"`
+	K8sCluster   string          `json:"k8sCluster,omitempty"`
 	Status       string          `json:"status" binding:"required"`
 	StatusDetail string          `json:"statusDetail" binding:"required"`
 	RootService  string          `json:"rootService,omitempty"`
@@ -75,11 +78,8 @@ type OBClusterOverview struct {
 
 type OBCluster struct {
 	OBClusterOverview `json:",inline"`
-
-	Metrics *OBMetrics `json:"metrics"`
-	Version string     `json:"version"`
-
-	OBClusterExtra `json:",inline"`
+	Metrics           *OBMetrics `json:"metrics"`
+	OBClusterExtra    `json:",inline"`
 }
 
 type ResourceSpecRender struct {
@@ -94,6 +94,7 @@ type ParameterSpec struct {
 }
 
 type OBClusterExtra struct {
+	Version  string             `json:"version"`
 	Resource ResourceSpecRender `json:"resource" binding:"required"`
 	Storage  OBServerStorage    `json:"storage" binding:"required"`
 
@@ -143,4 +144,29 @@ type OBZoneAvailableResource struct {
 	AvailableDataDisk int64  `json:"availableDataDisk" example:"16106127360" binding:"required"`
 	AvailableMemory   int64  `json:"availableMemory" example:"5368709120" binding:"required"`
 	AvailableCPU      int64  `json:"availableCPU" example:"12" binding:"required"`
+}
+
+type ParameterMeta struct {
+	Zone     string `json:"zone"`
+	SvrIp    string `json:"svr_ip"`
+	SvrPort  int64  `json:"svr_port"`
+	TenantID int64  `json:"tenant_id"`
+}
+
+type AggregratedParameterValue struct {
+	Value    string          `json:"value"`
+	Metas    []ParameterMeta `json:"metas"`
+	MetasStr string          `json:"metasStr"`
+}
+
+type AggregatedParameter struct {
+	Name                string                      `json:"name"`
+	Values              []AggregratedParameterValue `json:"values"`
+	Scope               string                      `json:"scope"`
+	EditLevel           string                      `json:"editLevel"`
+	DataType            string                      `json:"dataType"`
+	Info                string                      `json:"info"`
+	Section             string                      `json:"section"`
+	IsManagedByOperator bool                        `json:"isManagedByOperator"`
+	Status              string                      `json:"status"`
 }

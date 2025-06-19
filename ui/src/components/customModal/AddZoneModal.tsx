@@ -1,10 +1,12 @@
 import { intl } from '@/utils/intl';
-import { Form, Input, message } from 'antd';
+import { Form, Input, message, Select } from 'antd';
 
 import { RULER_ZONE } from '@/constants/rules';
 import { addObzoneReportWrap } from '@/services/reportRequest/clusterReportReq';
 import { useParams } from '@umijs/max';
 
+import { getK8sObclusterListReq } from '@/services';
+import { useRequest } from 'ahooks';
 import CustomModal from '.';
 import InputNumber from '../InputNumber';
 import NodeSelector from '../NodeSelector';
@@ -22,6 +24,11 @@ export default function AddZoneModal({
 }: API.CommonModalType) {
   const [form] = Form.useForm<FormData>();
   const { ns, name } = useParams();
+  const { data: K8sClustersList } = useRequest(getK8sObclusterListReq);
+  const options = (K8sClustersList?.data || [])?.map((item) => ({
+    value: item.name,
+    label: item.name,
+  }));
   const handleSubmit = async () => {
     try {
       await form.validateFields();
@@ -87,6 +94,23 @@ export default function AddZoneModal({
               id: 'OBDashboard.components.customModal.AddZoneModal.PleaseEnter',
               defaultMessage: '请输入',
             })}
+          />
+        </Form.Item>
+        <Form.Item
+          label={intl.formatMessage({
+            id: 'src.components.customModal.9CA73345',
+            defaultMessage: 'K8s 集群',
+          })}
+          name={'k8sCluster'}
+        >
+          <Select
+            showSearch
+            placeholder={intl.formatMessage({
+              id: 'src.components.customModal.7C047830',
+              defaultMessage: '请选择 K8s 集群',
+            })}
+            optionFilterProp="label"
+            options={options}
           />
         </Form.Item>
         <Form.Item

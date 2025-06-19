@@ -21,6 +21,7 @@ type TelemetryRecord struct {
 	EventType    string   `json:"eventType"`
 	Resource     any      `json:"resource,omitempty"`
 	Extra        any      `json:"extra,omitempty"`
+	Reporter     string   `json:"reporter"`
 }
 
 type ExtraField struct {

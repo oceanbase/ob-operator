@@ -142,7 +142,7 @@ check_obtenantoperation_running() {
         echo 'check obtenantoperation resource'
         counter=$((counter+1))
 	crd_obtenantoperation=`kubectl get obtenantoperation -n $NAMESPACE | grep "$OP_CHG_PWD"|awk -F' ' '{print $3}'`
-	db_obtenantoperation=`obclient -h $ip -P2881 -A -uroot@$OBTENANT_NAME -p$PASSWORD_NEW -Doceanbase -e "select * from DBA_OB_TENANTS;"| grep $OBTENANT_NAME|awk -F' ' '{print $18}'`
+	db_obtenantoperation=`mysql -h $ip -P2881 -A -uroot@$OBTENANT_NAME -p$PASSWORD_NEW -Doceanbase -e "select * from DBA_OB_TENANTS;"| grep $OBTENANT_NAME|awk -F' ' '{print $18}'`
         if [[ $crd_obtenantoperation = "SUCCESSFUL" && $db_obtenantoperation = "NORMAL" ]];then
             echo "crd_obtenantoperation $crd_obtenantoperation db_obtenantoperation $db_obtenantoperation"
             OPERATION_RUNNING='true'

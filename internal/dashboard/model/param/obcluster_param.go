@@ -20,6 +20,7 @@ import (
 type ZoneTopology struct {
 	Zone         string                  `json:"zone" binding:"required"`
 	Replicas     int                     `json:"replicas" binding:"required"`
+	K8sCluster   string                  `json:"k8sCluster,omitempty"`
 	NodeSelector []common.KVPair         `json:"nodeSelector,omitempty"`
 	Tolerations  []common.TolerationSpec `json:"tolerations,omitempty"`
 	Affinities   []common.AffinitySpec   `json:"affinities,omitempty"`
@@ -52,17 +53,18 @@ type NFSVolumeSpec struct {
 }
 
 type CreateOBClusterParam struct {
-	Namespace    string             `json:"namespace" binding:"required"`
-	Name         string             `json:"name" binding:"required"`
-	ClusterName  string             `json:"clusterName" binding:"required"`
-	ClusterId    int64              `json:"clusterId" binding:"required"`
-	RootPassword string             `json:"rootPassword" binding:"required"`
-	Topology     []ZoneTopology     `json:"topology"`
-	OBServer     *OBServerSpec      `json:"observer" binding:"required"`
-	Monitor      *MonitorSpec       `json:"monitor"`
-	Parameters   []common.KVPair    `json:"parameters"`
-	BackupVolume *NFSVolumeSpec     `json:"backupVolume"`
-	Mode         common.ClusterMode `json:"mode" binding:"required"`
+	Namespace       string             `json:"namespace" binding:"required"`
+	Name            string             `json:"name" binding:"required"`
+	ClusterName     string             `json:"clusterName" binding:"required"`
+	ClusterId       int64              `json:"clusterId" binding:"required"`
+	RootPassword    string             `json:"rootPassword" binding:"required"`
+	ProxyroPassword string             `json:"proxyroPassword"`
+	Topology        []ZoneTopology     `json:"topology" binding:"required"`
+	OBServer        *OBServerSpec      `json:"observer" binding:"required"`
+	Monitor         *MonitorSpec       `json:"monitor"`
+	Parameters      []common.KVPair    `json:"parameters"`
+	BackupVolume    *NFSVolumeSpec     `json:"backupVolume"`
+	Mode            common.ClusterMode `json:"mode" binding:"required"`
 
 	// Enum: express_oltp, express_oltp, olap, kv, htap, express_oltp_perf
 	Scenario           string `json:"scenario" binding:"required"`
