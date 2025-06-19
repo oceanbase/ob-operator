@@ -19,7 +19,6 @@ const (
 	tRollingUpgradeByZone       ttypes.TaskName = "rolling upgrade by zone"
 	tFinishUpgrade              ttypes.TaskName = "finish upgrade"
 	tModifySysTenantReplica     ttypes.TaskName = "modify sys tenant replica"
-	tCreateServiceForMonitor    ttypes.TaskName = "create service for monitor"
 	tRestoreEssentialParameters ttypes.TaskName = "restore essential parameters"
 	tCheckAndCreateUserSecrets  ttypes.TaskName = "check and create user secrets"
 	tCreateOBClusterService     ttypes.TaskName = "create obcluster service"
