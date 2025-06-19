@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.3.2 (Release on 2025.06.12)
+### New Feature
+1. Support to keep static IP address when using kube-ovn as network plugin
+
+### Bugfix
+1. Fix connection problem when upgrading single node cluster.
+2. Fix monitor password config problem when creating obcluster with obagent in multiple K8s clusters.
+
 ## 2.3.1 (Release on 2024.11.28)
 
 ### New Feature
