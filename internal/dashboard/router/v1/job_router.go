@@ -20,6 +20,6 @@ import (
 )
 
 func InitJobRoutes(g *gin.RouterGroup) {
-	g.GET("/jobs/:id", h.Wrap(h.GetJob, acbiz.PathGuard("system", "*", "read")))
-	g.DELETE("/jobs/:id", h.Wrap(h.DeleteJob, acbiz.PathGuard("system", "*", "write")))
+	g.GET("/jobs/:namespace/:name", h.Wrap(h.GetJob, acbiz.PathGuard("system", "*", "read")))
+	g.DELETE("/jobs/:namespace/:name", h.Wrap(h.DeleteJob, acbiz.PathGuard("system", "*", "write")))
 }
