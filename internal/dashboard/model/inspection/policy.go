@@ -30,14 +30,15 @@ const (
 	ScenarioPerformance InspectionScenario = "performance"
 )
 
+// TODO: refactor crontab to scheduleExpr
 type InspectionScheduleConfig struct {
 	Scenario InspectionScenario `json:"scenario" binding:"required"`
-	Crontab  string             `json:"crontab" binding:"required"`
+	Schedule string             `json:"schedule" binding:"required"`
 }
 
 type Policy struct {
-	OBCluster       response.OBClusterMeta     `json:"obCluster" binding:"required"`
-	Status          InspectionScheduleStatus   `json:"status" binding:"required"`
-	ScheduleConfigs []InspectionScheduleConfig `json:"scheduleConfig,omitempty"`
-	LatestReports   []ReportBriefInfo          `json:"latestReports,omitempty"`
+	OBCluster       *response.OBClusterMetaBasic `json:"obCluster" binding:"required"`
+	Status          InspectionScheduleStatus     `json:"status" binding:"required"`
+	ScheduleConfigs []InspectionScheduleConfig   `json:"scheduleConfig,omitempty"`
+	LatestReports   []ReportBriefInfo            `json:"latestReports,omitempty"`
 }

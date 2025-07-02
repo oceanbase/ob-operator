@@ -1,0 +1,209 @@
+/*
+Copyright (c) 2025 OceanBase
+ob-operator is licensed under Mulan PSL v2.
+You can use this software according to the terms and conditions of the Mulan PSL v2.
+You may obtain a copy of Mulan PSL v2 at:
+         http://license.coscl.org.cn/MulanPSL2
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+See the Mulan PSL v2 for more details.
+*/
+
+package inspection
+
+import (
+	"context"
+	"fmt"
+	"os"
+
+	"github.com/pkg/errors"
+
+	logger "github.com/sirupsen/logrus"
+	batchv1 "k8s.io/api/batch/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
+
+	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
+	insconst "github.com/oceanbase/ob-operator/internal/dashboard/business/inspection/constant"
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
+	insmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/inspection"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
+	"github.com/oceanbase/ob-operator/pkg/k8s/client"
+)
+
+func newPolicyFromCronJob(ctx context.Context, cronJob *batchv1.CronJob) (*insmodel.Policy, error) {
+	labels := cronJob.ObjectMeta.GetLabels()
+	objNamespace, ok := labels[insconst.INSPECTION_LABEL_REF_NAMESPACE]
+	if !ok {
+		return nil, errors.New("Failed to get object namespace from cronjob labels")
+	}
+	objName, ok := labels[insconst.INSPECTION_LABEL_REF_NAME]
+	if !ok {
+		return nil, errors.New("Failed to get object name from cronjob labels")
+	}
+	scenario, ok := labels[insconst.INSPECTION_LABEL_SCENARIO]
+	if !ok {
+		return nil, errors.New("Failed to job scenario from cronjob labels")
+	}
+	cluster, err := oceanbase.GetOBCluster(ctx, &param.K8sObjectIdentity{
+		Namespace: objNamespace,
+		Name:      objName,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to get corresponding obcluster")
+	}
+	scheduleStatus := insmodel.ScheduleEnabled
+	if *cronJob.Spec.JobTemplate.Spec.Suspend {
+		scheduleStatus = insmodel.ScheduleDisabled
+	}
+	scheduleConfig := insmodel.InspectionScheduleConfig{
+		Schedule: cronJob.Spec.Schedule,
+		Scenario: insmodel.InspectionScenario(scenario),
+	}
+	policy := &insmodel.Policy{
+		OBCluster:       &cluster.OBClusterMeta.OBClusterMetaBasic,
+		Status:          scheduleStatus,
+		ScheduleConfigs: []insmodel.InspectionScheduleConfig{scheduleConfig},
+		// TODO: Latest reports depends on the api implements of reports
+	}
+	return policy, nil
+
+}
+
+func listInspectionCronJobs(ctx context.Context, namespace, name, obcluster, scenario string) ([]batchv1.CronJob, error) {
+	jobNamespace := os.Getenv("NAMESPACE")
+	client := client.GetClient()
+	listOptions := metav1.ListOptions{}
+	labelSelector := fmt.Sprintf("%s=%s,%s=%s", insconst.INSPECTION_LABEL_MANAGED_BY, bizconst.DASHBOARD_APP_NAME, insconst.INSPECTION_LABEL_JOB_TYPE, insconst.JOB_TYPE_INSPECTION)
+	if namespace != "" {
+		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, insconst.INSPECTION_LABEL_REF_NAMESPACE, namespace)
+	}
+	if name != "" {
+		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, insconst.INSPECTION_LABEL_REF_NAME, name)
+	}
+	if obcluster != "" {
+		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, insconst.INSPECTION_LABEL_REF_OBCLUSTERNAME, obcluster)
+	}
+	if scenario != "" {
+		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, insconst.INSPECTION_LABEL_SCENARIO, scenario)
+	}
+	listOptions.LabelSelector = labelSelector
+	cronJobList, err := client.ClientSet.BatchV1().CronJobs(jobNamespace).List(ctx, listOptions)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to list cron jobs")
+	}
+	return cronJobList.Items, nil
+}
+
+func ListInspectionPolicies(ctx context.Context, namespace, name, obclusterName string) ([]insmodel.Policy, error) {
+	cronJobs, err := listInspectionCronJobs(ctx, namespace, name, obclusterName, "")
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to list cron jobs")
+	}
+	policyMap := make(map[string]*insmodel.Policy)
+	for _, cronJob := range cronJobs {
+		policy, err := newPolicyFromCronJob(ctx, &cronJob)
+		if err != nil {
+			logger.WithError(err).Errorf("Failed to parse inspection policy from cronjob, %s/%s", cronJob.Namespace, cronJob.Name)
+		}
+		key := fmt.Sprintf("%s/%s", policy.OBCluster.Namespace, policy.OBCluster.Name)
+		value, ok := policyMap[key]
+		if !ok {
+			policyMap[key] = policy
+		} else {
+			value.ScheduleConfigs = append(value.ScheduleConfigs, policy.ScheduleConfigs...)
+		}
+	}
+	policies := make([]insmodel.Policy, 0, len(policyMap))
+	for _, value := range policyMap {
+		policies = append(policies, *value)
+	}
+	return policies, nil
+}
+
+func GetInspectionPolicy(ctx context.Context, namespace, name string) (*insmodel.Policy, error) {
+	policies, err := ListInspectionPolicies(ctx, namespace, name, "")
+	if err != nil {
+		return nil, errors.Wrapf(err, "Failed to fetch inspection jobs for %s/%s", namespace, name)
+	}
+	if len(policies) != 1 {
+		return nil, errors.New("Policy not found or found multiple")
+	}
+	policy := policies[0]
+	return &policy, nil
+}
+
+func DeleteInspectionPolicy(ctx context.Context, namespace, name, scenario string) error {
+	cronJobs, err := listInspectionCronJobs(ctx, namespace, name, "", scenario)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("Failed to list all cronjobs for inspection policy of obcluster %s/%s, scenario %s", namespace, name, scenario))
+	}
+	client := client.GetClient()
+	delErrs := make([]error, 0)
+	for _, cronJob := range cronJobs {
+		err := client.ClientSet.BatchV1().CronJobs(cronJob.Namespace).Delete(ctx, cronJob.Name, metav1.DeleteOptions{})
+		logger.WithError(err).Errorf("Failed to delete inspection cronjob for object %s/%s, scenario: %s", namespace, name, scenario)
+		delErrs = append(delErrs, err)
+	}
+	if len(delErrs) > 0 {
+		return errors.Errorf("Failed to delete inspection policy for object %s/%s, scenario: %s", namespace, name, scenario)
+	}
+	return nil
+}
+
+func createCronJobForInspection(ctx context.Context, obcluster *response.OBClusterMetaBasic, scheduleConfig *insmodel.InspectionScheduleConfig) error {
+	jobNamespace := os.Getenv("NAMESPACE")
+	cronJobName := fmt.Sprintf("ins-%s-%s", scheduleConfig.Scenario, rand.String(6))
+	// TODO: run job
+	jobSpec := &batchv1.JobSpec{}
+	spec := &batchv1.CronJobSpec{
+		Schedule: scheduleConfig.Schedule,
+		JobTemplate: batchv1.JobTemplateSpec{
+			Spec: *jobSpec,
+		},
+	}
+	cronJob := &batchv1.CronJob{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      cronJobName,
+			Namespace: jobNamespace,
+		},
+		Spec: *spec,
+	}
+	client := client.GetClient()
+	_, err := client.ClientSet.BatchV1().CronJobs(jobNamespace).Create(ctx, cronJob, metav1.CreateOptions{})
+	return err
+}
+
+func updateCronJobForInspection(ctx context.Context, cronJob *batchv1.CronJob, suspend bool, scheduleConfig *insmodel.InspectionScheduleConfig) error {
+	jobNamespace := os.Getenv("NAMESPACE")
+	cronJob.Spec.Suspend = &suspend
+	cronJob.Spec.Schedule = scheduleConfig.Schedule
+	client := client.GetClient()
+	_, err := client.ClientSet.BatchV1().CronJobs(jobNamespace).Update(ctx, cronJob, metav1.UpdateOptions{})
+	return err
+}
+
+func CreateOrUpdateInspectionPolicy(ctx context.Context, policy insmodel.Policy) error {
+	for _, scheduleConfig := range policy.ScheduleConfigs {
+		cronJobs, err := listInspectionCronJobs(ctx, policy.OBCluster.Namespace, policy.OBCluster.Name, policy.OBCluster.ClusterName, string(scheduleConfig.Scenario))
+		if err != nil {
+			return errors.Wrap(err, fmt.Sprintf("Failed to list all cronjobs for inspection policy of obcluster %s/%s, scenario %s", policy.OBCluster.Namespace, policy.OBCluster.Name, scheduleConfig.Scenario))
+		}
+		if len(cronJobs) > 1 {
+			return errors.Errorf("Found multiple cronjobs for inspection object %s/%s, scenario: %s", policy.OBCluster.Namespace, policy.OBCluster.Name, scheduleConfig.Scenario)
+		} else if len(cronJobs) == 0 {
+			err := createCronJobForInspection(ctx, policy.OBCluster, &scheduleConfig)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("Failed to create cronjob for inspection object %s/%s, scenario: %s", policy.OBCluster.Namespace, policy.OBCluster.Name, scheduleConfig.Scenario))
+			}
+		} else {
+			err := updateCronJobForInspection(ctx, &cronJobs[0], policy.Status == insmodel.ScheduleDisabled, &scheduleConfig)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("Failed to update cronjob for inspection object %s/%s, scenario: %s", policy.OBCluster.Namespace, policy.OBCluster.Name, scheduleConfig.Scenario))
+			}
+		}
+	}
+	return nil
+}
