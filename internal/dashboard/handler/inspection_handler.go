@@ -15,6 +15,7 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 
+	insbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/inspection"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/inspection"
 	"github.com/oceanbase/ob-operator/pkg/errors"
 )
@@ -34,8 +35,11 @@ import (
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/inspection/policies [GET]
 // @Security ApiKeyAuth
-func ListInspectionPolicies(_ *gin.Context) ([]inspection.Policy, error) {
-	return nil, errors.NewNotImplemented("")
+func ListInspectionPolicies(c *gin.Context) ([]inspection.Policy, error) {
+	namespace := c.Query("namespace")
+	name := c.Query("name")
+	obclusterName := c.Query("obclusterName")
+	return insbiz.ListInspectionPolicies(c, namespace, name, obclusterName)
 }
 
 // @ID CreateOrUpdateInspectionPolicy
@@ -61,14 +65,18 @@ func CreateOrUpdateInspectionPolicy(_ *gin.Context) (*inspection.Policy, error) 
 // @Tags Inspection
 // @Accept application/json
 // @Produce application/json
+// @Param namespace path string true "obcluster namespace"
+// @Param name path string true "obcluster name"
 // @Success 200 object response.APIResponse{data=inspection.Policy}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/inspection/policies/{namespace}/{name} [GET]
 // @Security ApiKeyAuth
-func GetInspectionPolicy(_ *gin.Context) (*inspection.Policy, error) {
-	return nil, errors.NewNotImplemented("")
+func GetInspectionPolicy(c *gin.Context) (*inspection.Policy, error) {
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+	return insbiz.GetInspectionPolicy(c, namespace, name)
 }
 
 // @ID DeleteInspectionPolicy
@@ -77,14 +85,21 @@ func GetInspectionPolicy(_ *gin.Context) (*inspection.Policy, error) {
 // @Tags Inspection
 // @Accept application/json
 // @Produce application/json
+// @Param namespace path string true "obcluster namespace"
+// @Param name path string true "obcluster name"
+// @Param scenario path string true "scenario"
 // @Success 200 object response.APIResponse{data=bool}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/inspection/policies/{namespace}/{name}/{scenario} [DELETE]
 // @Security ApiKeyAuth
-func DeleteInspectionPolicy(_ *gin.Context) (bool, error) {
-	return true, errors.NewNotImplemented("")
+func DeleteInspectionPolicy(c *gin.Context) (bool, error) {
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+	scenario := c.Param("scenario")
+	err := insbiz.DeleteInspectionPolicy(c, namespace, name, scenario)
+	return err == nil, err
 }
 
 // @ID TriggerInspection

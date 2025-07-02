@@ -54,17 +54,19 @@ type OBMetrics struct {
 	DiskPercent   int `json:"diskPercent" binding:"required"`
 }
 
+type OBClusterMetaBasic struct {
+	UID         string `json:"uid" binding:"required"`
+	Name        string `json:"name" binding:"required"`
+	Namespace   string `json:"namespace" binding:"required"`
+	ClusterName string `json:"clusterName" binding:"required"`
+	ClusterId   int64  `json:"clusterId" binding:"required"`
+}
 type OBClusterMeta struct {
-	UID         string             `json:"uid" binding:"required"`
-	Name        string             `json:"name" binding:"required"`
-	Namespace   string             `json:"namespace" binding:"required"`
-	ClusterName string             `json:"clusterName" binding:"required"`
-	ClusterId   int64              `json:"clusterId" binding:"required"`
-	Mode        common.ClusterMode `json:"mode" binding:"required"`
-
-	SupportStaticIP    bool `json:"supportStaticIP" binding:"required"`
-	DeletionProtection bool `json:"deletionProtection" binding:"required"`
-	PvcIndependent     bool `json:"pvcIndependent" binding:"required"`
+	OBClusterMetaBasic `json:",inline"`
+	Mode               common.ClusterMode `json:"mode" binding:"required"`
+	SupportStaticIP    bool               `json:"supportStaticIP" binding:"required"`
+	DeletionProtection bool               `json:"deletionProtection" binding:"required"`
+	PvcIndependent     bool               `json:"pvcIndependent" binding:"required"`
 }
 
 type OBClusterOverview struct {
