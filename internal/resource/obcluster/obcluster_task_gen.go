@@ -17,7 +17,6 @@ func init() {
 	taskMap.Register(tRollingUpgradeByZone, RollingUpgradeByZone)
 	taskMap.Register(tFinishUpgrade, FinishUpgrade)
 	taskMap.Register(tModifySysTenantReplica, ModifySysTenantReplica)
-	taskMap.Register(tCreateServiceForMonitor, CreateServiceForMonitor)
 	taskMap.Register(tRestoreEssentialParameters, RestoreEssentialParameters)
 	taskMap.Register(tCheckAndCreateUserSecrets, CheckAndCreateUserSecrets)
 	taskMap.Register(tCreateOBClusterService, CreateOBClusterService)
@@ -34,4 +33,5 @@ func init() {
 	taskMap.Register(tAnnotateOBCluster, AnnotateOBCluster)
 	taskMap.Register(tOptimizeClusterByScenario, OptimizeClusterByScenario)
 	taskMap.Register(tAdjustParameters, AdjustParameters)
+	taskMap.Register(tCheckAndCreateNs, CheckAndCreateNs)
 }

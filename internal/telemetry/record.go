@@ -25,7 +25,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/telemetry/models"
 )
 
-func newRecordFromEvent(object any, objectType, eventType, reason, message string, annotations map[string]string, extra ...models.ExtraField) *models.TelemetryRecord {
+func newRecordFromEvent(object any, reporter, objectType, eventType, reason, message string, annotations map[string]string, extra ...models.ExtraField) *models.TelemetryRecord {
 	anno := annotations
 	if len(extra) > 0 {
 		if anno == nil {
@@ -43,6 +43,7 @@ func newRecordFromEvent(object any, objectType, eventType, reason, message strin
 		EventType:    eventType,
 		Resource:     object,
 		Extra:        anno,
+		Reporter:     reporter,
 	}
 }
 

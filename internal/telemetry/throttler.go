@@ -117,6 +117,7 @@ func (t *throttler) startWorkers() {
 					res, err := t.sendTelemetryRecord(record)
 					if err == nil && res != nil && res.Body != nil {
 						if debugMode {
+							getLogger().Printf("Report event: %v\n", record)
 							bts, err := io.ReadAll(res.Body)
 							if err != nil {
 								getLogger().Printf("Read response body error: %v\n", err)
