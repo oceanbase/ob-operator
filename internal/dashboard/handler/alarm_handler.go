@@ -61,8 +61,12 @@ func ListAlerts(ctx *gin.Context) ([]alert.Alert, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/alarm/alert/diagnose [POST]
 // @Security ApiKeyAuth
-func DiagnoseAlert(_ *gin.Context) (*job.Job, error) {
-	return nil, httpErr.NewNotImplemented("")
+func DiagnoseAlert(ctx *gin.Context) (*job.Job, error) {
+	param := &alert.AnalyzeParam{}
+	if err := ctx.Bind(param); err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return alarm.DiagnoseAlert(ctx, param)
 }
 
 // @ID ListSilencers

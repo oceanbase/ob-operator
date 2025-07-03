@@ -1,8 +1,8 @@
 module github.com/oceanbase/ob-operator
 
-go 1.22
+go 1.22.0
 
-toolchain go1.22.6
+toolchain go1.24.1
 
 require (
 	github.com/casbin/casbin/v2 v2.97.0
