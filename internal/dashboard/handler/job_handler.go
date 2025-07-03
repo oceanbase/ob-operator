@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 OceanBase
+Copyright (c) 2025 OceanBase
 ob-operator is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
 You may obtain a copy of Mulan PSL v2 at:
@@ -15,8 +15,8 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 
+	jobbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/job"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/job"
-	"github.com/oceanbase/ob-operator/pkg/errors"
 )
 
 // @ID GetJob
@@ -29,10 +29,15 @@ import (
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
+// @Param namespace path string true "namespace of the job"
+// @Param name path string true "name of the job"
 // @Router /api/v1/jobs/{namespace}/{name} [GET]
 // @Security ApiKeyAuth
-func GetJob(_ *gin.Context) (*job.Job, error) {
-	return nil, errors.NewNotImplemented("")
+func GetJob(c *gin.Context) (*job.Job, error) {
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	return jobbiz.GetJob(c.Request.Context(), namespace, name)
 }
 
 // @ID DeleteJob
@@ -45,8 +50,13 @@ func GetJob(_ *gin.Context) (*job.Job, error) {
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
+// @Param namespace path string true "namespace of the job"
+// @Param name path string true "name of the job"
 // @Router /api/v1/jobs/{namespace}/{name} [DELETE]
 // @Security ApiKeyAuth
-func DeleteJob(_ *gin.Context) (bool, error) {
-	return true, errors.NewNotImplemented("")
+func DeleteJob(c *gin.Context) (bool, error) {
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+
+	return true, jobbiz.DeleteJob(c.Request.Context(), namespace, name)
 }

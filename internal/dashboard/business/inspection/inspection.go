@@ -23,10 +23,13 @@ import (
 	logger "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
 
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	insconst "github.com/oceanbase/ob-operator/internal/dashboard/business/inspection/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
@@ -161,26 +164,126 @@ func DeleteInspectionPolicy(ctx context.Context, namespace, name, scenario strin
 	return nil
 }
 
-func createCronJobForInspection(ctx context.Context, obcluster *response.OBClusterMetaBasic, scheduleConfig *insmodel.InspectionScheduleConfig) error {
+func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBClusterMetaBasic, scheduleConfig *insmodel.InspectionScheduleConfig) error {
 	jobNamespace := os.Getenv("NAMESPACE")
 	cronJobName := fmt.Sprintf("ins-%s-%s", scheduleConfig.Scenario, rand.String(6))
-	// TODO: fill job spec
-	jobSpec := &batchv1.JobSpec{}
+	pvcName := "pvc-" + cronJobName
+	configVolumeName := "config"
+	configMountPath := "/etc/config"
+	configFile := configMountPath + "/config.yaml"
+	ttlSecondsAfterFinished := int32(7 * 24 * 60 * 60)
+
+	labels := map[string]string{
+		insconst.INSPECTION_LABEL_MANAGED_BY:        bizconst.DASHBOARD_APP_NAME,
+		insconst.INSPECTION_LABEL_JOB_TYPE:          insconst.JOB_TYPE_INSPECTION,
+		insconst.INSPECTION_LABEL_REF_NAMESPACE:     obclusterMeta.Namespace,
+		insconst.INSPECTION_LABEL_REF_NAME:          obclusterMeta.Name,
+		insconst.INSPECTION_LABEL_REF_OBCLUSTERNAME: obclusterMeta.ClusterName,
+		insconst.INSPECTION_LABEL_SCENARIO:          string(scheduleConfig.Scenario),
+	}
+
+	jobSpec := &batchv1.JobSpec{
+		TTLSecondsAfterFinished: &ttlSecondsAfterFinished,
+		Template: corev1.PodTemplateSpec{
+			ObjectMeta: metav1.ObjectMeta{
+				Labels: labels,
+			},
+			Spec: corev1.PodSpec{
+				RestartPolicy: corev1.RestartPolicyNever,
+				InitContainers: []corev1.Container{
+					{
+						Name:    "generate-config",
+						Image:   "oceanbase/oceanbase-helper:latest",
+						Command: []string{"oceanbase-helper", "config", "generate", "-o", configFile},
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      configVolumeName,
+								MountPath: configMountPath,
+							},
+						},
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:    "inspection",
+						Image:   "oceanbase/obdiag:latest",
+						Command: []string{"obdiag", "-c", configFile},
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      configVolumeName,
+								MountPath: configMountPath,
+							},
+						},
+					},
+				},
+				Volumes: []corev1.Volume{
+					{
+						Name: configVolumeName,
+						VolumeSource: corev1.VolumeSource{
+							PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+								ClaimName: pvcName,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
 	spec := &batchv1.CronJobSpec{
 		Schedule: scheduleConfig.Schedule,
 		JobTemplate: batchv1.JobTemplateSpec{
+			ObjectMeta: metav1.ObjectMeta{
+				Labels: labels,
+			},
 			Spec: *jobSpec,
 		},
 	}
+
+	controller := true
+	ownerRef := metav1.OwnerReference{
+		APIVersion: v1alpha1.GroupVersion.String(),
+		Kind:       "OBCluster",
+		Name:       obclusterMeta.Name,
+		UID:        types.UID(obclusterMeta.UID),
+		Controller: &controller,
+	}
+
 	cronJob := &batchv1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cronJobName,
-			Namespace: jobNamespace,
+			Name:            cronJobName,
+			Namespace:       jobNamespace,
+			Labels:          labels,
+			OwnerReferences: []metav1.OwnerReference{ownerRef},
 		},
 		Spec: *spec,
 	}
+
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            pvcName,
+			Namespace:       jobNamespace,
+			OwnerReferences: []metav1.OwnerReference{ownerRef},
+		},
+		Spec: corev1.PersistentVolumeClaimSpec{
+			AccessModes: []corev1.PersistentVolumeAccessMode{
+				corev1.ReadWriteOnce,
+			},
+			Resources: corev1.VolumeResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceStorage: resource.MustParse("1Gi"),
+				},
+			},
+		},
+	}
+
 	client := client.GetClient()
-	_, err := client.ClientSet.BatchV1().CronJobs(jobNamespace).Create(ctx, cronJob, metav1.CreateOptions{})
+	_, err := client.ClientSet.CoreV1().PersistentVolumeClaims(jobNamespace).Create(ctx, pvc, metav1.CreateOptions{})
+	if err != nil {
+		return errors.Wrap(err, "Failed to create pvc")
+	}
+
+	_, err = client.ClientSet.BatchV1().CronJobs(jobNamespace).Create(ctx, cronJob, metav1.CreateOptions{})
 	return err
 }
 
@@ -193,7 +296,7 @@ func updateCronJobForInspection(ctx context.Context, cronJob *batchv1.CronJob, s
 	return err
 }
 
-func CreateOrUpdateInspectionPolicy(ctx context.Context, policy insmodel.Policy) error {
+func CreateOrUpdateInspectionPolicy(ctx context.Context, policy *insmodel.Policy) error {
 	for _, scheduleConfig := range policy.ScheduleConfigs {
 		cronJobs, err := listInspectionCronJobs(ctx, policy.OBCluster.Namespace, policy.OBCluster.Name, policy.OBCluster.ClusterName, string(scheduleConfig.Scenario))
 		if err != nil {
