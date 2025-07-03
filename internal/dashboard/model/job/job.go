@@ -22,7 +22,7 @@ const (
 )
 
 type JobResult struct {
-	ExitCode     int    `json:"exitCode" binding:"required"`
+	ExitCode     int32  `json:"exitCode" binding:"required"`
 	Output       string `json:"output,omitempty"`
 	AttachmentId string `json:"attachmentId,omitempty"`
 }
