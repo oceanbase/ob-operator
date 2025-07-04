@@ -1,4 +1,5 @@
 import { POINT_NUMBER } from '@/constants';
+import { DATE_TIME_FORMAT } from '@/constants/datetime';
 import { useRequestOfMonitor } from '@/hook/useRequestOfMonitor';
 import { queryMetricsReq } from '@/services';
 import { Line } from '@antv/g2plot';
@@ -98,9 +99,7 @@ export default function LineGraph({
       },
       tooltip: {
         title: (value: number) => {
-          return dayjs
-            .unix(Math.ceil(value / 1000))
-            .format('YYYY-MM-DD HH:mm:ss');
+          return dayjs.unix(Math.ceil(value / 1000)).format(DATE_TIME_FORMAT);
         },
       },
       interactions: [{ type: 'marker-active' }, { type: 'brush' }],

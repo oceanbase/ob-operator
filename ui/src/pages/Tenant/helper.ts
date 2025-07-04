@@ -1,3 +1,4 @@
+import { TIME_FORMAT } from '@/constants/datetime';
 import { encryptText } from '@/hook/usePublicKey';
 import dayjs from 'dayjs';
 import { clone, cloneDeep } from 'lodash';
@@ -65,7 +66,7 @@ export function formatNewTenantForm(
                   timestamp:
                     dayjs(until.date).format('YYYY-MM-DD') +
                     ' ' +
-                    dayjs(until.time).format('HH:mm:ss'),
+                    dayjs(until.time).format(TIME_FORMAT),
                 }
               : { unlimited: true },
         };

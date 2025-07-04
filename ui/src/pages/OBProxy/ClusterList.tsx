@@ -1,5 +1,6 @@
 import type { ObproxyOBProxyOverview } from '@/api/generated';
 import { OBPROXY_STATUS_LIST } from '@/constants';
+import { DATE_TIME_FORMAT } from '@/constants/datetime';
 import { intl } from '@/utils/intl';
 import { findByValue } from '@oceanbase/util';
 import { Link, useAccess } from '@umijs/max';
@@ -94,7 +95,7 @@ const columns: ColumnsType<ObproxyOBProxyOverview> = [
     width: 178,
     key: 'creationTime',
     render: (value) => (
-      <span>{dayjs.unix(value).format('YYYY-MM-DD HH:mm:ss') || '-'}</span>
+      <span>{dayjs.unix(value).format(DATE_TIME_FORMAT) || '-'}</span>
     ),
   },
   {

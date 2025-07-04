@@ -1,4 +1,5 @@
 import { formatTopoData } from '@/components/TopoComponent/helper';
+import { DATE_TIME_FORMAT } from '@/constants/datetime';
 import { formatClusterData } from '@/pages/Cluster/Detail/Overview/helper';
 import { floorToTwoDecimalPlaces, formatStatisticData } from '@/utils/helper';
 import { intl } from '@/utils/intl';
@@ -47,10 +48,8 @@ export async function getEventsReq(params: API.EventParams) {
     r.data.sort((pre, next) => next.lastSeen - pre.lastSeen);
     for (const event of r.data) {
       event.id = ++count;
-      event.firstOccur = dayjs
-        .unix(event.firstOccur)
-        .format('YYYY-MM-DD HH:mm:ss');
-      event.lastSeen = dayjs.unix(event.lastSeen).format('YYYY-MM-DD HH:mm:ss');
+      event.firstOccur = dayjs.unix(event.firstOccur).format(DATE_TIME_FORMAT);
+      event.lastSeen = dayjs.unix(event.lastSeen).format(DATE_TIME_FORMAT);
     }
   }
   return r.data;
@@ -66,10 +65,8 @@ export async function getK8sEventsReq(params: API.EventParams) {
     r.data.sort((pre, next) => next.lastSeen - pre.lastSeen);
     for (const event of r.data) {
       event.id = ++count;
-      event.firstOccur = dayjs
-        .unix(event.firstOccur)
-        .format('YYYY-MM-DD HH:mm:ss');
-      event.lastSeen = dayjs.unix(event.lastSeen).format('YYYY-MM-DD HH:mm:ss');
+      event.firstOccur = dayjs.unix(event.firstOccur).format(DATE_TIME_FORMAT);
+      event.lastSeen = dayjs.unix(event.lastSeen).format(DATE_TIME_FORMAT);
     }
   }
   return r.data;
@@ -84,7 +81,7 @@ export async function getNodeInfoReq() {
       Object.assign(obj, node.info, node.resource);
       obj.cpu = ((obj.cpuUsed / obj.cpuTotal) * 100).toFixed(1);
       obj.memory = ((obj.memoryUsed / obj.memoryTotal) * 100).toFixed(1);
-      obj.uptime = dayjs.unix(obj.uptime).format('YYYY-MM-DD HH:mm:ss');
+      obj.uptime = dayjs.unix(obj.uptime).format(DATE_TIME_FORMAT);
       res.push(obj);
     }
   }
@@ -145,7 +142,7 @@ export async function getObclusterListReq() {
       const obj = {};
       cluster.createTime = dayjs
         .unix(cluster.createTime)
-        .format('YYYY-MM-DD HH:mm:ss');
+        .format(DATE_TIME_FORMAT);
       for (const key in cluster) {
         if (key !== 'metrics') {
           obj[key] = cluster[key];
