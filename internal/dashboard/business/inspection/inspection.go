@@ -194,7 +194,7 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 					{
 						Name:    "generate-config",
 						Image:   "oceanbase/oceanbase-helper:latest",
-						Command: []string{"oceanbase-helper", "config", "generate", "-o", configFile},
+						Command: []string{"oceanbase-helper", "generate", "obdiag-config", "-n", obclusterMeta.Namespace, "-c", obclusterMeta.Name, "-o", configFile},
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      configVolumeName,
@@ -207,7 +207,7 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 					{
 						Name:    "inspection",
 						Image:   "oceanbase/obdiag:latest",
-						Command: []string{"obdiag", "-c", configFile},
+						Command: []string{"obdiag", "check", "run", "-c", configFile, "--inner_config", "obdiag.logger.silent=Ture"},
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      configVolumeName,

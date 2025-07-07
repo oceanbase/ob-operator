@@ -16,12 +16,13 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/google/uuid"
 	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/alert"
 	jobmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/job"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 	"github.com/pkg/errors"
 	batchv1 "k8s.io/api/batch/v1"
@@ -58,6 +59,21 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 		DIAGNOSE_LABEL_ATTACHMENT_ID:     attachmentID,
 	}
 
+	var obclusterObj *response.OBClusterOverview = nil
+	obclusters, err := oceanbase.ListOBClusters(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to list obclusters")
+	}
+	for idx, obcluster := range obclusters {
+		if obcluster.ClusterName == param.Instance.OBCluster {
+			obclusterObj = &obclusters[idx]
+		}
+	}
+
+	if obclusterObj == nil {
+		return nil, errors.Errorf("Can not found obcluster object with obcluster name: %s", param.Instance.OBCluster)
+	}
+
 	jobSpec := &batchv1.JobSpec{
 		TTLSecondsAfterFinished: &ttlSecondsAfterFinished,
 		Template: corev1.PodTemplateSpec{
@@ -70,7 +86,7 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 					{
 						Name:    "generate-config",
 						Image:   "oceanbase/oceanbase-helper:latest",
-						Command: []string{"oceanbase-helper", "config", "generate", "-o", configFile},
+						Command: []string{"oceanbase-helper", "generate", "obdiag-config", "-n", obclusterObj.Namespace, "-c", obclusterObj.Name, "-o", configFile},
 						Env: []corev1.EnvVar{
 							{
 								Name:  "OB_CLUSTER_NAME",
@@ -89,25 +105,7 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 					{
 						Name:    "diagnose",
 						Image:   "oceanbase/obdiag:latest",
-						Command: []string{"obdiag", "-c", configFile},
-						Env: []corev1.EnvVar{
-							{
-								Name:  "DIAG_RULE",
-								Value: param.Rule,
-							},
-							{
-								Name:  "DIAG_START_TIME",
-								Value: strconv.FormatInt(param.StartsAt, 10),
-							},
-							{
-								Name:  "DIAG_END_TIME",
-								Value: strconv.FormatInt(param.EndsAt, 10),
-							},
-							{
-								Name:  "DIAG_RESULT_PATH",
-								Value: param.ResultPath,
-							},
-						},
+						Command: []string{"obdiag", "gather", "scene", "run", "--scene=observer.base", "-c", configFile, "--store_dir", param.ResultPath},
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      configVolumeName,
@@ -157,7 +155,7 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 	}
 
 	client := client.GetClient()
-	_, err := client.ClientSet.CoreV1().PersistentVolumeClaims(jobNamespace).Create(ctx, pvc, metav1.CreateOptions{})
+	_, err = client.ClientSet.CoreV1().PersistentVolumeClaims(jobNamespace).Create(ctx, pvc, metav1.CreateOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to create pvc")
 	}
