@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 OceanBase
+Copyright (c) 2025 OceanBase
 ob-operator is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
 You may obtain a copy of Mulan PSL v2 at:
@@ -14,22 +14,23 @@ package helper
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	sigclient "sigs.k8s.io/controller-runtime/pkg/client"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
 	oceanbasev1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
-	"github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	obclusterclient "github.com/oceanbase/ob-operator/internal/clients"
+	oceanbase "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	k8sclient "github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
-var (scheme = runtime.NewScheme())
+var (
+	scheme = runtime.NewScheme()
+)
 
 func init() {
 	_ = clientgoscheme.AddToScheme(scheme)
@@ -42,7 +43,7 @@ type OBDiagConfig struct {
 		DBHost        string `yaml:"db_host"`
 		DBPort        int    `yaml:"db_port"`
 		OBClusterName string `yaml:"ob_cluster_name"`
-		TenantSys struct {
+		TenantSys     struct {
 			User     string `yaml:"user"`
 			Password string `yaml:"password"`
 		} `yaml:"tenant_sys"`
@@ -68,10 +69,6 @@ var (
 	cluster   string
 	output    string
 )
-
-func init() {
-	rootCmd.AddCommand(newGenerateCmd())
-}
 
 func newGenerateCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -99,32 +96,21 @@ func newGenerateOBDiagConfigCmd() *cobra.Command {
 }
 
 func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		return err
-	}
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		return err
-	}
-	k8sClient, err := sigclient.New(config, sigclient.Options{Scheme: scheme})
+	clientset := k8sclient.GetClient().ClientSet
+
+	obcluster, err := obclusterclient.GetOBCluster(context.Background(), namespace, cluster)
 	if err != nil {
 		return err
 	}
 
-	obCluster := &oceanbasev1alpha1.OBCluster{}
-	if err := k8sClient.Get(context.Background(), sigclient.ObjectKey{Namespace: namespace, Name: cluster}, obCluster); err != nil {
-		return err
-	}
-
-	secret, err := clientset.CoreV1().Secrets(namespace).Get(context.Background(), obCluster.Spec.UserSecrets.Root, metav1.GetOptions{})
+	secret, err := clientset.CoreV1().Secrets(namespace).Get(context.Background(), obcluster.Spec.UserSecrets.Root, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
 	password := string(secret.Data["password"])
 
-	observers := &oceanbasev1alpha1.OBServerList{}
-	if err := k8sClient.List(context.Background(), observers, sigclient.InNamespace(namespace), sigclient.MatchingLabels{oceanbase.LabelRefOBCluster: cluster}); err != nil {
+	observers, err := obclusterclient.ListOBServersOfOBCluster(context.Background(), obcluster)
+	if err != nil {
 		return err
 	}
 
@@ -137,7 +123,8 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 
 	for _, observer := range observers.Items {
 		var ip string
-		if obCluster.Annotations["oceanbase.oceanbase.com/mode"] == "service" {
+		annotationMode, ok := obcluster.Annotations[oceanbase.AnnotationsMode]
+		if ok && annotationMode == oceanbase.ModeService {
 			svc, err := clientset.CoreV1().Services(namespace).Get(context.Background(), observer.Name, metav1.GetOptions{})
 			if err != nil {
 				return err
@@ -148,13 +135,8 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 				dbPort = 2881
 			}
 		} else {
-			pod, err := clientset.CoreV1().Pods(namespace).Get(context.Background(), observer.Name, metav1.GetOptions{})
-			if err != nil {
-				return err
-			}
-			ip = pod.Status.PodIP
 			if dbHost == "" {
-				dbHost = pod.Status.PodIP
+				dbHost = observer.Status.PodIp
 				dbPort = 2881
 			}
 		}
@@ -172,7 +154,7 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 			DBHost        string `yaml:"db_host"`
 			DBPort        int    `yaml:"db_port"`
 			OBClusterName string `yaml:"ob_cluster_name"`
-			TenantSys struct {
+			TenantSys     struct {
 				User     string `yaml:"user"`
 				Password string `yaml:"password"`
 			} `yaml:"tenant_sys"`
@@ -193,7 +175,7 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 		}{
 			DBHost:        dbHost,
 			DBPort:        dbPort,
-			OBClusterName: cluster,
+			OBClusterName: obcluster.Spec.ClusterName,
 			TenantSys: struct {
 				User     string `yaml:"user"`
 				Password string `yaml:"password"`
@@ -240,5 +222,5 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return ioutil.WriteFile(output, yamlData, 0644)
+	return os.WriteFile(output, yamlData, 0644)
 }
