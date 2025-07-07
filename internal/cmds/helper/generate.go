@@ -38,20 +38,29 @@ func init() {
 }
 
 type OBDiagConfig struct {
-	Global struct {
-		Namespace string `yaml:"namespace"`
-	} `yaml:"global"`
-	Servers []struct {
-		IP   string `yaml:"ip"`
-		Port int    `yaml:"port"`
-	} `yaml:"servers"`
-	TenantSys struct {
-		User     string `yaml:"user"`
-		Password string `yaml:"password"`
-	} `yaml:"tenant_sys"`
-	DBHost        string `yaml:"db_host"`
-	DBPort        int    `yaml:"db_port"`
-	OBClusterName string `yaml:"ob_cluster_name"`
+	OBCluster struct {
+		DBHost        string `yaml:"db_host"`
+		DBPort        int    `yaml:"db_port"`
+		OBClusterName string `yaml:"ob_cluster_name"`
+		TenantSys struct {
+			User     string `yaml:"user"`
+			Password string `yaml:"password"`
+		} `yaml:"tenant_sys"`
+		Servers struct {
+			Nodes []struct {
+				PodName string `yaml:"pod_name"`
+				IP      string `yaml:"ip"`
+			} `yaml:"nodes"`
+			Global struct {
+				Namespace     string `yaml:"namespace"`
+				SshType       string `yaml:"ssh_type"`
+				ContainerName string `yaml:"container_name"`
+				HomePath      string `yaml:"home_path"`
+				DataDir       string `yaml:"data_dir"`
+				RedoDir       string `yaml:"redo_Dir"`
+			} `yaml:"global"`
+		} `yaml:"servers"`
+	} `yaml:"obcluster"`
 }
 
 var (
@@ -119,26 +128,21 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var servers []struct {
-		IP   string `yaml:"ip"`
-		Port int    `yaml:"port"`
+	var nodes []struct {
+		PodName string `yaml:"pod_name"`
+		IP      string `yaml:"ip"`
 	}
 	var dbHost string
 	var dbPort int
 
 	for _, observer := range observers.Items {
+		var ip string
 		if obCluster.Annotations["oceanbase.oceanbase.com/mode"] == "service" {
 			svc, err := clientset.CoreV1().Services(namespace).Get(context.Background(), observer.Name, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
-			servers = append(servers, struct {
-				IP   string `yaml:"ip"`
-				Port int    `yaml:"port"`
-			}{
-				IP:   svc.Spec.ClusterIP,
-				Port: 2881,
-			})
+			ip = svc.Spec.ClusterIP
 			if dbHost == "" {
 				dbHost = svc.Spec.ClusterIP
 				dbPort = 2881
@@ -148,37 +152,87 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 			if err != nil {
 				return err
 			}
-			servers = append(servers, struct {
-				IP   string `yaml:"ip"`
-				Port int    `yaml:"port"`
-			}{
-				IP:   pod.Status.PodIP,
-				Port: 2881,
-			})
+			ip = pod.Status.PodIP
 			if dbHost == "" {
 				dbHost = pod.Status.PodIP
 				dbPort = 2881
 			}
 		}
+		nodes = append(nodes, struct {
+			PodName string `yaml:"pod_name"`
+			IP      string `yaml:"ip"`
+		}{
+			PodName: observer.Name,
+			IP:      ip,
+		})
 	}
 
 	diagConfig := &OBDiagConfig{
-		Global: struct {
-			Namespace string `yaml:"namespace"`
+		OBCluster: struct {
+			DBHost        string `yaml:"db_host"`
+			DBPort        int    `yaml:"db_port"`
+			OBClusterName string `yaml:"ob_cluster_name"`
+			TenantSys struct {
+				User     string `yaml:"user"`
+				Password string `yaml:"password"`
+			} `yaml:"tenant_sys"`
+			Servers struct {
+				Nodes []struct {
+					PodName string `yaml:"pod_name"`
+					IP      string `yaml:"ip"`
+				} `yaml:"nodes"`
+				Global struct {
+					Namespace     string `yaml:"namespace"`
+					SshType       string `yaml:"ssh_type"`
+					ContainerName string `yaml:"container_name"`
+					HomePath      string `yaml:"home_path"`
+					DataDir       string `yaml:"data_dir"`
+					RedoDir       string `yaml:"redo_Dir"`
+				} `yaml:"global"`
+			} `yaml:"servers"`
 		}{
-			Namespace: namespace,
+			DBHost:        dbHost,
+			DBPort:        dbPort,
+			OBClusterName: cluster,
+			TenantSys: struct {
+				User     string `yaml:"user"`
+				Password string `yaml:"password"`
+			}{
+				User:     "root@sys",
+				Password: password,
+			},
+			Servers: struct {
+				Nodes []struct {
+					PodName string `yaml:"pod_name"`
+					IP      string `yaml:"ip"`
+				} `yaml:"nodes"`
+				Global struct {
+					Namespace     string `yaml:"namespace"`
+					SshType       string `yaml:"ssh_type"`
+					ContainerName string `yaml:"container_name"`
+					HomePath      string `yaml:"home_path"`
+					DataDir       string `yaml:"data_dir"`
+					RedoDir       string `yaml:"redo_Dir"`
+				} `yaml:"global"`
+			}{
+				Nodes: nodes,
+				Global: struct {
+					Namespace     string `yaml:"namespace"`
+					SshType       string `yaml:"ssh_type"`
+					ContainerName string `yaml:"container_name"`
+					HomePath      string `yaml:"home_path"`
+					DataDir       string `yaml:"data_dir"`
+					RedoDir       string `yaml:"redo_Dir"`
+				}{
+					Namespace:     namespace,
+					SshType:       "kubernetes",
+					ContainerName: "observer",
+					HomePath:      "/home/admin/oceanbase",
+					DataDir:       "/home/admin/oceanbase/store",
+					RedoDir:       "/home/admin/oceanbase/store",
+				},
+			},
 		},
-		Servers: servers,
-		TenantSys: struct {
-			User     string `yaml:"user"`
-			Password string `yaml:"password"`
-		}{
-			User:     "root@sys",
-			Password: password,
-		},
-		DBHost:        dbHost,
-		DBPort:        dbPort,
-		OBClusterName: cluster,
 	}
 
 	yamlData, err := yaml.Marshal(diagConfig)
