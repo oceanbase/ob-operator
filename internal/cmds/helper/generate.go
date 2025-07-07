@@ -19,50 +19,13 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	runtime "k8s.io/apimachinery/pkg/runtime"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 
-	oceanbasev1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	obclusterclient "github.com/oceanbase/ob-operator/internal/clients"
 	oceanbase "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	k8sclient "github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
-var (
-	scheme = runtime.NewScheme()
-)
 
-func init() {
-	_ = clientgoscheme.AddToScheme(scheme)
-	_ = oceanbasev1alpha1.AddToScheme(scheme)
-	rootCmd.AddCommand(newGenerateCmd())
-}
-
-type OBDiagConfig struct {
-	OBCluster struct {
-		DBHost        string `yaml:"db_host"`
-		DBPort        int    `yaml:"db_port"`
-		OBClusterName string `yaml:"ob_cluster_name"`
-		TenantSys     struct {
-			User     string `yaml:"user"`
-			Password string `yaml:"password"`
-		} `yaml:"tenant_sys"`
-		Servers struct {
-			Nodes []struct {
-				PodName string `yaml:"pod_name"`
-				IP      string `yaml:"ip"`
-			} `yaml:"nodes"`
-			Global struct {
-				Namespace     string `yaml:"namespace"`
-				SshType       string `yaml:"ssh_type"`
-				ContainerName string `yaml:"container_name"`
-				HomePath      string `yaml:"home_path"`
-				DataDir       string `yaml:"data_dir"`
-				RedoDir       string `yaml:"redo_Dir"`
-			} `yaml:"global"`
-		} `yaml:"servers"`
-	} `yaml:"obcluster"`
-}
 
 var (
 	namespace string
@@ -114,10 +77,7 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var nodes []struct {
-		PodName string `yaml:"pod_name"`
-		IP      string `yaml:"ip"`
-	}
+	var nodes []NodeConfig
 	var dbHost string
 	var dbPort int
 
@@ -135,77 +95,34 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 				dbPort = 2881
 			}
 		} else {
+			pod, err := clientset.CoreV1().Pods(namespace).Get(context.Background(), observer.Name, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+			ip = pod.Status.PodIP
 			if dbHost == "" {
-				dbHost = observer.Status.PodIp
+				dbHost = pod.Status.PodIP
 				dbPort = 2881
 			}
 		}
-		nodes = append(nodes, struct {
-			PodName string `yaml:"pod_name"`
-			IP      string `yaml:"ip"`
-		}{
+		nodes = append(nodes, NodeConfig{
 			PodName: observer.Name,
 			IP:      ip,
 		})
 	}
 
 	diagConfig := &OBDiagConfig{
-		OBCluster: struct {
-			DBHost        string `yaml:"db_host"`
-			DBPort        int    `yaml:"db_port"`
-			OBClusterName string `yaml:"ob_cluster_name"`
-			TenantSys     struct {
-				User     string `yaml:"user"`
-				Password string `yaml:"password"`
-			} `yaml:"tenant_sys"`
-			Servers struct {
-				Nodes []struct {
-					PodName string `yaml:"pod_name"`
-					IP      string `yaml:"ip"`
-				} `yaml:"nodes"`
-				Global struct {
-					Namespace     string `yaml:"namespace"`
-					SshType       string `yaml:"ssh_type"`
-					ContainerName string `yaml:"container_name"`
-					HomePath      string `yaml:"home_path"`
-					DataDir       string `yaml:"data_dir"`
-					RedoDir       string `yaml:"redo_Dir"`
-				} `yaml:"global"`
-			} `yaml:"servers"`
-		}{
+		OBCluster: OBClusterConfig{
 			DBHost:        dbHost,
 			DBPort:        dbPort,
 			OBClusterName: obcluster.Spec.ClusterName,
-			TenantSys: struct {
-				User     string `yaml:"user"`
-				Password string `yaml:"password"`
-			}{
+			TenantSys: TenantSysConfig{
 				User:     "root@sys",
 				Password: password,
 			},
-			Servers: struct {
-				Nodes []struct {
-					PodName string `yaml:"pod_name"`
-					IP      string `yaml:"ip"`
-				} `yaml:"nodes"`
-				Global struct {
-					Namespace     string `yaml:"namespace"`
-					SshType       string `yaml:"ssh_type"`
-					ContainerName string `yaml:"container_name"`
-					HomePath      string `yaml:"home_path"`
-					DataDir       string `yaml:"data_dir"`
-					RedoDir       string `yaml:"redo_Dir"`
-				} `yaml:"global"`
-			}{
+			Servers: ServerConfig{
 				Nodes: nodes,
-				Global: struct {
-					Namespace     string `yaml:"namespace"`
-					SshType       string `yaml:"ssh_type"`
-					ContainerName string `yaml:"container_name"`
-					HomePath      string `yaml:"home_path"`
-					DataDir       string `yaml:"data_dir"`
-					RedoDir       string `yaml:"redo_Dir"`
-				}{
+				Global: GlobalConfig{
 					Namespace:     namespace,
 					SshType:       "kubernetes",
 					ContainerName: "observer",
