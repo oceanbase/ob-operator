@@ -19,13 +19,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NewConnectCmd connect to an ob cluster
+// NewConnectCmd connect to an ob cluster by sys tenant
 func NewConnectCmd() *cobra.Command {
 	o := cluster.NewConnectOptions()
 	logger := utils.GetDefaultLoggerInstance()
 	cmd := &cobra.Command{
 		Use:     "connect <cluster_name>",
-		Short:   "Connect to an ob cluster",
+		Short:   "Connect to an ob cluster by sys tenant",
 		Args:    cobra.ExactArgs(1),
 		PreRunE: o.Parse,
 		Run: func(cmd *cobra.Command, args []string) {
