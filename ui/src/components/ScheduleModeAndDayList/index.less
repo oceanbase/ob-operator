@@ -1,0 +1,66 @@
+@import '~@oceanbase/design/es/theme/index.less';
+
+.container {
+  .scheduleDayWrapper {
+    width: 268px;
+    margin-top: 8px;
+    padding: 12px 8px;
+    border-radius: ~'@{borderRadius}px';
+
+    li {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      margin: 4px 6px;
+      border-radius: ~'@{borderRadius}px';
+      cursor: pointer;
+
+      &:hover {
+        color: @colorPrimary;
+        border: 1px solid @colorPrimary;
+      }
+    }
+
+    .selected {
+      color: @colorBgContainer;
+      background-color: @colorPrimary;
+
+      &:hover {
+        color: @colorBgContainer;
+      }
+    }
+
+    .disabled {
+      color: @colorBorder;
+      background-color: #f7f7f7;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+  }
+
+  .checkAll::after {
+    position: absolute;
+    top: 4px;
+    right: -12px;
+    width: 1px;
+    height: 14px;
+    background-color: #cdd5e4;
+    content: '';
+  }
+
+  .check {
+    :global {
+      .ant-checkbox + span {
+        padding-right: 0;
+      }
+    }
+  }
+
+  :global {
+    .ant-checkbox-wrapper + .ant-checkbox-wrapper {
+      margin-left: 24px;
+    }
+  }
+}

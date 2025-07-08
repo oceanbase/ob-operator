@@ -78,6 +78,11 @@ export default [
                 name: 'K8s 集群管理',
               },
               {
+                path: 'inspection',
+                component: 'Inspection',
+                name: '巡检',
+              },
+              {
                 path: 'overview',
                 component: 'Overview',
                 name: '系统概览页',
@@ -210,6 +215,7 @@ export default [
               },
             ],
           },
+
           {
             path: 'k8scluster/:k8sclusterName',
             component: 'K8sCluster/Detail',
@@ -227,7 +233,30 @@ export default [
               },
             ],
           },
+          {
+            path: 'inspection/:inspectionName',
+            component: 'Inspection/Detail',
+            name: '巡检详情',
+            routes: [
+              {
+                path: '/inspection/:inspectionName',
+                redirect: 'overview',
+                name: '概览页',
+              },
+              {
+                path: 'overview',
+                component: 'Inspection/Detail/Overview',
+                name: '概览页',
+              },
+              // 巡检报告
+            ],
+          },
         ],
+      },
+      {
+        path: 'inspection/report/:id',
+        component: 'Inspection/Result',
+        name: '巡检报告详情',
       },
       {
         path: '/login',
