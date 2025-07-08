@@ -14,9 +14,10 @@ See the Mulan PSL v2 for more details.
 package cluster
 
 import (
+	"github.com/spf13/cobra"
+
 	cluster "github.com/oceanbase/ob-operator/internal/cli/cluster"
 	"github.com/oceanbase/ob-operator/internal/cli/utils"
-	"github.com/spf13/cobra"
 )
 
 // NewConnectCmd connect to an ob cluster by sys tenant

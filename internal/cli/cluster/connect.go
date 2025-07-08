@@ -19,12 +19,13 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/oceanbase/ob-operator/internal/cli/generic"
-	utils "github.com/oceanbase/ob-operator/internal/cli/utils"
-	"github.com/oceanbase/ob-operator/internal/clients"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+
+	"github.com/oceanbase/ob-operator/internal/cli/generic"
+	utils "github.com/oceanbase/ob-operator/internal/cli/utils"
+	"github.com/oceanbase/ob-operator/internal/clients"
 )
 
 type ConnectOptions struct {
