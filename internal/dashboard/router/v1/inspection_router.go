@@ -21,6 +21,7 @@ import (
 
 func InitInspectionRoutes(g *gin.RouterGroup) {
 	g.GET("/inspection/policies", h.Wrap(h.ListInspectionPolicies, acbiz.PathGuard("obcluster", "*", "read")))
+	g.GET("/inspection/policies/:namespace/:name", h.Wrap(h.GetInspectionPolicy, acbiz.PathGuard("obcluster", "*", "read")))
 	g.POST("/inspection/policies", h.Wrap(h.CreateOrUpdateInspectionPolicy, acbiz.PathGuard("obcluster", "*", "write")))
 	g.DELETE("/inspection/policies/:namespace/:name/:scenario", h.Wrap(h.DeleteInspectionPolicy, acbiz.PathGuard("obcluster", "*", "write")))
 	g.POST("/inspection/policies/:namespace/:name/:scenario/trigger", h.Wrap(h.TriggerInspection, acbiz.PathGuard("obcluster", "*", "write")))
