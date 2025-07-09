@@ -25,8 +25,6 @@ import (
 	k8sclient "github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
-
-
 var (
 	namespace string
 	cluster   string
@@ -140,4 +138,8 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 	}
 
 	return os.WriteFile(output, yamlData, 0644)
+}
+
+func init() {
+	rootCmd.AddCommand(newGenerateCmd())
 }
