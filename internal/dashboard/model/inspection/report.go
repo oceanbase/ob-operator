@@ -25,7 +25,8 @@ type ResultStatistics struct {
 }
 
 type ReportBriefInfo struct {
-	Id               string                 `json:"id" binding:"required"`
+	Namespace        string                 `json:"namespace" binding:"required"`
+	Name             string                 `json:"name" binding:"required"`
 	OBCluster        response.OBClusterMeta `json:"obCluster" binding:"required"`
 	Scenario         InspectionScenario     `json:"scenario" binding:"required"`
 	ResultStatistics ResultStatistics       `json:"resultStatistics" binding:"required"`
