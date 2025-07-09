@@ -189,9 +189,10 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 				RestartPolicy: corev1.RestartPolicyNever,
 				InitContainers: []corev1.Container{
 					{
-						Name:    "generate-config",
-						Image:   "oceanbase/oceanbase-helper:latest",
-						Command: []string{"oceanbase-helper", "generate", "obdiag-config", "-n", obclusterMeta.Namespace, "-c", obclusterMeta.Name, "-o", configFile},
+						Name:            "generate-config",
+						Image:           "oceanbase/oceanbase-helper:latest",
+						ImagePullPolicy: corev1.PullIfNotPresent,
+						Command:         []string{"bash", "-c", fmt.Sprintf("/home/admin/oceanbase/bin/oceanbase-helper generate obdiag-config -n %s -c %s -o %s", obclusterMeta.Namespace, obclusterMeta.Name, configFile)},
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      configVolumeName,
@@ -202,9 +203,10 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 				},
 				Containers: []corev1.Container{
 					{
-						Name:    "inspection",
-						Image:   "oceanbase/obdiag:latest",
-						Command: []string{"obdiag", "check", "run", "-c", configFile, "--inner_config", "obdiag.logger.silent=Ture"},
+						Name:            "inspection",
+						Image:           "oceanbase/obdiag:latest",
+						ImagePullPolicy: corev1.PullIfNotPresent,
+						Command:         []string{"obdiag", "check", "run", "-c", configFile, "--inner_config", "obdiag.logger.silent=Ture"},
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      configVolumeName,
@@ -434,7 +436,8 @@ func newReportFromJob(ctx context.Context, job *batchv1.Job) (*insmodel.Report, 
 
 	report := &insmodel.Report{
 		ReportBriefInfo: insmodel.ReportBriefInfo{
-			Id:        job.Name,
+			Namespace: job.Namespace,
+			Name:      job.Name,
 			OBCluster: cluster.OBClusterMeta,
 			Scenario:  insmodel.InspectionScenario(scenario),
 			Status:    status,
