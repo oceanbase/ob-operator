@@ -102,7 +102,12 @@ spec:
           configMap:
             name: {{ .Release.Name }}-prometheus-rules-conf
         - name: prometheus-storage-volume
+          {{- if .Values.prometheus.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-prometheus-pvc
+          {{- else }}
           emptyDir: {}
+          {{- end }}
         - name: prometheus-rules-volume
           emptyDir: {}
         - name: alertmanager-config-readonly-volume
@@ -115,3 +120,20 @@ spec:
         - name: rbac-policy-volume
           configMap:
             name: {{ .Release.Name }}-rbac-policy
+{{- if .Values.prometheus.persistence.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-prometheus-pvc
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+    - {{ .Values.prometheus.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.prometheus.persistence.storage }}
+  {{- if .Values.prometheus.persistence.storageClassName }}
+  storageClassName: {{ .Values.prometheus.persistence.storageClassName }}
+  {{- end }}
+{{- end }}
