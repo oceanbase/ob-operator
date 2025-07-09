@@ -9,3 +9,10 @@ configNamespace:
 service:
   type: NodePort
   port: 80
+
+prometheus:
+  persistence:
+    enabled: true
+    storageClassName: ""
+    accessMode: ReadWriteOnce
+    storage: 8Gi
