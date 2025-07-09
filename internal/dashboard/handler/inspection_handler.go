@@ -165,7 +165,7 @@ func ListInspectionReports(c *gin.Context) ([]inspection.ReportBriefInfo, error)
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/inspection/reports/{id} [GET]
+// @Router /api/v1/inspection/reports/{namespace}/{name} [GET]
 // @Security ApiKeyAuth
 func GetInspectionReport(c *gin.Context) (*inspection.Report, error) {
 	id := c.Param("id")

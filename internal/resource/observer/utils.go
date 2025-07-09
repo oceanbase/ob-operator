@@ -433,7 +433,7 @@ func (m *OBServerManager) createMonitorContainer(obcluster *v1alpha1.OBCluster) 
 	container := corev1.Container{
 		Name:            obagentconst.ContainerName,
 		Image:           m.OBServer.Spec.MonitorTemplate.Image,
-		ImagePullPolicy: "IfNotPresent",
+		ImagePullPolicy: corev1.PullIfNotPresent,
 		Ports:           ports,
 		Resources:       resources,
 		ReadinessProbe:  &readinessProbe,
@@ -625,7 +625,7 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 	container := corev1.Container{
 		Name:            oceanbaseconst.ContainerName,
 		Image:           m.OBServer.Spec.OBServerTemplate.Image,
-		ImagePullPolicy: "IfNotPresent",
+		ImagePullPolicy: corev1.PullIfNotPresent,
 		Ports:           ports,
 		Resources:       resources,
 		VolumeMounts:    volumeMounts,
