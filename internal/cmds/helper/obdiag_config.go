@@ -17,11 +17,11 @@ type OBDiagConfig struct {
 }
 
 type OBClusterConfig struct {
-	DBHost        string        `yaml:"db_host"`
-	DBPort        int           `yaml:"db_port"`
-	OBClusterName string        `yaml:"ob_cluster_name"`
+	DBHost        string          `yaml:"db_host"`
+	DBPort        int             `yaml:"db_port"`
+	OBClusterName string          `yaml:"ob_cluster_name"`
 	TenantSys     TenantSysConfig `yaml:"tenant_sys"`
-	Servers       ServerConfig  `yaml:"servers"`
+	Servers       ServerConfig    `yaml:"servers"`
 }
 
 type TenantSysConfig struct {
@@ -45,5 +45,5 @@ type GlobalConfig struct {
 	ContainerName string `yaml:"container_name"`
 	HomePath      string `yaml:"home_path"`
 	DataDir       string `yaml:"data_dir"`
-	RedoDir       string `yaml:"redo_Dir"`
+	RedoDir       string `yaml:"redo_dir"`
 }
