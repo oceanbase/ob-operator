@@ -381,6 +381,7 @@ func listInspectionJobs(ctx context.Context, namespace, name, obcluster, scenari
 
 func ListInspectionReports(ctx context.Context, namespace, name, obcluster, scenario string) ([]insmodel.ReportBriefInfo, error) {
 	jobs, err := listInspectionJobs(ctx, namespace, name, obcluster, scenario)
+	logger.Infof("Found %d corresponding jobs", len(jobs))
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to list jobs")
 	}
@@ -396,9 +397,9 @@ func ListInspectionReports(ctx context.Context, namespace, name, obcluster, scen
 	return reports, nil
 }
 
-func GetInspectionReport(ctx context.Context, id string) (*insmodel.Report, error) {
+func GetInspectionReport(ctx context.Context, namespace, name string) (*insmodel.Report, error) {
 	client := client.GetClient()
-	job, err := client.ClientSet.BatchV1().Jobs("").Get(ctx, id, metav1.GetOptions{})
+	job, err := client.ClientSet.BatchV1().Jobs(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to get job")
 	}
@@ -438,12 +439,14 @@ func newReportFromJob(ctx context.Context, job *batchv1.Job) (*insmodel.Report, 
 
 	report := &insmodel.Report{
 		ReportBriefInfo: insmodel.ReportBriefInfo{
-			Namespace: job.Namespace,
-			Name:      job.Name,
-			OBCluster: cluster.OBClusterMeta,
-			Scenario:  insmodel.InspectionScenario(scenario),
-			Status:    status,
+			Namespace:        job.Namespace,
+			Name:             job.Name,
+			OBCluster:        cluster.OBClusterMeta,
+			Scenario:         insmodel.InspectionScenario(scenario),
+			Status:           status,
+			ResultStatistics: insmodel.ResultStatistics{},
 		},
+		ResultDetail: insmodel.ResultDetail{},
 	}
 	if job.Status.StartTime != nil {
 		report.StartTime = job.Status.StartTime.Unix()
