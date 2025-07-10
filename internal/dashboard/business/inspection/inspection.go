@@ -186,7 +186,8 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 				Labels: labels,
 			},
 			Spec: corev1.PodSpec{
-				RestartPolicy: corev1.RestartPolicyNever,
+				ServiceAccountName: "inspection-job-sa",
+				RestartPolicy:      corev1.RestartPolicyNever,
 				InitContainers: []corev1.Container{
 					{
 						Name:            "generate-config",
