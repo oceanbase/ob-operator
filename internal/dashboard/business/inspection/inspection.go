@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"sort"
 
 	"github.com/pkg/errors"
 
@@ -69,12 +70,25 @@ func newPolicyFromCronJob(ctx context.Context, cronJob *batchv1.CronJob) (*insmo
 		Schedule: cronJob.Spec.Schedule,
 		Scenario: insmodel.InspectionScenario(scenario),
 	}
+
+	reports, err := ListInspectionReports(ctx, objNamespace, objName, "", scenario)
+	if err != nil {
+		logger.WithError(err).Warn("failed to list inspection reports")
+	}
+
 	policy := &insmodel.Policy{
 		OBCluster:       &cluster.OBClusterMeta.OBClusterMetaBasic,
 		Status:          scheduleStatus,
 		ScheduleConfigs: []insmodel.InspectionScheduleConfig{scheduleConfig},
-		// TODO: Latest reports depends on the api implements of reports
 	}
+
+	if len(reports) > 0 {
+		sort.Slice(reports, func(i, j int) bool {
+			return reports[i].FinishTime > reports[j].FinishTime
+		})
+		policy.LatestReports = []insmodel.ReportBriefInfo{reports[0]}
+	}
+
 	return policy, nil
 
 }
@@ -122,6 +136,9 @@ func ListInspectionPolicies(ctx context.Context, namespace, name, obclusterName 
 			policyMap[key] = policy
 		} else {
 			value.ScheduleConfigs = append(value.ScheduleConfigs, policy.ScheduleConfigs...)
+			if policy.LatestReports != nil {
+				value.LatestReports = append(value.LatestReports, policy.LatestReports...)
+			}
 		}
 	}
 	policies := make([]insmodel.Policy, 0, len(policyMap))
