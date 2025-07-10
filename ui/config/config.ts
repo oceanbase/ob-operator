@@ -21,7 +21,7 @@ export default defineConfig({
   jsMinifier: 'terser',
   proxy: {
     '/api/v1': {
-      target: 'http://11.161.204.50:30120', //自己的环境
+      target: 'http://11.161.204.50:30120',
     },
   },
 });

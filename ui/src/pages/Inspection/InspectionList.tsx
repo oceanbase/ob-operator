@@ -1,10 +1,9 @@
 import { inspection } from '@/api';
 import CustomTooltip from '@/components/CustomTooltip';
-import { TIME_FORMAT } from '@/constants/datetime';
 import { getColumnSearchProps } from '@/utils/component';
+import { formatTime } from '@/utils/datetime';
 import { CheckCircleFilled } from '@ant-design/icons';
 import { theme } from '@oceanbase/design';
-import { directTo } from '@oceanbase/util';
 import { Link } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import {
@@ -35,44 +34,41 @@ export default function InspectionList() {
     inspection.listInspectionPolicies,
     {
       defaultParams: [{}],
-      manual: true,
     },
   );
 
   const { run: triggerInspection } = useRequest(inspection.triggerInspection, {
-    defaultParams: [{}],
     manual: true,
   });
   const { run: deleteInspectionPolicy } = useRequest(
     inspection.deleteInspectionPolicy,
     {
-      defaultParams: [{}],
       manual: true,
     },
   );
 
   console.log('listInspectionPolicies', listInspectionPolicies);
 
-  // const dataSource = []; //listInspectionPolicies?.data || [];
+  const dataSource = listInspectionPolicies?.data || [];
 
-  const dataSource = [
-    {
-      key: '1',
-      name: '胡彦斌',
-      age: 32,
-      obCluster: {
-        namespace: 'testnamespace',
-        name: 'testname',
-        clusterName: 'testclusterName',
-      },
-    },
-    {
-      key: '2',
-      name: '胡彦祖',
-      age: 42,
-      address: '西湖区湖底公园1号',
-    },
-  ];
+  // const dataSource = [
+  //   {
+  //     key: '1',
+  //     name: '胡彦斌',
+  //     age: 32,
+  //     obCluster: {
+  //       namespace: 'testnamespace',
+  //       name: 'testname',
+  //       clusterName: 'testclusterName',
+  //     },
+  //   },
+  //   {
+  //     key: '2',
+  //     name: '胡彦祖',
+  //     age: 42,
+  //     address: '西湖区湖底公园1号',
+  //   },
+  // ];
 
   const columns = [
     {
@@ -91,7 +87,9 @@ export default function InspectionList() {
 
       render: (text) => {
         return (
-          <Link to={`${text?.namespace}/${text?.name}/${text?.clusterName}`}>
+          <Link
+            to={`/cluster/${text?.namespace}/${text?.name}/${text?.clusterName}`}
+          >
             <CustomTooltip
               text={`${text?.namespace}/${text?.name}`}
               width={100}
@@ -102,7 +100,7 @@ export default function InspectionList() {
     },
     {
       title: '集群名',
-      dataIndex: 'name',
+      dataIndex: 'obCluster',
       width: 80,
       ...getColumnSearchProps({
         dataIndex: 'name',
@@ -113,7 +111,7 @@ export default function InspectionList() {
         searchedColumn: searchedColumn,
       }),
       render: (text) => {
-        return <CustomTooltip text={text} width={60} />;
+        return <CustomTooltip text={text?.clusterName} width={60} />;
       },
     },
     {
@@ -127,7 +125,7 @@ export default function InspectionList() {
 
         return (
           <div>
-            <div>{`巡检时间：${repo?.finishTime}`}</div>
+            <div>{`巡检时间：${formatTime(repo?.finishTime)}`}</div>
             <Space size={6}>
               <span>巡检结果：</span>
               <span style={{ color: 'red' }}>{`高${criticalCount || 0}`}</span>
@@ -138,12 +136,7 @@ export default function InspectionList() {
                 negligibleCount || 0
               }`}</span>
 
-              <Link
-                // to={`/inspection/report/${repo?.id}`}
-                to={`/inspection/report/${1}`}
-                target="_blank"
-                // rel="noopener noreferrer"
-              >
+              <Link to={`/inspection/report/${1}`} target="_blank">
                 查看报告
               </Link>
               <a
@@ -151,6 +144,7 @@ export default function InspectionList() {
                   Modal.confirm({
                     title: '确定要发起基础巡检吗？',
                     onOk: () => {
+                      // triggerInspection(repo?.obCluster?.namespace);
                       triggerInspection({
                         namespace: repo?.obCluster?.namespace,
                         name: repo?.obCluster?.name,
@@ -178,7 +172,7 @@ export default function InspectionList() {
 
         return (
           <div>
-            <div>{`巡检时间：${repo?.finishTime}`}</div>
+            <div>{`巡检时间：${formatTime(repo?.finishTime)}`}</div>
             <Space size={6}>
               <span>巡检结果：</span>
               <span style={{ color: 'red' }}>{`高${criticalCount || 0}`}</span>
@@ -188,9 +182,9 @@ export default function InspectionList() {
               <span style={{ color: 'orange' }}>{`低${
                 negligibleCount || 0
               }`}</span>
-              <a onClick={() => directTo(`/inspection/report/${1}`)}>
+              <Link to={`/inspection/report/${1}`} target="_blank">
                 查看报告
-              </a>
+              </Link>
               <a
                 onClick={() => {
                   Modal.confirm({
@@ -245,7 +239,7 @@ export default function InspectionList() {
     {
       title: '操作',
       dataIndex: 'opeation',
-      render: (record) => {
+      render: (text, record) => {
         return (
           <a
             onClick={() => {
@@ -298,7 +292,7 @@ export default function InspectionList() {
             },
           ]}
         >
-          <TimePicker format={TIME_FORMAT} />
+          <TimePicker format={'HH:mm'} />
         </Form.Item>
         {!isEmpty(performanceRepo) || !isEmpty(basicRepo) ? (
           <Form.Item>
@@ -338,14 +332,17 @@ export default function InspectionList() {
     );
   };
 
-  console.log('scheduleValue', scheduleValue);
   const items = [
     {
       key: 'basic',
       label: (
         <Space>
           <span>基础巡检</span>
-          {/* <CheckCircleFilled style={{ color: token.colorSuccess }} /> */}
+          {inspectionPolicies?.scheduleConfig?.find(
+            (item) => item.scenario === 'basic',
+          ) ? (
+            <CheckCircleFilled style={{ color: token.colorSuccess }} />
+          ) : null}
         </Space>
       ),
       children: content('basic'),
@@ -355,13 +352,17 @@ export default function InspectionList() {
       label: (
         <Space>
           <span>性能巡检</span>
-          <CheckCircleFilled style={{ color: token.colorSuccess }} />
+          {inspectionPolicies?.scheduleConfig?.find(
+            (item) => item.scenario === 'performance',
+          ) ? (
+            <CheckCircleFilled style={{ color: token.colorSuccess }} />
+          ) : null}
         </Space>
       ),
       children: content('performance'),
     },
   ];
-
+  console.log('inspectionPolicies', inspectionPolicies);
   return (
     <>
       <Table dataSource={dataSource} columns={columns} />
