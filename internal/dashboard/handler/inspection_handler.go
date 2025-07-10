@@ -160,7 +160,8 @@ func ListInspectionReports(c *gin.Context) ([]inspection.ReportBriefInfo, error)
 // @Tags Inspection
 // @Accept application/json
 // @Produce application/json
-// @Param id path string true "report id"
+// @Param namespace path string true "job namespace"
+// @Param name path string true "job name"
 // @Success 200 object response.APIResponse{data=inspection.Report}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
@@ -168,6 +169,7 @@ func ListInspectionReports(c *gin.Context) ([]inspection.ReportBriefInfo, error)
 // @Router /api/v1/inspection/reports/{namespace}/{name} [GET]
 // @Security ApiKeyAuth
 func GetInspectionReport(c *gin.Context) (*inspection.Report, error) {
-	id := c.Param("id")
-	return insbiz.GetInspectionReport(c.Request.Context(), id)
+	namespace := c.Param("namespace")
+	name := c.Param("name")
+	return insbiz.GetInspectionReport(c, namespace, name)
 }
