@@ -14,6 +14,7 @@ package inspection
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -460,8 +461,28 @@ func newReportFromJob(ctx context.Context, job *batchv1.Job) (*insmodel.Report, 
 		if err != nil {
 			return nil, err
 		}
-		// TODO: parse logs to get report details
-		logger.Info(logs)
+
+		type ObdiagResult struct {
+			Data struct {
+				Observer struct {
+					Fail     map[string][]string `json:"fail"`
+					Critical map[string][]string `json:"critical"`
+					Warning  map[string][]string `json:"warning"`
+				} `json:"observer"`
+			} `json:"data"`
+		}
+
+		var result ObdiagResult
+		if err := json.Unmarshal([]byte(logs), &result); err != nil {
+			logger.WithError(err).Error("Failed to unmarshal obdiag result")
+		} else {
+			report.ResultDetail.FailedItems = newInspectionItemsFromMap(result.Data.Observer.Fail)
+			report.ResultDetail.CriticalItems = newInspectionItemsFromMap(result.Data.Observer.Critical)
+			report.ResultDetail.ModerateItems = newInspectionItemsFromMap(result.Data.Observer.Warning)
+			report.ResultStatistics.FailedCount = len(report.ResultDetail.FailedItems)
+			report.ResultStatistics.CriticalCount = len(report.ResultDetail.CriticalItems)
+			report.ResultStatistics.ModerateCount = len(report.ResultDetail.ModerateItems)
+		}
 	}
 
 	return report, nil
@@ -495,4 +516,15 @@ func getPodLogs(ctx context.Context, pod *corev1.Pod) (string, error) {
 		return "", errors.Wrap(err, "error in read logs")
 	}
 	return string(logs), nil
+}
+
+func newInspectionItemsFromMap(m map[string][]string) []insmodel.InspectionItem {
+	items := make([]insmodel.InspectionItem, 0, len(m))
+	for name, results := range m {
+		items = append(items, insmodel.InspectionItem{
+			Name:    name,
+			Results: results,
+		})
+	}
+	return items
 }
