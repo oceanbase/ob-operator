@@ -25,8 +25,6 @@ import (
 	k8sclient "github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
-
-
 var (
 	namespace string
 	cluster   string
@@ -127,8 +125,8 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 					SshType:       "kubernetes",
 					ContainerName: "observer",
 					HomePath:      "/home/admin/oceanbase",
-					DataDir:       "/home/admin/oceanbase/store",
-					RedoDir:       "/home/admin/oceanbase/store",
+					DataDir:       "/home/admin/data-file",
+					RedoDir:       "/home/admin/data-log",
 				},
 			},
 		},
@@ -140,4 +138,8 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 	}
 
 	return os.WriteFile(output, yamlData, 0644)
+}
+
+func init() {
+	rootCmd.AddCommand(newGenerateCmd())
 }

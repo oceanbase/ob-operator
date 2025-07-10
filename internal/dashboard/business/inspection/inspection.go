@@ -14,6 +14,7 @@ package inspection
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -186,7 +187,8 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 				Labels: labels,
 			},
 			Spec: corev1.PodSpec{
-				RestartPolicy: corev1.RestartPolicyNever,
+				ServiceAccountName: "inspection-job-sa",
+				RestartPolicy:      corev1.RestartPolicyNever,
 				InitContainers: []corev1.Container{
 					{
 						Name:            "generate-config",
@@ -379,6 +381,7 @@ func listInspectionJobs(ctx context.Context, namespace, name, obcluster, scenari
 
 func ListInspectionReports(ctx context.Context, namespace, name, obcluster, scenario string) ([]insmodel.ReportBriefInfo, error) {
 	jobs, err := listInspectionJobs(ctx, namespace, name, obcluster, scenario)
+	logger.Infof("Found %d corresponding jobs", len(jobs))
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to list jobs")
 	}
@@ -394,9 +397,9 @@ func ListInspectionReports(ctx context.Context, namespace, name, obcluster, scen
 	return reports, nil
 }
 
-func GetInspectionReport(ctx context.Context, id string) (*insmodel.Report, error) {
+func GetInspectionReport(ctx context.Context, namespace, name string) (*insmodel.Report, error) {
 	client := client.GetClient()
-	job, err := client.ClientSet.BatchV1().Jobs("").Get(ctx, id, metav1.GetOptions{})
+	job, err := client.ClientSet.BatchV1().Jobs(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to get job")
 	}
@@ -436,12 +439,14 @@ func newReportFromJob(ctx context.Context, job *batchv1.Job) (*insmodel.Report, 
 
 	report := &insmodel.Report{
 		ReportBriefInfo: insmodel.ReportBriefInfo{
-			Namespace: job.Namespace,
-			Name:      job.Name,
-			OBCluster: cluster.OBClusterMeta,
-			Scenario:  insmodel.InspectionScenario(scenario),
-			Status:    status,
+			Namespace:        job.Namespace,
+			Name:             job.Name,
+			OBCluster:        cluster.OBClusterMeta,
+			Scenario:         insmodel.InspectionScenario(scenario),
+			Status:           status,
+			ResultStatistics: insmodel.ResultStatistics{},
 		},
+		ResultDetail: insmodel.ResultDetail{},
 	}
 	if job.Status.StartTime != nil {
 		report.StartTime = job.Status.StartTime.Unix()
@@ -459,8 +464,28 @@ func newReportFromJob(ctx context.Context, job *batchv1.Job) (*insmodel.Report, 
 		if err != nil {
 			return nil, err
 		}
-		// TODO: parse logs to get report details
-		logger.Info(logs)
+
+		type ObdiagResult struct {
+			Data struct {
+				Observer struct {
+					Fail     map[string][]string `json:"fail"`
+					Critical map[string][]string `json:"critical"`
+					Warning  map[string][]string `json:"warning"`
+				} `json:"observer"`
+			} `json:"data"`
+		}
+
+		var result ObdiagResult
+		if err := json.Unmarshal([]byte(logs), &result); err != nil {
+			logger.WithError(err).Error("Failed to unmarshal obdiag result")
+		} else {
+			report.ResultDetail.FailedItems = newInspectionItemsFromMap(result.Data.Observer.Fail)
+			report.ResultDetail.CriticalItems = newInspectionItemsFromMap(result.Data.Observer.Critical)
+			report.ResultDetail.ModerateItems = newInspectionItemsFromMap(result.Data.Observer.Warning)
+			report.ResultStatistics.FailedCount = len(report.ResultDetail.FailedItems)
+			report.ResultStatistics.CriticalCount = len(report.ResultDetail.CriticalItems)
+			report.ResultStatistics.ModerateCount = len(report.ResultDetail.ModerateItems)
+		}
 	}
 
 	return report, nil
@@ -494,4 +519,15 @@ func getPodLogs(ctx context.Context, pod *corev1.Pod) (string, error) {
 		return "", errors.Wrap(err, "error in read logs")
 	}
 	return string(logs), nil
+}
+
+func newInspectionItemsFromMap(m map[string][]string) []insmodel.InspectionItem {
+	items := make([]insmodel.InspectionItem, 0, len(m))
+	for name, results := range m {
+		items = append(items, insmodel.InspectionItem{
+			Name:    name,
+			Results: results,
+		})
+	}
+	return items
 }
