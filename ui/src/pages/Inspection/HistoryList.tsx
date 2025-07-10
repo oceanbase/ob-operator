@@ -1,6 +1,8 @@
 import { inspection } from '@/api';
+import { formatTime } from '@/utils/datetime';
 import { theme } from '@oceanbase/design';
-import { directTo, findByValue } from '@oceanbase/util';
+import { findByValue } from '@oceanbase/util';
+import { Link } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Table, Tag } from 'antd';
 
@@ -11,13 +13,12 @@ export default function HistoryList() {
     inspection.listInspectionReports,
     {
       defaultParams: [{}],
-      manual: true,
     },
   );
 
   console.log('listInspectionReports', listInspectionReports);
 
-  // const dataSource = []; //listInspectionReports?.data || [];
+  const dataSource = listInspectionReports?.data || [];
 
   const statusList = [
     {
@@ -41,24 +42,11 @@ export default function HistoryList() {
       value: 'pending',
     },
   ];
-  const dataSource = [
-    {
-      key: '1',
-      name: '胡彦斌',
-      age: 32,
-      address: '西湖区湖底公园1号',
-    },
-    {
-      key: '2',
-      name: '胡彦祖',
-      age: 42,
-      address: '西湖区湖底公园1号',
-    },
-  ];
+
   const columns = [
     {
       title: '任务 ID',
-      dataIndex: 'name',
+      dataIndex: 'id',
     },
     {
       title: '资源名',
@@ -85,11 +73,17 @@ export default function HistoryList() {
       title: '开始时间',
       dataIndex: 'startTime',
       sorter: true,
+      render: (text) => {
+        return formatTime(text);
+      },
     },
     {
       title: '结束时间',
       dataIndex: 'finishTime',
       sorter: true,
+      render: (text) => {
+        return formatTime(text);
+      },
     },
     {
       title: '任务状态',
@@ -122,9 +116,12 @@ export default function HistoryList() {
     {
       title: '操作',
       dataIndex: 'opeation',
-      render: () => {
+      render: (text, record) => {
+        console.log('record?.id', record);
         return (
-          <a onClick={() => directTo(`/inspection/report/${1}`)}>查看报告</a>
+          <Link to={`/inspection/report/${record?.id}`} target="_blank">
+            查看报告
+          </Link>
         );
       },
     },

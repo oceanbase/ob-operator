@@ -31,7 +31,6 @@ const Report: React.FC<Props> = () => {
 
   const params = useParams();
   const { id } = params;
-
   const { data: getInspectionReport } = useRequest(
     inspection.getInspectionReport,
     {
@@ -40,10 +39,11 @@ const Report: React.FC<Props> = () => {
           id,
         },
       ],
-      //   ready: !!id,
-      manual: true,
+      ready: !!id,
     },
   );
+
+  console.log('id', params, id, getInspectionReport?.data);
 
   const {
     resultStatistics,
