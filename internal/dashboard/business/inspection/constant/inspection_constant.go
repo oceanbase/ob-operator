@@ -22,6 +22,5 @@ const (
 )
 
 const (
-	JOB_TYPE_INSPECTION    = "inspection"
-	JOB_TYPE_META_MAINTAIN = "meta-maintain"
+	JOB_TYPE_INSPECTION = "inspection"
 )
