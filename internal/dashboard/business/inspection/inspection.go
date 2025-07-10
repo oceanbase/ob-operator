@@ -136,14 +136,42 @@ func ListInspectionPolicies(ctx context.Context, namespace, name, obclusterName 
 			policyMap[key] = policy
 		} else {
 			value.ScheduleConfigs = append(value.ScheduleConfigs, policy.ScheduleConfigs...)
-			if policy.LatestReports != nil {
-				value.LatestReports = append(value.LatestReports, policy.LatestReports...)
-			}
+			value.LatestReports = append(value.LatestReports, policy.LatestReports...)
 		}
 	}
-	policies := make([]insmodel.Policy, 0, len(policyMap))
-	for _, value := range policyMap {
-		policies = append(policies, *value)
+
+	obclusters, err := oceanbase.ListOBClusters(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list obclusters")
+	}
+
+	filteredOBClusters := make([]response.OBClusterOverview, 0)
+	for _, cluster := range obclusters {
+		if namespace != "" && cluster.Namespace != namespace {
+			continue
+		}
+		if name != "" && cluster.Name != name {
+			continue
+		}
+		if obclusterName != "" && cluster.ClusterName != obclusterName {
+			continue
+		}
+		filteredOBClusters = append(filteredOBClusters, cluster)
+	}
+
+	policies := make([]insmodel.Policy, 0, len(filteredOBClusters))
+	for _, cluster := range filteredOBClusters {
+		key := fmt.Sprintf("%s/%s", cluster.Namespace, cluster.Name)
+		if policy, ok := policyMap[key]; ok {
+			policies = append(policies, *policy)
+		} else {
+			policies = append(policies, insmodel.Policy{
+				OBCluster:       &cluster.OBClusterMetaBasic,
+				Status:          insmodel.ScheduleDisabled,
+				ScheduleConfigs: []insmodel.InspectionScheduleConfig{},
+				LatestReports:   []insmodel.ReportBriefInfo{},
+			})
+		}
 	}
 	return policies, nil
 }
