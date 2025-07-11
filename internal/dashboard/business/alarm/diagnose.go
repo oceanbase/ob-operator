@@ -27,7 +27,6 @@ import (
 	"github.com/pkg/errors"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/rand"
 )
@@ -44,12 +43,11 @@ const (
 
 func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Job, error) {
 	jobNamespace := os.Getenv("NAMESPACE")
+	sharedPvcName := os.Getenv("SHARED_VOLUME_PVC_NAME")
+	sharedMountPath := os.Getenv("SHARED_VOLUME_MOUNT_PATH")
 	attachmentID := uuid.New().String()
 	jobName := fmt.Sprintf("diagnose-%s-%s", param.Instance.OBCluster, rand.String(6))
-	pvcName := "pvc-" + jobName
-	configVolumeName := "config"
-	configMountPath := "/etc/config"
-	configFile := configMountPath + "/config.yaml"
+	jobOutputDir := fmt.Sprintf("%s/%s", sharedMountPath, jobName)
 	ttlSecondsAfterFinished := int32(7 * 24 * 60 * 60)
 
 	labels := map[string]string{
@@ -82,44 +80,35 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 			},
 			Spec: corev1.PodSpec{
 				RestartPolicy: corev1.RestartPolicyNever,
-				InitContainers: []corev1.Container{
-					{
-						Name:    "generate-config",
-						Image:   "oceanbase/oceanbase-helper:latest",
-						Command: []string{"oceanbase-helper", "generate", "obdiag-config", "-n", obclusterObj.Namespace, "-c", obclusterObj.Name, "-o", configFile},
-						Env: []corev1.EnvVar{
-							{
-								Name:  "OB_CLUSTER_NAME",
-								Value: param.Instance.OBCluster,
-							},
-						},
-						VolumeMounts: []corev1.VolumeMount{
-							{
-								Name:      configVolumeName,
-								MountPath: configMountPath,
-							},
-						},
-					},
-				},
 				Containers: []corev1.Container{
 					{
 						Name:    "diagnose",
 						Image:   "oceanbase/obdiag:latest",
-						Command: []string{"obdiag", "gather", "scene", "run", "--scene=observer.base", "-c", configFile, "--store_dir", param.ResultPath},
+						Command: []string{"/bin/sh", "-c"},
+						Args: []string{
+							fmt.Sprintf("mkdir -p %s && obdiag gather scene run --scene=observer.base -c /etc/obdiag/config.yaml --store_dir %s", jobOutputDir, jobOutputDir),
+						},
 						VolumeMounts: []corev1.VolumeMount{
 							{
-								Name:      configVolumeName,
-								MountPath: configMountPath,
+								Name:      "shared-volume",
+								MountPath: sharedMountPath,
+							},
+						},
+						Lifecycle: &corev1.Lifecycle{
+							PreStop: &corev1.LifecycleHandler{
+								Exec: &corev1.ExecAction{
+									Command: []string{"/bin/sh", "-c", fmt.Sprintf("rm -rf %s", jobOutputDir)},
+								},
 							},
 						},
 					},
 				},
 				Volumes: []corev1.Volume{
 					{
-						Name: configVolumeName,
+						Name: "shared-volume",
 						VolumeSource: corev1.VolumeSource{
 							PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-								ClaimName: pvcName,
+								ClaimName: sharedPvcName,
 							},
 						},
 					},
@@ -137,33 +126,9 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 		Spec: *jobSpec,
 	}
 
-	pvc := &corev1.PersistentVolumeClaim{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      pvcName,
-			Namespace: jobNamespace,
-		},
-		Spec: corev1.PersistentVolumeClaimSpec{
-			AccessModes: []corev1.PersistentVolumeAccessMode{
-				corev1.ReadWriteOnce,
-			},
-			Resources: corev1.VolumeResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceStorage: resource.MustParse("1Gi"),
-				},
-			},
-		},
-	}
-
 	client := client.GetClient()
-	_, err = client.ClientSet.CoreV1().PersistentVolumeClaims(jobNamespace).Create(ctx, pvc, metav1.CreateOptions{})
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to create pvc")
-	}
-
 	createdJob, err := client.ClientSet.BatchV1().Jobs(jobNamespace).Create(ctx, job, metav1.CreateOptions{})
 	if err != nil {
-		// clean up pvc if job creation fails
-		client.ClientSet.CoreV1().PersistentVolumeClaims(jobNamespace).Delete(ctx, pvcName, metav1.DeleteOptions{})
 		return nil, err
 	}
 

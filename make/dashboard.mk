@@ -1,7 +1,14 @@
 ##@ Dashboard
 
 PROJECT=oceanbase-dashboard
-PROCESSOR=4
+# Get the number of processors
+ifeq ($(shell uname -s), Linux)
+	PROCESSOR = $(shell nproc)
+else ifeq ($(shell uname -s), Darwin)
+	PROCESSOR = $(shell sysctl -n hw.ncpu)
+else
+	PROCESSOR = 4
+endif
 PWD ?= $(shell pwd)
 
 DASHBOARD_VERSION ?= 0.4.0
