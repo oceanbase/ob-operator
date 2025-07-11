@@ -1,3 +1,12 @@
+# Get the number of processors
+ifeq ($(shell uname -s), Linux)
+	PROCESSOR = $(shell nproc)
+else ifeq ($(shell uname -s), Darwin)
+	PROCESSOR = $(shell sysctl -n hw.ncpu)
+else
+	PROCESSOR = 4
+endif
+
 include make/*
 
 VERSION ?= 2.3.2
