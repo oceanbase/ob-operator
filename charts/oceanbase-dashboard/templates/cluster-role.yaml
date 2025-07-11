@@ -32,6 +32,7 @@ rules:
       - configmaps
       - services
       - pods/exec
+      - persistentvolumeclaims
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
   - apiGroups:
       - "apps"

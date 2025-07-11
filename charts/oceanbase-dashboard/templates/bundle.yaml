@@ -36,6 +36,13 @@ spec:
               mountPath: /etc/prometheus/rules/
             - name: rbac-policy-volume
               mountPath: /etc/rbac
+            - name: shared-volume
+              mountPath: /shared-data
+          env:
+            - name: SHARED_VOLUME_PVC_NAME
+              value: {{ .Release.Name }}-shared-volume-pvc
+            - name: SHARED_VOLUME_MOUNT_PATH
+              value: /shared-data
           env:
             - name: USER_CREDENTIALS_SECRET
               value: {{ .Values.userCredentials | default (nospace (cat .Release.Name "-user-credentials")) }}
@@ -120,6 +127,13 @@ spec:
         - name: rbac-policy-volume
           configMap:
             name: {{ .Release.Name }}-rbac-policy
+        - name: shared-volume
+          {{- if .Values.sharedVolume.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-shared-volume-pvc
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
 {{- if .Values.prometheus.persistence.enabled }}
 ---
 apiVersion: v1
@@ -135,5 +149,22 @@ spec:
       storage: {{ .Values.prometheus.persistence.storage }}
   {{- if .Values.prometheus.persistence.storageClassName }}
   storageClassName: {{ .Values.prometheus.persistence.storageClassName }}
+  {{- end }}
+{{- end }}
+{{- if .Values.sharedVolume.persistence.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-shared-volume-pvc
+  namespace: {{ .Release.Namespace }}
+spec:
+  accessModes:
+    - {{ .Values.sharedVolume.persistence.accessMode }}
+  resources:
+    requests:
+      storage: {{ .Values.sharedVolume.persistence.storage }}
+  {{- if .Values.sharedVolume.persistence.storageClassName }}
+  storageClassName: {{ .Values.sharedVolume.persistence.storageClassName }}
   {{- end }}
 {{- end }}
