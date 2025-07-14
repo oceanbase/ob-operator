@@ -65,6 +65,7 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 	for idx, obcluster := range obclusters {
 		if obcluster.ClusterName == param.Instance.OBCluster {
 			obclusterObj = &obclusters[idx]
+			break
 		}
 	}
 
