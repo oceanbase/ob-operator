@@ -60,8 +60,9 @@ func GetJob(ctx context.Context, namespace, name string) (*job.Job, error) {
 		attachmentID, ok := k8sJob.Labels[alarm.DIAGNOSE_LABEL_ATTACHMENT_ID]
 		if ok {
 			resp.Result.AttachmentId = attachmentID
+		} else {
+			resp.Result.AttachmentId = k8sJob.Name
 		}
-
 		podList, err := client.ClientSet.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
 			LabelSelector: metav1.FormatLabelSelector(k8sJob.Spec.Selector),
 		})
