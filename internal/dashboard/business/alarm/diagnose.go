@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/google/uuid"
 	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/alert"
@@ -45,10 +44,10 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 	jobNamespace := os.Getenv("NAMESPACE")
 	sharedPvcName := os.Getenv("SHARED_VOLUME_PVC_NAME")
 	sharedMountPath := os.Getenv("SHARED_VOLUME_MOUNT_PATH")
-	attachmentID := uuid.New().String()
 	jobName := fmt.Sprintf("diagnose-%s-%s", param.Instance.OBCluster, rand.String(6))
+	attachmentID := jobName
 	jobOutputDir := fmt.Sprintf("%s/%s", sharedMountPath, jobName)
-	ttlSecondsAfterFinished := int32(7 * 24 * 60 * 60)
+	ttlSecondsAfterFinished := int32(24 * 60 * 60)
 
 	labels := map[string]string{
 		DIAGNOSE_LABEL_MANAGED_BY:        bizconst.DASHBOARD_APP_NAME,
