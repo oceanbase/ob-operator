@@ -1,4 +1,4 @@
-package obcluster
+package oceanbase
 
 import (
 	"context"

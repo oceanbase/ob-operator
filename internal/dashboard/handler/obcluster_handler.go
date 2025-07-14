@@ -23,7 +23,6 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
-	"github.com/oceanbase/ob-operator/internal/dashboard/business/obcluster"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/job"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
@@ -524,5 +523,5 @@ func DownloadOBClusterLog(c *gin.Context) (*job.Job, error) {
 	if startTime == "" || endTime == "" {
 		return nil, httpErr.NewBadRequest("startTime and endTime are required")
 	}
-	return obcluster.DownloadOBClusterLog(c, nn.Namespace, nn.Name, startTime, endTime)
+	return oceanbase.DownloadOBClusterLog(c, nn.Namespace, nn.Name, startTime, endTime)
 }
