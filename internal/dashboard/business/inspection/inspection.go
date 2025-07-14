@@ -32,7 +32,6 @@ import (
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
-	insconst "github.com/oceanbase/ob-operator/internal/dashboard/business/inspection/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
 	insmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/inspection"
 	jobmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/job"
@@ -43,15 +42,15 @@ import (
 
 func newPolicyFromCronJob(ctx context.Context, cronJob *batchv1.CronJob) (*insmodel.Policy, error) {
 	labels := cronJob.ObjectMeta.GetLabels()
-	objNamespace, ok := labels[insconst.INSPECTION_LABEL_REF_NAMESPACE]
+	objNamespace, ok := labels[bizconst.LABEL_REF_NAMESPACE]
 	if !ok {
 		return nil, errors.New("Failed to get object namespace from cronjob labels")
 	}
-	objName, ok := labels[insconst.INSPECTION_LABEL_REF_NAME]
+	objName, ok := labels[bizconst.LABEL_REF_NAME]
 	if !ok {
 		return nil, errors.New("Failed to get object name from cronjob labels")
 	}
-	scenario, ok := labels[insconst.INSPECTION_LABEL_SCENARIO]
+	scenario, ok := labels[bizconst.INSPECTION_SCENARIO]
 	if !ok {
 		return nil, errors.New("Failed to job scenario from cronjob labels")
 	}
@@ -96,18 +95,18 @@ func newPolicyFromCronJob(ctx context.Context, cronJob *batchv1.CronJob) (*insmo
 func listInspectionCronJobs(ctx context.Context, namespace, name, obcluster, scenario string) ([]batchv1.CronJob, error) {
 	client := client.GetClient()
 	listOptions := metav1.ListOptions{}
-	labelSelector := fmt.Sprintf("%s=%s,%s=%s", insconst.INSPECTION_LABEL_MANAGED_BY, bizconst.DASHBOARD_APP_NAME, insconst.INSPECTION_LABEL_JOB_TYPE, insconst.JOB_TYPE_INSPECTION)
+	labelSelector := fmt.Sprintf("%s=%s,%s=%s", bizconst.LABEL_MANAGED_BY, bizconst.DASHBOARD_APP_NAME, bizconst.LABEL_JOB_TYPE, bizconst.JOB_TYPE_INSPECTION)
 	if namespace != "" {
-		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, insconst.INSPECTION_LABEL_REF_NAMESPACE, namespace)
+		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, bizconst.LABEL_REF_NAMESPACE, namespace)
 	}
 	if name != "" {
-		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, insconst.INSPECTION_LABEL_REF_NAME, name)
+		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, bizconst.LABEL_REF_NAME, name)
 	}
 	if obcluster != "" {
-		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, insconst.INSPECTION_LABEL_REF_OBCLUSTERNAME, obcluster)
+		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, bizconst.LABEL_REF_OBCLUSTERNAME, obcluster)
 	}
 	if scenario != "" {
-		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, insconst.INSPECTION_LABEL_SCENARIO, scenario)
+		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, bizconst.INSPECTION_SCENARIO, scenario)
 	}
 	listOptions.LabelSelector = labelSelector
 	cronJobList, err := client.ClientSet.BatchV1().CronJobs("").List(ctx, listOptions)
@@ -217,12 +216,12 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 	ttlSecondsAfterFinished := int32(7 * 24 * 60 * 60)
 
 	labels := map[string]string{
-		insconst.INSPECTION_LABEL_MANAGED_BY:        bizconst.DASHBOARD_APP_NAME,
-		insconst.INSPECTION_LABEL_JOB_TYPE:          insconst.JOB_TYPE_INSPECTION,
-		insconst.INSPECTION_LABEL_REF_NAMESPACE:     obclusterMeta.Namespace,
-		insconst.INSPECTION_LABEL_REF_NAME:          obclusterMeta.Name,
-		insconst.INSPECTION_LABEL_REF_OBCLUSTERNAME: obclusterMeta.ClusterName,
-		insconst.INSPECTION_LABEL_SCENARIO:          string(scheduleConfig.Scenario),
+		bizconst.LABEL_MANAGED_BY:        bizconst.DASHBOARD_APP_NAME,
+		bizconst.LABEL_JOB_TYPE:          bizconst.JOB_TYPE_INSPECTION,
+		bizconst.LABEL_REF_NAMESPACE:     obclusterMeta.Namespace,
+		bizconst.LABEL_REF_NAME:          obclusterMeta.Name,
+		bizconst.LABEL_REF_OBCLUSTERNAME: obclusterMeta.ClusterName,
+		bizconst.INSPECTION_SCENARIO:     string(scheduleConfig.Scenario),
 	}
 
 	jobSpec := &batchv1.JobSpec{
@@ -403,18 +402,18 @@ func listInspectionJobs(ctx context.Context, namespace, name, obcluster, scenari
 
 	client := client.GetClient()
 	listOptions := metav1.ListOptions{}
-	labelSelector := fmt.Sprintf("%s=%s,%s=%s", insconst.INSPECTION_LABEL_MANAGED_BY, bizconst.DASHBOARD_APP_NAME, insconst.INSPECTION_LABEL_JOB_TYPE, insconst.JOB_TYPE_INSPECTION)
+	labelSelector := fmt.Sprintf("%s=%s,%s=%s", bizconst.LABEL_MANAGED_BY, bizconst.DASHBOARD_APP_NAME, bizconst.LABEL_JOB_TYPE, bizconst.JOB_TYPE_INSPECTION)
 	if namespace != "" {
-		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, insconst.INSPECTION_LABEL_REF_NAMESPACE, namespace)
+		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, bizconst.LABEL_REF_NAMESPACE, namespace)
 	}
 	if name != "" {
-		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, insconst.INSPECTION_LABEL_REF_NAME, name)
+		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, bizconst.LABEL_REF_NAME, name)
 	}
 	if obcluster != "" {
-		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, insconst.INSPECTION_LABEL_REF_OBCLUSTERNAME, obcluster)
+		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, bizconst.LABEL_REF_OBCLUSTERNAME, obcluster)
 	}
 	if scenario != "" {
-		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, insconst.INSPECTION_LABEL_SCENARIO, scenario)
+		labelSelector = fmt.Sprintf("%s,%s=%s", labelSelector, bizconst.INSPECTION_SCENARIO, scenario)
 	}
 	listOptions.LabelSelector = labelSelector
 	jobList, err := client.ClientSet.BatchV1().Jobs("").List(ctx, listOptions)
@@ -453,15 +452,15 @@ func GetInspectionReport(ctx context.Context, namespace, name string) (*insmodel
 
 func newReportFromJob(ctx context.Context, job *batchv1.Job) (*insmodel.Report, error) {
 	labels := job.ObjectMeta.GetLabels()
-	objNamespace, ok := labels[insconst.INSPECTION_LABEL_REF_NAMESPACE]
+	objNamespace, ok := labels[bizconst.LABEL_REF_NAMESPACE]
 	if !ok {
 		return nil, errors.New("Failed to get object namespace from job labels")
 	}
-	objName, ok := labels[insconst.INSPECTION_LABEL_REF_NAME]
+	objName, ok := labels[bizconst.LABEL_REF_NAME]
 	if !ok {
 		return nil, errors.New("Failed to get object name from job labels")
 	}
-	scenario, ok := labels[insconst.INSPECTION_LABEL_SCENARIO]
+	scenario, ok := labels[bizconst.INSPECTION_SCENARIO]
 	if !ok {
 		return nil, errors.New("Failed to job scenario from job labels")
 	}
