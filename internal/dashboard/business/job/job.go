@@ -17,7 +17,7 @@ import (
 	"context"
 	"io"
 
-	"github.com/oceanbase/ob-operator/internal/dashboard/business/alarm"
+	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/job"
 	k8sclient "github.com/oceanbase/ob-operator/pkg/k8s/client"
 	"github.com/pkg/errors"
@@ -57,7 +57,7 @@ func GetJob(ctx context.Context, namespace, name string) (*job.Job, error) {
 	}
 
 	if jobStatus == job.JobStatusSuccessful || jobStatus == job.JobStatusFailed {
-		attachmentID, ok := k8sJob.Labels[alarm.DIAGNOSE_LABEL_ATTACHMENT_ID]
+		attachmentID, ok := k8sJob.Labels[bizconst.LABEL_ATTACHMENT_ID]
 		if ok {
 			resp.Result.AttachmentId = attachmentID
 		} else {

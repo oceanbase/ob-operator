@@ -30,16 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-const (
-	DIAGNOSE_LABEL_MANAGED_BY        = "ob.oceanbase.com/managed-by"
-	DIAGNOSE_LABEL_JOB_TYPE          = "ob.oceanbase.com/job-type"
-	DIAGNOSE_LABEL_REF_NAMESPACE     = "ob.oceanbase.com/ref-namespace"
-	DIAGNOSE_LABEL_REF_NAME          = "ob.oceanbase.com/ref-name"
-	DIAGNOSE_LABEL_REF_OBCLUSTERNAME = "ob.oceanbase.com/ref-obcluster-name"
-	DIAGNOSE_LABEL_ATTACHMENT_ID     = "ob.oceanbase.com/attachment-id"
-	JOB_TYPE_DIAGNOSE                = "diagnose"
-)
-
 func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Job, error) {
 	jobNamespace := os.Getenv("NAMESPACE")
 	sharedPvcName := os.Getenv("SHARED_VOLUME_PVC_NAME")
@@ -50,10 +40,10 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 	ttlSecondsAfterFinished := int32(24 * 60 * 60)
 
 	labels := map[string]string{
-		DIAGNOSE_LABEL_MANAGED_BY:        bizconst.DASHBOARD_APP_NAME,
-		DIAGNOSE_LABEL_JOB_TYPE:          JOB_TYPE_DIAGNOSE,
-		DIAGNOSE_LABEL_REF_OBCLUSTERNAME: param.Instance.OBCluster,
-		DIAGNOSE_LABEL_ATTACHMENT_ID:     attachmentID,
+		bizconst.LABEL_MANAGED_BY:        bizconst.DASHBOARD_APP_NAME,
+		bizconst.LABEL_JOB_TYPE:          bizconst.JOB_TYPE_DIAGNOSE,
+		bizconst.LABEL_REF_OBCLUSTERNAME: param.Instance.OBCluster,
+		bizconst.LABEL_ATTACHMENT_ID:     attachmentID,
 	}
 
 	var obclusterObj *response.OBClusterOverview = nil
