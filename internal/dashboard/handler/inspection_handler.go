@@ -49,7 +49,7 @@ func ListInspectionPolicies(c *gin.Context) ([]inspection.Policy, error) {
 // @Tags Inspection
 // @Accept application/json
 // @Produce application/json
-// @Param body body inspection.Policy true "inspection policy"
+// @Param body body inspection.PolicyMeta true "inspection policy"
 // @Success 200 object response.APIResponse{data=inspection.Policy}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
@@ -57,12 +57,14 @@ func ListInspectionPolicies(c *gin.Context) ([]inspection.Policy, error) {
 // @Router /api/v1/inspection/policies [POST]
 // @Security ApiKeyAuth
 func CreateOrUpdateInspectionPolicy(c *gin.Context) (*inspection.Policy, error) {
-	policy := &inspection.Policy{}
+	policy := &inspection.PolicyMeta{}
 	if err := c.ShouldBindJSON(policy); err != nil {
 		return nil, errors.NewBadRequest(err.Error())
 	}
 	err := insbiz.CreateOrUpdateInspectionPolicy(c.Request.Context(), policy)
-	return policy, err
+	return &inspection.Policy{
+		PolicyMeta: *policy,
+	}, err
 }
 
 // @ID GetInspectionPolicy

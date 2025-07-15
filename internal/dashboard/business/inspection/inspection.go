@@ -76,9 +76,11 @@ func newPolicyFromCronJob(ctx context.Context, cronJob *batchv1.CronJob) (*insmo
 	}
 
 	policy := &insmodel.Policy{
-		OBCluster:       &cluster.OBClusterMeta.OBClusterMetaBasic,
-		Status:          scheduleStatus,
-		ScheduleConfigs: []insmodel.InspectionScheduleConfig{scheduleConfig},
+		PolicyMeta: insmodel.PolicyMeta{
+			OBCluster:       &cluster.OBClusterMeta.OBClusterMetaBasic,
+			Status:          scheduleStatus,
+			ScheduleConfigs: []insmodel.InspectionScheduleConfig{scheduleConfig},
+		},
 	}
 
 	if len(reports) > 0 {
@@ -165,10 +167,12 @@ func ListInspectionPolicies(ctx context.Context, namespace, name, obclusterName 
 			policies = append(policies, *policy)
 		} else {
 			policies = append(policies, insmodel.Policy{
-				OBCluster:       &cluster.OBClusterMetaBasic,
-				Status:          insmodel.ScheduleDisabled,
-				ScheduleConfigs: []insmodel.InspectionScheduleConfig{},
-				LatestReports:   []insmodel.ReportBriefInfo{},
+				PolicyMeta: insmodel.PolicyMeta{
+					OBCluster:       &cluster.OBClusterMetaBasic,
+					Status:          insmodel.ScheduleDisabled,
+					ScheduleConfigs: []insmodel.InspectionScheduleConfig{},
+				},
+				LatestReports: []insmodel.ReportBriefInfo{},
 			})
 		}
 	}
@@ -345,7 +349,7 @@ func updateCronJobForInspection(ctx context.Context, cronJob *batchv1.CronJob, s
 	return err
 }
 
-func CreateOrUpdateInspectionPolicy(ctx context.Context, policy *insmodel.Policy) error {
+func CreateOrUpdateInspectionPolicy(ctx context.Context, policy *insmodel.PolicyMeta) error {
 	for _, scheduleConfig := range policy.ScheduleConfigs {
 		cronJobs, err := listInspectionCronJobs(ctx, policy.OBCluster.Namespace, policy.OBCluster.Name, policy.OBCluster.ClusterName, string(scheduleConfig.Scenario))
 		if err != nil {
