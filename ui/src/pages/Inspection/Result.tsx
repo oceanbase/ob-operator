@@ -1,4 +1,3 @@
-import { inspection } from '@/api';
 import {
   Card,
   Col,
@@ -32,12 +31,8 @@ const Report: React.FC<Props> = () => {
   const params = useParams();
   const { namespace, name } = params;
 
-  // 获取巡检报告数据
-  const {
-    data: inspectionReportData,
-    run: fetchReport,
-    // loading: reportLoading,
-  } = useRequest(
+  // 获取巡检报告数据, 手动写请求函数，自带的请求函数不支持
+  const { data: inspectionReportData, run: fetchReport } = useRequest(
     async (params) => {
       const { namespace: namespace1, name: name1 } = params;
       const response = await fetch(
@@ -61,11 +56,10 @@ const Report: React.FC<Props> = () => {
       return response.json();
     },
     {
-      manual: true, // 手动触发
+      manual: true,
     },
   );
 
-  // console.log('inspectionReportData', inspectionReportData)
   const getreport = inspectionReportData?.data || {};
 
   useEffect(() => {
@@ -74,27 +68,12 @@ const Report: React.FC<Props> = () => {
     }
   }, [namespace, name]);
 
-  const { data: inspectionReport } = useRequest(
-    inspection.listInspectionReports,
-    {
-      defaultParams: [{ namespace, name }],
-    },
-  );
+  const { criticalItems, failedItems, moderateItems } =
+    getreport?.resultDetail || {};
+  const { criticalCount, failedCount, moderateCount } =
+    getreport?.resultStatistics || {};
 
-  const getInspectionReport = inspectionReport?.data?.find(
-    (item) => item.namespace === namespace && item.name === name,
-  );
-
-  const { resultDetail } = getInspectionReport || {};
-
-  const abd = getreport?.resultDetail;
-  const aa = getreport?.resultStatistics;
-  console.log('abd', abd);
-  // console.log('aa', aa)
-  const { criticalItems, failedItems, moderateItems } = resultDetail || {};
-
-  console.log('getreport', getreport);
-  const totalCount = aa?.criticalCount + aa?.failedCount + aa?.moderateCount;
+  const totalCount = criticalCount + failedCount + moderateCount;
 
   const tabList = [
     {
@@ -107,29 +86,35 @@ const Report: React.FC<Props> = () => {
     },
   ];
 
-  const CollapseDescriptions: React.FC<CollapseContentProps> = ({
-    inspectionItem,
-  }) => {
+  const CollapseDescriptions: React.FC<
+    CollapseContentProps & { tabKey?: string }
+  > = ({ inspectionItem }) => {
     const columns = [
       {
         title: '巡检项',
         dataIndex: 'name',
-        render: (text) => {
-          return <span>{text}</span>;
+        render: (text: any) => {
+          return <span>{text || '-'}</span>;
         },
       },
 
       {
         title: '巡检结果',
         dataIndex: 'results',
-        render: (text) => {
+        render: (text: any) => {
+          if (!text || !Array.isArray(text)) {
+            return <span>-</span>;
+          }
           return (
             <>
-              {text?.map((item) => {
+              {text.map((item: any, index: number) => {
                 const red = item?.includes('[critical]');
                 return (
-                  <div style={{ color: red ? 'rgba(166,29,36,1)' : 'black' }}>
-                    {item}
+                  <div
+                    key={index}
+                    style={{ color: red ? 'rgba(166,29,36,1)' : 'black' }}
+                  >
+                    {item || '-'}
                   </div>
                 );
               })}
@@ -139,75 +124,42 @@ const Report: React.FC<Props> = () => {
       },
     ];
 
-    // 表格渲染的 rules 字段需要从 inspectionItem 头上取到
-    // const dataSource = (inspectionItem.dataSource || []).map((item) =>
-    //   Object.assign(item, { rules: inspectionItem.rules }),
-    // );
+    // 确保数据源是数组格式
+    const dataSource = Array.isArray(inspectionItem)
+      ? inspectionItem
+      : [inspectionItem];
 
-    // // 对 target 进行排序，相同的放到一块
-    // const realDataSource = dataSource
-    //   .sort((a, b) => {
-    //     return sortByString(a, b, 'target') ? 1 : -1;
-    //   })
-    //   .map((item, index) => {
-    //     return {
-    //       // 增加 _index 做 ID 使用，用来判断是否此列进行需要进行合并
-    //       _index: index,
-    //       ...item,
-    //     };
-    //   });
+    // 添加数据验证
+    if (!dataSource || dataSource.length === 0) {
+      return <Empty description="暂无数据" />;
+    }
 
-    // const arrChage = (arr: any[], num: number) => {
-    //   const newArr = [];
-    //   while (arr.length > 0) {
-    //     newArr.push(arr.splice(0, num));
-    //   }
-    //   return newArr;
-    // };
-
-    // const showCellList: any[] = [];
-
-    // // 因为表格存在分页，所以要转换为二维数组，每一页进行对比，将同一个 target 的列进行合并
-    // arrChage([...realDataSource], 5).forEach((list) => {
-    //   const targetMap = {};
-    //   // 记录下每个不同的 target 第一次出现的位置，并累加得出每个 target 的总数
-    //   list.forEach((data) => {
-    //     const target = data.target as string;
-
-    //     if (targetMap[target]) {
-    //       // 记录同一个 target 出现次数
-    //       targetMap[target].count += 1;
-    //     } else {
-    //       targetMap[target] = {
-    //         count: 1,
-    //         // 将 index 存下，在 onCell 中和 record 进行对比，看是否需要展示
-    //         showCellIndex: data._index,
-    //       };
-    //     }
-    //   });
-
-    //   showCellList.push(...Object.values(targetMap));
-    // });
-
-    return (
-      <Table
-        size={'small'}
-        bordered={true}
-        columns={columns}
-        dataSource={inspectionItem}
-        rowKey={(record) => record?.name}
-      />
-    );
+    try {
+      return (
+        <Table
+          size={'small'}
+          bordered={true}
+          columns={columns}
+          dataSource={dataSource}
+          rowKey={(record: any) =>
+            record?.name || record?.id || Math.random().toString()
+          }
+          pagination={false}
+        />
+      );
+    } catch (error) {
+      console.error('Table渲染错误:', error);
+      return <div>数据渲染出错，请检查数据格式</div>;
+    }
   };
 
   // 风险汇总报告
   const RiskCollapseContent: React.FC<any> = () => {
-    // console.log('abd', abd)
-    const resultList: CollapseProps['items'] = [
+    const resultList: any[] = [
       {
         key: 'critical',
         label: '高风险',
-        children: criticalItems || [],
+        children: criticalItems,
       },
       {
         key: 'moderate',
@@ -220,30 +172,22 @@ const Report: React.FC<Props> = () => {
         children: failedItems,
       },
     ];
-    const bb = abd?.criticalItems;
-    console.log('bb', bb);
+
     return (
       <>
-        {resultList?.map(({ key, label }) => {
+        {resultList?.map(({ key, label, children }) => {
           return (
             <Collapse
-              defaultActiveKey={key}
+              // 默认只摊开高风险
+              defaultActiveKey={'critical'}
               key={key}
               style={{
                 marginTop: '16px',
               }}
             >
               <Panel header={label} key={key}>
-                {bb?.length > 0 ? (
-                  bb?.map((item) => {
-                    console.log('bbitem', item);
-                    return (
-                      <>
-                        <CollapseDescriptions inspectionItem={item} />
-                        {/* {index !== children?.length - 1 && <Divider />} */}
-                      </>
-                    );
-                  })
+                {children?.length > 0 ? (
+                  <CollapseDescriptions inspectionItem={children} />
                 ) : (
                   <Empty
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -261,9 +205,9 @@ const Report: React.FC<Props> = () => {
   // 汇总报告
   const ItemCollapseContent: React.FC<any> = () => {
     const data = [
-      ...(abd?.criticalItems || []),
-      ...(abd?.failedItems || []),
-      ...(abd?.moderateItems || []),
+      ...(criticalItems || []),
+      ...(failedItems || []),
+      ...(moderateItems || []),
     ];
 
     return (
@@ -359,7 +303,7 @@ const Report: React.FC<Props> = () => {
                       cursor: 'pointer',
                     }}
                   >
-                    {aa?.criticalCount || 0}
+                    {criticalCount || 0}
                   </div>
                 </span>
               </Col>
@@ -373,7 +317,7 @@ const Report: React.FC<Props> = () => {
                       cursor: 'pointer',
                     }}
                   >
-                    {aa?.moderateCount || 0}
+                    {moderateCount || 0}
                   </div>
                 </span>
               </Col>
@@ -387,7 +331,7 @@ const Report: React.FC<Props> = () => {
                       cursor: 'pointer',
                     }}
                   >
-                    {aa?.failedCount || 0}
+                    {failedCount || 0}
                   </div>
                 </span>
               </Col>

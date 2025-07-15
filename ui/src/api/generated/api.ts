@@ -1203,16 +1203,16 @@ export type InspectionInspectionScenario = typeof InspectionInspectionScenario[k
 export interface InspectionInspectionScheduleConfig {
     /**
      * 
-     * @type {string}
-     * @memberof InspectionInspectionScheduleConfig
-     */
-    'crontab': string;
-    /**
-     * 
      * @type {InspectionInspectionScenario}
      * @memberof InspectionInspectionScheduleConfig
      */
     'scenario': InspectionInspectionScenario;
+    /**
+     * 
+     * @type {string}
+     * @memberof InspectionInspectionScheduleConfig
+     */
+    'schedule': string;
 }
 
 
@@ -1244,10 +1244,10 @@ export interface InspectionPolicy {
     'latestReports'?: Array<InspectionReportBriefInfo>;
     /**
      * 
-     * @type {ResponseOBClusterMeta}
+     * @type {ResponseOBClusterMetaBasic}
      * @memberof InspectionPolicy
      */
-    'obCluster': ResponseOBClusterMeta;
+    'obCluster': ResponseOBClusterMetaBasic;
     /**
      * 
      * @type {Array<InspectionInspectionScheduleConfig>}
@@ -1280,7 +1280,13 @@ export interface InspectionReport {
      * @type {string}
      * @memberof InspectionReport
      */
-    'id': string;
+    'name': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof InspectionReport
+     */
+    'namespace': string;
     /**
      * 
      * @type {ResponseOBClusterMeta}
@@ -1337,7 +1343,13 @@ export interface InspectionReportBriefInfo {
      * @type {string}
      * @memberof InspectionReportBriefInfo
      */
-    'id': string;
+    'name': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof InspectionReportBriefInfo
+     */
+    'namespace': string;
     /**
      * 
      * @type {ResponseOBClusterMeta}
@@ -6155,6 +6167,43 @@ export interface ResponseOBClusterMeta {
 /**
  * 
  * @export
+ * @interface ResponseOBClusterMetaBasic
+ */
+export interface ResponseOBClusterMetaBasic {
+    /**
+     * 
+     * @type {number}
+     * @memberof ResponseOBClusterMetaBasic
+     */
+    'clusterId': number;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseOBClusterMetaBasic
+     */
+    'clusterName': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseOBClusterMetaBasic
+     */
+    'name': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseOBClusterMetaBasic
+     */
+    'namespace': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof ResponseOBClusterMetaBasic
+     */
+    'uid': string;
+}
+/**
+ * 
+ * @export
  * @interface ResponseOBClusterOverview
  */
 export interface ResponseOBClusterOverview {
@@ -10763,6 +10812,117 @@ export class AlarmApi extends BaseAPI {
 
 
 /**
+ * AttachmentApi - axios parameter creator
+ * @export
+ */
+export const AttachmentApiAxiosParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * Download attachment by id
+         * @summary Download attachment
+         * @param {string} id attachment id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        downloadAttachment: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('downloadAttachment', 'id', id)
+            const localVarPath = `/api/v1/attachments/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * AttachmentApi - functional programming interface
+ * @export
+ */
+export const AttachmentApiFp = function(configuration?: Configuration) {
+    const localVarAxiosParamCreator = AttachmentApiAxiosParamCreator(configuration)
+    return {
+        /**
+         * Download attachment by id
+         * @summary Download attachment
+         * @param {string} id attachment id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async downloadAttachment(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<File>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.downloadAttachment(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['AttachmentApi.downloadAttachment']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+    }
+};
+
+/**
+ * AttachmentApi - factory interface
+ * @export
+ */
+export const AttachmentApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
+    const localVarFp = AttachmentApiFp(configuration)
+    return {
+        /**
+         * Download attachment by id
+         * @summary Download attachment
+         * @param {string} id attachment id
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        downloadAttachment(id: string, options?: any): AxiosPromise<File> {
+            return localVarFp.downloadAttachment(id, options).then((request) => request(axios, basePath));
+        },
+    };
+};
+
+/**
+ * AttachmentApi - object-oriented interface
+ * @export
+ * @class AttachmentApi
+ * @extends {BaseAPI}
+ */
+export class AttachmentApi extends BaseAPI {
+    /**
+     * Download attachment by id
+     * @summary Download attachment
+     * @param {string} id attachment id
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AttachmentApi
+     */
+    public downloadAttachment(id: string, options?: RawAxiosRequestConfig) {
+        return AttachmentApiFp(this.configuration).downloadAttachment(id, options).then((request) => request(this.axios, this.basePath));
+    }
+}
+
+
+
+/**
  * ClusterApi - axios parameter creator
  * @export
  */
@@ -11709,11 +11869,23 @@ export const InspectionApiAxiosParamCreator = function (configuration?: Configur
         /**
          * delete inspection policy
          * @summary delete inspection policy
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
+         * @param {string} scenario scenario
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteInspectionPolicy: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/v1/inspection/policies/{namespace}/{name}/{scenario}`;
+        deleteInspectionPolicy: async (namespace: string, name: string, scenario: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('deleteInspectionPolicy', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('deleteInspectionPolicy', 'name', name)
+            // verify required parameter 'scenario' is not null or undefined
+            assertParamExists('deleteInspectionPolicy', 'scenario', scenario)
+            const localVarPath = `/api/v1/inspection/policies/{namespace}/{name}/{scenario}`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)))
+                .replace(`{${"scenario"}}`, encodeURIComponent(String(scenario)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -11742,11 +11914,19 @@ export const InspectionApiAxiosParamCreator = function (configuration?: Configur
         /**
          * get inspection policy
          * @summary get inspection policy
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getInspectionPolicy: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/v1/inspection/policies/{namespace}/{name}`;
+        getInspectionPolicy: async (namespace: string, name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('getInspectionPolicy', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('getInspectionPolicy', 'name', name)
+            const localVarPath = `/api/v1/inspection/policies/{namespace}/{name}`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -11775,11 +11955,19 @@ export const InspectionApiAxiosParamCreator = function (configuration?: Configur
         /**
          * get inspection report
          * @summary get inspection report
+         * @param {string} namespace job namespace
+         * @param {string} name job name
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getInspectionReport: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/v1/inspection/reports/{id}`;
+        getInspectionReport: async (namespace: string, name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('getInspectionReport', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('getInspectionReport', 'name', name)
+            const localVarPath = `/api/v1/inspection/reports/{namespace}/{name}`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -11856,10 +12044,14 @@ export const InspectionApiAxiosParamCreator = function (configuration?: Configur
         /**
          * list inspection reports
          * @summary list inspection reports
+         * @param {string} [namespace] Namespace
+         * @param {string} [name] Object name
+         * @param {string} [obclusterName] obcluster name
+         * @param {string} [scenario] scenario
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listInspectionReports: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        listInspectionReports: async (namespace?: string, name?: string, obclusterName?: string, scenario?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/api/v1/inspection/reports`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -11875,6 +12067,22 @@ export const InspectionApiAxiosParamCreator = function (configuration?: Configur
             // authentication ApiKeyAuth required
             await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
 
+            if (namespace !== undefined) {
+                localVarQueryParameter['namespace'] = namespace;
+            }
+
+            if (name !== undefined) {
+                localVarQueryParameter['name'] = name;
+            }
+
+            if (obclusterName !== undefined) {
+                localVarQueryParameter['obclusterName'] = obclusterName;
+            }
+
+            if (scenario !== undefined) {
+                localVarQueryParameter['scenario'] = scenario;
+            }
+
 
     
             setSearchParams(localVarUrlObj, localVarQueryParameter);
@@ -11889,11 +12097,23 @@ export const InspectionApiAxiosParamCreator = function (configuration?: Configur
         /**
          * trigger inspection
          * @summary trigger inspection
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
+         * @param {string} scenario scenario
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        triggerInspection: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/v1/inspection/policies/{namespace}/{name}/{scenario}`;
+        triggerInspection: async (namespace: string, name: string, scenario: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('triggerInspection', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('triggerInspection', 'name', name)
+            // verify required parameter 'scenario' is not null or undefined
+            assertParamExists('triggerInspection', 'scenario', scenario)
+            const localVarPath = `/api/v1/inspection/policies/{namespace}/{name}/{scenario}/trigger`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)))
+                .replace(`{${"scenario"}}`, encodeURIComponent(String(scenario)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -11945,11 +12165,14 @@ export const InspectionApiFp = function(configuration?: Configuration) {
         /**
          * delete inspection policy
          * @summary delete inspection policy
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
+         * @param {string} scenario scenario
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async deleteInspectionPolicy(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DeleteInspectionPolicy200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteInspectionPolicy(options);
+        async deleteInspectionPolicy(namespace: string, name: string, scenario: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DeleteInspectionPolicy200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteInspectionPolicy(namespace, name, scenario, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['InspectionApi.deleteInspectionPolicy']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -11957,11 +12180,13 @@ export const InspectionApiFp = function(configuration?: Configuration) {
         /**
          * get inspection policy
          * @summary get inspection policy
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getInspectionPolicy(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOrUpdateInspectionPolicy200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.getInspectionPolicy(options);
+        async getInspectionPolicy(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOrUpdateInspectionPolicy200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getInspectionPolicy(namespace, name, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['InspectionApi.getInspectionPolicy']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -11969,11 +12194,13 @@ export const InspectionApiFp = function(configuration?: Configuration) {
         /**
          * get inspection report
          * @summary get inspection report
+         * @param {string} namespace job namespace
+         * @param {string} name job name
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getInspectionReport(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetInspectionReport200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.getInspectionReport(options);
+        async getInspectionReport(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetInspectionReport200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getInspectionReport(namespace, name, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['InspectionApi.getInspectionReport']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -11996,11 +12223,15 @@ export const InspectionApiFp = function(configuration?: Configuration) {
         /**
          * list inspection reports
          * @summary list inspection reports
+         * @param {string} [namespace] Namespace
+         * @param {string} [name] Object name
+         * @param {string} [obclusterName] obcluster name
+         * @param {string} [scenario] scenario
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async listInspectionReports(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListInspectionReports200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.listInspectionReports(options);
+        async listInspectionReports(namespace?: string, name?: string, obclusterName?: string, scenario?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListInspectionReports200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listInspectionReports(namespace, name, obclusterName, scenario, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['InspectionApi.listInspectionReports']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -12008,11 +12239,14 @@ export const InspectionApiFp = function(configuration?: Configuration) {
         /**
          * trigger inspection
          * @summary trigger inspection
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
+         * @param {string} scenario scenario
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async triggerInspection(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOrUpdateInspectionPolicy200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.triggerInspection(options);
+        async triggerInspection(namespace: string, name: string, scenario: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DiagnoseAlert200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.triggerInspection(namespace, name, scenario, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['InspectionApi.triggerInspection']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -12040,29 +12274,36 @@ export const InspectionApiFactory = function (configuration?: Configuration, bas
         /**
          * delete inspection policy
          * @summary delete inspection policy
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
+         * @param {string} scenario scenario
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteInspectionPolicy(options?: any): AxiosPromise<DeleteInspectionPolicy200Response> {
-            return localVarFp.deleteInspectionPolicy(options).then((request) => request(axios, basePath));
+        deleteInspectionPolicy(namespace: string, name: string, scenario: string, options?: any): AxiosPromise<DeleteInspectionPolicy200Response> {
+            return localVarFp.deleteInspectionPolicy(namespace, name, scenario, options).then((request) => request(axios, basePath));
         },
         /**
          * get inspection policy
          * @summary get inspection policy
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getInspectionPolicy(options?: any): AxiosPromise<CreateOrUpdateInspectionPolicy200Response> {
-            return localVarFp.getInspectionPolicy(options).then((request) => request(axios, basePath));
+        getInspectionPolicy(namespace: string, name: string, options?: any): AxiosPromise<CreateOrUpdateInspectionPolicy200Response> {
+            return localVarFp.getInspectionPolicy(namespace, name, options).then((request) => request(axios, basePath));
         },
         /**
          * get inspection report
          * @summary get inspection report
+         * @param {string} namespace job namespace
+         * @param {string} name job name
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getInspectionReport(options?: any): AxiosPromise<GetInspectionReport200Response> {
-            return localVarFp.getInspectionReport(options).then((request) => request(axios, basePath));
+        getInspectionReport(namespace: string, name: string, options?: any): AxiosPromise<GetInspectionReport200Response> {
+            return localVarFp.getInspectionReport(namespace, name, options).then((request) => request(axios, basePath));
         },
         /**
          * list inspection policies
@@ -12079,20 +12320,27 @@ export const InspectionApiFactory = function (configuration?: Configuration, bas
         /**
          * list inspection reports
          * @summary list inspection reports
+         * @param {string} [namespace] Namespace
+         * @param {string} [name] Object name
+         * @param {string} [obclusterName] obcluster name
+         * @param {string} [scenario] scenario
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listInspectionReports(options?: any): AxiosPromise<ListInspectionReports200Response> {
-            return localVarFp.listInspectionReports(options).then((request) => request(axios, basePath));
+        listInspectionReports(namespace?: string, name?: string, obclusterName?: string, scenario?: string, options?: any): AxiosPromise<ListInspectionReports200Response> {
+            return localVarFp.listInspectionReports(namespace, name, obclusterName, scenario, options).then((request) => request(axios, basePath));
         },
         /**
          * trigger inspection
          * @summary trigger inspection
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
+         * @param {string} scenario scenario
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        triggerInspection(options?: any): AxiosPromise<CreateOrUpdateInspectionPolicy200Response> {
-            return localVarFp.triggerInspection(options).then((request) => request(axios, basePath));
+        triggerInspection(namespace: string, name: string, scenario: string, options?: any): AxiosPromise<DiagnoseAlert200Response> {
+            return localVarFp.triggerInspection(namespace, name, scenario, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -12119,34 +12367,41 @@ export class InspectionApi extends BaseAPI {
     /**
      * delete inspection policy
      * @summary delete inspection policy
+     * @param {string} namespace obcluster namespace
+     * @param {string} name obcluster name
+     * @param {string} scenario scenario
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InspectionApi
      */
-    public deleteInspectionPolicy(options?: RawAxiosRequestConfig) {
-        return InspectionApiFp(this.configuration).deleteInspectionPolicy(options).then((request) => request(this.axios, this.basePath));
+    public deleteInspectionPolicy(namespace: string, name: string, scenario: string, options?: RawAxiosRequestConfig) {
+        return InspectionApiFp(this.configuration).deleteInspectionPolicy(namespace, name, scenario, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
      * get inspection policy
      * @summary get inspection policy
+     * @param {string} namespace obcluster namespace
+     * @param {string} name obcluster name
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InspectionApi
      */
-    public getInspectionPolicy(options?: RawAxiosRequestConfig) {
-        return InspectionApiFp(this.configuration).getInspectionPolicy(options).then((request) => request(this.axios, this.basePath));
+    public getInspectionPolicy(namespace: string, name: string, options?: RawAxiosRequestConfig) {
+        return InspectionApiFp(this.configuration).getInspectionPolicy(namespace, name, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
      * get inspection report
      * @summary get inspection report
+     * @param {string} namespace job namespace
+     * @param {string} name job name
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InspectionApi
      */
-    public getInspectionReport(options?: RawAxiosRequestConfig) {
-        return InspectionApiFp(this.configuration).getInspectionReport(options).then((request) => request(this.axios, this.basePath));
+    public getInspectionReport(namespace: string, name: string, options?: RawAxiosRequestConfig) {
+        return InspectionApiFp(this.configuration).getInspectionReport(namespace, name, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -12166,23 +12421,30 @@ export class InspectionApi extends BaseAPI {
     /**
      * list inspection reports
      * @summary list inspection reports
+     * @param {string} [namespace] Namespace
+     * @param {string} [name] Object name
+     * @param {string} [obclusterName] obcluster name
+     * @param {string} [scenario] scenario
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InspectionApi
      */
-    public listInspectionReports(options?: RawAxiosRequestConfig) {
-        return InspectionApiFp(this.configuration).listInspectionReports(options).then((request) => request(this.axios, this.basePath));
+    public listInspectionReports(namespace?: string, name?: string, obclusterName?: string, scenario?: string, options?: RawAxiosRequestConfig) {
+        return InspectionApiFp(this.configuration).listInspectionReports(namespace, name, obclusterName, scenario, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
      * trigger inspection
      * @summary trigger inspection
+     * @param {string} namespace obcluster namespace
+     * @param {string} name obcluster name
+     * @param {string} scenario scenario
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InspectionApi
      */
-    public triggerInspection(options?: RawAxiosRequestConfig) {
-        return InspectionApiFp(this.configuration).triggerInspection(options).then((request) => request(this.axios, this.basePath));
+    public triggerInspection(namespace: string, name: string, scenario: string, options?: RawAxiosRequestConfig) {
+        return InspectionApiFp(this.configuration).triggerInspection(namespace, name, scenario, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -12197,11 +12459,19 @@ export const JobApiAxiosParamCreator = function (configuration?: Configuration) 
         /**
          * Delete a job by id
          * @summary Delete a job
+         * @param {string} namespace namespace of the job
+         * @param {string} name name of the job
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteJob: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/v1/jobs/{namespace}/{name}`;
+        deleteJob: async (namespace: string, name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('deleteJob', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('deleteJob', 'name', name)
+            const localVarPath = `/api/v1/jobs/{namespace}/{name}`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -12230,11 +12500,19 @@ export const JobApiAxiosParamCreator = function (configuration?: Configuration) 
         /**
          * Get job by id
          * @summary Get job
+         * @param {string} namespace namespace of the job
+         * @param {string} name name of the job
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJob: async (options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            const localVarPath = `/api/v1/jobs/{namespace}/{name}`;
+        getJob: async (namespace: string, name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('getJob', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('getJob', 'name', name)
+            const localVarPath = `/api/v1/jobs/{namespace}/{name}`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -12273,11 +12551,13 @@ export const JobApiFp = function(configuration?: Configuration) {
         /**
          * Delete a job by id
          * @summary Delete a job
+         * @param {string} namespace namespace of the job
+         * @param {string} name name of the job
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async deleteJob(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DeleteInspectionPolicy200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteJob(options);
+        async deleteJob(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DeleteInspectionPolicy200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteJob(namespace, name, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['JobApi.deleteJob']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -12285,11 +12565,13 @@ export const JobApiFp = function(configuration?: Configuration) {
         /**
          * Get job by id
          * @summary Get job
+         * @param {string} namespace namespace of the job
+         * @param {string} name name of the job
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async getJob(options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DiagnoseAlert200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.getJob(options);
+        async getJob(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DiagnoseAlert200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getJob(namespace, name, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['JobApi.getJob']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
@@ -12307,20 +12589,24 @@ export const JobApiFactory = function (configuration?: Configuration, basePath?:
         /**
          * Delete a job by id
          * @summary Delete a job
+         * @param {string} namespace namespace of the job
+         * @param {string} name name of the job
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        deleteJob(options?: any): AxiosPromise<DeleteInspectionPolicy200Response> {
-            return localVarFp.deleteJob(options).then((request) => request(axios, basePath));
+        deleteJob(namespace: string, name: string, options?: any): AxiosPromise<DeleteInspectionPolicy200Response> {
+            return localVarFp.deleteJob(namespace, name, options).then((request) => request(axios, basePath));
         },
         /**
          * Get job by id
          * @summary Get job
+         * @param {string} namespace namespace of the job
+         * @param {string} name name of the job
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getJob(options?: any): AxiosPromise<DiagnoseAlert200Response> {
-            return localVarFp.getJob(options).then((request) => request(axios, basePath));
+        getJob(namespace: string, name: string, options?: any): AxiosPromise<DiagnoseAlert200Response> {
+            return localVarFp.getJob(namespace, name, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -12335,23 +12621,27 @@ export class JobApi extends BaseAPI {
     /**
      * Delete a job by id
      * @summary Delete a job
+     * @param {string} namespace namespace of the job
+     * @param {string} name name of the job
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof JobApi
      */
-    public deleteJob(options?: RawAxiosRequestConfig) {
-        return JobApiFp(this.configuration).deleteJob(options).then((request) => request(this.axios, this.basePath));
+    public deleteJob(namespace: string, name: string, options?: RawAxiosRequestConfig) {
+        return JobApiFp(this.configuration).deleteJob(namespace, name, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
      * Get job by id
      * @summary Get job
+     * @param {string} namespace namespace of the job
+     * @param {string} name name of the job
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof JobApi
      */
-    public getJob(options?: RawAxiosRequestConfig) {
-        return JobApiFp(this.configuration).getJob(options).then((request) => request(this.axios, this.basePath));
+    public getJob(namespace: string, name: string, options?: RawAxiosRequestConfig) {
+        return JobApiFp(this.configuration).getJob(namespace, name, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
@@ -13734,6 +14024,61 @@ export const OBClusterApiAxiosParamCreator = function (configuration?: Configura
             };
         },
         /**
+         * Download obcluster log
+         * @summary Download obcluster log
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
+         * @param {string} startTime start time
+         * @param {string} endTime end time
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        downloadOBClusterLog: async (namespace: string, name: string, startTime: string, endTime: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('downloadOBClusterLog', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('downloadOBClusterLog', 'name', name)
+            // verify required parameter 'startTime' is not null or undefined
+            assertParamExists('downloadOBClusterLog', 'startTime', startTime)
+            // verify required parameter 'endTime' is not null or undefined
+            assertParamExists('downloadOBClusterLog', 'endTime', endTime)
+            const localVarPath = `/api/v1/obclusters/namespace/{namespace}/name/{name}/log`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+            if (startTime !== undefined) {
+                localVarQueryParameter['startTime'] = startTime;
+            }
+
+            if (endTime !== undefined) {
+                localVarQueryParameter['endTime'] = endTime;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * get obcluster detailed info
          * @summary get obcluster
          * @param {string} namespace obcluster namespace
@@ -14232,6 +14577,22 @@ export const OBClusterApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Download obcluster log
+         * @summary Download obcluster log
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
+         * @param {string} startTime start time
+         * @param {string} endTime end time
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async downloadOBClusterLog(namespace: string, name: string, startTime: string, endTime: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<DiagnoseAlert200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.downloadOBClusterLog(namespace, name, startTime, endTime, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OBClusterApi.downloadOBClusterLog']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * get obcluster detailed info
          * @summary get obcluster
          * @param {string} namespace obcluster namespace
@@ -14440,6 +14801,19 @@ export const OBClusterApiFactory = function (configuration?: Configuration, base
             return localVarFp.deleteOBZone(namespace, name, obzoneName, options).then((request) => request(axios, basePath));
         },
         /**
+         * Download obcluster log
+         * @summary Download obcluster log
+         * @param {string} namespace obcluster namespace
+         * @param {string} name obcluster name
+         * @param {string} startTime start time
+         * @param {string} endTime end time
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        downloadOBClusterLog(namespace: string, name: string, startTime: string, endTime: string, options?: any): AxiosPromise<DiagnoseAlert200Response> {
+            return localVarFp.downloadOBClusterLog(namespace, name, startTime, endTime, options).then((request) => request(axios, basePath));
+        },
+        /**
          * get obcluster detailed info
          * @summary get obcluster
          * @param {string} namespace obcluster namespace
@@ -14625,6 +14999,21 @@ export class OBClusterApi extends BaseAPI {
      */
     public deleteOBZone(namespace: string, name: string, obzoneName: string, options?: RawAxiosRequestConfig) {
         return OBClusterApiFp(this.configuration).deleteOBZone(namespace, name, obzoneName, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Download obcluster log
+     * @summary Download obcluster log
+     * @param {string} namespace obcluster namespace
+     * @param {string} name obcluster name
+     * @param {string} startTime start time
+     * @param {string} endTime end time
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OBClusterApi
+     */
+    public downloadOBClusterLog(namespace: string, name: string, startTime: string, endTime: string, options?: RawAxiosRequestConfig) {
+        return OBClusterApiFp(this.configuration).downloadOBClusterLog(namespace, name, startTime, endTime, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

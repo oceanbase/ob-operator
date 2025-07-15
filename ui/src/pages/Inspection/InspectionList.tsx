@@ -8,6 +8,8 @@ import { CheckCircleFilled } from '@ant-design/icons';
 import { theme } from '@oceanbase/design';
 import { Link } from '@umijs/max';
 import { useRequest } from 'ahooks';
+
+import { history } from '@umijs/max';
 import {
   Button,
   Drawer,
@@ -125,12 +127,21 @@ export default function InspectionList() {
 
   const dataSource = listInspectionPolicies?.data || [];
 
+  // 手动增加clusterName和namespace，便于搜索
+  const realData = dataSource?.map((item) => {
+    return {
+      ...item,
+      clusterName: item?.obCluster?.clusterName || item?.obCluster?.name,
+      namespace: `${item?.obCluster?.namespace}/${item?.obCluster?.name}`,
+    };
+  });
+  console.log('real', realData);
   const columns = [
     {
       title: '资源名',
-      dataIndex: 'obCluster',
+      dataIndex: 'namespace',
       ...getColumnSearchProps({
-        dataIndex: 'obCluster',
+        dataIndex: 'namespace',
         searchInput: searchInput,
         setSearchText: setSearchText,
         setSearchedColumn: setSearchedColumn,
@@ -140,22 +151,17 @@ export default function InspectionList() {
         symbol: '/',
       }),
 
-      render: (text) => {
+      render: (text, record) => {
         return (
-          <Link
-            to={`/cluster/${text?.namespace}/${text?.name}/${text?.clusterName}`}
-          >
-            <CustomTooltip
-              text={`${text?.namespace}/${text?.name}`}
-              width={100}
-            />
+          <Link to={`/cluster/${text}/${record?.obCluster?.clusterName}`}>
+            <CustomTooltip text={text} width={100} />
           </Link>
         );
       },
     },
     {
       title: '集群名',
-      dataIndex: 'obCluster',
+      dataIndex: 'clusterName',
       width: 80,
       ...getColumnSearchProps({
         dataIndex: 'name',
@@ -166,7 +172,7 @@ export default function InspectionList() {
         searchedColumn: searchedColumn,
       }),
       render: (text) => {
-        return <CustomTooltip text={text?.clusterName} width={60} />;
+        return <CustomTooltip text={text} width={60} />;
       },
     },
     {
@@ -182,7 +188,7 @@ export default function InspectionList() {
 
         return (
           <div>
-            {text ? (
+            {repo ? (
               <>
                 <div>{`巡检时间：${formatTime(repo?.finishTime)}`}</div>
                 <Space size={6}>
@@ -196,22 +202,25 @@ export default function InspectionList() {
                   <span style={{ color: token.colorError }}>{`低${
                     failedCount || 0
                   }`}</span>
-                  <Link
-                    to={`/inspection/report/${id}`}
-                    // target="_blank"
+                  <a
+                    disabled={!repo}
+                    onClick={() => {
+                      history.push(`/inspection/report/${id}`);
+                    }}
                   >
                     查看报告
-                  </Link>
+                  </a>
                   <a
+                    disabled={!repo}
                     onClick={() =>
                       Modal.confirm({
                         title: '确定要发起基础巡检吗？',
                         onOk: () => {
-                          triggerInspection({
-                            namespace: repo?.obCluster?.namespace,
-                            name: repo?.obCluster?.name,
-                            scenario: repo?.scenario,
-                          });
+                          triggerInspection(
+                            repo?.obCluster?.namespace,
+                            repo?.obCluster?.name,
+                            repo?.scenario,
+                          );
                         },
                       })
                     }
@@ -235,9 +244,11 @@ export default function InspectionList() {
         const repo = text?.find((item) => item?.scenario === 'performance');
         const { failedCount, criticalCount, moderateCount } =
           repo?.resultStatistics || {};
+        console.log('repo', repo);
+        const id = `${repo?.namespace}/${repo?.name}`;
         return (
           <div>
-            {text ? (
+            {repo ? (
               <>
                 <div>{`巡检时间：${formatTime(repo?.finishTime)}`}</div>
                 <Space size={6}>
@@ -251,10 +262,16 @@ export default function InspectionList() {
                   <span style={{ color: token.colorError }}>{`低${
                     failedCount || 0
                   }`}</span>
-                  <Link to={`/inspection/report/${1}`} target="_blank">
-                    查看报告
-                  </Link>
                   <a
+                    disabled={!repo}
+                    onClick={() => {
+                      history.push(`/inspection/report/${id}`);
+                    }}
+                  >
+                    查看报告
+                  </a>
+                  <a
+                    disabled={!repo}
                     onClick={() => {
                       Modal.confirm({
                         title: '确定要发起性能巡检吗？',
@@ -471,7 +488,7 @@ export default function InspectionList() {
 
   return (
     <>
-      <Table dataSource={dataSource} columns={columns} loading={loading} />
+      <Table dataSource={realData} columns={columns} loading={loading} />
       <Drawer
         title={`${inspectionPolicies?.obCluster?.namespace}/${inspectionPolicies?.obCluster?.name} 巡检调度配置`}
         onClose={() => {
