@@ -13,12 +13,12 @@ See the Mulan PSL v2 for more details.
 package constant
 
 const (
-	LABEL_MANAGED_BY        = "ob.oceanbase.com/managed-by"
-	LABEL_JOB_TYPE          = "ob.oceanbase.com/job-type"
-	LABEL_REF_NAMESPACE     = "ob.oceanbase.com/ref-namespace"
-	LABEL_REF_NAME          = "ob.oceanbase.com/ref-name"
-	LABEL_REF_OBCLUSTERNAME = "ob.oceanbase.com/ref-obcluster-name"
-	LABEL_ATTACHMENT_ID     = "ob.oceanbase.com/attachment-id"
+	LABEL_MANAGED_BY        = "job.oceanbase.com/managed-by"
+	LABEL_JOB_TYPE          = "job.oceanbase.com/job-type"
+	LABEL_REF_NAMESPACE     = "job.oceanbase.com/ref-namespace"
+	LABEL_REF_NAME          = "job.oceanbase.com/ref-name"
+	LABEL_REF_OBCLUSTERNAME = "job.oceanbase.com/ref-obcluster-name"
+	LABEL_ATTACHMENT_ID     = "job.oceanbase.com/attachment-id"
 )
 
 const (
