@@ -16,3 +16,15 @@ prometheus:
     storageClassName: ""
     accessMode: ReadWriteOnce
     storage: 8Gi
+
+sharedVolume:
+  persistence:
+    enabled: true
+    storageClassName: ""
+    # -- Important: The shared volume requires a StorageClass that supports ReadWriteMany (RWX)
+    # access mode. This is because the volume is shared between the dashboard pod and
+    # multiple job pods, which may run on different nodes.
+    # Common providers like NFS, CephFS, GlusterFS, or cloud-specific file services (EFS, Azure Files)
+    # support RWX. Standard block storage (aws-ebs, gce-pd) does not.
+    accessMode: ReadWriteMany
+    storage: 10Gi

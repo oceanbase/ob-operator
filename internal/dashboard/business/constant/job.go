@@ -13,14 +13,18 @@ See the Mulan PSL v2 for more details.
 package constant
 
 const (
-	INSPECTION_LABEL_MANAGED_BY        = "inspection.oceanbase.com/managed-by"
-	INSPECTION_LABEL_SCENARIO          = "inspection.oceanbase.com/scenario"
-	INSPECTION_LABEL_JOB_TYPE          = "inspection.oceanbase.com/type"
-	INSPECTION_LABEL_REF_NAMESPACE     = "inspection.oceanbase.com/ref-obj-namespace"
-	INSPECTION_LABEL_REF_NAME          = "inspection.oceanbase.com/ref-obj-name"
-	INSPECTION_LABEL_REF_OBCLUSTERNAME = "inspection.oceanbase.com/ref-obcluster-name"
+	LABEL_MANAGED_BY        = "ob.oceanbase.com/managed-by"
+	LABEL_JOB_TYPE          = "ob.oceanbase.com/job-type"
+	LABEL_REF_NAMESPACE     = "ob.oceanbase.com/ref-namespace"
+	LABEL_REF_NAME          = "ob.oceanbase.com/ref-name"
+	LABEL_REF_OBCLUSTERNAME = "ob.oceanbase.com/ref-obcluster-name"
+	LABEL_ATTACHMENT_ID     = "ob.oceanbase.com/attachment-id"
 )
 
 const (
+	JOB_TYPE_DIAGNOSE   = "diagnose"
+	JOB_TYPE_LOG        = "log"
 	JOB_TYPE_INSPECTION = "inspection"
+	JOB_TYPE_OBCONFIG   = "obconfig"
+	INSPECTION_SCENARIO = "scenario"
 )

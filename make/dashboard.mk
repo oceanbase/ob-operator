@@ -1,7 +1,7 @@
 ##@ Dashboard
 
 PROJECT=oceanbase-dashboard
-PROCESSOR=4
+
 PWD ?= $(shell pwd)
 
 DASHBOARD_VERSION ?= 0.4.0
