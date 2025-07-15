@@ -1,4 +1,5 @@
 import { inspection } from '@/api';
+import CustomTooltip from '@/components/CustomTooltip';
 import { formatTime } from '@/utils/datetime';
 import { theme } from '@oceanbase/design';
 import { findByValue } from '@oceanbase/util';
@@ -9,7 +10,7 @@ import { Table, Tag } from 'antd';
 export default function HistoryList() {
   const { token } = theme.useToken();
 
-  const { data: listInspectionReports } = useRequest(
+  const { data: listInspectionReports, loading } = useRequest(
     inspection.listInspectionReports,
     {
       defaultParams: [{}],
@@ -46,7 +47,10 @@ export default function HistoryList() {
   const columns = [
     {
       title: '任务 ID',
-      dataIndex: 'id',
+      dataIndex: 'namespace',
+      render: (text, record) => {
+        return <CustomTooltip text={`${text}/${record?.name}`} width={100} />;
+      },
     },
     {
       title: '资源名',
@@ -88,6 +92,7 @@ export default function HistoryList() {
     {
       title: '任务状态',
       dataIndex: 'status',
+      width: 100,
       render: (text) => {
         const content = findByValue(statusList, text);
         return <Tag color={content.color}>{content.label}</Tag>;
@@ -96,6 +101,7 @@ export default function HistoryList() {
     {
       title: '巡检结果',
       dataIndex: 'resultStatistics',
+      width: 120,
       render: (text) => {
         const { failedCount, criticalCount, moderateCount } = text || {};
         return (
@@ -116,10 +122,11 @@ export default function HistoryList() {
     {
       title: '操作',
       dataIndex: 'opeation',
+      width: 100,
       render: (text, record) => {
-        console.log('record?.id', record);
+        const id = `${record?.namespace}/${record?.name}`;
         return (
-          <Link to={`/inspection/report/${record?.id}`} target="_blank">
+          <Link to={`/inspection/report/${id}`} target="_blank">
             查看报告
           </Link>
         );
@@ -127,5 +134,5 @@ export default function HistoryList() {
     },
   ];
 
-  return <Table dataSource={dataSource} columns={columns} />;
+  return <Table dataSource={dataSource} columns={columns} loading={loading} />;
 }

@@ -10,10 +10,10 @@ import {
   Table,
   token,
 } from '@oceanbase/design';
-import { sortByString } from '@oceanbase/util';
+import { formatTime } from '@oceanbase/util';
 import { useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './Result.less';
 
 const { Panel } = Collapse;
@@ -30,33 +30,71 @@ const Report: React.FC<Props> = () => {
   const [activeTabKey, setActiveTabKey] = useState('risk');
 
   const params = useParams();
-  const { id } = params;
-  const { data: getInspectionReport } = useRequest(
-    inspection.getInspectionReport,
-    {
-      defaultParams: [
+  const { namespace, name } = params;
+
+  // 获取巡检报告数据
+  const {
+    data: inspectionReportData,
+    run: fetchReport,
+    // loading: reportLoading,
+  } = useRequest(
+    async (params) => {
+      const { namespace: namespace1, name: name1 } = params;
+      const response = await fetch(
+        `/api/v1/inspection/reports/${namespace1}/${name1}`,
         {
-          id,
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      ],
-      ready: !!id,
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message ||
+            `HTTP ${response.status}: ${response.statusText}`,
+        );
+      }
+
+      return response.json();
+    },
+    {
+      manual: true, // 手动触发
     },
   );
 
-  console.log('id', params, id, getInspectionReport?.data);
+  // console.log('inspectionReportData', inspectionReportData)
+  const getreport = inspectionReportData?.data || {};
 
-  const {
-    resultStatistics,
-    resultDetail,
-    obCluster,
-    finishTime,
-    startTime,
-    scenario,
-  } = getInspectionReport?.data || {};
+  useEffect(() => {
+    if (namespace && name) {
+      fetchReport({ namespace, name });
+    }
+  }, [namespace, name]);
+
+  const { data: inspectionReport } = useRequest(
+    inspection.listInspectionReports,
+    {
+      defaultParams: [{ namespace, name }],
+    },
+  );
+
+  const getInspectionReport = inspectionReport?.data?.find(
+    (item) => item.namespace === namespace && item.name === name,
+  );
+
+  const { resultDetail } = getInspectionReport || {};
+
+  const abd = getreport?.resultDetail;
+  const aa = getreport?.resultStatistics;
+  console.log('abd', abd);
+  // console.log('aa', aa)
   const { criticalItems, failedItems, moderateItems } = resultDetail || {};
-  const { criticalCount, failedCount, moderateCount } = resultStatistics || {};
 
-  const totalCount = criticalCount + failedCount + moderateCount;
+  console.log('getreport', getreport);
+  const totalCount = aa?.criticalCount + aa?.failedCount + aa?.moderateCount;
 
   const tabList = [
     {
@@ -76,18 +114,6 @@ const Report: React.FC<Props> = () => {
       {
         title: '巡检项',
         dataIndex: 'name',
-
-        onCell: (record) => {
-          const targetItem = showCellList.find(
-            (item) => item.showCellIndex === record._index,
-          );
-
-          if (targetItem) {
-            return { rowSpan: targetItem.count };
-          }
-
-          return { rowSpan: 0 };
-        },
         render: (text) => {
           return <span>{text}</span>;
         },
@@ -100,7 +126,12 @@ const Report: React.FC<Props> = () => {
           return (
             <>
               {text?.map((item) => {
-                <div>{item}</div>;
+                const red = item?.includes('[critical]');
+                return (
+                  <div style={{ color: red ? 'rgba(166,29,36,1)' : 'black' }}>
+                    {item}
+                  </div>
+                );
               })}
             </>
           );
@@ -109,54 +140,54 @@ const Report: React.FC<Props> = () => {
     ];
 
     // 表格渲染的 rules 字段需要从 inspectionItem 头上取到
-    const dataSource = (inspectionItem.dataSource || []).map((item) =>
-      Object.assign(item, { rules: inspectionItem.rules }),
-    );
+    // const dataSource = (inspectionItem.dataSource || []).map((item) =>
+    //   Object.assign(item, { rules: inspectionItem.rules }),
+    // );
 
-    // 对 target 进行排序，相同的放到一块
-    const realDataSource = dataSource
-      .sort((a, b) => {
-        return sortByString(a, b, 'target') ? 1 : -1;
-      })
-      .map((item, index) => {
-        return {
-          // 增加 _index 做 ID 使用，用来判断是否此列进行需要进行合并
-          _index: index,
-          ...item,
-        };
-      });
+    // // 对 target 进行排序，相同的放到一块
+    // const realDataSource = dataSource
+    //   .sort((a, b) => {
+    //     return sortByString(a, b, 'target') ? 1 : -1;
+    //   })
+    //   .map((item, index) => {
+    //     return {
+    //       // 增加 _index 做 ID 使用，用来判断是否此列进行需要进行合并
+    //       _index: index,
+    //       ...item,
+    //     };
+    //   });
 
-    const arrChage = (arr: any[], num: number) => {
-      const newArr = [];
-      while (arr.length > 0) {
-        newArr.push(arr.splice(0, num));
-      }
-      return newArr;
-    };
+    // const arrChage = (arr: any[], num: number) => {
+    //   const newArr = [];
+    //   while (arr.length > 0) {
+    //     newArr.push(arr.splice(0, num));
+    //   }
+    //   return newArr;
+    // };
 
-    const showCellList: any[] = [];
+    // const showCellList: any[] = [];
 
-    // 因为表格存在分页，所以要转换为二维数组，每一页进行对比，将同一个 target 的列进行合并
-    arrChage([...realDataSource], 5).forEach((list) => {
-      const targetMap = {};
-      // 记录下每个不同的 target 第一次出现的位置，并累加得出每个 target 的总数
-      list.forEach((data) => {
-        const target = data.target as string;
+    // // 因为表格存在分页，所以要转换为二维数组，每一页进行对比，将同一个 target 的列进行合并
+    // arrChage([...realDataSource], 5).forEach((list) => {
+    //   const targetMap = {};
+    //   // 记录下每个不同的 target 第一次出现的位置，并累加得出每个 target 的总数
+    //   list.forEach((data) => {
+    //     const target = data.target as string;
 
-        if (targetMap[target]) {
-          // 记录同一个 target 出现次数
-          targetMap[target].count += 1;
-        } else {
-          targetMap[target] = {
-            count: 1,
-            // 将 index 存下，在 onCell 中和 record 进行对比，看是否需要展示
-            showCellIndex: data._index,
-          };
-        }
-      });
+    //     if (targetMap[target]) {
+    //       // 记录同一个 target 出现次数
+    //       targetMap[target].count += 1;
+    //     } else {
+    //       targetMap[target] = {
+    //         count: 1,
+    //         // 将 index 存下，在 onCell 中和 record 进行对比，看是否需要展示
+    //         showCellIndex: data._index,
+    //       };
+    //     }
+    //   });
 
-      showCellList.push(...Object.values(targetMap));
-    });
+    //   showCellList.push(...Object.values(targetMap));
+    // });
 
     return (
       <Table
@@ -165,23 +196,18 @@ const Report: React.FC<Props> = () => {
         columns={columns}
         dataSource={inspectionItem}
         rowKey={(record) => record?.name}
-        // pagination={{
-        //   // ...PAGINATION_OPTION_5,
-        //   // 没有数据或只有一页数据时隐藏分页栏
-        //   hideOnSinglePage: true,
-        //   showSizeChanger: false,
-        // }}
       />
     );
   };
 
   // 风险汇总报告
   const RiskCollapseContent: React.FC<any> = () => {
+    // console.log('abd', abd)
     const resultList: CollapseProps['items'] = [
       {
         key: 'critical',
         label: '高风险',
-        children: criticalItems,
+        children: criticalItems || [],
       },
       {
         key: 'moderate',
@@ -194,9 +220,11 @@ const Report: React.FC<Props> = () => {
         children: failedItems,
       },
     ];
+    const bb = abd?.criticalItems;
+    console.log('bb', bb);
     return (
       <>
-        {resultList.map(({ key, label, children }) => {
+        {resultList?.map(({ key, label }) => {
           return (
             <Collapse
               defaultActiveKey={key}
@@ -206,12 +234,13 @@ const Report: React.FC<Props> = () => {
               }}
             >
               <Panel header={label} key={key}>
-                {children?.length > 0 ? (
-                  children?.map((item, index) => {
+                {bb?.length > 0 ? (
+                  bb?.map((item) => {
+                    console.log('bbitem', item);
                     return (
                       <>
                         <CollapseDescriptions inspectionItem={item} />
-                        {index !== children?.length - 1 && <Divider />}
+                        {/* {index !== children?.length - 1 && <Divider />} */}
                       </>
                     );
                   })
@@ -229,13 +258,14 @@ const Report: React.FC<Props> = () => {
     );
   };
 
-  // 巡检项汇总报告
+  // 汇总报告
   const ItemCollapseContent: React.FC<any> = () => {
     const data = [
-      ...(criticalItems || []),
-      ...(failedItems || []),
-      ...(moderateItems || []),
+      ...(abd?.criticalItems || []),
+      ...(abd?.failedItems || []),
+      ...(abd?.moderateItems || []),
     ];
+
     return (
       <>
         {data.length > 0 ? (
@@ -268,16 +298,16 @@ const Report: React.FC<Props> = () => {
           >
             <Descriptions column={1}>
               <Descriptions.Item label={'巡检对象'}>
-                {`${obCluster?.namespace}/${obCluster?.name}`}
+                {`${namespace}/${name}`}
               </Descriptions.Item>
               <Descriptions.Item label={'巡检场景'}>
-                {scenario === 'basic' ? '基础巡检' : '性能巡检'}
+                {getreport?.scenario === 'basic' ? '基础巡检' : '性能巡检'}
               </Descriptions.Item>
               <Descriptions.Item label={'开始时间'}>
-                {startTime}
+                {formatTime(getreport?.startTime)}
               </Descriptions.Item>
               <Descriptions.Item label={'结束时间'}>
-                {finishTime}
+                {formatTime(getreport?.finishTime)}
               </Descriptions.Item>
             </Descriptions>
           </Card>
@@ -329,7 +359,7 @@ const Report: React.FC<Props> = () => {
                       cursor: 'pointer',
                     }}
                   >
-                    {criticalCount || 0}
+                    {aa?.criticalCount || 0}
                   </div>
                 </span>
               </Col>
@@ -343,7 +373,7 @@ const Report: React.FC<Props> = () => {
                       cursor: 'pointer',
                     }}
                   >
-                    {moderateCount || 0}
+                    {aa?.moderateCount || 0}
                   </div>
                 </span>
               </Col>
@@ -357,7 +387,7 @@ const Report: React.FC<Props> = () => {
                       cursor: 'pointer',
                     }}
                   >
-                    {failedCount || 0}
+                    {aa?.failedCount || 0}
                   </div>
                 </span>
               </Col>
