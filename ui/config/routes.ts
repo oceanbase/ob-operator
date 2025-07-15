@@ -254,7 +254,7 @@ export default [
         ],
       },
       {
-        path: 'inspection/report/:id',
+        path: 'inspection/report/:namespace/:name',
         component: 'Inspection/Result',
         name: '巡检报告详情',
       },
