@@ -40,7 +40,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
-func newPolicyFromCronJob(ctx context.Context, cronJob *batchv1.CronJob) (*insmodel.Policy, error) {
+func newPolicyFromCronJob(ctx context.Context, cronJob *batchv1.CronJob, cluster *response.OBClusterOverview) (*insmodel.Policy, error) {
 	labels := cronJob.ObjectMeta.GetLabels()
 	objNamespace, ok := labels[bizconst.LABEL_REF_NAMESPACE]
 	if !ok {
@@ -54,12 +54,8 @@ func newPolicyFromCronJob(ctx context.Context, cronJob *batchv1.CronJob) (*insmo
 	if !ok {
 		return nil, errors.New("Failed to job scenario from cronjob labels")
 	}
-	cluster, err := oceanbase.GetOBCluster(ctx, &param.K8sObjectIdentity{
-		Namespace: objNamespace,
-		Name:      objName,
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to get corresponding obcluster")
+	if cluster == nil {
+		return nil, errors.New("cluster is nil")
 	}
 	scheduleStatus := insmodel.ScheduleEnabled
 	if cronJob.Spec.Suspend != nil && *cronJob.Spec.Suspend {
@@ -119,6 +115,16 @@ func listInspectionCronJobs(ctx context.Context, namespace, name, obcluster, sce
 }
 
 func ListInspectionPolicies(ctx context.Context, namespace, name, obclusterName string) ([]insmodel.Policy, error) {
+	obclusters, err := oceanbase.ListOBClusters(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list obclusters")
+	}
+	clusterMap := make(map[string]response.OBClusterOverview)
+	for i := range obclusters {
+		key := fmt.Sprintf("%s/%s", obclusters[i].Namespace, obclusters[i].Name)
+		clusterMap[key] = obclusters[i]
+	}
+
 	cronJobs, err := listInspectionCronJobs(ctx, namespace, name, obclusterName, "")
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to list cron jobs")
@@ -126,12 +132,30 @@ func ListInspectionPolicies(ctx context.Context, namespace, name, obclusterName 
 	policyMap := make(map[string]*insmodel.Policy)
 	for i := range cronJobs {
 		cronJob := cronJobs[i]
-		policy, err := newPolicyFromCronJob(ctx, &cronJob)
+		labels := cronJob.ObjectMeta.GetLabels()
+		objNamespace, ok := labels[bizconst.LABEL_REF_NAMESPACE]
+		if !ok {
+			logger.Errorf("Failed to get object namespace from cronjob labels for %s/%s", cronJob.Namespace, cronJob.Name)
+			continue
+		}
+		objName, ok := labels[bizconst.LABEL_REF_NAME]
+		if !ok {
+			logger.Errorf("Failed to get object name from cronjob labels for %s/%s", cronJob.Namespace, cronJob.Name)
+			continue
+		}
+		key := fmt.Sprintf("%s/%s", objNamespace, objName)
+		cluster, ok := clusterMap[key]
+		if !ok {
+			// It's possible that the cluster is not in the list, so we just log it and continue
+			logger.Warnf("cluster %s not found, may be deleted", key)
+			continue
+		}
+		policy, err := newPolicyFromCronJob(ctx, &cronJob, &cluster)
 		if err != nil {
 			logger.WithError(err).Errorf("Failed to parse inspection policy from cronjob, %s/%s", cronJob.Namespace, cronJob.Name)
 			continue
 		}
-		key := fmt.Sprintf("%s/%s", policy.OBCluster.Namespace, policy.OBCluster.Name)
+
 		value, ok := policyMap[key]
 		if !ok {
 			policyMap[key] = policy
@@ -139,11 +163,6 @@ func ListInspectionPolicies(ctx context.Context, namespace, name, obclusterName 
 			value.ScheduleConfigs = append(value.ScheduleConfigs, policy.ScheduleConfigs...)
 			value.LatestReports = append(value.LatestReports, policy.LatestReports...)
 		}
-	}
-
-	obclusters, err := oceanbase.ListOBClusters(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to list obclusters")
 	}
 
 	filteredOBClusters := make([]response.OBClusterOverview, 0)
