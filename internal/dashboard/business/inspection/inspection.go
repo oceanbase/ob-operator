@@ -345,7 +345,7 @@ func updateCronJobForInspection(ctx context.Context, cronJob *batchv1.CronJob, s
 	cronJob.Spec.Suspend = &suspend
 	cronJob.Spec.Schedule = scheduleConfig.Schedule
 	client := client.GetClient()
-	_, err := client.ClientSet.BatchV1().CronJobs("").Update(ctx, cronJob, metav1.UpdateOptions{})
+	_, err := client.ClientSet.BatchV1().CronJobs(cronJob.Namespace).Update(ctx, cronJob, metav1.UpdateOptions{})
 	return err
 }
 
