@@ -25,10 +25,9 @@ export default function Inspection() {
     setActiveTabKey(key);
   };
   return (
-    <PageContainer>
+    <PageContainer title="巡检" ghost={true}>
       <Card
         style={{ width: '100%' }}
-        title="巡检"
         tabList={tabList}
         activeTabKey={activeTabKey}
         onTabChange={onTabChange}
