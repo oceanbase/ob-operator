@@ -1,3 +1,4 @@
+import { inspection } from '@/api';
 import {
   Card,
   Col,
@@ -31,30 +32,8 @@ const Report: React.FC<Props> = () => {
   const params = useParams();
   const { namespace, name } = params;
 
-  // 获取巡检报告数据, 手动写请求函数，自带的请求函数不支持
   const { data: inspectionReportData, run: fetchReport } = useRequest(
-    async (params) => {
-      const { namespace: namespace1, name: name1 } = params;
-      const response = await fetch(
-        `/api/v1/inspection/reports/${namespace1}/${name1}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
-      }
-
-      return response.json();
-    },
+    inspection.getInspectionReport,
     {
       manual: true,
     },
@@ -64,7 +43,7 @@ const Report: React.FC<Props> = () => {
 
   useEffect(() => {
     if (namespace && name) {
-      fetchReport({ namespace, name });
+      fetchReport(namespace, name);
     }
   }, [namespace, name]);
 

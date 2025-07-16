@@ -109,7 +109,7 @@ export default function HistoryList() {
             <div style={{ color: token.colorError }}>{`失败:${
               failedCount || 0
             }`}</div>
-            <div style={{ color: 'purple' }}>{`高风险:${
+            <div style={{ color: 'rgba(166,29,36,1)' }}>{`高风险:${
               criticalCount || 0
             }`}</div>
             <div style={{ color: 'orange' }}>{`中风险:${
@@ -123,13 +123,9 @@ export default function HistoryList() {
       title: '操作',
       dataIndex: 'opeation',
       width: 100,
-      render: (text, record) => {
+      render: (_, record) => {
         const id = `${record?.namespace}/${record?.name}`;
-        return (
-          <Link to={`/inspection/report/${id}`} target="_blank">
-            查看报告
-          </Link>
-        );
+        return <Link to={`/inspection/report/${id}`}>查看报告</Link>;
       },
     },
   ];
