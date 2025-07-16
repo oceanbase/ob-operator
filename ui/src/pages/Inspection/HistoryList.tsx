@@ -17,9 +17,10 @@ export default function HistoryList() {
     },
   );
 
-  console.log('listInspectionReports', listInspectionReports);
-
-  const dataSource = listInspectionReports?.data || [];
+  const dataSource = (listInspectionReports?.data || []).sort((a, b) => {
+    // 按照 startTime 时间由近到远排列（最新的在前）
+    return (b.startTime || 0) - (a.startTime || 0);
+  });
 
   const statusList = [
     {
@@ -125,7 +126,14 @@ export default function HistoryList() {
       width: 100,
       render: (_, record) => {
         const id = `${record?.namespace}/${record?.name}`;
-        return <Link to={`/inspection/report/${id}`}>查看报告</Link>;
+        return (
+          <Link
+            disabled={record?.status === 'running'}
+            to={`/inspection/report/${id}`}
+          >
+            查看报告
+          </Link>
+        );
       },
     },
   ];

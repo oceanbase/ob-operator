@@ -1,4 +1,5 @@
 import { inspection } from '@/api';
+import { PageContainer } from '@ant-design/pro-components';
 import {
   Card,
   Col,
@@ -11,7 +12,7 @@ import {
   token,
 } from '@oceanbase/design';
 import { formatTime } from '@oceanbase/util';
-import { useParams } from '@umijs/max';
+import { history, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { useEffect, useState } from 'react';
 import styles from './Result.less';
@@ -32,12 +33,14 @@ const Report: React.FC<Props> = () => {
   const params = useParams();
   const { namespace, name } = params;
 
-  const { data: inspectionReportData, run: fetchReport } = useRequest(
-    inspection.getInspectionReport,
-    {
-      manual: true,
-    },
-  );
+  const {
+    data: inspectionReportData,
+    run: fetchReport,
+    loading,
+    refresh,
+  } = useRequest(inspection.getInspectionReport, {
+    manual: true,
+  });
 
   const getreport = inspectionReportData?.data || {};
 
@@ -209,129 +212,147 @@ const Report: React.FC<Props> = () => {
   };
 
   return (
-    <div className={styles.container}>
-      <Row gutter={[16, 16]}>
-        <Col span={8}>
-          <Card
-            bordered={false}
-            title={'基本信息'}
-            style={{
-              height: '250px',
-            }}
-          >
-            <Descriptions column={1}>
-              <Descriptions.Item label={'巡检对象'}>
-                {`${namespace}/${name}`}
-              </Descriptions.Item>
-              <Descriptions.Item label={'巡检场景'}>
-                {getreport?.scenario === 'basic' ? '基础巡检' : '性能巡检'}
-              </Descriptions.Item>
-              <Descriptions.Item label={'开始时间'}>
-                {formatTime(getreport?.startTime)}
-              </Descriptions.Item>
-              <Descriptions.Item label={'结束时间'}>
-                {formatTime(getreport?.finishTime)}
-              </Descriptions.Item>
-            </Descriptions>
-          </Card>
-        </Col>
-        <Col span={16}>
-          <Card
-            title={'巡检结果概览'}
-            bordered={false}
-            style={{
-              height: '250px',
-            }}
-          >
-            <Row
+    <PageContainer
+      ghost={true}
+      loading={loading}
+      header={{
+        title: '巡检报告',
+        onBack: () => {
+          history.back();
+        },
+        reload: {
+          spin: loading,
+          onClick: () => {
+            refresh();
+          },
+        },
+      }}
+    >
+      <div className={styles.container}>
+        <Row gutter={[16, 16]}>
+          <Col span={8}>
+            <Card
+              bordered={false}
+              title={'基本信息'}
               style={{
-                textAlign: 'center',
-                paddingTop: '20px',
+                height: '250px',
               }}
             >
-              <Col span={5}>
-                <span>
-                  <div>
-                    <div>总巡检结果</div>
+              <Descriptions column={1}>
+                <Descriptions.Item label={'巡检对象'}>
+                  {`${namespace}/${name}`}
+                </Descriptions.Item>
+                <Descriptions.Item label={'巡检场景'}>
+                  {getreport?.scenario === 'basic' ? '基础巡检' : '性能巡检'}
+                </Descriptions.Item>
+                <Descriptions.Item label={'开始时间'}>
+                  {formatTime(getreport?.startTime)}
+                </Descriptions.Item>
+                <Descriptions.Item label={'结束时间'}>
+                  {formatTime(getreport?.finishTime)}
+                </Descriptions.Item>
+              </Descriptions>
+            </Card>
+          </Col>
+          <Col span={16}>
+            <Card
+              title={'巡检结果概览'}
+              bordered={false}
+              style={{
+                height: '250px',
+              }}
+            >
+              <Row
+                style={{
+                  textAlign: 'center',
+                  paddingTop: '20px',
+                }}
+              >
+                <Col span={5}>
+                  <span>
+                    <div>
+                      <div>总巡检结果</div>
+                      <div
+                        style={{
+                          fontSize: '38px',
+                        }}
+                      >
+                        {totalCount || 0}
+                      </div>
+                    </div>
+                  </span>
+                </Col>
+                <Col span={2}>
+                  <Divider
+                    type="vertical"
+                    style={{
+                      height: '50px',
+                      marginTop: '10px',
+                    }}
+                  />
+                </Col>
+                <Col span={5}>
+                  <span>
+                    <div>高风险结果</div>
                     <div
                       style={{
+                        color: 'rgba(166,29,36,1)',
                         fontSize: '38px',
+                        cursor: 'pointer',
                       }}
                     >
-                      {totalCount || 0}
+                      {criticalCount || 0}
                     </div>
-                  </div>
-                </span>
-              </Col>
-              <Col span={2}>
-                <Divider
-                  type="vertical"
-                  style={{
-                    height: '50px',
-                    marginTop: '10px',
-                  }}
-                />
-              </Col>
-              <Col span={5}>
-                <span>
-                  <div>高风险结果</div>
-                  <div
-                    style={{
-                      color: 'rgba(166,29,36,1)',
-                      fontSize: '38px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {criticalCount || 0}
-                  </div>
-                </span>
-              </Col>
-              <Col span={6}>
-                <span>
-                  <div>中风险结果</div>
-                  <div
-                    style={{
-                      color: token.colorWarning,
-                      fontSize: '38px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {moderateCount || 0}
-                  </div>
-                </span>
-              </Col>
-              <Col span={6}>
-                <span>
-                  <div>失败</div>
-                  <div
-                    style={{
-                      color: token.colorError,
-                      fontSize: '38px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {failedCount || 0}
-                  </div>
-                </span>
-              </Col>
-            </Row>
-          </Card>
-        </Col>
-        <Col span={24}>
-          <Card
-            bordered={false}
-            tabList={tabList}
-            activeTabKey={activeTabKey}
-            onTabChange={(key) => {
-              setActiveTabKey(key);
-            }}
-            bodyStyle={{ paddingTop: 8 }}
-          >
-            {contentList[activeTabKey]}
-          </Card>
-        </Col>
-      </Row>
-    </div>
+                  </span>
+                </Col>
+                <Col span={6}>
+                  <span>
+                    <div>中风险结果</div>
+                    <div
+                      style={{
+                        color: token.colorWarning,
+                        fontSize: '38px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {moderateCount || 0}
+                    </div>
+                  </span>
+                </Col>
+                <Col span={6}>
+                  <span>
+                    <div>失败</div>
+                    <div
+                      style={{
+                        color: token.colorError,
+                        fontSize: '38px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {failedCount || 0}
+                    </div>
+                  </span>
+                </Col>
+              </Row>
+            </Card>
+          </Col>
+          <Col span={24}>
+            <Card
+              bordered={false}
+              tabList={tabList}
+              activeTabKey={activeTabKey}
+              onTabChange={(key) => {
+                setActiveTabKey(key);
+              }}
+              bodyStyle={{ paddingTop: 8 }}
+            >
+              {contentList[activeTabKey]}
+            </Card>
+          </Col>
+        </Row>
+      </div>
+    </PageContainer>
   );
 };
+
 export default Report;

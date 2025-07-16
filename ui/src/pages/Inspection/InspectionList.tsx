@@ -48,6 +48,10 @@ export default function InspectionList() {
 
   const { run: triggerInspection } = useRequest(inspection.triggerInspection, {
     manual: true,
+    onSuccess: () => {
+      message.success('发起巡检成功');
+      refresh();
+    },
   });
   const { run: createOrUpdateInspectionPolicy, loading: saveLoading } =
     useRequest(inspection.createOrUpdateInspectionPolicy, {
@@ -128,16 +132,19 @@ export default function InspectionList() {
       title: '基础巡检',
       dataIndex: 'latestReports',
       sorter: true,
-      render: (text) => {
+      render: (text, record) => {
         const repo = text?.find((item) => item?.scenario === 'basic');
         const { failedCount, criticalCount, moderateCount } =
           repo?.resultStatistics || {};
 
         const id = `${repo?.namespace}/${repo?.name}`;
 
+        const showContent = record?.scheduleConfig?.find(
+          (item) => item?.scenario === 'basic',
+        );
         return (
           <div>
-            {repo ? (
+            {showContent ? (
               <>
                 <div>{`巡检时间：${formatTime(repo?.finishTime)}`}</div>
                 <Space size={6}>
@@ -160,15 +167,14 @@ export default function InspectionList() {
                     查看报告
                   </a>
                   <a
-                    disabled={!repo}
                     onClick={() =>
                       Modal.confirm({
                         title: '确定要发起基础巡检吗？',
                         onOk: () => {
                           triggerInspection(
-                            repo?.obCluster?.namespace,
-                            repo?.obCluster?.name,
-                            repo?.scenario,
+                            record.obCluster.namespace,
+                            record.obCluster.name,
+                            'basic',
                           );
                         },
                       })
@@ -189,7 +195,10 @@ export default function InspectionList() {
       title: '性能巡检',
       dataIndex: 'latestReports',
       sorter: true,
-      render: (text) => {
+      render: (text, record) => {
+        const showContent = record?.scheduleConfig?.find(
+          (item) => item?.scenario === 'performance',
+        );
         const repo = text?.find((item) => item?.scenario === 'performance');
         const { failedCount, criticalCount, moderateCount } =
           repo?.resultStatistics || {};
@@ -197,7 +206,7 @@ export default function InspectionList() {
         const id = `${repo?.namespace}/${repo?.name}`;
         return (
           <div>
-            {repo ? (
+            {showContent ? (
               <>
                 <div>{`巡检时间：${formatTime(repo?.finishTime)}`}</div>
                 <Space size={6}>
@@ -220,15 +229,14 @@ export default function InspectionList() {
                     查看报告
                   </a>
                   <a
-                    disabled={!repo}
                     onClick={() => {
                       Modal.confirm({
                         title: '确定要发起性能巡检吗？',
                         onOk: () => {
                           triggerInspection(
-                            repo?.obCluster?.namespace,
-                            repo?.obCluster?.name,
-                            repo?.scenario,
+                            record.obCluster.namespace,
+                            record.obCluster.name,
+                            'performance',
                           );
                         },
                       });
@@ -263,12 +271,15 @@ export default function InspectionList() {
           <a
             onClick={() => {
               setOpen(true);
-              setInspectionPolicies({
-                status: record?.status,
-                latestReports: record?.latestReports || [],
-                scheduleConfig: record?.scheduleConfig || [],
-                obCluster: record?.obCluster,
-              });
+              setInspectionPolicies(record);
+              // 重置表单状态，确保每次打开都是干净的状态
+              form.resetFields();
+              setActiveTab('basic');
+              // 延迟设置初始值，确保 inspectionPolicies 已经更新
+              setTimeout(() => {
+                const initialValues = getInitialValues('basic');
+                form.setFieldsValue(initialValues);
+              }, 0);
             }}
           >
             调度配置
@@ -284,27 +295,60 @@ export default function InspectionList() {
       (item) => item?.scenario === tabKey,
     );
 
-    const schedule = parseCronExpression(repo?.schedule).data;
+    // 尝试从不同的字段名获取cron表达式
+    const cronExpression = repo?.crontab || repo?.schedule || '';
+
+    const parseResult = parseCronExpression(cronExpression);
+
+    // 如果解析失败，使用默认值
+    const schedule = parseResult.success ? parseResult.data : null;
 
     const getScheduleMode = () => {
-      if (schedule?.dayOfMonth) return 'Monthly';
-      if (schedule?.dayOfWeek) return 'Weekly';
-      return 'Daily';
+      if (schedule?.dayOfMonth && schedule.dayOfMonth !== '*') return 'Monthly';
+      if (schedule?.dayOfWeek && schedule.dayOfWeek !== '*') return 'Weekly';
+      return 'Dayly';
     };
 
     const getScheduleDays = () => {
-      if (schedule?.dayOfMonth) return [toNumber(schedule.dayOfMonth)];
-      if (schedule?.dayOfWeek) return [schedule.dayOfWeek];
+      if (schedule?.dayOfMonth && schedule.dayOfMonth !== '*') {
+        // 处理多个日期的情况，如 "1,15" 或 "1-5"
+        if (schedule.dayOfMonth.includes(',')) {
+          return schedule.dayOfMonth.split(',').map((day) => toNumber(day));
+        }
+        if (schedule.dayOfMonth.includes('-')) {
+          const [start] = schedule.dayOfMonth
+            .split('-')
+            .map((day) => toNumber(day));
+          return [start]; // 只取第一个值作为示例
+        }
+        return [toNumber(schedule.dayOfMonth)];
+      }
+      if (schedule?.dayOfWeek && schedule.dayOfWeek !== '*') {
+        // 处理多个星期的情况，如 "1,3,5" 或 "1-5"
+        if (schedule.dayOfWeek.includes(',')) {
+          return schedule.dayOfWeek.split(',').map((day) => toNumber(day));
+        }
+        if (schedule.dayOfWeek.includes('-')) {
+          const [start] = schedule.dayOfWeek
+            .split('-')
+            .map((day) => toNumber(day));
+          return [start]; // 只取第一个值作为示例
+        }
+        return [toNumber(schedule.dayOfWeek)];
+      }
       return [];
     };
 
     const getScheduleTime = () => {
-      if (schedule?.hour) {
-        return dayjs(
-          `${schedule.hour}:${schedule.minute}`,
-          TIME_FORMAT_WITHOUT_SECOND,
-        );
+      if (schedule?.hour !== undefined && schedule?.minute !== undefined) {
+        // 确保时间格式正确，补零
+        const hour = String(schedule.hour).padStart(2, '0');
+        const minute = String(schedule.minute).padStart(2, '0');
+        const timeString = `${hour}:${minute}`;
+        return dayjs(timeString, TIME_FORMAT_WITHOUT_SECOND);
       }
+
+      // 如果没有现有配置，返回 null，让表单显示为空
       return null;
     };
 
@@ -319,6 +363,9 @@ export default function InspectionList() {
 
   const onChange = (activeKey) => {
     setActiveTab(activeKey);
+    // 先重置表单，清除所有字段值
+    form.resetFields();
+    // 然后设置新tab的初始值
     const initialValues = getInitialValues(activeKey);
     form.setFieldsValue(initialValues);
   };
@@ -337,7 +384,7 @@ export default function InspectionList() {
     const month = '*';
 
     switch (scheduleDates.mode) {
-      case 'Daily':
+      case 'Dayly':
         // 每天执行: 0 2 * * *
         break;
       case 'Weekly':
@@ -376,13 +423,6 @@ export default function InspectionList() {
           message.error('无法获取资源信息，请重试');
           return;
         }
-
-        console.log('删除巡检参数:', {
-          namespace,
-          name,
-          scenario: repo?.scenario || tabKey,
-        });
-
         deleteInspectionPolicy(namespace, name, repo?.scenario);
       },
     });
@@ -396,7 +436,11 @@ export default function InspectionList() {
     );
 
     return (
-      <Form form={form} initialValues={getInitialValues(tabKey)}>
+      <Form
+        form={form}
+        initialValues={getInitialValues(tabKey)}
+        key={`form-${tabKey}`} // 添加key确保每个tab的表单是独立的
+      >
         <SchduleSelectFormItem
           form={form}
           scheduleValue={scheduleValue}
@@ -457,6 +501,7 @@ export default function InspectionList() {
           setOpen(false);
           form.resetFields();
           setActiveTab('basic');
+          // 不清空 inspectionPolicies，保持数据用于下次打开
         }}
         open={open}
         footer={
@@ -501,12 +546,6 @@ export default function InspectionList() {
                     status: inspectionPolicies?.status || 'enabled',
                     scheduleConfig: [scheduleConfig],
                   };
-                  // console.log('inspectionPolicies?.latestReports', inspectionPolicies?.latestReports)
-                  //                   console.log('cron表达式:', cronExpression);
-                  //                   console.log('请求体:', body);
-                  //                   console.log('inspectionPolicies:', inspectionPolicies);
-                  //                   console.log('namespace:', inspectionPolicies?.obCluster?.namespace);
-                  //                   console.log('name:', inspectionPolicies?.obCluster?.name);
 
                   // 验证必要字段
                   if (
@@ -517,7 +556,6 @@ export default function InspectionList() {
                     return;
                   }
 
-                  console.log('body', body);
                   // 调用API
                   createOrUpdateInspectionPolicy(body);
                 });
