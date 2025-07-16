@@ -24,6 +24,8 @@ import (
 	logger "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -32,6 +34,7 @@ import (
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
+	insconst "github.com/oceanbase/ob-operator/internal/dashboard/business/inspection/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
 	insmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/inspection"
 	jobmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/job"
@@ -254,10 +257,13 @@ func DeleteInspectionPolicy(ctx context.Context, namespace, name, scenario strin
 func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBClusterMetaBasic, scheduleConfig *insmodel.InspectionScheduleConfig) error {
 	cronJobName := fmt.Sprintf("ins-%s-%s", scheduleConfig.Scenario, rand.String(6))
 	pvcName := "pvc-" + cronJobName
-	configVolumeName := "config"
-	configMountPath := "/etc/config"
+	configVolumeName := insconst.ConfigVolumeName
+	configMountPath := insconst.ConfigMountPath
 	configFile := configMountPath + "/config.yaml"
-	ttlSecondsAfterFinished := int32(7 * 24 * 60 * 60)
+	ttlSecondsAfterFinished := int32(insconst.TTLSecondsAfterFinished)
+	serviceAccountName := fmt.Sprintf(insconst.ServiceAccountNameFmt, obclusterMeta.Name)
+	clusterRoleName := insconst.ClusterRoleName
+	clusterRoleBindingName := fmt.Sprintf(insconst.ClusterRoleBindingNameFmt, obclusterMeta.Namespace, obclusterMeta.Name)
 
 	labels := map[string]string{
 		bizconst.LABEL_MANAGED_BY:        bizconst.DASHBOARD_APP_NAME,
@@ -268,6 +274,48 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 		bizconst.INSPECTION_SCENARIO:     string(scheduleConfig.Scenario),
 	}
 
+	ownerRef := metav1.OwnerReference{
+		APIVersion: v1alpha1.GroupVersion.String(),
+		Kind:       "OBCluster",
+		Name:       obclusterMeta.Name,
+		UID:        types.UID(obclusterMeta.UID),
+	}
+
+	// Create ServiceAccount and ClusterRoleBinding
+	sa := &corev1.ServiceAccount{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            serviceAccountName,
+			Namespace:       obclusterMeta.Namespace,
+			OwnerReferences: []metav1.OwnerReference{ownerRef},
+		},
+	}
+	client := client.GetClient()
+	if _, err := client.ClientSet.CoreV1().ServiceAccounts(obclusterMeta.Namespace).Create(ctx, sa, metav1.CreateOptions{}); err != nil && !k8serrors.IsAlreadyExists(err) {
+		return errors.Wrap(err, "Failed to create service account")
+	}
+
+	crb := &rbacv1.ClusterRoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            clusterRoleBindingName,
+			OwnerReferences: []metav1.OwnerReference{ownerRef},
+		},
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      serviceAccountName,
+				Namespace: obclusterMeta.Namespace,
+			},
+		},
+		RoleRef: rbacv1.RoleRef{
+			Kind:     "ClusterRole",
+			Name:     clusterRoleName,
+			APIGroup: "rbac.authorization.k8s.io",
+		},
+	}
+	if _, err := client.ClientSet.RbacV1().ClusterRoleBindings().Create(ctx, crb, metav1.CreateOptions{}); err != nil && !k8serrors.IsAlreadyExists(err) {
+		return errors.Wrap(err, "Failed to create cluster role binding")
+	}
+
 	jobSpec := &batchv1.JobSpec{
 		TTLSecondsAfterFinished: &ttlSecondsAfterFinished,
 		Template: corev1.PodTemplateSpec{
@@ -275,7 +323,7 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 				Labels: labels,
 			},
 			Spec: corev1.PodSpec{
-				ServiceAccountName: "inspection-job-sa",
+				ServiceAccountName: serviceAccountName,
 				RestartPolicy:      corev1.RestartPolicyNever,
 				InitContainers: []corev1.Container{
 					{
@@ -329,13 +377,6 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 		},
 	}
 
-	ownerRef := metav1.OwnerReference{
-		APIVersion: v1alpha1.GroupVersion.String(),
-		Kind:       "OBCluster",
-		Name:       obclusterMeta.Name,
-		UID:        types.UID(obclusterMeta.UID),
-	}
-
 	cronJob := &batchv1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            cronJobName,
@@ -365,7 +406,6 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 	}
 
 	logger.Infof("Create pvc for cronjob %s", cronJobName)
-	client := client.GetClient()
 	pvcObject, err := client.ClientSet.CoreV1().PersistentVolumeClaims(obclusterMeta.Namespace).Create(ctx, pvc, metav1.CreateOptions{})
 	if err != nil {
 		return errors.Wrap(err, "Failed to create pvc")
