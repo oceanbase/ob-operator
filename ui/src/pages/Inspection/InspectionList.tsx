@@ -35,92 +35,43 @@ export default function InspectionList() {
   const searchInput = useRef<InputRef>(null);
   const [open, setOpen] = useState(false);
   const [inspectionPolicies, setInspectionPolicies] = useState({});
+  const [form] = Form.useForm();
+  const [activeTab, setActiveTab] = useState('basic');
 
-  const { data: listInspectionPolicies, loading } = useRequest(
-    inspection.listInspectionPolicies,
-    {
-      defaultParams: [{}],
-    },
-  );
+  const {
+    data: listInspectionPolicies,
+    loading,
+    refresh,
+  } = useRequest(inspection.listInspectionPolicies, {
+    defaultParams: [{}],
+  });
 
   const { run: triggerInspection } = useRequest(inspection.triggerInspection, {
     manual: true,
   });
-
-  // 手写巡检调度配置请求
   const { run: createOrUpdateInspectionPolicy, loading: saveLoading } =
-    useRequest(
-      async (body) => {
-        const response = await fetch('/api/v1/inspection/policies', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(body),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(
-            errorData.message ||
-              `HTTP ${response.status}: ${response.statusText}`,
-          );
-        }
-
-        return response.json();
+    useRequest(inspection.createOrUpdateInspectionPolicy, {
+      manual: true,
+      onSuccess: () => {
+        message.success('保存巡检配置成功');
+        setOpen(false);
+        form.resetFields();
+        setActiveTab('basic');
+        setInspectionPolicies({});
+        refresh();
       },
-      {
-        manual: true,
-        onSuccess: (data) => {
-          console.log('保存成功:', data);
-          message.success('调度配置保存成功');
-          setOpen(false);
-          form.resetFields();
-          setActiveTab('basic');
-          setInspectionPolicies({});
-        },
-        onError: (error) => {
-          console.error('保存失败:', error);
-          message.error(error.message);
-        },
-      },
-    );
-
-  // 手写删除巡检请求
+    });
   const { run: deleteInspectionPolicy } = useRequest(
-    async (params) => {
-      const { namespace, name, scenario } = params;
-      const response = await fetch(
-        `/api/v1/inspection/policies?namespace=${namespace}&name=${name}&scenario=${scenario}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message ||
-            `HTTP ${response.status}: ${response.statusText}`,
-        );
-      }
-
-      return response.json();
-    },
+    inspection.deleteInspectionPolicy,
     {
       manual: true,
-      onSuccess: (data) => {
-        console.log('删除成功:', data);
-        message.success('巡检配置删除成功');
-        // 刷新列表
-        listInspectionPolicies?.refresh?.();
-      },
-      onError: (error) => {
-        console.error('删除失败:', error);
-        message.error(error.message);
+      onSuccess: () => {
+        message.success('删除巡检配置成功');
+        setOpen(false);
+        form.resetFields();
+        setActiveTab('basic');
+        setInspectionPolicies({});
+        refresh();
       },
     },
   );
@@ -135,7 +86,7 @@ export default function InspectionList() {
       namespace: `${item?.obCluster?.namespace}/${item?.obCluster?.name}`,
     };
   });
-  console.log('real', realData);
+
   const columns = [
     {
       title: '资源名',
@@ -147,8 +98,6 @@ export default function InspectionList() {
         setSearchedColumn: setSearchedColumn,
         searchText: searchText,
         searchedColumn: searchedColumn,
-        arraySearch: true,
-        symbol: '/',
       }),
 
       render: (text, record) => {
@@ -164,7 +113,7 @@ export default function InspectionList() {
       dataIndex: 'clusterName',
       width: 80,
       ...getColumnSearchProps({
-        dataIndex: 'name',
+        dataIndex: 'clusterName',
         searchInput: searchInput,
         setSearchText: setSearchText,
         setSearchedColumn: setSearchedColumn,
@@ -199,7 +148,7 @@ export default function InspectionList() {
                   <span style={{ color: token.colorWarning }}>{`中${
                     moderateCount || 0
                   }`}</span>
-                  <span style={{ color: token.colorError }}>{`低${
+                  <span style={{ color: token.colorError }}>{`失败${
                     failedCount || 0
                   }`}</span>
                   <a
@@ -244,7 +193,7 @@ export default function InspectionList() {
         const repo = text?.find((item) => item?.scenario === 'performance');
         const { failedCount, criticalCount, moderateCount } =
           repo?.resultStatistics || {};
-        console.log('repo', repo);
+
         const id = `${repo?.namespace}/${repo?.name}`;
         return (
           <div>
@@ -259,7 +208,7 @@ export default function InspectionList() {
                   <span style={{ color: 'orange' }}>{`中${
                     moderateCount || 0
                   }`}</span>
-                  <span style={{ color: token.colorError }}>{`低${
+                  <span style={{ color: token.colorError }}>{`失败${
                     failedCount || 0
                   }`}</span>
                   <a
@@ -276,11 +225,11 @@ export default function InspectionList() {
                       Modal.confirm({
                         title: '确定要发起性能巡检吗？',
                         onOk: () => {
-                          triggerInspection({
-                            namespace: repo?.obCluster?.namespace,
-                            name: repo?.obCluster?.name,
-                            scenario: repo?.scenario,
-                          });
+                          triggerInspection(
+                            repo?.obCluster?.namespace,
+                            repo?.obCluster?.name,
+                            repo?.scenario,
+                          );
                         },
                       });
                     }}
@@ -314,7 +263,12 @@ export default function InspectionList() {
           <a
             onClick={() => {
               setOpen(true);
-              setInspectionPolicies(record);
+              setInspectionPolicies({
+                status: record?.status,
+                latestReports: record?.latestReports || [],
+                scheduleConfig: record?.scheduleConfig || [],
+                obCluster: record?.obCluster,
+              });
             }}
           >
             调度配置
@@ -323,9 +277,6 @@ export default function InspectionList() {
       },
     },
   ];
-
-  const [form] = Form.useForm();
-  const [activeTab, setActiveTab] = useState('basic');
 
   // 获取指定tab的初始值
   const getInitialValues = (tabKey) => {
@@ -417,11 +368,22 @@ export default function InspectionList() {
     Modal.confirm({
       title: `确定要删除${getInspectionTypeName()}巡检吗？`,
       onOk: () => {
-        deleteInspectionPolicy({
-          namespace: repo?.obCluster?.namespace,
-          name: repo?.obCluster?.name,
-          scenario: repo?.scenario,
+        // 从 inspectionPolicies 中获取正确的 namespace 和 name
+        const namespace = inspectionPolicies?.obCluster?.namespace;
+        const name = inspectionPolicies?.obCluster?.name;
+
+        if (!namespace || !name) {
+          message.error('无法获取资源信息，请重试');
+          return;
+        }
+
+        console.log('删除巡检参数:', {
+          namespace,
+          name,
+          scenario: repo?.scenario || tabKey,
         });
+
+        deleteInspectionPolicy(namespace, name, repo?.scenario);
       },
     });
   };
@@ -530,19 +492,32 @@ export default function InspectionList() {
                   // 构建调度配置
                   const scheduleConfig = {
                     scenario: activeTab,
-                    crontab: cronExpression,
+                    schedule: cronExpression,
                   };
 
-                  // 构建请求体
+                  // 构建请求体 - 按照 InspectionPolicy 接口要求
                   const body = {
-                    ...inspectionPolicies,
+                    obCluster: inspectionPolicies?.obCluster,
+                    status: inspectionPolicies?.status || 'enabled',
                     scheduleConfig: [scheduleConfig],
                   };
+                  // console.log('inspectionPolicies?.latestReports', inspectionPolicies?.latestReports)
+                  //                   console.log('cron表达式:', cronExpression);
+                  //                   console.log('请求体:', body);
+                  //                   console.log('inspectionPolicies:', inspectionPolicies);
+                  //                   console.log('namespace:', inspectionPolicies?.obCluster?.namespace);
+                  //                   console.log('name:', inspectionPolicies?.obCluster?.name);
 
-                  console.log('cron表达式:', cronExpression);
-                  console.log('请求体:', body);
-                  console.log('inspectionPolicies:', inspectionPolicies);
+                  // 验证必要字段
+                  if (
+                    !inspectionPolicies?.obCluster?.namespace ||
+                    !inspectionPolicies?.obCluster?.name
+                  ) {
+                    message.error('缺少必要的资源信息，请重试');
+                    return;
+                  }
 
+                  console.log('body', body);
                   // 调用API
                   createOrUpdateInspectionPolicy(body);
                 });
