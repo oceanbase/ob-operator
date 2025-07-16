@@ -468,6 +468,16 @@ func listInspectionJobs(ctx context.Context, namespace, name, obcluster, scenari
 }
 
 func ListInspectionReports(ctx context.Context, namespace, name, obcluster, scenario string) ([]insmodel.ReportBriefInfo, error) {
+	obclusters, err := oceanbase.ListOBClusters(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to list obclusters")
+	}
+	clusterMap := make(map[string]response.OBClusterOverview)
+	for i := range obclusters {
+		key := fmt.Sprintf("%s/%s", obclusters[i].Namespace, obclusters[i].Name)
+		clusterMap[key] = obclusters[i]
+	}
+
 	jobs, err := listInspectionJobs(ctx, namespace, name, obcluster, scenario)
 	logger.Infof("Found %d corresponding jobs", len(jobs))
 	if err != nil {
@@ -475,7 +485,24 @@ func ListInspectionReports(ctx context.Context, namespace, name, obcluster, scen
 	}
 	reports := make([]insmodel.ReportBriefInfo, 0, len(jobs))
 	for idx, job := range jobs {
-		report, err := newReportFromJob(ctx, &jobs[idx])
+		labels := job.ObjectMeta.GetLabels()
+		objNamespace, ok := labels[bizconst.LABEL_REF_NAMESPACE]
+		if !ok {
+			logger.Errorf("Failed to get object namespace from job labels for %s/%s", job.Namespace, job.Name)
+			continue
+		}
+		objName, ok := labels[bizconst.LABEL_REF_NAME]
+		if !ok {
+			logger.Errorf("Failed to get object name from job labels for %s/%s", job.Namespace, job.Name)
+			continue
+		}
+		key := fmt.Sprintf("%s/%s", objNamespace, objName)
+		cluster, ok := clusterMap[key]
+		if !ok {
+			logger.Warnf("cluster %s not found, may be deleted", key)
+			continue
+		}
+		report, err := newReportFromJob(ctx, &jobs[idx], &cluster)
 		if err != nil {
 			logger.WithError(err).Errorf("Failed to parse report from job, %s/%s", job.Namespace, job.Name)
 			continue
@@ -491,10 +518,6 @@ func GetInspectionReport(ctx context.Context, namespace, name string) (*insmodel
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to get job")
 	}
-	return newReportFromJob(ctx, job)
-}
-
-func newReportFromJob(ctx context.Context, job *batchv1.Job) (*insmodel.Report, error) {
 	labels := job.ObjectMeta.GetLabels()
 	objNamespace, ok := labels[bizconst.LABEL_REF_NAMESPACE]
 	if !ok {
@@ -504,16 +527,32 @@ func newReportFromJob(ctx context.Context, job *batchv1.Job) (*insmodel.Report, 
 	if !ok {
 		return nil, errors.New("Failed to get object name from job labels")
 	}
-	scenario, ok := labels[bizconst.INSPECTION_SCENARIO]
-	if !ok {
-		return nil, errors.New("Failed to job scenario from job labels")
-	}
 	cluster, err := oceanbase.GetOBCluster(ctx, &param.K8sObjectIdentity{
 		Namespace: objNamespace,
 		Name:      objName,
 	})
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to get corresponding obcluster")
+	}
+	return newReportFromJob(ctx, job, &cluster.OBClusterOverview)
+}
+
+func newReportFromJob(ctx context.Context, job *batchv1.Job, cluster *response.OBClusterOverview) (*insmodel.Report, error) {
+	labels := job.ObjectMeta.GetLabels()
+	_, ok := labels[bizconst.LABEL_REF_NAMESPACE]
+	if !ok {
+		return nil, errors.New("Failed to get object namespace from job labels")
+	}
+	_, ok = labels[bizconst.LABEL_REF_NAME]
+	if !ok {
+		return nil, errors.New("Failed to get object name from job labels")
+	}
+	scenario, ok := labels[bizconst.INSPECTION_SCENARIO]
+	if !ok {
+		return nil, errors.New("Failed to job scenario from job labels")
+	}
+	if cluster == nil {
+		return nil, errors.New("cluster is nil")
 	}
 
 	status := jobmodel.JobStatusPending
