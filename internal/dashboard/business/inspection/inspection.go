@@ -296,8 +296,7 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 
 	crb := &rbacv1.ClusterRoleBinding{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            clusterRoleBindingName,
-			OwnerReferences: []metav1.OwnerReference{ownerRef},
+			Name: clusterRoleBindingName,
 		},
 		Subjects: []rbacv1.Subject{
 			{
