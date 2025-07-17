@@ -61,7 +61,7 @@ func CreateOrUpdateInspectionPolicy(c *gin.Context) (*inspection.Policy, error) 
 	if err := c.ShouldBindJSON(policy); err != nil {
 		return nil, errors.NewBadRequest(err.Error())
 	}
-	err := insbiz.CreateOrUpdateInspectionPolicy(c.Request.Context(), policy)
+	err := insbiz.CreateOrUpdateInspectionPolicy(c, policy)
 	return &inspection.Policy{
 		PolicyMeta: *policy,
 	}, err
@@ -129,7 +129,7 @@ func TriggerInspection(c *gin.Context) (*job.Job, error) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 	scenario := c.Param("scenario")
-	return insbiz.TriggerInspection(c.Request.Context(), namespace, name, scenario)
+	return insbiz.TriggerInspection(c, namespace, name, scenario)
 }
 
 // @ID ListInspectionReports
@@ -153,7 +153,7 @@ func ListInspectionReports(c *gin.Context) ([]inspection.ReportBriefInfo, error)
 	name := c.Query("name")
 	obclusterName := c.Query("obclusterName")
 	scenario := c.Query("scenario")
-	return insbiz.ListInspectionReports(c.Request.Context(), namespace, name, obclusterName, scenario)
+	return insbiz.ListInspectionReports(c, namespace, name, obclusterName, scenario)
 }
 
 // @ID GetInspectionReport
