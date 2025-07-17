@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package ac
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/gin-contrib/sessions"
@@ -29,7 +30,7 @@ func PathGuard(domain, resource, action string) EnforceFunc {
 		sess := sessions.Default(c)
 		usernameIf := sess.Get("username")
 		if usernameIf == nil {
-			return false, nil
+			return false, errors.New("username not found in session")
 		}
 		username := usernameIf.(string)
 		finalResource := resource
