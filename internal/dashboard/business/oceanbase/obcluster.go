@@ -166,7 +166,7 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 			Memory: obcluster.Spec.MonitorTemplate.Resource.Memory.Value(),
 		}
 	}
-	if obcluster.Spec.BackupVolume != nil {
+	if obcluster.Spec.BackupVolume != nil && obcluster.Spec.BackupVolume.Volume != nil && obcluster.Spec.BackupVolume.Volume.NFS != nil {
 		respCluster.BackupVolume = &response.NFSVolumeSpec{}
 		respCluster.BackupVolume.Address = obcluster.Spec.BackupVolume.Volume.NFS.Server
 		respCluster.BackupVolume.Path = obcluster.Spec.BackupVolume.Volume.NFS.Path
