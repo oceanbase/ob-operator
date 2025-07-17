@@ -17,6 +17,13 @@ spec:
         app: oceanbase-dashboard-{{ .Release.Name }}
     spec:
       serviceAccountName: {{ .Release.Name }}-sa
+      initContainers:
+        - name: prometheus-storage-owner-init
+          image: busybox:latest
+          command: ["sh", "-c", "chown -R 65534:65534 /prometheus"]
+          volumeMounts:
+            - name: prometheus-storage-volume
+              mountPath: /prometheus/
       containers:
         - name: dashboard
           image: quay.io/oceanbase/oceanbase-dashboard:{{ .Chart.AppVersion }}
