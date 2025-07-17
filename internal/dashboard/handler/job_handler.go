@@ -37,7 +37,7 @@ func GetJob(c *gin.Context) (*job.Job, error) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 
-	return jobbiz.GetJob(c.Request.Context(), namespace, name)
+	return jobbiz.GetJob(c, namespace, name)
 }
 
 // @ID DeleteJob
@@ -58,5 +58,5 @@ func DeleteJob(c *gin.Context) (bool, error) {
 	namespace := c.Param("namespace")
 	name := c.Param("name")
 
-	return true, jobbiz.DeleteJob(c.Request.Context(), namespace, name)
+	return true, jobbiz.DeleteJob(c, namespace, name)
 }
