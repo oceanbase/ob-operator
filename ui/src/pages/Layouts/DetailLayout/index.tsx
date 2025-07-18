@@ -94,7 +94,8 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
       title: '巡检',
       link: '/inspection',
       icon: <FileSearchOutlined style={{ color: 'rgb(109,120,147)' }} />,
-      accessible: access.acread || access.acwrite,
+      // 巡检权限，巡检是巡检的某个集群，接口调用时按照集群权限来的
+      accessible: access.obclusterread || access.obclusterread,
     },
     {
       title: intl.formatMessage({
