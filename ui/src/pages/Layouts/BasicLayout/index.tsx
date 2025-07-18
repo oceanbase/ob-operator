@@ -89,7 +89,8 @@ const BasicLayout: React.FC = () => {
       title: '巡检',
       link: '/inspection',
       icon: <FileSearchOutlined style={{ color: 'rgb(109,120,147)' }} />,
-      accessible: access.acread || access.acwrite,
+      // 巡检权限暂缺失
+      // accessible: access.acread || access.acwrite,
     },
     {
       title: intl.formatMessage({

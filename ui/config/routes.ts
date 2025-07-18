@@ -233,24 +233,6 @@ export default [
               },
             ],
           },
-          {
-            path: 'inspection/:inspectionName',
-            component: 'Inspection/Detail',
-            name: '巡检详情',
-            routes: [
-              {
-                path: '/inspection/:inspectionName',
-                redirect: 'overview',
-                name: '概览页',
-              },
-              {
-                path: 'overview',
-                component: 'Inspection/Detail/Overview',
-                name: '概览页',
-              },
-              // 巡检报告
-            ],
-          },
         ],
       },
       {
