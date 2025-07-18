@@ -6,6 +6,7 @@ import {
   ClusterApiFactory,
   Configuration,
   InfoApiFactory,
+  InspectionApiFactory,
   K8sClusterApiFactory,
   OBClusterApiFactory,
   OBProxyApiFactory,
@@ -53,3 +54,4 @@ export const user = wrapper(UserApiFactory, config);
 export const alert = wrapper(AlarmApiFactory, config);
 export const obproxy = wrapper(OBProxyApiFactory, config);
 export const access = wrapper(AccessControlApiFactory, config);
+export const inspection = wrapper(InspectionApiFactory, config);

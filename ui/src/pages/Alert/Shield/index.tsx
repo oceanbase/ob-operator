@@ -7,6 +7,7 @@ import type {
 import PreText from '@/components/PreText';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { SHILED_STATUS_MAP } from '@/constants';
+import { DATE_TIME_FORMAT } from '@/constants/datetime';
 import { Alert } from '@/type/alert';
 import { intl } from '@/utils/intl';
 import { useAccess, useSearchParams } from '@umijs/max';
@@ -145,7 +146,7 @@ export default function Shield() {
       key: 'endsAt',
       sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
       render: (endsAt) => (
-        <Text>{dayjs.unix(endsAt).format('YYYY-MM-DD HH:mm:ss')}</Text>
+        <Text>{dayjs.unix(endsAt).format(DATE_TIME_FORMAT)}</Text>
       ),
     },
     {
@@ -181,7 +182,7 @@ export default function Shield() {
       key: 'startsAt',
       sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
       render: (startsAt) => (
-        <Text>{dayjs.unix(startsAt).format('YYYY-MM-DD HH:mm:ss')}</Text>
+        <Text>{dayjs.unix(startsAt).format(DATE_TIME_FORMAT)}</Text>
       ),
     },
     {

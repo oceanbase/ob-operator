@@ -6,6 +6,7 @@ import { getAppInfoFromStorage } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import {
   AlertFilled,
+  FileSearchOutlined,
   RadarChartOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
@@ -88,6 +89,13 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
       link: '/alert',
       icon: <AlertFilled style={{ color: 'rgb(109,120,147)' }} />,
       accessible: access.alarmread || access.alarmwrite,
+    },
+    {
+      title: '巡检',
+      link: '/inspection',
+      icon: <FileSearchOutlined style={{ color: 'rgb(109,120,147)' }} />,
+      // 巡检权限，巡检是巡检的某个集群，接口调用时按照集群权限来的
+      accessible: access.obclusterread || access.obclusterread,
     },
     {
       title: intl.formatMessage({
