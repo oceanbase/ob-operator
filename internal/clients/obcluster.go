@@ -171,6 +171,22 @@ func GetPodOfOBServer(ctx context.Context, observer *v1alpha1.OBServer) (*corev1
 	return pod, nil
 }
 
+func ListOBServersOfOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluster) (*v1alpha1.OBServerList, error) {
+	client := client.GetClient()
+	var observerList v1alpha1.OBServerList
+	obj, err := client.DynamicClient.Resource(schema.OBServerGVR).Namespace(obcluster.Namespace).List(ctx, metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s", oceanbaseconst.LabelRefOBCluster, obcluster.Name),
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "List observers")
+	}
+	err = runtime.DefaultUnstructuredConverter.FromUnstructured(obj.UnstructuredContent(), &observerList)
+	if err != nil {
+		return nil, errors.Wrap(err, "Convert unstructured to observer list")
+	}
+	return &observerList, nil
+}
+
 func ListOBParametersOfOBCluster(ctx context.Context, obcluster *v1alpha1.OBCluster) (*v1alpha1.OBParameterList, error) {
 	client := client.GetClient()
 	var obparameterList v1alpha1.OBParameterList
