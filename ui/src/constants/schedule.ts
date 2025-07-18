@@ -18,6 +18,22 @@ export const SCHEDULE_TYPE_OPTIONS = [
   },
 ];
 
+export const INSPECTION_SCHEDULE_MODE_LIST = [
+  {
+    value: 'Monthly',
+    label: '月',
+  },
+
+  {
+    value: 'Weekly',
+    label: '周',
+  },
+
+  {
+    value: 'Dayly',
+    label: '日',
+  },
+];
 export const WEEK_OPTIONS = [
   {
     label: intl.formatMessage({

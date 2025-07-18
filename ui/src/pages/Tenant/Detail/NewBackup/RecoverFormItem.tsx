@@ -1,4 +1,5 @@
 import { TZ_NAME_REG } from '@/constants';
+import { TIME_FORMAT } from '@/constants/datetime';
 import { resourceNameRule } from '@/constants/rules';
 import {
   getEssentialParameters as getEssentialParametersReq,
@@ -125,7 +126,7 @@ export default function RecoverFormItem({
         >
           <TimePicker
             style={{ width: '100%' }}
-            defaultOpenValue={dayjs('00:00:00', 'HH:mm:ss')}
+            defaultOpenValue={dayjs('00:00:00', TIME_FORMAT)}
           />
         </Form.Item>
       </Col>

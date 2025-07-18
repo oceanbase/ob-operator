@@ -6,6 +6,7 @@ import { getAppInfoFromStorage } from '@/utils/helper';
 import { intl } from '@/utils/intl';
 import {
   AlertFilled,
+  FileSearchOutlined,
   RadarChartOutlined,
   TeamOutlined,
 } from '@ant-design/icons';
@@ -24,6 +25,7 @@ const BasicLayout: React.FC = () => {
   const [resetModalVisible, setResetModalVisible] = useState<boolean>(false);
   const [infoModalVisible, setInfoModalVisible] = useState<boolean>(false);
   const access = useAccess();
+
   const { run: logout } = useRequest(logoutReq, {
     manual: true,
     onSuccess: (data) => {
@@ -82,6 +84,12 @@ const BasicLayout: React.FC = () => {
       link: '/alert',
       icon: <AlertFilled style={{ color: 'rgb(109,120,147)' }} />,
       accessible: access.alarmread || access.alarmwrite,
+    },
+    {
+      title: '巡检',
+      link: '/inspection',
+      icon: <FileSearchOutlined style={{ color: 'rgb(109,120,147)' }} />,
+      accessible: access.obclusterread || access.obclusterread,
     },
     {
       title: intl.formatMessage({

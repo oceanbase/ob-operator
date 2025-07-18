@@ -1,5 +1,6 @@
 import { K8sClusterApi } from '@/api';
 import EventsTable from '@/components/EventsTable';
+import { DATE_TIME_FORMAT } from '@/constants/datetime';
 import NodesTable from '@/pages/Overview/NodesTable';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
@@ -36,7 +37,7 @@ const K8sClusterOverview: React.FC = () => {
       Object.assign(obj, node.info, node.resource);
       obj.cpu = ((obj.cpuUsed / obj.cpuTotal) * 100).toFixed(1);
       obj.memory = ((obj.memoryUsed / obj.memoryTotal) * 100).toFixed(1);
-      obj.uptime = dayjs.unix(obj.uptime).format('YYYY-MM-DD HH:mm:ss');
+      obj.uptime = dayjs.unix(obj.uptime).format(DATE_TIME_FORMAT);
       res.push(obj);
     }
 
@@ -57,10 +58,10 @@ const K8sClusterOverview: React.FC = () => {
             event.id = ++count;
             event.firstOccur = dayjs
               .unix(event.firstOccur)
-              .format('YYYY-MM-DD HH:mm:ss');
+              .format(DATE_TIME_FORMAT);
             event.lastSeen = dayjs
               .unix(event.lastSeen)
-              .format('YYYY-MM-DD HH:mm:ss');
+              .format(DATE_TIME_FORMAT);
           }
         }
         return r.data;

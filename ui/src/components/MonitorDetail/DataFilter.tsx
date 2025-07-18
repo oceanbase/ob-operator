@@ -1,4 +1,5 @@
 import { POINT_NUMBER, REFRESH_FREQUENCY } from '@/constants';
+import { TIME_FORMAT } from '@/constants/datetime';
 import { intl } from '@/utils/intl';
 import { useUpdateEffect } from 'ahooks';
 import { Card, Col, DatePicker, Row, Select, Switch } from 'antd';
@@ -392,7 +393,7 @@ export default function DataFilter({
               onChange={rangePickerChange}
               disabledDate={disabledDate}
               disabledTime={disabledDateTime}
-              showTime={{ format: 'HH:mm:ss' }}
+              showTime={{ format: TIME_FORMAT }}
             />
           </div>
         </Col>

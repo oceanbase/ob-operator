@@ -1,0 +1,25 @@
+@import '~@oceanbase/design/es/theme/index.less';
+
+.container {
+  width: 1160px;
+  margin: 24px auto;
+
+  :global {
+    .success {
+      color: @colorSuccess;
+    }
+
+    .error {
+      color: @colorError;
+    }
+
+    .warning {
+      color: @colorWarning;
+    }
+
+    hr {
+      color: @colorText;
+      border-top: 1px solid rgba(0, 0, 0, 6%);
+    }
+  }
+}
