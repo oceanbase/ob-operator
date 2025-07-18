@@ -24,6 +24,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/clients"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/job"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
@@ -493,4 +494,34 @@ func ListOBClusterParameters(c *gin.Context) ([]response.AggregatedParameter, er
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
 	return oceanbase.ListOBClusterParameters(c, nn)
+}
+
+// @ID DownloadOBClusterLog
+// @Summary Download obcluster log
+// @Description Download obcluster log
+// @Tags OBCluster
+// @Accept application/json
+// @Produce application/json
+// @Param namespace path string true "obcluster namespace"
+// @Param name path string true "obcluster name"
+// @Param startTime query string true "start time"
+// @Param endTime query string true "end time"
+// @Success 200 object response.APIResponse{data=job.Job}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/obclusters/namespace/{namespace}/name/{name}/log [GET]
+// @Security ApiKeyAuth
+func DownloadOBClusterLog(c *gin.Context) (*job.Job, error) {
+	nn := &param.K8sObjectIdentity{}
+	err := c.BindUri(nn)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	startTime := c.Query("startTime")
+	endTime := c.Query("endTime")
+	if startTime == "" || endTime == "" {
+		return nil, httpErr.NewBadRequest("startTime and endTime are required")
+	}
+	return oceanbase.DownloadOBClusterLog(c, nn.Namespace, nn.Name, startTime, endTime)
 }

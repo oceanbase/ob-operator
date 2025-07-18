@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2023 OceanBase
+Copyright (c) 2025 OceanBase
 ob-operator is licensed under Mulan PSL v2.
 You can use this software according to the terms and conditions of the Mulan PSL v2.
 You may obtain a copy of Mulan PSL v2 at:
@@ -10,16 +10,13 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
-package v1
+package constant
 
-import (
-	"github.com/gin-gonic/gin"
-
-	acbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/ac"
-	h "github.com/oceanbase/ob-operator/internal/dashboard/handler"
+const (
+	ConfigVolumeName          = "config"
+	ConfigMountPath           = "/etc/config"
+	TTLSecondsAfterFinished   = 7 * 24 * 60 * 60
+	ClusterRoleName           = "oceanbase-dashboard-cluster-role"
+	ServiceAccountNameFmt     = "ob-ins-%s"
+	ClusterRoleBindingNameFmt = "ob-ins-%s-%s"
 )
-
-func InitJobRoutes(g *gin.RouterGroup) {
-	g.GET("/jobs/:namespace/:name", h.Wrap(h.GetJob, acbiz.PathGuard("system", "*", "read")))
-	g.DELETE("/jobs/:namespace/:name", h.Wrap(h.DeleteJob, acbiz.PathGuard("system", "*", "write")))
-}

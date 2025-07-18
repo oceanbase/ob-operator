@@ -22,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 	logger "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -33,6 +34,7 @@ import (
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
+	insconst "github.com/oceanbase/ob-operator/internal/dashboard/business/inspection/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/k8s"
 	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
@@ -95,11 +97,13 @@ func buildOBClusterOverview(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 	}
 	return &response.OBClusterOverview{
 		OBClusterMeta: response.OBClusterMeta{
-			UID:                string(obcluster.UID),
-			Namespace:          obcluster.Namespace,
-			Name:               obcluster.Name,
-			ClusterName:        obcluster.Spec.ClusterName,
-			ClusterId:          obcluster.Spec.ClusterId,
+			OBClusterMetaBasic: response.OBClusterMetaBasic{
+				UID:         string(obcluster.UID),
+				Namespace:   obcluster.Namespace,
+				Name:        obcluster.Name,
+				ClusterName: obcluster.Spec.ClusterName,
+				ClusterId:   obcluster.Spec.ClusterId,
+			},
 			Mode:               clusterMode,
 			SupportStaticIP:    obcluster.SupportStaticIP(),
 			DeletionProtection: deletionProtection,
@@ -162,7 +166,7 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 			Memory: obcluster.Spec.MonitorTemplate.Resource.Memory.Value(),
 		}
 	}
-	if obcluster.Spec.BackupVolume != nil {
+	if obcluster.Spec.BackupVolume != nil && obcluster.Spec.BackupVolume.Volume != nil && obcluster.Spec.BackupVolume.Volume.NFS != nil {
 		respCluster.BackupVolume = &response.NFSVolumeSpec{}
 		respCluster.BackupVolume.Address = obcluster.Spec.BackupVolume.Volume.NFS.Server
 		respCluster.BackupVolume.Path = obcluster.Spec.BackupVolume.Volume.NFS.Path
@@ -772,7 +776,14 @@ func GetOBCluster(ctx context.Context, obclusterIdentity *param.K8sObjectIdentit
 }
 
 func DeleteOBCluster(ctx context.Context, obclusterIdentity *param.K8sObjectIdentity) (bool, error) {
-	err := clients.DeleteOBCluster(ctx, obclusterIdentity.Namespace, obclusterIdentity.Name)
+	// First, delete the cluster role binding.
+	clusterRoleBindingName := fmt.Sprintf(insconst.ClusterRoleBindingNameFmt, obclusterIdentity.Namespace, obclusterIdentity.Name)
+	client := client.GetClient()
+	err := client.ClientSet.RbacV1().ClusterRoleBindings().Delete(ctx, clusterRoleBindingName, metav1.DeleteOptions{})
+	if err != nil && !k8serrors.IsNotFound(err) {
+		return false, errors.Wrap(err, "failed to delete cluster role binding")
+	}
+	err = clients.DeleteOBCluster(ctx, obclusterIdentity.Namespace, obclusterIdentity.Name)
 	return err == nil, err
 }
 
