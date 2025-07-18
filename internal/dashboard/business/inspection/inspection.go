@@ -36,6 +36,7 @@ import (
 	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	insconst "github.com/oceanbase/ob-operator/internal/dashboard/business/inspection/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/inspection"
 	insmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/inspection"
 	jobmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/job"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
@@ -264,6 +265,10 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 	serviceAccountName := fmt.Sprintf(insconst.ServiceAccountNameFmt, obclusterMeta.Name)
 	clusterRoleName := insconst.ClusterRoleName
 	clusterRoleBindingName := fmt.Sprintf(insconst.ClusterRoleBindingNameFmt, obclusterMeta.Namespace, obclusterMeta.Name)
+	checkPackage := insconst.InspectionPackageBasic
+	if scheduleConfig.Scenario == inspection.ScenarioPerformance {
+		checkPackage = insconst.InspectionPackagePerformance
+	}
 
 	labels := map[string]string{
 		bizconst.LABEL_MANAGED_BY:        bizconst.DASHBOARD_APP_NAME,
@@ -343,7 +348,7 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 						Name:            "inspection",
 						Image:           "oceanbase/obdiag:latest",
 						ImagePullPolicy: corev1.PullIfNotPresent,
-						Command:         []string{"obdiag", "check", "run", "-c", configFile, "--inner_config", "obdiag.logger.silent=Ture"},
+						Command:         []string{"obdiag", "check", "run", "--cases", checkPackage, "-c", configFile, "--inner_config", "obdiag.logger.silent=Ture"},
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      configVolumeName,

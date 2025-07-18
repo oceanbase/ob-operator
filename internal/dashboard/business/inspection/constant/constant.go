@@ -13,10 +13,12 @@ See the Mulan PSL v2 for more details.
 package constant
 
 const (
-	ConfigVolumeName          = "config"
-	ConfigMountPath           = "/etc/config"
-	TTLSecondsAfterFinished   = 7 * 24 * 60 * 60
-	ClusterRoleName           = "oceanbase-dashboard-cluster-role"
-	ServiceAccountNameFmt     = "ob-ins-%s"
-	ClusterRoleBindingNameFmt = "ob-ins-%s-%s"
+	InspectionPackageBasic       = "k8s_basic"
+	InspectionPackagePerformance = "k8s_performance"
+	ConfigVolumeName             = "config"
+	ConfigMountPath              = "/etc/config"
+	TTLSecondsAfterFinished      = 7 * 24 * 60 * 60
+	ClusterRoleName              = "oceanbase-dashboard-cluster-role"
+	ServiceAccountNameFmt        = "ob-ins-%s"
+	ClusterRoleBindingNameFmt    = "ob-ins-%s-%s"
 )
