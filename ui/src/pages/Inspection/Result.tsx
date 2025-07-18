@@ -240,7 +240,7 @@ const Report: React.FC<Props> = () => {
             >
               <Descriptions column={1}>
                 <Descriptions.Item label={'巡检对象'}>
-                  {`${namespace}/${name}`}
+                  {`${namespace}/${getreport?.obCluster?.clusterName}`}
                 </Descriptions.Item>
                 <Descriptions.Item label={'巡检场景'}>
                   {getreport?.scenario === 'basic' ? '基础巡检' : '性能巡检'}

@@ -47,7 +47,7 @@ export default function HistoryList() {
 
   const columns = [
     {
-      title: '任务 ID',
+      title: '任务',
       dataIndex: 'namespace',
       render: (text, record) => {
         return <CustomTooltip text={`${text}/${record?.name}`} width={100} />;

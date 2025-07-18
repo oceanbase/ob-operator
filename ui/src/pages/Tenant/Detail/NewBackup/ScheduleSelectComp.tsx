@@ -9,7 +9,7 @@ import { Checkbox, Radio } from 'antd';
 import styles from './index.less';
 
 export type ParamsType = {
-  mode: 'Weekly' | 'Monthly';
+  mode: 'Weekly' | 'Monthly' | 'Dayly';
   days: number[];
 };
 
@@ -17,6 +17,7 @@ interface ScheduleSelectCompProps {
   value: ParamsType;
   onChange: (val: ParamsType) => void;
   disable?: boolean;
+  type?: string;
 }
 
 export default function ScheduleSelectComp({
