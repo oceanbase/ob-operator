@@ -1,0 +1,31 @@
+{{- if .Values.cleanup.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "oceanbase-dashboard.cleanup.fullname" . }}
+  labels:
+    {{- include "oceanbase-dashboard.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cleanup.schedule | quote }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ include "oceanbase-dashboard.serviceAccountName" . }}
+          restartPolicy: OnFailure
+          containers:
+          - name: cleanup
+            image: {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+            command:
+            - /bin/sh
+            - -c
+            - |
+              find {{ .Values.sharedVolume.mountPath }} -mtime +{{ .Values.cleanup.retentionDays }} -exec rm -rf {} +
+            volumeMounts:
+            - name: {{ .Values.sharedVolume.pvcName }}
+              mountPath: {{ .Values.sharedVolume.mountPath }}
+          volumes:
+          - name: {{ .Values.sharedVolume.pvcName }}
+            persistentVolumeClaim:
+              claimName: {{ .Values.sharedVolume.pvcName }}
+{{- end }}

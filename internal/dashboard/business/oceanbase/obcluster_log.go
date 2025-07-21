@@ -84,13 +84,6 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 								MountPath: sharedMountPath,
 							},
 						},
-						Lifecycle: &corev1.Lifecycle{
-							PreStop: &corev1.LifecycleHandler{
-								Exec: &corev1.ExecAction{
-									Command: []string{"/bin/sh", "-c", fmt.Sprintf("rm -rf %s", jobOutputDir)},
-								},
-							},
-						},
 					},
 				},
 				Volumes: []corev1.Volume{
