@@ -71,9 +71,10 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 				},
 				Containers: []corev1.Container{
 					{
-						Name:    "log",
-						Image:   "oceanbase/obdiag:latest",
-						Command: []string{"/bin/sh", "-c"},
+						Name:            "log",
+						Image:           "oceanbase/obdiag:latest",
+						ImagePullPolicy: corev1.PullIfNotPresent,
+						Command:         []string{"/bin/sh", "-c"},
 						Args: []string{
 							fmt.Sprintf("obdiag gather log --from %s --to %s --store_dir %s -c %s", startTime, endTime, jobOutputDir, configFilePath),
 						},
