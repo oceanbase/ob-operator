@@ -170,10 +170,23 @@ export default function InspectionList() {
     },
     {
       title: '基础巡检',
-      dataIndex: 'latestReports',
-      sorter: true,
+      dataIndex: 'basicInspection',
+      sorter: (a: any, b: any) => {
+        // 按基础巡检的最新时间排序
+        const aRepo = a.latestReports?.find(
+          (item: any) => item?.scenario === 'basic',
+        );
+        const bRepo = b.latestReports?.find(
+          (item: any) => item?.scenario === 'basic',
+        );
+        const aTime = aRepo?.finishTime || 0;
+        const bTime = bRepo?.finishTime || 0;
+        return bTime - aTime; // 最新的在前
+      },
       render: (text: any, record: any) => {
-        const repo = text?.find((item: any) => item?.scenario === 'basic');
+        const repo = record.latestReports?.find(
+          (item: any) => item?.scenario === 'basic',
+        );
         const { failedCount, criticalCount, moderateCount } =
           repo?.resultStatistics || {};
 
@@ -238,13 +251,24 @@ export default function InspectionList() {
     },
     {
       title: '性能巡检',
-      dataIndex: 'latestReports',
-      sorter: true,
+      dataIndex: 'performanceInspection',
+      sorter: (a: any, b: any) => {
+        // 按性能巡检的最新时间排序
+        const aRepo = a.latestReports?.find(
+          (item: any) => item?.scenario === 'performance',
+        );
+        const bRepo = b.latestReports?.find(
+          (item: any) => item?.scenario === 'performance',
+        );
+        const aTime = aRepo?.finishTime || 0;
+        const bTime = bRepo?.finishTime || 0;
+        return bTime - aTime; // 最新的在前
+      },
       render: (text: any, record: any) => {
         const showContent = record?.scheduleConfig?.find(
           (item: any) => item?.scenario === 'performance',
         );
-        const repo = text?.find(
+        const repo = record.latestReports?.find(
           (item: any) => item?.scenario === 'performance',
         );
         const { failedCount, criticalCount, moderateCount } =
@@ -258,7 +282,7 @@ export default function InspectionList() {
                 <div>{`巡检时间：${formatTime(repo?.finishTime)}`}</div>
                 <Space size={6}>
                   <span>巡检结果：</span>
-                  <span style={{ color: 'red' }}>{`高${
+                  <span style={{ color: 'rgba(166,29,36,1)' }}>{`高${
                     criticalCount || 0
                   }`}</span>
                   <span style={{ color: 'orange' }}>{`中${
