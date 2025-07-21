@@ -1,4 +1,4 @@
-{{- if .Values.cleanup.enabled -}}
+{{- if and .Values.cleanup.enabled .Values.sharedVolume.persistence.enabled -}}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -15,17 +15,17 @@ spec:
           restartPolicy: OnFailure
           containers:
           - name: cleanup
-            image: {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
+            image: busybox:latest
             command:
             - /bin/sh
             - -c
             - |
-              find {{ .Values.sharedVolume.mountPath }} -mtime +{{ .Values.cleanup.retentionDays }} -exec rm -rf {} +
+              find /shared-data -mtime +{{ .Values.cleanup.retentionDays }} -exec rm -rf {} +
             volumeMounts:
-            - name: {{ .Values.sharedVolume.pvcName }}
-              mountPath: {{ .Values.sharedVolume.mountPath }}
+            - name: shared-volume
+              mountPath: /shared-data
           volumes:
-          - name: {{ .Values.sharedVolume.pvcName }}
+          - name: shared-volume
             persistentVolumeClaim:
-              claimName: {{ .Values.sharedVolume.pvcName }}
+              claimName: {{ .Release.Name }}-shared-volume-pvc
 {{- end }}
