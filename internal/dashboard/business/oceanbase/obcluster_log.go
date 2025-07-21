@@ -62,7 +62,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 						Command:         []string{"bash", "-c", fmt.Sprintf("/home/admin/oceanbase/bin/oceanbase-helper generate obdiag-config -n %s -c %s -o %s", nn.Namespace, nn.Name, configFilePath)},
 						VolumeMounts: []corev1.VolumeMount{
 							{
-								Name:      "shared-volume",
+								Name:      sharedPvcName,
 								MountPath: sharedMountPath,
 							},
 						},
@@ -78,7 +78,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 						},
 						VolumeMounts: []corev1.VolumeMount{
 							{
-								Name:      "shared-volume",
+								Name:      sharedPvcName,
 								MountPath: sharedMountPath,
 							},
 						},
@@ -93,7 +93,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 				},
 				Volumes: []corev1.Volume{
 					{
-						Name: "shared-volume",
+						Name: sharedPvcName,
 						VolumeSource: corev1.VolumeSource{
 							PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 								ClaimName: sharedPvcName,
