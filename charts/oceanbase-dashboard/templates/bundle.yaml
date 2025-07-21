@@ -50,7 +50,6 @@ spec:
               value: {{ .Release.Name }}-shared-volume-pvc
             - name: SHARED_VOLUME_MOUNT_PATH
               value: /shared-data
-          env:
             - name: USER_CREDENTIALS_SECRET
               value: {{ .Values.userCredentials | default (nospace (cat .Release.Name "-user-credentials")) }}
             - name: USER_NAMESPACE
