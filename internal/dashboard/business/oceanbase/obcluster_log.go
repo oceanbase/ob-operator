@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	jobmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/job"
@@ -33,7 +34,9 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 	sharedMountPath := os.Getenv("SHARED_VOLUME_MOUNT_PATH")
 	jobName := fmt.Sprintf("log-%s-%s-%s", nn.Namespace, nn.Name, rand.String(6))
 	attachmentID := jobName
-	jobOutputDir := fmt.Sprintf("%s/%s", sharedMountPath, jobName)
+	jobOutputDir := filepath.Join(sharedMountPath, jobName)
+	configFileName := "config.yaml"
+	configFilePath := filepath.Join(jobOutputDir, configFileName)
 	ttlSecondsAfterFinished := int32(24 * 60 * 60)
 
 	labels := map[string]string{
@@ -51,13 +54,27 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 			},
 			Spec: corev1.PodSpec{
 				RestartPolicy: corev1.RestartPolicyNever,
+				InitContainers: []corev1.Container{
+					{
+						Name:            "generate-config",
+						Image:           "oceanbase/oceanbase-helper:latest",
+						ImagePullPolicy: corev1.PullIfNotPresent,
+						Command:         []string{"bash", "-c", fmt.Sprintf("/home/admin/oceanbase/bin/oceanbase-helper generate obdiag-config -n %s -c %s -o %s", nn.Namespace, nn.Name, configFilePath)},
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      "shared-volume",
+								MountPath: sharedMountPath,
+							},
+						},
+					},
+				},
 				Containers: []corev1.Container{
 					{
 						Name:    "log",
 						Image:   "oceanbase/obdiag:latest",
 						Command: []string{"/bin/sh", "-c"},
 						Args: []string{
-							fmt.Sprintf("mkdir -p %s && obdiag gather log --from %s --to %s --store_dir %s -c /etc/obdiag/config.yaml", jobOutputDir, startTime, endTime, jobOutputDir),
+							fmt.Sprintf("mkdir -p %s && obdiag gather log --from %s --to %s --store_dir %s -c %s", jobOutputDir, startTime, endTime, jobOutputDir, configFilePath),
 						},
 						VolumeMounts: []corev1.VolumeMount{
 							{
