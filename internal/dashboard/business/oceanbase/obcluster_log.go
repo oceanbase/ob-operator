@@ -60,7 +60,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 						Name:            "generate-config",
 						Image:           "oceanbase/oceanbase-helper:latest",
 						ImagePullPolicy: corev1.PullIfNotPresent,
-						Command:         []string{"bash", "-c", fmt.Sprintf("/home/admin/oceanbase/bin/oceanbase-helper generate obdiag-config -n %s -c %s -o %s", nn.Namespace, nn.Name, configFilePath)},
+						Command:         []string{"bash", "-c", fmt.Sprintf("mkdir -p %s && /home/admin/oceanbase/bin/oceanbase-helper generate obdiag-config -n %s -c %s -o %s", jobOutputDir, nn.Namespace, nn.Name, configFilePath)},
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      sharedPvcName,
@@ -75,7 +75,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 						Image:   "oceanbase/obdiag:latest",
 						Command: []string{"/bin/sh", "-c"},
 						Args: []string{
-							fmt.Sprintf("mkdir -p %s && obdiag gather log --from %s --to %s --store_dir %s -c %s", jobOutputDir, startTime, endTime, jobOutputDir, configFilePath),
+							fmt.Sprintf("obdiag gather log --from %s --to %s --store_dir %s -c %s", startTime, endTime, jobOutputDir, configFilePath),
 						},
 						VolumeMounts: []corev1.VolumeMount{
 							{
