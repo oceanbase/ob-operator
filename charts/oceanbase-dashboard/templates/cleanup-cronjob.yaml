@@ -11,7 +11,7 @@ spec:
     spec:
       template:
         spec:
-          serviceAccountName: {{ include "oceanbase-dashboard.serviceAccountName" . }}
+          serviceAccountName: {{ .Release.Name }}-sa
           restartPolicy: OnFailure
           containers:
           - name: cleanup
