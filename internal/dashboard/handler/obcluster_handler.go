@@ -523,5 +523,5 @@ func DownloadOBClusterLog(c *gin.Context) (*job.Job, error) {
 	if startTime == "" || endTime == "" {
 		return nil, httpErr.NewBadRequest("startTime and endTime are required")
 	}
-	return oceanbase.DownloadOBClusterLog(c, nn.Namespace, nn.Name, startTime, endTime)
+	return oceanbase.DownloadOBClusterLog(c, nn, startTime, endTime)
 }
