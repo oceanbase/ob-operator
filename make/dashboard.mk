@@ -53,7 +53,9 @@ dashboard-run: ## Run oceanbase-dashboard in dev mode
 
 .PHONY: dashboard-docker-build
 dashboard-docker-build: ## build oceanbase-dashboard image
-	docker build -t ${DASHBOARD_IMG} -f build/Dockerfile.dashboard .
+	$(eval DOCKER_BUILD_ARGS :=)
+	$(if $(GOPROXY),$(eval DOCKER_BUILD_ARGS := --build-arg GOPROXY=$(GOPROXY)))
+	docker build $(DOCKER_BUILD_ARGS) -t ${DASHBOARD_IMG} -f build/Dockerfile.dashboard .
 
 .PHONY: dashboard-docker-push
 dashboard-docker-push: ## push oceanbase-dashboard image
