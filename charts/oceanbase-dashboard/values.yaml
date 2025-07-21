@@ -23,3 +23,8 @@ sharedVolume:
     storageClassName: ""
     accessMode: ReadWriteOnce
     storage: 10Gi
+
+cleanup:
+  enabled: true
+  schedule: "0 0 * * *"
+  retentionDays: 1
