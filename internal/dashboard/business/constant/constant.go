@@ -22,5 +22,6 @@ const (
 )
 
 const (
-	DASHBOARD_APP_NAME = "oceanbase-dashboard"
+	DASHBOARD_APP_NAME   = "oceanbase-dashboard"
+	SERVICE_ACCOUNT_NAME = "oceanbase-dashboard-sa"
 )

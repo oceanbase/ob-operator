@@ -53,7 +53,8 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 				Labels: labels,
 			},
 			Spec: corev1.PodSpec{
-				RestartPolicy: corev1.RestartPolicyNever,
+				ServiceAccountName: bizconst.SERVICE_ACCOUNT_NAME,
+				RestartPolicy:      corev1.RestartPolicyNever,
 				InitContainers: []corev1.Container{
 					{
 						Name:            "generate-config",
