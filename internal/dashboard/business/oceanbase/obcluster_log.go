@@ -19,6 +19,7 @@ import (
 
 	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	jobmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/job"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -26,11 +27,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-func DownloadOBClusterLog(ctx context.Context, namespace, name, startTime, endTime string) (*jobmodel.Job, error) {
+func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, startTime, endTime string) (*jobmodel.Job, error) {
 	jobNamespace := os.Getenv("NAMESPACE")
 	sharedPvcName := os.Getenv("SHARED_VOLUME_PVC_NAME")
 	sharedMountPath := os.Getenv("SHARED_VOLUME_MOUNT_PATH")
-	jobName := fmt.Sprintf("log-%s-%s-%s", namespace, name, rand.String(6))
+	jobName := fmt.Sprintf("log-%s-%s-%s", nn.Namespace, nn.Name, rand.String(6))
 	attachmentID := jobName
 	jobOutputDir := fmt.Sprintf("%s/%s", sharedMountPath, jobName)
 	ttlSecondsAfterFinished := int32(24 * 60 * 60)
@@ -38,7 +39,7 @@ func DownloadOBClusterLog(ctx context.Context, namespace, name, startTime, endTi
 	labels := map[string]string{
 		bizconst.LABEL_MANAGED_BY:        bizconst.DASHBOARD_APP_NAME,
 		bizconst.LABEL_JOB_TYPE:          bizconst.JOB_TYPE_LOG,
-		bizconst.LABEL_REF_OBCLUSTERNAME: name,
+		bizconst.LABEL_REF_OBCLUSTERNAME: nn.Name,
 		bizconst.LABEL_ATTACHMENT_ID:     attachmentID,
 	}
 
