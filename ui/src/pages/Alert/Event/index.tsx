@@ -1,14 +1,9 @@
-import { alert } from '@/api';
-import type {
-  AlarmSeverity,
-  AlertAlert,
-  AlertStatus,
-  OceanbaseOBInstance,
-} from '@/api/generated';
+import type { AlarmSeverity, AlertAlert, AlertStatus } from '@/api/generated';
+
+import DownloadModal from '@/components/DownloadModal';
 import { ALERT_STATE_MAP, SEVERITY_MAP } from '@/constants';
 import { intl } from '@/utils/intl';
 import { history, useAccess } from '@umijs/max';
-import { useRequest } from 'ahooks';
 import {
   Button,
   Card,
@@ -24,23 +19,50 @@ import dayjs from 'dayjs';
 import { useState } from 'react';
 import AlarmFilter from '../AlarmFilter';
 import RuleDrawerForm from '../Rules/RuleDrawerForm';
-import { sortEvents } from '../helper';
 const { Text } = Typography;
 
 export default function Event() {
   const [form] = Form.useForm();
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
+  const [downloadModal, setDownloadModal] = useState(false);
   const access = useAccess();
   const [editRuleName, setEditRuleName] = useState<string>();
-  const { data: listAlertsRes, run: getListAlerts } = useRequest(
-    alert.listAlerts,
-  );
+  // const { data: listAlertsRes, run: getListAlerts } = useRequest(
+  //   alert.listAlerts,
+  // );
   const editRule = (rule: string) => {
     setEditRuleName(rule);
     setDrawerOpen(true);
   };
 
-  const listAlerts = sortEvents(listAlertsRes?.data || []);
+  // const { run: getJob } = useRequest(job.getJob, {
+  //   manual: true,
+  //   // onSuccess: () => {
+  //   //   setIsModalOpen(false);
+  //   // },
+  // });
+  // const { run: deleteJob } = useRequest(job.deleteJob, {
+  //   manual: true,
+  //   // onSuccess: () => {
+  //   //   setIsModalOpen(false);
+  //   // },
+  // });
+  // const { run: diagnoseAlert } = useRequest(alert.diagnoseAlert, {
+  //   manual: true,
+  //   onSuccess: () => {
+  //     setDownloadModal(true);
+  //   },
+  // });
+
+  const diagnoseStatus = 'failed'; //'success'; //'running';
+
+  // const listAlerts = sortEvents(listAlertsRes?.data || []);
+
+  const mock = [
+    {
+      summary: 'test',
+    },
+  ];
   const columns: ColumnsType<AlertAlert> = [
     {
       title: intl.formatMessage({
@@ -74,19 +96,19 @@ export default function Event() {
       }),
       dataIndex: 'instance',
       key: 'instance',
-      render: (instance: OceanbaseOBInstance) => (
+      render: () => (
         <Text>
           {intl.formatMessage({
             id: 'src.pages.Alert.Event.3EAC0543',
             defaultMessage: '对象：',
           })}
-          {instance[instance.type]}
+          {/* {instance[instance.type]} */}
           <br />
           {intl.formatMessage({
             id: 'src.pages.Alert.Event.AB6EB56A',
             defaultMessage: '类型：',
           })}
-          {instance.type}
+          {/* {instance.type} */}
         </Text>
       ),
     },
@@ -123,8 +145,8 @@ export default function Event() {
         );
       },
       render: (status: AlertStatus) => (
-        <Tag color={ALERT_STATE_MAP[status.state].color}>
-          {ALERT_STATE_MAP[status.state].text || '-'}
+        <Tag color={ALERT_STATE_MAP[status?.state]?.color}>
+          {ALERT_STATE_MAP[status?.state]?.text || '-'}
         </Tag>
       ),
     },
@@ -159,28 +181,47 @@ export default function Event() {
       }),
       key: 'action',
       render: (_, record) => (
-        <Button
-          disabled={record.status.state !== 'active' || !access.alarmwrite}
-          style={{ paddingLeft: 0 }}
-          type="link"
-          onClick={() => {
-            history.push(
-              `/alert/shield?instance=${JSON.stringify(
-                record.instance,
-              )}&label=${JSON.stringify(
-                record.labels?.map((label) => ({
-                  name: label.key,
-                  value: label.value,
-                })),
-              )}&rule=${record.rule}`,
-            );
-          }}
-        >
-          {intl.formatMessage({
-            id: 'src.pages.Alert.Event.2BBFF587',
-            defaultMessage: '屏蔽',
-          })}
-        </Button>
+        <Space>
+          <Button
+            disabled={record?.status?.state !== 'active' || !access.alarmwrite}
+            // style={{ paddingLeft: 0 }}
+            type="link"
+            onClick={() => {
+              history.push(
+                `/alert/shield?instance=${JSON.stringify(
+                  record.instance,
+                )}&label=${JSON.stringify(
+                  record.labels?.map((label) => ({
+                    name: label.key,
+                    value: label.value,
+                  })),
+                )}&rule=${record.rule}`,
+              );
+            }}
+          >
+            {intl.formatMessage({
+              id: 'src.pages.Alert.Event.2BBFF587',
+              defaultMessage: '屏蔽',
+            })}
+          </Button>
+          <Button
+            // disabled={record?.status?.state !== 'active' || !access.alarmwrite}
+            // style={{ paddingLeft: 0 }}
+            type="link"
+            onClick={() => {
+              // diagnoseAlert({
+              //   endsAt: record.endsAt,
+              //   instance: record.instance,
+              //   rule: record.rule,
+              //   resultPath: record.rule,
+              //   startsAt: record.startsAt,
+              // });
+              setIsModalOpen(true);
+            }}
+          >
+            诊断
+          </Button>
+        </Space>
       ),
     },
   ];
@@ -206,7 +247,8 @@ export default function Event() {
       >
         <Table
           columns={columns}
-          dataSource={listAlerts}
+          // dataSource={listAlerts}
+          dataSource={mock}
           rowKey="fingerprint"
           pagination={{ simple: true }}
           // scroll={{ x: 1500 }}
@@ -217,6 +259,13 @@ export default function Event() {
         open={drawerOpen}
         ruleName={editRuleName}
         onClose={drawerClose}
+      />
+      <DownloadModal
+        visible={downloadModal}
+        onCancel={() => setDownloadModal(false)}
+        onOk={() => setDownloadModal(false)}
+        title={'日志下载'}
+        diagnoseStatus={diagnoseStatus}
       />
     </Space>
   );

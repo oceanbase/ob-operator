@@ -5,14 +5,16 @@ import {
   Col,
   Descriptions,
   Dropdown,
+  Form,
   MenuProps,
+  Modal,
   Row,
   Space,
   Tooltip,
   message,
 } from 'antd';
-import { useEffect, useRef, useState } from 'react';
 
+import DownloadModal from '@/components/DownloadModal';
 import EventsTable from '@/components/EventsTable';
 import OperateModal from '@/components/customModal/OperateModal';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
@@ -24,8 +26,11 @@ import { intl } from '@/utils/intl';
 import { DownOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { Checkbox } from '@oceanbase/design';
+import { Ranger } from '@oceanbase/ui';
 import { useRequest } from 'ahooks';
+import dayjs from 'dayjs';
 import { isEmpty } from 'lodash';
+import { useEffect, useRef, useState } from 'react';
 import BasicInfo from './BasicInfo';
 import NFSInfoModal from './NFSInfoModal';
 import ResourceDrawer from './ResourceDrawer';
@@ -44,7 +49,8 @@ const ClusterOverview: React.FC = () => {
   const [chooseServerNum, setChooseServerNum] = useState<number>(1);
   const [mountNFSModal, setMountNFSModal] = useState<boolean>(false);
   const [removeNFSModal, setRemoveNFSModal] = useState<boolean>(false);
-
+  const [downloadModal, setDownloadModal] = useState(false);
+  const [diagnoseModal, setDiagnoseModal] = useState(false);
   const modalType = useRef<API.ModalType>('addZone');
 
   const {
@@ -103,7 +109,6 @@ const ClusterOverview: React.FC = () => {
 
   // 不为空即为绑定了NFS
   const removeNFS = !!backupVolume;
-
   const menuChange = ({ key }) => {
     if (key === 'AddZone') {
       return handleAddZone();
@@ -123,6 +128,10 @@ const ClusterOverview: React.FC = () => {
       } else {
         setMountNFSModal(true);
       }
+    } else if (key === 'download') {
+      // setDownloadModal(true);
+      console.log('key', key);
+      setDiagnoseModal(true);
     }
   };
 
@@ -174,6 +183,11 @@ const ClusterOverview: React.FC = () => {
         isEmpty(clusterDetail) ||
         clusterDetail?.status !== 'running' ||
         !clusterDetail?.supportStaticIP,
+    },
+    {
+      key: 'download',
+      label: '日志下载',
+      disabled: isEmpty(clusterDetail),
     },
   ];
 
@@ -267,6 +281,16 @@ const ClusterOverview: React.FC = () => {
       }
     };
   }, []);
+  const [form] = Form.useForm();
+
+  const diagnoseStatus = 'failed'; //'success'; //'running';
+  const handleChange = ({ range }) => {
+    console.log(range[0].format('YYYY-MM-DD HH:mm:ss'));
+    console.log(range[1].format('YYYY-MM-DD HH:mm:ss'));
+  };
+
+  // 设置默认时间为当前时间
+  const defaultTime = dayjs();
 
   return (
     <PageContainer header={header()} loading={clusterDetailLoading}>
@@ -428,6 +452,44 @@ const ClusterOverview: React.FC = () => {
         }}
         {...(clusterDetail?.info as API.ClusterInfo)}
       />
+
+      <DownloadModal
+        visible={downloadModal}
+        onCancel={() => setDownloadModal(false)}
+        onOk={() => setDownloadModal(false)}
+        title={'日志下载'}
+        diagnoseStatus={diagnoseStatus}
+      />
+      <Modal
+        title="日志下载"
+        open={diagnoseModal}
+        onCancel={() => setDiagnoseModal(false)}
+        onOk={() => {
+          setDiagnoseModal(false);
+          setDownloadModal(true);
+        }}
+      >
+        <Form
+          form={form}
+          onValuesChange={handleChange}
+          initialValues={{
+            range: [defaultTime, defaultTime],
+          }}
+        >
+          <Form.Item name="range">
+            <Ranger
+              showTime={{
+                format: 'HH:mm:ss',
+                defaultValue: [defaultTime, defaultTime],
+              }}
+              format="YYYY-MM-DD HH:mm:ss"
+              placeholder={['开始时间', '结束时间']}
+              style={{ width: '100%' }}
+              selects={[Ranger.YESTERDAY, Ranger.TODAY, Ranger.TOMORROW]}
+            />
+          </Form.Item>
+        </Form>
+      </Modal>
     </PageContainer>
   );
 };
