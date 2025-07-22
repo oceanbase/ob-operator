@@ -92,9 +92,10 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 				},
 				Containers: []corev1.Container{
 					{
-						Name:    "diagnose",
-						Image:   "oceanbase/obdiag:latest",
-						Command: []string{"/bin/sh", "-c"},
+						Name:            "diagnose",
+						Image:           "oceanbase/obdiag:latest",
+						ImagePullPolicy: corev1.PullIfNotPresent,
+						Command:         []string{"/bin/sh", "-c"},
 						Args: []string{
 							// TODO: change since to from and to
 							fmt.Sprintf("obdiag gather scene run --scene=%s --since %s --store_dir %s -c %s", scene, "10m", jobOutputDir, configFilePath),
