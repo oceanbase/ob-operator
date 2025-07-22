@@ -13,7 +13,7 @@ export default function HistoryList() {
   const { data: listInspectionReports, loading } = useRequest(
     inspection.listInspectionReports,
     {
-      defaultParams: [{}],
+      defaultParams: [{} as any],
     },
   );
 
@@ -77,7 +77,7 @@ export default function HistoryList() {
     {
       title: '开始时间',
       dataIndex: 'startTime',
-      sorter: true,
+      sorter: (a: any, b: any) => (a.startTime || 0) - (b.startTime || 0),
       render: (text) => {
         return formatTime(text);
       },
@@ -85,7 +85,7 @@ export default function HistoryList() {
     {
       title: '结束时间',
       dataIndex: 'finishTime',
-      sorter: true,
+      sorter: (a: any, b: any) => (a.finishTime || 0) - (b.finishTime || 0),
       render: (text) => {
         return formatTime(text);
       },
@@ -124,7 +124,7 @@ export default function HistoryList() {
       title: '操作',
       dataIndex: 'opeation',
       width: 100,
-      render: (_, record) => {
+      render: (_: any, record: any) => {
         const id = `${record?.namespace}/${record?.name}`;
         return (
           <Link
