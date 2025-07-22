@@ -109,7 +109,7 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 				},
 				Volumes: []corev1.Volume{
 					{
-						Name: "shared-volume",
+						Name: sharedPvcName,
 						VolumeSource: corev1.VolumeSource{
 							PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 								ClaimName: sharedPvcName,
