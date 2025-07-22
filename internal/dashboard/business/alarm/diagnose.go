@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
@@ -36,7 +37,9 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 	sharedMountPath := os.Getenv("SHARED_VOLUME_MOUNT_PATH")
 	jobName := fmt.Sprintf("diagnose-%s-%s", param.Instance.OBCluster, rand.String(6))
 	attachmentID := jobName
-	jobOutputDir := fmt.Sprintf("%s/%s", sharedMountPath, jobName)
+	jobOutputDir := filepath.Join(sharedMountPath, jobName)
+	configFileName := "config.yaml"
+	configFilePath := filepath.Join(jobOutputDir, configFileName)
 	ttlSecondsAfterFinished := int32(24 * 60 * 60)
 
 	labels := map[string]string{
@@ -62,6 +65,8 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 		return nil, errors.Errorf("Can not found obcluster object with obcluster name: %s", param.Instance.OBCluster)
 	}
 
+	scene := "observer.unknown"
+
 	jobSpec := &batchv1.JobSpec{
 		TTLSecondsAfterFinished: &ttlSecondsAfterFinished,
 		Template: corev1.PodTemplateSpec{
@@ -69,26 +74,35 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 				Labels: labels,
 			},
 			Spec: corev1.PodSpec{
-				RestartPolicy: corev1.RestartPolicyNever,
+				ServiceAccountName: bizconst.SERVICE_ACCOUNT_NAME,
+				RestartPolicy:      corev1.RestartPolicyNever,
+				InitContainers: []corev1.Container{
+					{
+						Name:            "generate-config",
+						Image:           "oceanbase/oceanbase-helper:latest",
+						ImagePullPolicy: corev1.PullIfNotPresent,
+						Command:         []string{"bash", "-c", fmt.Sprintf("mkdir -p %s && /home/admin/oceanbase/bin/oceanbase-helper generate obdiag-config -n %s -c %s -o %s", jobOutputDir, obclusterObj.Namespace, obclusterObj.Name, configFilePath)},
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      sharedPvcName,
+								MountPath: sharedMountPath,
+							},
+						},
+					},
+				},
 				Containers: []corev1.Container{
 					{
 						Name:    "diagnose",
 						Image:   "oceanbase/obdiag:latest",
 						Command: []string{"/bin/sh", "-c"},
 						Args: []string{
-							fmt.Sprintf("mkdir -p %s && obdiag gather scene run --scene=observer.base -c /etc/obdiag/config.yaml --store_dir %s", jobOutputDir, jobOutputDir),
+							// TODO: change since to from and to
+							fmt.Sprintf("obdiag gather scene run --scene=%s --since %s --store_dir %s -c %s", scene, "10m", jobOutputDir, configFilePath),
 						},
 						VolumeMounts: []corev1.VolumeMount{
 							{
-								Name:      "shared-volume",
+								Name:      sharedPvcName,
 								MountPath: sharedMountPath,
-							},
-						},
-						Lifecycle: &corev1.Lifecycle{
-							PreStop: &corev1.LifecycleHandler{
-								Exec: &corev1.ExecAction{
-									Command: []string{"/bin/sh", "-c", fmt.Sprintf("rm -rf %s", jobOutputDir)},
-								},
 							},
 						},
 					},
