@@ -321,7 +321,7 @@ const Report: React.FC<Props> = () => {
                 </Col>
                 <Col span={6}>
                   <span>
-                    <div>失败</div>
+                    <div>失败结果</div>
                     <div
                       style={{
                         color: token.colorError,
