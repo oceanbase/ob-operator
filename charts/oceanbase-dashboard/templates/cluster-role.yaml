@@ -18,6 +18,12 @@ rules:
       - "*"
     verbs: ["get", "list", "watch", "update", "create", "delete", "patch"]
   - apiGroups:
+      - batch
+    resources:
+      - "jobs"
+      - "cronjobs"
+    verbs: ["get", "list", "watch", "update", "create", "delete", "patch"]
+  - apiGroups:
       - ""
     resources:
       - events
@@ -26,6 +32,14 @@ rules:
       - configmaps
       - services
       - pods/exec
+      - pods/log
+      - persistentvolumeclaims
+      - serviceaccounts
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups:
+      - "rbac.authorization.k8s.io"
+    resources:
+      - clusterrolebindings
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
   - apiGroups:
       - "apps"

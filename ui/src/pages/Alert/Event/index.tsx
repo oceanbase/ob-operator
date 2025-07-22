@@ -2,6 +2,7 @@ import type { AlarmSeverity, AlertAlert, AlertStatus } from '@/api/generated';
 
 import DownloadModal from '@/components/DownloadModal';
 import { ALERT_STATE_MAP, SEVERITY_MAP } from '@/constants';
+import { DATE_TIME_FORMAT } from '@/constants/datetime';
 import { intl } from '@/utils/intl';
 import { history, useAccess } from '@umijs/max';
 import {
@@ -159,7 +160,7 @@ export default function Event() {
       key: 'startsAt',
       sorter: (preRecord, curRecord) => curRecord.startsAt - preRecord.startsAt,
       render: (startsAt: number) => (
-        <Text>{dayjs.unix(startsAt).format('YYYY-MM-DD HH:mm:ss')}</Text>
+        <Text>{dayjs.unix(startsAt).format(DATE_TIME_FORMAT)}</Text>
       ),
     },
     {
@@ -171,7 +172,7 @@ export default function Event() {
       key: 'endsAt',
       sorter: (preRecord, curRecord) => curRecord.endsAt - preRecord.endsAt,
       render: (endsAt: number) => (
-        <Text>{dayjs.unix(endsAt).format('YYYY-MM-DD HH:mm:ss')}</Text>
+        <Text>{dayjs.unix(endsAt).format(DATE_TIME_FORMAT)}</Text>
       ),
     },
     {

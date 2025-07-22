@@ -128,6 +128,10 @@ spec:
       name: Task
       priority: 1
       type: string
+    - jsonPath: .status.operationContext.taskStatus
+      name: TaskStatus
+      priority: 1
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -6801,6 +6805,10 @@ spec:
       name: Task
       priority: 1
       type: string
+    - jsonPath: .status.operationContext.taskStatus
+      name: TaskStatus
+      priority: 1
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -10507,6 +10515,10 @@ spec:
       name: Task
       priority: 1
       type: string
+    - jsonPath: .status.operationContext.taskStatus
+      name: TaskStatus
+      priority: 1
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -13481,6 +13493,8 @@ spec:
                 type: string
               nodeIp:
                 type: string
+              nodeName:
+                type: string
               obStatus:
                 type: string
               operationContext:
@@ -13612,6 +13626,10 @@ spec:
       type: string
     - jsonPath: .status.operationContext.task
       name: Task
+      priority: 1
+      type: string
+    - jsonPath: .status.operationContext.taskStatus
+      name: TaskStatus
       priority: 1
       type: string
     name: v1alpha1
@@ -15051,6 +15069,18 @@ spec:
       type: string
     - jsonPath: .status.secondaryTenant.spec.tenantName
       name: SecondaryTenant
+      priority: 1
+      type: string
+    - jsonPath: .status.operationContext.tasks
+      name: Tasks
+      priority: 1
+      type: string
+    - jsonPath: .status.operationContext.task
+      name: Task
+      priority: 1
+      type: string
+    - jsonPath: .status.operationContext.taskStatus
+      name: TaskStatus
       priority: 1
       type: string
     name: v1alpha1
@@ -16816,6 +16846,18 @@ spec:
       name: charset
       priority: 1
       type: string
+    - jsonPath: .status.operationContext.tasks
+      name: Tasks
+      priority: 1
+      type: string
+    - jsonPath: .status.operationContext.task
+      name: Task
+      priority: 1
+      type: string
+    - jsonPath: .status.operationContext.taskStatus
+      name: TaskStatus
+      priority: 1
+      type: string
     name: v1alpha1
     schema:
       openAPIV3Schema:
@@ -17575,6 +17617,10 @@ spec:
       type: string
     - jsonPath: .status.operationContext.task
       name: Task
+      priority: 1
+      type: string
+    - jsonPath: .status.operationContext.taskStatus
+      name: TaskStatus
       priority: 1
       type: string
     name: v1alpha1
@@ -21802,7 +21848,10 @@ spec:
         - --log-verbosity=0
         command:
         - /manager
-        image: quay.io/oceanbase/ob-operator:2.3.1
+        env:
+        - name: TELEMETRY_REPORTER
+          value: {{ .Values.reporter }}
+        image: quay.io/oceanbase/ob-operator:2.3.2
         livenessProbe:
           httpGet:
             path: /healthz
@@ -22111,6 +22160,7 @@ webhooks:
     operations:
     - CREATE
     - UPDATE
+    - DELETE
     resources:
     - obclusters
   sideEffects: None
@@ -22171,6 +22221,7 @@ webhooks:
     operations:
     - CREATE
     - UPDATE
+    - DELETE
     resources:
     - obtenants
   sideEffects: None

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import MonitorComp from '@/components/MonitorComp';
 import { DEFAULT_QUERY_RANGE, REFRESH_FREQUENCY } from '@/constants';
+import { DATE_TIME_FORMAT } from '@/constants/datetime';
 import DataFilter from './DataFilter';
 
 interface MonitorDetailProps {
@@ -20,7 +21,7 @@ interface MonitorDetailProps {
 const getDate = () => {
   return dayjs
     .unix(Math.ceil(new Date().valueOf() / 1000))
-    .format('YYYY-MM-DD HH:mm:ss');
+    .format(DATE_TIME_FORMAT);
 };
 
 //Query is somewhat similar to sql statement, label is equivalent to filter condition，for example: where label1=xxx and label2 = xxx

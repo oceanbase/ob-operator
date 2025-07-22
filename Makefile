@@ -1,6 +1,15 @@
+# Get the number of processors
+ifeq ($(shell uname -s), Linux)
+	PROCESSOR = $(shell nproc)
+else ifeq ($(shell uname -s), Darwin)
+	PROCESSOR = $(shell sysctl -n hw.ncpu)
+else
+	PROCESSOR = 4
+endif
+
 include make/*
 
-VERSION ?= 2.3.1
+VERSION ?= 2.3.2
 # Image URL to use all building/pushing image targets
 IMG ?= quay.io/oceanbase/ob-operator:${VERSION}
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.

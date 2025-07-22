@@ -17,7 +17,7 @@ const (
 )
 
 const (
-	ReceiverTemplateDir = "internal/assets/receiver_templates"
+	ReceiverTemplateDir = "internal/assets/dashboard/receiver_templates"
 )
 
 const (

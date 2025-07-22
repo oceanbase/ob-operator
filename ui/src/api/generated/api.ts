@@ -1266,33 +1266,6 @@ export interface InspectionPolicy {
 /**
  * 
  * @export
- * @interface InspectionPolicyMeta
- */
-export interface InspectionPolicyMeta {
-    /**
-     * 
-     * @type {ResponseOBClusterMetaBasic}
-     * @memberof InspectionPolicyMeta
-     */
-    'obCluster': ResponseOBClusterMetaBasic;
-    /**
-     * 
-     * @type {Array<InspectionInspectionScheduleConfig>}
-     * @memberof InspectionPolicyMeta
-     */
-    'scheduleConfig'?: Array<InspectionInspectionScheduleConfig>;
-    /**
-     * 
-     * @type {InspectionInspectionScheduleStatus}
-     * @memberof InspectionPolicyMeta
-     */
-    'status': InspectionInspectionScheduleStatus;
-}
-
-
-/**
- * 
- * @export
  * @interface InspectionReport
  */
 export interface InspectionReport {
@@ -11857,11 +11830,11 @@ export const InspectionApiAxiosParamCreator = function (configuration?: Configur
         /**
          * create or update inspection policy
          * @summary create or update inspection policy
-         * @param {InspectionPolicyMeta} body inspection policy
+         * @param {InspectionPolicy} body inspection policy
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createOrUpdateInspectionPolicy: async (body: InspectionPolicyMeta, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        createOrUpdateInspectionPolicy: async (body: InspectionPolicy, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'body' is not null or undefined
             assertParamExists('createOrUpdateInspectionPolicy', 'body', body)
             const localVarPath = `/api/v1/inspection/policies`;
@@ -12179,11 +12152,11 @@ export const InspectionApiFp = function(configuration?: Configuration) {
         /**
          * create or update inspection policy
          * @summary create or update inspection policy
-         * @param {InspectionPolicyMeta} body inspection policy
+         * @param {InspectionPolicy} body inspection policy
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createOrUpdateInspectionPolicy(body: InspectionPolicyMeta, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOrUpdateInspectionPolicy200Response>> {
+        async createOrUpdateInspectionPolicy(body: InspectionPolicy, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateOrUpdateInspectionPolicy200Response>> {
             const localVarAxiosArgs = await localVarAxiosParamCreator.createOrUpdateInspectionPolicy(body, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['InspectionApi.createOrUpdateInspectionPolicy']?.[localVarOperationServerIndex]?.url;
@@ -12291,11 +12264,11 @@ export const InspectionApiFactory = function (configuration?: Configuration, bas
         /**
          * create or update inspection policy
          * @summary create or update inspection policy
-         * @param {InspectionPolicyMeta} body inspection policy
+         * @param {InspectionPolicy} body inspection policy
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createOrUpdateInspectionPolicy(body: InspectionPolicyMeta, options?: any): AxiosPromise<CreateOrUpdateInspectionPolicy200Response> {
+        createOrUpdateInspectionPolicy(body: InspectionPolicy, options?: any): AxiosPromise<CreateOrUpdateInspectionPolicy200Response> {
             return localVarFp.createOrUpdateInspectionPolicy(body, options).then((request) => request(axios, basePath));
         },
         /**
@@ -12382,12 +12355,12 @@ export class InspectionApi extends BaseAPI {
     /**
      * create or update inspection policy
      * @summary create or update inspection policy
-     * @param {InspectionPolicyMeta} body inspection policy
+     * @param {InspectionPolicy} body inspection policy
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InspectionApi
      */
-    public createOrUpdateInspectionPolicy(body: InspectionPolicyMeta, options?: RawAxiosRequestConfig) {
+    public createOrUpdateInspectionPolicy(body: InspectionPolicy, options?: RawAxiosRequestConfig) {
         return InspectionApiFp(this.configuration).createOrUpdateInspectionPolicy(body, options).then((request) => request(this.axios, this.basePath));
     }
 

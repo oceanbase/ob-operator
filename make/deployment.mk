@@ -31,4 +31,4 @@ export-operator: manifests kustomize ## Export operator manifests
 
 .PHONY: export-charts
 export-charts: export-operator ## Export ob-operator helm chart
-	sed -e 's/oceanbase-system/{{ .Release.Namespace }}/g' deploy/operator.yaml | sed '1,/---/d' > charts/ob-operator/templates/operator.yaml
+	sed -e 's/oceanbase-system/{{ .Release.Namespace }}/g' deploy/operator.yaml | sed -e 's/value: ob-operator/value: {{ .Values.reporter }}/g' | sed '1,/---/d' > charts/ob-operator/templates/operator.yaml
