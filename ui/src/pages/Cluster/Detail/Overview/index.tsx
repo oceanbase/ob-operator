@@ -3,6 +3,7 @@ import {
   Button,
   Card,
   Col,
+  DatePicker,
   Descriptions,
   Dropdown,
   Form,
@@ -14,11 +15,13 @@ import {
   message,
 } from 'antd';
 
+import { job, obcluster } from '@/api';
 import DownloadModal from '@/components/DownloadModal';
 import EventsTable from '@/components/EventsTable';
 import OperateModal from '@/components/customModal/OperateModal';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { REFRESH_CLUSTER_TIME } from '@/constants';
+import { DATE_TIME_FORMAT, TIME_FORMAT } from '@/constants/datetime';
 import { getClusterDetailReq } from '@/services';
 import { deleteClusterReportWrap } from '@/services/reportRequest/clusterReportReq';
 import { floorToTwoDecimalPlaces } from '@/utils/helper';
@@ -26,7 +29,6 @@ import { intl } from '@/utils/intl';
 import { DownOutlined } from '@ant-design/icons';
 import { PageContainer } from '@ant-design/pro-components';
 import { Checkbox } from '@oceanbase/design';
-import { Ranger } from '@oceanbase/ui';
 import { useRequest } from 'ahooks';
 import dayjs from 'dayjs';
 import { isEmpty } from 'lodash';
@@ -36,6 +38,7 @@ import NFSInfoModal from './NFSInfoModal';
 import ResourceDrawer from './ResourceDrawer';
 import ServerTable from './ServerTable';
 import ZoneTable from './ZoneTable';
+const { RangePicker } = DatePicker;
 
 const ClusterOverview: React.FC = () => {
   const { setChooseClusterName } = useModel('global');
@@ -51,6 +54,13 @@ const ClusterOverview: React.FC = () => {
   const [removeNFSModal, setRemoveNFSModal] = useState<boolean>(false);
   const [downloadModal, setDownloadModal] = useState(false);
   const [diagnoseModal, setDiagnoseModal] = useState(false);
+  const [diagnoseStatus, setDiagnoseStatus] = useState('');
+  const [jobValue, setjobValue] = useState({});
+  const [attachmentValue, setAttachmentValue] = useState('');
+  // const [originalTimeRange, setOriginalTimeRange] = useState<[string, string]>([
+  //   '',
+  //   '',
+  // ]);
   const modalType = useRef<API.ModalType>('addZone');
 
   const {
@@ -71,6 +81,38 @@ const ClusterOverview: React.FC = () => {
       }
     },
   });
+
+  const { run: getJob } = useRequest(job.getJob, {
+    manual: true,
+    onSuccess: ({ data }) => {
+      console.log('data', data);
+      setAttachmentValue(data?.result?.attachmentId || '');
+      setDiagnoseStatus(data?.status);
+
+      // 如果状态不是successful或failed，继续轮询
+      if (data?.status !== 'successful' && data?.status !== 'failed') {
+        setTimeout(() => {
+          // 使用保存的原始时间参数进行轮询
+          getJob(jobValue?.namespace, jobValue?.name);
+        }, 2000); // 每2秒轮询一次
+      }
+    },
+  });
+
+  const { run: downloadOBClusterLog } = useRequest(
+    obcluster.downloadOBClusterLog,
+    {
+      manual: true,
+      onSuccess: ({ data }) => {
+        console.log('data data', data, data?.namespace);
+        getJob(data?.namespace, data?.name);
+        setDiagnoseStatus(data?.status);
+        setjobValue(data);
+        setDiagnoseModal(false);
+        setDownloadModal(true);
+      },
+    },
+  );
 
   const handleDelete = async () => {
     const res = await deleteClusterReportWrap({ ns: ns!, name: name! });
@@ -109,7 +151,7 @@ const ClusterOverview: React.FC = () => {
 
   // 不为空即为绑定了NFS
   const removeNFS = !!backupVolume;
-  const menuChange = ({ key }) => {
+  const menuChange = ({ key }: { key: string }) => {
     if (key === 'AddZone') {
       return handleAddZone();
     } else if (key === 'Upgrade') {
@@ -129,8 +171,6 @@ const ClusterOverview: React.FC = () => {
         setMountNFSModal(true);
       }
     } else if (key === 'download') {
-      // setDownloadModal(true);
-      console.log('key', key);
       setDiagnoseModal(true);
     }
   };
@@ -282,12 +322,6 @@ const ClusterOverview: React.FC = () => {
     };
   }, []);
   const [form] = Form.useForm();
-
-  const diagnoseStatus = 'failed'; //'success'; //'running';
-  const handleChange = ({ range }) => {
-    console.log(range[0].format('YYYY-MM-DD HH:mm:ss'));
-    console.log(range[1].format('YYYY-MM-DD HH:mm:ss'));
-  };
 
   // 设置默认时间为当前时间
   const defaultTime = dayjs();
@@ -459,33 +493,58 @@ const ClusterOverview: React.FC = () => {
         onOk={() => setDownloadModal(false)}
         title={'日志下载'}
         diagnoseStatus={diagnoseStatus}
+        attachmentValue={attachmentValue}
+        jobValue={jobValue}
       />
       <Modal
         title="日志下载"
         open={diagnoseModal}
         onCancel={() => setDiagnoseModal(false)}
         onOk={() => {
-          setDiagnoseModal(false);
-          setDownloadModal(true);
+          form.validateFields().then((values) => {
+            // 转换时间格式为 YYYY-MM-DD HH:mm:ss
+            const formattedValues = {
+              ...values,
+              range: values.range?.map((time: any) => {
+                if (time && typeof time.format === 'function') {
+                  return time.format('YYYY-MM-DD HH:mm:ss');
+                }
+                return time;
+              }),
+            };
+
+            // 调用下载日志API
+            if (formattedValues.range && formattedValues.range.length === 2) {
+              // 保存原始时间范围用于轮询
+              // setOriginalTimeRange([
+              //   formattedValues.range[0],
+              //   formattedValues.range[1],
+              // ]);
+              downloadOBClusterLog(
+                ns!,
+                name!,
+                formattedValues.range[0],
+                formattedValues.range[1],
+              );
+            }
+          });
         }}
       >
         <Form
           form={form}
-          onValuesChange={handleChange}
           initialValues={{
             range: [defaultTime, defaultTime],
           }}
         >
           <Form.Item name="range">
-            <Ranger
+            <RangePicker
               showTime={{
-                format: 'HH:mm:ss',
+                format: TIME_FORMAT,
                 defaultValue: [defaultTime, defaultTime],
               }}
-              format="YYYY-MM-DD HH:mm:ss"
+              format={DATE_TIME_FORMAT}
               placeholder={['开始时间', '结束时间']}
               style={{ width: '100%' }}
-              selects={[Ranger.YESTERDAY, Ranger.TODAY, Ranger.TOMORROW]}
             />
           </Form.Item>
         </Form>

@@ -3,6 +3,7 @@ import { errorHandling } from './errorHandling';
 import {
   AccessControlApiFactory,
   AlarmApiFactory,
+  AttachmentApiFactory,
   ClusterApiFactory,
   Configuration,
   InfoApiFactory,
@@ -57,3 +58,4 @@ export const obproxy = wrapper(OBProxyApiFactory, config);
 export const access = wrapper(AccessControlApiFactory, config);
 export const inspection = wrapper(InspectionApiFactory, config);
 export const job = wrapper(JobApiFactory, config);
+export const attachment = wrapper(AttachmentApiFactory, config);

@@ -1,5 +1,7 @@
+import { attachment, job } from '@/api';
 import { LoadingOutlined } from '@ant-design/icons';
 import { findByValue } from '@oceanbase/util';
+import { useRequest } from 'ahooks';
 import { Alert, Button, Modal, Spin } from 'antd';
 
 interface DownloadModalProps {
@@ -8,6 +10,7 @@ interface DownloadModalProps {
   onOk: () => void;
   title: string;
   diagnoseStatus: string;
+  attachmentValue: string;
 }
 
 export default function DownloadModal({
@@ -16,8 +19,40 @@ export default function DownloadModal({
   onOk,
   title,
   diagnoseStatus,
+  attachmentValue,
+  jobValue,
 }: DownloadModalProps) {
+  const { run: downloadAttachment } = useRequest(
+    attachment.downloadAttachment,
+    {
+      manual: true,
+      onSuccess: (data) => {
+        console.log('data', data);
+        onOk();
+      },
+    },
+  );
+
+  const { run: deleteJob } = useRequest(job.deleteJob, {
+    manual: true,
+    onSuccess: () => {
+      onCancel();
+    },
+  });
+
   const modalContent = [
+    {
+      value: 'pending',
+      label: '中...',
+      children: (
+        <Spin
+          indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
+          tip="Loading"
+        >
+          <div style={{ minHeight: 100 }} />
+        </Spin>
+      ),
+    },
     {
       value: 'running',
       label: '中...',
@@ -31,7 +66,7 @@ export default function DownloadModal({
       ),
     },
     {
-      value: 'success',
+      value: 'successful',
       label: '完成',
       children: (
         <div style={{ minHeight: 100 }}>
@@ -40,7 +75,13 @@ export default function DownloadModal({
             type="success"
             showIcon
             action={
-              <Button size="small" type="link">
+              <Button
+                size="small"
+                type="link"
+                onClick={() => {
+                  downloadAttachment(attachmentValue);
+                }}
+              >
                 下载链接
               </Button>
             }
@@ -73,10 +114,14 @@ export default function DownloadModal({
       title={`${title}${findByValue(modalContent, diagnoseStatus).label}`}
       open={visible}
       onOk={onOk}
-      onCancel={onCancel}
+      onCancel={() => deleteJob(jobValue?.namespace, jobValue?.name)}
       footer={
         diagnoseStatus === 'running' ? (
-          <Button onClick={() => {}}>取消</Button>
+          <Button
+            onClick={() => deleteJob(jobValue?.namespace, jobValue?.name)}
+          >
+            取消
+          </Button>
         ) : null
       }
     >
