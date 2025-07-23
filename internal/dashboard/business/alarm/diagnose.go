@@ -39,7 +39,7 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 	sharedPvcName := os.Getenv("SHARED_VOLUME_PVC_NAME")
 	sharedMountPath := os.Getenv("SHARED_VOLUME_MOUNT_PATH")
 	jobName := fmt.Sprintf("diagnose-%s-%s", param.Instance.OBCluster, rand.String(6))
-	attachmentID := jobName
+	attachmentID := jobName + ".zip"
 	jobOutputDir := filepath.Join(sharedMountPath, jobName)
 	configFileName := "config.yaml"
 	configFilePath := filepath.Join(jobOutputDir, configFileName)
@@ -121,7 +121,7 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{"/bin/sh", "-c"},
 						Args: []string{
-							fmt.Sprintf("obdiag gather scene run --scene=%s --from '%s' --to '%s' --store_dir %s -c %s", scene, from, to, jobOutputDir, configFilePath),
+							fmt.Sprintf("obdiag gather scene run --scene=%s --from '%s' --to '%s' --store_dir %s -c %s && zip -r %s/%s %s", scene, from, to, jobOutputDir, configFilePath, sharedMountPath, attachmentID, jobOutputDir),
 						},
 						VolumeMounts: []corev1.VolumeMount{
 							{
