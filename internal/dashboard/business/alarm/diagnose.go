@@ -121,7 +121,7 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{"/bin/sh", "-c"},
 						Args: []string{
-							fmt.Sprintf("obdiag gather scene run --scene=%s --from '%s' --to '%s' --store_dir %s -c %s && tar -czf %s/%s -C %s .", scene, from, to, jobOutputDir, configFilePath, sharedMountPath, attachmentID, jobOutputDir),
+							fmt.Sprintf("obdiag gather scene run --scene=%s --from '%s' --to '%s' --store_dir %s -c %s && rm -f %s && tar -czf %s/%s -C %s . && rm -rf %s", scene, from, to, jobOutputDir, configFilePath, configFilePath, sharedMountPath, attachmentID, jobOutputDir, jobOutputDir),
 						},
 						VolumeMounts: []corev1.VolumeMount{
 							{

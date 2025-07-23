@@ -76,7 +76,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{"/bin/sh", "-c"},
 						Args: []string{
-							fmt.Sprintf("obdiag gather log --from %s --to %s --store_dir %s -c %s && tar -czf %s/%s -C %s .", startTime, endTime, jobOutputDir, configFilePath, sharedMountPath, attachmentID, jobOutputDir),
+							fmt.Sprintf("obdiag gather log --from %s --to %s --store_dir %s -c %s && rm -f %s && tar -czf %s/%s -C %s . && rm -rf %s", startTime, endTime, jobOutputDir, configFilePath, configFilePath, sharedMountPath, attachmentID, jobOutputDir, jobOutputDir),
 						},
 						VolumeMounts: []corev1.VolumeMount{
 							{
