@@ -630,6 +630,52 @@ OBTENANT:
       unit: ''
     name: Cache request total count
   name: Storage and Cache
+OBTENANT_OVERVIEW:
+- description: OBTenant Overview
+  name: OBTenant Overview
+  metricGroups:
+  - description: Average number of SQL statements processed per second
+    metrics:
+    - description: Number of SQL statements processed per second
+      key: sql_all_count
+      name: query_count
+      unit: times/s
+    name: QPS
+  - description: Response time
+    metrics:
+    - description: The average processing time of each SQL statement
+      key: sql_all_rt
+      name: query_time
+      unit: us
+    name: Response time
+  - description: Average number of transactions processed per second
+    metrics:
+    - description: Transactions per second
+      key: tps
+      name: trans_count
+      unit: times/s
+    name: TPS
+  - description: Average processing time per transaction on the server side
+    metrics:
+    - description: Average processing time per transaction
+      key: tps_rt
+      name: trans_time
+      unit: us
+    name: Transaction response time
+  - description: Number of sessions
+    metrics:
+    - description: Number of current sessions
+      key: active_session
+      name: active_session
+      unit: ''
+    name: Number of sessions
+  - description: Waiting for event average time
+    metrics:
+    - description: Average time spent waiting for events
+      key: wait_event_rt
+      name: wait_time
+      unit: us
+    name: Waiting for event time
 OBCLUSTER_OVERVIEW:
 - description: OBCluster Overview
   name: OBCluster Overview
