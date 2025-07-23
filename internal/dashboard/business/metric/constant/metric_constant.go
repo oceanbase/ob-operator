@@ -34,6 +34,7 @@ const (
 const (
 	ScopeCluster         = "OBCLUSTER"
 	ScopeClusterOverview = "OBCLUSTER_OVERVIEW"
+	ScopeTenantOverview  = "OBTENANT_OVERVIEW"
 	ScopeTenant          = "OBTENANT"
 	ScopeOBProxy         = "OBPROXY"
 )
