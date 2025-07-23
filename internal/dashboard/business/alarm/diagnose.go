@@ -17,14 +17,17 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
+	"github.com/oceanbase/ob-operator/internal/dashboard/generated/bindata"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/alert"
 	jobmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/job"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -40,7 +43,7 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 	jobOutputDir := filepath.Join(sharedMountPath, jobName)
 	configFileName := "config.yaml"
 	configFilePath := filepath.Join(jobOutputDir, configFileName)
-	ttlSecondsAfterFinished := int32(24 * 60 * 60)
+	ttlSecondsAfterFinished := int32(5 * 60)
 
 	labels := map[string]string{
 		bizconst.LABEL_MANAGED_BY:        bizconst.DASHBOARD_APP_NAME,
@@ -66,6 +69,27 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 	}
 
 	scene := "observer.unknown"
+	ruleSceneMapBytes, err := bindata.Asset("internal/assets/dashboard/rule-scene-map.yaml")
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read rule-scene-map.yaml")
+	}
+	var ruleSceneMap map[string]string
+	if err := yaml.Unmarshal(ruleSceneMapBytes, &ruleSceneMap); err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal rule-scene-map.yaml")
+	}
+	if s, ok := ruleSceneMap[param.Rule]; ok {
+		scene = s
+	}
+
+	startTime := time.Unix(param.StartsAt-60, 0).In(time.Local)
+	var endTime time.Time
+	if param.EndsAt < param.StartsAt {
+		endTime = time.Unix(param.StartsAt, 0).In(time.Local)
+	} else {
+		endTime = time.Unix(param.EndsAt, 0).In(time.Local)
+	}
+	from := startTime.Format("2006-01-02 15:04:05")
+	to := endTime.Format("2006-01-02 15:04:05")
 
 	jobSpec := &batchv1.JobSpec{
 		TTLSecondsAfterFinished: &ttlSecondsAfterFinished,
@@ -97,8 +121,7 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{"/bin/sh", "-c"},
 						Args: []string{
-							// TODO: change since to from and to
-							fmt.Sprintf("obdiag gather scene run --scene=%s --since %s --store_dir %s -c %s", scene, "10m", jobOutputDir, configFilePath),
+							fmt.Sprintf("obdiag gather scene run --scene=%s --from '%s' --to '%s' --store_dir %s -c %s", scene, from, to, jobOutputDir, configFilePath),
 						},
 						VolumeMounts: []corev1.VolumeMount{
 							{

@@ -37,7 +37,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 	jobOutputDir := filepath.Join(sharedMountPath, jobName)
 	configFileName := "config.yaml"
 	configFilePath := filepath.Join(jobOutputDir, configFileName)
-	ttlSecondsAfterFinished := int32(24 * 60 * 60)
+	ttlSecondsAfterFinished := int32(5 * 60)
 
 	labels := map[string]string{
 		bizconst.LABEL_MANAGED_BY:        bizconst.DASHBOARD_APP_NAME,
