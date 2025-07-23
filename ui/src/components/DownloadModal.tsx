@@ -47,8 +47,8 @@ export default function DownloadModal({
               return;
             }
 
-            // 创建Blob对象
-            const blob = new Blob([data], { type: 'application/zip' });
+            // 创建Blob对象 - 使用tar.gz的MIME类型
+            const blob = new Blob([data], { type: 'application/gzip' });
 
             // 检查Blob大小
             if (blob.size === 0) {
@@ -62,7 +62,7 @@ export default function DownloadModal({
             link.href = url;
 
             // 设置文件名
-            const fileName = `cluster_log_${new Date().getTime()}.zip`;
+            const fileName = `${attachmentValue}`;
             link.download = fileName;
 
             // 触发下载
