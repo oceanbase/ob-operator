@@ -33,7 +33,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 	sharedPvcName := os.Getenv("SHARED_VOLUME_PVC_NAME")
 	sharedMountPath := os.Getenv("SHARED_VOLUME_MOUNT_PATH")
 	jobName := fmt.Sprintf("log-%s-%s-%s", nn.Namespace, nn.Name, rand.String(6))
-	attachmentID := jobName + ".zip"
+	attachmentID := jobName + ".tar.gz"
 	jobOutputDir := filepath.Join(sharedMountPath, jobName)
 	configFileName := "config.yaml"
 	configFilePath := filepath.Join(jobOutputDir, configFileName)
@@ -76,7 +76,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{"/bin/sh", "-c"},
 						Args: []string{
-							fmt.Sprintf("obdiag gather log --from %s --to %s --store_dir %s -c %s && zip -r %s/%s %s", startTime, endTime, jobOutputDir, configFilePath, sharedMountPath, attachmentID, jobOutputDir),
+							fmt.Sprintf("obdiag gather log --from %s --to %s --store_dir %s -c %s && tar -czf %s/%s -C %s .", startTime, endTime, jobOutputDir, configFilePath, sharedMountPath, attachmentID, jobOutputDir),
 						},
 						VolumeMounts: []corev1.VolumeMount{
 							{
