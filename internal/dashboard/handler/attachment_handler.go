@@ -13,9 +13,6 @@ See the Mulan PSL v2 for more details.
 package handler
 
 import (
-	"net/http"
-	"os"
-
 	"github.com/gin-gonic/gin"
 	biz "github.com/oceanbase/ob-operator/internal/dashboard/business/attachment"
 )
@@ -35,11 +32,6 @@ import (
 // @Security ApiKeyAuth
 func DownloadAttachment(c *gin.Context) {
 	id := c.Param("id")
-	zipFile, err := biz.GetAttachment(id)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "failed to get attachment: %s", err.Error())
-		return
-	}
-	defer os.Remove(zipFile)
+	zipFile := biz.GetAttachment(id)
 	c.File(zipFile)
 }
