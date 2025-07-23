@@ -155,13 +155,18 @@ const Report: React.FC<Props> = () => {
       },
     ];
 
+    // 找到第一个有数据的项作为默认展开项
+    const firstActiveKey =
+      resultList.find(({ children }) => children && children.length > 0)?.key ||
+      '';
+
     return (
       <>
         {resultList?.map(({ key, label, children }) => {
           return (
             <Collapse
-              // 默认只摊开高风险
-              defaultActiveKey={'critical'}
+              // 默认展开第一个有数据的项
+              defaultActiveKey={firstActiveKey}
               key={key}
               style={{
                 marginTop: '16px',
@@ -321,7 +326,7 @@ const Report: React.FC<Props> = () => {
                 </Col>
                 <Col span={6}>
                   <span>
-                    <div>失败</div>
+                    <div>失败结果</div>
                     <div
                       style={{
                         color: token.colorError,
