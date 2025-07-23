@@ -1,0 +1,15 @@
+cluster_active_session: observer.unknown
+inactive_server: observer.restart
+index_fail: index_ddl_error
+tenant_active_session: observer.unknown
+tenant_compaction_error: observer.compaction
+tenant_cpu_usage: observer.cpu_high
+tenant_log_disk_used_percent: observer.clog_disk_full
+tenant_log_stream_downgrade: observer.unknown
+tenant_no_compaction: observer.compaction
+tenant_no_frozen: observer.compaction
+tenant500_mem_hold_percent: observer.memory
+tenant_task_timeout: observer.unknown
+tenant_memstore_percent: observer.memory
+tenant_active_memstore_percent: observer.memory
+tenant_thread_used_percent: observer.unknown

@@ -17,9 +17,8 @@ import (
 )
 
 type AnalyzeParam struct {
-	Rule       string                `json:"rule" binding:"required"`
-	Instance   *oceanbase.OBInstance `json:"instance" binding:"required"`
-	StartsAt   int64                 `json:"startsAt" binding:"required"`
-	EndsAt     int64                 `json:"endsAt" binding:"required"`
-	ResultPath string                `json:"resultPath,omitempty"`
+	Rule     string                `json:"rule" binding:"required"`
+	Instance *oceanbase.OBInstance `json:"instance" binding:"required"`
+	StartsAt int64                 `json:"startsAt" binding:"required"`
+	EndsAt   int64                 `json:"endsAt" binding:"required"`
 }
