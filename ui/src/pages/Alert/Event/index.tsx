@@ -255,7 +255,6 @@ export default function Event() {
         <Table
           columns={columns}
           dataSource={listAlerts}
-          // dataSource={mock}
           rowKey="fingerprint"
           pagination={{ simple: true }}
           // scroll={{ x: 1500 }}
