@@ -646,6 +646,53 @@ OBTENANT:
       unit: ''
     name: "\u7F13\u5B58\u8BF7\u6C42\u6B21\u6570"
   name: "\u5B58\u50A8\u4E0E\u7F13\u5B58"
+OBTENANT_OVERVIEW:
+- description: Tenant Overview
+  name: "租户概览指标"
+  metricGroups:
+  - description: "\u5E73\u5747\u6BCF\u79D2\u5904\u7406 SQL \u8BED\u53E5\u6570"
+    metrics:
+    - description: "\u6BCF\u79D2\u5904\u7406 SQL \u8BED\u53E5\u6570"
+      key: sql_all_count
+      name: query_count
+      unit: times/s
+    name: QPS
+  - description: "\u54CD\u5E94\u65F6\u95F4"
+    metrics:
+    - description: "SQL \u8BED\u53E5\u5E73\u5747\u5904\u7406\u8017\u65F6"
+      key: sql_all_rt
+      name: query_time
+      unit: "\u03BCs"
+    name: "\u54CD\u5E94\u65F6\u95F4"
+  - description: "\u5E73\u5747\u6BCF\u79D2\u5904\u7406\u4E8B\u52A1\u6570"
+    metrics:
+    - description: "\u6BCF\u79D2\u5904\u7406\u4E8B\u52A1\u6570"
+      key: tps
+      name: trans_count
+      unit: times/s
+    name: TPS
+  - description: "\u670D\u52A1\u7AEF\u6BCF\u4E2A\u4E8B\u52A1\u5E73\u5747\u5904\u7406\
+      \u65F6\u95F4"
+    metrics:
+    - description: "\u4E8B\u52A1\u5E73\u5747\u5904\u7406\u8017\u65F6"
+      key: tps_rt
+      name: trans_time
+      unit: "\u03BCs"
+    name: "\u4E8B\u52A1\u54CD\u5E94\u65F6\u95F4"
+  - description: "\u4F1A\u8BDD\u6570"
+    metrics:
+    - description: "\u5F53\u524D\u6D3B\u8DC3\u4F1A\u8BDD\u6570"
+      key: active_session
+      name: active_session
+      unit: ''
+    name: "\u4F1A\u8BDD\u6570"
+  - description: "\u7B49\u5F85\u4E8B\u4EF6\u5E73\u5747\u8017\u65F6"
+    metrics:
+    - description: "\u7B49\u5F85\u4E8B\u4EF6\u5E73\u5747\u8017\u65F6"
+      key: wait_event_rt
+      name: wait_time
+      unit: "\u03BCs"
+    name: "\u7B49\u5F85\u4E8B\u4EF6\u8017\u65F6"
 OBCLUSTER_OVERVIEW:
 - description: Cluster Overview
   name: "\u96c6\u7fa4\u6027\u80fd\u6982\u89c8"

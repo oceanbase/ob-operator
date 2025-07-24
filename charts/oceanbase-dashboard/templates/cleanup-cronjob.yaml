@@ -1,0 +1,31 @@
+{{- if and .Values.cleanup.enabled .Values.sharedVolume.persistence.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "oceanbase-dashboard.cleanup.fullname" . }}
+  labels:
+    {{- include "oceanbase-dashboard.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.cleanup.schedule | quote }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ .Release.Name }}-sa
+          restartPolicy: OnFailure
+          containers:
+          - name: cleanup
+            image: busybox:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              find /shared-data -mtime +{{ .Values.cleanup.retentionDays }} -exec rm -rf {} +
+            volumeMounts:
+            - name: shared-volume
+              mountPath: /shared-data
+          volumes:
+          - name: shared-volume
+            persistentVolumeClaim:
+              claimName: {{ .Release.Name }}-shared-volume-pvc
+{{- end }}

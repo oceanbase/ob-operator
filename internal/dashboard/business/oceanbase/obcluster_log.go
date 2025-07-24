@@ -16,9 +16,11 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	jobmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/job"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -26,19 +28,21 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-func DownloadOBClusterLog(ctx context.Context, namespace, name, startTime, endTime string) (*jobmodel.Job, error) {
+func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, startTime, endTime string) (*jobmodel.Job, error) {
 	jobNamespace := os.Getenv("NAMESPACE")
 	sharedPvcName := os.Getenv("SHARED_VOLUME_PVC_NAME")
 	sharedMountPath := os.Getenv("SHARED_VOLUME_MOUNT_PATH")
-	jobName := fmt.Sprintf("log-%s-%s-%s", namespace, name, rand.String(6))
-	attachmentID := jobName
-	jobOutputDir := fmt.Sprintf("%s/%s", sharedMountPath, jobName)
-	ttlSecondsAfterFinished := int32(24 * 60 * 60)
+	jobName := fmt.Sprintf("log-%s-%s-%s", nn.Namespace, nn.Name, rand.String(6))
+	attachmentID := jobName + ".tar.gz"
+	jobOutputDir := filepath.Join(sharedMountPath, jobName)
+	configFileName := "config.yaml"
+	configFilePath := filepath.Join(jobOutputDir, configFileName)
+	ttlSecondsAfterFinished := int32(5 * 60)
 
 	labels := map[string]string{
 		bizconst.LABEL_MANAGED_BY:        bizconst.DASHBOARD_APP_NAME,
 		bizconst.LABEL_JOB_TYPE:          bizconst.JOB_TYPE_LOG,
-		bizconst.LABEL_REF_OBCLUSTERNAME: name,
+		bizconst.LABEL_REF_OBCLUSTERNAME: nn.Name,
 		bizconst.LABEL_ATTACHMENT_ID:     attachmentID,
 	}
 
@@ -49,33 +53,42 @@ func DownloadOBClusterLog(ctx context.Context, namespace, name, startTime, endTi
 				Labels: labels,
 			},
 			Spec: corev1.PodSpec{
-				RestartPolicy: corev1.RestartPolicyNever,
-				Containers: []corev1.Container{
+				ServiceAccountName: bizconst.SERVICE_ACCOUNT_NAME,
+				RestartPolicy:      corev1.RestartPolicyNever,
+				InitContainers: []corev1.Container{
 					{
-						Name:    "log",
-						Image:   "oceanbase/obdiag:latest",
-						Command: []string{"/bin/sh", "-c"},
-						Args: []string{
-							fmt.Sprintf("mkdir -p %s && obdiag gather log --from %s --to %s --store_dir %s -c /etc/obdiag/config.yaml", jobOutputDir, startTime, endTime, jobOutputDir),
-						},
+						Name:            "generate-config",
+						Image:           "oceanbase/oceanbase-helper:latest",
+						ImagePullPolicy: corev1.PullIfNotPresent,
+						Command:         []string{"bash", "-c", fmt.Sprintf("mkdir -p %s && /home/admin/oceanbase/bin/oceanbase-helper generate obdiag-config -n %s -c %s -o %s", jobOutputDir, nn.Namespace, nn.Name, configFilePath)},
 						VolumeMounts: []corev1.VolumeMount{
 							{
-								Name:      "shared-volume",
+								Name:      sharedPvcName,
 								MountPath: sharedMountPath,
 							},
 						},
-						Lifecycle: &corev1.Lifecycle{
-							PreStop: &corev1.LifecycleHandler{
-								Exec: &corev1.ExecAction{
-									Command: []string{"/bin/sh", "-c", fmt.Sprintf("rm -rf %s", jobOutputDir)},
-								},
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:            "log",
+						Image:           "oceanbase/obdiag:latest",
+						ImagePullPolicy: corev1.PullIfNotPresent,
+						Command:         []string{"/bin/sh", "-c"},
+						Args: []string{
+							fmt.Sprintf("obdiag gather log --from %s --to %s --store_dir %s -c %s && rm -f %s && tar -czf %s/%s -C %s . && rm -rf %s", startTime, endTime, jobOutputDir, configFilePath, configFilePath, sharedMountPath, attachmentID, jobOutputDir, jobOutputDir),
+						},
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      sharedPvcName,
+								MountPath: sharedMountPath,
 							},
 						},
 					},
 				},
 				Volumes: []corev1.Volume{
 					{
-						Name: "shared-volume",
+						Name: sharedPvcName,
 						VolumeSource: corev1.VolumeSource{
 							PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 								ClaimName: sharedPvcName,

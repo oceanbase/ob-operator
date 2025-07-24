@@ -16,14 +16,18 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
+	"time"
 
 	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
+	"github.com/oceanbase/ob-operator/internal/dashboard/generated/bindata"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/alert"
 	jobmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/job"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v2"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,9 +39,11 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 	sharedPvcName := os.Getenv("SHARED_VOLUME_PVC_NAME")
 	sharedMountPath := os.Getenv("SHARED_VOLUME_MOUNT_PATH")
 	jobName := fmt.Sprintf("diagnose-%s-%s", param.Instance.OBCluster, rand.String(6))
-	attachmentID := jobName
-	jobOutputDir := fmt.Sprintf("%s/%s", sharedMountPath, jobName)
-	ttlSecondsAfterFinished := int32(24 * 60 * 60)
+	attachmentID := jobName + ".tar.gz"
+	jobOutputDir := filepath.Join(sharedMountPath, jobName)
+	configFileName := "config.yaml"
+	configFilePath := filepath.Join(jobOutputDir, configFileName)
+	ttlSecondsAfterFinished := int32(5 * 60)
 
 	labels := map[string]string{
 		bizconst.LABEL_MANAGED_BY:        bizconst.DASHBOARD_APP_NAME,
@@ -62,6 +68,29 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 		return nil, errors.Errorf("Can not found obcluster object with obcluster name: %s", param.Instance.OBCluster)
 	}
 
+	scene := "observer.unknown"
+	ruleSceneMapBytes, err := bindata.Asset("internal/assets/dashboard/rule-scene-map.yaml")
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to read rule-scene-map.yaml")
+	}
+	var ruleSceneMap map[string]string
+	if err := yaml.Unmarshal(ruleSceneMapBytes, &ruleSceneMap); err != nil {
+		return nil, errors.Wrap(err, "failed to unmarshal rule-scene-map.yaml")
+	}
+	if s, ok := ruleSceneMap[param.Rule]; ok {
+		scene = s
+	}
+
+	startTime := time.Unix(param.StartsAt-60, 0).In(time.Local)
+	var endTime time.Time
+	if param.EndsAt < param.StartsAt {
+		endTime = time.Unix(param.StartsAt, 0).In(time.Local)
+	} else {
+		endTime = time.Unix(param.EndsAt, 0).In(time.Local)
+	}
+	from := startTime.Format("2006-01-02 15:04:05")
+	to := endTime.Format("2006-01-02 15:04:05")
+
 	jobSpec := &batchv1.JobSpec{
 		TTLSecondsAfterFinished: &ttlSecondsAfterFinished,
 		Template: corev1.PodTemplateSpec{
@@ -69,33 +98,42 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 				Labels: labels,
 			},
 			Spec: corev1.PodSpec{
-				RestartPolicy: corev1.RestartPolicyNever,
-				Containers: []corev1.Container{
+				ServiceAccountName: bizconst.SERVICE_ACCOUNT_NAME,
+				RestartPolicy:      corev1.RestartPolicyNever,
+				InitContainers: []corev1.Container{
 					{
-						Name:    "diagnose",
-						Image:   "oceanbase/obdiag:latest",
-						Command: []string{"/bin/sh", "-c"},
-						Args: []string{
-							fmt.Sprintf("mkdir -p %s && obdiag gather scene run --scene=observer.base -c /etc/obdiag/config.yaml --store_dir %s", jobOutputDir, jobOutputDir),
-						},
+						Name:            "generate-config",
+						Image:           "oceanbase/oceanbase-helper:latest",
+						ImagePullPolicy: corev1.PullIfNotPresent,
+						Command:         []string{"bash", "-c", fmt.Sprintf("mkdir -p %s && /home/admin/oceanbase/bin/oceanbase-helper generate obdiag-config -n %s -c %s -o %s", jobOutputDir, obclusterObj.Namespace, obclusterObj.Name, configFilePath)},
 						VolumeMounts: []corev1.VolumeMount{
 							{
-								Name:      "shared-volume",
+								Name:      sharedPvcName,
 								MountPath: sharedMountPath,
 							},
 						},
-						Lifecycle: &corev1.Lifecycle{
-							PreStop: &corev1.LifecycleHandler{
-								Exec: &corev1.ExecAction{
-									Command: []string{"/bin/sh", "-c", fmt.Sprintf("rm -rf %s", jobOutputDir)},
-								},
+					},
+				},
+				Containers: []corev1.Container{
+					{
+						Name:            "diagnose",
+						Image:           "oceanbase/obdiag:latest",
+						ImagePullPolicy: corev1.PullIfNotPresent,
+						Command:         []string{"/bin/sh", "-c"},
+						Args: []string{
+							fmt.Sprintf("obdiag gather scene run --scene=%s --from '%s' --to '%s' --store_dir %s -c %s && rm -f %s && tar -czf %s/%s -C %s . && rm -rf %s", scene, from, to, jobOutputDir, configFilePath, configFilePath, sharedMountPath, attachmentID, jobOutputDir, jobOutputDir),
+						},
+						VolumeMounts: []corev1.VolumeMount{
+							{
+								Name:      sharedPvcName,
+								MountPath: sharedMountPath,
 							},
 						},
 					},
 				},
 				Volumes: []corev1.Volume{
 					{
-						Name: "shared-volume",
+						Name: sharedPvcName,
 						VolumeSource: corev1.VolumeSource{
 							PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
 								ClaimName: sharedPvcName,
