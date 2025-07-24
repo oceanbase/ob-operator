@@ -1,10 +1,7 @@
-import { alert } from '@/api';
-import type {
-  AlarmSeverity,
-  AlertAlert,
-  AlertStatus,
-  OceanbaseOBInstance,
-} from '@/api/generated';
+import type { AlarmSeverity, AlertAlert, AlertStatus } from '@/api/generated';
+
+import { alert, job } from '@/api';
+import DownloadModal from '@/components/DownloadModal';
 import { ALERT_STATE_MAP, SEVERITY_MAP } from '@/constants';
 import { DATE_TIME_FORMAT } from '@/constants/datetime';
 import { intl } from '@/utils/intl';
@@ -31,8 +28,13 @@ const { Text } = Typography;
 export default function Event() {
   const [form] = Form.useForm();
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
+  const [downloadModal, setDownloadModal] = useState(false);
   const access = useAccess();
   const [editRuleName, setEditRuleName] = useState<string>();
+  const [diagnoseStatus, setDiagnoseStatus] = useState('');
+  const [jobValue, setjobValue] = useState<any>({});
+  const [errorLogs, setErrorLogs] = useState('');
+  const [attachmentValue, setAttachmentValue] = useState<string>('');
   const { data: listAlertsRes, run: getListAlerts } = useRequest(
     alert.listAlerts,
   );
@@ -41,7 +43,32 @@ export default function Event() {
     setDrawerOpen(true);
   };
 
+  const { run: getJob } = useRequest(job.getJob, {
+    manual: true,
+    onSuccess: ({ data }) => {
+      setAttachmentValue(data?.result?.attachmentId);
+      setDiagnoseStatus(data?.status);
+      setErrorLogs(data?.result?.output);
+      if (data?.status !== 'successful' && data?.status !== 'failed') {
+        setTimeout(() => {
+          getJob(jobValue?.namespace, jobValue?.name);
+        }, 2000);
+      }
+    },
+  });
+
+  const { run: diagnoseAlert } = useRequest(alert.diagnoseAlert, {
+    manual: true,
+    onSuccess: ({ data }) => {
+      setDownloadModal(true);
+      setDiagnoseStatus(data?.status);
+      setjobValue(data);
+      getJob(data?.namespace, data?.name);
+    },
+  });
+
   const listAlerts = sortEvents(listAlertsRes?.data || []);
+
   const columns: ColumnsType<AlertAlert> = [
     {
       title: intl.formatMessage({
@@ -75,7 +102,7 @@ export default function Event() {
       }),
       dataIndex: 'instance',
       key: 'instance',
-      render: (instance: OceanbaseOBInstance) => (
+      render: (instance) => (
         <Text>
           {intl.formatMessage({
             id: 'src.pages.Alert.Event.3EAC0543',
@@ -124,8 +151,8 @@ export default function Event() {
         );
       },
       render: (status: AlertStatus) => (
-        <Tag color={ALERT_STATE_MAP[status.state].color}>
-          {ALERT_STATE_MAP[status.state].text || '-'}
+        <Tag color={ALERT_STATE_MAP[status?.state]?.color}>
+          {ALERT_STATE_MAP[status?.state]?.text || '-'}
         </Tag>
       ),
     },
@@ -160,28 +187,47 @@ export default function Event() {
       }),
       key: 'action',
       render: (_, record) => (
-        <Button
-          disabled={record.status.state !== 'active' || !access.alarmwrite}
-          style={{ paddingLeft: 0 }}
-          type="link"
-          onClick={() => {
-            history.push(
-              `/alert/shield?instance=${JSON.stringify(
-                record.instance,
-              )}&label=${JSON.stringify(
-                record.labels?.map((label) => ({
-                  name: label.key,
-                  value: label.value,
-                })),
-              )}&rule=${record.rule}`,
-            );
-          }}
-        >
-          {intl.formatMessage({
-            id: 'src.pages.Alert.Event.2BBFF587',
-            defaultMessage: '屏蔽',
-          })}
-        </Button>
+        <Space>
+          <Button
+            disabled={record?.status?.state !== 'active' || !access.alarmwrite}
+            // style={{ paddingLeft: 0 }}
+            type="link"
+            onClick={() => {
+              history.push(
+                `/alert/shield?instance=${JSON.stringify(
+                  record.instance,
+                )}&label=${JSON.stringify(
+                  record.labels?.map((label) => ({
+                    name: label.key,
+                    value: label.value,
+                  })),
+                )}&rule=${record.rule}`,
+              );
+            }}
+          >
+            {intl.formatMessage({
+              id: 'src.pages.Alert.Event.2BBFF587',
+              defaultMessage: '屏蔽',
+            })}
+          </Button>
+          <Button
+            // disabled={record?.status?.state !== 'active' || !access.alarmwrite}
+            // style={{ paddingLeft: 0 }}
+            type="link"
+            onClick={() => {
+              diagnoseAlert({
+                endsAt: record.endsAt,
+                instance: record.instance,
+                rule: record.rule,
+                resultPath: record.rule,
+                startsAt: record.startsAt,
+              });
+              setDownloadModal(true);
+            }}
+          >
+            诊断
+          </Button>
+        </Space>
       ),
     },
   ];
@@ -190,6 +236,7 @@ export default function Event() {
     setEditRuleName(undefined);
     setDrawerOpen(false);
   };
+
   return (
     <Space style={{ width: '100%' }} direction="vertical" size="large">
       <Card>
@@ -218,6 +265,17 @@ export default function Event() {
         open={drawerOpen}
         ruleName={editRuleName}
         onClose={drawerClose}
+      />
+
+      <DownloadModal
+        visible={downloadModal}
+        onCancel={() => setDownloadModal(false)}
+        onOk={() => setDownloadModal(false)}
+        title={'诊断分析'}
+        diagnoseStatus={diagnoseStatus}
+        attachmentValue={attachmentValue}
+        jobValue={jobValue}
+        errorLogs={errorLogs}
       />
     </Space>
   );
