@@ -4,6 +4,7 @@ import AlertDrawer from '@/components/AlertDrawer';
 import IconTip from '@/components/IconTip';
 import InputLabelComp from '@/components/InputLabelComp';
 import { VALIDATE_DEBOUNCE } from '@/constants';
+import { DATE_TIME_FORMAT } from '@/constants/datetime';
 import { LABEL_NAME_RULE } from '@/constants/rules';
 import { Alert } from '@/type/alert';
 import { intl } from '@/utils/intl';
@@ -309,7 +310,7 @@ export default function ShieldDrawerForm({
                 defaultMessage: '屏蔽结束时间',
               })}
             >
-              <DatePicker showTime format="YYYY-MM-DD HH:mm:ss" />
+              <DatePicker showTime format={DATE_TIME_FORMAT} />
             </Form.Item>
           </Col>
           <Col>
