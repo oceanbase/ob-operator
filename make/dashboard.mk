@@ -41,7 +41,7 @@ dashboard-clean: ## Clean build
 .PHONY: dashboard-dep-install
 dashboard-dep-install: ## Install dependencies for oceanbase-dashboard
 	@if [ -z "$(shell command -v swag)" ]; then \
-		go install github.com/swaggo/swag/cmd/swag@latest; \
+		go install github.com/swaggo/swag/cmd/swag@v1.16.3; \
 	fi
 	@if [ -z "$(shell command -v go-bindata)" ]; then \
 		go install github.com/go-bindata/go-bindata/...@v3.1.2+incompatible; \
