@@ -135,6 +135,11 @@ func (m *ObTenantBackupPolicyManager) getDestPath(dest apitypes.BackupDestinatio
 		destPath += ("&appid=" + string(secret.Data["appId"]))
 	} else if dest.Type == constants.BackupDestTypeS3 {
 		destPath += ("&s3_region=" + string(secret.Data["s3Region"]))
+	} else if dest.Type == constants.BackupDestTypeS3Compatible {
+		addressingModel, ok := secret.Data["addressingModel"]
+		if ok {
+			destPath += ("&addressing_model=" + string(addressingModel))
+		}
 	}
 	return destPath
 }
