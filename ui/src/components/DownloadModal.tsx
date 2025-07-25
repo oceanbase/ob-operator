@@ -1,5 +1,5 @@
-import { attachment, job } from '@/api';
-import { download } from '@/utils/export';
+import { job } from '@/api';
+import { downloadFile } from '@/utils/export';
 import { LoadingOutlined } from '@ant-design/icons';
 import { findByValue } from '@oceanbase/util';
 import { useRequest } from 'ahooks';
@@ -29,25 +29,15 @@ export default function DownloadModal({
 }: DownloadModalProps) {
   const [showErrorDetails, setShowErrorDetails] = useState(false);
 
-  // 文件下载 - 后端直接返回文件内容
-  const { run: downloadAttachment, loading: downloadLoading } = useRequest(
-    attachment.downloadAttachment,
-    {
-      manual: true,
-      onSuccess: (data) => {
-        if (data) {
-          download(data, attachmentValue);
-          message.success('文件下载成功');
-        } else {
-          message.error('下载数据为空');
-        }
-        onOk();
-      },
-      onError: () => {
-        message.error('下载失败，请重试');
-      },
-    },
-  );
+  // 直接触发浏览器下载
+  const handleDownload = () => {
+    if (attachmentValue) {
+      downloadFile(attachmentValue);
+      message.success('开始下载文件');
+    } else {
+      message.error('文件ID不存在');
+    }
+  };
 
   const { run: deleteJob } = useRequest(job.deleteJob, {
     manual: true,
@@ -91,14 +81,7 @@ export default function DownloadModal({
             type="success"
             showIcon
             action={
-              <Button
-                size="small"
-                type="link"
-                loading={downloadLoading}
-                onClick={() => {
-                  downloadAttachment(attachmentValue);
-                }}
-              >
+              <Button size="small" type="link" onClick={handleDownload}>
                 下载链接
               </Button>
             }
