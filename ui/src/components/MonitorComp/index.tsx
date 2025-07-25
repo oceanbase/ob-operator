@@ -2,7 +2,7 @@ import { useRequest } from 'ahooks';
 import { Card, Row } from 'antd';
 
 import { getAllMetrics } from '@/services';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import IconTip from '../IconTip';
 import LineGraph from './LineGraph';
 import styles from './index.less';
@@ -45,66 +45,76 @@ export default function MonitorComp({
   const { data: allMetrics } = useRequest(getAllMetrics, {
     defaultParams: [queryScope],
   });
-  const { data: allMetrics2 } = useRequest(getAllMetrics, {
-    defaultParams: ['OBTENANT_OVERVIEW'],
-  });
 
-  const tabList =
-    allMetrics2?.concat(allMetrics)?.map((container: any, index: number) => ({
-      key: index.toString(),
-      label: container?.name,
-    })) || [];
+  // 生成tab列表和内容
+  const { tabList, contentList } = useMemo(() => {
+    const tabs =
+      allMetrics?.map((container: any, index: number) => ({
+        key: index.toString(),
+        label: container?.name,
+      })) || [];
 
-  // 动态生成内容列表
-  const contentList: Record<string, React.ReactNode> = {};
+    const contents: Record<string, React.ReactNode> = {};
 
-  allMetrics?.concat(allMetrics2)?.forEach((container: any, index: number) => {
-    contentList[index.toString()] = (
-      <div className={styles.monitorContainer}>
-        {container?.metricGroups?.map(
-          (graphContainer: any, graphIdx: number) => (
-            <Card className={styles.monitorItem} key={graphIdx}>
-              <div className={styles.graphHeader}>
-                <IconTip
-                  tip={graphContainer.description}
-                  style={{ fontSize: 16 }}
-                  content={
-                    <span className={styles.graphHeaderText}>
-                      {graphContainer.name}
-                      {graphContainer.metrics[0].unit &&
-                        `(
-                      ${graphContainer.metrics[0].unit}
-                      ${
-                        (graphContainer.metrics[0].unit && type) === 'OVERVIEW'
-                          ? ','
-                          : ''
-                      }
-                      ${
-                        type === 'OVERVIEW' ? graphContainer.metrics[0].key : ''
-                      }
-                      )`}
-                    </span>
-                  }
+    allMetrics?.forEach((container: any, index: number) => {
+      contents[index.toString()] = (
+        <div className={styles.monitorContainer}>
+          {container?.metricGroups?.map(
+            (graphContainer: any, graphIdx: number) => (
+              <Card className={styles.monitorItem} key={graphIdx}>
+                <div className={styles.graphHeader}>
+                  <IconTip
+                    tip={graphContainer.description}
+                    style={{ fontSize: 16 }}
+                    content={
+                      <span className={styles.graphHeaderText}>
+                        {graphContainer.name}
+                        {graphContainer.metrics[0]?.unit &&
+                          `(${graphContainer.metrics[0].unit}${
+                            (graphContainer.metrics[0].unit && type) ===
+                            'OVERVIEW'
+                              ? ','
+                              : ''
+                          }${
+                            type === 'OVERVIEW'
+                              ? graphContainer.metrics[0].key
+                              : ''
+                          })`}
+                      </span>
+                    }
+                  />
+                </div>
+                <LineGraph
+                  id={`monitor-${graphContainer.name.replace(/\s+/g, '')}`}
+                  isRefresh={isRefresh}
+                  queryRange={queryRange}
+                  metrics={graphContainer.metrics}
+                  labels={filterLabel}
+                  groupLabels={groupLabels}
+                  type={type}
+                  useFor={useFor}
+                  filterData={filterData}
+                  filterQueryMetric={filterQueryMetric}
                 />
-              </div>
-              <LineGraph
-                id={`monitor-${graphContainer.name.replace(/\s+/g, '')}`}
-                isRefresh={isRefresh}
-                queryRange={queryRange}
-                metrics={graphContainer.metrics}
-                labels={filterLabel}
-                groupLabels={groupLabels}
-                type={type}
-                useFor={useFor}
-                filterData={filterData}
-                filterQueryMetric={filterQueryMetric}
-              />
-            </Card>
-          ),
-        )}
-      </div>
-    );
-  });
+              </Card>
+            ),
+          )}
+        </div>
+      );
+    });
+
+    return { tabList: tabs, contentList: contents };
+  }, [
+    allMetrics,
+    isRefresh,
+    queryRange,
+    filterLabel,
+    groupLabels,
+    type,
+    useFor,
+    filterData,
+    filterQueryMetric,
+  ]);
 
   return (
     <Row style={{ marginTop: 16 }}>
