@@ -1,4 +1,5 @@
 import { attachment, job } from '@/api';
+import { download } from '@/utils/export';
 import { LoadingOutlined } from '@ant-design/icons';
 import { findByValue } from '@oceanbase/util';
 import { useRequest } from 'ahooks';
@@ -35,17 +36,7 @@ export default function DownloadModal({
       manual: true,
       onSuccess: (data) => {
         if (data) {
-          // 将File对象转换为Blob进行下载
-          const blob = new Blob([data], { type: 'application/octet-stream' });
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download =
-            attachmentValue || `cluster_log_${new Date().getTime()}`;
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(url);
+          download(data, attachmentValue);
           message.success('文件下载成功');
         } else {
           message.error('下载数据为空');
