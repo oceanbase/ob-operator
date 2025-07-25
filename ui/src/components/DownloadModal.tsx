@@ -34,6 +34,7 @@ export default function DownloadModal({
     if (attachmentValue) {
       downloadFile(attachmentValue);
       message.success('开始下载文件');
+      onOk();
     } else {
       message.error('文件ID不存在');
     }
