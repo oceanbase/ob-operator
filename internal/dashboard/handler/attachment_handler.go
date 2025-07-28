@@ -52,7 +52,7 @@ func DownloadAttachment(c *gin.Context) {
 		return
 	}
 	c.Header("Content-Type", "application/x-gzip")
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", attachmentFile))
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", id))
 	c.Header("Content-Length", fmt.Sprintf("%d", stat.Size()))
 	io.Copy(c.Writer, file)
 }
