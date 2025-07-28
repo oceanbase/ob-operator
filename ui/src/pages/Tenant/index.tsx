@@ -79,7 +79,7 @@ export default function TenantPage() {
       </Row>
       <MonitorComp
         filterLabel={filterLabel}
-        queryScope="OBTENANT"
+        queryScope="OBTENANT_OVERVIEW"
         type="OVERVIEW"
         useFor="tenant"
         groupLabels={['tenant_name', 'ob_cluster_name']}

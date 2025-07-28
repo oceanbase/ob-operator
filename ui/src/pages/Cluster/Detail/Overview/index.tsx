@@ -68,6 +68,43 @@ const ClusterOverview: React.FC = () => {
   const [selectRange, setSelectRange] = useState<string | number>('custom');
   const [rangePickerKey, setRangePickerKey] = useState(0);
 
+  // 当诊断弹窗打开时，确保状态是干净的
+  useEffect(() => {
+    if (diagnoseModal) {
+      // 重置所有状态到初始值
+      setDiagnoseStatus('');
+      setjobValue({});
+      setAttachmentValue('');
+      setErrorLogs('');
+      setPollingJob(false);
+      setSelectRange('custom');
+      setRangePickerKey(0);
+      // 重置表单并设置当前时间
+      form.resetFields();
+    }
+  }, [diagnoseModal]);
+
+  // 清空下载相关状态
+  const clearDownloadStates = () => {
+    setDiagnoseStatus('');
+    setjobValue({});
+    setAttachmentValue('');
+    setErrorLogs('');
+    setPollingJob(false);
+    setSelectRange('custom');
+    setRangePickerKey(0);
+    // 清除定时器
+    if (pollingTimeoutRef.current) {
+      clearTimeout(pollingTimeoutRef.current);
+      pollingTimeoutRef.current = null;
+    }
+    // 重置表单并设置当前时间
+    form.resetFields();
+    form.setFieldsValue({
+      range: [dayjs(), dayjs()], // 使用当前时间
+    });
+  };
+
   // 根据selectRange计算时间范围
   const getTimeRangeBySelectRange = (range: string | number) => {
     const now = dayjs();
@@ -116,20 +153,41 @@ const ClusterOverview: React.FC = () => {
     },
   });
 
+  const [pollingJob, setPollingJob] = useState(false);
+  const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const { run: getJob } = useRequest(job.getJob, {
     manual: true,
     onSuccess: ({ data }) => {
-      setAttachmentValue(data?.result?.attachmentId);
-      setDiagnoseStatus(data?.status);
+      setAttachmentValue(data?.result?.attachmentId || '');
+      setDiagnoseStatus(data?.status || '');
       if (data?.status === 'failed') {
-        setErrorLogs(data?.result?.output);
+        setErrorLogs(data?.result?.output || '');
       }
       // 如果状态不是successful或failed，继续轮询
-      if (data?.status !== 'successful' && data?.status !== 'failed') {
-        setTimeout(() => {
+      if (
+        data?.status !== 'successful' &&
+        data?.status !== 'failed' &&
+        pollingJob
+      ) {
+        // 清除之前的定时器
+        if (pollingTimeoutRef.current) {
+          clearTimeout(pollingTimeoutRef.current);
+        }
+        // 设置新的定时器
+        pollingTimeoutRef.current = setTimeout(() => {
           // 使用保存的原始时间参数进行轮询
           getJob(jobValue?.namespace, jobValue?.name);
         }, 2000); // 每2秒轮询一次
+      }
+    },
+    onError: () => {
+      // 如果job不存在，停止轮询
+      setPollingJob(false);
+      // 清除定时器
+      if (pollingTimeoutRef.current) {
+        clearTimeout(pollingTimeoutRef.current);
+        pollingTimeoutRef.current = null;
       }
     },
   });
@@ -139,6 +197,7 @@ const ClusterOverview: React.FC = () => {
     {
       manual: true,
       onSuccess: ({ data }) => {
+        setPollingJob(true); // 开始轮询
         getJob(data?.namespace, data?.name);
         setDiagnoseStatus(data?.status);
         setjobValue(data);
@@ -357,9 +416,6 @@ const ClusterOverview: React.FC = () => {
   }, []);
   const [form] = Form.useForm();
 
-  // 设置默认时间为当前时间
-  const defaultTime = dayjs();
-
   return (
     <PageContainer header={header()} loading={clusterDetailLoading}>
       <Row gutter={[16, 16]}>
@@ -523,18 +579,35 @@ const ClusterOverview: React.FC = () => {
 
       <DownloadModal
         visible={downloadModal}
-        onCancel={() => setDownloadModal(false)}
-        onOk={() => setDownloadModal(false)}
+        onCancel={() => {
+          setDownloadModal(false);
+          clearDownloadStates();
+        }}
+        onOk={() => {
+          setDownloadModal(false);
+          clearDownloadStates();
+        }}
         title={'日志下载'}
         diagnoseStatus={diagnoseStatus}
         attachmentValue={attachmentValue}
         jobValue={jobValue}
         errorLogs={errorLogs}
+        onJobDeleted={() => {
+          setPollingJob(false); // 停止轮询
+          // 清除定时器
+          if (pollingTimeoutRef.current) {
+            clearTimeout(pollingTimeoutRef.current);
+            pollingTimeoutRef.current = null;
+          }
+        }}
       />
       <Modal
         title="日志下载"
         open={diagnoseModal}
-        onCancel={() => setDiagnoseModal(false)}
+        onCancel={() => {
+          setDiagnoseModal(false);
+          clearDownloadStates();
+        }}
         onOk={() => {
           form.validateFields().then((values) => {
             const formattedValues = {
@@ -561,14 +634,11 @@ const ClusterOverview: React.FC = () => {
       >
         <Form
           form={form}
-          initialValues={{
-            range: [defaultTime, defaultTime],
-          }}
+          key={diagnoseModal ? 'open' : 'closed'} // 强制重新创建表单
         >
           <Form.Item name="range">
             <Space style={{ display: 'flex', alignItems: 'center' }}>
               <Select
-                // style={{ width: 200 }}
                 value={selectRange}
                 onChange={(value) => {
                   setSelectRange(value);
@@ -604,7 +674,6 @@ const ClusterOverview: React.FC = () => {
                 key={rangePickerKey}
                 showTime={{
                   format: TIME_FORMAT,
-                  defaultValue: [defaultTime, defaultTime],
                 }}
                 format={DATE_TIME_FORMAT}
                 placeholder={['开始时间', '结束时间']}
