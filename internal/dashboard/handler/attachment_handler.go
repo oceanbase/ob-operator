@@ -13,6 +13,11 @@ See the Mulan PSL v2 for more details.
 package handler
 
 import (
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+
 	"github.com/gin-gonic/gin"
 	biz "github.com/oceanbase/ob-operator/internal/dashboard/business/attachment"
 )
@@ -33,7 +38,31 @@ import (
 func DownloadAttachment(c *gin.Context) {
 	id := c.Param("id")
 	attachmentFile := biz.GetAttachment(id)
-	// Prevent double compression from gzip middleware
+
+	file, err := os.Open(attachmentFile)
+	if err != nil {
+		c.String(http.StatusNotFound, "file not found: %v", err)
+		return
+	}
+	defer file.Close()
+
+	stat, err := file.Stat()
+	if err != nil {
+		c.String(http.StatusInternalServerError, "failed to get file stat: %v", err)
+		return
+	}
+
+	// Set headers manually for full control
+	c.Header("Content-Type", "application/x-gzip")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", id))
+	c.Header("Content-Length", fmt.Sprintf("%d", stat.Size()))
+	// Prevent gzip middleware from re-compressing the file and stripping Content-Length
 	c.Header("Content-Encoding", "identity")
-	c.FileAttachment(attachmentFile, id)
+
+	// Stream the file directly to the response writer
+	_, err = io.Copy(c.Writer, file)
+	if err != nil {
+		// An error occurred while streaming the file, so we abort the request
+		c.Abort()
+	}
 }
