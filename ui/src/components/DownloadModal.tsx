@@ -4,7 +4,7 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { findByValue } from '@oceanbase/util';
 import { useRequest } from 'ahooks';
 import { Alert, Button, Modal, Spin, message } from 'antd';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface DownloadModalProps {
   visible: boolean;
@@ -15,6 +15,7 @@ interface DownloadModalProps {
   attachmentValue: string;
   jobValue?: any;
   errorLogs?: any;
+  onJobDeleted?: () => void; // 新增：job被删除时的回调
 }
 
 export default function DownloadModal({
@@ -26,8 +27,16 @@ export default function DownloadModal({
   attachmentValue,
   jobValue,
   errorLogs,
+  onJobDeleted,
 }: DownloadModalProps) {
   const [showErrorDetails, setShowErrorDetails] = useState(false);
+
+  // 当弹窗关闭时清空内部状态
+  useEffect(() => {
+    if (!visible) {
+      setShowErrorDetails(false);
+    }
+  }, [visible]);
 
   // 直接触发浏览器下载
   const handleDownload = () => {
@@ -43,6 +52,7 @@ export default function DownloadModal({
   const { run: deleteJob } = useRequest(job.deleteJob, {
     manual: true,
     onSuccess: () => {
+      onJobDeleted?.();
       onCancel();
     },
   });
@@ -161,11 +171,15 @@ export default function DownloadModal({
       }`}
       open={visible}
       onOk={onOk}
-      onCancel={() => deleteJob(jobValue?.namespace, jobValue?.name)}
+      onCancel={() => {
+        deleteJob(jobValue?.namespace, jobValue?.name);
+      }}
       footer={
         diagnoseStatus === 'running' ? (
           <Button
-            onClick={() => deleteJob(jobValue?.namespace, jobValue?.name)}
+            onClick={() => {
+              deleteJob(jobValue?.namespace, jobValue?.name);
+            }}
           >
             取消
           </Button>

@@ -46,9 +46,9 @@ export default function Event() {
   const { run: getJob } = useRequest(job.getJob, {
     manual: true,
     onSuccess: ({ data }) => {
-      setAttachmentValue(data?.result?.attachmentId);
-      setDiagnoseStatus(data?.status);
-      setErrorLogs(data?.result?.output);
+      setAttachmentValue(data?.result?.attachmentId || '');
+      setDiagnoseStatus(data?.status || '');
+      setErrorLogs(data?.result?.output || '');
       if (data?.status !== 'successful' && data?.status !== 'failed') {
         setTimeout(() => {
           getJob(jobValue?.namespace, jobValue?.name);
@@ -276,6 +276,7 @@ export default function Event() {
         attachmentValue={attachmentValue}
         jobValue={jobValue}
         errorLogs={errorLogs}
+        onJobDeleted={() => {}} // Alert页面不需要轮询，传空函数
       />
     </Space>
   );
