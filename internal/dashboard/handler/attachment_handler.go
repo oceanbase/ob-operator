@@ -33,5 +33,7 @@ import (
 func DownloadAttachment(c *gin.Context) {
 	id := c.Param("id")
 	attachmentFile := biz.GetAttachment(id)
+	// Prevent double compression from gzip middleware
+	c.Header("Content-Encoding", "identity")
 	c.FileAttachment(attachmentFile, id)
 }
