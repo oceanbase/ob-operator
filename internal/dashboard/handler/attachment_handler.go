@@ -13,6 +13,11 @@ See the Mulan PSL v2 for more details.
 package handler
 
 import (
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+
 	"github.com/gin-gonic/gin"
 	biz "github.com/oceanbase/ob-operator/internal/dashboard/business/attachment"
 )
@@ -22,9 +27,9 @@ import (
 // @Description Download attachment by id
 // @Tags Attachment
 // @Accept application/json
-// @Produce application/zip
+// @Produce application/x-gzip
 // @Param id path string true "attachment id"
-// @Success 200 {file} application/zip
+// @Success 200 {file} application/x-gzip
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
@@ -32,6 +37,22 @@ import (
 // @Security ApiKeyAuth
 func DownloadAttachment(c *gin.Context) {
 	id := c.Param("id")
-	zipFile := biz.GetAttachment(id)
-	c.File(zipFile)
+	attachmentFile := biz.GetAttachment(id)
+
+	file, err := os.Open(attachmentFile)
+	if err != nil {
+		c.String(http.StatusNotFound, "file not found")
+		return
+	}
+	defer file.Close()
+
+	stat, err := file.Stat()
+	if err != nil {
+		c.String(http.StatusInternalServerError, "can't get file stat")
+		return
+	}
+	c.Header("Content-Type", "application/x-gzip")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", attachmentFile))
+	c.Header("Content-Length", fmt.Sprintf("%d", stat.Size()))
+	io.Copy(c.Writer, file)
 }
