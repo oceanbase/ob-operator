@@ -18,8 +18,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/oceanbase/ob-operator/internal/dashboard/config"
 	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
+	"github.com/oceanbase/ob-operator/internal/dashboard/config"
 	jobmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/job"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
@@ -38,7 +38,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 	jobOutputDir := filepath.Join(sharedMountPath, jobName)
 	configFileName := "config.yaml"
 	configFilePath := filepath.Join(jobOutputDir, configFileName)
-	ttlSecondsAfterFinished := config.GetConfig().DownloadLog.TTLSecondsAfterFinished
+	ttlSecondsAfterFinished := config.GetConfig().Job.Normal.TTLSecondsAfterFinished
 
 	labels := map[string]string{
 		bizconst.LABEL_MANAGED_BY:        bizconst.DASHBOARD_APP_NAME,
@@ -59,7 +59,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 				InitContainers: []corev1.Container{
 					{
 						Name:            "generate-config",
-						Image:           fmt.Sprintf("%s:%s", config.GetConfig().OBHelper.Repository, config.GetConfig().OBHelper.Tag),
+						Image:           config.GetConfig().Inspection.OBHelper.Image,
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{"bash", "-c", fmt.Sprintf("mkdir -p %s && /home/admin/oceanbase/bin/oceanbase-helper generate obdiag-config -n %s -c %s -o %s", jobOutputDir, nn.Namespace, nn.Name, configFilePath)},
 						VolumeMounts: []corev1.VolumeMount{
@@ -73,7 +73,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 				Containers: []corev1.Container{
 					{
 						Name:            "log",
-						Image:           fmt.Sprintf("%s:%s", config.GetConfig().OBDiag.Repository, config.GetConfig().OBDiag.Tag),
+						Image:           config.GetConfig().Inspection.OBDiag.Image,
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{"/bin/sh", "-c"},
 						Args: []string{
@@ -122,4 +122,3 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 		Status:    jobmodel.JobStatusPending,
 	}, nil
 }
-

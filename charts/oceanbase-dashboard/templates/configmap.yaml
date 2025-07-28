@@ -8,15 +8,13 @@ metadata:
     app.kubernetes.io/instance: {{ .Release.Name }}
 data:
   config.yaml: |
-    obdiag:
-      repository: {{ .Values.obdiag.image.repository }}
-      tag: {{ .Values.obdiag.image.tag }}
-    ob-helper:
-      repository: {{ .Values.obHelper.image.repository }}
-      tag: {{ .Values.obHelper.image.tag }}
     inspection:
-      ttlSecondsAfterFinished: {{ .Values.inspection.ttlSecondsAfterFinished }}
-    diagnose:
-      ttlSecondsAfterFinished: {{ .Values.diagnose.ttlSecondsAfterFinished }}
-    download-log:
-      ttlSecondsAfterFinished: {{ .Values.downloadLog.ttlSecondsAfterFinished }}
+      obdiag:
+        image: {{ .Values.inspection.obdiag.image }}
+      oceanbase-helper:
+        image: {{ .Values.inspection.oceanbase-helper.image }}
+    job:
+      inspection:
+        ttlSecondsAfterFinished: {{ .Values.job.inspection.ttlSecondsAfterFinished }}
+      normal:
+        ttlSecondsAfterFinished: {{ .Values.job.normal.ttlSecondsAfterFinished }}

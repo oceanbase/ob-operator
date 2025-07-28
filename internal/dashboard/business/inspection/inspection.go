@@ -262,7 +262,7 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 	configVolumeName := insconst.ConfigVolumeName
 	configMountPath := insconst.ConfigMountPath
 	configFile := configMountPath + "/config.yaml"
-	ttlSecondsAfterFinished := config.GetConfig().Inspection.TTLSecondsAfterFinished
+	ttlSecondsAfterFinished := config.GetConfig().Job.Inspection.TTLSecondsAfterFinished
 	serviceAccountName := fmt.Sprintf(insconst.ServiceAccountNameFmt, obclusterMeta.Name)
 	clusterRoleName := insconst.ClusterRoleName
 	clusterRoleBindingName := fmt.Sprintf(insconst.ClusterRoleBindingNameFmt, obclusterMeta.Namespace, obclusterMeta.Name)
@@ -333,7 +333,7 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 				InitContainers: []corev1.Container{
 					{
 						Name:            "generate-config",
-						Image:           fmt.Sprintf("%s:%s", config.GetConfig().OBHelper.Repository, config.GetConfig().OBHelper.Tag),
+						Image:           config.GetConfig().Inspection.OBHelper.Image,
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{"bash", "-c", fmt.Sprintf("/home/admin/oceanbase/bin/oceanbase-helper generate obdiag-config -n %s -c %s -o %s", obclusterMeta.Namespace, obclusterMeta.Name, configFile)},
 						VolumeMounts: []corev1.VolumeMount{
@@ -347,7 +347,7 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 				Containers: []corev1.Container{
 					{
 						Name:            "inspection",
-						Image:           fmt.Sprintf("%s:%s", config.GetConfig().OBDiag.Repository, config.GetConfig().OBDiag.Tag),
+						Image:           config.GetConfig().Inspection.OBDiag.Image,
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{"bash", "-c", fmt.Sprintf("obdiag check run --cases %s -c %s --inner_config obdiag.logger.silent=Ture && rm -f %s", checkPackage, configFile, configFile)},
 						VolumeMounts: []corev1.VolumeMount{
@@ -703,4 +703,3 @@ func newInspectionItemsFromMap(m map[string][]string) []insmodel.InspectionItem 
 	}
 	return items
 }
-

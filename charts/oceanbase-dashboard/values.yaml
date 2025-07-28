@@ -3,32 +3,25 @@ image:
   tag: latest
   pullPolicy: IfNotPresent
 
-obdiag:
-  image:
-    repository: oceanbase/obdiag
-    tag: latest
-
-obHelper:
-  image:
-    repository: oceanbase/oceanbase-helper
-    tag: latest
-
 inspection:
-  ttlSecondsAfterFinished: 86400 # 1 day
+  obdiag:
+    image: "oceanbase/obdiag:latest"
+  oceanbase-helper:
+    image: "oceanbase/oceanbase-helper:latest"
 
-diagnose:
-  ttlSecondsAfterFinished: 300 # 5 minutes
-
-downloadLog:
-  ttlSecondsAfterFinished: 300 # 5 minutes
+job:
+  inspection:
+    ttlSecondsAfterFinished: 86400 # 1 day
+  normal:
+    ttlSecondsAfterFinished: 300 # 5 minutes
 
 initCredentials: true
 # admin's password. If not set, the chart will generate it randomly
 adminPassword: admin
 
-userCredentials:
-userNamespace:
-configNamespace:
+userCredentials: 
+userNamespace: 
+configNamespace: 
 
 service:
   type: NodePort

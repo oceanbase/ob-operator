@@ -20,21 +20,27 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type ImageConfig struct {
-	Repository string `yaml:"repository"`
-	Tag        string `yaml:"tag"`
+type ToolConfig struct {
+	Image string `yaml:"image"`
 }
 
-type JobConfig struct {
+type InspectionConfig struct {
+	OBDiag   ToolConfig `yaml:"obdiag"`
+	OBHelper ToolConfig `yaml:"oceanbase-helper"`
+}
+
+type JobTypeConfig struct {
 	TTLSecondsAfterFinished int32 `yaml:"ttlSecondsAfterFinished"`
 }
 
+type JobConfig struct {
+	Inspection JobTypeConfig `yaml:"inspection"`
+	Normal     JobTypeConfig `yaml:"normal"`
+}
+
 type Config struct {
-	OBDiag      ImageConfig `yaml:"obdiag"`
-	OBHelper    ImageConfig `yaml:"ob-helper"`
-	Inspection  JobConfig   `yaml:"inspection"`
-	Diagnose    JobConfig   `yaml:"diagnose"`
-	DownloadLog JobConfig   `yaml:"download-log"`
+	Inspection InspectionConfig `yaml:"inspection"`
+	Job        JobConfig        `yaml:"job"`
 }
 
 var (
@@ -47,9 +53,11 @@ func loadConfig(configFile string) error {
 	if err != nil {
 		return errors.Wrap(err, "read config file failed")
 	}
-	if err = yaml.Unmarshal(data, &dashboardConfig); err != nil {
+	var newConfig Config
+	if err = yaml.Unmarshal(data, &newConfig); err != nil {
 		return errors.Wrap(err, "unmarshal config file failed")
 	}
+	dashboardConfig = &newConfig
 	return nil
 }
 
