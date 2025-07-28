@@ -14,7 +14,6 @@ package handler
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 
@@ -52,17 +51,12 @@ func DownloadAttachment(c *gin.Context) {
 		return
 	}
 
-	// Set headers manually for full control
-	c.Header("Content-Type", "application/x-gzip")
+	// Set headers that c.DataFromReader doesn't handle itself.
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", id))
-	c.Header("Content-Length", fmt.Sprintf("%d", stat.Size()))
-	// Prevent gzip middleware from re-compressing the file and stripping Content-Length
+	// Crucially, prevent re-compression and stripping of Content-Length by middleware.
 	c.Header("Content-Encoding", "identity")
 
-	// Stream the file directly to the response writer
-	_, err = io.Copy(c.Writer, file)
-	if err != nil {
-		// An error occurred while streaming the file, so we abort the request
-		c.Abort()
-	}
+	// Use DataFromReader to have Gin handle the streaming with an explicit content length.
+	// This is the most robust way to force the Content-Length header.
+	c.DataFromReader(http.StatusOK, stat.Size(), "application/x-gzip", file, nil)
 }
