@@ -18,6 +18,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/oceanbase/ob-operator/internal/dashboard/config"
 	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	jobmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/job"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
@@ -37,7 +38,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 	jobOutputDir := filepath.Join(sharedMountPath, jobName)
 	configFileName := "config.yaml"
 	configFilePath := filepath.Join(jobOutputDir, configFileName)
-	ttlSecondsAfterFinished := int32(5 * 60)
+	ttlSecondsAfterFinished := config.GetConfig().DownloadLog.TTLSecondsAfterFinished
 
 	labels := map[string]string{
 		bizconst.LABEL_MANAGED_BY:        bizconst.DASHBOARD_APP_NAME,
@@ -58,7 +59,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 				InitContainers: []corev1.Container{
 					{
 						Name:            "generate-config",
-						Image:           "oceanbase/oceanbase-helper:latest",
+						Image:           fmt.Sprintf("%s:%s", config.GetConfig().OBHelper.Repository, config.GetConfig().OBHelper.Tag),
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{"bash", "-c", fmt.Sprintf("mkdir -p %s && /home/admin/oceanbase/bin/oceanbase-helper generate obdiag-config -n %s -c %s -o %s", jobOutputDir, nn.Namespace, nn.Name, configFilePath)},
 						VolumeMounts: []corev1.VolumeMount{
@@ -72,7 +73,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 				Containers: []corev1.Container{
 					{
 						Name:            "log",
-						Image:           "oceanbase/obdiag:latest",
+						Image:           fmt.Sprintf("%s:%s", config.GetConfig().OBDiag.Repository, config.GetConfig().OBDiag.Tag),
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{"/bin/sh", "-c"},
 						Args: []string{
@@ -121,3 +122,4 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 		Status:    jobmodel.JobStatusPending,
 	}, nil
 }
+

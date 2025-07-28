@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/oceanbase/ob-operator/internal/dashboard/config"
 	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/generated/bindata"
@@ -43,7 +44,7 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 	jobOutputDir := filepath.Join(sharedMountPath, jobName)
 	configFileName := "config.yaml"
 	configFilePath := filepath.Join(jobOutputDir, configFileName)
-	ttlSecondsAfterFinished := int32(5 * 60)
+	ttlSecondsAfterFinished := config.GetConfig().Diagnose.TTLSecondsAfterFinished
 
 	labels := map[string]string{
 		bizconst.LABEL_MANAGED_BY:        bizconst.DASHBOARD_APP_NAME,
@@ -103,7 +104,7 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 				InitContainers: []corev1.Container{
 					{
 						Name:            "generate-config",
-						Image:           "oceanbase/oceanbase-helper:latest",
+						Image:           fmt.Sprintf("%s:%s", config.GetConfig().OBHelper.Repository, config.GetConfig().OBHelper.Tag),
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{"bash", "-c", fmt.Sprintf("mkdir -p %s && /home/admin/oceanbase/bin/oceanbase-helper generate obdiag-config -n %s -c %s -o %s", jobOutputDir, obclusterObj.Namespace, obclusterObj.Name, configFilePath)},
 						VolumeMounts: []corev1.VolumeMount{
@@ -117,7 +118,7 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 				Containers: []corev1.Container{
 					{
 						Name:            "diagnose",
-						Image:           "oceanbase/obdiag:latest",
+						Image:           fmt.Sprintf("%s:%s", config.GetConfig().OBDiag.Repository, config.GetConfig().OBDiag.Tag),
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{"/bin/sh", "-c"},
 						Args: []string{

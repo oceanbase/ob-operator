@@ -19,6 +19,7 @@ import (
 	"io"
 	"sort"
 
+	"github.com/oceanbase/ob-operator/internal/dashboard/config"
 	"github.com/pkg/errors"
 
 	logger "github.com/sirupsen/logrus"
@@ -261,7 +262,7 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 	configVolumeName := insconst.ConfigVolumeName
 	configMountPath := insconst.ConfigMountPath
 	configFile := configMountPath + "/config.yaml"
-	ttlSecondsAfterFinished := int32(insconst.TTLSecondsAfterFinished)
+	ttlSecondsAfterFinished := config.GetConfig().Inspection.TTLSecondsAfterFinished
 	serviceAccountName := fmt.Sprintf(insconst.ServiceAccountNameFmt, obclusterMeta.Name)
 	clusterRoleName := insconst.ClusterRoleName
 	clusterRoleBindingName := fmt.Sprintf(insconst.ClusterRoleBindingNameFmt, obclusterMeta.Namespace, obclusterMeta.Name)
@@ -332,7 +333,7 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 				InitContainers: []corev1.Container{
 					{
 						Name:            "generate-config",
-						Image:           "oceanbase/oceanbase-helper:latest",
+						Image:           fmt.Sprintf("%s:%s", config.GetConfig().OBHelper.Repository, config.GetConfig().OBHelper.Tag),
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{"bash", "-c", fmt.Sprintf("/home/admin/oceanbase/bin/oceanbase-helper generate obdiag-config -n %s -c %s -o %s", obclusterMeta.Namespace, obclusterMeta.Name, configFile)},
 						VolumeMounts: []corev1.VolumeMount{
@@ -346,7 +347,7 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 				Containers: []corev1.Container{
 					{
 						Name:            "inspection",
-						Image:           "oceanbase/obdiag:latest",
+						Image:           fmt.Sprintf("%s:%s", config.GetConfig().OBDiag.Repository, config.GetConfig().OBDiag.Tag),
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{"bash", "-c", fmt.Sprintf("obdiag check run --cases %s -c %s --inner_config obdiag.logger.silent=Ture && rm -f %s", checkPackage, configFile, configFile)},
 						VolumeMounts: []corev1.VolumeMount{
@@ -702,3 +703,4 @@ func newInspectionItemsFromMap(m map[string][]string) []insmodel.InspectionItem 
 	}
 	return items
 }
+

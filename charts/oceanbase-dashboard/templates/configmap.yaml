@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-dashboard-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: oceanbase-dashboard
+    app.kubernetes.io/instance: {{ .Release.Name }}
+data:
+  config.yaml: |
+    obdiag:
+      repository: {{ .Values.obdiag.image.repository }}
+      tag: {{ .Values.obdiag.image.tag }}
+    ob-helper:
+      repository: {{ .Values.obHelper.image.repository }}
+      tag: {{ .Values.obHelper.image.tag }}
+    inspection:
+      ttlSecondsAfterFinished: {{ .Values.inspection.ttlSecondsAfterFinished }}
+    diagnose:
+      ttlSecondsAfterFinished: {{ .Values.diagnose.ttlSecondsAfterFinished }}
+    download-log:
+      ttlSecondsAfterFinished: {{ .Values.downloadLog.ttlSecondsAfterFinished }}
