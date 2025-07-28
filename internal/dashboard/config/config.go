@@ -14,6 +14,7 @@ package config
 
 import (
 	"os"
+	"sync"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
@@ -36,9 +37,12 @@ type Config struct {
 	DownloadLog JobConfig   `yaml:"download-log"`
 }
 
-var dashboardConfig *Config
+var (
+	dashboardConfig *Config
+	once            sync.Once
+)
 
-func Init(configFile string) error {
+func loadConfig(configFile string) error {
 	data, err := os.ReadFile(configFile)
 	if err != nil {
 		return errors.Wrap(err, "read config file failed")
@@ -50,5 +54,10 @@ func Init(configFile string) error {
 }
 
 func GetConfig() *Config {
+	once.Do(func() {
+		if err := loadConfig("/etc/dashboard/config.yaml"); err != nil {
+			panic(err)
+		}
+	})
 	return dashboardConfig
 }

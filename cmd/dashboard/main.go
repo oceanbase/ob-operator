@@ -15,7 +15,6 @@ package main
 import (
 	"os"
 
-	"github.com/oceanbase/ob-operator/internal/dashboard/config"
 	logger "github.com/sirupsen/logrus"
 
 	"github.com/oceanbase/ob-operator/internal/dashboard/server"
@@ -53,10 +52,6 @@ func init() {
 // @in header
 // @name Cookie
 func main() {
-	if err := config.Init("/etc/dashboard/config.yaml"); err != nil {
-		logger.WithError(err).Errorln("Init config failed")
-		os.Exit(1)
-	}
 	httpServer := server.NewHTTPServer()
 	err := httpServer.RegisterRouter()
 	if err != nil {
