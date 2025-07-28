@@ -588,6 +588,7 @@ const ClusterOverview: React.FC = () => {
           clearDownloadStates();
         }}
         title={'日志下载'}
+        content={'日志收集完成'}
         diagnoseStatus={diagnoseStatus}
         attachmentValue={attachmentValue}
         jobValue={jobValue}
