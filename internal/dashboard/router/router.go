@@ -46,7 +46,7 @@ func InitRoutes(router *gin.Engine) {
 		gin.Recovery(),
 		requestid.New(),
 		middleware.Logging(),
-		gzip.Gzip(gzip.DefaultCompression),
+		gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{"/api/v1/attachments/"})),
 		sessions.Sessions("cookies", store),
 	)
 

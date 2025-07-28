@@ -13,6 +13,7 @@ interface DownloadModalProps {
   title: string;
   diagnoseStatus: string;
   attachmentValue: string;
+  content: string;
   jobValue?: any;
   errorLogs?: any;
   onJobDeleted?: () => void; // 新增：job被删除时的回调
@@ -28,6 +29,7 @@ export default function DownloadModal({
   jobValue,
   errorLogs,
   onJobDeleted,
+  content,
 }: DownloadModalProps) {
   const [showErrorDetails, setShowErrorDetails] = useState(false);
 
@@ -88,7 +90,7 @@ export default function DownloadModal({
       children: (
         <div style={{ minHeight: 100 }}>
           <Alert
-            message={'信息收集与分析完成'}
+            message={content || '信息收集与分析完成'}
             type="success"
             showIcon
             action={
