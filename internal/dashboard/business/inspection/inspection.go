@@ -469,9 +469,10 @@ func TriggerInspection(ctx context.Context, namespace, name, scenario string) (*
 	jobName := fmt.Sprintf("ins-%s-%s", scenario, rand.String(6))
 	triggeredJob := &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      jobName,
-			Namespace: cronJob.Namespace,
-			Labels:    cronJob.Labels,
+			Name:            jobName,
+			Namespace:       cronJob.GetNamespace(),
+			Labels:          cronJob.GetLabels(),
+			OwnerReferences: cronJob.GetOwnerReferences(),
 		},
 		Spec: cronJob.Spec.JobTemplate.Spec,
 	}
