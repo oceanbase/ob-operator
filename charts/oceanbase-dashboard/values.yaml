@@ -26,8 +26,9 @@ sharedVolume:
 
 cleanup:
   enabled: true
-  schedule: "0 0 * * *"
-  retentionDays: 1
+  schedule: "0 * * * *"
+  retentionMinutes: 60
+  ttlSecondsAfterFinished: 60
 
 inspection:
   obdiag:

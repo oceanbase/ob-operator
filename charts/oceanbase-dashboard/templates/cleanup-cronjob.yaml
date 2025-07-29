@@ -9,6 +9,7 @@ spec:
   schedule: {{ .Values.cleanup.schedule | quote }}
   jobTemplate:
     spec:
+      ttlSecondsAfterFinished: {{ .Values.cleanup.ttlSecondsAfterFinished }}
       template:
         spec:
           serviceAccountName: {{ .Release.Name }}-sa
@@ -20,7 +21,7 @@ spec:
             - /bin/sh
             - -c
             - |
-              find /shared-data -mtime +{{ .Values.cleanup.retentionDays }} -exec rm -rf {} +
+              find /shared-data -mmin +{{ .Values.cleanup.retentionMinutes }} -exec rm -rf {} +
             volumeMounts:
             - name: shared-volume
               mountPath: /shared-data
