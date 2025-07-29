@@ -12,7 +12,7 @@ data:
       obdiag:
         image: {{ .Values.inspection.obdiag.image }}
       oceanbase-helper:
-        image: {{ .Values.inspection.oceanbase-helper.image }}
+        image: {{ .Values.inspection.oceanbaseHelper.image }}
     job:
       inspection:
         ttlSecondsAfterFinished: {{ .Values.job.inspection.ttlSecondsAfterFinished }}
