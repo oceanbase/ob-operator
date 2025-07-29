@@ -20,6 +20,7 @@ spec:
       initContainers:
         - name: prometheus-storage-owner-init
           image: busybox:latest
+          imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "chown -R 65534:65534 /prometheus"]
           volumeMounts:
             - name: prometheus-storage-volume
@@ -45,6 +46,9 @@ spec:
               mountPath: /etc/rbac
             - name: shared-volume
               mountPath: /shared-data
+            - name: config-volume
+              mountPath: /etc/dashboard/config.yaml
+              subPath: config.yaml
           env:
             - name: SHARED_VOLUME_PVC_NAME
               value: {{ .Release.Name }}-shared-volume-pvc
@@ -140,6 +144,9 @@ spec:
           {{- else }}
           emptyDir: {}
           {{- end }}
+        - name: config-volume
+          configMap:
+            name: {{ .Release.Name }}-dashboard-config
 {{- if .Values.prometheus.persistence.enabled }}
 ---
 apiVersion: v1
