@@ -20,6 +20,7 @@ spec:
       initContainers:
         - name: prometheus-storage-owner-init
           image: busybox:latest
+          imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "chown -R 65534:65534 /prometheus"]
           volumeMounts:
             - name: prometheus-storage-volume
