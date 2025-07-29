@@ -643,6 +643,7 @@ func newReportFromJob(ctx context.Context, job *batchv1.Job, cluster *response.O
 					Fail     map[string][]string `json:"fail"`
 					Critical map[string][]string `json:"critical"`
 					Warning  map[string][]string `json:"warning"`
+					All      map[string][]string `json:"all"`
 				} `json:"observer"`
 			} `json:"data"`
 		}
@@ -657,6 +658,18 @@ func newReportFromJob(ctx context.Context, job *batchv1.Job, cluster *response.O
 			report.ResultStatistics.FailedCount = len(report.ResultDetail.FailedItems)
 			report.ResultStatistics.CriticalCount = len(report.ResultDetail.CriticalItems)
 			report.ResultStatistics.ModerateCount = len(report.ResultDetail.ModerateItems)
+
+			// Populate NegligibleItems with "all pass" results
+			negligibleItems := make([]insmodel.InspectionItem, 0)
+			for name, results := range result.Data.Observer.All {
+				if len(results) == 1 && results[0] == "all pass" {
+					negligibleItems = append(negligibleItems, insmodel.InspectionItem{
+						Name:    name,
+						Results: results,
+					})
+				}
+			}
+			report.ResultDetail.NegligibleItems = negligibleItems
 		}
 	}
 
