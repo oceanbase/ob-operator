@@ -17,6 +17,7 @@ spec:
           containers:
           - name: cleanup
             image: busybox:latest
+            imagePullPolicy: IfNotPresent
             command:
             - /bin/sh
             - -c
