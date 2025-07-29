@@ -21,6 +21,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/log"
 )
 
+
 func init() {
 	logLevel := os.Getenv("LOG_LEVEL")
 	if logLevel == "" {

@@ -26,5 +26,19 @@ sharedVolume:
 
 cleanup:
   enabled: true
-  schedule: "0 0 * * *"
-  retentionDays: 1
+  schedule: "0 * * * *"
+  retentionMinutes: 60
+  ttlSecondsAfterFinished: 60
+
+inspection:
+  obdiag:
+    image: "oceanbase/obdiag:latest"
+  oceanbaseHelper:
+    image: "oceanbase/oceanbase-helper:latest"
+
+job:
+  inspection:
+    ttlSecondsAfterFinished: 86400 # 1 day
+  normal:
+    ttlSecondsAfterFinished: 300 # 5 minutes
+
