@@ -1,20 +1,3 @@
-image:
-  repository: oceanbase/oceanbase-dashboard
-  tag: latest
-  pullPolicy: IfNotPresent
-
-inspection:
-  obdiag:
-    image: "oceanbase/obdiag:latest"
-  oceanbase-helper:
-    image: "oceanbase/oceanbase-helper:latest"
-
-job:
-  inspection:
-    ttlSecondsAfterFinished: 86400 # 1 day
-  normal:
-    ttlSecondsAfterFinished: 300 # 5 minutes
-
 initCredentials: true
 # admin's password. If not set, the chart will generate it randomly
 adminPassword: admin
@@ -45,3 +28,16 @@ cleanup:
   enabled: true
   schedule: "0 0 * * *"
   retentionDays: 1
+
+inspection:
+  obdiag:
+    image: "oceanbase/obdiag:latest"
+  oceanbase-helper:
+    image: "oceanbase/oceanbase-helper:latest"
+
+job:
+  inspection:
+    ttlSecondsAfterFinished: 86400 # 1 day
+  normal:
+    ttlSecondsAfterFinished: 300 # 5 minutes
+
