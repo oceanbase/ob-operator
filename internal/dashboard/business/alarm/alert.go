@@ -67,7 +67,7 @@ func filterAlert(alert *alert.Alert, filter *alert.AlertFilter) bool {
 		matched = matched && (filter.EndTime >= alert.StartsAt)
 	}
 	if filter.Keyword != "" {
-		matched = matched && strings.Contains(alert.Description, filter.Keyword)
+		matched = matched && (strings.Contains(alert.Description, filter.Keyword) || strings.Contains(alert.Summary, filter.Keyword))
 	}
 	if filter.Instance != nil {
 		matched = matched && filter.Instance.Equals(alert.Instance)
