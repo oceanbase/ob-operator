@@ -349,7 +349,7 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 						Name:            "inspection",
 						Image:           config.GetConfig().Inspection.OBDiag.Image,
 						ImagePullPolicy: corev1.PullIfNotPresent,
-						Command:         []string{"bash", "-c", fmt.Sprintf("obdiag check run --cases %s -c %s --inner_config obdiag.logger.silent=Ture && rm -f %s/*", checkPackage, configFile, configMountPath)},
+						Command:         []string{"bash", "-c", fmt.Sprintf("obdiag check run --cases %s -c %s --inner_config obdiag.logger.silent=Ture && rm -rf %s/*", checkPackage, configFile, configMountPath)},
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      configVolumeName,
