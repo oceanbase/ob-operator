@@ -604,6 +604,7 @@ const ClusterOverview: React.FC = () => {
       <Modal
         title="日志下载"
         open={diagnoseModal}
+        maskClosable={false}
         onCancel={() => {
           setDiagnoseModal(false);
           clearDownloadStates();

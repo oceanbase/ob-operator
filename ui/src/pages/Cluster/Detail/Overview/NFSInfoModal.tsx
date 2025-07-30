@@ -53,6 +53,7 @@ const NFSInfoModal: React.FC<NFSInfoModalProps> = ({
       title={title}
       open={visible}
       destroyOnClose
+      maskClosable={false}
       onCancel={() => {
         onCancel();
         resetFields();

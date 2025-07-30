@@ -19,7 +19,7 @@ import {
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import AlarmFilter from '../AlarmFilter';
 import RuleDrawerForm from '../Rules/RuleDrawerForm';
 import { sortEvents } from '../helper';
@@ -35,6 +35,8 @@ export default function Event() {
   const [jobValue, setjobValue] = useState<any>({});
   const [errorLogs, setErrorLogs] = useState('');
   const [attachmentValue, setAttachmentValue] = useState<string>('');
+  const [pollingJob, setPollingJob] = useState(false);
+  const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { data: listAlertsRes, run: getListAlerts } = useRequest(
     alert.listAlerts,
   );
@@ -48,11 +50,33 @@ export default function Event() {
     onSuccess: ({ data }) => {
       setAttachmentValue(data?.result?.attachmentId || '');
       setDiagnoseStatus(data?.status || '');
-      setErrorLogs(data?.result?.output || '');
-      if (data?.status !== 'successful' && data?.status !== 'failed') {
-        setTimeout(() => {
+      if (data?.status === 'failed') {
+        setErrorLogs(data?.result?.output || '');
+      }
+      // 如果状态不是successful或failed，继续轮询
+      if (
+        data?.status !== 'successful' &&
+        data?.status !== 'failed' &&
+        pollingJob
+      ) {
+        // 清除之前的定时器
+        if (pollingTimeoutRef.current) {
+          clearTimeout(pollingTimeoutRef.current);
+        }
+        // 设置新的定时器
+        pollingTimeoutRef.current = setTimeout(() => {
+          // 使用保存的原始时间参数进行轮询
           getJob(jobValue?.namespace, jobValue?.name);
-        }, 2000);
+        }, 2000); // 每2秒轮询一次
+      }
+    },
+    onError: () => {
+      // 如果job不存在，停止轮询
+      setPollingJob(false);
+      // 清除定时器
+      if (pollingTimeoutRef.current) {
+        clearTimeout(pollingTimeoutRef.current);
+        pollingTimeoutRef.current = null;
       }
     },
   });
@@ -60,10 +84,11 @@ export default function Event() {
   const { run: diagnoseAlert } = useRequest(alert.diagnoseAlert, {
     manual: true,
     onSuccess: ({ data }) => {
-      setDownloadModal(true);
+      setPollingJob(true); // 开始轮询
+      getJob(data?.namespace, data?.name);
       setDiagnoseStatus(data?.status);
       setjobValue(data);
-      getJob(data?.namespace, data?.name);
+      setDownloadModal(true);
     },
   });
 
@@ -269,14 +294,36 @@ export default function Event() {
 
       <DownloadModal
         visible={downloadModal}
-        onCancel={() => setDownloadModal(false)}
-        onOk={() => setDownloadModal(false)}
+        onCancel={() => {
+          setDownloadModal(false);
+          setPollingJob(false);
+          setDiagnoseStatus('');
+          setErrorLogs('');
+          setAttachmentValue('');
+          setjobValue({});
+        }}
+        onOk={() => {
+          setDownloadModal(false);
+          setPollingJob(false);
+          setDiagnoseStatus('');
+          setErrorLogs('');
+          setAttachmentValue('');
+          setjobValue({});
+        }}
         title={'诊断分析'}
         diagnoseStatus={diagnoseStatus}
         attachmentValue={attachmentValue}
         jobValue={jobValue}
         errorLogs={errorLogs}
-        onJobDeleted={() => {}} // Alert页面不需要轮询，传空函数
+        onJobDeleted={() => {
+          setPollingJob(false); // 停止轮询
+          // 清除定时器
+          if (pollingTimeoutRef.current) {
+            clearTimeout(pollingTimeoutRef.current);
+            pollingTimeoutRef.current = null;
+          }
+          setDiagnoseStatus('');
+        }}
       />
     </Space>
   );

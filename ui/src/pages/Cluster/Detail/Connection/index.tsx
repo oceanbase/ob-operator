@@ -33,7 +33,7 @@ const ClusterConnection: React.FC = () => {
   });
 
   const [terminalId, setTerminalId] = useState<string>();
-
+  console.log('terminalId', terminalId);
   return (
     <PageContainer header={header()}>
       <link
@@ -54,12 +54,14 @@ const ClusterConnection: React.FC = () => {
                 terminalId={terminalId}
                 onClose={() => {
                   setTerminalId(undefined);
-                  message.info(
-                    intl.formatMessage({
-                      id: 'Dashboard.Cluster.Detail.CloseConnection',
-                      defaultMessage: '连接已关闭',
-                    }),
-                  );
+                  if (terminalId) {
+                    message.info(
+                      intl.formatMessage({
+                        id: 'Dashboard.Cluster.Detail.CloseConnection',
+                        defaultMessage: '连接已关闭',
+                      }),
+                    );
+                  }
                 }}
               />
             ) : (
