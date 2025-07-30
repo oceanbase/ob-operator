@@ -79,7 +79,17 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 	var dbHost string
 	var dbPort int
 
+	k8sConfigDir := output + "/k8s"
+	if err := os.MkdirAll(k8sConfigDir, 0755); err != nil {
+		return err
+	}
+
 	for _, observer := range observers.Items {
+		pod, err := clientset.CoreV1().Pods(namespace).Get(context.Background(), observer.Name, metav1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
 		var ip string
 		annotationMode, ok := obcluster.Annotations[oceanbase.AnnotationsMode]
 		if ok && annotationMode == oceanbase.ModeService {
@@ -93,20 +103,38 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 				dbPort = 2881
 			}
 		} else {
-			pod, err := clientset.CoreV1().Pods(namespace).Get(context.Background(), observer.Name, metav1.GetOptions{})
-			if err != nil {
-				return err
-			}
 			ip = pod.Status.PodIP
 			if dbHost == "" {
 				dbHost = pod.Status.PodIP
 				dbPort = 2881
 			}
 		}
-		nodes = append(nodes, NodeConfig{
+
+		nodeConfig := NodeConfig{
 			PodName: observer.Name,
 			IP:      ip,
-		})
+		}
+
+		zone := observer.Spec.Zone
+		for _, obzone := range obcluster.Spec.Topology {
+			if obzone.Zone != zone || obzone.K8sCluster == "" {
+				continue
+			}
+			k8sCluster, err := obclusterclient.GetK8sCluster(context.Background(), obzone.K8sCluster)
+			if err != nil {
+				return err
+			}
+			config, err := k8sCluster.DecodeKubeConfig()
+			if err != nil {
+				return err
+			}
+			configPath := k8sConfigDir + "/" + obzone.K8sCluster + ".yaml"
+			if err := os.WriteFile(configPath, config, 0644); err != nil {
+				return err
+			}
+			nodeConfig.KubernetesConfigFile = configPath
+		}
+		nodes = append(nodes, nodeConfig)
 	}
 
 	diagConfig := &OBDiagConfig{
@@ -137,7 +165,7 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return os.WriteFile(output, yamlData, 0644)
+	return os.WriteFile(output+"/config.yaml", yamlData, 0644)
 }
 
 func init() {
