@@ -85,28 +85,20 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, observer := range observers.Items {
-		pod, err := clientset.CoreV1().Pods(namespace).Get(context.Background(), observer.Name, metav1.GetOptions{})
-		if err != nil {
-			return err
-		}
 
 		var ip string
 		annotationMode, ok := obcluster.Annotations[oceanbase.AnnotationsMode]
 		if ok && annotationMode == oceanbase.ModeService {
-			svc, err := clientset.CoreV1().Services(namespace).Get(context.Background(), observer.Name, metav1.GetOptions{})
-			if err != nil {
-				return err
-			}
-			ip = svc.Spec.ClusterIP
+			ip = observer.Status.ServiceIp
 			if dbHost == "" {
-				dbHost = svc.Spec.ClusterIP
-				dbPort = 2881
+				dbHost = observer.Status.ServiceIp
+				dbPort = oceanbase.SqlPort
 			}
 		} else {
-			ip = pod.Status.PodIP
+			ip = observer.Status.PodIp
 			if dbHost == "" {
-				dbHost = pod.Status.PodIP
-				dbPort = 2881
+				dbHost = observer.Status.PodIp
+				dbPort = oceanbase.SqlPort
 			}
 		}
 
