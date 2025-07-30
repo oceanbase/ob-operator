@@ -38,6 +38,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 	jobOutputDir := filepath.Join(sharedMountPath, jobName)
 	configFileName := "config.yaml"
 	configFilePath := filepath.Join(jobOutputDir, configFileName)
+	k8sConfigPath := filepath.Join(jobOutputDir, "k8s")
 	ttlSecondsAfterFinished := config.GetConfig().Job.Normal.TTLSecondsAfterFinished
 
 	labels := map[string]string{
@@ -61,7 +62,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 						Name:            "generate-config",
 						Image:           config.GetConfig().Inspection.OBHelper.Image,
 						ImagePullPolicy: corev1.PullIfNotPresent,
-						Command:         []string{"bash", "-c", fmt.Sprintf("mkdir -p %s && /home/admin/oceanbase/bin/oceanbase-helper generate obdiag-config -n %s -c %s -o %s", jobOutputDir, nn.Namespace, nn.Name, configFilePath)},
+						Command:         []string{"bash", "-c", fmt.Sprintf("mkdir -p %s && /home/admin/oceanbase/bin/oceanbase-helper generate obdiag-config -n %s -c %s -o %s", jobOutputDir, nn.Namespace, nn.Name, jobOutputDir)},
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      sharedPvcName,
@@ -77,7 +78,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 						ImagePullPolicy: corev1.PullIfNotPresent,
 						Command:         []string{"/bin/sh", "-c"},
 						Args: []string{
-							fmt.Sprintf("obdiag gather log --from %s --to %s --store_dir %s -c %s && rm -f %s && tar -czf %s/%s -C %s . && rm -rf %s", startTime, endTime, jobOutputDir, configFilePath, configFilePath, sharedMountPath, attachmentID, jobOutputDir, jobOutputDir),
+							fmt.Sprintf("obdiag gather log --from %s --to %s --store_dir %s -c %s && rm -f %s && rm -rf %s && tar -czf %s/%s -C %s . && rm -rf %s", startTime, endTime, jobOutputDir, configFilePath, configFilePath, k8sConfigPath, sharedMountPath, attachmentID, jobOutputDir, jobOutputDir),
 						},
 						VolumeMounts: []corev1.VolumeMount{
 							{
