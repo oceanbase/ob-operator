@@ -93,7 +93,9 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 	from := startTime.Format("2006-01-02 15:04:05")
 	to := endTime.Format("2006-01-02 15:04:05")
 
+	var backoffLimit int32 = 0
 	jobSpec := &batchv1.JobSpec{
+		BackoffLimit:            &backoffLimit,
 		TTLSecondsAfterFinished: &ttlSecondsAfterFinished,
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
