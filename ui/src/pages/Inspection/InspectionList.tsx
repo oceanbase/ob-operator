@@ -44,8 +44,6 @@ export default function InspectionList() {
   const [activeTab, setActiveTab] = useState('basic');
   // 存储所有tab的表单数据
   const [allTabData, setAllTabData] = useState<Record<string, any>>({});
-  // 存储初始值，用于比较是否有变化
-  const [initialValues, setInitialValues] = useState<any>({});
 
   // 当drawer打开且inspectionPolicies有数据时，设置初始值
   useEffect(() => {
@@ -53,11 +51,6 @@ export default function InspectionList() {
       // 延迟设置初始值，确保表单已经渲染
       setTimeout(() => {
         const initialValues = getInitialValues(activeTab);
-        // 保存初始值用于比较
-        setInitialValues((prev: any) => ({
-          ...prev,
-          [activeTab]: initialValues,
-        }));
         form.setFieldsValue(initialValues);
       }, 100);
     }
@@ -124,25 +117,6 @@ export default function InspectionList() {
 
   const dataSource = listInspectionPolicies?.data || [];
 
-  // 检查是否有新的配置内容
-  const hasChanges = () => {
-    // 检查当前tab的表单数据是否有变化
-    const currentFormData = form.getFieldsValue();
-    const currentInitialValues = initialValues[activeTab] || {};
-
-    // 比较当前表单数据与初始值
-    const hasCurrentTabChanges =
-      JSON.stringify(currentFormData.scheduleTime) !==
-        JSON.stringify(currentInitialValues.scheduleTime) ||
-      JSON.stringify(currentFormData.scheduleDates) !==
-        JSON.stringify(currentInitialValues.scheduleDates);
-
-    // 检查其他tab是否有保存的数据
-    const hasOtherTabChanges = Object.keys(allTabData).length > 0;
-
-    return hasCurrentTabChanges || hasOtherTabChanges;
-  };
-
   // 手动增加clusterName和namespace，便于搜索
   const realData = dataSource?.map((item: any) => {
     return {
@@ -178,7 +152,6 @@ export default function InspectionList() {
     {
       title: '集群名',
       dataIndex: 'clusterName',
-      width: 80,
       ...getColumnSearchProps({
         dataIndex: 'clusterName',
         searchInput: searchInput,
@@ -474,6 +447,17 @@ export default function InspectionList() {
       return savedData;
     }
 
+    // 如果没有现有配置，返回默认值（日调度，凌晨2点）
+    if (!repo) {
+      return {
+        scheduleDates: {
+          mode: 'Dayly',
+          days: [],
+        },
+        scheduleTime: undefined,
+      };
+    }
+
     return {
       scheduleDates: {
         mode: getScheduleMode(),
@@ -654,7 +638,6 @@ export default function InspectionList() {
             <Button
               type="primary"
               loading={saveLoading}
-              disabled={!hasChanges()}
               onClick={async () => {
                 // 先验证当前表单
                 try {

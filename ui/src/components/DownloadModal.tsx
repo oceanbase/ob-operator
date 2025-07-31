@@ -172,6 +172,7 @@ export default function DownloadModal({
         findByValue(modalContent, diagnoseStatus).label || '中...'
       }`}
       open={visible}
+      maskClosable={false}
       onOk={onOk}
       onCancel={() => {
         deleteJob(jobValue?.namespace, jobValue?.name);

@@ -50,7 +50,7 @@ const Report: React.FC<Props> = () => {
     }
   }, [namespace, name]);
 
-  const { criticalItems, failedItems, moderateItems } =
+  const { criticalItems, failedItems, moderateItems, negligibleItems } =
     getreport?.resultDetail || {};
   const { criticalCount, failedCount, moderateCount } =
     getreport?.resultStatistics || {};
@@ -195,6 +195,7 @@ const Report: React.FC<Props> = () => {
       ...(criticalItems || []),
       ...(failedItems || []),
       ...(moderateItems || []),
+      ...(negligibleItems || []),
     ];
 
     return (

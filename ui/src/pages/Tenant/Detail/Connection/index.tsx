@@ -66,12 +66,15 @@ const TenantConnection: React.FC = () => {
               terminalId={terminalId}
               onClose={() => {
                 setTerminalId(undefined);
-                message.info(
-                  intl.formatMessage({
-                    id: 'Dashboard.Cluster.Detail.CloseConnection',
-                    defaultMessage: '连接已关闭',
-                  }),
-                );
+                console.log('first 22');
+                if (terminalId) {
+                  message.info(
+                    intl.formatMessage({
+                      id: 'Dashboard.Cluster.Detail.CloseConnection',
+                      defaultMessage: '连接已关闭',
+                    }),
+                  );
+                }
               }}
             />
           ) : (
