@@ -8,6 +8,7 @@ import { TIME_FORMAT_WITHOUT_SECOND } from '@/constants/datetime';
 import { getColumnSearchProps } from '@/utils/component';
 import { parseCronExpression } from '@/utils/cron';
 import { formatTime } from '@/utils/datetime';
+import { getTimezoneInfo } from '@/utils/timezone';
 import { CheckCircleFilled } from '@ant-design/icons';
 import { theme } from '@oceanbase/design';
 import { Link } from '@umijs/max';
@@ -525,7 +526,14 @@ export default function InspectionList() {
         return null;
     }
 
-    return `${minute} ${hour} ${dayOfMonth} ${month} ${dayOfWeek}`;
+    const cronExpression = `${minute} ${hour} ${dayOfMonth} ${month} ${dayOfWeek}`;
+
+    // 获取浏览器当前时区信息
+    const timezoneInfo = getTimezoneInfo();
+    return {
+      cron: cronExpression,
+      timeZone: timezoneInfo.name,
+    };
   };
 
   // 处理删除巡检的函数
@@ -657,15 +665,16 @@ export default function InspectionList() {
                   currentFormData.scheduleTime &&
                   currentFormData.scheduleDates
                 ) {
-                  const currentCronExpression = generateCronFromFormData(
+                  const currentCronData = generateCronFromFormData(
                     currentFormData.scheduleTime,
                     currentFormData.scheduleDates,
                   );
 
-                  if (currentCronExpression) {
+                  if (currentCronData) {
                     allScheduleConfigs.push({
                       scenario: activeTab,
-                      schedule: currentCronExpression,
+                      schedule: currentCronData.cron,
+                      timeZone: currentCronData.timeZone,
                     });
                   }
                 }
@@ -675,15 +684,16 @@ export default function InspectionList() {
                   if (tabKey !== activeTab) {
                     const tabData = allTabData[tabKey];
                     if (tabData.scheduleTime && tabData.scheduleDates) {
-                      const cronExpression = generateCronFromFormData(
+                      const cronData = generateCronFromFormData(
                         tabData.scheduleTime,
                         tabData.scheduleDates,
                       );
 
-                      if (cronExpression) {
+                      if (cronData) {
                         allScheduleConfigs.push({
                           scenario: tabKey,
-                          schedule: cronExpression,
+                          schedule: cronData.cron,
+                          timeZone: cronData.timeZone,
                         });
                       }
                     }
@@ -698,9 +708,12 @@ export default function InspectionList() {
                     const isInSavedData = allTabData[config.scenario];
 
                     if (!isInCurrentForm && !isInSavedData) {
+                      // 获取时区信息
+                      const timezoneInfo = getTimezoneInfo();
                       allScheduleConfigs.push({
                         scenario: config.scenario,
                         schedule: config.schedule,
+                        timeZone: timezoneInfo.name,
                       });
                     }
                   });
@@ -719,6 +732,7 @@ export default function InspectionList() {
                   scheduleConfig: allScheduleConfigs.map((config) => ({
                     scenario: config.scenario as InspectionInspectionScenario,
                     schedule: config.schedule,
+                    timeZone: config.timeZone,
                   })),
                 };
                 createOrUpdateInspectionPolicy(body);
