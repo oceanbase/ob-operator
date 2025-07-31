@@ -360,7 +360,7 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 		return errors.Wrap(err, "Failed to create cluster role binding")
 	}
 
-	var backoffLimit int32 = 1
+	var backoffLimit int32 = 0
 	jobSpec := &batchv1.JobSpec{
 		BackoffLimit:            &backoffLimit,
 		TTLSecondsAfterFinished: &ttlSecondsAfterFinished,
