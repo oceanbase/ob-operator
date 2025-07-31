@@ -263,9 +263,12 @@ func DeleteInspectionPolicy(ctx context.Context, namespace, name, scenario strin
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Failed to list all jobs for inspection policy of obcluster %s/%s, scenario %s", namespace, name, scenario))
 	}
+	deletePolicy := metav1.DeletePropagationBackground
 	for _, job := range jobs {
 		logger.Infof("Delete job %s/%s", job.Namespace, job.Name)
-		err := client.ClientSet.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{})
+		err := client.ClientSet.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{
+			PropagationPolicy: &deletePolicy,
+		})
 		if err != nil {
 			logger.WithError(err).Errorf("Failed to delete inspection job for object %s/%s, scenario: %s", namespace, name, scenario)
 			delErrs = append(delErrs, err)
