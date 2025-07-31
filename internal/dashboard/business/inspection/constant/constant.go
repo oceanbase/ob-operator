@@ -20,4 +20,5 @@ const (
 	ClusterRoleName              = "oceanbase-dashboard-cluster-role"
 	ServiceAccountNameFmt        = "ob-ins-%s"
 	ClusterRoleBindingNameFmt    = "ob-ins-%s-%s"
+	DefaultTimeZone              = "Asia/Shanghai"
 )

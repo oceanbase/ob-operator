@@ -413,8 +413,13 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 		},
 	}
 
+	timeZone := insconst.DefaultTimeZone
+	if scheduleConfig.TimeZone != "" {
+		timeZone = scheduleConfig.TimeZone
+	}
 	spec := &batchv1.CronJobSpec{
 		Schedule: scheduleConfig.Schedule,
+		TimeZone: &timeZone,
 		JobTemplate: batchv1.JobTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: labels,

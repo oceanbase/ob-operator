@@ -30,10 +30,10 @@ const (
 	ScenarioPerformance InspectionScenario = "performance"
 )
 
-// TODO: refactor crontab to scheduleExpr
 type InspectionScheduleConfig struct {
 	Scenario InspectionScenario `json:"scenario" binding:"required"`
 	Schedule string             `json:"schedule" binding:"required"`
+	TimeZone string             `json:"timeZone,omitempty"`
 }
 
 type PolicyMeta struct {
