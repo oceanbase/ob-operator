@@ -48,7 +48,9 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 		bizconst.LABEL_ATTACHMENT_ID:     attachmentID,
 	}
 
+	var backoffLimit int32 = 1
 	jobSpec := &batchv1.JobSpec{
+		BackoffLimit:            &backoffLimit,
 		TTLSecondsAfterFinished: &ttlSecondsAfterFinished,
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
