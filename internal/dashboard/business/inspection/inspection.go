@@ -237,6 +237,8 @@ func GetInspectionPolicy(ctx context.Context, namespace, name string) (*insmodel
 }
 
 func DeleteInspectionPolicy(ctx context.Context, namespace, name, scenario string) error {
+	// delete cronjobs
+	pvcs := make([]string, 0)
 	cronJobs, err := listInspectionCronJobs(ctx, namespace, name, "", scenario)
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Failed to list all cronjobs for inspection policy of obcluster %s/%s, scenario %s", namespace, name, scenario))
@@ -244,6 +246,9 @@ func DeleteInspectionPolicy(ctx context.Context, namespace, name, scenario strin
 	client := client.GetClient()
 	delErrs := make([]error, 0)
 	for _, cronJob := range cronJobs {
+		pvcName := "pvc-" + cronJob.Name
+		pvcs = append(pvcs, pvcName)
+		logger.Infof("Delete cronjob %s/%s", cronJob.Namespace, cronJob.Name)
 		err := client.ClientSet.BatchV1().CronJobs(cronJob.Namespace).Delete(ctx, cronJob.Name, metav1.DeleteOptions{})
 		if err != nil {
 			logger.WithError(err).Errorf("Failed to delete inspection cronjob for object %s/%s, scenario: %s", namespace, name, scenario)
@@ -253,6 +258,40 @@ func DeleteInspectionPolicy(ctx context.Context, namespace, name, scenario strin
 	if len(delErrs) > 0 {
 		return errors.Errorf("Failed to delete inspection policy for object %s/%s, scenario: %s", namespace, name, scenario)
 	}
+
+	// delete jobs
+	jobs, err := listInspectionJobs(ctx, namespace, name, "", scenario)
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("Failed to list all jobs for inspection policy of obcluster %s/%s, scenario %s", namespace, name, scenario))
+	}
+	deletePolicy := metav1.DeletePropagationBackground
+	for _, job := range jobs {
+		logger.Infof("Delete job %s/%s", job.Namespace, job.Name)
+		err := client.ClientSet.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{
+			PropagationPolicy: &deletePolicy,
+		})
+		if err != nil {
+			logger.WithError(err).Errorf("Failed to delete inspection job for object %s/%s, scenario: %s", namespace, name, scenario)
+			delErrs = append(delErrs, err)
+		}
+	}
+	if len(delErrs) > 0 {
+		return errors.Errorf("Failed to delete inspection policy for object %s/%s, scenario: %s", namespace, name, scenario)
+	}
+
+	// delete pvc
+	for _, pvc := range pvcs {
+		logger.Infof("Delete pvc %s/%s", namespace, pvc)
+		err := client.ClientSet.CoreV1().PersistentVolumeClaims(namespace).Delete(ctx, pvc, metav1.DeleteOptions{})
+		if err != nil {
+			logger.WithError(err).Errorf("Failed to delete inspection job for object %s/%s, scenario: %s", namespace, name, scenario)
+			delErrs = append(delErrs, err)
+		}
+	}
+	if len(delErrs) > 0 {
+		return errors.Errorf("Failed to delete pvc for object %s/%s, scenario: %s", namespace, name, scenario)
+	}
+
 	return nil
 }
 
