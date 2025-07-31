@@ -35,8 +35,9 @@ type ServerConfig struct {
 }
 
 type NodeConfig struct {
-	PodName string `yaml:"pod_name"`
-	IP      string `yaml:"ip"`
+	PodName              string `yaml:"pod_name"`
+	IP                   string `yaml:"ip"`
+	KubernetesConfigFile string `yaml:"kubernetes_config_file,omitempty"`
 }
 
 type GlobalConfig struct {
