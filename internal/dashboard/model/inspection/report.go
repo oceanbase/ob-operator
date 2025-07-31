@@ -29,7 +29,7 @@ type ReportBriefInfo struct {
 	Name             string                 `json:"name" binding:"required"`
 	OBCluster        response.OBClusterMeta `json:"obCluster" binding:"required"`
 	Scenario         InspectionScenario     `json:"scenario" binding:"required"`
-	ResultStatistics ResultStatistics       `json:"resultStatistics" binding:"required"`
+	ResultStatistics *ResultStatistics      `json:"resultStatistics" binding:"required"`
 	Status           job.JobStatus          `json:"status" binding:"required"`
 	StartTime        int64                  `json:"startTime,omitempty"`
 	FinishTime       int64                  `json:"finishTime,omitempty"`
