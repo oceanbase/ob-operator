@@ -17,7 +17,7 @@ function devLog(...args: any[]) {
 }
 
 export const OBTerminal: React.FC<ITerminal> = (props) => {
-  const { terminalId } = props;
+  const { terminalId, onClose } = props;
   const ref = React.useRef<HTMLDivElement>(null);
   const [ws, setWs] = React.useState<WebSocket | null>(null);
 
@@ -55,7 +55,7 @@ export const OBTerminal: React.FC<ITerminal> = (props) => {
           window.addEventListener('beforeunload', () => {
             if (ws) {
               ws.close();
-              props.onClose?.();
+              onClose();
               setWs(null);
             }
           });
@@ -101,7 +101,7 @@ export const OBTerminal: React.FC<ITerminal> = (props) => {
                 okType: 'danger',
                 onOk: () => {
                   ws.close();
-                  props.onClose?.();
+                  onClose();
                   setWs(null);
                 },
               });

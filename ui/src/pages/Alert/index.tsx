@@ -19,6 +19,10 @@ const TAB_ITEMS: TabsProps['items'] = [
     }),
   },
   {
+    key: 'divider-1',
+    label: <Divider type="vertical" />,
+  },
+  {
     key: 'shield',
     label: intl.formatMessage({
       id: 'src.pages.Alert.0E2168FC',
@@ -26,7 +30,7 @@ const TAB_ITEMS: TabsProps['items'] = [
     }),
   },
   {
-    key: 'divider-1',
+    key: 'divider-2',
     label: <Divider type="vertical" />,
   },
   {
@@ -37,7 +41,7 @@ const TAB_ITEMS: TabsProps['items'] = [
     }),
   },
   {
-    key: 'divider-2',
+    key: 'divider-3',
     label: <Divider type="vertical" />,
   },
   {
@@ -46,6 +50,10 @@ const TAB_ITEMS: TabsProps['items'] = [
       id: 'src.pages.Alert.5208FED8',
       defaultMessage: '告警通道',
     }),
+  },
+  {
+    key: 'divider-4',
+    label: <Divider type="vertical" />,
   },
   {
     key: 'subscriptions',
