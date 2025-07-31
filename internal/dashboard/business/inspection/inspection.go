@@ -265,7 +265,7 @@ func DeleteInspectionPolicy(ctx context.Context, namespace, name, scenario strin
 	}
 	for _, job := range jobs {
 		logger.Infof("Delete job %s/%s", job.Namespace, job.Name)
-		err := client.ClientSet.BatchV1().CronJobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{})
+		err := client.ClientSet.BatchV1().Jobs(job.Namespace).Delete(ctx, job.Name, metav1.DeleteOptions{})
 		if err != nil {
 			logger.WithError(err).Errorf("Failed to delete inspection job for object %s/%s, scenario: %s", namespace, name, scenario)
 			delErrs = append(delErrs, err)
