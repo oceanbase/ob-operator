@@ -98,7 +98,10 @@ func GetJob(ctx context.Context, namespace, name string) (*job.Job, error) {
 
 func DeleteJob(ctx context.Context, namespace, name string) error {
 	client := k8sclient.GetClient()
-	err := client.ClientSet.BatchV1().Jobs(namespace).Delete(ctx, name, metav1.DeleteOptions{})
+	deletePolicy := metav1.DeletePropagationBackground
+	err := client.ClientSet.BatchV1().Jobs(namespace).Delete(ctx, name, metav1.DeleteOptions{
+		PropagationPolicy: &deletePolicy,
+	})
 	if err != nil {
 		if k8serrors.IsNotFound(err) {
 			return nil
