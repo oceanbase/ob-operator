@@ -374,6 +374,7 @@ func createCronJobForInspection(ctx context.Context, obclusterMeta *response.OBC
 
 	spec := &batchv1.CronJobSpec{
 		Schedule: scheduleConfig.Schedule,
+		TimeZone: insconst.DefaultTimeZone,
 		JobTemplate: batchv1.JobTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
 				Labels: labels,
