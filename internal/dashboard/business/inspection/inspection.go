@@ -247,6 +247,7 @@ func DeleteInspectionPolicy(ctx context.Context, namespace, name, scenario strin
 	for _, cronJob := range cronJobs {
 		pvcName := "pvc-" + cronJob.Name
 		pvcs = append(pvcs, pvcName)
+		logger.Infof("Delete cronjob %s/%s", cronJob.Namespace, cronJob.Name)
 		err := client.ClientSet.BatchV1().CronJobs(cronJob.Namespace).Delete(ctx, cronJob.Name, metav1.DeleteOptions{})
 		if err != nil {
 			logger.WithError(err).Errorf("Failed to delete inspection cronjob for object %s/%s, scenario: %s", namespace, name, scenario)
@@ -259,7 +260,6 @@ func DeleteInspectionPolicy(ctx context.Context, namespace, name, scenario strin
 
 	// delete jobs
 	jobs, err := listInspectionJobs(ctx, namespace, name, "", scenario)
-	logger.Infof("Found %d jobs", len(jobs))
 	if err != nil {
 		return errors.Wrap(err, fmt.Sprintf("Failed to list all jobs for inspection policy of obcluster %s/%s, scenario %s", namespace, name, scenario))
 	}
@@ -279,7 +279,6 @@ func DeleteInspectionPolicy(ctx context.Context, namespace, name, scenario strin
 	}
 
 	// delete pvc
-	logger.Infof("Found %d pvcs", len(pvcs))
 	for _, pvc := range pvcs {
 		logger.Infof("Delete pvc %s/%s", namespace, pvc)
 		err := client.ClientSet.CoreV1().PersistentVolumeClaims(namespace).Delete(ctx, pvc, metav1.DeleteOptions{})
