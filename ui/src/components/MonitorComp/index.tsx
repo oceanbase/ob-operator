@@ -46,65 +46,70 @@ export default function MonitorComp({
     defaultParams: [queryScope],
   });
 
-  // 生成tab列表和内容
-  const { tabList, contentList } = useMemo(() => {
-    const tabs =
+  // 生成tab列表
+  const tabList = useMemo(() => {
+    return (
       allMetrics?.map((container: any, index: number) => ({
         key: index.toString(),
         label: container?.name,
-      })) || [];
+      })) || []
+    );
+  }, [allMetrics]);
 
-    const contents: Record<string, React.ReactNode> = {};
+  // 生成当前激活tab的内容
+  const currentTabContent = useMemo(() => {
+    const currentContainer = allMetrics?.[parseInt(activeTabKey)];
+    if (!currentContainer) return null;
 
-    allMetrics?.forEach((container: any, index: number) => {
-      contents[index.toString()] = (
-        <div className={styles.monitorContainer}>
-          {container?.metricGroups?.map(
-            (graphContainer: any, graphIdx: number) => (
-              <Card className={styles.monitorItem} key={graphIdx}>
-                <div className={styles.graphHeader}>
-                  <IconTip
-                    tip={graphContainer.description}
-                    style={{ fontSize: 16 }}
-                    content={
-                      <span className={styles.graphHeaderText}>
-                        {graphContainer.name}
-                        {graphContainer.metrics[0]?.unit &&
-                          `(${graphContainer.metrics[0].unit}${
-                            (graphContainer.metrics[0].unit && type) ===
-                            'OVERVIEW'
-                              ? ','
-                              : ''
-                          }${
-                            type === 'OVERVIEW'
-                              ? graphContainer.metrics[0].key
-                              : ''
-                          })`}
-                      </span>
-                    }
-                  />
-                </div>
-                <LineGraph
-                  id={`monitor-${graphContainer.name.replace(/\s+/g, '')}`}
-                  isRefresh={isRefresh}
-                  queryRange={queryRange}
-                  metrics={graphContainer.metrics}
-                  labels={filterLabel}
-                  groupLabels={groupLabels}
-                  type={type}
-                  useFor={useFor}
-                  filterData={filterData}
-                  filterQueryMetric={filterQueryMetric}
+    return (
+      <div className={styles.monitorContainer}>
+        {currentContainer?.metricGroups?.map(
+          (graphContainer: any, graphIdx: number) => (
+            <Card className={styles.monitorItem} key={graphIdx}>
+              <div className={styles.graphHeader}>
+                <IconTip
+                  tip={graphContainer.description}
+                  style={{ fontSize: 16 }}
+                  content={
+                    <span className={styles.graphHeaderText}>
+                      {graphContainer.name}
+                      {graphContainer.metrics[0]?.unit &&
+                        `(${graphContainer.metrics[0].unit}${
+                          (graphContainer.metrics[0].unit && type) ===
+                          'OVERVIEW'
+                            ? ','
+                            : ''
+                        }${
+                          type === 'OVERVIEW'
+                            ? graphContainer.metrics[0].key
+                            : ''
+                        })`}
+                    </span>
+                  }
                 />
-              </Card>
-            ),
-          )}
-        </div>
-      );
-    });
-
-    return { tabList: tabs, contentList: contents };
+              </div>
+              <LineGraph
+                id={`monitor-${activeTabKey}-${graphContainer.name.replace(
+                  /\s+/g,
+                  '',
+                )}`}
+                isRefresh={isRefresh}
+                queryRange={queryRange}
+                metrics={graphContainer.metrics}
+                labels={filterLabel}
+                groupLabels={groupLabels}
+                type={type}
+                useFor={useFor}
+                filterData={filterData}
+                filterQueryMetric={filterQueryMetric}
+              />
+            </Card>
+          ),
+        )}
+      </div>
+    );
   }, [
+    activeTabKey,
     allMetrics,
     isRefresh,
     queryRange,
@@ -125,7 +130,7 @@ export default function MonitorComp({
           activeTabKey={activeTabKey}
           onTabChange={(key) => setActiveTabKey(key)}
         >
-          {contentList[activeTabKey] || (
+          {currentTabContent || (
             <div style={{ padding: 20, textAlign: 'center', color: '#999' }}>
               暂无数据
             </div>

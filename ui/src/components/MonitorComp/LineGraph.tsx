@@ -6,7 +6,7 @@ import { Line } from '@antv/g2plot';
 import { useInViewport, useUpdateEffect } from 'ahooks';
 import { Empty, Spin } from 'antd';
 import dayjs from 'dayjs';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type MetricType = {
   description: string;
@@ -104,13 +104,16 @@ export default function LineGraph({
       },
       interactions: [{ type: 'marker-active' }, { type: 'brush' }],
     };
+
+    // 如果图表实例存在，先销毁它
     if (lineInstanceRef.current) {
-      // lineInstanceRef.current.update({ ...config });
-      lineInstanceRef.current.changeData(metricsData);
-    } else {
-      lineInstanceRef.current = new Line(id, { ...config });
-      lineInstanceRef.current.render();
+      lineInstanceRef.current.destroy();
+      lineInstanceRef.current = null;
     }
+
+    // 创建新的图表实例
+    lineInstanceRef.current = new Line(id, { ...config });
+    lineInstanceRef.current.render();
   };
 
   const lineInstanceDestroy = () => {
@@ -135,14 +138,12 @@ export default function LineGraph({
       }
 
       if (metricsData && metricsData.length > 0) {
-        if (isEmpty) {
-          setIsEmpty(false);
-          setIsloading(false);
-          return;
-        }
+        setIsEmpty(false);
+        setIsloading(false);
         lineInstanceRender(metricsData);
+      } else {
+        lineInstanceDestroy();
       }
-      setIsloading(false);
     },
     onError: () => {
       lineInstanceDestroy();
@@ -160,6 +161,13 @@ export default function LineGraph({
       setInViewportCount(inViewportCount + 1);
     }
   }, [inViewport]);
+
+  // 当ID变化时，重新检查视口状态
+  useUpdateEffect(() => {
+    if (inViewport && inViewportCount === 0) {
+      setInViewportCount(1);
+    }
+  }, [id, inViewport]);
 
   useUpdateEffect(() => {
     if (inViewportCount === 1 && !isRefresh) {
@@ -182,6 +190,32 @@ export default function LineGraph({
       queryMetrics(getQueryParms());
     }
   }, [labels, queryRange]);
+
+  // 监听ID变化，当tab切换导致ID变化时，重新初始化图表
+  useUpdateEffect(() => {
+    if (lineInstanceRef.current) {
+      lineInstanceDestroy();
+    }
+    // 重置inViewportCount，确保新tab能触发数据查询
+    setInViewportCount(0);
+    // 立即触发数据查询，不等待视口检测
+    if (!isRefresh) {
+      queryMetrics(getQueryParms());
+    }
+  }, [id]);
+
+  // 组件卸载时清理图表实例
+  useEffect(() => {
+    return () => {
+      if (lineInstanceRef.current) {
+        lineInstanceDestroy();
+      }
+      // 重置状态
+      setInViewportCount(0);
+      setIsEmpty(true);
+      setIsloading(true);
+    };
+  }, []);
 
   return (
     <div style={{ height: `${height}px` }}>

@@ -50,14 +50,18 @@ export default function Tenant() {
           </Col>
         ) : null}
 
-        {tenantsList && (
+        {tenantsList && tenantsList.length > 0 && clusterDetail && (
           <Col span={24}>
             <MonitorComp
+              key={`monitor-${clusterName}-${tenantsList.length}`}
               queryRange={DEFAULT_QUERY_RANGE}
               queryScope="OBTENANT"
               groupLabels={['tenant_name']}
               useFor="tenant"
-              filterLabel={[{ key: 'ob_cluster_name', value: clusterName }]}
+              type="DETAIL"
+              filterLabel={[
+                { key: 'ob_cluster_name', value: clusterName || '' },
+              ]}
               filterQueryMetric={[
                 ...tenantsList.map((tenant) => ({
                   key: 'tenant_name' as API.LableKeys,
