@@ -7,7 +7,7 @@ import { PageContainer } from '@ant-design/pro-components';
 import { useAccess, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Button, Col, Row, Space, message } from 'antd';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import BasicInfo from '../Overview/BasicInfo';
 
 const ClusterConnection: React.FC = () => {
@@ -33,6 +33,33 @@ const ClusterConnection: React.FC = () => {
   });
 
   const [terminalId, setTerminalId] = useState<string>();
+
+  // 组件卸载时关闭连接
+  useEffect(() => {
+    return () => {
+      if (terminalId) {
+        // 这里可以调用关闭连接的API 通过设置terminalId为undefined来触发关闭
+        setTerminalId(undefined);
+      }
+    };
+  }, [terminalId, ns, name]);
+
+  // 监听路由变化，关闭连接
+  useEffect(() => {
+    const handleRouteChange = () => {
+      if (terminalId) {
+        setTerminalId(undefined);
+      }
+    };
+
+    // 监听 popstate 事件（浏览器前进后退）
+    window.addEventListener('popstate', handleRouteChange);
+
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+    };
+  }, [terminalId]);
+
   return (
     <PageContainer header={header()}>
       <link
