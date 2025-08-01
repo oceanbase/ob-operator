@@ -33,7 +33,6 @@ const ClusterConnection: React.FC = () => {
   });
 
   const [terminalId, setTerminalId] = useState<string>();
-  console.log('terminalId', terminalId);
   return (
     <PageContainer header={header()}>
       <link

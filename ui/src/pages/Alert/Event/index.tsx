@@ -73,6 +73,7 @@ export default function Event() {
     onError: () => {
       // 如果job不存在，停止轮询
       setPollingJob(false);
+      setDownloadModal(false);
       // 清除定时器
       if (pollingTimeoutRef.current) {
         clearTimeout(pollingTimeoutRef.current);

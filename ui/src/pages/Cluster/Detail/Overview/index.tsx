@@ -62,11 +62,11 @@ const ClusterOverview: React.FC = () => {
   const [diagnoseStatus, setDiagnoseStatus] = useState('');
   const [jobValue, setjobValue] = useState<any>({});
   const [attachmentValue, setAttachmentValue] = useState('');
-
   const [errorLogs, setErrorLogs] = useState('');
-
   const [selectRange, setSelectRange] = useState<string | number>('custom');
   const [rangePickerKey, setRangePickerKey] = useState(0);
+  const [pollingJob, setPollingJob] = useState(false);
+  const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // 当诊断弹窗打开时，确保状态是干净的
   useEffect(() => {
@@ -153,9 +153,6 @@ const ClusterOverview: React.FC = () => {
     },
   });
 
-  const [pollingJob, setPollingJob] = useState(false);
-  const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
   const { run: getJob } = useRequest(job.getJob, {
     manual: true,
     onSuccess: ({ data }) => {
@@ -182,13 +179,9 @@ const ClusterOverview: React.FC = () => {
       }
     },
     onError: () => {
-      // 如果job不存在，停止轮询
-      setPollingJob(false);
-      // 清除定时器
-      if (pollingTimeoutRef.current) {
-        clearTimeout(pollingTimeoutRef.current);
-        pollingTimeoutRef.current = null;
-      }
+      // 如果job不存在，停止轮询，
+      clearDownloadStates();
+      setDownloadModal(false);
     },
   });
 
