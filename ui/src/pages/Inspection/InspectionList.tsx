@@ -145,7 +145,7 @@ export default function InspectionList() {
       render: (text: string, record: any) => {
         return (
           <Link to={`/cluster/${text}/${record?.obCluster?.clusterName}`}>
-            <CustomTooltip text={text} width={100} />
+            <CustomTooltip text={text} width={120} />
           </Link>
         );
       },
@@ -164,7 +164,7 @@ export default function InspectionList() {
         symbol: '',
       }),
       render: (text: string) => {
-        return <CustomTooltip text={text} width={60} />;
+        return <CustomTooltip text={text} width={80} />;
       },
     },
     {

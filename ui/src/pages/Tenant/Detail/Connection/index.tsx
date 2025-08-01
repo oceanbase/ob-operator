@@ -66,7 +66,6 @@ const TenantConnection: React.FC = () => {
               terminalId={terminalId}
               onClose={() => {
                 setTerminalId(undefined);
-                console.log('first 22');
                 if (terminalId) {
                   message.info(
                     intl.formatMessage({
