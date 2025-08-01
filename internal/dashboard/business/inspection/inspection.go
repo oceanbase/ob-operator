@@ -39,6 +39,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/inspection"
 	insmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/inspection"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/job"
 	jobmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/job"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
@@ -131,6 +132,10 @@ func ListInspectionPolicies(ctx context.Context, namespace, name, obclusterName 
 	reportsMap := make(map[string]map[string][]insmodel.ReportBriefInfo)
 	for i := range reports {
 		report := reports[i]
+		// only successful report is returned in policy's latest report
+		if report.Status != job.JobStatusSuccessful {
+			continue
+		}
 		key := fmt.Sprintf("%s/%s", report.OBCluster.Namespace, report.OBCluster.Name)
 		scenario := string(report.Scenario)
 		if _, ok := reportsMap[key]; !ok {
@@ -571,7 +576,6 @@ func ListInspectionReports(ctx context.Context, namespace, name, obcluster, scen
 	}
 
 	jobs, err := listInspectionJobs(ctx, namespace, name, obcluster, scenario)
-	logger.Infof("Found %d corresponding jobs", len(jobs))
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to list jobs")
 	}
@@ -663,7 +667,7 @@ func newReportFromJob(ctx context.Context, job *batchv1.Job, cluster *response.O
 			OBCluster:        cluster.OBClusterMeta,
 			Scenario:         insmodel.InspectionScenario(scenario),
 			Status:           status,
-			ResultStatistics: insmodel.ResultStatistics{},
+			ResultStatistics: &insmodel.ResultStatistics{},
 		},
 		ResultDetail: insmodel.ResultDetail{},
 	}
