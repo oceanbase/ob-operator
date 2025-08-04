@@ -7,15 +7,13 @@ export const usePublicKey = () => {
   const { publicKey, setPublicKey } = useModel('global');
 
   useEffect(() => {
-    if (!publicKey) {
-      getAppInfo()
-        .then(({ data }) => {
-          setPublicKey(data.publicKey);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    }
+    getAppInfo()
+      .then(({ data }) => {
+        setPublicKey(data.publicKey);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }, []);
 
   return publicKey;
