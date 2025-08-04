@@ -455,7 +455,16 @@ export async function queryMetricsReq({
               ).value || '';
           }
         } else {
-          item.name = metric.metric.name;
+          // 对于租户详情页面，需要区分不同租户的指标名称
+          if (useFor === 'tenant' && type === 'DETAIL') {
+            const tenantLabel = metric.metric.labels.find(
+              (label) => label.key === 'tenant_name',
+            );
+            const tenantName = tenantLabel?.value || '';
+            item.name = `${metric.metric.name} (${tenantName})`;
+          } else {
+            item.name = metric.metric.name;
+          }
         }
       });
     });

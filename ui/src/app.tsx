@@ -26,8 +26,13 @@ export const request: RequestConfig = {
     },
     errorHandler: (err) => {
       console.log('errorHandler', err);
+
+      const url = err?.config?.url || err?.request?.responseURL || '';
+
       if (err?.response?.status === 401) {
         location.href = '/#/login';
+      } else if (url.includes('/api/web/oceanbase/report')) {
+        console.log('Report data error, not showing message:', err);
       } else {
         message.error(err?.response?.data?.message || err.message);
       }
