@@ -4,7 +4,7 @@ PROJECT=oceanbase-dashboard
 
 PWD ?= $(shell pwd)
 
-DASHBOARD_VERSION ?= 0.4.0
+DASHBOARD_VERSION ?= 0.5.0
 DASHBOARD_IMG ?= quay.io/oceanbase/oceanbase-dashboard:${DASHBOARD_VERSION}
 COMMIT_HASH ?= $(shell git rev-parse --short HEAD)
 BUILD_TIMESTAMP ?= $(shell date '+%Y%m%d%H%M%S')
