@@ -34,6 +34,7 @@ import (
 
 	"github.com/oceanbase/ob-operator/internal/clients"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/k8s"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
@@ -135,22 +136,31 @@ func CreateOBClusterConnTerminal(c *gin.Context) (*response.OBConnection, error)
 	}
 	passwd := string(secret.Data["password"])
 
-	pods, err := client.GetClient().ClientSet.CoreV1().Pods(nn.Namespace).List(c, metav1.ListOptions{
-		LabelSelector: oceanbaseconst.LabelRefOBCluster + "=" + obcluster.Name,
-		FieldSelector: "status.phase=Running",
-	})
+	observerList, err := clients.ListOBServersOfOBCluster(c, obcluster)
 	if err != nil {
 		return nil, err
 	}
-	if len(pods.Items) == 0 {
-		return nil, httpErr.NewBadRequest("no running pods found in obcluster")
+	if len(observerList.Items) == 0 {
+		return nil, httpErr.NewBadRequest("no running observers found in obcluster")
+	}
+
+	name := ""
+	host := ""
+	for _, observer := range observerList.Items {
+		if observer.Status.Status == serverstatus.Running {
+			name = observer.Name
+			host = observer.Status.PodIp
+		}
+	}
+	if name == "" && host == "" {
+		return nil, httpErr.NewBadRequest("no running observers found in obcluster")
 	}
 
 	conn := &response.OBConnection{}
 	conn.Namespace = nn.Namespace
 	conn.Cluster = nn.Name
-	conn.Pod = pods.Items[0].Name
-	conn.Host = pods.Items[0].Status.PodIP
+	conn.Pod = name
+	conn.Host = host
 	conn.ClientIP = c.ClientIP()
 	conn.Password = passwd
 	conn.User = "root"
