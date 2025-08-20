@@ -31,6 +31,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
+	"github.com/oceanbase/ob-operator/pkg/helper/converter"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/status/tenant"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
@@ -48,10 +49,31 @@ func (m *OBTenantManager) createTenant() tasktypes.TaskError {
 		return errors.Wrap(err, "Failed to get sql operator error when creating tenant")
 	}
 
+	variableList := make([]string, 0)
+	isWhiteListSet := false
+	for _, variable := range m.OBTenant.Spec.Variables {
+		if variable.Name == tenant.OBTcpInvitedNodes {
+			isWhiteListSet = true
+		}
+		setValue := variable.Value
+		value := converter.AutoConvert(variable.Value)
+		switch v := value.(type) {
+		case string:
+			setValue = fmt.Sprintf("'%s'", v)
+		default:
+			setValue = converter.ConvertToString(v)
+		}
+		variableList = append(variableList, fmt.Sprintf("%s = %s", variable.Name, setValue))
+	}
+	if !isWhiteListSet {
+		whiteListVariableConfig := m.generateWhiteListInVariableForm(m.OBTenant.Spec.ConnectWhiteList)
+		variableList = append(variableList, whiteListVariableConfig)
+	}
+
 	tenantSQLParam := model.TenantSQLParam{
 		TenantName:   tenantName,
 		PrimaryZone:  m.generateSpecPrimaryZone(pools),
-		VariableList: m.generateWhiteListInVariableForm(m.OBTenant.Spec.ConnectWhiteList),
+		VariableList: strings.Join(variableList, ", "),
 		Charset:      m.OBTenant.Spec.Charset,
 		PoolList:     m.generateSpecPoolList(pools),
 		Locality:     m.generateLocality(pools),

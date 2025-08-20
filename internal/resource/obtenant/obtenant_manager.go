@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -37,6 +38,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/status/tenant"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/variables"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
@@ -435,6 +437,14 @@ func (m *OBTenantManager) hasModifiedVariables() bool {
 		variableMap[variable.Name] = variable
 	}
 	for _, variable := range m.OBTenant.Spec.Variables {
+		if slices.Contains(variables.ReadonlyVariables, variable.Name) {
+			m.Logger.Info("Variable is readonly, skip", "name", variable.Name)
+			continue
+		}
+		if slices.Contains(variables.UnsupportedVariables, variable.Name) {
+			m.Logger.Info("Variable is unsupported, skip", "name", variable.Name)
+			continue
+		}
 		variableStatus, variableExists := variableMap[variable.Name]
 		// need create or update variable
 		if !variableExists || variableStatus.Value != variable.Value {
