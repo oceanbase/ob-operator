@@ -437,12 +437,12 @@ func (m *OBTenantManager) hasModifiedVariables() bool {
 		variableMap[variable.Name] = variable
 	}
 	for _, variable := range m.OBTenant.Spec.Variables {
+		// skip readonly variables
 		if slices.Contains(variables.ReadonlyVariables, variable.Name) {
-			m.Logger.Info("Variable is readonly, skip", "name", variable.Name)
 			continue
 		}
+		// skip unsupported variables
 		if slices.Contains(variables.UnsupportedVariables, variable.Name) {
-			m.Logger.Info("Variable is unsupported, skip", "name", variable.Name)
 			continue
 		}
 		variableStatus, variableExists := variableMap[variable.Name]
