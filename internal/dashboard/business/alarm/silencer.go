@@ -121,12 +121,12 @@ func CreateOrUpdateSilencer(ctx context.Context, param *silence.SilencerParam) (
 
 	matchers = append(matchers, instanceMatcher)
 	matcherMap[labelInstance] = instanceMatcher
-	for _, m := range param.Matchers {
+	for idx, m := range param.Matchers {
 		matcher := &ammodels.Matcher{
 			IsEqual: &trueValue,
-			IsRegex: &m.IsRegex,
-			Name:    &m.Name,
-			Value:   &m.Value,
+			IsRegex: &param.Matchers[idx].IsRegex,
+			Name:    &param.Matchers[idx].Name,
+			Value:   &param.Matchers[idx].Value,
 		}
 		_, exists := matcherMap[m.Name]
 		if !exists {
