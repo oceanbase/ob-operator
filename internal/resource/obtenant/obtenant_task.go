@@ -615,6 +615,9 @@ func MaintainTenantVariables(m *OBTenantManager) tasktypes.TaskError {
 	variableMap := make(map[string]apitypes.Variable)
 	for _, variable := range m.OBTenant.Status.Variables {
 		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Build variable map", "variable", variable.Name)
+		variableMap[variable.Name] = variable
+	}
+	for _, variable := range m.OBTenant.Spec.Variables {
 		// skip readonly variables
 		if slices.Contains(variables.ReadonlyVariables, variable.Name) {
 			continue
@@ -623,9 +626,6 @@ func MaintainTenantVariables(m *OBTenantManager) tasktypes.TaskError {
 		if slices.Contains(variables.UnsupportedVariables, variable.Name) {
 			continue
 		}
-		variableMap[variable.Name] = variable
-	}
-	for _, variable := range m.OBTenant.Spec.Variables {
 		variableStatus, variableExists := variableMap[variable.Name]
 		if !variableExists {
 			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Variable not exists, need create", "variable", variable.Name)
