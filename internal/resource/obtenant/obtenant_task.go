@@ -17,6 +17,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
 	"time"
 
 	"github.com/pkg/errors"
@@ -37,6 +38,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/helper/converter"
 	helpermodel "github.com/oceanbase/ob-operator/pkg/helper/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/status/tenant"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/variables"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
@@ -613,6 +615,14 @@ func MaintainTenantVariables(m *OBTenantManager) tasktypes.TaskError {
 	variableMap := make(map[string]apitypes.Variable)
 	for _, variable := range m.OBTenant.Status.Variables {
 		m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Build variable map", "variable", variable.Name)
+		// skip readonly variables
+		if slices.Contains(variables.ReadonlyVariables, variable.Name) {
+			continue
+		}
+		// skip unsupported variables
+		if slices.Contains(variables.UnsupportedVariables, variable.Name) {
+			continue
+		}
 		variableMap[variable.Name] = variable
 	}
 	for _, variable := range m.OBTenant.Spec.Variables {
