@@ -1,7 +1,7 @@
 clusterName: obcluster
 clusterId: 1
 
-obAgentVersion: 4.2.1-100000092023101717
+obAgentVersion: 4.2.2-100000042024011120
 
 annotations: 
   # "oceanbase.oceanbase.com/independent-pvc-lifecycle": "true"
@@ -22,7 +22,7 @@ observerConfig:
 monitorEnabled: true
 monitorResource:
   cpu: 500m
-  memory: 2Gi
+  memory: 1Gi
 
 parameters:
   - name: system_memory
