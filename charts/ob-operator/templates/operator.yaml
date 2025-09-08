@@ -21851,7 +21851,7 @@ spec:
         env:
         - name: TELEMETRY_REPORTER
           value: {{ .Values.reporter }}
-        image: quay.io/oceanbase/ob-operator:2.3.2
+        image: quay.io/oceanbase/ob-operator:2.3.3
         livenessProbe:
           httpGet:
             path: /healthz
