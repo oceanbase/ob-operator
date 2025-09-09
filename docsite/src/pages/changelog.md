@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.3.2 (Release on 2025.06.12)
+## 2.3.2 (Release on 2025.09.08)
 ### New Feature
 1. Support setting addressingModel for S3_COMPATIBLE storage.
 2. Support setting variables while creating tenant, for setting variables which are not able to be modifed after tenant creation.
