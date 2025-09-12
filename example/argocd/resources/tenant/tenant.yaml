@@ -1,0 +1,25 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenant
+metadata:
+  name: example-tenant
+  namespace: oceanbase
+spec:
+  obcluster: example-obcluster
+  tenantName: t1
+  unitNum: 1
+  charset: utf8mb4
+  connectWhiteList: '%'
+  forceDelete: true
+  credentials:
+    root: t1-ro
+  pools:
+    - zone: zone1
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 1
+        memorySize: 2Gi
+        minCPU: 1
+        logDiskSize: 4Gi

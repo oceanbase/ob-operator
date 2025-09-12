@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ob-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/chris-sun-star/ob-operator.git # Replace with your git repo URL
+    path: charts/ob-operator
+    targetRevision: argocd
+    helm:
+      releaseName: ob-operator
+  destination:
+    # Replace with the URL of your remote cluster's API server
+    server: "https://kubernetes.default.svc"
+    namespace: oceanbase-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
