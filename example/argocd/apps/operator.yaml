@@ -8,13 +8,14 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/chris-sun-star/ob-operator.git # Replace with your git repo URL
-    path: charts/ob-operator
-    targetRevision: argocd
+    repoURL: https://oceanbase.github.io/ob-operator
+    chart: ob-operator
+    targetRevision: 2.3.3
     helm:
-      releaseName: ob-operator
+      parameters:
+      - name: reporter
+        value: "argocd"
   destination:
-    # Replace with the URL of your remote cluster's API server
     server: "https://kubernetes.default.svc"
     namespace: oceanbase-system
   syncPolicy:

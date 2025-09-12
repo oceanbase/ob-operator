@@ -4,12 +4,12 @@ metadata:
   name: ob-tenant
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/sync-wave: "4"
 spec:
   project: default
   source:
     repoURL: https://github.com/chris-sun-star/ob-operator.git # Replace with your git repo URL
-    path: example/argocd/resources/tenant
+    path: example/argocd/resources/obtenant
     targetRevision: argocd
   destination:
     # Replace with the URL of your remote cluster's API server

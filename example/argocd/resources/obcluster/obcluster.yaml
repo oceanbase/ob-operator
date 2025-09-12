@@ -1,0 +1,38 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBCluster
+metadata:
+  name: obcluster
+  namespace: oceanbase
+  annotations:
+    "oceanbase.oceanbase.com/mode": "service"
+spec:
+  clusterName: obcluster
+  clusterId: 1
+  userSecrets:
+    root: root-password
+  topology:
+    - zone: zone1
+      replica: 1
+    - zone: zone2
+      replica: 1
+    - zone: zone3
+      replica: 1
+  observer:
+    image: oceanbase/oceanbase-cloud-native:4.3.5.3-103000092025080818
+    resource:
+      memory: 10Gi
+    storage:
+      dataStorage:
+        storageClass: local-path
+        size: 30Gi
+      redoLogStorage:
+        storageClass: local-path
+        size: 30Gi
+      logStorage:
+        storageClass: local-path
+        size: 10Gi
+  parameters:
+    - name: __min_full_resource_pool_memory
+      value: "2147483648"
+    - name: system_memory
+      value: 1G

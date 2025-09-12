@@ -1,6 +1,3 @@
-# Source: https://cert-manager.io/docs/installation/helm/
-# Make sure you have added the jetstack helm repo to your Argo CD instance.
-# argocd repo add https://charts.jetstack.io --name jetstack
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -19,7 +16,6 @@ spec:
       - name: installCRDs
         value: "true"
   destination:
-    # Replace with the URL of your remote cluster's API server
     server: "https://kubernetes.default.svc"
     namespace: cert-manager
   syncPolicy:
