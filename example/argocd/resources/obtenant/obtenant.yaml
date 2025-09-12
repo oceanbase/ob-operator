@@ -11,7 +11,7 @@ spec:
   connectWhiteList: '%'
   forceDelete: true
   credentials:
-    root: obtenant-root-password
+    root: root-password
   pools:
     - zone: zone1
       type:

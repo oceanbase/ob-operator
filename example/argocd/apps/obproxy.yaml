@@ -1,18 +1,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ob-tenant
+  name: ob-proxy
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "4"
 spec:
   project: default
   source:
-    repoURL: https://github.com/chris-sun-star/ob-operator.git # Replace with your git repo URL
-    path: example/argocd/resources/obtenant
-    targetRevision: argocd
+    repoURL: https://oceanbase.github.io/ob-operator
+    chart: obproxy-ce
+    targetRevision: 0.1.0
+    helm:
+      parameters:
+      - name: obcluster
+        value: "obcluster"
   destination:
-    # Replace with the URL of your remote cluster's API server
     server: "https://kubernetes.default.svc"
     namespace: oceanbase
   syncPolicy:
