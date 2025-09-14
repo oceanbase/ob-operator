@@ -5,6 +5,17 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "4"
+    argocd.argoproj.io/resource-customizations: |
+      oceanbase.oceanbase.com/OBTenant:
+        health.lua: |
+          hs = {}
+          hs.status = "Progressing"
+          if obj.status ~= nil then
+            if obj.status.status == "running" then
+              hs.status = "Healthy"
+            end
+          end
+          return hs
 spec:
   project: default
   source:
@@ -18,3 +29,8 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    ignoreDifferences:
+    - group: "oceanbase.oceanbase.com"
+      kind: "OBTenant"
+      jsonPointers:
+      - /status
