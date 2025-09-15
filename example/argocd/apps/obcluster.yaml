@@ -9,15 +9,31 @@ metadata:
       oceanbase.oceanbase.com/OBCluster:
         health.lua: |
           hs = {}
-          if obj.status == nil or obj.status.status == nil then
+          print("Health check for: " .. obj.metadata.name)
+          if obj.status == nil then
             hs.status = "Progressing"
+            hs.message = "status field not found"
+            print("Result: Progressing (status field not found)")
             return hs
           end
-          if obj.status.status == "running" then
+          if obj.status.status == nil then
+            hs.status = "Progressing"
+            hs.message = "status.status field not found"
+            print("Result: Progressing (status.status field not found)")
+            return hs
+          end
+
+          local current_status = obj.status.status
+          print("Current status: " .. current_status)
+
+          if current_status == "running" then
             hs.status = "Healthy"
+            hs.message = "Cluster is running"
           else
             hs.status = "Progressing"
+            hs.message = "Cluster is " .. current_status
           end
+          print("Result: " .. hs.status .. " (" .. hs.message .. ")")
           return hs
 spec:
   project: default
