@@ -4,7 +4,7 @@ metadata:
   name: wait-for-ob-cluster
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "3"
+    argocd.argoproj.io/sync-wave: "2"
 spec:
   project: default
   source:
