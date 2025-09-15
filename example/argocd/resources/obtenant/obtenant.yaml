@@ -11,7 +11,8 @@ spec:
   connectWhiteList: '%'
   forceDelete: true
   credentials:
-    root: root-password
+    root: tenant-root-password
+    standbyRo: standbyro-password
   pools:
     - zone: zone1
       type:

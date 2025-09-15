@@ -11,6 +11,8 @@ spec:
   userSecrets:
     root: root-password
     proxyro: proxyro-password
+    monitor: monitor-password
+    operator: operator-password
   topology:
     - zone: zone1
       replica: 1
