@@ -15,7 +15,7 @@ spec:
     operator: operator-password
   topology:
     - zone: zone1
-      replica: 2
+      replica: 1
     - zone: zone2
       replica: 1
     - zone: zone3
