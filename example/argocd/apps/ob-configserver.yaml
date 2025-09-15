@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ob-tenant
+  name: ob-configserver
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "0"
