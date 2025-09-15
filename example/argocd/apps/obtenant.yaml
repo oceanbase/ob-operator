@@ -34,3 +34,4 @@ spec:
       kind: "OBTenant"
       jsonPointers:
       - /status
+      - /spec/credentials

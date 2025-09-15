@@ -34,3 +34,5 @@ spec:
       kind: "OBCluster"
       jsonPointers:
       - /status
+      - /spec/parameters
+      - /spec/userSecrets
