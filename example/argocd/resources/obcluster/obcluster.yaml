@@ -10,6 +10,7 @@ spec:
   clusterId: 1
   userSecrets:
     root: root-password
+    proxyro: proxyro-password
   topology:
     - zone: zone1
       replica: 1
@@ -36,3 +37,5 @@ spec:
       value: "2147483648"
     - name: system_memory
       value: 1G
+    - name: obconfig_url
+      value: 'http://ob-configserver.oceanbase.svc:8080/services?Action=ObRootServiceInfo&ObCluster=obcluster'

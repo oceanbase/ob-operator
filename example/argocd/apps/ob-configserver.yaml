@@ -1,15 +1,15 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ob-proxy
+  name: ob-tenant
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "4"
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   project: default
   source:
     repoURL: https://github.com/chris-sun-star/ob-operator.git # Replace with your git repo URL
-    path: example/argocd/resources/obproxy
+    path: example/argocd/resources/ob-configserver
     targetRevision: argocd
   destination:
     server: "https://kubernetes.default.svc"
@@ -18,3 +18,5 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
