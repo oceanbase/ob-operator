@@ -35,3 +35,4 @@ spec:
     jsonPointers:
     - /status
     - /spec/credentials
+    - /spec/pools
