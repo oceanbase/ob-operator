@@ -23,5 +23,4 @@ spec:
   - group: "oceanbase.oceanbase.com"
     kind: "OBCluster"
     jsonPointers:
-    - /status
     - /spec/parameters
