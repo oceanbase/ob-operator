@@ -29,9 +29,9 @@ spec:
     automated:
       prune: true
       selfHeal: true
-    ignoreDifferences:
-    - group: "oceanbase.oceanbase.com"
-      kind: "OBTenant"
-      jsonPointers:
-      - /status
-      - /spec/credentials
+  ignoreDifferences:
+  - group: "oceanbase.oceanbase.com"
+    kind: "OBTenant"
+    jsonPointers:
+    - /status
+    - /spec/credentials

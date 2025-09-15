@@ -29,10 +29,10 @@ spec:
     automated:
       prune: true
       selfHeal: true
-    ignoreDifferences:
-    - group: "oceanbase.oceanbase.com"
-      kind: "OBCluster"
-      jsonPointers:
-      - /status
-      - /spec/parameters
-      - /spec/userSecrets
+  ignoreDifferences:
+  - group: "oceanbase.oceanbase.com"
+    kind: "OBCluster"
+    jsonPointers:
+    - /status
+    - /spec/parameters
+    - /spec/userSecrets
