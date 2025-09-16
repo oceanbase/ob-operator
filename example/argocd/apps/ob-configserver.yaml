@@ -8,9 +8,9 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/chris-sun-star/ob-operator.git # Replace with your git repo URL
+    repoURL: https://github.com/oceanbase/ob-operator.git
     path: example/argocd/resources/ob-configserver
-    targetRevision: argocd
+    targetRevision: master
   destination:
     server: "https://kubernetes.default.svc"
     namespace: oceanbase
