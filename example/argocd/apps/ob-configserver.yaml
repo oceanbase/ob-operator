@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ob-configserver
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/oceanbase/ob-operator.git
+    path: example/argocd/resources/ob-configserver
+    targetRevision: master
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: oceanbase
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

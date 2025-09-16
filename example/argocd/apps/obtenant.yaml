@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ob-tenant
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/oceanbase/ob-operator.git
+    path: example/argocd/resources/obtenant
+    targetRevision: master
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: oceanbase
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+  ignoreDifferences:
+  - group: "oceanbase.oceanbase.com"
+    kind: "OBTenant"
+    jsonPointers:
+    - /spec/pools

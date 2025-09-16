@@ -1,0 +1,43 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBTenant
+metadata:
+  name: obtenant
+  namespace: oceanbase
+spec:
+  obcluster: obcluster
+  tenantName: obtenant
+  unitNum: 1
+  charset: utf8mb4
+  connectWhiteList: '%'
+  forceDelete: true
+  credentials:
+    root: tenant-root-password
+    standbyRo: standbyro-password
+  pools:
+    - zone: zone1
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 4
+        memorySize: 5Gi
+        logDiskSize: 15Gi
+    - zone: zone2
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 4
+        memorySize: 5Gi
+        logDiskSize: 15Gi
+    - zone: zone3
+      type:
+        name: Full
+        replica: 1
+        isActive: true
+      resource:
+        maxCPU: 4
+        memorySize: 5Gi
+        logDiskSize: 15Gi

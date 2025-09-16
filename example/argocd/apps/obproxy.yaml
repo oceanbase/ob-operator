@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ob-proxy
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/oceanbase/ob-operator.git
+    path: example/argocd/resources/obproxy
+    targetRevision: master
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: oceanbase
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

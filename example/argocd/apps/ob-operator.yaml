@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ob-operator
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+spec:
+  project: default
+  source:
+    repoURL: https://oceanbase.github.io/ob-operator
+    chart: ob-operator
+    targetRevision: 2.3.3
+    helm:
+      parameters:
+      - name: reporter
+        value: "argocd"
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: oceanbase-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

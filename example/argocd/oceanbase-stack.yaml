@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: oceanbase-stack
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/oceanbase/ob-operator.git
+    path: example/argocd/apps
+    targetRevision: master
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
