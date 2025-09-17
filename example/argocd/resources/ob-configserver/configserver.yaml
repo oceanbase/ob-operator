@@ -4,14 +4,12 @@ metadata:
   name: ob-configserver
   namespace: oceanbase
 spec:
-  type: NodePort
   selector:
     app: ob-configserver
   ports:
     - name: "http"
       port: 8080
       targetPort: 8080
-      nodePort: 30080
 ---
 apiVersion: apps/v1
 kind: Deployment
