@@ -25,7 +25,7 @@ const (
 const (
 	ProbeCheckPeriodSeconds = 2
 	ProbeCheckDelaySeconds  = 5
-	GetConnectionMaxRetries = 10
+	GetConnectionMaxRetries = 100
 	CheckConnectionInterval = 3
 	CheckJobInterval        = 3
 	CheckJobMaxRetries      = 100
