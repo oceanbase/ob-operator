@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	//+kubebuilder:scaffold:imports
 
@@ -44,6 +45,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	"github.com/oceanbase/ob-operator/pkg/coordinator"
 	"github.com/oceanbase/ob-operator/pkg/database"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	"github.com/oceanbase/ob-operator/pkg/task"
 )
 
@@ -104,6 +106,12 @@ func main() {
 	task.SetDebugTask(cfg.Task.Debug)
 	task.SetTaskPoolSize(cfg.Task.PoolSize)
 	database.SetLRUCacheSize(cfg.Database.ConnectionLRUCacheSize)
+	operation.SetManagerConfig(&operation.ManagerConfig{
+		DefaultSqlTimeout:    time.Duration(cfg.Time.DefaultSqlTimeoutSeconds) * time.Second,
+		TenantSqlTimeout:     time.Duration(cfg.Time.TenantSqlTimeoutSeconds) * time.Second,
+		TenantRestoreTimeout: time.Duration(cfg.Time.TenantRestoreTimeoutSeconds) * time.Second,
+		PollingJobSleepTime:  time.Duration(cfg.Time.PollingJobSleepTimeSeconds) * time.Second,
+	})
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 

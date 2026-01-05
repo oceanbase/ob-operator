@@ -77,6 +77,11 @@ var defaultConfigMap = map[string]any{
 	"time.waitForJobTimeoutSeconds":         oc.WaitForJobTimeoutSeconds,
 	"time.serverDeleteTimeoutSeconds":       oc.ServerDeleteTimeoutSeconds,
 	"time.tolerateServerPodNotReadyMinutes": oc.TolerateServerPodNotReadyMinutes,
+
+	"time.defaultSqlTimeoutSeconds":    60,
+	"time.tenantSqlTimeoutSeconds":     600,
+	"time.tenantRestoreTimeoutSeconds": 600,
+	"time.pollingJobSleepTimeSeconds":  1,
 }
 
 func setDefaultConfigs(vp *viper.Viper) {

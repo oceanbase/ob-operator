@@ -21,7 +21,6 @@ import (
 	"github.com/pkg/errors"
 
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/config"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
@@ -143,7 +142,7 @@ func (m *OceanbaseOperationManager) GetRsJob(ctx context.Context, reJobName stri
 
 func (m *OceanbaseOperationManager) DeleteTenant(ctx context.Context, tenantName string, force bool) error {
 	preparedSQL, params := m.preparedSQLForDeleteTenant(tenantName, force)
-	err := m.ExecWithTimeout(ctx, config.TenantSqlTimeout, preparedSQL, params...)
+	err := m.ExecWithTimeout(ctx, managerConfig.TenantSqlTimeout, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Delete tenantconst by tenantName")
 	}
@@ -210,7 +209,7 @@ func (m *OceanbaseOperationManager) CheckRsJobExistByTenantID(ctx context.Contex
 
 func (m *OceanbaseOperationManager) AddTenant(ctx context.Context, tenantSQLParam model.TenantSQLParam) error {
 	preparedSQL, params := preparedSQLForAddTenant(tenantSQLParam)
-	err := m.ExecWithTimeout(ctx, config.TenantSqlTimeout, preparedSQL, params...)
+	err := m.ExecWithTimeout(ctx, managerConfig.TenantSqlTimeout, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Add Tenant")
 	}
@@ -287,7 +286,7 @@ func (m *OceanbaseOperationManager) WaitTenantLocalityChangeFinished(ctx context
 func (m *OceanbaseOperationManager) SetTenant(ctx context.Context, tenantSQLParam model.TenantSQLParam) error {
 	preparedSQL, params := preparedSQLForSetTenant(tenantSQLParam)
 	m.Logger.V(oceanbaseconst.LogLevelTrace).Info(fmt.Sprintf("sql: %s, parms: %v", preparedSQL, params))
-	err := m.ExecWithTimeout(ctx, config.TenantSqlTimeout, preparedSQL, params...)
+	err := m.ExecWithTimeout(ctx, managerConfig.TenantSqlTimeout, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Set tenant")
 	}
@@ -490,7 +489,7 @@ func (m *OceanbaseOperationManager) ListTenantAccessPoints(ctx context.Context, 
 
 func (m *OceanbaseOperationManager) CreateEmptyStandbyTenant(ctx context.Context, params *model.CreateEmptyStandbyTenantParam) error {
 	sqlStatement := fmt.Sprintf(sql.CreateEmptyStandbyTenant, params.TenantName, "'"+strings.Join(params.PoolList, "','")+"'")
-	err := m.ExecWithTimeout(ctx, config.TenantSqlTimeout, sqlStatement, params.RestoreSource, params.PrimaryZone, params.Locality)
+	err := m.ExecWithTimeout(ctx, managerConfig.TenantSqlTimeout, sqlStatement, params.RestoreSource, params.PrimaryZone, params.Locality)
 	if err != nil {
 		m.Logger.Error(err, "Failed to create empty standby tenant")
 		return errors.Wrap(err, "Create empty standby tenant")

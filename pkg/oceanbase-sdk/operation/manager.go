@@ -15,6 +15,7 @@ package operation
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -24,6 +25,29 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/config"
 )
+
+type ManagerConfig struct {
+	DefaultSqlTimeout    time.Duration
+	TenantSqlTimeout     time.Duration
+	TenantRestoreTimeout time.Duration
+	PollingJobSleepTime  time.Duration
+}
+
+var (
+	managerConfig = &ManagerConfig{
+		DefaultSqlTimeout:    config.DefaultSqlTimeout,
+		TenantSqlTimeout:     config.TenantSqlTimeout,
+		TenantRestoreTimeout: config.TenantRestoreTimeOut,
+		PollingJobSleepTime:  config.PollingJobSleepTime,
+	}
+	once sync.Once
+)
+
+func SetManagerConfig(cfg *ManagerConfig) {
+	once.Do(func() {
+		managerConfig = cfg
+	})
+}
 
 type OceanbaseOperationManager struct {
 	Connector *database.Connector
@@ -57,7 +81,8 @@ func (m *OceanbaseOperationManager) ExecWithTimeout(ctx context.Context, timeout
 }
 
 func (m *OceanbaseOperationManager) ExecWithDefaultTimeout(ctx context.Context, sql string, params ...any) error {
-	return m.ExecWithTimeout(ctx, config.DefaultSqlTimeout, sql, params...)
+	m.Logger.Info("Check default sql timeout", "timeout", managerConfig.DefaultSqlTimeout)
+	return m.ExecWithTimeout(ctx, managerConfig.DefaultSqlTimeout, sql, params...)
 }
 
 func (m *OceanbaseOperationManager) QueryRowWithTimeout(ctx context.Context, timeout time.Duration, ret any, sql string, params ...any) error {
@@ -71,7 +96,7 @@ func (m *OceanbaseOperationManager) QueryRowWithTimeout(ctx context.Context, tim
 }
 
 func (m *OceanbaseOperationManager) QueryRow(ctx context.Context, ret any, sql string, params ...any) error {
-	return m.QueryRowWithTimeout(ctx, config.DefaultSqlTimeout, ret, sql, params...)
+	return m.QueryRowWithTimeout(ctx, managerConfig.DefaultSqlTimeout, ret, sql, params...)
 }
 
 func (m *OceanbaseOperationManager) QueryListWithTimeout(ctx context.Context, timeout time.Duration, ret any, sql string, params ...any) error {
@@ -86,11 +111,11 @@ func (m *OceanbaseOperationManager) QueryListWithTimeout(ctx context.Context, ti
 }
 
 func (m *OceanbaseOperationManager) QueryList(ctx context.Context, ret any, sql string, paramstx ...any) error {
-	return m.QueryListWithTimeout(ctx, config.DefaultSqlTimeout, ret, sql, paramstx...)
+	return m.QueryListWithTimeout(ctx, managerConfig.DefaultSqlTimeout, ret, sql, paramstx...)
 }
 
 func (m *OceanbaseOperationManager) QueryCount(ctx context.Context, count *int, sql string, params ...any) error {
-	c, cancel := context.WithTimeout(ctx, config.DefaultSqlTimeout)
+	c, cancel := context.WithTimeout(ctx, managerConfig.DefaultSqlTimeout)
 	defer cancel()
 	err := m.Connector.GetClient().GetContext(c, count, sql, params...)
 	if err != nil {
