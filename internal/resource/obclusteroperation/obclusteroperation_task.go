@@ -329,6 +329,7 @@ func RestartOBServers(m *OBClusterOperationManager) tasktypes.TaskError {
 	for _, observer := range restartingServers {
 		if observer.Status.Status == serverstatus.Recover {
 			m.Logger.Info("OBServer is in recover status, skip restart this observer", "observer", observer.Name)
+			continue
 		}
 		pod := corev1.Pod{}
 		clt := m.Client
