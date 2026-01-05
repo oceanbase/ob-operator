@@ -78,7 +78,8 @@ func genRecoverOBServerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 			Tasks:        []tasktypes.TaskName{tDeletePod, tWaitForPodDeleted, tCreateOBServerPod, tWaitOBServerReady, tAddServer, tWaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
 			OnFailure: tasktypes.FailureRule{
-				Strategy: strategy.StartOver,
+				Strategy:      strategy.StartOver,
+				NextTryStatus: serverstatus.Running,
 			},
 		},
 	}
