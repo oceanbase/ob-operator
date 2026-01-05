@@ -75,10 +75,11 @@ func genRecoverOBServerFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         "recover observer",
-			Tasks:        []tasktypes.TaskName{tCreateOBServerPod, tWaitOBServerReady, tAddServer, tWaitOBServerActiveInCluster},
+			Tasks:        []tasktypes.TaskName{tDeletePod, tWaitForPodDeleted, tCreateOBServerPod, tWaitOBServerReady, tAddServer, tWaitOBServerActiveInCluster},
 			TargetStatus: serverstatus.Running,
 			OnFailure: tasktypes.FailureRule{
-				Strategy: strategy.RetryFromCurrent,
+				Strategy:      strategy.StartOver,
+				NextTryStatus: serverstatus.Running,
 			},
 		},
 	}
