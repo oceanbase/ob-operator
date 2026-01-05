@@ -81,6 +81,7 @@ func (m *OceanbaseOperationManager) ExecWithTimeout(ctx context.Context, timeout
 }
 
 func (m *OceanbaseOperationManager) ExecWithDefaultTimeout(ctx context.Context, sql string, params ...any) error {
+	m.Logger.Info("Check default sql timeout", "timeout", managerConfig.DefaultSqlTimeout)
 	return m.ExecWithTimeout(ctx, managerConfig.DefaultSqlTimeout, sql, params...)
 }
 
