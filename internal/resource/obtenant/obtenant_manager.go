@@ -671,14 +671,18 @@ func (m *OBTenantManager) buildPoolStatusList(obTenant *model.OBTenant) ([]v1alp
 		var poolCurrentStatus v1alpha1.ResourcePoolStatus
 		poolCurrentStatus.ZoneList = zoneList
 		localityType, exist := statusTypeMap[zoneList]
+		_, specExist := statusTypeMap[zoneList]
 		if exist {
 			poolCurrentStatus.Type = &localityType
-		} else {
+		} else if specExist {
 			poolCurrentStatus.Type = &v1alpha1.LocalityType{
 				Name:     specTypeMap[zoneList].Name,
 				Replica:  specTypeMap[zoneList].Replica,
 				IsActive: false,
 			}
+		} else {
+			m.Logger.Error(errors.Errorf("ZoneList %s does not exists in status or spec", zoneList), "Unexpected zoneList")
+			continue
 		}
 		poolCurrentStatus.UnitNumber = unitNumMap[zoneList]
 		poolCurrentStatus.Priority = priorityMap[zoneList]
