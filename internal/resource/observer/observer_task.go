@@ -42,17 +42,21 @@ var taskMap = builder.NewTaskHub[*OBServerManager]()
 
 func WaitOBServerReady(m *OBServerManager) tasktypes.TaskError {
 	for i := 0; i < podconst.ReadyTimeoutSeconds; i++ {
+		_, err := m.getPod()
+		if err != nil {
+			return errors.Wrapf(err, "Failed to get pod of observer %s", m.OBServer.Name)
+		}
 		observer, err := m.getOBServer()
 		if err != nil {
 			return errors.Wrap(err, "Get observer from K8s")
 		}
 		if observer.Status.Ready {
-			m.Logger.Info("Pod is ready")
+			m.Logger.Info("OBServer is ready")
 			return nil
 		}
 		time.Sleep(time.Second)
 	}
-	return errors.New("Timeout to wait pod ready")
+	return errors.New("Timeout to wait observer ready")
 }
 
 func AddServer(m *OBServerManager) tasktypes.TaskError {
@@ -415,6 +419,10 @@ func DeletePod(m *OBServerManager) tasktypes.TaskError {
 	m.Logger.Info("Delete observer pod")
 	pod, err := m.getPod()
 	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			m.Logger.Info("pod already deleted")
+			return nil
+		}
 		return errors.Wrapf(err, "Failed to get pod of observer %s", m.OBServer.Name)
 	}
 	err = m.K8sResClient.Delete(m.Ctx, pod)
