@@ -16,6 +16,7 @@ import (
 	stderrs "errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -71,11 +72,19 @@ func (m *OBServerManager) generateNamespacedName(name string) types.NamespacedNa
 func (m *OBServerManager) getPod() (*corev1.Pod, error) {
 	// this label always exists
 	pod := &corev1.Pod{}
-	err := m.K8sResClient.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), pod)
-	if err != nil {
+	var err error
+	for i := 0; i < 3; i++ {
+		err = m.K8sResClient.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), pod)
+		if err == nil {
+			return pod, nil
+		}
+		if kubeerrors.IsNotFound(err) {
+			time.Sleep(time.Second)
+			continue
+		}
 		return nil, errors.Wrap(err, "get pod")
 	}
-	return pod, nil
+	return nil, errors.Wrap(err, "get pod")
 }
 
 func (m *OBServerManager) getSvc() (*corev1.Service, error) {
