@@ -94,6 +94,7 @@ func genAddOBZoneFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 				tCreateOBZone,
 				tWaitOBZoneRunning,
 				tModifySysTenantReplica,
+				tAnnotateOBCluster,
 			},
 			TargetStatus: clusterstatus.Running,
 		},
