@@ -5,10 +5,10 @@ import ttypes "github.com/oceanbase/ob-operator/pkg/task/types"
 
 const (
 	tConfigureServerForBackup ttypes.TaskName = "configure server for backup"
-	tStartBackup ttypes.TaskName = "start backup"
-	tStopBackup ttypes.TaskName = "stop backup"
-	tCheckAndSpawnJobs ttypes.TaskName = "check and spawn jobs"
-	tCleanOldBackupJobs ttypes.TaskName = "clean old backup jobs"
-	tPauseBackup ttypes.TaskName = "pause backup"
-	tResumeBackup ttypes.TaskName = "resume backup"
+	tStartBackup              ttypes.TaskName = "start backup"
+	tStopBackup               ttypes.TaskName = "stop backup"
+	tCheckAndSpawnJobs        ttypes.TaskName = "check and spawn jobs"
+	tCleanOldBackupJobs       ttypes.TaskName = "clean old backup jobs"
+	tPauseBackup              ttypes.TaskName = "pause backup"
+	tResumeBackup             ttypes.TaskName = "resume backup"
 )
