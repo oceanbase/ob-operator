@@ -99,5 +99,10 @@ type Time struct {
 	WaitForJobTimeoutSeconds      int `mapstructure:"waitForJobTimeoutSeconds" yaml:"waitForJobTimeoutSeconds"`
 	ServerDeleteTimeoutSeconds    int `mapstructure:"serverDeleteTimeoutSeconds" yaml:"serverDeleteTimeoutSeconds"`
 
+	DefaultSqlTimeoutSeconds    int `mapstructure:"defaultSqlTimeoutSeconds" yaml:"defaultSqlTimeoutSeconds"`
+	TenantSqlTimeoutSeconds     int `mapstructure:"tenantSqlTimeoutSeconds" yaml:"tenantSqlTimeoutSeconds"`
+	TenantRestoreTimeoutSeconds int `mapstructure:"tenantRestoreTimeoutSeconds" yaml:"tenantRestoreTimeoutSeconds"`
+	PollingJobSleepTimeSeconds  int `mapstructure:"pollingJobSleepTimeSeconds" yaml:"pollingJobSleepTimeSeconds"`
+
 	TolerateServerPodNotReadyMinutes int `mapstructure:"tolerateServerPodNotReadyMinutes" yaml:"tolerateServerPodNotReadyMinutes"`
 }
