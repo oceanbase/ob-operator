@@ -24,11 +24,15 @@ const (
 
 	// Flags for all the commands in cluster management
 	FLAG_CLUSTER_NAME  = "cluster-name"
+	FLAG_TENANT_NAME   = "tenant-name"
 	FLAG_NAMESPACE     = "namespace"
 	FLAG_CLUSTER_ID    = "id"
 	FLAG_ROOT_PASSWORD = "root-password"
+	FLAG_PORT          = "port"
 	FLAG_MODE          = "mode"
 	FLAG_NAME          = "name"
+	FLAG_DATABASE      = "database"
+	FLAG_USER          = "user"
 
 	// Flags for zone-related options
 	FLAG_ZONES = "zones"
@@ -82,6 +86,10 @@ const (
 	DEFAULT_MONITOR_MEMORY         = 1
 	DEFAULT_NAME                   = "test"
 	DEFAULT_MODE                   = "service"
+	DEFAULT_PORT                   = "2881"
+	DEFAULT_DATABASE               = "oceanbase"
+	DEFAULT_TENANT_NAME            = "sys"
+	DEFAULT_USER                   = "root"
 
 	// Default values for Parameter flag
 	DEFAULT_MIN_FULL_RESOURCE_POOL_MEMORY = "2147483648"
@@ -107,9 +115,13 @@ const (
 
 // Shorthand for cluster management
 const (
-	SHORTHAND_ZONES     = "z"
-	SHORTHAND_NAMESPACE = "n"
-	SHORTHAND_PASSWD    = "p"
+	SHORTHAND_ZONES       = "z"
+	SHORTHAND_NAMESPACE   = "n"
+	SHORTHAND_PASSWD      = "p"
+	SHORTHAND_PORT        = "P"
+	SHORTHAND_DATABASE    = "D"
+	SHORTHAND_USER        = "u"
+	SHORTHAND_TENANT_NAME = "t"
 
 	// Shorthand for demo cluster creation
 	SHORTHAND_WAIT    = "w"
