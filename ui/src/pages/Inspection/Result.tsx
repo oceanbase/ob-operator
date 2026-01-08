@@ -1,4 +1,5 @@
 import { inspection } from '@/api';
+import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import {
   Card,
@@ -60,11 +61,17 @@ const Report: React.FC<Props> = () => {
   const tabList = [
     {
       key: 'risk',
-      tab: '结果概览',
+      tab: intl.formatMessage({
+        id: 'src.pages.Inspection.Result.ResultOverview',
+        defaultMessage: '结果概览',
+      }),
     },
     {
       key: 'item',
-      tab: '全部结果',
+      tab: intl.formatMessage({
+        id: 'src.pages.Inspection.Result.AllResults',
+        defaultMessage: '全部结果',
+      }),
     },
   ];
 
@@ -73,7 +80,10 @@ const Report: React.FC<Props> = () => {
   > = ({ inspectionItem }) => {
     const columns = [
       {
-        title: '巡检项',
+        title: intl.formatMessage({
+          id: 'src.pages.Inspection.Result.InspectionItem',
+          defaultMessage: '巡检项',
+        }),
         dataIndex: 'name',
         render: (text: any) => {
           return <span>{text || '-'}</span>;
@@ -81,7 +91,10 @@ const Report: React.FC<Props> = () => {
       },
 
       {
-        title: '巡检结果',
+        title: intl.formatMessage({
+          id: 'src.pages.Inspection.Result.InspectionResult',
+          defaultMessage: '巡检结果',
+        }),
         dataIndex: 'results',
         render: (text: any) => {
           if (!text || !Array.isArray(text)) {
@@ -113,7 +126,14 @@ const Report: React.FC<Props> = () => {
 
     // 添加数据验证
     if (!dataSource || dataSource.length === 0) {
-      return <Empty description="暂无数据" />;
+      return (
+        <Empty
+          description={intl.formatMessage({
+            id: 'src.pages.Inspection.Result.NoData',
+            defaultMessage: '暂无数据',
+          })}
+        />
+      );
     }
 
     try {
@@ -130,8 +150,15 @@ const Report: React.FC<Props> = () => {
         />
       );
     } catch (error) {
-      console.error('Table渲染错误:', error);
-      return <div>数据渲染出错，请检查数据格式</div>;
+      console.error('Table rendering error:', error);
+      return (
+        <div>
+          {intl.formatMessage({
+            id: 'src.pages.Inspection.Result.DataRenderError',
+            defaultMessage: '数据渲染出错，请检查数据格式',
+          })}
+        </div>
+      );
     }
   };
 
@@ -140,17 +167,26 @@ const Report: React.FC<Props> = () => {
     const resultList: any[] = [
       {
         key: 'critical',
-        label: '高风险',
+        label: intl.formatMessage({
+          id: 'src.pages.Inspection.Result.HighRisk',
+          defaultMessage: '高风险',
+        }),
         children: criticalItems,
       },
       {
         key: 'moderate',
-        label: '中风险',
+        label: intl.formatMessage({
+          id: 'src.pages.Inspection.Result.ModerateRisk',
+          defaultMessage: '中风险',
+        }),
         children: moderateItems,
       },
       {
         key: 'failed',
-        label: '失败',
+        label: intl.formatMessage({
+          id: 'src.pages.Inspection.Result.Failed',
+          defaultMessage: '失败',
+        }),
         children: failedItems,
       },
     ];
@@ -178,7 +214,17 @@ const Report: React.FC<Props> = () => {
                 ) : (
                   <Empty
                     image={Empty.PRESENTED_IMAGE_SIMPLE}
-                    description={<span>{`无${label}目标对象`}</span>}
+                    description={
+                      <span>
+                        {intl.formatMessage(
+                          {
+                            id: 'src.pages.Inspection.Result.NoTargetObjects',
+                            defaultMessage: '无{label}目标对象',
+                          },
+                          { label },
+                        )}
+                      </span>
+                    }
                   />
                 )}
               </Panel>
@@ -205,7 +251,14 @@ const Report: React.FC<Props> = () => {
         ) : (
           <Empty
             image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={<span>无目标巡检项</span>}
+            description={
+              <span>
+                {intl.formatMessage({
+                  id: 'src.pages.Inspection.Result.NoTargetInspectionItems',
+                  defaultMessage: '无目标巡检项',
+                })}
+              </span>
+            }
           />
         )}
       </>
@@ -222,7 +275,10 @@ const Report: React.FC<Props> = () => {
       ghost={true}
       loading={loading}
       header={{
-        title: '巡检报告',
+        title: intl.formatMessage({
+          id: 'src.pages.Inspection.Result.InspectionReport',
+          defaultMessage: '巡检报告',
+        }),
         onBack: () => {
           history.back();
         },
@@ -239,22 +295,53 @@ const Report: React.FC<Props> = () => {
           <Col span={8}>
             <Card
               bordered={false}
-              title={'基本信息'}
+              title={intl.formatMessage({
+                id: 'src.pages.Inspection.Result.BasicInfo',
+                defaultMessage: '基本信息',
+              })}
               style={{
                 height: '250px',
               }}
             >
               <Descriptions column={1}>
-                <Descriptions.Item label={'巡检对象'}>
+                <Descriptions.Item
+                  label={intl.formatMessage({
+                    id: 'src.pages.Inspection.Result.InspectionObject',
+                    defaultMessage: '巡检对象',
+                  })}
+                >
                   {`${namespace}/${getreport?.obCluster?.clusterName}`}
                 </Descriptions.Item>
-                <Descriptions.Item label={'巡检场景'}>
-                  {getreport?.scenario === 'basic' ? '基础巡检' : '性能巡检'}
+                <Descriptions.Item
+                  label={intl.formatMessage({
+                    id: 'src.pages.Inspection.Result.InspectionScenario',
+                    defaultMessage: '巡检场景',
+                  })}
+                >
+                  {getreport?.scenario === 'basic'
+                    ? intl.formatMessage({
+                        id: 'src.pages.Inspection.BasicInspection',
+                        defaultMessage: '基础巡检',
+                      })
+                    : intl.formatMessage({
+                        id: 'src.pages.Inspection.PerformanceInspection',
+                        defaultMessage: '性能巡检',
+                      })}
                 </Descriptions.Item>
-                <Descriptions.Item label={'开始时间'}>
+                <Descriptions.Item
+                  label={intl.formatMessage({
+                    id: 'src.pages.Inspection.Result.StartTime',
+                    defaultMessage: '开始时间',
+                  })}
+                >
                   {formatTime(getreport?.startTime)}
                 </Descriptions.Item>
-                <Descriptions.Item label={'结束时间'}>
+                <Descriptions.Item
+                  label={intl.formatMessage({
+                    id: 'src.pages.Inspection.Result.EndTime',
+                    defaultMessage: '结束时间',
+                  })}
+                >
                   {formatTime(getreport?.finishTime)}
                 </Descriptions.Item>
               </Descriptions>
@@ -262,7 +349,10 @@ const Report: React.FC<Props> = () => {
           </Col>
           <Col span={16}>
             <Card
-              title={'巡检结果概览'}
+              title={intl.formatMessage({
+                id: 'src.pages.Inspection.Result.InspectionResultOverview',
+                defaultMessage: '巡检结果概览',
+              })}
               bordered={false}
               style={{
                 height: '250px',
@@ -277,7 +367,12 @@ const Report: React.FC<Props> = () => {
                 <Col span={5}>
                   <span>
                     <div>
-                      <div>总巡检结果</div>
+                      <div>
+                        {intl.formatMessage({
+                          id: 'src.pages.Inspection.Result.TotalInspectionResults',
+                          defaultMessage: '总巡检结果',
+                        })}
+                      </div>
                       <div
                         style={{
                           fontSize: '38px',
@@ -299,7 +394,12 @@ const Report: React.FC<Props> = () => {
                 </Col>
                 <Col span={5}>
                   <span>
-                    <div>高风险结果</div>
+                    <div>
+                      {intl.formatMessage({
+                        id: 'src.pages.Inspection.Result.HighRiskResults',
+                        defaultMessage: '高风险结果',
+                      })}
+                    </div>
                     <div
                       style={{
                         color: 'rgba(166,29,36,1)',
@@ -313,7 +413,12 @@ const Report: React.FC<Props> = () => {
                 </Col>
                 <Col span={6}>
                   <span>
-                    <div>中风险结果</div>
+                    <div>
+                      {intl.formatMessage({
+                        id: 'src.pages.Inspection.Result.ModerateRiskResults',
+                        defaultMessage: '中风险结果',
+                      })}
+                    </div>
                     <div
                       style={{
                         color: token.colorWarning,
@@ -327,7 +432,12 @@ const Report: React.FC<Props> = () => {
                 </Col>
                 <Col span={6}>
                   <span>
-                    <div>失败结果</div>
+                    <div>
+                      {intl.formatMessage({
+                        id: 'src.pages.Inspection.Result.FailedResults',
+                        defaultMessage: '失败结果',
+                      })}
+                    </div>
                     <div
                       style={{
                         color: token.colorError,

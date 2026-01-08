@@ -86,10 +86,19 @@ export default function SchduleSelectFormItem({
           (scheduleValue?.days?.find((item) => item === 31) ? (
             <Space>
               <InfoCircleFilled style={{ color: token.colorPrimary }} />
-              <span>若调度的当月没有 31 号，则对该月的最后 1 天进行调度</span>
+              <span>
+                {intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.NewBackup.2B9E9733',
+                  defaultMessage:
+                    '若调度的当月没有 31 号，则对该月的最后 1 天进行调度',
+                })}
+              </span>
             </Space>
           ) : (
-            '调度周期为月时，最多只能选择 10 天'
+            intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.NewBackup.31C3220E',
+              defaultMessage: '调度周期为月时，最多只能选择 10 天',
+            })
           ))
         }
       >

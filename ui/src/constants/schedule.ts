@@ -21,17 +21,26 @@ export const SCHEDULE_TYPE_OPTIONS = [
 export const INSPECTION_SCHEDULE_MODE_LIST = [
   {
     value: 'Monthly',
-    label: '月',
+    label: intl.formatMessage({
+      id: 'Dashboard.src.constants.schedule.Month',
+      defaultMessage: '月',
+    }),
   },
 
   {
     value: 'Weekly',
-    label: '周',
+    label: intl.formatMessage({
+      id: 'Dashboard.src.constants.schedule.Zhou',
+      defaultMessage: '周',
+    }),
   },
 
   {
     value: 'Dayly',
-    label: '日',
+    label: intl.formatMessage({
+      id: 'Dashboard.src.constants.schedule.Day',
+      defaultMessage: '日',
+    }),
   },
 ];
 export const WEEK_OPTIONS = [

@@ -174,7 +174,12 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
                       ]}
                       label={key === 0 && 'Key'}
                     >
-                      <Input placeholder="请输入 " />
+                      <Input
+                        placeholder={intl.formatMessage({
+                          id: 'src.pages.Overview.8B049D70',
+                          defaultMessage: '请输入 ',
+                        })}
+                      />
                     </Form.Item>
                   </Col>
                   {fromName && (
@@ -235,7 +240,10 @@ const EditNodeDrawer: React.FC<ParametersModalProps> = ({
                                   ? [
                                       {
                                         required: true,
-                                        message: '请输入 Value',
+                                        message: intl.formatMessage({
+                                          id: 'src.pages.Overview.8926036C',
+                                          defaultMessage: '请输入 Value',
+                                        }),
                                       },
                                     ]
                                   : []),

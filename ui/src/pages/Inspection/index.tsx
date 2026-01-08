@@ -1,3 +1,4 @@
+import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { Card } from 'antd';
 import { useState } from 'react';
@@ -8,11 +9,17 @@ export default function Inspection() {
   const tabList = [
     {
       key: 'list',
-      tab: '巡检列表',
+      tab: intl.formatMessage({
+        id: 'src.pages.Inspection.InspectionList',
+        defaultMessage: '巡检列表',
+      }),
     },
     {
       key: 'history',
-      tab: '巡检历史',
+      tab: intl.formatMessage({
+        id: 'src.pages.Inspection.HistoryList',
+        defaultMessage: '巡检历史',
+      }),
     },
   ];
 
@@ -25,7 +32,13 @@ export default function Inspection() {
     setActiveTabKey(key);
   };
   return (
-    <PageContainer title="巡检" ghost={true}>
+    <PageContainer
+      title={intl.formatMessage({
+        id: 'src.pages.Inspection.Title',
+        defaultMessage: '巡检',
+      })}
+      ghost={true}
+    >
       <Card
         style={{ width: '100%' }}
         tabList={tabList}

@@ -1,7 +1,9 @@
 /**
- * Cron 表达式解析工具
- * 支持标准 cron 格式 (5 字段) 和扩展格式 (6 字段)
+ * Cron expression parsing utility
+ * Supports standard cron format (5 fields) and extended format (6 fields)
  */
+
+import { intl } from '@/utils/intl';
 
 export interface CronObject {
   minute: string;
@@ -31,15 +33,31 @@ const CRON_FIELD_PATTERNS = {
   year: /^[\d\*,\-\/]+$/,
 } as const;
 
-const WEEK_DAYS = [
-  '周日',
-  '周一',
-  '周二',
-  '周三',
-  '周四',
-  '周五',
-  '周六',
-] as const;
+const getWeekDay = (index: number): string => {
+  const keys = [
+    'src.utils.cron.Sunday',
+    'src.utils.cron.Monday',
+    'src.utils.cron.Tuesday',
+    'src.utils.cron.Wednesday',
+    'src.utils.cron.Thursday',
+    'src.utils.cron.Friday',
+    'src.utils.cron.Saturday',
+  ];
+
+  const defaultMessages = [
+    intl.formatMessage({ id: 'src.utils.EE6CFC53', defaultMessage: '周日' }),
+    intl.formatMessage({ id: 'src.utils.AEF107F1', defaultMessage: '周一' }),
+    intl.formatMessage({ id: 'src.utils.F86B45D3', defaultMessage: '周二' }),
+    intl.formatMessage({ id: 'src.utils.6BE72650', defaultMessage: '周三' }),
+    intl.formatMessage({ id: 'src.utils.B4A71F61', defaultMessage: '周四' }),
+    intl.formatMessage({ id: 'src.utils.CF6B8D0F', defaultMessage: '周五' }),
+    intl.formatMessage({ id: 'src.utils.D96B2392', defaultMessage: '周六' }),
+  ];
+  return intl.formatMessage({
+    id: keys[index % 7],
+    defaultMessage: defaultMessages[index % 7],
+  });
+};
 
 // 字段验证器
 const FIELD_VALIDATORS = [
@@ -100,12 +118,30 @@ function generateFieldDescription(
 ): string {
   if (value === '*') {
     const descriptions = {
-      minute: '每分钟',
-      hour: '每小时',
-      dayOfMonth: '每天',
-      month: '每月',
-      dayOfWeek: '每周',
-      year: '每年',
+      minute: intl.formatMessage({
+        id: 'src.utils.cron.EveryMinute',
+        defaultMessage: '每分钟',
+      }),
+      hour: intl.formatMessage({
+        id: 'src.utils.cron.EveryHour',
+        defaultMessage: '每小时',
+      }),
+      dayOfMonth: intl.formatMessage({
+        id: 'src.utils.cron.EveryDay',
+        defaultMessage: '每天',
+      }),
+      month: intl.formatMessage({
+        id: 'src.utils.cron.EveryMonth',
+        defaultMessage: '每月',
+      }),
+      dayOfWeek: intl.formatMessage({
+        id: 'src.utils.cron.EveryWeek',
+        defaultMessage: '每周',
+      }),
+      year: intl.formatMessage({
+        id: 'src.utils.cron.EveryYear',
+        defaultMessage: '每年',
+      }),
     };
     return descriptions[fieldType];
   }
@@ -113,34 +149,80 @@ function generateFieldDescription(
   if (value.includes('/')) {
     const interval = value.split('/')[1];
     const units = {
-      minute: '分钟',
-      hour: '小时',
-      dayOfMonth: '天',
-      month: '个月',
-      dayOfWeek: '周',
-      year: '年',
+      minute: intl.formatMessage({
+        id: 'src.utils.cron.Minute',
+        defaultMessage: '分钟',
+      }),
+      hour: intl.formatMessage({
+        id: 'src.utils.cron.Hour',
+        defaultMessage: '小时',
+      }),
+      dayOfMonth: intl.formatMessage({
+        id: 'src.utils.cron.Day',
+        defaultMessage: '天',
+      }),
+      month: intl.formatMessage({
+        id: 'src.utils.cron.Month',
+        defaultMessage: '个月',
+      }),
+      dayOfWeek: intl.formatMessage({
+        id: 'src.utils.cron.Week',
+        defaultMessage: '周',
+      }),
+      year: intl.formatMessage({
+        id: 'src.utils.cron.Year',
+        defaultMessage: '年',
+      }),
     };
-    return `每${interval}${units[fieldType]}`;
+    return intl.formatMessage(
+      {
+        id: 'src.utils.cron.EveryInterval',
+        defaultMessage: '每{interval}{unit}',
+      },
+      { interval, unit: units[fieldType] },
+    );
   }
 
   if (value.includes(',')) {
     const values = value.split(',');
     if (fieldType === 'dayOfWeek') {
-      const days = values.map((d) => WEEK_DAYS[parseInt(d) % 7]);
-      return `在${days.join('、')}`;
+      const days = values.map((d) => getWeekDay(parseInt(d)));
+      return intl.formatMessage(
+        { id: 'src.utils.cron.OnDays', defaultMessage: '在{days}' },
+        {
+          days: days.join(
+            intl.formatMessage({
+              id: 'src.utils.cron.Comma',
+              defaultMessage: '、',
+            }),
+          ),
+        },
+      );
     }
-    return `在${value}`;
+    return intl.formatMessage(
+      { id: 'src.utils.cron.OnValue', defaultMessage: '在{value}' },
+      { value },
+    );
   }
 
   if (value.includes('-')) {
-    return `在${value}`;
+    return intl.formatMessage(
+      { id: 'src.utils.cron.OnValue', defaultMessage: '在{value}' },
+      { value },
+    );
   }
 
   if (fieldType === 'dayOfWeek') {
-    return `在${WEEK_DAYS[parseInt(value) % 7]}`;
+    return intl.formatMessage(
+      { id: 'src.utils.cron.OnDay', defaultMessage: '在{day}' },
+      { day: getWeekDay(parseInt(value)) },
+    );
   }
 
-  return `在${value}`;
+  return intl.formatMessage(
+    { id: 'src.utils.cron.OnValue', defaultMessage: '在{value}' },
+    { value },
+  );
 }
 
 /**
@@ -191,14 +273,17 @@ export function parseCronExpression(cronExpression: string): CronParseResult {
     if (!isValidCronFormat(cronExpression)) {
       return {
         success: false,
-        error: '无效的 cron 表达式格式',
+        error: intl.formatMessage({
+          id: 'src.utils.cron.InvalidCronFormat',
+          defaultMessage: '无效的 cron 表达式格式',
+        }),
       };
     }
 
     const cronObject = parseCronFields(cronExpression);
     cronObject.description = generateDescription(cronExpression);
-    cronObject.nextRun = calculateNextRunTime(cronExpression);
-    cronObject.prevRun = calculatePrevRunTime(cronExpression);
+    cronObject.nextRun = calculateNextRunTime();
+    cronObject.prevRun = calculatePrevRunTime();
 
     return {
       success: true,
@@ -226,7 +311,7 @@ export function getNextRunTime(cronExpression: string): string | null {
   if (!isValidCronExpression(cronExpression)) {
     return null;
   }
-  return calculateNextRunTime(cronExpression);
+  return calculateNextRunTime();
 }
 
 /**
@@ -236,7 +321,7 @@ export function getPrevRunTime(cronExpression: string): string | null {
   if (!isValidCronExpression(cronExpression)) {
     return null;
   }
-  return calculatePrevRunTime(cronExpression);
+  return calculatePrevRunTime();
 }
 
 /**
@@ -320,7 +405,10 @@ export function validateAndFormatCron(cronExpression: string) {
   if (!isValid) {
     return {
       isValid: false,
-      error: '无效的 cron 表达式',
+      error: intl.formatMessage({
+        id: 'src.utils.cron.InvalidCronExpression',
+        defaultMessage: '无效的 cron 表达式',
+      }),
       suggestions: getSuggestions(cronExpression),
     };
   }
@@ -335,10 +423,16 @@ export function validateAndFormatCron(cronExpression: string) {
       description: details.description,
       nextRun: details.nextRun
         ? new Date(details.nextRun).toLocaleString()
-        : '无法计算',
+        : intl.formatMessage({
+            id: 'src.utils.cron.CannotCalculate',
+            defaultMessage: '无法计算',
+          }),
       prevRun: details.prevRun
         ? new Date(details.prevRun).toLocaleString()
-        : '无法计算',
+        : intl.formatMessage({
+            id: 'src.utils.cron.CannotCalculate',
+            defaultMessage: '无法计算',
+          }),
     },
   };
 }
@@ -351,18 +445,58 @@ function getSuggestions(cronExpression: string): string[] {
   const parts = cronExpression.trim().split(/\s+/);
 
   if (parts.length < 5) {
-    suggestions.push('标准 cron 表达式需要 5 个字段：分钟 小时 日期 月份 星期');
-    suggestions.push('示例：0 0 * * *');
+    suggestions.push(
+      intl.formatMessage({
+        id: 'src.utils.cron.StandardCronRequires5Fields',
+        defaultMessage:
+          '标准 cron 表达式需要 5 个字段：分钟 小时 日期 月份 星期',
+      }),
+    );
+    suggestions.push(
+      intl.formatMessage({
+        id: 'src.utils.cron.Example',
+        defaultMessage: '示例：0 0 * * *',
+      }),
+    );
   } else if (parts.length > 6) {
-    suggestions.push('cron 表达式最多支持 6 个字段（包含年份）');
+    suggestions.push(
+      intl.formatMessage({
+        id: 'src.utils.cron.CronSupportsMax6Fields',
+        defaultMessage: 'cron 表达式最多支持 6 个字段（包含年份）',
+      }),
+    );
   }
 
   // 检查常见错误
   const commonErrors = [
-    { pattern: /60/, message: '分钟字段不能超过 59' },
-    { pattern: /25/, message: '小时字段不能超过 23' },
-    { pattern: /32/, message: '日期字段不能超过 31' },
-    { pattern: /13/, message: '月份字段不能超过 12' },
+    {
+      pattern: /60/,
+      message: intl.formatMessage({
+        id: 'src.utils.cron.MinuteFieldCannotExceed59',
+        defaultMessage: '分钟字段不能超过 59',
+      }),
+    },
+    {
+      pattern: /25/,
+      message: intl.formatMessage({
+        id: 'src.utils.cron.HourFieldCannotExceed23',
+        defaultMessage: '小时字段不能超过 23',
+      }),
+    },
+    {
+      pattern: /32/,
+      message: intl.formatMessage({
+        id: 'src.utils.cron.DayFieldCannotExceed31',
+        defaultMessage: '日期字段不能超过 31',
+      }),
+    },
+    {
+      pattern: /13/,
+      message: intl.formatMessage({
+        id: 'src.utils.cron.MonthFieldCannotExceed12',
+        defaultMessage: '月份字段不能超过 12',
+      }),
+    },
   ];
 
   commonErrors.forEach(({ pattern, message }) => {
@@ -390,6 +524,11 @@ export function validateCronInForm(cronExpression: string) {
 
   return {
     validateStatus: 'success' as const,
-    help: result.formatted?.description || '有效的 cron 表达式',
+    help:
+      result.formatted?.description ||
+      intl.formatMessage({
+        id: 'src.utils.cron.ValidCronExpression',
+        defaultMessage: '有效的 cron 表达式',
+      }),
   };
 }

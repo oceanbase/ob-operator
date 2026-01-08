@@ -71,7 +71,10 @@ const BasicLayout: React.FC = () => {
       accessible: access.obclusterread || access.obclusterwrite,
     },
     {
-      title: 'OBProxy',
+      title: intl.formatMessage({
+        id: 'src.pages.Layouts.BasicLayout.OBProxy',
+        defaultMessage: 'OBProxy',
+      }),
       link: '/obproxy',
       icon: <IconFont type="obproxy" />,
       accessible: access.obproxyread || access.obproxywrite,
@@ -86,7 +89,10 @@ const BasicLayout: React.FC = () => {
       accessible: access.alarmread || access.alarmwrite,
     },
     {
-      title: '巡检',
+      title: intl.formatMessage({
+        id: 'src.pages.Layouts.BasicLayout.Inspection',
+        defaultMessage: '巡检',
+      }),
       link: '/inspection',
       icon: <FileSearchOutlined style={{ color: 'rgb(109,120,147)' }} />,
       accessible: access.obclusterread || access.obclusterread,

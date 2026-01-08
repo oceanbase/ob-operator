@@ -91,7 +91,10 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
       accessible: access.alarmread || access.alarmwrite,
     },
     {
-      title: '巡检',
+      title: intl.formatMessage({
+        id: 'src.pages.Layouts.DetailLayout.C3495997',
+        defaultMessage: '巡检',
+      }),
       link: '/inspection',
       icon: <FileSearchOutlined style={{ color: 'rgb(109,120,147)' }} />,
       // 巡检权限，巡检是巡检的某个集群，接口调用时按照集群权限来的
