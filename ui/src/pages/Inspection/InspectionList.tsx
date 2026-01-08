@@ -63,7 +63,7 @@ export default function InspectionList() {
     loading,
     refresh,
   } = useRequest(inspection.listInspectionPolicies, {
-    defaultParams: [{}],
+    defaultParams: [{} as any],
   });
 
   const { run: triggerInspection } = useRequest(inspection.triggerInspection, {
@@ -221,94 +221,110 @@ export default function InspectionList() {
         );
 
         return (
-          <div>
+          <div style={{ lineHeight: 1.8 }}>
             {showContent ? (
               <>
-                <div>
-                  {intl.formatMessage(
-                    {
-                      id: 'src.pages.Inspection.InspectionTime',
-                      defaultMessage: '巡检时间：{time}',
-                    },
-                    { time: formatTime(repo?.finishTime) },
-                  )}
-                </div>
-                <Space size={6}>
-                  <span>
-                    {intl.formatMessage({
-                      id: 'src.pages.Inspection.InspectionResult',
-                      defaultMessage: '巡检结果：',
-                    })}
-                  </span>
-                  <span style={{ color: 'rgba(166,29,36,1)' }}>
-                    {intl.formatMessage(
-                      {
-                        id: 'src.pages.Inspection.Critical',
-                        defaultMessage: '高{count}',
-                      },
-                      { count: criticalCount || 0 },
-                    )}
-                  </span>
-                  <span style={{ color: token.colorWarning }}>
-                    {intl.formatMessage(
-                      {
-                        id: 'src.pages.Inspection.Moderate',
-                        defaultMessage: '中{count}',
-                      },
-                      { count: moderateCount || 0 },
-                    )}
-                  </span>
-                  <span style={{ color: token.colorError }}>
-                    {intl.formatMessage(
-                      {
-                        id: 'src.pages.Inspection.Failed',
-                        defaultMessage: '失败{count}',
-                      },
-                      { count: failedCount || 0 },
-                    )}
-                  </span>
-                  <a
-                    style={{
-                      pointerEvents: !repo ? 'none' : 'auto',
-                      opacity: !repo ? 0.5 : 1,
-                    }}
-                    onClick={() => {
-                      if (repo) {
-                        history.push(`/inspection/report/${id}`);
-                      }
-                    }}
+                {repo?.finishTime && (
+                  <div
+                    style={{ marginBottom: 8, color: 'rgba(0, 0, 0, 0.65)' }}
                   >
-                    {intl.formatMessage({
-                      id: 'src.pages.Inspection.ViewReport',
-                      defaultMessage: '查看报告',
-                    })}
-                  </a>
-                  <a
-                    onClick={() =>
-                      Modal.confirm({
-                        title: intl.formatMessage({
-                          id: 'src.pages.Inspection.ConfirmTriggerBasicInspection',
-                          defaultMessage: '确定要发起基础巡检吗？',
-                        }),
-                        onOk: () => {
-                          triggerInspection(
-                            record.obCluster.namespace,
-                            record.obCluster.name,
-                            'basic',
-                          );
+                    {intl.formatMessage(
+                      {
+                        id: 'src.pages.Inspection.InspectionTime',
+                        defaultMessage: '巡检时间：{time}',
+                      },
+                      { time: formatTime(repo?.finishTime) },
+                    )}
+                  </div>
+                )}
+                <div style={{ marginBottom: 8 }}>
+                  <Space size={8} wrap>
+                    <span style={{ fontWeight: 500, fontSize: 13 }}>
+                      {intl.formatMessage({
+                        id: 'src.pages.Inspection.InspectionResult',
+                        defaultMessage: '巡检结果：',
+                      })}
+                    </span>
+                    <span
+                      style={{ color: 'rgba(166,29,36,1)', fontWeight: 500 }}
+                    >
+                      {intl.formatMessage(
+                        {
+                          id: 'src.pages.Inspection.Critical',
+                          defaultMessage: '高{count}',
                         },
-                      })
-                    }
-                  >
-                    {intl.formatMessage({
-                      id: 'src.pages.Inspection.TriggerInspectionNow',
-                      defaultMessage: '立即巡检',
-                    })}
-                  </a>
-                </Space>
+                        { count: criticalCount || 0 },
+                      )}
+                    </span>
+                    <span
+                      style={{ color: token.colorWarning, fontWeight: 500 }}
+                    >
+                      {intl.formatMessage(
+                        {
+                          id: 'src.pages.Inspection.Moderate',
+                          defaultMessage: '中{count}',
+                        },
+                        { count: moderateCount || 0 },
+                      )}
+                    </span>
+                    <span style={{ color: token.colorError, fontWeight: 500 }}>
+                      {intl.formatMessage(
+                        {
+                          id: 'src.pages.Inspection.Failed',
+                          defaultMessage: '失败{count}',
+                        },
+                        { count: failedCount || 0 },
+                      )}
+                    </span>
+                  </Space>
+                </div>
+                <div>
+                  <Space size={12}>
+                    <a
+                      style={{
+                        pointerEvents: !repo ? 'none' : 'auto',
+                        opacity: !repo ? 0.5 : 1,
+                        fontSize: 13,
+                      }}
+                      onClick={() => {
+                        if (repo) {
+                          history.push(`/inspection/report/${id}`);
+                        }
+                      }}
+                    >
+                      {intl.formatMessage({
+                        id: 'src.pages.Inspection.ViewReport',
+                        defaultMessage: '查看报告',
+                      })}
+                    </a>
+                    <a
+                      style={{ fontSize: 13 }}
+                      onClick={() =>
+                        Modal.confirm({
+                          title: intl.formatMessage({
+                            id: 'src.pages.Inspection.ConfirmTriggerBasicInspection',
+                            defaultMessage: '确定要发起基础巡检吗？',
+                          }),
+                          onOk: () => {
+                            triggerInspection(
+                              record.obCluster.namespace,
+                              record.obCluster.name,
+                              'basic',
+                            );
+                          },
+                        })
+                      }
+                    >
+                      {intl.formatMessage({
+                        id: 'src.pages.Inspection.TriggerInspectionNow',
+                        defaultMessage: '立即巡检',
+                      })}
+                    </a>
+                  </Space>
+                </div>
               </>
             ) : (
-              <> - </>
+              <span style={{ color: 'rgba(0, 0, 0, 0.25)' }}>-</span>
             )}
           </div>
         );
@@ -345,94 +361,110 @@ export default function InspectionList() {
         const id = `${repo?.namespace}/${repo?.name}`;
 
         return (
-          <div>
+          <div style={{ lineHeight: 1.8 }}>
             {showContent ? (
               <>
-                <div>
-                  {intl.formatMessage(
-                    {
-                      id: 'src.pages.Inspection.InspectionTime',
-                      defaultMessage: '巡检时间：{time}',
-                    },
-                    { time: formatTime(repo?.finishTime) },
-                  )}
-                </div>
-                <Space size={6}>
-                  <span>
-                    {intl.formatMessage({
-                      id: 'src.pages.Inspection.InspectionResult',
-                      defaultMessage: '巡检结果：',
-                    })}
-                  </span>
-                  <span style={{ color: 'rgba(166,29,36,1)' }}>
-                    {intl.formatMessage(
-                      {
-                        id: 'src.pages.Inspection.Critical',
-                        defaultMessage: '高{count}',
-                      },
-                      { count: criticalCount || 0 },
-                    )}
-                  </span>
-                  <span style={{ color: 'orange' }}>
-                    {intl.formatMessage(
-                      {
-                        id: 'src.pages.Inspection.Moderate',
-                        defaultMessage: '中{count}',
-                      },
-                      { count: moderateCount || 0 },
-                    )}
-                  </span>
-                  <span style={{ color: token.colorError }}>
-                    {intl.formatMessage(
-                      {
-                        id: 'src.pages.Inspection.Failed',
-                        defaultMessage: '失败{count}',
-                      },
-                      { count: failedCount || 0 },
-                    )}
-                  </span>
-                  <a
-                    style={{
-                      pointerEvents: !repo ? 'none' : 'auto',
-                      opacity: !repo ? 0.5 : 1,
-                    }}
-                    onClick={() => {
-                      if (repo) {
-                        history.push(`/inspection/report/${id}`);
-                      }
-                    }}
+                {repo?.finishTime && (
+                  <div
+                    style={{ marginBottom: 8, color: 'rgba(0, 0, 0, 0.65)' }}
                   >
-                    {intl.formatMessage({
-                      id: 'src.pages.Inspection.ViewReport',
-                      defaultMessage: '查看报告',
-                    })}
-                  </a>
-                  <a
-                    onClick={() => {
-                      Modal.confirm({
-                        title: intl.formatMessage({
-                          id: 'src.pages.Inspection.ConfirmTriggerPerformanceInspection',
-                          defaultMessage: '确定要发起性能巡检吗？',
-                        }),
-                        onOk: () => {
-                          triggerInspection(
-                            record.obCluster.namespace,
-                            record.obCluster.name,
-                            'performance',
-                          );
+                    {intl.formatMessage(
+                      {
+                        id: 'src.pages.Inspection.InspectionTime',
+                        defaultMessage: '巡检时间：{time}',
+                      },
+                      { time: formatTime(repo?.finishTime) },
+                    )}
+                  </div>
+                )}
+                <div style={{ marginBottom: 8 }}>
+                  <Space size={8} wrap>
+                    <span style={{ fontWeight: 500, fontSize: 13 }}>
+                      {intl.formatMessage({
+                        id: 'src.pages.Inspection.InspectionResult',
+                        defaultMessage: '巡检结果：',
+                      })}
+                    </span>
+                    <span
+                      style={{ color: 'rgba(166,29,36,1)', fontWeight: 500 }}
+                    >
+                      {intl.formatMessage(
+                        {
+                          id: 'src.pages.Inspection.Critical',
+                          defaultMessage: '高{count}',
                         },
-                      });
-                    }}
-                  >
-                    {intl.formatMessage({
-                      id: 'src.pages.Inspection.TriggerInspectionNow',
-                      defaultMessage: '立即巡检',
-                    })}
-                  </a>
-                </Space>
+                        { count: criticalCount || 0 },
+                      )}
+                    </span>
+                    <span
+                      style={{ color: token.colorWarning, fontWeight: 500 }}
+                    >
+                      {intl.formatMessage(
+                        {
+                          id: 'src.pages.Inspection.Moderate',
+                          defaultMessage: '中{count}',
+                        },
+                        { count: moderateCount || 0 },
+                      )}
+                    </span>
+                    <span style={{ color: token.colorError, fontWeight: 500 }}>
+                      {intl.formatMessage(
+                        {
+                          id: 'src.pages.Inspection.Failed',
+                          defaultMessage: '失败{count}',
+                        },
+                        { count: failedCount || 0 },
+                      )}
+                    </span>
+                  </Space>
+                </div>
+                <div>
+                  <Space size={12}>
+                    <a
+                      style={{
+                        pointerEvents: !repo ? 'none' : 'auto',
+                        opacity: !repo ? 0.5 : 1,
+                        fontSize: 13,
+                      }}
+                      onClick={() => {
+                        if (repo) {
+                          history.push(`/inspection/report/${id}`);
+                        }
+                      }}
+                    >
+                      {intl.formatMessage({
+                        id: 'src.pages.Inspection.ViewReport',
+                        defaultMessage: '查看报告',
+                      })}
+                    </a>
+                    <a
+                      style={{ fontSize: 13 }}
+                      onClick={() => {
+                        Modal.confirm({
+                          title: intl.formatMessage({
+                            id: 'src.pages.Inspection.ConfirmTriggerPerformanceInspection',
+                            defaultMessage: '确定要发起性能巡检吗？',
+                          }),
+                          onOk: () => {
+                            triggerInspection(
+                              record.obCluster.namespace,
+                              record.obCluster.name,
+                              'performance',
+                            );
+                          },
+                        });
+                      }}
+                    >
+                      {intl.formatMessage({
+                        id: 'src.pages.Inspection.TriggerInspectionNow',
+                        defaultMessage: '立即巡检',
+                      })}
+                    </a>
+                  </Space>
+                </div>
               </>
             ) : (
-              <>-</>
+              <span style={{ color: 'rgba(0, 0, 0, 0.25)' }}>-</span>
             )}
           </div>
         );
