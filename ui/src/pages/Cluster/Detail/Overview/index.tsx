@@ -305,6 +305,7 @@ const ClusterOverview: React.FC = () => {
               })}
         </span>
       ),
+
       disabled:
         isEmpty(clusterDetail) ||
         clusterDetail?.status !== 'running' ||
@@ -312,7 +313,10 @@ const ClusterOverview: React.FC = () => {
     },
     {
       key: 'download',
-      label: '日志下载',
+      label: intl.formatMessage({
+        id: 'src.pages.Cluster.Detail.Overview.B4837698',
+        defaultMessage: '日志下载',
+      }),
       disabled: isEmpty(clusterDetail),
     },
   ];
@@ -580,8 +584,14 @@ const ClusterOverview: React.FC = () => {
           setDownloadModal(false);
           clearDownloadStates();
         }}
-        title={'日志下载'}
-        content={'日志收集完成'}
+        title={intl.formatMessage({
+          id: 'src.pages.Cluster.Detail.Overview.CCB0B369',
+          defaultMessage: '日志下载',
+        })}
+        content={intl.formatMessage({
+          id: 'src.pages.Cluster.Detail.Overview.9EE030A6',
+          defaultMessage: '日志收集完成',
+        })}
         diagnoseStatus={diagnoseStatus}
         attachmentValue={attachmentValue}
         jobValue={jobValue}
@@ -595,8 +605,12 @@ const ClusterOverview: React.FC = () => {
           }
         }}
       />
+
       <Modal
-        title="日志下载"
+        title={intl.formatMessage({
+          id: 'src.pages.Cluster.Detail.Overview.B7F0215E',
+          defaultMessage: '日志下载',
+        })}
         open={diagnoseModal}
         maskClosable={false}
         onCancel={() => {
@@ -663,15 +677,28 @@ const ClusterOverview: React.FC = () => {
                   }
                 }}
                 options={DateSelectOption}
-                placeholder="选择时间范围"
+                placeholder={intl.formatMessage({
+                  id: 'src.pages.Cluster.Detail.Overview.CFC2AB95',
+                  defaultMessage: '选择时间范围',
+                })}
               />
+
               <RangePicker
                 key={rangePickerKey}
                 showTime={{
                   format: TIME_FORMAT,
                 }}
                 format={DATE_TIME_FORMAT}
-                placeholder={['开始时间', '结束时间']}
+                placeholder={[
+                  intl.formatMessage({
+                    id: 'src.pages.Cluster.Detail.Overview.28C6E1C8',
+                    defaultMessage: '开始时间',
+                  }),
+                  intl.formatMessage({
+                    id: 'src.pages.Cluster.Detail.Overview.D8D9B75A',
+                    defaultMessage: '结束时间',
+                  }),
+                ]}
                 style={{ width: '100%' }}
                 value={form.getFieldValue('range')}
                 onChange={(value) => {

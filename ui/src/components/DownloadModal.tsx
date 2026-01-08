@@ -1,5 +1,6 @@
 import { job } from '@/api';
 import { downloadFile } from '@/utils/export';
+import { intl } from '@/utils/intl';
 import { LoadingOutlined } from '@ant-design/icons';
 import { findByValue } from '@oceanbase/util';
 import { useRequest } from 'ahooks';
@@ -44,10 +45,20 @@ export default function DownloadModal({
   const handleDownload = () => {
     if (attachmentValue) {
       downloadFile(attachmentValue);
-      message.success('开始下载文件');
+      message.success(
+        intl.formatMessage({
+          id: 'src.components.DownloadModal.StartDownloading',
+          defaultMessage: '开始下载文件',
+        }),
+      );
       onOk();
     } else {
-      message.error('文件ID不存在');
+      message.error(
+        intl.formatMessage({
+          id: 'src.components.DownloadModal.FileIdNotExists',
+          defaultMessage: '文件ID不存在',
+        }),
+      );
     }
   };
 
@@ -62,7 +73,10 @@ export default function DownloadModal({
   const modalContent = [
     {
       value: 'pending',
-      label: '中...',
+      label: intl.formatMessage({
+        id: 'src.components.DownloadModal.InProgress',
+        defaultMessage: '中...',
+      }),
       children: (
         <Spin
           indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
@@ -74,7 +88,10 @@ export default function DownloadModal({
     },
     {
       value: 'running',
-      label: '中...',
+      label: intl.formatMessage({
+        id: 'src.components.DownloadModal.InProgress',
+        defaultMessage: '中...',
+      }),
       children: (
         <Spin
           indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
@@ -86,16 +103,28 @@ export default function DownloadModal({
     },
     {
       value: 'successful',
-      label: '完成',
+      label: intl.formatMessage({
+        id: 'src.components.DownloadModal.Completed',
+        defaultMessage: '完成',
+      }),
       children: (
         <div style={{ minHeight: 100 }}>
           <Alert
-            message={content || '信息收集与分析完成'}
+            message={
+              content ||
+              intl.formatMessage({
+                id: 'src.components.DownloadModal.InfoCollectionCompleted',
+                defaultMessage: '信息收集与分析完成',
+              })
+            }
             type="success"
             showIcon
             action={
               <Button size="small" type="link" onClick={handleDownload}>
-                下载链接
+                {intl.formatMessage({
+                  id: 'src.components.DownloadModal.DownloadLink',
+                  defaultMessage: '下载链接',
+                })}
               </Button>
             }
           />
@@ -104,11 +133,20 @@ export default function DownloadModal({
     },
     {
       value: 'failed',
-      label: '失败',
+      label: intl.formatMessage({
+        id: 'src.components.DownloadModal.Failed',
+        defaultMessage: '失败',
+      }),
       children: (
         <div style={{ minHeight: 100 }}>
           <Alert
-            message={`${title}分析失败`}
+            message={intl.formatMessage(
+              {
+                id: 'src.components.DownloadModal.AnalysisFailed',
+                defaultMessage: '{title}分析失败',
+              },
+              { title },
+            )}
             type="error"
             showIcon
             action={
@@ -119,7 +157,10 @@ export default function DownloadModal({
                   setShowErrorDetails(true);
                 }}
               >
-                查看详情
+                {intl.formatMessage({
+                  id: 'src.components.DownloadModal.ViewDetails',
+                  defaultMessage: '查看详情',
+                })}
               </Button>
             }
           />
@@ -147,7 +188,10 @@ export default function DownloadModal({
                     color: '#ff4d4f',
                   }}
                 >
-                  错误详情：
+                  {intl.formatMessage({
+                    id: 'src.components.DownloadModal.ErrorDetails',
+                    defaultMessage: '错误详情：',
+                  })}
                 </div>
                 {errorLogs}
               </div>
@@ -157,7 +201,10 @@ export default function DownloadModal({
                 style={{ marginTop: 8 }}
                 onClick={() => setShowErrorDetails(false)}
               >
-                隐藏详情
+                {intl.formatMessage({
+                  id: 'src.components.DownloadModal.HideDetails',
+                  defaultMessage: '隐藏详情',
+                })}
               </Button>
             </div>
           )}
@@ -166,11 +213,17 @@ export default function DownloadModal({
     },
   ];
 
+  const statusLabel =
+    findByValue(modalContent, diagnoseStatus).label ||
+    intl.formatMessage({
+      id: 'src.components.DownloadModal.InProgress',
+      defaultMessage: '中...',
+    });
+  const modalTitle = `${title}${statusLabel}`;
+
   return (
     <Modal
-      title={`${title}${
-        findByValue(modalContent, diagnoseStatus).label || '中...'
-      }`}
+      title={modalTitle}
       open={visible}
       maskClosable={false}
       onOk={onOk}
@@ -184,7 +237,10 @@ export default function DownloadModal({
               deleteJob(jobValue?.namespace, jobValue?.name);
             }}
           >
-            取消
+            {intl.formatMessage({
+              id: 'src.components.DownloadModal.Cancel',
+              defaultMessage: '取消',
+            })}
           </Button>
         ) : null
       }

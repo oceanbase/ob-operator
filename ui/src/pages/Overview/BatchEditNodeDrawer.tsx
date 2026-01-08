@@ -144,7 +144,10 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                       rules={[
                         {
                           required: true,
-                          message: '请输入 Keys',
+                          message: intl.formatMessage({
+                            id: 'src.pages.Overview.C31466BB',
+                            defaultMessage: '请输入 Keys',
+                          }),
                         },
                       ]}
                     >
@@ -152,7 +155,10 @@ const BatchEditNodeDrawer: React.FC<BatchEditNodeDrawerProps> = ({
                         mode="tags"
                         maxCount={1}
                         optionFilterProp="label"
-                        placeholder="请输入 Keys"
+                        placeholder={intl.formatMessage({
+                          id: 'src.pages.Overview.D4C21314',
+                          defaultMessage: '请输入 Keys',
+                        })}
                         options={
                           tabKey === 'labels' ? labelsOption : taintsOption
                         }

@@ -1,3 +1,4 @@
+import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
 import { Card, Row } from 'antd';
 
@@ -132,7 +133,10 @@ export default function MonitorComp({
         >
           {currentTabContent || (
             <div style={{ padding: 20, textAlign: 'center', color: '#999' }}>
-              暂无数据
+              {intl.formatMessage({
+                id: 'src.components.MonitorComp.9E85EFCC',
+                defaultMessage: '暂无数据',
+              })}
             </div>
           )}
         </Card>

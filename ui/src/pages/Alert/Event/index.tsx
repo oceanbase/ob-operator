@@ -251,7 +251,10 @@ export default function Event() {
               setDownloadModal(true);
             }}
           >
-            诊断
+            {intl.formatMessage({
+              id: 'src.pages.Alert.Event.C3C5032D',
+              defaultMessage: '诊断',
+            })}
           </Button>
         </Space>
       ),
@@ -311,7 +314,10 @@ export default function Event() {
           setAttachmentValue('');
           setjobValue({});
         }}
-        title={'诊断分析'}
+        title={intl.formatMessage({
+          id: 'src.pages.Alert.Event.7E0D883E',
+          defaultMessage: '诊断分析',
+        })}
         diagnoseStatus={diagnoseStatus}
         attachmentValue={attachmentValue}
         jobValue={jobValue}
