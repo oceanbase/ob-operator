@@ -239,13 +239,14 @@ func (m *OBClusterManager) modifyOBZonesAndCheckStatus(changer obzoneChanger, st
 
 func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStatus, targetStatus string, timeoutSeconds int) tasktypes.TaskFunc {
 	return func() tasktypes.TaskError {
-		tk := time.NewTicker(time.Duration(timeoutSeconds*2) * time.Second)
-		defer tk.Stop()
 		obzoneList, err := m.listOBZones()
 		if err != nil {
 			return errors.Wrap(err, "list obzones")
 		}
 		for _, obzone := range obzoneList.Items {
+			tk := time.NewTicker(time.Duration(timeoutSeconds) * time.Second)
+			defer tk.Stop()
+			m.Logger.Info(fmt.Sprintf("Update obzone %s", obzone.Name))
 			var specChanged bool
 			m.Recorder.Event(m.OBCluster, "Normal", "RollingUpdateOBZone", "Rolling update OBZone "+obzone.Name)
 			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
@@ -270,7 +271,7 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 				return errors.Wrap(err, "update obzone")
 			}
 			if !specChanged {
-				m.Logger.Info("OBZone not changed, skipp checking this zone", "obzone", obzone.Name)
+				m.Logger.Info("OBZone not changed, skip checking this zone", "obzone", obzone.Name)
 				continue
 			}
 			for i := 0; i < timeoutSeconds; i++ {
@@ -292,6 +293,7 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 					break
 				}
 			}
+			m.Logger.Info("OBZone has changed to working status", "obzone", obzone.Name, "status", workingStatus)
 			for i := 0; i < timeoutSeconds; i++ {
 				select {
 				case <-tk.C:
@@ -311,6 +313,7 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 					break
 				}
 			}
+			m.Logger.Info("OBZone has changed to target status", "obzone", obzone.Name, "status", targetStatus)
 		}
 		return nil
 	}
