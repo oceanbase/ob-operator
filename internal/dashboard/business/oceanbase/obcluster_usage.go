@@ -14,6 +14,7 @@ package oceanbase
 
 import (
 	"context"
+	"sort"
 
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,6 +22,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	observerstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
@@ -43,6 +45,11 @@ func GetOBClusterUsages(ctx context.Context, nn *param.K8sObjectIdentity) (*resp
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
 	}
+
+	sort.Slice(serverList.Items, func(i, j int) bool {
+		return serverList.Items[i].Status.Status == observerstatus.Running && serverList.Items[j].Status.Status != observerstatus.Running
+	})
+
 	rootSecret, err := clt.ClientSet.CoreV1().Secrets(nn.Namespace).Get(ctx, obcluster.Spec.UserSecrets.Root, metav1.GetOptions{})
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
