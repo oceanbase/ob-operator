@@ -404,6 +404,7 @@ func RollingReplaceOBServers(m *OBZoneManager) tasktypes.TaskError {
 		return errors.Wrap(err, "List observers")
 	}
 	for _, server := range servers.Items {
+		m.Logger.Info(fmt.Sprintf("Replacing observer %s", server.Name))
 		newServerName := m.generateServerName()
 		newServer, err := m.createOneOBServer(newServerName)
 		if err != nil {
@@ -422,6 +423,7 @@ func RollingReplaceOBServers(m *OBZoneManager) tasktypes.TaskError {
 		if newServer.Status.Status != serverstatus.Running {
 			return errors.New("Wait for new observer get running status, timeout")
 		}
+		m.Logger.Info(fmt.Sprintf("New observer %s created", newServer.Name))
 		err = m.Client.Delete(m.Ctx, &server)
 		if err != nil {
 			return errors.Wrap(err, "Delete old observer")
@@ -442,6 +444,7 @@ func RollingReplaceOBServers(m *OBZoneManager) tasktypes.TaskError {
 		if !deleted {
 			m.Logger.Error(errors.New("Delete old observer timeout"), "observer", server.Name)
 		}
+		m.Logger.Info(fmt.Sprintf("Old observer %s deleted", server.Name))
 	}
 	return nil
 }
