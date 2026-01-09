@@ -14,6 +14,7 @@ package obcluster
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -245,6 +246,7 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 			return errors.Wrap(err, "list obzones")
 		}
 		for _, obzone := range obzoneList.Items {
+			var specChanged bool
 			m.Recorder.Event(m.OBCluster, "Normal", "RollingUpdateOBZone", "Rolling update OBZone "+obzone.Name)
 			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 				targetZone := v1alpha1.OBZone{}
@@ -255,11 +257,21 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 				if err != nil {
 					return errors.Wrap(err, "get obzone")
 				}
+				originalZone := targetZone.DeepCopy()
 				changer(&targetZone)
+				if reflect.DeepEqual(originalZone.Spec, targetZone.Spec) {
+					specChanged = false
+					return nil
+				}
+				specChanged = true
 				return m.Client.Update(m.Ctx, &targetZone)
 			})
 			if err != nil {
 				return errors.Wrap(err, "update obzone")
+			}
+			if !specChanged {
+				m.Logger.Info("OBZone not changed, skipp checking this zone", "obzone", obzone.Name)
+				continue
 			}
 			for i := 0; i < timeoutSeconds; i++ {
 				select {
