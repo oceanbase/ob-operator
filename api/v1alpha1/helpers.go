@@ -14,6 +14,7 @@ package v1alpha1
 
 import (
 	"context"
+	"sort"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -23,6 +24,7 @@ import (
 
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
+	observerstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 )
@@ -50,6 +52,10 @@ func getSysClient(c client.Client, logger *logr.Logger, obcluster *OBCluster, us
 	if len(observerList.Items) == 0 {
 		return nil, errors.Errorf("No observer belongs to cluster %s", obcluster.Name)
 	}
+
+	sort.Slice(observerList.Items, func(i, j int) bool {
+		return observerList.Items[i].Status.Status == observerstatus.Running && observerList.Items[j].Status.Status != observerstatus.Running
+	})
 
 	var s *connector.OceanBaseDataSource
 	password, err := readPassword(c, obcluster.Namespace, secretName)
