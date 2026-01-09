@@ -1567,5 +1567,9 @@
   "src.pages.Tenant.Detail.Sql.Detail.Name": "名称",
   "src.pages.Tenant.Detail.Sql.Detail.EstRows": "预估行数",
   "src.pages.Tenant.Detail.Sql.Detail.OutputFilter": "输出/过滤",
-  "src.pages.Tenant.Detail.Sql.Plan.PlanDetailPageUnderConstruction": "执行计划详情页面（建设中）"
+  "src.pages.Tenant.Detail.Sql.Plan.PlanDetailPageUnderConstruction": "执行计划详情页面（建设中）",
+  "src.pages.Tenant.Detail.Overview.DeleteProtection": "删除保护",
+  "src.pages.Tenant.Detail.Overview.ConfirmDeleteProtection": "确认要{action}删除保护吗？",
+  "src.pages.Tenant.Detail.Overview.Enable": "开启",
+  "src.pages.Tenant.Detail.Overview.Disable": "关闭"
 }

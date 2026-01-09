@@ -1567,5 +1567,9 @@
   "src.pages.Tenant.Detail.Sql.Detail.Name": "Name",
   "src.pages.Tenant.Detail.Sql.Detail.EstRows": "Est. Rows",
   "src.pages.Tenant.Detail.Sql.Detail.OutputFilter": "Output/Filter",
-  "src.pages.Tenant.Detail.Sql.Plan.PlanDetailPageUnderConstruction": "Plan Detail Page (Under Construction)"
+  "src.pages.Tenant.Detail.Sql.Plan.PlanDetailPageUnderConstruction": "Plan Detail Page (Under Construction)",
+  "src.pages.Tenant.Detail.Overview.DeleteProtection": "Delete Protection",
+  "src.pages.Tenant.Detail.Overview.ConfirmDeleteProtection": "Are you sure you want to {action} deletion protection?",
+  "src.pages.Tenant.Detail.Overview.Enable": "Enable",
+  "src.pages.Tenant.Detail.Overview.Disable": "Disable"
 }
