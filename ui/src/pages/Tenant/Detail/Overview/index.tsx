@@ -1,3 +1,4 @@
+import { obtenant } from '@/api';
 import EventsTable from '@/components/EventsTable';
 import OperateModal from '@/components/customModal/OperateModal';
 import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
@@ -179,6 +180,13 @@ export default function TenantOverview() {
       : []),
     {
       label: intl.formatMessage({
+        id: 'src.pages.Tenant.Detail.Overview.DeleteProtection',
+        defaultMessage: '删除保护',
+      }),
+      key: 'deleteProtection',
+    },
+    {
+      label: intl.formatMessage({
         id: 'Dashboard.Detail.Overview.DeleteTenant',
         defaultMessage: '删除租户',
       }),
@@ -186,6 +194,8 @@ export default function TenantOverview() {
       danger: true,
     },
   ];
+
+  const defaultDeletionProtection = tenantDetail?.info?.deletionProtection;
 
   const menuChange = ({ key }) => {
     if (key === 'createBackupPolicy') {
@@ -200,10 +210,57 @@ export default function TenantOverview() {
           defaultMessage: '你确定要删除该租户吗？',
         }),
       });
+    } else if (key === 'deleteProtection') {
+      showDeleteConfirm({
+        onOk: handDeletionProtection,
+        title: intl.formatMessage(
+          {
+            id: 'src.pages.Tenant.Detail.Overview.ConfirmDeleteProtection',
+            defaultMessage: '确认要{action}删除保护吗？',
+          },
+          {
+            action: !defaultDeletionProtection
+              ? intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Overview.Enable',
+                  defaultMessage: '开启',
+                })
+              : intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Overview.Disable',
+                  defaultMessage: '关闭',
+                }),
+          },
+        ),
+      });
     } else if (key) {
       openOperateModal(key);
     }
   };
+
+  const { runAsync: patchTenant } = useRequest(obtenant.patchTenant, {
+    manual: true,
+    onSuccess: (res) => {
+      if (res.successful) {
+        reGetTenantDetail();
+        message.success(
+          intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.Overview.892E62C7',
+            defaultMessage: '修改删除保护已成功',
+          }),
+        );
+      }
+    },
+  });
+
+  const handDeletionProtection = () => {
+    const body = {} as API.ParamPatchTenant;
+    if (defaultDeletionProtection) {
+      body.removeDeletionProtection = true;
+    } else {
+      body.addDeletionProtection = true;
+    }
+    patchTenant(ns, name, body);
+  };
+
   const header = () => {
     return {
       title: intl.formatMessage({

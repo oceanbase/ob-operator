@@ -1,5 +1,6 @@
 import { DATE_TIME_FORMAT, DateSelectOption } from '@/constants/datetime';
 import { listSqlMetrics, listSqlStats } from '@/services/sql';
+import { intl } from '@/utils/intl';
 import { SettingOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
@@ -223,7 +224,15 @@ export default function SqlList() {
                 <Tooltip
                   title={
                     <div>
-                      <div>Total: {total.toFixed(2)} ms</div>
+                      <div>
+                        {intl.formatMessage(
+                          {
+                            id: 'src.pages.Tenant.Detail.Sql.Total',
+                            defaultMessage: '总计：{total} ms',
+                          },
+                          { total: total.toFixed(2) },
+                        )}
+                      </div>
                       {segments.map((seg) => (
                         <div
                           key={seg.name}
@@ -242,7 +251,13 @@ export default function SqlList() {
                             }}
                           ></span>
                           <span>
-                            {seg.name}: {seg.value.toFixed(2)} ms
+                            {intl.formatMessage(
+                              {
+                                id: 'src.pages.Tenant.Detail.Sql.MetricValue',
+                                defaultMessage: '{name}：{value} ms',
+                              },
+                              { name: seg.name, value: seg.value.toFixed(2) },
+                            )}
                           </span>
                         </div>
                       ))}
@@ -307,13 +322,19 @@ export default function SqlList() {
   const columns: ProColumns<API.SqlInfo>[] = [
     ...dynamicColumns,
     {
-      title: 'User',
+      title: intl.formatMessage({
+        id: 'src.pages.Tenant.Detail.Sql.UserName',
+        defaultMessage: '用户名',
+      }),
       dataIndex: 'user',
       hideInTable: true,
       order: 100,
     },
     {
-      title: 'Database',
+      title: intl.formatMessage({
+        id: 'src.pages.Tenant.Detail.Sql.DatabaseName',
+        defaultMessage: '数据库',
+      }),
       dataIndex: 'database',
       hideInTable: true,
       order: 99,
@@ -334,13 +355,19 @@ export default function SqlList() {
               form.submit();
             }}
           >
-            Include Inner SQLs
+            {intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.Sql.IncludeInnerSqls',
+              defaultMessage: '包含内部 SQL',
+            })}
           </Checkbox>
         );
       },
     },
     {
-      title: 'Time Range',
+      title: intl.formatMessage({
+        id: 'src.pages.Tenant.Detail.Sql.TimeRange',
+        defaultMessage: '时间范围',
+      }),
       dataIndex: 'timeRange',
       valueType: 'dateTimeRange',
       hideInTable: true,
@@ -366,7 +393,10 @@ export default function SqlList() {
       },
     },
     {
-      title: 'Keyword',
+      title: intl.formatMessage({
+        id: 'src.pages.Tenant.Detail.Sql.Keyword',
+        defaultMessage: '关键字',
+      }),
       dataIndex: 'keyword',
       hideInTable: true,
       order: 96,
@@ -376,7 +406,10 @@ export default function SqlList() {
   return (
     <>
       <ProTable<API.SqlInfo>
-        headerTitle="SQL Analysis"
+        headerTitle={intl.formatMessage({
+          id: 'src.pages.Tenant.Detail.Sql.SqlAnalysis',
+          defaultMessage: 'SQL 分析',
+        })}
         actionRef={actionRef}
         rowKey={(record) =>
           `${record.sqlId}_${record.svrIp}_${record.svrPort}_${record.planId}_${record.userName}_${record.dbName}`
@@ -388,21 +421,26 @@ export default function SqlList() {
             activeKey: activeTab,
             items: [
               {
-                label: 'SQL Analysis',
+                label: intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.SqlAnalysis',
+                  defaultMessage: 'SQL 分析',
+                }),
                 key: 'sql_analysis',
               },
               {
-                label: 'Slow SQL',
+                label: intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.SlowSql',
+                  defaultMessage: '慢 SQL',
+                }),
                 key: 'slow_sql',
               },
             ],
             onChange: (key) => {
               const k = key as string;
               setActiveTab(k);
-              setSearchParams((prev) => {
-                prev.set('activeTab', k);
-                return prev;
-              });
+              const newParams = new URLSearchParams(searchParams);
+              newParams.set('activeTab', k);
+              setSearchParams(newParams);
             },
           },
         }}
@@ -445,7 +483,10 @@ export default function SqlList() {
             icon={<SettingOutlined />}
             onClick={() => setDrawerOpen(true)}
           >
-            Column Selection
+            {intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.Sql.ColumnSelection',
+              defaultMessage: '列选择',
+            })}
           </Button>,
         ]}
         scroll={{ x: 1500 }}
