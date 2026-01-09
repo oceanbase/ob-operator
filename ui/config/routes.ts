@@ -187,6 +187,27 @@ export default [
                 name: '连接租户',
               },
               {
+                path: 'sql',
+                name: 'SQL 分析',
+                routes: [
+                  {
+                    path: '',
+                    component: 'Tenant/Detail/Sql',
+                    name: 'SQL 列表',
+                  },
+                  {
+                    path: ':sqlId',
+                    component: 'Tenant/Detail/Sql/Detail',
+                    name: 'SQL 详情',
+                  },
+                  {
+                    path: ':sqlId/plan/:planId',
+                    component: 'Tenant/Detail/Sql/Plan',
+                    name: '执行计划详情',
+                  },
+                ],
+              },
+              {
                 path: '/tenant/:ns/:name/:tenantName',
                 redirect: 'overview',
                 name: '概览页',

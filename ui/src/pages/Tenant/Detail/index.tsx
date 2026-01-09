@@ -46,6 +46,13 @@ export default () => {
       link: `/tenant/${ns}/${name}/${tenantName}/connection`,
       accessible: access.obclusterwrite,
     },
+    {
+      title: intl.formatMessage({
+        id: 'Dashboard.Tenant.Detail.SQLDiagnose',
+        defaultMessage: 'SQL 分析',
+      }),
+      link: `/tenant/${ns}/${name}/${tenantName}/sql`,
+    },
   ];
 
   return <DetailLayout menus={menus} subSideSelectKey="tenant" />;

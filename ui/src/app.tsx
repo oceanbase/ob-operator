@@ -14,7 +14,7 @@ interface ResponseStructure {
 }
 
 export const request: RequestConfig = {
-  timeout: 10000,
+  timeout: 600000,
 
   errorConfig: {
     errorThrower: (res: ResponseStructure) => {
