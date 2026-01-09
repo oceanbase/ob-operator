@@ -1,0 +1,520 @@
+import { DATE_TIME_FORMAT, DateSelectOption } from '@/constants/datetime';
+import { listSqlMetrics, listSqlStats } from '@/services/sql';
+import { SettingOutlined } from '@ant-design/icons';
+import type { ActionType, ProColumns } from '@ant-design/pro-components';
+import { ProTable } from '@ant-design/pro-components';
+import { Link, useParams, useRequest, useSearchParams } from '@umijs/max';
+import { Button, Checkbox, Tooltip } from 'antd';
+import type { RangePickerProps } from 'antd/es/date-picker';
+import dayjs from 'dayjs';
+import { useMemo, useRef, useState } from 'react';
+import { getLocale } from 'umi';
+import ColumnSelectionDrawer from './ColumnSelectionDrawer';
+
+export default function SqlList() {
+  const { ns, name, tenantName } = useParams<{
+    ns: string;
+    name: string;
+    tenantName: string;
+  }>();
+  const actionRef = useRef<ActionType>();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedMetricKeys, setSelectedMetricKeys] = useState<string[]>([]);
+  const [maxElapsedTime, setMaxElapsedTime] = useState<number>(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<string>(
+    searchParams.get('activeTab') || 'sql_analysis',
+  );
+  const [currentParams, setCurrentParams] = useState<{
+    startTime?: number;
+    endTime?: number;
+  }>({});
+
+  // Helper to robustly extract metrics array regardless of response format
+  const getMetricsList = (data: any): API.SqlMetricMetaCategory[] => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    if (data.data && Array.isArray(data.data)) return data.data;
+    return [];
+  };
+
+  // Fetch metric metadata to know available columns and defaults
+  const { data: metricsData } = useRequest(
+    () =>
+      listSqlMetrics({ language: getLocale() === 'zh-CN' ? 'zh_CN' : 'en_US' }),
+    {
+      onSuccess: (data) => {
+        const list = getMetricsList(data);
+        const defaults: string[] = [];
+        list.forEach((category) => {
+          category.metrics.forEach((metric) => {
+            if (metric.displayByDefault || metric.immutable) {
+              defaults.push(metric.key);
+            }
+          });
+        });
+        setSelectedMetricKeys(defaults);
+      },
+    },
+  );
+
+  const initialTimeRange: [dayjs.Dayjs, dayjs.Dayjs] = useMemo(
+    () => [dayjs().subtract(30, 'minute'), dayjs()],
+    [],
+  );
+
+  const range = (start: number, end: number) => {
+    const result = [];
+    for (let i = start; i < end; i++) {
+      result.push(i);
+    }
+    return result;
+  };
+
+  const disabledDateTime: RangePickerProps['disabledTime'] = (_) => {
+    const isToday = _?.date() === dayjs().date();
+    if (!isToday)
+      return {
+        disabledHours: () => [],
+        disabledMinutes: () => [],
+        disabledSeconds: () => [],
+      };
+    return {
+      disabledHours: () => range(0, 24).splice(dayjs().hour() + 1, 24),
+      disabledMinutes: (hour) => {
+        if (hour === dayjs().hour()) {
+          return range(0, 60).splice(dayjs().minute() + 1, 60);
+        }
+        return [];
+      },
+      disabledSeconds: (hour, minute) => {
+        if (hour === dayjs().hour() && minute === dayjs().minute()) {
+          return range(0, 60).splice(dayjs().second(), 60);
+        }
+        return [];
+      },
+    };
+  };
+
+  const disabledDate: RangePickerProps['disabledDate'] = (current) => {
+    return current && current > dayjs().endOf('day');
+  };
+
+  const metaFieldMap: Record<string, keyof API.SqlMetaInfo> = {
+    query_sql: 'querySql',
+    db_name: 'dbName',
+    user_name: 'userName',
+    sql_id: 'sqlId',
+    svr_ip: 'svrIp',
+    svr_port: 'svrPort',
+    client_ip: 'clientIp',
+  };
+
+  const METRIC_COLORS: Record<string, string> = {
+    execute_time: '#4096FF', // blue
+    queue_time: '#95DE54', // green
+    get_plan_time: '#FFD666', // orange
+  };
+
+  // ... existing imports ...
+
+  // ... inside the component ...
+  // Generate dynamic columns based on selected keys and metadata
+  const dynamicColumns: ProColumns<API.SqlInfo>[] = useMemo(() => {
+    const list = getMetricsList(metricsData);
+    if (list.length === 0 || selectedMetricKeys.length === 0) return [];
+
+    const cols: ProColumns<API.SqlInfo>[] = [];
+    const allMetrics: API.SqlMetricMeta[] = [];
+    list.forEach((cat) => {
+      allMetrics.push(...cat.metrics);
+    });
+
+    allMetrics.forEach((metric) => {
+      if (selectedMetricKeys.includes(metric.key)) {
+        const title = metric.unit
+          ? `${metric.name} (${metric.unit})`
+          : metric.name;
+        const colConfig: ProColumns<API.SqlInfo> = {
+          title: title,
+          dataIndex: metric.key,
+          search: false,
+          width: 120,
+        };
+
+        if (metaFieldMap[metric.key]) {
+          colConfig.dataIndex = metaFieldMap[metric.key];
+          if (metric.key === 'sql_id') {
+            colConfig.width = 120;
+            colConfig.copyable = true;
+            colConfig.ellipsis = true;
+          } else if (metric.key === 'query_sql') {
+            colConfig.fixed = 'left';
+            colConfig.width = 150;
+            colConfig.ellipsis = true;
+            colConfig.copyable = true;
+            colConfig.render = (dom, record) => {
+              const params = new URLSearchParams();
+              params.append('dbName', record.dbName);
+              if (currentParams.startTime) {
+                params.append('startTime', currentParams.startTime.toString());
+              }
+              if (currentParams.endTime) {
+                params.append('endTime', currentParams.endTime.toString());
+              }
+              return (
+                <Link
+                  to={{
+                    pathname: `/tenant/${ns}/${name}/${tenantName}/sql/${record.sqlId}`,
+                    search: params.toString(),
+                  }}
+                  state={record}
+                >
+                  {dom}
+                </Link>
+              );
+            };
+          } else if (metric.key === 'user_name') {
+            colConfig.width = 100;
+          }
+        } else if (metric.key === 'elapsed_time') {
+          colConfig.width = 250;
+          colConfig.render = (_, record) => {
+            const elapsedStat = record.latencyStatistics?.find(
+              (s) => s.name === 'elapsed_time',
+            );
+            if (!elapsedStat) return '-';
+            const total = elapsedStat.value;
+            if (total <= 0) return '0.00';
+
+            // Find component metrics that are currently selected and have a color defined
+            const components =
+              record.latencyStatistics?.filter(
+                (s) =>
+                  s.name !== 'elapsed_time' &&
+                  selectedMetricKeys.includes(s.name) &&
+                  METRIC_COLORS[s.name],
+              ) || [];
+
+            // Sort components based on the order of keys in METRIC_COLORS to ensure consistent display order
+            const orderedKeys = Object.keys(METRIC_COLORS);
+            components.sort((a, b) => {
+              return orderedKeys.indexOf(a.name) - orderedKeys.indexOf(b.name);
+            });
+
+            // Calculate width for each component relative to the total of this row
+            const segments = components.map((comp) => {
+              const width = (comp.value / total) * 100;
+              return {
+                name: comp.name,
+                value: comp.value,
+                width,
+                color: METRIC_COLORS[comp.name],
+              };
+            });
+
+            // Calculate the width of the bar relative to the max elapsed time on the page
+            const MAX_BAR_WIDTH = 150;
+            const barWidth =
+              maxElapsedTime > 0 ? (total / maxElapsedTime) * MAX_BAR_WIDTH : 0;
+
+            return (
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <Tooltip
+                  title={
+                    <div>
+                      <div>Total: {total.toFixed(2)} ms</div>
+                      {segments.map((seg) => (
+                        <div
+                          key={seg.name}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 8,
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: 8,
+                              height: 8,
+                              backgroundColor: seg.color,
+                              borderRadius: '50%',
+                            }}
+                          ></span>
+                          <span>
+                            {seg.name}: {seg.value.toFixed(2)} ms
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  }
+                >
+                  <div
+                    style={{
+                      width: barWidth,
+                      height: 12,
+                      backgroundColor: '#f0f0f0', // Background represents total
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      display: 'flex',
+                      marginRight: 8,
+                      position: 'relative',
+                    }}
+                  >
+                    {segments.map((seg, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          width: `${seg.width}%`,
+                          height: '100%',
+                          backgroundColor: seg.color,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </Tooltip>
+                <span>{total.toFixed(2)}</span>
+              </div>
+            );
+          };
+          colConfig.sorter = true;
+        } else {
+          colConfig.render = (_, record) => {
+            const stat =
+              record.executionStatistics?.find((s) => s.name === metric.key) ||
+              record.latencyStatistics?.find((s) => s.name === metric.key);
+            if (!stat) return '-';
+            return Number.isInteger(stat.value)
+              ? stat.value
+              : stat.value.toFixed(2);
+          };
+          colConfig.sorter = true;
+        }
+        cols.push(colConfig);
+      }
+    });
+    return cols;
+  }, [
+    metricsData,
+    selectedMetricKeys,
+    ns,
+    name,
+    tenantName,
+    maxElapsedTime,
+    currentParams,
+  ]);
+
+  const columns: ProColumns<API.SqlInfo>[] = [
+    ...dynamicColumns,
+    {
+      title: 'User',
+      dataIndex: 'user',
+      hideInTable: true,
+      order: 100,
+    },
+    {
+      title: 'Database',
+      dataIndex: 'database',
+      hideInTable: true,
+      order: 99,
+    },
+    {
+      title: '',
+      dataIndex: 'includeInnerSql',
+      hideInTable: true,
+      order: 98,
+      formItemProps: {
+        valuePropName: 'checked',
+      },
+      renderFormItem: (_item, _config, form) => {
+        return (
+          <Checkbox
+            onChange={(e) => {
+              form.setFieldValue('includeInnerSql', e.target.checked);
+              form.submit();
+            }}
+          >
+            Include Inner SQLs
+          </Checkbox>
+        );
+      },
+    },
+    {
+      title: 'Time Range',
+      dataIndex: 'timeRange',
+      valueType: 'dateTimeRange',
+      hideInTable: true,
+      order: 97,
+      fieldProps: {
+        format: DATE_TIME_FORMAT,
+        disabledDate: disabledDate,
+        disabledTime: disabledDateTime,
+        presets: DateSelectOption.filter((o) => o.value !== 'custom').map(
+          (o) => ({
+            label: o.label,
+            value: [dayjs().subtract(o.value as number, 'ms'), dayjs()],
+          }),
+        ),
+      },
+      search: {
+        transform: (value: [string, string]) => {
+          return {
+            startTime: dayjs(value[0]).unix(),
+            endTime: dayjs(value[1]).unix(),
+          };
+        },
+      },
+    },
+    {
+      title: 'Keyword',
+      dataIndex: 'keyword',
+      hideInTable: true,
+      order: 96,
+    },
+  ];
+
+  return (
+    <>
+      <ProTable<API.SqlInfo>
+        headerTitle="SQL Analysis"
+        actionRef={actionRef}
+        rowKey={(record) =>
+          `${record.sqlId}_${record.svrIp}_${record.svrPort}_${record.planId}_${record.userName}_${record.dbName}`
+        }
+        params={{ outputColumns: selectedMetricKeys, activeTab }}
+        toolbar={{
+          menu: {
+            type: 'tab',
+            activeKey: activeTab,
+            items: [
+              {
+                label: 'SQL Analysis',
+                key: 'sql_analysis',
+              },
+              {
+                label: 'Slow SQL',
+                key: 'slow_sql',
+              },
+            ],
+            onChange: (key) => {
+              const k = key as string;
+              setActiveTab(k);
+              setSearchParams((prev) => {
+                prev.set('activeTab', k);
+                return prev;
+              });
+            },
+          },
+        }}
+        form={{
+          syncToUrl: (values, type) => {
+            if (type === 'get') {
+              const { startTime, endTime, ...rest } = values;
+              return {
+                ...rest,
+                timeRange:
+                  startTime && endTime
+                    ? [
+                        dayjs.unix(Number(startTime)),
+                        dayjs.unix(Number(endTime)),
+                      ]
+                    : initialTimeRange,
+              };
+            }
+            const { timeRange, ...rest } = values;
+            if (timeRange && timeRange[0] && timeRange[1]) {
+              return {
+                ...rest,
+                startTime: dayjs(timeRange[0]).unix(),
+                endTime: dayjs(timeRange[1]).unix(),
+              };
+            }
+            return rest;
+          },
+        }}
+        search={{
+          collapsed: false,
+          collapseRender: false,
+          labelWidth: 'auto',
+          span: 8,
+        }}
+        options={false}
+        toolBarRender={() => [
+          <Button
+            key="column-selection"
+            icon={<SettingOutlined />}
+            onClick={() => setDrawerOpen(true)}
+          >
+            Column Selection
+          </Button>,
+        ]}
+        scroll={{ x: 1500 }}
+        request={async (params, sort) => {
+          if (!ns || !name || !tenantName) {
+            return { data: [], success: false };
+          }
+
+          const { startTime, endTime, ...restParams } = params;
+
+          // Ensure startTime and endTime are present, defaulting to initialTimeRange if not
+          const effectiveStartTime = startTime ?? initialTimeRange[0].unix();
+          const effectiveEndTime = endTime ?? initialTimeRange[1].unix();
+
+          setCurrentParams({
+            startTime: effectiveStartTime,
+            endTime: effectiveEndTime,
+          });
+
+          const msg = await listSqlStats({
+            namespace: ns,
+            obtenant: name,
+            sortColumn: Object.keys(sort)[0],
+            sortOrder: Object.values(sort)[0] === 'ascend' ? 'asc' : 'desc',
+            pageNum: restParams.current,
+            pageSize: restParams.pageSize,
+            keyword: restParams.keyword as string,
+            user: restParams.user as string,
+            database: restParams.database as string,
+            includeInnerSql: restParams.includeInnerSql as boolean,
+            suspiciousOnly: activeTab === 'slow_sql',
+            startTime: effectiveStartTime,
+            endTime: effectiveEndTime,
+            outputColumns: selectedMetricKeys,
+          });
+
+          const items = msg.data?.items || [];
+          let maxTime = 0;
+          items.forEach((item) => {
+            const elapsed =
+              item.latencyStatistics?.find((s) => s.name === 'elapsed_time')
+                ?.value || 0;
+            if (elapsed > maxTime) maxTime = elapsed;
+          });
+          setMaxElapsedTime(maxTime);
+
+          return {
+            data: items,
+            success: msg.successful,
+            total: msg.data?.totalCount || 0,
+            page: params.current,
+          };
+        }}
+        columns={columns}
+        pagination={{
+          defaultPageSize: 20,
+          showSizeChanger: true,
+        }}
+      />
+      <ColumnSelectionDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        selectedKeys={selectedMetricKeys}
+        onSelectionChange={(keys) => {
+          setSelectedMetricKeys(keys);
+          actionRef.current?.reload();
+        }}
+        metrics={getMetricsList(metricsData)}
+      />
+    </>
+  );
+}
