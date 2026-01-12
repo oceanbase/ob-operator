@@ -187,6 +187,13 @@ export default function TenantOverview() {
     },
     {
       label: intl.formatMessage({
+        id: 'src.pages.Tenant.Detail.Overview.BasicInfo.SqlDiagnosis',
+        defaultMessage: 'SQL 诊断',
+      }),
+      key: 'sqlAnalyzer',
+    },
+    {
+      label: intl.formatMessage({
         id: 'Dashboard.Detail.Overview.DeleteTenant',
         defaultMessage: '删除租户',
       }),
@@ -196,6 +203,7 @@ export default function TenantOverview() {
   ];
 
   const defaultDeletionProtection = tenantDetail?.info?.deletionProtection;
+  const defaultSqlAnalyzer = tenantDetail?.info?.sqlAnalyzerEnabled;
 
   const menuChange = ({ key }) => {
     if (key === 'createBackupPolicy') {
@@ -231,6 +239,27 @@ export default function TenantOverview() {
           },
         ),
       });
+    } else if (key === 'sqlAnalyzer') {
+      showDeleteConfirm({
+        onOk: handSqlAnalyzer,
+        title: intl.formatMessage(
+          {
+            id: 'src.pages.Tenant.Detail.Overview.ConfirmSqlDiagnosis',
+            defaultMessage: '确认要{action} SQL 诊断吗？',
+          },
+          {
+            action: !defaultSqlAnalyzer
+              ? intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Overview.Enable',
+                  defaultMessage: '开启',
+                })
+              : intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Overview.Disable',
+                  defaultMessage: '关闭',
+                }),
+          },
+        ),
+      });
     } else if (key) {
       openOperateModal(key);
     }
@@ -251,6 +280,42 @@ export default function TenantOverview() {
     },
   });
 
+  const { runAsync: createSQLAnalyzer } = useRequest(
+    obtenant.createSQLAnalyzer,
+    {
+      manual: true,
+      onSuccess: (res) => {
+        if (res.successful) {
+          reGetTenantDetail();
+          message.success(
+            intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.Overview.SqlDiagnosisEnabled',
+              defaultMessage: 'SQL诊断已开启',
+            }),
+          );
+        }
+      },
+    },
+  );
+
+  const { runAsync: deleteSQLAnalyzer } = useRequest(
+    obtenant.deleteSQLAnalyzer,
+    {
+      manual: true,
+      onSuccess: (res) => {
+        if (res.successful) {
+          reGetTenantDetail();
+          message.success(
+            intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.Overview.SqlDiagnosisDisabled',
+              defaultMessage: 'SQL诊断已关闭',
+            }),
+          );
+        }
+      },
+    },
+  );
+
   const handDeletionProtection = () => {
     const body = {} as API.ParamPatchTenant;
     if (defaultDeletionProtection) {
@@ -259,6 +324,14 @@ export default function TenantOverview() {
       body.addDeletionProtection = true;
     }
     patchTenant(ns, name, body);
+  };
+
+  const handSqlAnalyzer = () => {
+    if (defaultSqlAnalyzer) {
+      deleteSQLAnalyzer(ns, name);
+    } else {
+      createSQLAnalyzer(ns, name);
+    }
   };
 
   const header = () => {
