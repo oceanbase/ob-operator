@@ -1,5 +1,8 @@
 ##@ Build
 
+.PHONY: build
+build: operator ## Build manager binary.
+
 .PHONY: operator
 operator: dashboard-doc-gen dashboard-bindata-gen manifests generate fmt vet ## Build manager binary.
 	CGO_ENABLED=0 GOOS=linux go build -p $(PROCESSOR) -o bin/manager cmd/operator/main.go
@@ -7,6 +10,9 @@ operator: dashboard-doc-gen dashboard-bindata-gen manifests generate fmt vet ## 
 # If you wish built the manager image targeting other platforms you can use the --platform flag.
 # (i.e. docker build --platform linux/arm64 ). However, you must enable docker buildKit for it.
 # More info: https://docs.docker.com/develop/develop-images/build_enhancements/
+.PHONY: docker-build
+docker-build: operator-image ## Build docker image with the manager.
+
 .PHONY: operator-image
 operator-image: generate fmt ## Build docker image with the manager.
 	docker build -t ${IMG} --build-arg GOPROXY=${GOPROXY} --build-arg GOSUMDB=${GOSUMDB} --build-arg RACE=${RACE} --no-cache -f build/Dockerfile.operator .

@@ -25,23 +25,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        with:
-          config-inline: |
-            [worker.oci]
-              max-parallelism = 1
-
       - name: Set up Go 1.x
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
-
-      - name: generate parser
-        run: make generate-parser
 
       - name: generate bindata
         run: make dashboard-bindata-gen dashboard-doc-gen
