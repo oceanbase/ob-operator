@@ -30,6 +30,9 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
 
+      - name: generate parser
+        run: make generate-parser
+
       - name: generate bindata
         run: make dashboard-bindata-gen dashboard-doc-gen
   

@@ -23,6 +23,9 @@ jobs:
           check-latest: true
           cache: true
 
+      - name: generate parser
+        run: make generate-parser
+
       - name: generate bindata
         run: make dashboard-bindata-gen dashboard-doc-gen
 

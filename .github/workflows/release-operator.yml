@@ -47,6 +47,9 @@ jobs:
         run: |
           echo "version=$(echo $tagName | grep -P '(\d*\.\d*\.\d*)' --only-matching)" >> $GITHUB_OUTPUT
       
+      - name: Generate parser
+        run: make generate-parser
+
       - name: Create and push manifests w/o cache
         uses: docker/build-push-action@v6
         with:
