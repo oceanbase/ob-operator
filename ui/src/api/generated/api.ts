@@ -412,12 +412,6 @@ export interface AlertAnalyzeParam {
      * @type {string}
      * @memberof AlertAnalyzeParam
      */
-    'resultPath'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof AlertAnalyzeParam
-     */
     'rule': string;
     /**
      * 
@@ -1213,6 +1207,12 @@ export interface InspectionInspectionScheduleConfig {
      * @memberof InspectionInspectionScheduleConfig
      */
     'schedule': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof InspectionInspectionScheduleConfig
+     */
+    'timeZone'?: string;
 }
 
 
@@ -2230,6 +2230,31 @@ export interface ListRemoteK8sClusters200Response {
 /**
  * 
  * @export
+ * @interface ListRequestStatistics200Response
+ */
+export interface ListRequestStatistics200Response {
+    /**
+     * 
+     * @type {Array<SqlRequestStatisticInfo>}
+     * @memberof ListRequestStatistics200Response
+     */
+    'data': Array<SqlRequestStatisticInfo>;
+    /**
+     * 
+     * @type {string}
+     * @memberof ListRequestStatistics200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof ListRequestStatistics200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
  * @interface ListRoutes200Response
  */
 export interface ListRoutes200Response {
@@ -2330,25 +2355,25 @@ export interface ListSqlMetrics200Response {
 /**
  * 
  * @export
- * @interface ListSuspiciousSqls200Response
+ * @interface ListSqlStats200Response
  */
-export interface ListSuspiciousSqls200Response {
+export interface ListSqlStats200Response {
     /**
      * 
-     * @type {Array<SqlSqlInfo>}
-     * @memberof ListSuspiciousSqls200Response
+     * @type {SqlSqlStatsList}
+     * @memberof ListSqlStats200Response
      */
-    'data': Array<SqlSqlInfo>;
+    'data': SqlSqlStatsList;
     /**
      * 
      * @type {string}
-     * @memberof ListSuspiciousSqls200Response
+     * @memberof ListSqlStats200Response
      */
     'message': string;
     /**
      * 
      * @type {boolean}
-     * @memberof ListSuspiciousSqls200Response
+     * @memberof ListSqlStats200Response
      */
     'successful': boolean;
 }
@@ -3779,6 +3804,12 @@ export interface ParamCreateOBTenantParam {
     'deletionProtection'?: boolean;
     /**
      * 
+     * @type {boolean}
+     * @memberof ParamCreateOBTenantParam
+     */
+    'enableSqlAnalyzer'?: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof ParamCreateOBTenantParam
      */
@@ -4892,6 +4923,31 @@ export interface QuerySqlDetailInfo200Response {
 /**
  * 
  * @export
+ * @interface QuerySqlHistoryInfo200Response
+ */
+export interface QuerySqlHistoryInfo200Response {
+    /**
+     * 
+     * @type {SqlSqlHistoryInfo}
+     * @memberof QuerySqlHistoryInfo200Response
+     */
+    'data': SqlSqlHistoryInfo;
+    /**
+     * 
+     * @type {string}
+     * @memberof QuerySqlHistoryInfo200Response
+     */
+    'message': string;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof QuerySqlHistoryInfo200Response
+     */
+    'successful': boolean;
+}
+/**
+ * 
+ * @export
  * @interface ReceiverReceiver
  */
 export interface ReceiverReceiver {
@@ -4962,31 +5018,6 @@ export interface ReceiverTemplate {
 }
 
 
-/**
- * 
- * @export
- * @interface RequestStatistics200Response
- */
-export interface RequestStatistics200Response {
-    /**
-     * 
-     * @type {Array<SqlRequestStatisticInfo>}
-     * @memberof RequestStatistics200Response
-     */
-    'data': Array<SqlRequestStatisticInfo>;
-    /**
-     * 
-     * @type {string}
-     * @memberof RequestStatistics200Response
-     */
-    'message': string;
-    /**
-     * 
-     * @type {boolean}
-     * @memberof RequestStatistics200Response
-     */
-    'successful': boolean;
-}
 /**
  * 
  * @export
@@ -6659,6 +6690,12 @@ export interface ResponseOBTenantDetail {
      */
     'scenario'?: string;
     /**
+     * Whether the sql analyzer is enabled
+     * @type {boolean}
+     * @memberof ResponseOBTenantDetail
+     */
+    'sqlAnalyzerEnabled'?: boolean;
+    /**
      * 
      * @type {string}
      * @memberof ResponseOBTenantDetail
@@ -6767,6 +6804,12 @@ export interface ResponseOBTenantOverview {
      * @memberof ResponseOBTenantOverview
      */
     'scenario'?: string;
+    /**
+     * Whether the sql analyzer is enabled
+     * @type {boolean}
+     * @memberof ResponseOBTenantOverview
+     */
+    'sqlAnalyzerEnabled'?: boolean;
     /**
      * Status of the tenant
      * @type {string}
@@ -7765,32 +7808,9 @@ export interface SilenceStatus {
 /**
  * 
  * @export
- * @enum {string}
- */
-
-export const SqlIndexCategory = {
-    IndexCategoryPrimaryKey: 'primaryKey',
-    IndexCategoryGlobalNormal: 'globalNormal',
-    IndexCategoryGlobalUnique: 'globalUnique',
-    IndexCategoryLocalNormal: 'localNormal',
-    IndexCategoryLocalUnique: 'localUnique'
-} as const;
-
-export type SqlIndexCategory = typeof SqlIndexCategory[keyof typeof SqlIndexCategory];
-
-
-/**
- * 
- * @export
  * @interface SqlIndexInfo
  */
 export interface SqlIndexInfo {
-    /**
-     * 
-     * @type {SqlIndexCategory}
-     * @memberof SqlIndexInfo
-     */
-    'category': SqlIndexCategory;
     /**
      * 
      * @type {Array<string>}
@@ -7805,34 +7825,29 @@ export interface SqlIndexInfo {
     'indexName': string;
     /**
      * 
-     * @type {SqlIndexStatus}
+     * @type {string}
      * @memberof SqlIndexInfo
      */
-    'status': SqlIndexStatus;
+    'indexType': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlIndexInfo
+     */
+    'status': string;
     /**
      * 
      * @type {string}
      * @memberof SqlIndexInfo
      */
     'tableName': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlIndexInfo
+     */
+    'uniqueness': string;
 }
-
-
-/**
- * 
- * @export
- * @enum {string}
- */
-
-export const SqlIndexStatus = {
-    IndexStatusCreating: 'creating',
-    IndexStatusAvailable: 'available',
-    IndexStatusError: 'error'
-} as const;
-
-export type SqlIndexStatus = typeof SqlIndexStatus[keyof typeof SqlIndexStatus];
-
-
 /**
  * 
  * @export
@@ -7851,30 +7866,9 @@ export type SqlMetricCategory = typeof SqlMetricCategory[keyof typeof SqlMetricC
 /**
  * 
  * @export
- * @enum {string}
- */
-
-export const SqlPlanCategory = {
-    PlanCategoryLocal: 'local',
-    PlanCategoryRemote: 'remote',
-    PlanCategoryDistributed: 'distributed'
-} as const;
-
-export type SqlPlanCategory = typeof SqlPlanCategory[keyof typeof SqlPlanCategory];
-
-
-/**
- * 
- * @export
  * @interface SqlPlanDetail
  */
 export interface SqlPlanDetail {
-    /**
-     * 
-     * @type {SqlPlanCategory}
-     * @memberof SqlPlanDetail
-     */
-    'category': SqlPlanCategory;
     /**
      * 
      * @type {number}
@@ -7883,31 +7877,41 @@ export interface SqlPlanDetail {
     'generatedTime': number;
     /**
      * 
-     * @type {number}
-     * @memberof SqlPlanDetail
-     */
-    'mergedVersion': number;
-    /**
-     * 
      * @type {SqlPlanOperator}
      * @memberof SqlPlanDetail
      */
     'planDetail': SqlPlanOperator;
     /**
      * 
+     * @type {number}
+     * @memberof SqlPlanDetail
+     */
+    'planHash': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanDetail
+     */
+    'planID': number;
+    /**
+     * 
      * @type {string}
      * @memberof SqlPlanDetail
      */
-    'planHash': string;
+    'svrIP': string;
     /**
      * 
-     * @type {Array<SqlPlanStatisticByServer>}
+     * @type {number}
      * @memberof SqlPlanDetail
      */
-    'planStatistics': Array<SqlPlanStatisticByServer>;
+    'svrPort': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanDetail
+     */
+    'tenantID': number;
 }
-
-
 /**
  * 
  * @export
@@ -7919,49 +7923,37 @@ export interface SqlPlanDetailParam {
      * @type {string}
      * @memberof SqlPlanDetailParam
      */
-    'database'?: string;
-    /**
-     * 
-     * @type {number}
-     * @memberof SqlPlanDetailParam
-     */
-    'endTime'?: number;
-    /**
-     * 
-     * @type {string}
-     * @memberof SqlPlanDetailParam
-     */
     'namespace': string;
     /**
      * 
      * @type {string}
      * @memberof SqlPlanDetailParam
      */
-    'obcluster': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SqlPlanDetailParam
-     */
-    'obtenant'?: string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SqlPlanDetailParam
-     */
-    'planHash': string;
+    'obtenant': string;
     /**
      * 
      * @type {number}
      * @memberof SqlPlanDetailParam
      */
-    'startTime'?: number;
+    'planID': number;
     /**
      * 
      * @type {string}
      * @memberof SqlPlanDetailParam
      */
-    'user'?: string;
+    'svrIP': string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanDetailParam
+     */
+    'svrPort': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanDetailParam
+     */
+    'tenantID': number;
 }
 /**
  * 
@@ -8014,22 +8006,16 @@ export interface SqlPlanOperator {
 export interface SqlPlanStatistic {
     /**
      * 
-     * @type {SqlPlanCategory}
+     * @type {number}
      * @memberof SqlPlanStatistic
      */
-    'category': SqlPlanCategory;
+    'cost'?: number;
     /**
      * 
      * @type {number}
      * @memberof SqlPlanStatistic
      */
-    'cost': number;
-    /**
-     * 
-     * @type {number}
-     * @memberof SqlPlanStatistic
-     */
-    'cpuTime': number;
+    'cpuCost'?: number;
     /**
      * 
      * @type {number}
@@ -8041,73 +8027,44 @@ export interface SqlPlanStatistic {
      * @type {number}
      * @memberof SqlPlanStatistic
      */
-    'mergedVersion': number;
+    'ioCost'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanStatistic
+     */
+    'planHash': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanStatistic
+     */
+    'planID': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanStatistic
+     */
+    'realCost'?: number;
     /**
      * 
      * @type {string}
      * @memberof SqlPlanStatistic
      */
-    'planHash': string;
+    'svrIP': string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanStatistic
+     */
+    'svrPort': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlPlanStatistic
+     */
+    'tenantID': number;
 }
-
-
-/**
- * 
- * @export
- * @interface SqlPlanStatisticByServer
- */
-export interface SqlPlanStatisticByServer {
-    /**
-     * 
-     * @type {SqlPlanCategory}
-     * @memberof SqlPlanStatisticByServer
-     */
-    'category': SqlPlanCategory;
-    /**
-     * 
-     * @type {number}
-     * @memberof SqlPlanStatisticByServer
-     */
-    'cost': number;
-    /**
-     * 
-     * @type {number}
-     * @memberof SqlPlanStatisticByServer
-     */
-    'cpuTime': number;
-    /**
-     * 
-     * @type {number}
-     * @memberof SqlPlanStatisticByServer
-     */
-    'generatedTime': number;
-    /**
-     * 
-     * @type {number}
-     * @memberof SqlPlanStatisticByServer
-     */
-    'mergedVersion': number;
-    /**
-     * 
-     * @type {string}
-     * @memberof SqlPlanStatisticByServer
-     */
-    'planHash': string;
-    /**
-     * 
-     * @type {number}
-     * @memberof SqlPlanStatisticByServer
-     */
-    'planId': number;
-    /**
-     * 
-     * @type {string}
-     * @memberof SqlPlanStatisticByServer
-     */
-    'server': string;
-}
-
-
 /**
  * 
  * @export
@@ -8116,34 +8073,34 @@ export interface SqlPlanStatisticByServer {
 export interface SqlRequestStatisticInfo {
     /**
      * 
+     * @type {number}
+     * @memberof SqlRequestStatisticInfo
+     */
+    'averageLatency': number;
+    /**
+     * 
      * @type {string}
      * @memberof SqlRequestStatisticInfo
      */
     'database': string;
     /**
      * 
-     * @type {Array<SqlSqlStatisticMetric>}
+     * @type {Array<ResponseMetricValue>}
      * @memberof SqlRequestStatisticInfo
      */
-    'executionStatistics': Array<SqlSqlStatisticMetric>;
+    'executionTrend': Array<ResponseMetricValue>;
     /**
      * 
-     * @type {ResponseMetricData}
+     * @type {number}
      * @memberof SqlRequestStatisticInfo
      */
-    'executionTrend': ResponseMetricData;
+    'failedExecutions': number;
     /**
      * 
-     * @type {Array<SqlSqlStatisticMetric>}
+     * @type {Array<ResponseMetricValue>}
      * @memberof SqlRequestStatisticInfo
      */
-    'latencyStatistics': Array<SqlSqlStatisticMetric>;
-    /**
-     * 
-     * @type {ResponseMetricData}
-     * @memberof SqlRequestStatisticInfo
-     */
-    'latencyTrend': ResponseMetricData;
+    'latencyTrend': Array<ResponseMetricValue>;
     /**
      * 
      * @type {Array<SqlSqlStatisticMetric>}
@@ -8156,6 +8113,18 @@ export interface SqlRequestStatisticInfo {
      * @memberof SqlRequestStatisticInfo
      */
     'tenant': string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlRequestStatisticInfo
+     */
+    'totalExecutions': number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlRequestStatisticInfo
+     */
+    'totalLatency': number;
     /**
      * 
      * @type {string}
@@ -8183,10 +8152,10 @@ export interface SqlSqlDetailParam {
     'endTime'?: number;
     /**
      * 
-     * @type {number}
+     * @type {boolean}
      * @memberof SqlSqlDetailParam
      */
-    'interval': number;
+    'includeInnerSql'?: boolean;
     /**
      * 
      * @type {string}
@@ -8198,13 +8167,7 @@ export interface SqlSqlDetailParam {
      * @type {string}
      * @memberof SqlSqlDetailParam
      */
-    'obcluster': string;
-    /**
-     * 
-     * @type {string}
-     * @memberof SqlSqlDetailParam
-     */
-    'obtenant'?: string;
+    'obtenant': string;
     /**
      * 
      * @type {string}
@@ -8238,22 +8201,10 @@ export interface SqlSqlDetailedInfo {
     'diagnoseInfo'?: Array<SqlSqlDiagnoseInfo>;
     /**
      * 
-     * @type {Array<ResponseMetricData>}
-     * @memberof SqlSqlDetailedInfo
-     */
-    'executionTrend': Array<ResponseMetricData>;
-    /**
-     * 
      * @type {Array<SqlIndexInfo>}
      * @memberof SqlSqlDetailedInfo
      */
     'indexies'?: Array<SqlIndexInfo>;
-    /**
-     * 
-     * @type {Array<ResponseMetricData>}
-     * @memberof SqlSqlDetailedInfo
-     */
-    'latencyTrend': Array<ResponseMetricData>;
     /**
      * 
      * @type {Array<SqlPlanStatistic>}
@@ -8272,7 +8223,19 @@ export interface SqlSqlDiagnoseInfo {
      * @type {string}
      * @memberof SqlSqlDiagnoseInfo
      */
-    'reason': string;
+    'level'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlDiagnoseInfo
+     */
+    'reason'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlDiagnoseInfo
+     */
+    'ruleName'?: string;
     /**
      * 
      * @type {string}
@@ -8321,13 +8284,37 @@ export interface SqlSqlFilter {
      * @type {string}
      * @memberof SqlSqlFilter
      */
-    'obcluster': string;
+    'obtenant': string;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof SqlSqlFilter
+     */
+    'outputColumns'?: Array<string>;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlFilter
+     */
+    'pageNum'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlFilter
+     */
+    'pageSize'?: number;
     /**
      * 
      * @type {string}
      * @memberof SqlSqlFilter
      */
-    'obtenant'?: string;
+    'sortColumn'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlFilter
+     */
+    'sortOrder'?: string;
     /**
      * 
      * @type {number}
@@ -8336,8 +8323,100 @@ export interface SqlSqlFilter {
     'startTime'?: number;
     /**
      * 
+     * @type {boolean}
+     * @memberof SqlSqlFilter
+     */
+    'suspiciousOnly'?: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof SqlSqlFilter
+     */
+    'user'?: string;
+}
+/**
+ * 
+ * @export
+ * @interface SqlSqlHistoryInfo
+ */
+export interface SqlSqlHistoryInfo {
+    /**
+     * 
+     * @type {Array<ResponseMetricData>}
+     * @memberof SqlSqlHistoryInfo
+     */
+    'executionTrend': Array<ResponseMetricData>;
+    /**
+     * 
+     * @type {Array<ResponseMetricData>}
+     * @memberof SqlSqlHistoryInfo
+     */
+    'latencyTrend': Array<ResponseMetricData>;
+}
+/**
+ * 
+ * @export
+ * @interface SqlSqlHistoryParam
+ */
+export interface SqlSqlHistoryParam {
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlHistoryParam
+     */
+    'database'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlHistoryParam
+     */
+    'endTime'?: number;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof SqlSqlHistoryParam
+     */
+    'includeInnerSql'?: boolean;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlHistoryParam
+     */
+    'interval': number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlHistoryParam
+     */
+    'namespace': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlHistoryParam
+     */
+    'obtenant': string;
+    /**
+     * 
+     * @type {Array<string>}
+     * @memberof SqlSqlHistoryParam
+     */
+    'outputColumns'?: Array<string>;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlHistoryParam
+     */
+    'sqlId': string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlHistoryParam
+     */
+    'startTime'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlHistoryParam
      */
     'user'?: string;
 }
@@ -8349,10 +8428,28 @@ export interface SqlSqlFilter {
 export interface SqlSqlInfo {
     /**
      * 
+     * @type {number}
+     * @memberof SqlSqlInfo
+     */
+    'causeType'?: number;
+    /**
+     * 
      * @type {string}
      * @memberof SqlSqlInfo
      */
-    'database': string;
+    'clientIp'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlInfo
+     */
+    'dbId'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlInfo
+     */
+    'dbName'?: string;
     /**
      * 
      * @type {Array<SqlSqlDiagnoseInfo>}
@@ -8361,16 +8458,34 @@ export interface SqlSqlInfo {
     'diagnoseInfo'?: Array<SqlSqlDiagnoseInfo>;
     /**
      * 
+     * @type {number}
+     * @memberof SqlSqlInfo
+     */
+    'effectiveTenantId'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlInfo
+     */
+    'event'?: string;
+    /**
+     * 
      * @type {Array<SqlSqlStatisticMetric>}
      * @memberof SqlSqlInfo
      */
     'executionStatistics': Array<SqlSqlStatisticMetric>;
     /**
      * 
-     * @type {boolean}
+     * @type {string}
      * @memberof SqlSqlInfo
      */
-    'isInner': boolean;
+    'formatSqlId'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlInfo
+     */
+    'lastFailInfo'?: number;
     /**
      * 
      * @type {Array<SqlSqlStatisticMetric>}
@@ -8379,40 +8494,88 @@ export interface SqlSqlInfo {
     'latencyStatistics': Array<SqlSqlStatisticMetric>;
     /**
      * 
-     * @type {string}
+     * @type {number}
      * @memberof SqlSqlInfo
      */
-    'observer': string;
+    'planId'?: number;
     /**
      * 
      * @type {string}
      * @memberof SqlSqlInfo
      */
-    'sqlID': string;
+    'querySql'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlInfo
+     */
+    'sid'?: number;
     /**
      * 
      * @type {string}
      * @memberof SqlSqlInfo
      */
-    'sqlText': string;
+    'sqlId'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlInfo
+     */
+    'subPlanCount'?: number;
     /**
      * 
      * @type {string}
      * @memberof SqlSqlInfo
      */
-    'sqlType': string;
+    'svrIp'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlInfo
+     */
+    'svrPort'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlInfo
+     */
+    'tenantId'?: number;
     /**
      * 
      * @type {string}
      * @memberof SqlSqlInfo
      */
-    'tenant': string;
+    'tenantName'?: string;
     /**
      * 
      * @type {string}
      * @memberof SqlSqlInfo
      */
-    'user': string;
+    'traceId'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlInfo
+     */
+    'txId'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlInfo
+     */
+    'userClientIp'?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlInfo
+     */
+    'userId'?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlInfo
+     */
+    'userName'?: string;
 }
 /**
  * 
@@ -8420,12 +8583,6 @@ export interface SqlSqlInfo {
  * @interface SqlSqlMetricMeta
  */
 export interface SqlSqlMetricMeta {
-    /**
-     * 
-     * @type {SqlMetricCategory}
-     * @memberof SqlSqlMetricMeta
-     */
-    'category': SqlMetricCategory;
     /**
      * 
      * @type {string}
@@ -8440,13 +8597,29 @@ export interface SqlSqlMetricMeta {
     'displayByDefault': boolean;
     /**
      * 
+     * @type {boolean}
+     * @memberof SqlSqlMetricMeta
+     */
+    'immutable': boolean;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlMetricMeta
+     */
+    'key': string;
+    /**
+     * 
      * @type {string}
      * @memberof SqlSqlMetricMeta
      */
     'name': string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlMetricMeta
+     */
+    'unit': string;
 }
-
-
 /**
  * 
  * @export
@@ -8488,6 +8661,12 @@ export interface SqlSqlRequestStatisticParam {
     'endTime'?: number;
     /**
      * 
+     * @type {boolean}
+     * @memberof SqlSqlRequestStatisticParam
+     */
+    'includeInnerSql'?: boolean;
+    /**
+     * 
      * @type {string}
      * @memberof SqlSqlRequestStatisticParam
      */
@@ -8497,13 +8676,31 @@ export interface SqlSqlRequestStatisticParam {
      * @type {string}
      * @memberof SqlSqlRequestStatisticParam
      */
-    'obcluster': string;
+    'obtenant': string;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlRequestStatisticParam
+     */
+    'pageNum'?: number;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlRequestStatisticParam
+     */
+    'pageSize'?: number;
     /**
      * 
      * @type {string}
      * @memberof SqlSqlRequestStatisticParam
      */
-    'obtenant'?: string;
+    'sortColumn'?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof SqlSqlRequestStatisticParam
+     */
+    'sortOrder'?: string;
     /**
      * 
      * @type {number}
@@ -8541,6 +8738,25 @@ export interface SqlSqlStatisticMetric {
      * @memberof SqlSqlStatisticMetric
      */
     'value': number;
+}
+/**
+ * 
+ * @export
+ * @interface SqlSqlStatsList
+ */
+export interface SqlSqlStatsList {
+    /**
+     * 
+     * @type {Array<SqlSqlInfo>}
+     * @memberof SqlSqlStatsList
+     */
+    'items'?: Array<SqlSqlInfo>;
+    /**
+     * 
+     * @type {number}
+     * @memberof SqlSqlStatsList
+     */
+    'totalCount'?: number;
 }
 
 /**
@@ -15884,6 +16100,47 @@ export const OBTenantApiAxiosParamCreator = function (configuration?: Configurat
             };
         },
         /**
+         * Create SQL Analyzer for specific tenant
+         * @summary Create SQL Analyzer for specific tenant
+         * @param {string} namespace obtenant namespace
+         * @param {string} name obtenant name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createSQLAnalyzer: async (namespace: string, name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('createSQLAnalyzer', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('createSQLAnalyzer', 'name', name)
+            const localVarPath = `/api/v1/obtenants/{namespace}/{name}/sql-analyzer`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Create an obtenant in a specific namespace, passwords should be encrypted by AES
          * @summary Create tenant
          * @param {ParamCreateOBTenantParam} body create obtenant request body
@@ -15988,6 +16245,47 @@ export const OBTenantApiAxiosParamCreator = function (configuration?: Configurat
                 .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
                 .replace(`{${"name"}}`, encodeURIComponent(String(name)))
                 .replace(`{${"zoneName"}}`, encodeURIComponent(String(zoneName)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Delete SQL Analyzer for specific tenant
+         * @summary Delete SQL Analyzer for specific tenant
+         * @param {string} namespace obtenant namespace
+         * @param {string} name obtenant name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteSQLAnalyzer: async (namespace: string, name: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'namespace' is not null or undefined
+            assertParamExists('deleteSQLAnalyzer', 'namespace', namespace)
+            // verify required parameter 'name' is not null or undefined
+            assertParamExists('deleteSQLAnalyzer', 'name', name)
+            const localVarPath = `/api/v1/obtenants/{namespace}/{name}/sql-analyzer`
+                .replace(`{${"namespace"}}`, encodeURIComponent(String(namespace)))
+                .replace(`{${"name"}}`, encodeURIComponent(String(name)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -16690,6 +16988,20 @@ export const OBTenantApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Create SQL Analyzer for specific tenant
+         * @summary Create SQL Analyzer for specific tenant
+         * @param {string} namespace obtenant namespace
+         * @param {string} name obtenant name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createSQLAnalyzer(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateTenant200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createSQLAnalyzer(namespace, name, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OBTenantApi.createSQLAnalyzer']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Create an obtenant in a specific namespace, passwords should be encrypted by AES
          * @summary Create tenant
          * @param {ParamCreateOBTenantParam} body create obtenant request body
@@ -16730,6 +17042,20 @@ export const OBTenantApiFp = function(configuration?: Configuration) {
             const localVarAxiosArgs = await localVarAxiosParamCreator.deleteOBTenantPool(namespace, name, zoneName, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['OBTenantApi.deleteOBTenantPool']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Delete SQL Analyzer for specific tenant
+         * @summary Delete SQL Analyzer for specific tenant
+         * @param {string} namespace obtenant namespace
+         * @param {string} name obtenant name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async deleteSQLAnalyzer(namespace: string, name: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseAPIResponse>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteSQLAnalyzer(namespace, name, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['OBTenantApi.deleteSQLAnalyzer']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -16993,6 +17319,17 @@ export const OBTenantApiFactory = function (configuration?: Configuration, baseP
             return localVarFp.createOBTenantPool(namespace, name, zoneName, body, options).then((request) => request(axios, basePath));
         },
         /**
+         * Create SQL Analyzer for specific tenant
+         * @summary Create SQL Analyzer for specific tenant
+         * @param {string} namespace obtenant namespace
+         * @param {string} name obtenant name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createSQLAnalyzer(namespace: string, name: string, options?: any): AxiosPromise<CreateTenant200Response> {
+            return localVarFp.createSQLAnalyzer(namespace, name, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Create an obtenant in a specific namespace, passwords should be encrypted by AES
          * @summary Create tenant
          * @param {ParamCreateOBTenantParam} body create obtenant request body
@@ -17025,6 +17362,17 @@ export const OBTenantApiFactory = function (configuration?: Configuration, baseP
          */
         deleteOBTenantPool(namespace: string, name: string, zoneName: string, options?: any): AxiosPromise<CreateTenant200Response> {
             return localVarFp.deleteOBTenantPool(namespace, name, zoneName, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Delete SQL Analyzer for specific tenant
+         * @summary Delete SQL Analyzer for specific tenant
+         * @param {string} namespace obtenant namespace
+         * @param {string} name obtenant name
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteSQLAnalyzer(namespace: string, name: string, options?: any): AxiosPromise<ResponseAPIResponse> {
+            return localVarFp.deleteSQLAnalyzer(namespace, name, options).then((request) => request(axios, basePath));
         },
         /**
          * Delete an obtenant in a specific namespace, ask user to confirm the deletion carefully
@@ -17253,6 +17601,19 @@ export class OBTenantApi extends BaseAPI {
     }
 
     /**
+     * Create SQL Analyzer for specific tenant
+     * @summary Create SQL Analyzer for specific tenant
+     * @param {string} namespace obtenant namespace
+     * @param {string} name obtenant name
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OBTenantApi
+     */
+    public createSQLAnalyzer(namespace: string, name: string, options?: RawAxiosRequestConfig) {
+        return OBTenantApiFp(this.configuration).createSQLAnalyzer(namespace, name, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * Create an obtenant in a specific namespace, passwords should be encrypted by AES
      * @summary Create tenant
      * @param {ParamCreateOBTenantParam} body create obtenant request body
@@ -17290,6 +17651,19 @@ export class OBTenantApi extends BaseAPI {
      */
     public deleteOBTenantPool(namespace: string, name: string, zoneName: string, options?: RawAxiosRequestConfig) {
         return OBTenantApiFp(this.configuration).deleteOBTenantPool(namespace, name, zoneName, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Delete SQL Analyzer for specific tenant
+     * @summary Delete SQL Analyzer for specific tenant
+     * @param {string} namespace obtenant namespace
+     * @param {string} name obtenant name
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof OBTenantApi
+     */
+    public deleteSQLAnalyzer(namespace: string, name: string, options?: RawAxiosRequestConfig) {
+        return OBTenantApiFp(this.configuration).deleteSQLAnalyzer(namespace, name, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -17499,6 +17873,45 @@ export type ListBackupJobsTypeEnum = typeof ListBackupJobsTypeEnum[keyof typeof 
 export const SqlApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
+         * list request statistics
+         * @summary list request statistics
+         * @param {SqlSqlRequestStatisticParam} body sql request statistic param
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listRequestStatistics: async (body: SqlSqlRequestStatisticParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'body' is not null or undefined
+            assertParamExists('listRequestStatistics', 'body', body)
+            const localVarPath = `/api/v1/sql/requestStatistics`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * list sqls metrics
          * @summary list sql metrics
          * @param {*} [options] Override http request option.
@@ -17532,55 +17945,16 @@ export const SqlApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
-         * list suspicious sqls
-         * @summary list suspicious sqls
-         * @param {SqlSqlFilter} body sql filter
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        listSuspiciousSqls: async (body: SqlSqlFilter, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
-            // verify required parameter 'body' is not null or undefined
-            assertParamExists('listSuspiciousSqls', 'body', body)
-            const localVarPath = `/api/v1/sql/suspiciousSqls`;
-            // use dummy base URL string because the URL constructor only accepts absolute URLs.
-            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
-            let baseOptions;
-            if (configuration) {
-                baseOptions = configuration.baseOptions;
-            }
-
-            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-
-            // authentication ApiKeyAuth required
-            await setApiKeyToObject(localVarHeaderParameter, "Cookie", configuration)
-
-
-    
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-
-            setSearchParams(localVarUrlObj, localVarQueryParameter);
-            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
-            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
-            localVarRequestOptions.data = serializeDataIfNeeded(body, localVarRequestOptions, configuration)
-
-            return {
-                url: toPathString(localVarUrlObj),
-                options: localVarRequestOptions,
-            };
-        },
-        /**
          * list top sqls ordering by spcecific metrics
          * @summary list top sqls
          * @param {SqlSqlFilter} body sql filter
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listTopSqls: async (body: SqlSqlFilter, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        listSqlStats: async (body: SqlSqlFilter, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'body' is not null or undefined
-            assertParamExists('listTopSqls', 'body', body)
-            const localVarPath = `/api/v1/sql/topSqls`;
+            assertParamExists('listSqlStats', 'body', body)
+            const localVarPath = `/api/v1/sql/stats`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -17688,16 +18062,16 @@ export const SqlApiAxiosParamCreator = function (configuration?: Configuration) 
             };
         },
         /**
-         * list request statistics
-         * @summary list request statistics
-         * @param {SqlSqlRequestStatisticParam} body sql request statistic param
+         * query history statistic info of a SQL
+         * @summary query SQL history info
+         * @param {SqlSqlHistoryParam} body param for query history sql info
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        requestStatistics: async (body: SqlSqlRequestStatisticParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        querySqlHistoryInfo: async (body: SqlSqlHistoryParam, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'body' is not null or undefined
-            assertParamExists('requestStatistics', 'body', body)
-            const localVarPath = `/api/v1/sql/requestStatistics`;
+            assertParamExists('querySqlHistoryInfo', 'body', body)
+            const localVarPath = `/api/v1/sql/querySqlHistoryInfo`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
             let baseOptions;
@@ -17737,6 +18111,19 @@ export const SqlApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = SqlApiAxiosParamCreator(configuration)
     return {
         /**
+         * list request statistics
+         * @summary list request statistics
+         * @param {SqlSqlRequestStatisticParam} body sql request statistic param
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listRequestStatistics(body: SqlSqlRequestStatisticParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListRequestStatistics200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listRequestStatistics(body, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['SqlApi.listRequestStatistics']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * list sqls metrics
          * @summary list sql metrics
          * @param {*} [options] Override http request option.
@@ -17749,29 +18136,16 @@ export const SqlApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * list suspicious sqls
-         * @summary list suspicious sqls
-         * @param {SqlSqlFilter} body sql filter
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        async listSuspiciousSqls(body: SqlSqlFilter, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListSuspiciousSqls200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.listSuspiciousSqls(body, options);
-            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['SqlApi.listSuspiciousSqls']?.[localVarOperationServerIndex]?.url;
-            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
-        },
-        /**
          * list top sqls ordering by spcecific metrics
          * @summary list top sqls
          * @param {SqlSqlFilter} body sql filter
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async listTopSqls(body: SqlSqlFilter, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListSuspiciousSqls200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.listTopSqls(body, options);
+        async listSqlStats(body: SqlSqlFilter, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListSqlStats200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listSqlStats(body, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['SqlApi.listTopSqls']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['SqlApi.listSqlStats']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
@@ -17801,16 +18175,16 @@ export const SqlApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * list request statistics
-         * @summary list request statistics
-         * @param {SqlSqlRequestStatisticParam} body sql request statistic param
+         * query history statistic info of a SQL
+         * @summary query SQL history info
+         * @param {SqlSqlHistoryParam} body param for query history sql info
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async requestStatistics(body: SqlSqlRequestStatisticParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<RequestStatistics200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.requestStatistics(body, options);
+        async querySqlHistoryInfo(body: SqlSqlHistoryParam, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<QuerySqlHistoryInfo200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.querySqlHistoryInfo(body, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
-            const localVarOperationServerBasePath = operationServerMap['SqlApi.requestStatistics']?.[localVarOperationServerIndex]?.url;
+            const localVarOperationServerBasePath = operationServerMap['SqlApi.querySqlHistoryInfo']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
@@ -17824,6 +18198,16 @@ export const SqlApiFactory = function (configuration?: Configuration, basePath?:
     const localVarFp = SqlApiFp(configuration)
     return {
         /**
+         * list request statistics
+         * @summary list request statistics
+         * @param {SqlSqlRequestStatisticParam} body sql request statistic param
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listRequestStatistics(body: SqlSqlRequestStatisticParam, options?: any): AxiosPromise<ListRequestStatistics200Response> {
+            return localVarFp.listRequestStatistics(body, options).then((request) => request(axios, basePath));
+        },
+        /**
          * list sqls metrics
          * @summary list sql metrics
          * @param {*} [options] Override http request option.
@@ -17833,24 +18217,14 @@ export const SqlApiFactory = function (configuration?: Configuration, basePath?:
             return localVarFp.listSqlMetrics(options).then((request) => request(axios, basePath));
         },
         /**
-         * list suspicious sqls
-         * @summary list suspicious sqls
-         * @param {SqlSqlFilter} body sql filter
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        listSuspiciousSqls(body: SqlSqlFilter, options?: any): AxiosPromise<ListSuspiciousSqls200Response> {
-            return localVarFp.listSuspiciousSqls(body, options).then((request) => request(axios, basePath));
-        },
-        /**
          * list top sqls ordering by spcecific metrics
          * @summary list top sqls
          * @param {SqlSqlFilter} body sql filter
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listTopSqls(body: SqlSqlFilter, options?: any): AxiosPromise<ListSuspiciousSqls200Response> {
-            return localVarFp.listTopSqls(body, options).then((request) => request(axios, basePath));
+        listSqlStats(body: SqlSqlFilter, options?: any): AxiosPromise<ListSqlStats200Response> {
+            return localVarFp.listSqlStats(body, options).then((request) => request(axios, basePath));
         },
         /**
          * query detailed statistic info of a plan
@@ -17873,14 +18247,14 @@ export const SqlApiFactory = function (configuration?: Configuration, basePath?:
             return localVarFp.querySqlDetailInfo(body, options).then((request) => request(axios, basePath));
         },
         /**
-         * list request statistics
-         * @summary list request statistics
-         * @param {SqlSqlRequestStatisticParam} body sql request statistic param
+         * query history statistic info of a SQL
+         * @summary query SQL history info
+         * @param {SqlSqlHistoryParam} body param for query history sql info
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        requestStatistics(body: SqlSqlRequestStatisticParam, options?: any): AxiosPromise<RequestStatistics200Response> {
-            return localVarFp.requestStatistics(body, options).then((request) => request(axios, basePath));
+        querySqlHistoryInfo(body: SqlSqlHistoryParam, options?: any): AxiosPromise<QuerySqlHistoryInfo200Response> {
+            return localVarFp.querySqlHistoryInfo(body, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -17893,6 +18267,18 @@ export const SqlApiFactory = function (configuration?: Configuration, basePath?:
  */
 export class SqlApi extends BaseAPI {
     /**
+     * list request statistics
+     * @summary list request statistics
+     * @param {SqlSqlRequestStatisticParam} body sql request statistic param
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SqlApi
+     */
+    public listRequestStatistics(body: SqlSqlRequestStatisticParam, options?: RawAxiosRequestConfig) {
+        return SqlApiFp(this.configuration).listRequestStatistics(body, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
      * list sqls metrics
      * @summary list sql metrics
      * @param {*} [options] Override http request option.
@@ -17904,18 +18290,6 @@ export class SqlApi extends BaseAPI {
     }
 
     /**
-     * list suspicious sqls
-     * @summary list suspicious sqls
-     * @param {SqlSqlFilter} body sql filter
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof SqlApi
-     */
-    public listSuspiciousSqls(body: SqlSqlFilter, options?: RawAxiosRequestConfig) {
-        return SqlApiFp(this.configuration).listSuspiciousSqls(body, options).then((request) => request(this.axios, this.basePath));
-    }
-
-    /**
      * list top sqls ordering by spcecific metrics
      * @summary list top sqls
      * @param {SqlSqlFilter} body sql filter
@@ -17923,8 +18297,8 @@ export class SqlApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof SqlApi
      */
-    public listTopSqls(body: SqlSqlFilter, options?: RawAxiosRequestConfig) {
-        return SqlApiFp(this.configuration).listTopSqls(body, options).then((request) => request(this.axios, this.basePath));
+    public listSqlStats(body: SqlSqlFilter, options?: RawAxiosRequestConfig) {
+        return SqlApiFp(this.configuration).listSqlStats(body, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
@@ -17952,15 +18326,15 @@ export class SqlApi extends BaseAPI {
     }
 
     /**
-     * list request statistics
-     * @summary list request statistics
-     * @param {SqlSqlRequestStatisticParam} body sql request statistic param
+     * query history statistic info of a SQL
+     * @summary query SQL history info
+     * @param {SqlSqlHistoryParam} body param for query history sql info
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof SqlApi
      */
-    public requestStatistics(body: SqlSqlRequestStatisticParam, options?: RawAxiosRequestConfig) {
-        return SqlApiFp(this.configuration).requestStatistics(body, options).then((request) => request(this.axios, this.basePath));
+    public querySqlHistoryInfo(body: SqlSqlHistoryParam, options?: RawAxiosRequestConfig) {
+        return SqlApiFp(this.configuration).querySqlHistoryInfo(body, options).then((request) => request(this.axios, this.basePath));
     }
 }
 
