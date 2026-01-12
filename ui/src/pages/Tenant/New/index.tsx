@@ -25,6 +25,8 @@ export default function New() {
   const [selectClusterId, setSelectClusterId] = useState<string>();
   const [clusterList, setClusterList] = useState<API.SimpleClusterList>([]);
   const [deleteValue, setDeleteValue] = useState<boolean>(false);
+  const [sqlDiagnoseValue, setSqlDiagnoseValue] = useState<boolean>(false);
+
   useRequest(getSimpleClusterList, {
     onSuccess: ({ successful, data }) => {
       if (successful) {
@@ -70,6 +72,7 @@ export default function New() {
     const res = await createTenantReportWrap({
       namespace: ns,
       deletionProtection: deleteValue,
+      enableSqlAnalyzer: sqlDiagnoseValue,
       ...reqData,
     });
     if (res.successful) {
@@ -154,6 +157,8 @@ export default function New() {
               form={form}
               deleteValue={deleteValue}
               setDeleteValue={setDeleteValue}
+              sqlDiagnoseValue={sqlDiagnoseValue}
+              setSqlDiagnoseValue={setSqlDiagnoseValue}
             />
           </Col>
           <Col span={24}>

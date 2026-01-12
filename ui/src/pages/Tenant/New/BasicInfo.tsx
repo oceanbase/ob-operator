@@ -25,6 +25,8 @@ export default function BasicInfo({
   setSelectClusterId,
   deleteValue,
   setDeleteValue,
+  sqlDiagnoseValue,
+  setSqlDiagnoseValue,
 }: BasicInfoProps) {
   const clusterOptions = clusterList
     .filter((cluster) => cluster.status !== 'failed')
@@ -205,8 +207,7 @@ export default function BasicInfo({
             <Select mode="tags" />
           </Form.Item>
         </Col>
-
-        <Col span={8}>
+        <Col span={2}>
           <Space>
             {intl.formatMessage({
               id: 'src.pages.Tenant.New.3979BAB6',
@@ -216,6 +217,17 @@ export default function BasicInfo({
               defaultChecked={deleteValue}
               onChange={(e) => {
                 setDeleteValue(e.target.checked);
+              }}
+            />
+          </Space>
+        </Col>
+        <Col span={2}>
+          <Space>
+            SQL 诊断
+            <Checkbox
+              defaultChecked={sqlDiagnoseValue}
+              onChange={(e) => {
+                setSqlDiagnoseValue(e.target.checked);
               }}
             />
           </Space>

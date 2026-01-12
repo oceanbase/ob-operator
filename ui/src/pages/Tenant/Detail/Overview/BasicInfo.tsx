@@ -48,7 +48,10 @@ export default function BasicInfo({
       id: 'Dashboard.Detail.Overview.BasicInfo.ReplicaDistribution',
       defaultMessage: '副本分布',
     }),
-    primaryZone: 'PrimaryZone',
+    primaryZone: intl.formatMessage({
+      id: 'Dashboard.Detail.Overview.BasicInfo.PrimaryZone',
+      defaultMessage: 'PrimaryZone',
+    }),
   };
   const SourceConfig = {
     primaryTenant: intl.formatMessage({
@@ -67,7 +70,10 @@ export default function BasicInfo({
       id: 'Dashboard.Detail.Overview.BasicInfo.DataSource',
       defaultMessage: '数据源',
     }),
-    until: 'until',
+    until: intl.formatMessage({
+      id: 'Dashboard.Detail.Overview.BasicInfo.Until',
+      defaultMessage: 'until',
+    }),
   };
 
   const checkSource = (source: API.Source) => {
@@ -112,7 +118,31 @@ export default function BasicInfo({
             defaultMessage: '删除保护',
           })}
         >
-          {deletionProtection ? '开启' : '关闭'}
+          {deletionProtection
+            ? intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Overview.Enable',
+                defaultMessage: '开启',
+              })
+            : intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Overview.Disable',
+                defaultMessage: '关闭',
+              })}
+        </Descriptions.Item>
+        <Descriptions.Item
+          label={intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.Overview.BasicInfo.SqlDiagnosis',
+            defaultMessage: 'SQL 诊断',
+          })}
+        >
+          {info.sqlAnalyzerEnabled
+            ? intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Overview.Enable',
+                defaultMessage: '开启',
+              })
+            : intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Overview.Disable',
+                defaultMessage: '关闭',
+              })}
         </Descriptions.Item>
       </Descriptions>
       {checkSource(source) && (
