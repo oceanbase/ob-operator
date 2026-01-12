@@ -21,10 +21,10 @@ on:
       - '**/*.mk'
 
 env:
-  GO_VERSION: "1.22"
+  GO_VERSION: "1.25"
 
 jobs:
-  build-images:
+  build-binaries:
     runs-on: ubuntu-latest
 
     steps:
