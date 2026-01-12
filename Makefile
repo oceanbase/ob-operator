@@ -8,6 +8,7 @@ else
 endif
 
 include make/*
+include make/parser.mk
 
 VERSION ?= 2.3.3
 # Image URL to use all building/pushing image targets
@@ -36,7 +37,7 @@ SHELL = /usr/bin/env bash -o pipefail
 .SHELLFLAGS = -ec
 
 .PHONY: all
-all: build
+all: operator
 
 ##@ General
 

@@ -1,0 +1,83 @@
+/*
+Copyright (c) 2025 OceanBase
+ob-operator is licensed under Mulan PSL v2.
+You can use this software according to the terms and conditions of the Mulan PSL v2.
+You may obtain a copy of Mulan PSL v2 at:
+         http://license.coscl.org.cn/MulanPSL2
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+See the Mulan PSL v2 for more details.
+*/
+
+package sql
+
+const (
+	ListSqlPlanIdentifier   = "SELECT TENANT_ID, SVR_IP, SVR_PORT, PLAN_ID FROM sql_plan group by TENANT_ID, SVR_IP, SVR_PORT, PLAN_ID"
+	SelectSqlPlan           = `SELECT TENANT_ID, SVR_IP, SVR_PORT, PLAN_ID, SQL_ID, DB_ID, PLAN_HASH, GMT_CREATE, OPERATOR, OBJECT_NODE, OBJECT_ID, OBJECT_OWNER, OBJECT_NAME, OBJECT_ALIAS, OBJECT_TYPE, OPTIMIZER, ID, PARENT_ID, DEPTH, POSITION, COST, REAL_COST, CARDINALITY, REAL_CARDINALITY, IO_COST, CPU_COST, BYTES, ROWSET, OTHER_TAG, PARTITION_START, OTHER, ACCESS_PREDICATES, FILTER_PREDICATES, STARTUP_PREDICATES, PROJECTION, SPECIAL_PREDICATES, QBLOCK_NAME, REMARKS, OTHER_XML FROM GV$OB_SQL_PLAN WHERE TENANT_ID = ? AND SVR_IP = ? AND SVR_PORT = ? AND PLAN_ID = ?`
+	SelectSqlPlanFromDuckdb = `SELECT TENANT_ID, SVR_IP, SVR_PORT, PLAN_ID, SQL_ID, DB_ID, PLAN_HASH, GMT_CREATE, OPERATOR, OBJECT_NODE, OBJECT_ID, OBJECT_OWNER, OBJECT_NAME, OBJECT_ALIAS, OBJECT_TYPE, OPTIMIZER, ID, PARENT_ID, DEPTH, POSITION, COST, REAL_COST, CARDINALITY, REAL_CARDINALITY, IO_COST, CPU_COST, BYTES, ROWSET, OTHER_TAG, PARTITION_START, OTHER, ACCESS_PREDICATES, FILTER_PREDICATES, STARTUP_PREDICATES, PROJECTION, SPECIAL_PREDICATES, QBLOCK_NAME, REMARKS, OTHER_XML FROM SQL_PLAN WHERE TENANT_ID = ? AND SVR_IP = ? AND SVR_PORT = ? AND PLAN_ID = ?`
+	StoreSqlPlanStatement   = "INSERT OR REPLACE INTO sql_plan (TENANT_ID, SVR_IP, SVR_PORT, PLAN_ID, SQL_ID, DB_ID, PLAN_HASH, GMT_CREATE, OPERATOR, OBJECT_NODE, OBJECT_ID, OBJECT_OWNER, OBJECT_NAME, OBJECT_ALIAS, OBJECT_TYPE, OPTIMIZER, ID, PARENT_ID, DEPTH, POSITION, COST, REAL_COST, CARDINALITY, REAL_CARDINALITY, IO_COST, CPU_COST, BYTES, ROWSET, OTHER_TAG, PARTITION_START, OTHER, ACCESS_PREDICATES, FILTER_PREDICATES, STARTUP_PREDICATES, PROJECTION, SPECIAL_PREDICATES, QBLOCK_NAME, REMARKS, OTHER_XML) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+	CreateSqlPlanTable      = `CREATE TABLE IF NOT EXISTS sql_plan (
+		TENANT_ID          UBIGINT,
+		SVR_IP             VARCHAR,
+		SVR_PORT           BIGINT,
+		PLAN_ID            BIGINT,
+		SQL_ID             VARCHAR,
+		DB_ID              BIGINT,
+		PLAN_HASH          VARCHAR,
+		GMT_CREATE         VARCHAR,
+		OPERATOR           VARCHAR,
+		OBJECT_NODE        VARCHAR,
+		OBJECT_ID          BIGINT,
+		OBJECT_OWNER       VARCHAR,
+		OBJECT_NAME        VARCHAR,
+		OBJECT_ALIAS       VARCHAR,
+		OBJECT_TYPE        VARCHAR,
+		OPTIMIZER          VARCHAR,
+		ID                 BIGINT,
+		PARENT_ID          BIGINT,
+		DEPTH              BIGINT,
+		POSITION           BIGINT,
+		COST               BIGINT,
+		REAL_COST          BIGINT,
+		CARDINALITY        BIGINT,
+		REAL_CARDINALITY   BIGINT,
+		IO_COST            BIGINT,
+		CPU_COST           BIGINT,
+		BYTES              BIGINT,
+		ROWSET             BIGINT,
+		OTHER_TAG          VARCHAR,
+		PARTITION_START    VARCHAR,
+		OTHER              VARCHAR,
+		ACCESS_PREDICATES  VARCHAR,
+		FILTER_PREDICATES  VARCHAR,
+		STARTUP_PREDICATES VARCHAR,
+		PROJECTION         VARCHAR,
+		SPECIAL_PREDICATES VARCHAR,
+		QBLOCK_NAME        VARCHAR,
+		REMARKS            VARCHAR,
+		OTHER_XML          VARCHAR,
+		PRIMARY KEY (TENANT_ID, SVR_IP, SVR_PORT, PLAN_ID, ID)
+	)`
+
+	GetTableIndex = `
+    SELECT
+      I.index_name,
+      I.index_type,
+      I.uniqueness,
+      I.status,
+      GROUP_CONCAT(C.column_name ORDER BY column_position SEPARATOR ',') AS column_name
+    FROM cdb_indexes I
+    LEFT JOIN cdb_ind_columns C
+      ON I.table_owner = C.table_owner
+      AND I.table_name = C.table_name
+      AND I.index_name = C.index_name
+      AND I.con_id = C.con_id
+    WHERE I.con_id = ?
+      AND I.table_owner = ?
+      AND I.table_name = ?
+    GROUP BY I.index_name, I.index_type, I.uniqueness, I.status;
+    `
+
+	GetTablePrimaryKey = `SELECT column_name FROM oceanbase.__all_virtual_column WHERE tenant_id = ? AND table_id = ? and rowkey_position <> 0 ORDER BY rowkey_position`
+)

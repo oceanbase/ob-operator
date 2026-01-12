@@ -17,12 +17,14 @@ import (
 )
 
 type RequestStatisticInfo struct {
-	Tenant                 string               `json:"tenant" binding:"required"`
-	User                   string               `json:"user" binding:"required"`
-	Database               string               `json:"database" binding:"required"`
-	PlanCategoryStatistics []SqlStatisticMetric `json:"planCategoryStatistics" binding:"required"`
-	ExecutionStatistics    []SqlStatisticMetric `json:"executionStatistics" binding:"required"`
-	LatencyStatistics      []SqlStatisticMetric `json:"latencyStatistics" binding:"required"`
-	ExecutionTrend         response.MetricData  `json:"executionTrend" binding:"required"`
-	LatencyTrend           response.MetricData  `json:"latencyTrend" binding:"required"`
+	Tenant                 string                 `json:"tenant" binding:"required"`
+	User                   string                 `json:"user" binding:"required"`
+	Database               string                 `json:"database" binding:"required"`
+	PlanCategoryStatistics []SqlStatisticMetric   `json:"planCategoryStatistics" binding:"required"`
+	TotalExecutions        float64                `json:"totalExecutions" binding:"required"`
+	FailedExecutions       float64                `json:"failedExecutions" binding:"required"`
+	TotalLatency           float64                `json:"totalLatency" binding:"required"`
+	AverageLatency         float64                `json:"averageLatency" binding:"required"`
+	ExecutionTrend         []response.MetricValue `json:"executionTrend" binding:"required"`
+	LatencyTrend           []response.MetricValue `json:"latencyTrend" binding:"required"`
 }

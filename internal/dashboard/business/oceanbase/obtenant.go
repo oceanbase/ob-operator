@@ -14,15 +14,21 @@ package oceanbase
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"sort"
 	"strings"
 
+	"github.com/oceanbase/ob-operator/internal/dashboard/config"
+
 	"github.com/pkg/errors"
 	logger "github.com/sirupsen/logrus"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/rand"
@@ -175,7 +181,7 @@ func buildOBTenantApiType(nn types.NamespacedName, p *param.CreateOBTenantParam)
 
 func buildDetailFromApiType(ctx context.Context, t *v1alpha1.OBTenant) *response.OBTenantDetail {
 	rt := &response.OBTenantDetail{
-		OBTenantOverview: *buildOverviewFromApiType(t),
+		OBTenantOverview: *buildOverviewFromApiType(ctx, t),
 	}
 	rt.RootCredential = t.Status.Credentials.Root
 	rt.StandbyROCredential = t.Status.Credentials.StandbyRO
@@ -228,7 +234,20 @@ func buildDetailFromApiType(ctx context.Context, t *v1alpha1.OBTenant) *response
 	return rt
 }
 
-func buildOverviewFromApiType(t *v1alpha1.OBTenant) *response.OBTenantOverview {
+func checkSqlAnalyzerEnabled(ctx context.Context, t *v1alpha1.OBTenant) bool {
+	k8sclient := client.GetClient()
+	deploymentName := fmt.Sprintf("sql-analyzer-%s", t.Name)
+	_, err := k8sclient.ClientSet.AppsV1().Deployments(t.Namespace).Get(ctx, deploymentName, v1.GetOptions{})
+	if err != nil {
+		if !kubeerrors.IsNotFound(err) {
+			logger.Errorf("failed to get sql analyzer deployment: %v", err)
+		}
+		return false
+	}
+	return true
+}
+
+func buildOverviewFromApiType(ctx context.Context, t *v1alpha1.OBTenant) *response.OBTenantOverview {
 	rt := &response.OBTenantOverview{}
 	rt.UID = string(t.UID)
 	rt.Name = t.Name
@@ -244,6 +263,7 @@ func buildOverviewFromApiType(t *v1alpha1.OBTenant) *response.OBTenantOverview {
 	rt.PrimaryZone = t.Status.TenantRecordInfo.PrimaryZone
 	rt.Scenario = t.Spec.Scenario
 	rt.DeletionProtection = t.Annotations[oceanbaseconst.AnnotationsIgnoreDeletion] == "true"
+	rt.SqlAnalyzerEnabled = checkSqlAnalyzerEnabled(ctx, t)
 
 	for i := range t.Status.Pools {
 		pool := t.Status.Pools[i]
@@ -474,7 +494,297 @@ func CreateOBTenant(ctx context.Context, nn types.NamespacedName, p *param.Creat
 	if err != nil {
 		return nil, err
 	}
+
+	if p.EnableSQLAnalyzer {
+		if err := CreateSQLAnalyzerDeployment(ctx, tenant); err != nil {
+			logger.Errorf("failed to create sql-analyzer deployment: %v", err)
+		}
+	}
+
 	return buildDetailFromApiType(ctx, tenant), nil
+}
+
+func CreateSQLAnalyzerDeployment(ctx context.Context, tenant *v1alpha1.OBTenant) error {
+	k8sclient := client.GetClient()
+
+	obcluster, err := clients.GetOBCluster(ctx, tenant.Namespace, tenant.Spec.ClusterName)
+	if err != nil {
+		return errors.Wrapf(err, "Get obcluster %s %s", tenant.Namespace, tenant.Spec.ClusterName)
+	}
+
+	// Common metadata for all resources
+	objectMeta := v1.ObjectMeta{
+		Namespace: tenant.Namespace,
+		Labels: map[string]string{
+			"app":      "sql-analyzer",
+			"obtenant": tenant.Name,
+		},
+		OwnerReferences: []metav1.OwnerReference{
+			{
+				APIVersion: tenant.APIVersion,
+				Kind:       tenant.Kind,
+				Name:       tenant.Name,
+				UID:        tenant.GetUID(),
+			},
+		},
+	}
+
+	// 1. Create ServiceAccount
+	saName := fmt.Sprintf("sql-analyzer-%s", tenant.Name)
+	sa := &corev1.ServiceAccount{
+		ObjectMeta: objectMeta,
+	}
+	sa.Name = saName
+	_, err = k8sclient.ClientSet.CoreV1().ServiceAccounts(tenant.Namespace).Create(ctx, sa, v1.CreateOptions{})
+	if err != nil && !kubeerrors.IsAlreadyExists(err) {
+		return errors.Wrap(err, "failed to create ServiceAccount for sql-analyzer")
+	}
+
+	// 2. Create Role
+	roleName := fmt.Sprintf("sql-analyzer-%s-role", tenant.Name)
+	role := &rbacv1.Role{
+		ObjectMeta: objectMeta,
+		Rules: []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{"oceanbase.oceanbase.com"},
+				Resources: []string{"obclusters", "obtenants", "observers"},
+				Verbs:     []string{"get", "list", "watch"},
+			},
+			{
+				APIGroups: []string{""},
+				Resources: []string{"secrets"},
+				Verbs:     []string{"get", "list", "watch"},
+			},
+		},
+	}
+	role.Name = roleName
+	_, err = k8sclient.ClientSet.RbacV1().Roles(tenant.Namespace).Create(ctx, role, v1.CreateOptions{})
+	if err != nil && !kubeerrors.IsAlreadyExists(err) {
+		return errors.Wrap(err, "failed to create Role for sql-analyzer")
+	}
+
+	// 3. Create RoleBinding
+	rbName := fmt.Sprintf("sql-analyzer-%s-rb", tenant.Name)
+	rb := &rbacv1.RoleBinding{
+		ObjectMeta: objectMeta,
+		Subjects: []rbacv1.Subject{
+			{
+				Kind:      "ServiceAccount",
+				Name:      saName,
+				Namespace: tenant.Namespace,
+			},
+		},
+		RoleRef: rbacv1.RoleRef{
+			Kind:     "Role",
+			Name:     roleName,
+			APIGroup: "rbac.authorization.k8s.io",
+		},
+	}
+	rb.Name = rbName
+	_, err = k8sclient.ClientSet.RbacV1().RoleBindings(tenant.Namespace).Create(ctx, rb, v1.CreateOptions{})
+	if err != nil && !kubeerrors.IsAlreadyExists(err) {
+		return errors.Wrap(err, "failed to create RoleBinding for sql-analyzer")
+	}
+
+	// 4. Create PVC
+	pvcName := "pvc-sql-" + tenant.Name
+	pvcMeta := objectMeta
+	pvcMeta.Name = pvcName
+	pvcSpec := corev1.PersistentVolumeClaimSpec{}
+	requestsResources := corev1.ResourceList{}
+	storageSize, err := resource.ParseQuantity(config.GetConfig().SQLAnalyzer.StorageSize)
+	if err != nil {
+		return errors.Wrap(err, "failed to parse sql-analyzer storage size")
+	}
+	requestsResources["storage"] = storageSize
+	storageClassName := obcluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass
+	pvcSpec.StorageClassName = &(storageClassName)
+	pvcSpec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}
+	pvcSpec.Resources.Requests = requestsResources
+
+	pvc := &corev1.PersistentVolumeClaim{
+		ObjectMeta: pvcMeta,
+		Spec:       pvcSpec,
+	}
+	_, err = k8sclient.ClientSet.CoreV1().PersistentVolumeClaims(tenant.Namespace).Create(ctx, pvc, v1.CreateOptions{})
+	if err != nil && !kubeerrors.IsAlreadyExists(err) {
+		return errors.Wrap(err, "Create single pvc of observer")
+	}
+
+	// 5. Create Deployment
+	deploymentName := fmt.Sprintf("sql-analyzer-%s", tenant.Name)
+	deploymentMeta := objectMeta
+	deploymentMeta.Name = deploymentName
+	image := config.GetConfig().SQLAnalyzer.Image
+	dataPath := "/data"
+	replicas := int32(1)
+
+	// Parse resource requirements
+	cpuRequest, err := resource.ParseQuantity(config.GetConfig().SQLAnalyzer.CPURequest)
+	if err != nil {
+		return errors.Wrap(err, "failed to parse sql-analyzer cpu request")
+	}
+	cpuLimit, err := resource.ParseQuantity(config.GetConfig().SQLAnalyzer.CPULimit)
+	if err != nil {
+		return errors.Wrap(err, "failed to parse sql-analyzer cpu limit")
+	}
+	memoryRequest, err := resource.ParseQuantity(config.GetConfig().SQLAnalyzer.MemoryRequest)
+	if err != nil {
+		return errors.Wrap(err, "failed to parse sql-analyzer memory request")
+	}
+	memoryLimit, err := resource.ParseQuantity(config.GetConfig().SQLAnalyzer.MemoryLimit)
+	if err != nil {
+		return errors.Wrap(err, "failed to parse sql-analyzer memory limit")
+	}
+
+	resources := corev1.ResourceRequirements{
+		Requests: corev1.ResourceList{
+			corev1.ResourceCPU:    cpuRequest,
+			corev1.ResourceMemory: memoryRequest,
+		},
+		Limits: corev1.ResourceList{
+			corev1.ResourceCPU:    cpuLimit,
+			corev1.ResourceMemory: memoryLimit,
+		},
+	}
+
+	deployment := &appsv1.Deployment{
+		ObjectMeta: deploymentMeta,
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &v1.LabelSelector{
+				MatchLabels: map[string]string{
+					"app":    "sql-analyzer",
+					"tenant": tenant.Name,
+				},
+			},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: v1.ObjectMeta{
+					Labels: map[string]string{
+						"app":    "sql-analyzer",
+						"tenant": tenant.Name,
+					},
+				},
+				Spec: corev1.PodSpec{
+					ServiceAccountName: saName, // Use the newly created ServiceAccount
+					Volumes: []corev1.Volume{
+						{
+							Name: "data-volume",
+							VolumeSource: corev1.VolumeSource{
+								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
+									ClaimName: pvc.Name,
+								},
+							},
+						},
+					},
+					Containers: []corev1.Container{
+						{
+							Name:            "sql-analyzer",
+							Image:           image,
+							ImagePullPolicy: corev1.PullIfNotPresent,
+							Resources:       resources, // Set resource requirements
+							VolumeMounts: []corev1.VolumeMount{
+								{
+									Name:      "data-volume",
+									MountPath: dataPath,
+								},
+							},
+							Env: []corev1.EnvVar{
+								{
+									Name:  "OBTENANT",
+									Value: tenant.Name,
+								},
+								{
+									Name: "NAMESPACE",
+									ValueFrom: &corev1.EnvVarSource{
+										FieldRef: &corev1.ObjectFieldSelector{
+											FieldPath: "metadata.namespace",
+										},
+									},
+								},
+								{
+									Name:  "DATA_PATH",
+									Value: dataPath,
+								},
+								{
+									Name:  "DATA_RETENTION_DAYS",
+									Value: fmt.Sprintf("%d", config.GetConfig().SQLAnalyzer.RetentionDays),
+								},
+								{
+									Name:  "COLLECTION_INTERVAL_SECONDS",
+									Value: fmt.Sprintf("%d", config.GetConfig().SQLAnalyzer.CollectionIntervalSeconds),
+								},
+								{
+									Name:  "COMPACTION_INTERVAL_SECONDS",
+									Value: fmt.Sprintf("%d", config.GetConfig().SQLAnalyzer.CompactionIntervalSeconds),
+								},
+								{
+									Name:  "SQL_AUDIT_LIMIT",
+									Value: fmt.Sprintf("%d", config.GetConfig().SQLAnalyzer.SqlAuditLimit),
+								},
+								{
+									Name:  "SLOW_SQL_THRESHOLD_MILLISECONDS",
+									Value: fmt.Sprintf("%d", config.GetConfig().SQLAnalyzer.SlowSqlThresholdMilliSeconds),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	_, err = k8sclient.ClientSet.AppsV1().Deployments(tenant.Namespace).Create(ctx, deployment, v1.CreateOptions{})
+	if err != nil && !kubeerrors.IsAlreadyExists(err) {
+		logger.Errorf("failed to create deployment %s: %v", deployment.Name, err)
+		return oberr.NewInternal(err.Error())
+	}
+	logger.Infof("create sql-analyzer deployment %s for tenant %s", deploymentName, tenant.Name)
+	return nil
+}
+
+func DeleteSQLAnalyzerDeployment(ctx context.Context, tenant *v1alpha1.OBTenant) error {
+	k8sclient := client.GetClient()
+	ns := tenant.Namespace
+	name := tenant.Name
+
+	// 1. Delete Deployment
+	deploymentName := fmt.Sprintf("sql-analyzer-%s", name)
+	err := k8sclient.ClientSet.AppsV1().Deployments(ns).Delete(ctx, deploymentName, v1.DeleteOptions{})
+	if err != nil && !kubeerrors.IsNotFound(err) {
+		return errors.Wrapf(err, "failed to delete deployment %s", deploymentName)
+	}
+
+	// 2. Delete PVC
+	pvcName := "pvc-sql-" + name
+	err = k8sclient.ClientSet.CoreV1().PersistentVolumeClaims(ns).Delete(ctx, pvcName, v1.DeleteOptions{})
+	if err != nil && !kubeerrors.IsNotFound(err) {
+		return errors.Wrapf(err, "failed to delete pvc %s", pvcName)
+	}
+
+	// 3. Delete RoleBinding
+	rbName := fmt.Sprintf("sql-analyzer-%s-rb", name)
+	err = k8sclient.ClientSet.RbacV1().RoleBindings(ns).Delete(ctx, rbName, v1.DeleteOptions{})
+	if err != nil && !kubeerrors.IsNotFound(err) {
+		return errors.Wrapf(err, "failed to delete role binding %s", rbName)
+	}
+
+	// 4. Delete Role
+	roleName := fmt.Sprintf("sql-analyzer-%s-role", name)
+	err = k8sclient.ClientSet.RbacV1().Roles(ns).Delete(ctx, roleName, v1.DeleteOptions{})
+	if err != nil && !kubeerrors.IsNotFound(err) {
+		return errors.Wrapf(err, "failed to delete role %s", roleName)
+	}
+
+	// 5. Delete ServiceAccount
+	saName := fmt.Sprintf("sql-analyzer-%s", name)
+	err = k8sclient.ClientSet.CoreV1().ServiceAccounts(ns).Delete(ctx, saName, v1.DeleteOptions{})
+	if err != nil && !kubeerrors.IsNotFound(err) {
+		return errors.Wrapf(err, "failed to delete service account %s", saName)
+	}
+
+	logger.Infof("delete sql-analyzer resources for tenant %s", name)
+	return nil
 }
 
 func ListAllOBTenants(ctx context.Context, ns string, listOptions v1.ListOptions) ([]*response.OBTenantOverview, error) {
@@ -489,7 +799,7 @@ func ListAllOBTenants(ctx context.Context, ns string, listOptions v1.ListOptions
 	})
 	tenants := make([]*response.OBTenantOverview, 0, len(tenantList.Items))
 	for i := range tenantList.Items {
-		tenants = append(tenants, buildOverviewFromApiType(&tenantList.Items[i]))
+		tenants = append(tenants, buildOverviewFromApiType(ctx, &tenantList.Items[i]))
 	}
 	return tenants, nil
 }

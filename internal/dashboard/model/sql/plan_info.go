@@ -20,23 +20,25 @@ const (
 	PlanCategoryDistributed PlanCategory = "distributed"
 )
 
+type PlanIdentity struct {
+	TenantID uint64 `json:"tenantID" binding:"required"`
+	SvrIP    string `json:"svrIP" binding:"required"`
+	SvrPort  int64  `json:"svrPort" binding:"required"`
+	PlanID   int64  `json:"planID" binding:"required"`
+}
+
 type PlanMeta struct {
-	PlanHash      string       `json:"planHash" binding:"required"`
-	Category      PlanCategory `json:"category" binding:"required"`
-	MergedVersion int          `json:"mergedVersion" binding:"required"`
-	GeneratedTime int64        `json:"generatedTime" binding:"required"`
+	PlanIdentity  `json:",inline"`
+	PlanHash      uint64 `json:"planHash" binding:"required"`
+	GeneratedTime int64  `json:"generatedTime" binding:"required"`
 }
 
 type PlanStatistic struct {
 	PlanMeta `json:",inline"`
-	CpuTime  int64 `json:"cpuTime" binding:"required"`
-	Cost     int64 `json:"cost" binding:"required"`
-}
-
-type PlanStatisticByServer struct {
-	PlanStatistic `json:",inline"`
-	Server        string `json:"server" binding:"required"`
-	PlanId        int64  `json:"planId" binding:"required"`
+	IoCost   int64 `json:"ioCost"`
+	CpuCost  int64 `json:"cpuCost"`
+	Cost     int64 `json:"cost"`
+	RealCost int64 `json:"realCost"`
 }
 
 type PlanOperator struct {
@@ -49,7 +51,6 @@ type PlanOperator struct {
 }
 
 type PlanDetail struct {
-	PlanMeta       `json:",inline"`
-	PlanStatistics []PlanStatisticByServer `json:"planStatistics" binding:"required"`
-	PlanDetail     *PlanOperator           `json:"planDetail" binding:"required"`
+	PlanMeta   `json:",inline"`
+	PlanDetail *PlanOperator `json:"planDetail" binding:"required"`
 }

@@ -8,6 +8,8 @@ metadata:
     {{- include "oceanbase-dashboard.labels" . | nindent 4}}
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: oceanbase-dashboard-{{ .Release.Name }}
@@ -70,6 +72,8 @@ spec:
               value: {{ .Release.Name }}-rbac-policy
             - name: NAMESPACE
               value: {{ .Release.Namespace }}
+            - name: SERVICE_ACCOUNT
+              value: {{ .Release.Name }}-sa
         - name: prometheus
           image: quay.io/prometheus/prometheus:v2.51.1
           resources:

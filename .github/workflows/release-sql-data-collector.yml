@@ -1,0 +1,63 @@
+name: release sql-data-collector
+
+on: 
+  push:
+    tags: 
+      - 'sql-data-collector-[0-9]+.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+env:
+  tagName: ${{ github.ref_name }}
+
+jobs:
+  release-sql-data-collector:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Log in to Quay io
+        uses: docker/login-action@v3
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_IO_USERNAME }}
+          password: ${{ secrets.QUAY_IO_PASSWORD }}
+
+      - name: Log in to Ghcr io
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set Version variables
+        id: set_version_vars
+        run: |
+          echo "version=$(echo $tagName | grep -P '(\d*\.\d*\.\d*)' --only-matching)" >> $GITHUB_OUTPUT
+
+      - name: Create and push manifests w/o cache
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          file: build/Dockerfile.sql-data-collector
+          push: true
+          tags: |
+            ${{ vars.DOCKER_PUSH_BASE }}/sql-data-collector:${{ steps.set_version_vars.outputs.version }}
+            ${{ vars.DOCKER_PUSH_BASE }}/sql-data-collector:latest
+            quay.io/${{ vars.QUAY_IO_PUSH_BASE }}/sql-data-collector:${{ steps.set_version_vars.outputs.version }}
+            quay.io/${{ vars.QUAY_IO_PUSH_BASE }}/sql-data-collector:latest
+            ghcr.io/${{ github.repository_owner }}/sql-data-collector:${{ steps.set_version_vars.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/sql-data-collector:latest

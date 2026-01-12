@@ -514,7 +514,7 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 
 	if m.OBServer.Spec.BackupVolume != nil {
 		volumeMountBackup := corev1.VolumeMount{}
-		volumeMountBackup.Name = fmt.Sprintf(m.OBServer.Spec.BackupVolume.Volume.Name)
+		volumeMountBackup.Name = m.OBServer.Spec.BackupVolume.Volume.Name
 		volumeMountBackup.MountPath = oceanbaseconst.BackupPath
 		volumeMounts = append(volumeMounts, volumeMountBackup)
 	}

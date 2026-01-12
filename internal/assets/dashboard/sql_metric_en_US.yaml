@@ -1,0 +1,342 @@
+- category: meta
+  metrics:
+    - key: query_sql
+      name: Query SQL
+      description: "The SQL statement"
+      unit: ""
+      displayByDefault: true
+      immutable: true
+    - key: db_name
+      name: Database Name
+      description: "Name of the database"
+      unit: ""
+      displayByDefault: true
+      immutable: false
+    - key: user_name
+      name: User Name
+      description: "Name of the user"
+      unit: ""
+      displayByDefault: true
+      immutable: false
+    - key: sql_id
+      name: SQL ID
+      description: "ID of the SQL statement"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: svr_ip
+      name: Server IP
+      description: "IP address of the server"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: svr_port
+      name: Server Port
+      description: "Port of the server"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+- category: latency
+  metrics:
+    - key: elapsed_time
+      name: Elapsed Time
+      description: "Average time taken for the SQL to execute."
+      unit: "ms"
+      displayByDefault: true
+      immutable: true
+    - key: execute_time
+      name: Execute Time
+      description: "Time spent executing the SQL statement."
+      unit: "ms"
+      displayByDefault: true
+      immutable: false
+    - key: queue_time
+      name: Queue Time
+      description: "Total time spent in the queue waiting for execution."
+      unit: "ms"
+      displayByDefault: true
+      immutable: false
+    - key: get_plan_time
+      name: Get Plan Time
+      description: "Time spent getting the execution plan."
+      unit: "ms"
+      displayByDefault: true
+      immutable: false
+    - key: wait_time_micro
+      name: Wait Time
+      description: "Total wait time."
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: total_wait_time_micro
+      name: Total Wait Time
+      description: "Total wait time including all events."
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: net_time
+      name: Net Time
+      description: "Time spent on network."
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: net_wait_time
+      name: Net Wait Time
+      description: "Time spent waiting for network I/O."
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: decode_time
+      name: Decode Time
+      description: "Time spent decoding."
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: application_wait_time
+      name: Application Wait Time
+      description: "Time spent waiting for application."
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: concurrency_wait_time
+      name: Concurrency Wait Time
+      description: "Time spent waiting for concurrency control."
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: user_io_wait_time
+      name: User I/O Wait Time
+      description: "Time spent waiting for user I/O."
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: schedule_time
+      name: Schedule Time
+      description: "Time spent on scheduling."
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: event_0_wait_time_sum
+      name: "Event 0 Wait Time"
+      description: "Wait time for event 0."
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: event_1_wait_time_sum
+      name: "Event 1 Wait Time"
+      description: "Wait time for event 1."
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: event_2_wait_time_sum
+      name: "Event 2 Wait Time"
+      description: "Wait time for event 2."
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: event_3_wait_time_sum
+      name: "Event 3 Wait Time"
+      description: "Wait time for event 3."
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+- category: execution
+  metrics:
+    - key: executions
+      name: Executions
+      description: "Total number of executions."
+      unit: ""
+      displayByDefault: true
+      immutable: false
+    - key: affected_rows
+      name: Affected Rows
+      description: "Number of rows affected by the SQL statement."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: return_rows
+      name: Return Rows
+      description: "Number of rows returned by the SQL statement."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: partition_count
+      name: Partition Count
+      description: "Number of partitions accessed."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: retry_count
+      name: Retry Count
+      description: "Number of retries."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: disk_reads
+      name: Disk Reads
+      description: "Number of disk reads performed."
+      unit: ""
+      displayByDefault: true
+      immutable: false
+    - key: rpc_count
+      name: RPC Count
+      description: "Number of RPC calls made."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: memstore_read_row_count
+      name: Memstore Read Row Count
+      description: "Number of rows read from memstore."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: ssstore_read_row_count
+      name: SSStore Read Row Count
+      description: "Number of rows read from ssstore."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: request_memory_used
+      name: Request Memory Used
+      description: "Memory used by the request."
+      unit: "bytes"
+      displayByDefault: false
+      immutable: false
+    - key: row_cache_hit
+      name: Row Cache Hit
+      description: "Row cache hit ratio."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: bloom_filter_cache_hit
+      name: Bloom Filter Cache Hit
+      description: "Bloom filter cache hit ratio."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: block_cache_hit
+      name: Block Cache Hit
+      description: "Block cache hit ratio."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: index_block_cache_hit
+      name: Index Block Cache Hit
+      description: "Index block cache hit ratio."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: expected_worker_count
+      name: Expected Worker Count
+      description: "Expected number of workers."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: used_worker_count
+      name: Used Worker Count
+      description: "Number of workers used."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: table_scan
+      name: Table Scan
+      description: "Number of table scans."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: consistency_level_strong_count
+      name: Strong Consistency Count
+      description: "Number of strong consistency reads."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: consistency_level_weak_count
+      name: Weak Consistency Count
+      description: "Number of weak consistency reads."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: fail_count_sum
+      name: Fail Count
+      description: "Total number of failures."
+      unit: ""
+      displayByDefault: true
+      immutable: false
+    - key: ret_code_4012_count_sum
+      name: "RetCode 4012 Count"
+      description: "Count of return code 4012."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: ret_code_4013_count_sum
+      name: "RetCode 4013 Count"
+      description: "Count of return code 4013."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: ret_code_5001_count_sum
+      name: "RetCode 5001 Count"
+      description: "Count of return code 5001."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: ret_code_5024_count_sum
+      name: "RetCode 5024 Count"
+      description: "Count of return code 5024."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: ret_code_5167_count_sum
+      name: "RetCode 5167 Count"
+      description: "Count of return code 5167."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: ret_code_5217_count_sum
+      name: "RetCode 5217 Count"
+      description: "Count of return code 5217."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: ret_code_6002_count_sum
+      name: "RetCode 6002 Count"
+      description: "Count of return code 6002."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: plan_type_local_count
+      name: "Local Plan Count"
+      description: "Number of local plans."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: plan_type_remote_count
+      name: "Remote Plan Count"
+      description: "Number of remote plans."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: plan_type_distributed_count
+      name: "Distributed Plan Count"
+      description: "Number of distributed plans."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: inner_sql_count
+      name: "Inner SQL Count"
+      description: "Number of inner SQLs."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: miss_plan_count
+      name: "Miss Plan Count"
+      description: "Number of plan cache misses."
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: executor_rpc_count
+      name: "Executor RPC Count"
+      description: "Number of executor RPCs."
+      unit: ""
+      displayByDefault: false
+      immutable: false

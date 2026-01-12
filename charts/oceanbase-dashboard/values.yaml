@@ -42,3 +42,16 @@ job:
   normal:
     ttlSecondsAfterFinished: 300 # 5 minutes
 
+sqlAnalyzer:
+  image: "quay.io/oceanbase/sql-analyzer:0.1.0"
+  retentionDays: 7
+  storageSize: 20Gi
+  collectionIntervalSeconds: 30
+  compactionIntervalSeconds: 3600
+  cpuRequest: "100m"
+  cpuLimit: "1"
+  memoryRequest: "128Mi"
+  memoryLimit: "1Gi"
+  sqlAuditLimit: 10000
+  slowSqlThresholdMilliSeconds: 1000
+

@@ -38,9 +38,24 @@ type JobConfig struct {
 	Normal     JobTypeConfig `yaml:"normal"`
 }
 
+type SQLAnalyzerConfig struct {
+	Image                        string `yaml:"image"`
+	RetentionDays                int    `yaml:"retentionDays"`
+	StorageSize                  string `yaml:"storageSize"`
+	CollectionIntervalSeconds    int    `yaml:"collectionIntervalSeconds"`
+	CompactionIntervalSeconds    int    `yaml:"compactionIntervalSeconds"`
+	CPURequest                   string `yaml:"cpuRequest"`
+	CPULimit                     string `yaml:"cpuLimit"`
+	MemoryRequest                string `yaml:"memoryRequest"`
+	MemoryLimit                  string `yaml:"memoryLimit"`
+	SqlAuditLimit                int    `yaml:"sqlAuditLimit"`
+	SlowSqlThresholdMilliSeconds int    `yaml:"slowSqlThresholdMilliSeconds"`
+}
+
 type Config struct {
-	Inspection InspectionConfig `yaml:"inspection"`
-	Job        JobConfig        `yaml:"job"`
+	Inspection  InspectionConfig  `yaml:"inspection"`
+	Job         JobConfig         `yaml:"job"`
+	SQLAnalyzer SQLAnalyzerConfig `yaml:"sqlAnalyzer"`
 }
 
 var (

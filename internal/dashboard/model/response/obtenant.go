@@ -32,6 +32,7 @@ type OBTenantOverview struct {
 	Scenario    string            `json:"scenario,omitempty"`
 
 	DeletionProtection bool `json:"deletionProtection" binding:"required"` // Whether the tenant is protected from deletion
+	SqlAnalyzerEnabled bool `json:"sqlAnalyzerEnabled"`                    // Whether the sql analyzer is enabled
 }
 
 type OBTenantDetail struct {

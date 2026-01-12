@@ -42,5 +42,7 @@ func InitOBTenantRoutes(g *gin.RouterGroup) {
 	g.PUT("/obtenants/:namespace/:name/pools/:zoneName", h.Wrap(h.CreateOBTenantPool, oceanbase.TenantGuard(":namespace", ":name", "write")))
 	g.DELETE("/obtenants/:namespace/:name/pools/:zoneName", h.Wrap(h.DeleteOBTenantPool, oceanbase.TenantGuard(":namespace", ":name", "write")))
 	g.PATCH("/obtenants/:namespace/:name/pools/:zoneName", h.Wrap(h.PatchOBTenantPool, oceanbase.TenantGuard(":namespace", ":name", "write")))
+	g.PUT("/obtenants/:namespace/:name/sql-analyzer", h.Wrap(h.CreateSQLAnalyzer, oceanbase.TenantGuard(":namespace", ":name", "write")))
+	g.DELETE("/obtenants/:namespace/:name/sql-analyzer", h.Wrap(h.DeleteSQLAnalyzer, oceanbase.TenantGuard(":namespace", ":name", "write")))
 	g.GET("/obtenants/:namespace/:name/related-events", h.Wrap(h.ListOBTenantRelatedEvents, oceanbase.TenantGuard(":namespace", ":name", "read")))
 }

@@ -14,7 +14,9 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	logger "github.com/sirupsen/logrus"
 
+	sqlbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/sql"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/sql"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 )
@@ -31,45 +33,41 @@ import (
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/sql/metrics [GET]
 // @Security ApiKeyAuth
-func ListSqlMetrics(_ *gin.Context) ([]sql.SqlMetricMetaCategory, error) {
-	return nil, httpErr.NewNotImplemented("")
+func ListSqlMetrics(c *gin.Context) ([]sql.SqlMetricMetaCategory, error) {
+	lang := c.Query("language")
+	return sqlbiz.ListSqlMetrics(lang)
 }
 
-// @ID ListTopSqls
+// @ID ListSqlStats
 // @Summary list top sqls
 // @Description list top sqls ordering by spcecific metrics
 // @Tags Sql
 // @Accept application/json
 // @Produce application/json
 // @Param body body sql.SqlFilter true "sql filter"
-// @Success 200 object response.APIResponse{data=[]sql.SqlInfo}
+// @Success 200 object response.APIResponse{data=sql.SqlStatsList}
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/sql/topSqls [POST]
+// @Router /api/v1/sql/stats [POST]
 // @Security ApiKeyAuth
-func ListTopSqls(_ *gin.Context) ([]sql.SqlInfo, error) {
-	return nil, httpErr.NewNotImplemented("")
+func ListSqlStats(c *gin.Context) (*sql.SqlStatsList, error) {
+	filter := &sql.SqlFilter{}
+	err := c.ShouldBindJSON(filter)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	logger.Infof("ListSqlStats filter: %+v", filter)
+	res, err := sqlbiz.ListSqlStats(c, filter)
+	if err != nil {
+		logger.Errorf("ListSqlStats error: %v", err)
+		return nil, err
+	}
+	logger.Infof("ListSqlStats returned %d records", len(res.Items))
+	return res, nil
 }
 
-// @ID ListSuspiciousSqls
-// @Summary list suspicious sqls
-// @Description list suspicious sqls
-// @Tags Sql
-// @Accept application/json
-// @Produce application/json
-// @Param body body sql.SqlFilter true "sql filter"
-// @Success 200 object response.APIResponse{data=[]sql.SqlInfo}
-// @Failure 400 object response.APIResponse
-// @Failure 401 object response.APIResponse
-// @Failure 500 object response.APIResponse
-// @Router /api/v1/sql/suspiciousSqls [POST]
-// @Security ApiKeyAuth
-func ListSuspiciousSqls(_ *gin.Context) ([]sql.SqlInfo, error) {
-	return nil, httpErr.NewNotImplemented("")
-}
-
-// @ID RequestStatistics
+// @ID ListRequestStatistics
 // @Summary list request statistics
 // @Description list request statistics
 // @Tags Sql
@@ -82,8 +80,34 @@ func ListSuspiciousSqls(_ *gin.Context) ([]sql.SqlInfo, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/sql/requestStatistics [POST]
 // @Security ApiKeyAuth
-func RequestStatistics(_ *gin.Context) ([]sql.RequestStatisticInfo, error) {
-	return nil, httpErr.NewNotImplemented("")
+func ListRequestStatistics(c *gin.Context) ([]sql.RequestStatisticInfo, error) {
+	param := &sql.SqlRequestStatisticParam{}
+	err := c.ShouldBindJSON(param)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return sqlbiz.ListRequestStatistics(c, param)
+}
+
+// @ID QuerySqlHistoryInfo
+// @Summary query SQL history info
+// @Description query history statistic info of a SQL
+// @Tags Sql
+// @Accept application/json
+// @Produce application/json
+// @Param body body sql.SqlHistoryParam true "param for query history sql info"
+// @Success 200 object response.APIResponse{data=sql.SqlHistoryInfo}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Router /api/v1/sql/querySqlHistoryInfo [POST]
+// @Security ApiKeyAuth
+func QuerySqlHistoryInfo(c *gin.Context) (*sql.SqlHistoryInfo, error) {
+	param := &sql.SqlHistoryParam{}
+	if err := c.ShouldBindJSON(param); err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return sqlbiz.QuerySqlHistoryInfo(c, param)
 }
 
 // @ID QuerySqlDetailInfo
@@ -99,8 +123,12 @@ func RequestStatistics(_ *gin.Context) ([]sql.RequestStatisticInfo, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/sql/querySqlDetailInfo [POST]
 // @Security ApiKeyAuth
-func QuerySqlDetailInfo(_ *gin.Context) (*sql.SqlDetailedInfo, error) {
-	return nil, httpErr.NewNotImplemented("")
+func QuerySqlDetailInfo(c *gin.Context) (*sql.SqlDetailedInfo, error) {
+	param := &sql.SqlDetailParam{}
+	if err := c.ShouldBindJSON(param); err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return sqlbiz.QuerySqlDetailInfo(c, param)
 }
 
 // @ID QueryPlanDetailInfo
@@ -116,6 +144,10 @@ func QuerySqlDetailInfo(_ *gin.Context) (*sql.SqlDetailedInfo, error) {
 // @Failure 500 object response.APIResponse
 // @Router /api/v1/sql/queryPlanDetailInfo [POST]
 // @Security ApiKeyAuth
-func QueryPlanDetailInfo(_ *gin.Context) (*sql.PlanDetail, error) {
-	return nil, httpErr.NewNotImplemented("")
+func QueryPlanDetailInfo(c *gin.Context) (*sql.PlanDetail, error) {
+	param := &sql.PlanDetailParam{}
+	if err := c.ShouldBindJSON(param); err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	return sqlbiz.QueryPlanDetailInfo(c, param)
 }

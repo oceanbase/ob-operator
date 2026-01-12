@@ -868,3 +868,82 @@ func ListOBTenantUsers(_ *gin.Context) ([]string, error) {
 func ListOBTenantDatabases(_ *gin.Context) ([]string, error) {
 	return nil, httpErr.NewNotImplemented("")
 }
+
+// @ID CreateSQLAnalyzer
+// @Tags OBTenant
+// @Summary Create SQL Analyzer for specific tenant
+// @Description Create SQL Analyzer for specific tenant
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse{data=response.OBTenantDetail}
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Param namespace path string true "obtenant namespace"
+// @Param name path string true "obtenant name"
+// @Router /api/v1/obtenants/{namespace}/{name}/sql-analyzer [PUT]
+// @Security ApiKeyAuth
+func CreateSQLAnalyzer(c *gin.Context) (*response.OBTenantDetail, error) {
+	nn := &param.NamespacedName{}
+	err := c.BindUri(nn)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	tenant, err := clients.GetOBTenant(c, types.NamespacedName{
+		Namespace: nn.Namespace,
+		Name:      nn.Name,
+	})
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return nil, httpErr.NewNotFound(err.Error())
+		}
+		return nil, httpErr.NewInternal(err.Error())
+	}
+
+	err = oceanbase.CreateSQLAnalyzerDeployment(c, tenant)
+	if err != nil {
+		return nil, httpErr.NewInternal(err.Error())
+	}
+	return oceanbase.GetOBTenant(c, types.NamespacedName{
+		Namespace: nn.Namespace,
+		Name:      nn.Name,
+	})
+}
+
+// @ID DeleteSQLAnalyzer
+// @Tags OBTenant
+// @Summary Delete SQL Analyzer for specific tenant
+// @Description Delete SQL Analyzer for specific tenant
+// @Accept application/json
+// @Produce application/json
+// @Success 200 object response.APIResponse
+// @Failure 400 object response.APIResponse
+// @Failure 401 object response.APIResponse
+// @Failure 500 object response.APIResponse
+// @Param namespace path string true "obtenant namespace"
+// @Param name path string true "obtenant name"
+// @Router /api/v1/obtenants/{namespace}/{name}/sql-analyzer [DELETE]
+// @Security ApiKeyAuth
+func DeleteSQLAnalyzer(c *gin.Context) (any, error) {
+	nn := &param.NamespacedName{}
+	err := c.BindUri(nn)
+	if err != nil {
+		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	tenant, err := clients.GetOBTenant(c, types.NamespacedName{
+		Namespace: nn.Namespace,
+		Name:      nn.Name,
+	})
+	if err != nil {
+		if kubeerrors.IsNotFound(err) {
+			return nil, httpErr.NewNotFound(err.Error())
+		}
+		return nil, httpErr.NewInternal(err.Error())
+	}
+
+	err = oceanbase.DeleteSQLAnalyzerDeployment(c, tenant)
+	if err != nil {
+		return nil, httpErr.NewInternal(err.Error())
+	}
+	return nil, nil
+}

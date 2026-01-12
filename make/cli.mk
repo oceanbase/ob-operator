@@ -26,8 +26,8 @@ CLI_BUILD := GO11MODULE=ON CGO_ENABLED=0 GOOS=$(GOOS) GOARCH=$(GOARCH) go build 
 # build dir for cli
 BUILD_DIR?=bin/
 
-.PHONY: cli-build
-cli-build:  ## Build oceanbase-cli
+.PHONY: cli
+cli:  ## Build oceanbase-cli
 	@echo "Building $(BINARY_NAME) for $(GOOS)/$(GOARCH)..."
 	$(CLI_BUILD) -o $(BUILD_DIR)$(BINARY_NAME) cmd/cli/main.go
 
