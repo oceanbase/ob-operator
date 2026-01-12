@@ -1,10 +1,12 @@
 import { DATE_TIME_FORMAT, DateSelectOption } from '@/constants/datetime';
 import {
   listSqlMetrics,
+  listSqlStats,
   queryPlanDetailInfo,
   querySqlDetailInfo,
   querySqlHistoryInfo,
 } from '@/services/sql';
+import { intl } from '@/utils/intl';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { ProCard, ProDescriptions, ProTable } from '@ant-design/pro-components';
 import { Line } from '@antv/g2plot';
@@ -193,7 +195,8 @@ const SqlDetail: React.FC = () => {
         database: dbName,
         startTime: start,
         endTime: end,
-      });
+        interval: 60,
+      } as any);
     },
     {
       refreshDeps: [ns, name, sqlId, dbName], // Only reload if identity changes
@@ -409,11 +412,20 @@ const SqlDetail: React.FC = () => {
                 icon={<ArrowLeftOutlined />}
                 onClick={() => history.back()}
               >
-                Back
+                {intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.Detail.Back',
+                  defaultMessage: '返回',
+                })}
               </Button>
 
               <Title level={4} style={{ margin: 0 }}>
-                SQL Detail: {sqlId}
+                {intl.formatMessage(
+                  {
+                    id: 'src.pages.Tenant.Detail.Sql.Detail.SqlDetail',
+                    defaultMessage: 'SQL 详情：{sqlId}',
+                  },
+                  { sqlId },
+                )}
               </Title>
             </Space>
 
@@ -421,7 +433,13 @@ const SqlDetail: React.FC = () => {
           </Space>
 
           <ProDescriptions column={3} bordered>
-            <ProDescriptions.Item label="SQL Text" span={3}>
+            <ProDescriptions.Item
+              label={intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Sql.Detail.SqlText',
+                defaultMessage: 'SQL 文本',
+              })}
+              span={3}
+            >
               <Typography.Paragraph
                 ellipsis={{ rows: 2, expandable: true, symbol: 'more' }}
                 copyable
@@ -430,13 +448,30 @@ const SqlDetail: React.FC = () => {
               </Typography.Paragraph>
             </ProDescriptions.Item>
 
-            <ProDescriptions.Item label="SQL ID">{sqlId}</ProDescriptions.Item>
+            <ProDescriptions.Item
+              label={intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Sql.Detail.SqlId',
+                defaultMessage: 'SQL ID',
+              })}
+            >
+              {sqlId}
+            </ProDescriptions.Item>
 
-            <ProDescriptions.Item label="Database">
+            <ProDescriptions.Item
+              label={intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Sql.Detail.Database',
+                defaultMessage: '数据库',
+              })}
+            >
               {dbName || sqlMeta?.dbName || '-'}
             </ProDescriptions.Item>
 
-            <ProDescriptions.Item label="User">
+            <ProDescriptions.Item
+              label={intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Sql.Detail.User',
+                defaultMessage: '用户',
+              })}
+            >
               {sqlMeta?.userName || '-'}
             </ProDescriptions.Item>
           </ProDescriptions>
@@ -445,7 +480,10 @@ const SqlDetail: React.FC = () => {
         {/* Charts */}
 
         <ProCard
-          title="History Request Info"
+          title={intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.Sql.Detail.HistoryRequestInfo',
+            defaultMessage: '历史请求信息',
+          })}
           headerBordered
           loading={historyLoading}
           extra={
@@ -467,7 +505,13 @@ const SqlDetail: React.FC = () => {
           }
         >
           <ProCard split="vertical">
-            <ProCard title="Executions" colSpan={12}>
+            <ProCard
+              title={intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Sql.Detail.Executions',
+                defaultMessage: '执行次数',
+              })}
+              colSpan={12}
+            >
               <SqlTrendChart
                 data={historyInfo?.executionTrend || []}
                 type="execution"
@@ -477,7 +521,12 @@ const SqlDetail: React.FC = () => {
             <ProCard
               title={
                 <Space>
-                  <span>Latency</span>
+                  <span>
+                    {intl.formatMessage({
+                      id: 'src.pages.Tenant.Detail.Sql.Detail.Latency',
+                      defaultMessage: '延迟',
+                    })}
+                  </span>
 
                   <Select
                     mode="multiple"
@@ -506,7 +555,10 @@ const SqlDetail: React.FC = () => {
         {/* Diagnosis */}
 
         <ProCard
-          title="Diagnosis & Advice"
+          title={intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.Sql.Detail.DiagnosisAndAdvice',
+            defaultMessage: '诊断与建议',
+          })}
           headerBordered
           loading={detailLoading}
         >
@@ -520,10 +572,14 @@ const SqlDetail: React.FC = () => {
               pagination={false}
               columns={[
                 {
-                  title: 'Level',
+                  title: intl.formatMessage({
+                    id: 'src.pages.Tenant.Detail.Sql.Detail.Level',
+                    defaultMessage: '级别',
+                  }),
                   dataIndex: 'level',
                   width: 100,
-                  render: (level: string) => {
+                  render: (_: any, record: any) => {
+                    const level = record.level;
                     let color = 'blue';
                     if (level === 'CRITICAL') color = 'red';
                     if (level === 'WARN') color = 'orange';
@@ -532,28 +588,49 @@ const SqlDetail: React.FC = () => {
                   },
                 },
                 {
-                  title: 'Rule Name',
+                  title: intl.formatMessage({
+                    id: 'src.pages.Tenant.Detail.Sql.Detail.RuleName',
+                    defaultMessage: '规则名称',
+                  }),
                   dataIndex: 'ruleName',
                   width: 200,
                 },
                 {
-                  title: 'Reason',
+                  title: intl.formatMessage({
+                    id: 'src.pages.Tenant.Detail.Sql.Detail.Reason',
+                    defaultMessage: '原因',
+                  }),
                   dataIndex: 'reason',
                 },
                 {
-                  title: 'Suggestion',
+                  title: intl.formatMessage({
+                    id: 'src.pages.Tenant.Detail.Sql.Detail.Suggestion',
+                    defaultMessage: '建议',
+                  }),
                   dataIndex: 'suggestion',
                 },
               ]}
             />
           ) : (
-            <Tag color="green">No diagnosis issues found.</Tag>
+            <Tag color="green">
+              {intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Sql.Detail.NoDiagnosisIssuesFound',
+                defaultMessage: '未发现诊断问题',
+              })}
+            </Tag>
           )}
         </ProCard>
 
         {/* Plan Statistics */}
 
-        <ProCard title="Plan Statistics" headerBordered loading={detailLoading}>
+        <ProCard
+          title={intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.Sql.Detail.PlanStatistics',
+            defaultMessage: '执行计划统计',
+          })}
+          headerBordered
+          loading={detailLoading}
+        >
           <ProTable<API.PlanStatistic>
             rowKey={(record) =>
               `${record.svrIP}-${record.svrPort}-${record.planID}`
@@ -561,7 +638,10 @@ const SqlDetail: React.FC = () => {
             dataSource={sqlInfo?.plans || []}
             columns={[
               {
-                title: 'Plan ID',
+                title: intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.Detail.PlanId',
+                  defaultMessage: '执行计划 ID',
+                }),
 
                 dataIndex: 'planID',
 
@@ -570,14 +650,35 @@ const SqlDetail: React.FC = () => {
                 ),
               },
 
-              { title: 'Svr IP', dataIndex: 'svrIP' },
-
-              { title: 'Svr Port', dataIndex: 'svrPort' },
-
-              { title: 'Plan Hash', dataIndex: 'planHash' },
+              {
+                title: intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.Detail.SvrIp',
+                  defaultMessage: '服务器 IP',
+                }),
+                dataIndex: 'svrIP',
+              },
 
               {
-                title: 'Cost',
+                title: intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.Detail.SvrPort',
+                  defaultMessage: '服务器端口',
+                }),
+                dataIndex: 'svrPort',
+              },
+
+              {
+                title: intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.Detail.PlanHash',
+                  defaultMessage: '执行计划哈希',
+                }),
+                dataIndex: 'planHash',
+              },
+
+              {
+                title: intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.Detail.Cost',
+                  defaultMessage: '成本',
+                }),
 
                 dataIndex: 'cost',
 
@@ -585,7 +686,10 @@ const SqlDetail: React.FC = () => {
               },
 
               {
-                title: 'CPU Cost',
+                title: intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.Detail.CpuCost',
+                  defaultMessage: 'CPU 成本',
+                }),
 
                 dataIndex: 'cpuCost',
 
@@ -593,7 +697,10 @@ const SqlDetail: React.FC = () => {
               },
 
               {
-                title: 'IO Cost',
+                title: intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.Detail.IoCost',
+                  defaultMessage: 'IO 成本',
+                }),
 
                 dataIndex: 'ioCost',
 
@@ -601,7 +708,10 @@ const SqlDetail: React.FC = () => {
               },
 
               {
-                title: 'Generated Time',
+                title: intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.Detail.GeneratedTime',
+                  defaultMessage: '生成时间',
+                }),
 
                 dataIndex: 'generatedTime',
 
@@ -619,20 +729,54 @@ const SqlDetail: React.FC = () => {
 
         {/* Index Info */}
 
-        <ProCard title="Index Info" headerBordered loading={detailLoading}>
+        <ProCard
+          title={intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.Sql.Detail.IndexInfo',
+            defaultMessage: '索引信息',
+          })}
+          headerBordered
+          loading={detailLoading}
+        >
           <ProTable<API.IndexInfo>
             dataSource={sqlInfo?.indexies || []}
             columns={[
-              { title: 'Table Name', dataIndex: 'tableName' },
-
-              { title: 'Index Name', dataIndex: 'indexName' },
-
-              { title: 'Index Type', dataIndex: 'indexType' },
-
-              { title: 'Uniqueness', dataIndex: 'uniqueness' },
+              {
+                title: intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.Detail.TableName',
+                  defaultMessage: '表名',
+                }),
+                dataIndex: 'tableName',
+              },
 
               {
-                title: 'Columns',
+                title: intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.Detail.IndexName',
+                  defaultMessage: '索引名',
+                }),
+                dataIndex: 'indexName',
+              },
+
+              {
+                title: intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.Detail.IndexType',
+                  defaultMessage: '索引类型',
+                }),
+                dataIndex: 'indexType',
+              },
+
+              {
+                title: intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.Detail.Uniqueness',
+                  defaultMessage: '唯一性',
+                }),
+                dataIndex: 'uniqueness',
+              },
+
+              {
+                title: intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.Detail.Columns',
+                  defaultMessage: '列',
+                }),
 
                 dataIndex: 'columns',
 
@@ -640,7 +784,13 @@ const SqlDetail: React.FC = () => {
                   Array.isArray(cols) ? cols.join(', ') : cols,
               },
 
-              { title: 'Status', dataIndex: 'status' },
+              {
+                title: intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.Detail.Status',
+                  defaultMessage: '状态',
+                }),
+                dataIndex: 'status',
+              },
             ]}
             search={false}
             toolBarRender={false}
@@ -650,7 +800,13 @@ const SqlDetail: React.FC = () => {
       </ProCard>
 
       <Drawer
-        title={`Plan Detail (Plan ID: ${currentPlanId})`}
+        title={intl.formatMessage(
+          {
+            id: 'src.pages.Tenant.Detail.Sql.Detail.PlanDetail',
+            defaultMessage: '执行计划详情（执行计划 ID：{planId}）',
+          },
+          { planId: currentPlanId },
+        )}
         width={1000}
         open={planDrawerOpen}
         onClose={() => setPlanDrawerOpen(false)}
@@ -658,22 +814,49 @@ const SqlDetail: React.FC = () => {
       >
         <ProTable
           columns={[
-            { title: 'Operator', dataIndex: 'operator', key: 'operator' },
-
-            { title: 'Name', dataIndex: 'name', key: 'name' },
+            {
+              title: intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Sql.Detail.Operator',
+                defaultMessage: '操作符',
+              }),
+              dataIndex: 'operator',
+              key: 'operator',
+            },
 
             {
-              title: 'Est. Rows',
+              title: intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Sql.Detail.Name',
+                defaultMessage: '名称',
+              }),
+              dataIndex: 'name',
+              key: 'name',
+            },
+
+            {
+              title: intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Sql.Detail.EstRows',
+                defaultMessage: '预估行数',
+              }),
 
               dataIndex: 'estimatedRows',
 
               key: 'estimatedRows',
             },
 
-            { title: 'Cost', dataIndex: 'cost', key: 'cost' },
+            {
+              title: intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Sql.Detail.Cost',
+                defaultMessage: '成本',
+              }),
+              dataIndex: 'cost',
+              key: 'cost',
+            },
 
             {
-              title: 'Output/Filter',
+              title: intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Sql.Detail.OutputFilter',
+                defaultMessage: '输出/过滤',
+              }),
 
               dataIndex: 'outputOrFilter',
 

@@ -1,9 +1,7 @@
-import { obtenant } from '@/api';
 import { STATUS_LIST } from '@/constants';
 import { intl } from '@/utils/intl';
 import { findByValue } from '@oceanbase/util';
-import { useRequest } from 'ahooks';
-import { Card, Checkbox, Descriptions, Tag, message } from 'antd';
+import { Card, Descriptions, Tag } from 'antd';
 import { isEmpty } from 'lodash';
 
 export default function BasicInfo({
@@ -11,8 +9,6 @@ export default function BasicInfo({
   source = {},
   loading,
   style,
-  name,
-  ns,
 }: API.TenantBasicInfo & { style?: React.CSSProperties; loading: boolean }) {
   const deletionProtection = info?.deletionProtection;
   const InfoConfig = {
@@ -81,22 +77,6 @@ export default function BasicInfo({
     return false;
   };
 
-  const { runAsync: patchTenant, loading: patchTenantLoading } = useRequest(
-    obtenant.patchTenant,
-    {
-      manual: true,
-      onSuccess: (res) => {
-        if (res.successful) {
-          message.success(
-            intl.formatMessage({
-              id: 'src.pages.Tenant.Detail.Overview.892E62C7',
-              defaultMessage: '修改删除保护已成功',
-            }),
-          );
-        }
-      },
-    },
-  );
   return (
     <Card
       loading={loading}
@@ -132,23 +112,9 @@ export default function BasicInfo({
             defaultMessage: '删除保护',
           })}
         >
-          <Checkbox
-            // loading 态禁止操作，防止重复操作
-            disabled={patchTenantLoading}
-            defaultChecked={deletionProtection}
-            onChange={(e) => {
-              const body = {} as API.ParamPatchTenant;
-              if (!e.target.checked) {
-                body.removeDeletionProtection = true;
-              } else {
-                body.addDeletionProtection = true;
-              }
-              patchTenant(ns, name, body);
-            }}
-          />
+          {deletionProtection ? '开启' : '关闭'}
         </Descriptions.Item>
       </Descriptions>
-
       {checkSource(source) && (
         <Descriptions
           title={intl.formatMessage({
