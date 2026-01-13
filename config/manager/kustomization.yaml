@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: quay.io/oceanbase/ob-operator
-  newTag: 2.3.3
+  newTag: 2.3.4
