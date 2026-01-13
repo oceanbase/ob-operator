@@ -85,6 +85,7 @@ const CLUSTER_INFO_CONFIG = [
   'topology',
   'pvcIndependent',
   'version',
+  'clusterId',
 ];
 
 const TOPO_INFO_CONFIG = [
