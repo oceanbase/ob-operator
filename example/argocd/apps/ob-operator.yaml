@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://oceanbase.github.io/ob-operator
     chart: ob-operator
-    targetRevision: 2.3.3
+    targetRevision: 2.3.4
     helm:
       parameters:
       - name: reporter
