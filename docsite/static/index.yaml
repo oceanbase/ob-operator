@@ -2,6 +2,16 @@ apiVersion: v1
 entries:
   ob-operator:
   - apiVersion: v2
+    appVersion: 2.3.4
+    created: "2026-01-13T09:12:00.747155744Z"
+    description: A Helm chart for OB-Operator
+    digest: 551d03d30f627ce24c06df60a9a0829f70cdcee381224eb43f7f7d314bbb2587
+    name: ob-operator
+    type: application
+    urls:
+    - https://github.com/oceanbase/ob-operator/releases/download/ob-operator-2.3.4/ob-operator-2.3.4.tgz
+    version: 2.3.4
+  - apiVersion: v2
     appVersion: 2.3.3
     created: "2025-09-08T05:18:13.780482723Z"
     description: A Helm chart for OB-Operator
@@ -304,4 +314,4 @@ entries:
     urls:
     - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-dashboard-0.1.0/oceanbase-dashboard-0.1.0.tgz
     version: 0.1.0
-generated: "2025-09-08T05:18:13.780568393Z"
+generated: "2026-01-13T09:12:00.747245531Z"
