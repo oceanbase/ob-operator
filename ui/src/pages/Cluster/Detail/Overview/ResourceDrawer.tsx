@@ -58,21 +58,24 @@ export const TooltipItemContent = ({ item }) => {
   );
 };
 
-const ResourceDrawer: React.FC<ParametersModalProps> = ({
+const ResourceDrawer: React.FC<
+  ParametersModalProps & { resource?: { cpu?: number; memory?: number } }
+> = ({
   visible,
   onCancel,
   initialValues,
   name,
   namespace,
   onSuccess,
+  resource,
 }) => {
   const [form] = Form.useForm<API.CreateClusterData>();
   const { validateFields, setFieldValue, resetFields } = form;
 
   useEffect(() => {
-    const data = {};
-    const log = {};
-    const redoLog = {};
+    const data: Record<string, any> = {};
+    const log: Record<string, any> = {};
+    const redoLog: Record<string, any> = {};
 
     initialValues?.forEach((item) => {
       if (item.type === 'data') {
@@ -91,7 +94,22 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
       log,
       redoLog,
     });
-  }, [initialValues]);
+
+    // 设置 CPU 和 Memory 的默认值
+    if (resource) {
+      if (resource.cpu) {
+        setFieldValue(['resource', 'cpu'], resource.cpu);
+      }
+      if (resource.memory) {
+        // memory 可能是以字节为单位，需要转换为 GB
+        const memoryInGB =
+          typeof resource.memory === 'number'
+            ? resource.memory / (1 << 30)
+            : resource.memory;
+        setFieldValue(['resource', 'memory'], memoryInGB);
+      }
+    }
+  }, [initialValues, resource, setFieldValue]);
 
   const { data: storageClassesRes } = useRequest(getStorageClasses, {});
 
