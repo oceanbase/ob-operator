@@ -26,6 +26,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/clients"
 	bizconstant "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	"github.com/oceanbase/ob-operator/internal/dashboard/business/k8s"
+	"github.com/oceanbase/ob-operator/internal/dashboard/client"
 	"github.com/oceanbase/ob-operator/internal/dashboard/generated/bindata"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/sql"
@@ -85,7 +86,7 @@ func ListSqlMetrics(language string) ([]sql.SqlMetricMetaCategory, error) {
 }
 
 func ListSqlStats(ctx context.Context, filter *sql.SqlFilter) (*sql.SqlStatsList, error) {
-	podIP, err := k8s.GetSQLAnalyzerPodIP(ctx, filter.Namespace, filter.OBTenant)
+	sqlAnalyzerAddress, err := k8s.GetSQLAnalyzerAddress(ctx, filter.Namespace, filter.OBTenant)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +115,8 @@ func ListSqlStats(ctx context.Context, filter *sql.SqlFilter) (*sql.SqlStatsList
 	}
 
 	logger.Infof("Sending QuerySqlStatsRequest: %+v", req)
-	resp, err := QuerySqlStats(podIP, obtenant.Spec.TenantName, req)
+	clt := client.NewClient(fmt.Sprintf("http://%s:8080", sqlAnalyzerAddress))
+	resp, err := clt.QuerySqlStats(obtenant.Spec.TenantName, req)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +183,7 @@ func ListSqlStats(ctx context.Context, filter *sql.SqlFilter) (*sql.SqlStatsList
 }
 
 func QuerySqlHistoryInfo(ctx context.Context, param *sql.SqlHistoryParam) (*sql.SqlHistoryInfo, error) {
-	podIP, err := k8s.GetSQLAnalyzerPodIP(ctx, param.Namespace, param.OBTenant)
+	sqlAnalyzerAddress, err := k8s.GetSQLAnalyzerAddress(ctx, param.Namespace, param.OBTenant)
 	if err != nil {
 		return nil, err
 	}
@@ -202,7 +204,8 @@ func QuerySqlHistoryInfo(ctx context.Context, param *sql.SqlHistoryParam) (*sql.
 		LatencyColumns: param.LatencyColumns,
 	}
 
-	resp, err := QuerySqlHistory(podIP, obtenant.Spec.TenantName, req)
+	clt := client.NewClient(fmt.Sprintf("http://%s:8080", sqlAnalyzerAddress))
+	resp, err := clt.QuerySqlHistory(obtenant.Spec.TenantName, req)
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +267,7 @@ func QuerySqlHistoryInfo(ctx context.Context, param *sql.SqlHistoryParam) (*sql.
 }
 
 func QuerySqlDetailInfo(ctx context.Context, param *sql.SqlDetailParam) (*sql.SqlDetailedInfo, error) {
-	podIP, err := k8s.GetSQLAnalyzerPodIP(ctx, param.Namespace, param.OBTenant)
+	sqlAnalyzerAddress, err := k8s.GetSQLAnalyzerAddress(ctx, param.Namespace, param.OBTenant)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +286,8 @@ func QuerySqlDetailInfo(ctx context.Context, param *sql.SqlDetailParam) (*sql.Sq
 		SqlId:     param.SqlId,
 	}
 
-	resp, err := QuerySqlDetail(podIP, obtenant.Spec.TenantName, req)
+	clt := client.NewClient(fmt.Sprintf("http://%s:8080", sqlAnalyzerAddress))
+	resp, err := clt.QuerySqlDetail(obtenant.Spec.TenantName, req)
 	if err != nil {
 		return nil, err
 	}
@@ -344,7 +348,7 @@ func QuerySqlDetailInfo(ctx context.Context, param *sql.SqlDetailParam) (*sql.Sq
 }
 
 func ListRequestStatistics(c context.Context, param *sql.SqlRequestStatisticParam) ([]sql.RequestStatisticInfo, error) {
-	podIP, err := k8s.GetSQLAnalyzerPodIP(c, param.Namespace, param.OBTenant)
+	sqlAnalyzerAddress, err := k8s.GetSQLAnalyzerAddress(c, param.Namespace, param.OBTenant)
 	if err != nil {
 		return nil, err
 	}
@@ -365,7 +369,8 @@ func ListRequestStatistics(c context.Context, param *sql.SqlRequestStatisticPara
 		FilterInnerSql: !param.IncludeInnerSql,
 	}
 
-	resp, err := QueryRequestStatistics(podIP, obtenant.Spec.TenantName, req)
+	clt := client.NewClient(fmt.Sprintf("http://%s:8080", sqlAnalyzerAddress))
+	resp, err := clt.QueryRequestStatistics(obtenant.Spec.TenantName, req)
 	if err != nil {
 		return nil, err
 	}
@@ -422,7 +427,7 @@ func ListRequestStatistics(c context.Context, param *sql.SqlRequestStatisticPara
 }
 
 func QueryPlanDetailInfo(ctx context.Context, param *sql.PlanDetailParam) (*sql.PlanDetail, error) {
-	podIP, err := k8s.GetSQLAnalyzerPodIP(ctx, param.Namespace, param.OBTenant)
+	sqlAnalyzerAddress, err := k8s.GetSQLAnalyzerAddress(ctx, param.Namespace, param.OBTenant)
 	if err != nil {
 		return nil, err
 	}
@@ -442,7 +447,8 @@ func QueryPlanDetailInfo(ctx context.Context, param *sql.PlanDetailParam) (*sql.
 		PlanID:   param.PlanID,
 	}
 
-	plans, err := QueryPlanDetail(podIP, obtenant.Spec.TenantName, req)
+	clt := client.NewClient(fmt.Sprintf("http://%s:8080", sqlAnalyzerAddress))
+	plans, err := clt.QueryPlanDetail(obtenant.Spec.TenantName, req)
 	if err != nil {
 		return nil, err
 	}

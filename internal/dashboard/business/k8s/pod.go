@@ -22,7 +22,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
-func GetSQLAnalyzerPodIP(ctx context.Context, namespace, obtenant string) (string, error) {
+func GetSQLAnalyzerAddress(ctx context.Context, namespace, obtenant string) (string, error) {
 	k8sclient := client.GetClient()
 	pods, err := k8sclient.ClientSet.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("app=sql-analyzer,tenant=%s", obtenant),

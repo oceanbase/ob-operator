@@ -91,5 +91,4 @@ func InitRoutes(router *gin.Engine) {
 	v1.InitJobRoutes(v1Group)
 	v1.InitStorageRoutes(v1Group)
 	v1.InitAttachmentRoutes(v1Group)
-	v1.InitSqlStatsRoutes(v1Group)
 }

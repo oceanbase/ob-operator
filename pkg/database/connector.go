@@ -14,7 +14,6 @@ package database
 
 import (
 	"context"
-	"log"
 	"time"
 
 	// register mysql driver
@@ -96,7 +95,6 @@ func (c *Connector) DataSource() DataSource {
 
 func (c *Connector) Close() error {
 	if c.client.DB != nil {
-		log.Println("Closing database connection")
 		return c.client.DB.Close()
 	}
 	return nil
