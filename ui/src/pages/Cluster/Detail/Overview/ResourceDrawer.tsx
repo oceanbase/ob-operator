@@ -185,7 +185,7 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
                 name={['resource', 'cpu']}
               >
                 <InputNumber
-                  min={0}
+                  min={MINIMAL_CONFIG.cpu}
                   style={{ width: '180px' }}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
@@ -199,7 +199,7 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
                 name={['resource', 'memory']}
               >
                 <InputNumber
-                  min={0}
+                  min={MINIMAL_CONFIG.memory}
                   addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
