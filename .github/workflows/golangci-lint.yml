@@ -27,7 +27,7 @@ jobs:
         run: make dashboard-bindata-gen dashboard-doc-gen
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v9
         with:
           version: v2.8.0
           args: --verbose --timeout=10m --max-same-issues=30
