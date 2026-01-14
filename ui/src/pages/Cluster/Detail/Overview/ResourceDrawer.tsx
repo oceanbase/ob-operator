@@ -193,43 +193,33 @@ const ResourceDrawer: React.FC<
             <p style={fontStyle}>
               {intl.formatMessage({
                 id: 'src.pages.Cluster.Detail.Overview.70C825D8',
-                defaultMessage: '计算数据',
+                defaultMessage: '计算资源',
               })}
             </p>
-            <Col span={24}>
-              <CustomFormItem
-                style={{ marginRight: '8px' }}
-                label="CPU"
-                name={['resource', 'cpu']}
-              >
-                <InputNumber
-                  min={MINIMAL_CONFIG.cpu}
-                  style={{ width: '180px' }}
-                  placeholder={intl.formatMessage({
-                    id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
-                    defaultMessage: '请输入',
-                  })}
-                />
-              </CustomFormItem>
-              <CustomFormItem
-                style={{ marginRight: '8px' }}
-                label="Memory"
-                name={['resource', 'memory']}
-              >
-                <InputNumber
-                  min={MINIMAL_CONFIG.memory}
-                  addonAfter={SUFFIX_UNIT}
-                  placeholder={intl.formatMessage({
-                    id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
-                    defaultMessage: '请输入',
-                  })}
-                />
-              </CustomFormItem>
-            </Col>
+            <CustomFormItem label="CPU" name={['resource', 'cpu']}>
+              <InputNumber
+                min={MINIMAL_CONFIG.cpu}
+                style={{ width: '180px' }}
+                placeholder={intl.formatMessage({
+                  id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
+                  defaultMessage: '请输入',
+                })}
+              />
+            </CustomFormItem>
+            <CustomFormItem label="Memory" name={['resource', 'memory']}>
+              <InputNumber
+                min={MINIMAL_CONFIG.memory}
+                addonAfter={SUFFIX_UNIT}
+                placeholder={intl.formatMessage({
+                  id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
+                  defaultMessage: '请输入',
+                })}
+              />
+            </CustomFormItem>
             <p style={fontStyle}>
               {intl.formatMessage({
                 id: 'src.pages.Cluster.Detail.Overview.77C825D8',
-                defaultMessage: '存储数据',
+                defaultMessage: '存储资源',
               })}
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
