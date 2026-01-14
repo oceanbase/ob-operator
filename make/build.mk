@@ -4,7 +4,7 @@
 build: operator ## Build manager binary.
 
 .PHONY: operator
-operator: dashboard-doc-gen dashboard-bindata-gen manifests generate fmt ## Build manager binary.
+operator: dashboard-doc-gen dashboard-bindata-gen manifests generate fmt vet ## Build manager binary.
 	CGO_ENABLED=0 GOOS=linux go build -p $(PROCESSOR) -o bin/manager cmd/operator/main.go
 
 # If you wish built the manager image targeting other platforms you can use the --platform flag.
