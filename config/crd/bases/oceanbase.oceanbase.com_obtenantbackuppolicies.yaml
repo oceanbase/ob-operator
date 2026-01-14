@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.15.0
+    controller-gen.kubebuilder.io/version: v0.16.0
   name: obtenantbackuppolicies.oceanbase.oceanbase.com
 spec:
   group: oceanbase.oceanbase.com
@@ -507,8 +507,6 @@ spec:
                               default: 1
                               type: integer
                             resource:
-                              description: TODO Split UnitConfig struct to SpecUnitConfig
-                                and StatusUnitConfig
                               properties:
                                 iopsWeight:
                                   type: integer
@@ -545,12 +543,8 @@ spec:
                               - memorySize
                               type: object
                             type:
-                              description: TODO Split LocalityType struct to SpecLocalityType
-                                and StatusLocalityType
                               properties:
                                 isActive:
-                                  description: TODO move isActive to ResourcePoolSpec
-                                    And ResourcePoolStatus
                                   type: boolean
                                 name:
                                   type: string
@@ -725,12 +719,8 @@ spec:
                             priority:
                               type: integer
                             type:
-                              description: TODO Split LocalityType struct to SpecLocalityType
-                                and StatusLocalityType
                               properties:
                                 isActive:
-                                  description: TODO move isActive to ResourcePoolSpec
-                                    And ResourcePoolStatus
                                   type: boolean
                                 name:
                                   type: string
@@ -742,8 +732,6 @@ spec:
                               - replica
                               type: object
                             unitConfig:
-                              description: TODO Split UnitConfig struct to SpecUnitConfig
-                                and StatusUnitConfig
                               properties:
                                 iopsWeight:
                                   type: integer
