@@ -1,16 +1,16 @@
-name: release sql-data-collector
+name: release sql-analyzer
 
 on: 
   push:
     tags: 
-      - 'sql-data-collector-[0-9]+.[0-9]+.[0-9]+'
+      - 'sql-analyzer-[0-9]+.[0-9]+.[0-9]+'
       - '[0-9]+.[0-9]+.[0-9]+'
 
 env:
   tagName: ${{ github.ref_name }}
 
 jobs:
-  release-sql-data-collector:
+  release-sql-analyzer:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -52,12 +52,12 @@ jobs:
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          file: build/Dockerfile.sql-data-collector
+          file: build/Dockerfile.sql-analyzer
           push: true
           tags: |
-            ${{ vars.DOCKER_PUSH_BASE }}/sql-data-collector:${{ steps.set_version_vars.outputs.version }}
-            ${{ vars.DOCKER_PUSH_BASE }}/sql-data-collector:latest
-            quay.io/${{ vars.QUAY_IO_PUSH_BASE }}/sql-data-collector:${{ steps.set_version_vars.outputs.version }}
-            quay.io/${{ vars.QUAY_IO_PUSH_BASE }}/sql-data-collector:latest
-            ghcr.io/${{ github.repository_owner }}/sql-data-collector:${{ steps.set_version_vars.outputs.version }}
-            ghcr.io/${{ github.repository_owner }}/sql-data-collector:latest
+            ${{ vars.DOCKER_PUSH_BASE }}/sql-analyzer:${{ steps.set_version_vars.outputs.version }}
+            ${{ vars.DOCKER_PUSH_BASE }}/sql-analyzer:latest
+            quay.io/${{ vars.QUAY_IO_PUSH_BASE }}/sql-analyzer:${{ steps.set_version_vars.outputs.version }}
+            quay.io/${{ vars.QUAY_IO_PUSH_BASE }}/sql-analyzer:latest
+            ghcr.io/${{ github.repository_owner }}/sql-analyzer:${{ steps.set_version_vars.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/sql-analyzer:latest
