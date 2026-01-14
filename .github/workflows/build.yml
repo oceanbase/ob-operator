@@ -46,8 +46,8 @@ jobs:
         run: make build
       
       - name: go build oceanbase-dashboard
-        run: make dashboard-build
+        run: make dashboard
         
       - name: go build oceanbase-cli
-        run: make cli-build
+        run: make cli
         
