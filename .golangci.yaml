@@ -1,5 +1,14 @@
 version: "2"
 
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes: 
+        - github.com/oceanbase/ob-operator
+
 linters:
   default: none
   enable:
@@ -16,6 +25,14 @@ linters:
     - sqlclosecheck
     - staticcheck
     # - unused
+
+  exclusions:
+    rules:
+      - path: _test\.go
+        linters:
+          - errcheck
+          - revive
+          - unused
 
   settings:
     gocritic:
@@ -66,19 +83,3 @@ linters:
           disabled: true
         - name: deep-exit
           disabled: true
-
-formatters:
-  enable:
-    - gofmt
-    - goimports
-  settings:
-    goimports:
-      local-prefixes: github.com/oceanbase/ob-operator
-
-issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
-        - revive
-        - unused
