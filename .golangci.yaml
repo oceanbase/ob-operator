@@ -27,6 +27,8 @@ linters:
     # - unused
 
   exclusions:
+    paths:
+      - internal/sql-analyzer/parser
     rules:
       - path: _test\.go
         linters:
@@ -47,6 +49,16 @@ linters:
           - errcheck
 
   settings:
+    errcheck:
+      exclude-functions:
+        - (*os.File).Close
+        - (*net/http.Response).Body.Close
+        - (*database/sql.DB).Close
+        - (*database/sql.Conn).Close
+        - (*github.com/spf13/cobra.Command).MarkFlagRequired
+        - (*github.com/oceanbase/ob-operator/internal/server.HTTPServer).Stop
+        - io.ReadCloser.Close
+        - io.Closer.Close
     gocritic:
       disabled-checks:
         - ifElseChain
