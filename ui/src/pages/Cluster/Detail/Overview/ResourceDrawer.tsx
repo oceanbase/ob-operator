@@ -122,7 +122,7 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
     <Drawer
       title={intl.formatMessage({
         id: 'src.pages.Cluster.Detail.Overview.41F76901',
-        defaultMessage: '存储资源编辑',
+        defaultMessage: '节点资源编辑',
       })}
       open={visible}
       destroyOnClose
@@ -155,7 +155,7 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
                   value,
                   intl.formatMessage({
                     id: 'src.pages.Cluster.Detail.Overview.DBF1120A',
-                    defaultMessage: '存储资源编辑成功',
+                    defaultMessage: '节点资源编辑成功',
                   }),
                 );
               });
@@ -174,8 +174,44 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
           <Col span={24}>
             <p style={fontStyle}>
               {intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.70C825D8',
+                defaultMessage: '计算数据',
+              })}
+            </p>
+            <Col span={24}>
+              <CustomFormItem
+                style={{ marginRight: '8px' }}
+                label="CPU"
+                name={['resource', 'cpu']}
+              >
+                <InputNumber
+                  min={0}
+                  style={{ width: '180px' }}
+                  placeholder={intl.formatMessage({
+                    id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
+                    defaultMessage: '请输入',
+                  })}
+                />
+              </CustomFormItem>
+              <CustomFormItem
+                style={{ marginRight: '8px' }}
+                label="Memory"
+                name={['resource', 'memory']}
+              >
+                <InputNumber
+                  min={0}
+                  addonAfter={SUFFIX_UNIT}
+                  placeholder={intl.formatMessage({
+                    id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
+                    defaultMessage: '请输入',
+                  })}
+                />
+              </CustomFormItem>
+            </Col>
+            <p style={fontStyle}>
+              {intl.formatMessage({
                 id: 'src.pages.Cluster.Detail.Overview.77C825D8',
-                defaultMessage: '数据',
+                defaultMessage: '存储数据',
               })}
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
