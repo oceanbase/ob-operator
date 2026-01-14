@@ -183,4 +183,6 @@ const (
 			AND max_request_time >= ?
 			AND max_request_time <= ?
 		LIMIT 1`
+
+	GetTenantIDByName = "SELECT tenant_id FROM __all_tenant WHERE tenant_name = ?"
 )

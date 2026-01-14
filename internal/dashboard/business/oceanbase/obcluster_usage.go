@@ -70,7 +70,6 @@ func GetOBClusterUsages(ctx context.Context, nn *param.K8sObjectIdentity) (*resp
 	if manager == nil {
 		return nil, httpErr.NewInternal("no running observer is connectable")
 	} else {
-		defer manager.Close()
 		managerLogger := logr.FromContextOrDiscard(ctx)
 		manager.Logger = &managerLogger
 	}
