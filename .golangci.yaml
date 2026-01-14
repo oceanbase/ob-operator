@@ -1,5 +1,7 @@
+version: "2"
+
 linters:
-  disable-all: true
+  default: none
   enable:
     - asciicheck
     - errcheck
@@ -18,6 +20,58 @@ linters:
     - typecheck
     # - unused
 
+  settings:
+    gocritic:
+      disabled-checks:
+        - ifElseChain
+    goimports:
+      local-prefixes: github.com/oceanbase/ob-operator
+    revive:
+      enable-all-rules: true
+      rules:
+        - name: struct-tag
+          disabled: true
+        - name: var-naming
+          disabled: true
+        - name: comment-spacings
+          disabled: true
+        - name: exported
+          disabled: true
+        - name: unused-receiver
+          disabled: true
+        - name: file-header
+          disabled: true
+        - name: line-length-limit
+          disabled: true
+        - name: function-length
+          disabled: true
+        - name: max-public-structs
+          disabled: true
+        - name: function-result-limit
+          disabled: true
+        - name: banned-characters
+          disabled: true
+        - name: argument-limit
+          disabled: true
+        - name: cognitive-complexity
+          disabled: true
+        - name: cyclomatic
+          disabled: true
+        - name: confusing-results
+          disabled: true
+        - name: add-constant
+          disabled: true
+        - name: flag-parameter
+          disabled: true
+        - name: nested-structs
+          disabled: true
+        - name: import-shadowing
+          disabled: true
+        - name: early-return
+          disabled: true
+        - name: deep-exit
+          disabled: true
+
 issues:
   exclude-rules:
     - path: _test\.go
@@ -25,55 +79,3 @@ issues:
         - errcheck
         - revive
         - unused
-
-linters-settings:
-  gocritic:
-    disabled-checks:
-      - ifElseChain
-  goimports:
-    local-prefixes: github.com/oceanbase/ob-operator
-  revive:
-    enable-all-rules: true
-    rules:
-      - name: struct-tag
-        disabled: true
-      - name: var-naming
-        disabled: true
-      - name: comment-spacings
-        disabled: true
-      - name: exported
-        disabled: true
-      - name: unused-receiver
-        disabled: true
-      - name: file-header
-        disabled: true
-      - name: line-length-limit
-        disabled: true
-      - name: function-length
-        disabled: true
-      - name: max-public-structs
-        disabled: true
-      - name: function-result-limit
-        disabled: true
-      - name: banned-characters
-        disabled: true
-      - name: argument-limit
-        disabled: true
-      - name: cognitive-complexity
-        disabled: true
-      - name: cyclomatic
-        disabled: true
-      - name: confusing-results
-        disabled: true
-      - name: add-constant
-        disabled: true
-      - name: flag-parameter
-        disabled: true
-      - name: nested-structs
-        disabled: true
-      - name: import-shadowing
-        disabled: true
-      - name: early-return
-        disabled: true
-      - name: deep-exit
-        disabled: true
