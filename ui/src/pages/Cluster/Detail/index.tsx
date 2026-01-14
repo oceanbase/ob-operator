@@ -1,7 +1,16 @@
+import ClusterSelect from '@/components/ClusterSelect';
+import { STATUS_LIST } from '@/constants';
 import DetailLayout from '@/pages/Layouts/DetailLayout';
+import { getClusterDetailReq } from '@/services';
 import { intl } from '@/utils/intl';
+import { ApartmentOutlined, CaretDownFilled } from '@ant-design/icons';
 import type { MenuItem } from '@oceanbase/design/es/BasicLayout';
+import { findByValue } from '@oceanbase/util';
 import { useAccess, useParams } from '@umijs/max';
+import { useRequest } from 'ahooks';
+import { Badge } from 'antd';
+import { toNumber } from 'lodash';
+import styles from './index.less';
 
 export default () => {
   const params = useParams();
@@ -57,6 +66,41 @@ export default () => {
       accessible: access.obclusterwrite,
     },
   ];
+  const { data: clusterDetail } = useRequest(getClusterDetailReq, {
+    defaultParams: [{ ns: ns!, name: name! }],
+  });
 
-  return <DetailLayout menus={menus} subSideSelectKey="cluster" />;
+  const statusDetailItem = findByValue(STATUS_LIST, clusterDetail?.status);
+
+  return (
+    <DetailLayout
+      menus={menus}
+      subSideSelectKey="cluster"
+      sideHeader={
+        clusterDetail?.info?.clusterId ? (
+          <div className={styles.sideHeader}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <ApartmentOutlined />
+              <ClusterSelect
+                valueProp="id"
+                value={toNumber(clusterDetail?.info?.clusterId)}
+                bordered={false}
+                showStandby={true}
+                showInnerStandby={false}
+                suffixIcon={<CaretDownFilled />}
+                optionLabelRender={(item) => item?.name}
+                className={styles.clusterSelect}
+              />
+            </div>
+            <Badge
+              color={statusDetailItem.badgeStatus}
+              text={statusDetailItem.label}
+              className={styles.badge}
+              style={{ marginLeft: '24px', marginTop: '2px' }}
+            />
+          </div>
+        ) : null
+      }
+    />
+  );
 };

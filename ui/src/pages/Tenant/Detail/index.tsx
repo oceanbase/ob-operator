@@ -48,7 +48,7 @@ export default () => {
     },
     {
       title: intl.formatMessage({
-        id: 'Dashboard.Tenant.Detail.SQLDiagnose',
+        id: 'src.pages.Tenant.Detail.Sql.SqlAnalysis',
         defaultMessage: 'SQL 分析',
       }),
       link: `/tenant/${ns}/${name}/${tenantName}/sql`,

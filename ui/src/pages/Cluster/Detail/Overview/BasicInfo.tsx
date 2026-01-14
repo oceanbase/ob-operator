@@ -1,4 +1,3 @@
-import { obcluster } from '@/api';
 import {
   CommonAffinitySpec,
   CommonAffinityType,
@@ -8,16 +7,7 @@ import {
 import { MODE_MAP, STATUS_LIST } from '@/constants';
 import { intl } from '@/utils/intl';
 import { findByValue } from '@oceanbase/util';
-import { useRequest } from 'ahooks';
-import {
-  Card,
-  Checkbox,
-  Descriptions,
-  Table,
-  Tag,
-  Typography,
-  message,
-} from 'antd';
+import { Card, Descriptions, Table, Tag, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import { useMemo } from 'react';
 
@@ -121,12 +111,10 @@ export default function BasicInfo({
   clusterName,
   style,
   deletionProtection,
-  clusterDetailRefresh,
   ...props
 }: ResponseOBCluster & {
   style?: React.CSSProperties;
   extra?: boolean;
-  clusterDetailRefresh?: () => void;
 }) {
   const statusItem = findByValue(STATUS_LIST, status);
   const statusDetailItem = findByValue(STATUS_LIST, statusDetail);
@@ -171,24 +159,6 @@ export default function BasicInfo({
       rendering.tolerations.length > 0;
     return rendering;
   }, [props.topology]);
-
-  const { runAsync: patchOBCluster, loading } = useRequest(
-    obcluster.patchOBCluster,
-    {
-      manual: true,
-      onSuccess: (res) => {
-        if (res.successful) {
-          message.success(
-            intl.formatMessage({
-              id: 'src.pages.Cluster.Detail.Overview.02AE8EA0',
-              defaultMessage: '修改删除保护已成功',
-            }),
-          );
-          clusterDetailRefresh?.();
-        }
-      },
-    },
-  );
 
   return (
     <Card
@@ -267,20 +237,7 @@ export default function BasicInfo({
             defaultMessage: '删除保护',
           })}
         >
-          <Checkbox
-            // loading 态禁止操作，防止重复操作
-            disabled={loading || status !== 'running'}
-            defaultChecked={deletionProtection}
-            onChange={(e) => {
-              const body = {} as API.ParamPatchOBClusterParam;
-              if (!e.target.checked) {
-                body.removeDeletionProtection = true;
-              } else {
-                body.addDeletionProtection = true;
-              }
-              patchOBCluster(namespace, name, body);
-            }}
-          />
+          {deletionProtection ? '开启' : '关闭'}
         </Descriptions.Item>
         <Descriptions.Item
           label={intl.formatMessage({

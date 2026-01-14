@@ -14,6 +14,7 @@ package utils
 
 import (
 	"context"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -24,6 +25,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
+	observerstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 )
@@ -53,6 +55,10 @@ func GetTenantRootOperationClient(c client.Client, logger *logr.Logger, obcluste
 	if len(observerList.Items) == 0 {
 		return nil, errors.Errorf("No observer belongs to cluster %s", obcluster.Name)
 	}
+
+	sort.Slice(observerList.Items, func(i, j int) bool {
+		return observerList.Items[i].Status.Status == observerstatus.Running && observerList.Items[j].Status.Status != observerstatus.Running
+	})
 	var password string
 	if credential != "" {
 		password, err = ReadPassword(c, obcluster.Namespace, credential)
@@ -133,6 +139,10 @@ func getSysClient(c client.Client, logger *logr.Logger, obcluster *v1alpha1.OBCl
 	if len(observerList.Items) == 0 {
 		return nil, errors.Errorf("No observer belongs to cluster %s", obcluster.Name)
 	}
+
+	sort.Slice(observerList.Items, func(i, j int) bool {
+		return observerList.Items[i].Status.Status == observerstatus.Running && observerList.Items[j].Status.Status != observerstatus.Running
+	})
 
 	var s *connector.OceanBaseDataSource
 	password, err := ReadPassword(c, obcluster.Namespace, secretName)

@@ -20,11 +20,13 @@ import { useEffect, useState } from 'react';
 interface DetailLayoutProps {
   subSideSelectKey: string;
   menus: MenuItem[];
+  sideHeader: React.ReactNode;
 }
 
 const DetailLayout: React.FC<DetailLayoutProps> = ({
   subSideSelectKey,
   menus,
+  sideHeader,
 }) => {
   const { initialState } = useModel('@@initialState');
   const access = useAccess();
@@ -179,6 +181,7 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
         location={location}
         subSideMenus={subSideMenus}
         subSideMenuProps={{ selectedKeys: [`/${subSideSelectKey}`] }}
+        sideHeader={sideHeader}
       >
         <Outlet />
       </BasicLayout>

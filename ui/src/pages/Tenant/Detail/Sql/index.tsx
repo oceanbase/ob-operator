@@ -1,10 +1,15 @@
+import { obtenant } from '@/api';
+import EmptyImg from '@/assets/empty.svg';
+import showDeleteConfirm from '@/components/customModal/showDeleteConfirm';
 import { DATE_TIME_FORMAT, DateSelectOption } from '@/constants/datetime';
 import { listSqlMetrics, listSqlStats } from '@/services/sql';
+import { getTenant } from '@/services/tenant';
+import { intl } from '@/utils/intl';
 import { SettingOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
 import { Link, useParams, useRequest, useSearchParams } from '@umijs/max';
-import { Button, Checkbox, Tooltip } from 'antd';
+import { Button, Card, Checkbox, Tooltip, message } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker';
 import dayjs from 'dayjs';
 import { useMemo, useRef, useState } from 'react';
@@ -57,6 +62,27 @@ export default function SqlList() {
       },
     },
   );
+
+  const { data: tenantDetailResponse, run: getTenantDetail } = useRequest(
+    getTenant,
+    {
+      defaultParams: [{ ns: ns!, name: name! }],
+    },
+  );
+
+  const defaultSqlAnalyzer = tenantDetailResponse?.info?.sqlAnalyzerEnabled;
+
+  const { run: createSQLAnalyzer } = useRequest(obtenant.createSQLAnalyzer, {
+    manual: true,
+    onSuccess: () => {
+      message.success(
+        intl.formatMessage({
+          id: 'src.pages.Tenant.Detail.Sql.SqlDiagnosisEnabled',
+          defaultMessage: 'SQL诊断已开启',
+        }),
+      );
+    },
+  });
 
   const initialTimeRange: [dayjs.Dayjs, dayjs.Dayjs] = useMemo(
     () => [dayjs().subtract(30, 'minute'), dayjs()],
@@ -223,7 +249,15 @@ export default function SqlList() {
                 <Tooltip
                   title={
                     <div>
-                      <div>Total: {total.toFixed(2)} ms</div>
+                      <div>
+                        {intl.formatMessage(
+                          {
+                            id: 'src.pages.Tenant.Detail.Sql.Total',
+                            defaultMessage: '总计：{total} ms',
+                          },
+                          { total: total.toFixed(2) },
+                        )}
+                      </div>
                       {segments.map((seg) => (
                         <div
                           key={seg.name}
@@ -242,7 +276,13 @@ export default function SqlList() {
                             }}
                           ></span>
                           <span>
-                            {seg.name}: {seg.value.toFixed(2)} ms
+                            {intl.formatMessage(
+                              {
+                                id: 'src.pages.Tenant.Detail.Sql.MetricValue',
+                                defaultMessage: '{name}：{value} ms',
+                              },
+                              { name: seg.name, value: seg.value.toFixed(2) },
+                            )}
                           </span>
                         </div>
                       ))}
@@ -307,13 +347,19 @@ export default function SqlList() {
   const columns: ProColumns<API.SqlInfo>[] = [
     ...dynamicColumns,
     {
-      title: 'User',
+      title: intl.formatMessage({
+        id: 'src.pages.Tenant.Detail.Sql.UserName',
+        defaultMessage: '用户名',
+      }),
       dataIndex: 'user',
       hideInTable: true,
       order: 100,
     },
     {
-      title: 'Database',
+      title: intl.formatMessage({
+        id: 'src.pages.Tenant.Detail.Sql.DatabaseName',
+        defaultMessage: '数据库',
+      }),
       dataIndex: 'database',
       hideInTable: true,
       order: 99,
@@ -334,13 +380,19 @@ export default function SqlList() {
               form.submit();
             }}
           >
-            Include Inner SQLs
+            {intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.Sql.IncludeInnerSqls',
+              defaultMessage: '包含内部 SQL',
+            })}
           </Checkbox>
         );
       },
     },
     {
-      title: 'Time Range',
+      title: intl.formatMessage({
+        id: 'src.pages.Tenant.Detail.Sql.TimeRange',
+        defaultMessage: '时间范围',
+      }),
       dataIndex: 'timeRange',
       valueType: 'dateTimeRange',
       hideInTable: true,
@@ -366,155 +418,237 @@ export default function SqlList() {
       },
     },
     {
-      title: 'Keyword',
+      title: intl.formatMessage({
+        id: 'src.pages.Tenant.Detail.Sql.Keyword',
+        defaultMessage: '关键字',
+      }),
       dataIndex: 'keyword',
       hideInTable: true,
       order: 96,
     },
   ];
 
+  const handSqlAnalyzer = async () => {
+    createSQLAnalyzer(ns, name).then(() => {
+      if (ns && name) {
+        getTenantDetail({ ns, name });
+      }
+    });
+  };
+
   return (
-    <>
-      <ProTable<API.SqlInfo>
-        headerTitle="SQL Analysis"
-        actionRef={actionRef}
-        rowKey={(record) =>
-          `${record.sqlId}_${record.svrIp}_${record.svrPort}_${record.planId}_${record.userName}_${record.dbName}`
-        }
-        params={{ outputColumns: selectedMetricKeys, activeTab }}
-        toolbar={{
-          menu: {
-            type: 'tab',
-            activeKey: activeTab,
-            items: [
-              {
-                label: 'SQL Analysis',
-                key: 'sql_analysis',
+    <div
+      style={{
+        backgroundColor: 'transparent',
+        minHeight: '100vh',
+        padding: 24,
+      }}
+    >
+      {defaultSqlAnalyzer ? (
+        <>
+          <ProTable<API.SqlInfo>
+            headerTitle={intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.Sql.SqlAnalysis',
+              defaultMessage: 'SQL 分析',
+            })}
+            actionRef={actionRef}
+            rowKey={(record) =>
+              `${record.sqlId}_${record.svrIp}_${record.svrPort}_${record.planId}_${record.userName}_${record.dbName}`
+            }
+            params={{ outputColumns: selectedMetricKeys, activeTab }}
+            toolbar={{
+              menu: {
+                type: 'tab',
+                activeKey: activeTab,
+                items: [
+                  {
+                    label: intl.formatMessage({
+                      id: 'src.pages.Tenant.Detail.Sql.SqlAnalysis',
+                      defaultMessage: 'SQL 分析',
+                    }),
+                    key: 'sql_analysis',
+                  },
+                  {
+                    label: intl.formatMessage({
+                      id: 'src.pages.Tenant.Detail.Sql.SlowSql',
+                      defaultMessage: '慢 SQL',
+                    }),
+                    key: 'slow_sql',
+                  },
+                ],
+                onChange: (key) => {
+                  const k = key as string;
+                  setActiveTab(k);
+                  const newParams = new URLSearchParams(searchParams);
+                  newParams.set('activeTab', k);
+                  setSearchParams(newParams);
+                },
               },
-              {
-                label: 'Slow SQL',
-                key: 'slow_sql',
+            }}
+            form={{
+              syncToUrl: (values, type) => {
+                if (type === 'get') {
+                  const { startTime, endTime, ...rest } = values;
+                  return {
+                    ...rest,
+                    timeRange:
+                      startTime && endTime
+                        ? [
+                            dayjs.unix(Number(startTime)),
+                            dayjs.unix(Number(endTime)),
+                          ]
+                        : initialTimeRange,
+                  };
+                }
+                const { timeRange, ...rest } = values;
+                if (timeRange && timeRange[0] && timeRange[1]) {
+                  return {
+                    ...rest,
+                    startTime: dayjs(timeRange[0]).unix(),
+                    endTime: dayjs(timeRange[1]).unix(),
+                  };
+                }
+                return rest;
               },
-            ],
-            onChange: (key) => {
-              const k = key as string;
-              setActiveTab(k);
-              setSearchParams((prev) => {
-                prev.set('activeTab', k);
-                return prev;
+            }}
+            search={{
+              collapsed: false,
+              collapseRender: false,
+              labelWidth: 'auto',
+              span: 8,
+            }}
+            options={false}
+            toolBarRender={() => [
+              <Button
+                key="column-selection"
+                icon={<SettingOutlined />}
+                onClick={() => setDrawerOpen(true)}
+              >
+                {intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.ColumnSelection',
+                  defaultMessage: '列选择',
+                })}
+              </Button>,
+            ]}
+            scroll={{ x: 1500 }}
+            request={async (params, sort) => {
+              if (!ns || !name || !tenantName) {
+                return { data: [], success: false };
+              }
+
+              const { startTime, endTime, ...restParams } = params;
+
+              // Ensure startTime and endTime are present, defaulting to initialTimeRange if not
+              const effectiveStartTime =
+                startTime ?? initialTimeRange[0].unix();
+              const effectiveEndTime = endTime ?? initialTimeRange[1].unix();
+
+              setCurrentParams({
+                startTime: effectiveStartTime,
+                endTime: effectiveEndTime,
               });
-            },
-          },
-        }}
-        form={{
-          syncToUrl: (values, type) => {
-            if (type === 'get') {
-              const { startTime, endTime, ...rest } = values;
+
+              const msg = await listSqlStats({
+                namespace: ns,
+                obtenant: name,
+                sortColumn: Object.keys(sort)[0],
+                sortOrder: Object.values(sort)[0] === 'ascend' ? 'asc' : 'desc',
+                pageNum: restParams.current,
+                pageSize: restParams.pageSize,
+                keyword: restParams.keyword as string,
+                user: restParams.user as string,
+                database: restParams.database as string,
+                includeInnerSql: restParams.includeInnerSql as boolean,
+                suspiciousOnly: activeTab === 'slow_sql',
+                startTime: effectiveStartTime,
+                endTime: effectiveEndTime,
+                outputColumns: selectedMetricKeys,
+              });
+
+              const items = msg.data?.items || [];
+              let maxTime = 0;
+              items.forEach((item) => {
+                const elapsed =
+                  item.latencyStatistics?.find((s) => s.name === 'elapsed_time')
+                    ?.value || 0;
+                if (elapsed > maxTime) maxTime = elapsed;
+              });
+              setMaxElapsedTime(maxTime);
+
               return {
-                ...rest,
-                timeRange:
-                  startTime && endTime
-                    ? [
-                        dayjs.unix(Number(startTime)),
-                        dayjs.unix(Number(endTime)),
-                      ]
-                    : initialTimeRange,
+                data: items,
+                success: msg.successful,
+                total: msg.data?.totalCount || 0,
+                page: params.current,
               };
-            }
-            const { timeRange, ...rest } = values;
-            if (timeRange && timeRange[0] && timeRange[1]) {
-              return {
-                ...rest,
-                startTime: dayjs(timeRange[0]).unix(),
-                endTime: dayjs(timeRange[1]).unix(),
-              };
-            }
-            return rest;
-          },
-        }}
-        search={{
-          collapsed: false,
-          collapseRender: false,
-          labelWidth: 'auto',
-          span: 8,
-        }}
-        options={false}
-        toolBarRender={() => [
-          <Button
-            key="column-selection"
-            icon={<SettingOutlined />}
-            onClick={() => setDrawerOpen(true)}
+            }}
+            columns={columns}
+            pagination={{
+              defaultPageSize: 20,
+              showSizeChanger: true,
+            }}
+          />
+          <ColumnSelectionDrawer
+            open={drawerOpen}
+            onClose={() => setDrawerOpen(false)}
+            selectedKeys={selectedMetricKeys}
+            onSelectionChange={(keys) => {
+              setSelectedMetricKeys(keys);
+              actionRef.current?.reload();
+            }}
+            metrics={getMetricsList(metricsData)}
+          />
+        </>
+      ) : (
+        <Card
+          style={{
+            height: 'calc(100vh - 98px)',
+          }}
+          bodyStyle={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            padding: '40px 24px',
+          }}
+        >
+          <img
+            src={EmptyImg}
+            alt="empty"
+            style={{ marginBottom: 24, height: 100, width: 110 }}
+          />
+          <p
+            style={{
+              color: '#8592ad',
+              marginBottom: 24,
+              textAlign: 'center',
+            }}
           >
-            Column Selection
-          </Button>,
-        ]}
-        scroll={{ x: 1500 }}
-        request={async (params, sort) => {
-          if (!ns || !name || !tenantName) {
-            return { data: [], success: false };
-          }
-
-          const { startTime, endTime, ...restParams } = params;
-
-          // Ensure startTime and endTime are present, defaulting to initialTimeRange if not
-          const effectiveStartTime = startTime ?? initialTimeRange[0].unix();
-          const effectiveEndTime = endTime ?? initialTimeRange[1].unix();
-
-          setCurrentParams({
-            startTime: effectiveStartTime,
-            endTime: effectiveEndTime,
-          });
-
-          const msg = await listSqlStats({
-            namespace: ns,
-            obtenant: name,
-            sortColumn: Object.keys(sort)[0],
-            sortOrder: Object.values(sort)[0] === 'ascend' ? 'asc' : 'desc',
-            pageNum: restParams.current,
-            pageSize: restParams.pageSize,
-            keyword: restParams.keyword as string,
-            user: restParams.user as string,
-            database: restParams.database as string,
-            includeInnerSql: restParams.includeInnerSql as boolean,
-            suspiciousOnly: activeTab === 'slow_sql',
-            startTime: effectiveStartTime,
-            endTime: effectiveEndTime,
-            outputColumns: selectedMetricKeys,
-          });
-
-          const items = msg.data?.items || [];
-          let maxTime = 0;
-          items.forEach((item) => {
-            const elapsed =
-              item.latencyStatistics?.find((s) => s.name === 'elapsed_time')
-                ?.value || 0;
-            if (elapsed > maxTime) maxTime = elapsed;
-          });
-          setMaxElapsedTime(maxTime);
-
-          return {
-            data: items,
-            success: msg.successful,
-            total: msg.data?.totalCount || 0,
-            page: params.current,
-          };
-        }}
-        columns={columns}
-        pagination={{
-          defaultPageSize: 20,
-          showSizeChanger: true,
-        }}
-      />
-      <ColumnSelectionDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        selectedKeys={selectedMetricKeys}
-        onSelectionChange={(keys) => {
-          setSelectedMetricKeys(keys);
-          actionRef.current?.reload();
-        }}
-        metrics={getMetricsList(metricsData)}
-      />
-    </>
+            {intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.Sql.TenantHasNotEnabledSqlDiagnosis',
+              defaultMessage: '该租户尚未开启 SQL 诊断，是否立即开启？',
+            })}
+          </p>
+          <Button
+            type="primary"
+            onClick={() => {
+              showDeleteConfirm({
+                onOk: handSqlAnalyzer,
+                title: intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Sql.ConfirmEnableSqlDiagnosis',
+                  defaultMessage: '确认要开启 SQL 诊断吗？',
+                }),
+              });
+            }}
+          >
+            {intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.Sql.EnableNow',
+              defaultMessage: '立即开启',
+            })}
+          </Button>
+        </Card>
+      )}
+    </div>
   );
 }

@@ -1,3 +1,4 @@
+import { intl } from '@/utils/intl';
 import {
   Button,
   Card,
@@ -49,15 +50,26 @@ export default function ColumnSelectionDrawer({
 
   return (
     <Drawer
-      title="Column Selection"
+      title={intl.formatMessage({
+        id: 'src.pages.Tenant.Detail.Sql.ColumnSelection',
+        defaultMessage: '列选择',
+      })}
       width={600}
       onClose={onClose}
       open={open}
       footer={
         <Space style={{ float: 'right' }}>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>
+            {intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.Sql.Cancel',
+              defaultMessage: '取消',
+            })}
+          </Button>
           <Button type="primary" onClick={handleApply}>
-            OK
+            {intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.Sql.Ok',
+              defaultMessage: '确定',
+            })}
           </Button>
         </Space>
       }
@@ -94,7 +106,12 @@ export default function ColumnSelectionDrawer({
           </Card>
         ))
       ) : (
-        <Empty description="No metrics available" />
+        <Empty
+          description={intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.Sql.NoMetricsAvailable',
+            defaultMessage: '暂无指标可用',
+          })}
+        />
       )}
     </Drawer>
   );

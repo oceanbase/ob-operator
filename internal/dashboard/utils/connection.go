@@ -14,6 +14,7 @@ package utils
 
 import (
 	"context"
+	"sort"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
@@ -22,6 +23,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	observerstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
 	"github.com/oceanbase/ob-operator/pkg/k8s/client"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
@@ -38,6 +40,10 @@ func GetOBConnection(ctx context.Context, obcluster *v1alpha1.OBCluster, userNam
 	if len(observerList.Items) == 0 {
 		return nil, errors.Errorf("No observer belongs to cluster %s", obcluster.Name)
 	}
+
+	sort.Slice(observerList.Items, func(i, j int) bool {
+		return observerList.Items[i].Status.Status == observerstatus.Running && observerList.Items[j].Status.Status != observerstatus.Running
+	})
 
 	var s *connector.OceanBaseDataSource
 	secret, err := client.GetClient().ClientSet.CoreV1().Secrets(obcluster.Namespace).Get(ctx, secretName, metav1.GetOptions{})
