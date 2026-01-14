@@ -183,7 +183,8 @@ func (s *BaseOBParserListener) EnterRespect_or_ignore(ctx *Respect_or_ignoreCont
 func (s *BaseOBParserListener) ExitRespect_or_ignore(ctx *Respect_or_ignoreContext) {}
 
 // EnterWin_fun_first_last_params is called when production win_fun_first_last_params is entered.
-func (s *BaseOBParserListener) EnterWin_fun_first_last_params(ctx *Win_fun_first_last_paramsContext) {}
+func (s *BaseOBParserListener) EnterWin_fun_first_last_params(ctx *Win_fun_first_last_paramsContext) {
+}
 
 // ExitWin_fun_first_last_params is called when production win_fun_first_last_params is exited.
 func (s *BaseOBParserListener) ExitWin_fun_first_last_params(ctx *Win_fun_first_last_paramsContext) {}
@@ -195,16 +196,20 @@ func (s *BaseOBParserListener) EnterWin_fun_lead_lag_params(ctx *Win_fun_lead_la
 func (s *BaseOBParserListener) ExitWin_fun_lead_lag_params(ctx *Win_fun_lead_lag_paramsContext) {}
 
 // EnterNew_generalized_window_clause is called when production new_generalized_window_clause is entered.
-func (s *BaseOBParserListener) EnterNew_generalized_window_clause(ctx *New_generalized_window_clauseContext) {}
+func (s *BaseOBParserListener) EnterNew_generalized_window_clause(ctx *New_generalized_window_clauseContext) {
+}
 
 // ExitNew_generalized_window_clause is called when production new_generalized_window_clause is exited.
-func (s *BaseOBParserListener) ExitNew_generalized_window_clause(ctx *New_generalized_window_clauseContext) {}
+func (s *BaseOBParserListener) ExitNew_generalized_window_clause(ctx *New_generalized_window_clauseContext) {
+}
 
 // EnterNew_generalized_window_clause_with_blanket is called when production new_generalized_window_clause_with_blanket is entered.
-func (s *BaseOBParserListener) EnterNew_generalized_window_clause_with_blanket(ctx *New_generalized_window_clause_with_blanketContext) {}
+func (s *BaseOBParserListener) EnterNew_generalized_window_clause_with_blanket(ctx *New_generalized_window_clause_with_blanketContext) {
+}
 
 // ExitNew_generalized_window_clause_with_blanket is called when production new_generalized_window_clause_with_blanket is exited.
-func (s *BaseOBParserListener) ExitNew_generalized_window_clause_with_blanket(ctx *New_generalized_window_clause_with_blanketContext) {}
+func (s *BaseOBParserListener) ExitNew_generalized_window_clause_with_blanket(ctx *New_generalized_window_clause_with_blanketContext) {
+}
 
 // EnterNamed_windows is called when production named_windows is entered.
 func (s *BaseOBParserListener) EnterNamed_windows(ctx *Named_windowsContext) {}
@@ -219,7 +224,8 @@ func (s *BaseOBParserListener) EnterNamed_window(ctx *Named_windowContext) {}
 func (s *BaseOBParserListener) ExitNamed_window(ctx *Named_windowContext) {}
 
 // EnterGeneralized_window_clause is called when production generalized_window_clause is entered.
-func (s *BaseOBParserListener) EnterGeneralized_window_clause(ctx *Generalized_window_clauseContext) {}
+func (s *BaseOBParserListener) EnterGeneralized_window_clause(ctx *Generalized_window_clauseContext) {
+}
 
 // ExitGeneralized_window_clause is called when production generalized_window_clause is exited.
 func (s *BaseOBParserListener) ExitGeneralized_window_clause(ctx *Generalized_window_clauseContext) {}
@@ -231,10 +237,12 @@ func (s *BaseOBParserListener) EnterWin_rows_or_range(ctx *Win_rows_or_rangeCont
 func (s *BaseOBParserListener) ExitWin_rows_or_range(ctx *Win_rows_or_rangeContext) {}
 
 // EnterWin_preceding_or_following is called when production win_preceding_or_following is entered.
-func (s *BaseOBParserListener) EnterWin_preceding_or_following(ctx *Win_preceding_or_followingContext) {}
+func (s *BaseOBParserListener) EnterWin_preceding_or_following(ctx *Win_preceding_or_followingContext) {
+}
 
 // ExitWin_preceding_or_following is called when production win_preceding_or_following is exited.
-func (s *BaseOBParserListener) ExitWin_preceding_or_following(ctx *Win_preceding_or_followingContext) {}
+func (s *BaseOBParserListener) ExitWin_preceding_or_following(ctx *Win_preceding_or_followingContext) {
+}
 
 // EnterWin_interval is called when production win_interval is entered.
 func (s *BaseOBParserListener) EnterWin_interval(ctx *Win_intervalContext) {}
@@ -387,10 +395,12 @@ func (s *BaseOBParserListener) EnterCreate_resource_stmt(ctx *Create_resource_st
 func (s *BaseOBParserListener) ExitCreate_resource_stmt(ctx *Create_resource_stmtContext) {}
 
 // EnterOpt_resource_unit_option_list is called when production opt_resource_unit_option_list is entered.
-func (s *BaseOBParserListener) EnterOpt_resource_unit_option_list(ctx *Opt_resource_unit_option_listContext) {}
+func (s *BaseOBParserListener) EnterOpt_resource_unit_option_list(ctx *Opt_resource_unit_option_listContext) {
+}
 
 // ExitOpt_resource_unit_option_list is called when production opt_resource_unit_option_list is exited.
-func (s *BaseOBParserListener) ExitOpt_resource_unit_option_list(ctx *Opt_resource_unit_option_listContext) {}
+func (s *BaseOBParserListener) ExitOpt_resource_unit_option_list(ctx *Opt_resource_unit_option_listContext) {
+}
 
 // EnterResource_unit_option is called when production resource_unit_option is entered.
 func (s *BaseOBParserListener) EnterResource_unit_option(ctx *Resource_unit_optionContext) {}
@@ -399,22 +409,28 @@ func (s *BaseOBParserListener) EnterResource_unit_option(ctx *Resource_unit_opti
 func (s *BaseOBParserListener) ExitResource_unit_option(ctx *Resource_unit_optionContext) {}
 
 // EnterOpt_create_resource_pool_option_list is called when production opt_create_resource_pool_option_list is entered.
-func (s *BaseOBParserListener) EnterOpt_create_resource_pool_option_list(ctx *Opt_create_resource_pool_option_listContext) {}
+func (s *BaseOBParserListener) EnterOpt_create_resource_pool_option_list(ctx *Opt_create_resource_pool_option_listContext) {
+}
 
 // ExitOpt_create_resource_pool_option_list is called when production opt_create_resource_pool_option_list is exited.
-func (s *BaseOBParserListener) ExitOpt_create_resource_pool_option_list(ctx *Opt_create_resource_pool_option_listContext) {}
+func (s *BaseOBParserListener) ExitOpt_create_resource_pool_option_list(ctx *Opt_create_resource_pool_option_listContext) {
+}
 
 // EnterCreate_resource_pool_option is called when production create_resource_pool_option is entered.
-func (s *BaseOBParserListener) EnterCreate_resource_pool_option(ctx *Create_resource_pool_optionContext) {}
+func (s *BaseOBParserListener) EnterCreate_resource_pool_option(ctx *Create_resource_pool_optionContext) {
+}
 
 // ExitCreate_resource_pool_option is called when production create_resource_pool_option is exited.
-func (s *BaseOBParserListener) ExitCreate_resource_pool_option(ctx *Create_resource_pool_optionContext) {}
+func (s *BaseOBParserListener) ExitCreate_resource_pool_option(ctx *Create_resource_pool_optionContext) {
+}
 
 // EnterAlter_resource_pool_option_list is called when production alter_resource_pool_option_list is entered.
-func (s *BaseOBParserListener) EnterAlter_resource_pool_option_list(ctx *Alter_resource_pool_option_listContext) {}
+func (s *BaseOBParserListener) EnterAlter_resource_pool_option_list(ctx *Alter_resource_pool_option_listContext) {
+}
 
 // ExitAlter_resource_pool_option_list is called when production alter_resource_pool_option_list is exited.
-func (s *BaseOBParserListener) ExitAlter_resource_pool_option_list(ctx *Alter_resource_pool_option_listContext) {}
+func (s *BaseOBParserListener) ExitAlter_resource_pool_option_list(ctx *Alter_resource_pool_option_listContext) {
+}
 
 // EnterUnit_id_list is called when production unit_id_list is entered.
 func (s *BaseOBParserListener) EnterUnit_id_list(ctx *Unit_id_listContext) {}
@@ -423,10 +439,12 @@ func (s *BaseOBParserListener) EnterUnit_id_list(ctx *Unit_id_listContext) {}
 func (s *BaseOBParserListener) ExitUnit_id_list(ctx *Unit_id_listContext) {}
 
 // EnterAlter_resource_pool_option is called when production alter_resource_pool_option is entered.
-func (s *BaseOBParserListener) EnterAlter_resource_pool_option(ctx *Alter_resource_pool_optionContext) {}
+func (s *BaseOBParserListener) EnterAlter_resource_pool_option(ctx *Alter_resource_pool_optionContext) {
+}
 
 // ExitAlter_resource_pool_option is called when production alter_resource_pool_option is exited.
-func (s *BaseOBParserListener) ExitAlter_resource_pool_option(ctx *Alter_resource_pool_optionContext) {}
+func (s *BaseOBParserListener) ExitAlter_resource_pool_option(ctx *Alter_resource_pool_optionContext) {
+}
 
 // EnterAlter_resource_stmt is called when production alter_resource_stmt is entered.
 func (s *BaseOBParserListener) EnterAlter_resource_stmt(ctx *Alter_resource_stmtContext) {}
@@ -657,7 +675,8 @@ func (s *BaseOBParserListener) EnterTable_element(ctx *Table_elementContext) {}
 func (s *BaseOBParserListener) ExitTable_element(ctx *Table_elementContext) {}
 
 // EnterOpt_reference_option_list is called when production opt_reference_option_list is entered.
-func (s *BaseOBParserListener) EnterOpt_reference_option_list(ctx *Opt_reference_option_listContext) {}
+func (s *BaseOBParserListener) EnterOpt_reference_option_list(ctx *Opt_reference_option_listContext) {
+}
 
 // ExitOpt_reference_option_list is called when production opt_reference_option_list is exited.
 func (s *BaseOBParserListener) ExitOpt_reference_option_list(ctx *Opt_reference_option_listContext) {}
@@ -687,16 +706,20 @@ func (s *BaseOBParserListener) EnterColumn_definition(ctx *Column_definitionCont
 func (s *BaseOBParserListener) ExitColumn_definition(ctx *Column_definitionContext) {}
 
 // EnterOpt_generated_column_attribute_list is called when production opt_generated_column_attribute_list is entered.
-func (s *BaseOBParserListener) EnterOpt_generated_column_attribute_list(ctx *Opt_generated_column_attribute_listContext) {}
+func (s *BaseOBParserListener) EnterOpt_generated_column_attribute_list(ctx *Opt_generated_column_attribute_listContext) {
+}
 
 // ExitOpt_generated_column_attribute_list is called when production opt_generated_column_attribute_list is exited.
-func (s *BaseOBParserListener) ExitOpt_generated_column_attribute_list(ctx *Opt_generated_column_attribute_listContext) {}
+func (s *BaseOBParserListener) ExitOpt_generated_column_attribute_list(ctx *Opt_generated_column_attribute_listContext) {
+}
 
 // EnterGenerated_column_attribute is called when production generated_column_attribute is entered.
-func (s *BaseOBParserListener) EnterGenerated_column_attribute(ctx *Generated_column_attributeContext) {}
+func (s *BaseOBParserListener) EnterGenerated_column_attribute(ctx *Generated_column_attributeContext) {
+}
 
 // ExitGenerated_column_attribute is called when production generated_column_attribute is exited.
-func (s *BaseOBParserListener) ExitGenerated_column_attribute(ctx *Generated_column_attributeContext) {}
+func (s *BaseOBParserListener) ExitGenerated_column_attribute(ctx *Generated_column_attributeContext) {
+}
 
 // EnterColumn_definition_ref is called when production column_definition_ref is entered.
 func (s *BaseOBParserListener) EnterColumn_definition_ref(ctx *Column_definition_refContext) {}
@@ -819,7 +842,8 @@ func (s *BaseOBParserListener) EnterCollation(ctx *CollationContext) {}
 func (s *BaseOBParserListener) ExitCollation(ctx *CollationContext) {}
 
 // EnterOpt_column_attribute_list is called when production opt_column_attribute_list is entered.
-func (s *BaseOBParserListener) EnterOpt_column_attribute_list(ctx *Opt_column_attribute_listContext) {}
+func (s *BaseOBParserListener) EnterOpt_column_attribute_list(ctx *Opt_column_attribute_listContext) {
+}
 
 // ExitOpt_column_attribute_list is called when production opt_column_attribute_list is exited.
 func (s *BaseOBParserListener) ExitOpt_column_attribute_list(ctx *Opt_column_attribute_listContext) {}
@@ -849,10 +873,12 @@ func (s *BaseOBParserListener) EnterOpt_comma(ctx *Opt_commaContext) {}
 func (s *BaseOBParserListener) ExitOpt_comma(ctx *Opt_commaContext) {}
 
 // EnterTable_option_list_space_seperated is called when production table_option_list_space_seperated is entered.
-func (s *BaseOBParserListener) EnterTable_option_list_space_seperated(ctx *Table_option_list_space_seperatedContext) {}
+func (s *BaseOBParserListener) EnterTable_option_list_space_seperated(ctx *Table_option_list_space_seperatedContext) {
+}
 
 // ExitTable_option_list_space_seperated is called when production table_option_list_space_seperated is exited.
-func (s *BaseOBParserListener) ExitTable_option_list_space_seperated(ctx *Table_option_list_space_seperatedContext) {}
+func (s *BaseOBParserListener) ExitTable_option_list_space_seperated(ctx *Table_option_list_space_seperatedContext) {
+}
 
 // EnterTable_option_list is called when production table_option_list is entered.
 func (s *BaseOBParserListener) EnterTable_option_list(ctx *Table_option_listContext) {}
@@ -933,10 +959,12 @@ func (s *BaseOBParserListener) EnterRange_partition_option(ctx *Range_partition_
 func (s *BaseOBParserListener) ExitRange_partition_option(ctx *Range_partition_optionContext) {}
 
 // EnterOpt_column_partition_option is called when production opt_column_partition_option is entered.
-func (s *BaseOBParserListener) EnterOpt_column_partition_option(ctx *Opt_column_partition_optionContext) {}
+func (s *BaseOBParserListener) EnterOpt_column_partition_option(ctx *Opt_column_partition_optionContext) {
+}
 
 // ExitOpt_column_partition_option is called when production opt_column_partition_option is exited.
-func (s *BaseOBParserListener) ExitOpt_column_partition_option(ctx *Opt_column_partition_optionContext) {}
+func (s *BaseOBParserListener) ExitOpt_column_partition_option(ctx *Opt_column_partition_optionContext) {
+}
 
 // EnterColumn_partition_option is called when production column_partition_option is entered.
 func (s *BaseOBParserListener) EnterColumn_partition_option(ctx *Column_partition_optionContext) {}
@@ -975,10 +1003,12 @@ func (s *BaseOBParserListener) EnterOpt_list_partition_list(ctx *Opt_list_partit
 func (s *BaseOBParserListener) ExitOpt_list_partition_list(ctx *Opt_list_partition_listContext) {}
 
 // EnterOpt_list_subpartition_list is called when production opt_list_subpartition_list is entered.
-func (s *BaseOBParserListener) EnterOpt_list_subpartition_list(ctx *Opt_list_subpartition_listContext) {}
+func (s *BaseOBParserListener) EnterOpt_list_subpartition_list(ctx *Opt_list_subpartition_listContext) {
+}
 
 // ExitOpt_list_subpartition_list is called when production opt_list_subpartition_list is exited.
-func (s *BaseOBParserListener) ExitOpt_list_subpartition_list(ctx *Opt_list_subpartition_listContext) {}
+func (s *BaseOBParserListener) ExitOpt_list_subpartition_list(ctx *Opt_list_subpartition_listContext) {
+}
 
 // EnterOpt_range_partition_list is called when production opt_range_partition_list is entered.
 func (s *BaseOBParserListener) EnterOpt_range_partition_list(ctx *Opt_range_partition_listContext) {}
@@ -987,10 +1017,12 @@ func (s *BaseOBParserListener) EnterOpt_range_partition_list(ctx *Opt_range_part
 func (s *BaseOBParserListener) ExitOpt_range_partition_list(ctx *Opt_range_partition_listContext) {}
 
 // EnterOpt_range_subpartition_list is called when production opt_range_subpartition_list is entered.
-func (s *BaseOBParserListener) EnterOpt_range_subpartition_list(ctx *Opt_range_subpartition_listContext) {}
+func (s *BaseOBParserListener) EnterOpt_range_subpartition_list(ctx *Opt_range_subpartition_listContext) {
+}
 
 // ExitOpt_range_subpartition_list is called when production opt_range_subpartition_list is exited.
-func (s *BaseOBParserListener) ExitOpt_range_subpartition_list(ctx *Opt_range_subpartition_listContext) {}
+func (s *BaseOBParserListener) ExitOpt_range_subpartition_list(ctx *Opt_range_subpartition_listContext) {
+}
 
 // EnterList_partition_list is called when production list_partition_list is entered.
 func (s *BaseOBParserListener) EnterList_partition_list(ctx *List_partition_listContext) {}
@@ -1005,7 +1037,8 @@ func (s *BaseOBParserListener) EnterList_subpartition_list(ctx *List_subpartitio
 func (s *BaseOBParserListener) ExitList_subpartition_list(ctx *List_subpartition_listContext) {}
 
 // EnterList_subpartition_element is called when production list_subpartition_element is entered.
-func (s *BaseOBParserListener) EnterList_subpartition_element(ctx *List_subpartition_elementContext) {}
+func (s *BaseOBParserListener) EnterList_subpartition_element(ctx *List_subpartition_elementContext) {
+}
 
 // ExitList_subpartition_element is called when production list_subpartition_element is exited.
 func (s *BaseOBParserListener) ExitList_subpartition_element(ctx *List_subpartition_elementContext) {}
@@ -1041,10 +1074,12 @@ func (s *BaseOBParserListener) EnterRange_partition_element(ctx *Range_partition
 func (s *BaseOBParserListener) ExitRange_partition_element(ctx *Range_partition_elementContext) {}
 
 // EnterRange_subpartition_element is called when production range_subpartition_element is entered.
-func (s *BaseOBParserListener) EnterRange_subpartition_element(ctx *Range_subpartition_elementContext) {}
+func (s *BaseOBParserListener) EnterRange_subpartition_element(ctx *Range_subpartition_elementContext) {
+}
 
 // ExitRange_subpartition_element is called when production range_subpartition_element is exited.
-func (s *BaseOBParserListener) ExitRange_subpartition_element(ctx *Range_subpartition_elementContext) {}
+func (s *BaseOBParserListener) ExitRange_subpartition_element(ctx *Range_subpartition_elementContext) {
+}
 
 // EnterRange_subpartition_list is called when production range_subpartition_list is entered.
 func (s *BaseOBParserListener) EnterRange_subpartition_list(ctx *Range_subpartition_listContext) {}
@@ -1089,7 +1124,8 @@ func (s *BaseOBParserListener) EnterTg_key_partition_option(ctx *Tg_key_partitio
 func (s *BaseOBParserListener) ExitTg_key_partition_option(ctx *Tg_key_partition_optionContext) {}
 
 // EnterTg_range_partition_option is called when production tg_range_partition_option is entered.
-func (s *BaseOBParserListener) EnterTg_range_partition_option(ctx *Tg_range_partition_optionContext) {}
+func (s *BaseOBParserListener) EnterTg_range_partition_option(ctx *Tg_range_partition_optionContext) {
+}
 
 // ExitTg_range_partition_option is called when production tg_range_partition_option is exited.
 func (s *BaseOBParserListener) ExitTg_range_partition_option(ctx *Tg_range_partition_optionContext) {}
@@ -1131,10 +1167,12 @@ func (s *BaseOBParserListener) EnterAlter_tablegroup_stmt(ctx *Alter_tablegroup_
 func (s *BaseOBParserListener) ExitAlter_tablegroup_stmt(ctx *Alter_tablegroup_stmtContext) {}
 
 // EnterTablegroup_option_list_space_seperated is called when production tablegroup_option_list_space_seperated is entered.
-func (s *BaseOBParserListener) EnterTablegroup_option_list_space_seperated(ctx *Tablegroup_option_list_space_seperatedContext) {}
+func (s *BaseOBParserListener) EnterTablegroup_option_list_space_seperated(ctx *Tablegroup_option_list_space_seperatedContext) {
+}
 
 // ExitTablegroup_option_list_space_seperated is called when production tablegroup_option_list_space_seperated is exited.
-func (s *BaseOBParserListener) ExitTablegroup_option_list_space_seperated(ctx *Tablegroup_option_list_space_seperatedContext) {}
+func (s *BaseOBParserListener) ExitTablegroup_option_list_space_seperated(ctx *Tablegroup_option_list_space_seperatedContext) {
+}
 
 // EnterTablegroup_option_list is called when production tablegroup_option_list is entered.
 func (s *BaseOBParserListener) EnterTablegroup_option_list(ctx *Tablegroup_option_listContext) {}
@@ -1365,10 +1403,12 @@ func (s *BaseOBParserListener) EnterSelect_clause(ctx *Select_clauseContext) {}
 func (s *BaseOBParserListener) ExitSelect_clause(ctx *Select_clauseContext) {}
 
 // EnterSelect_clause_set_with_order_and_limit is called when production select_clause_set_with_order_and_limit is entered.
-func (s *BaseOBParserListener) EnterSelect_clause_set_with_order_and_limit(ctx *Select_clause_set_with_order_and_limitContext) {}
+func (s *BaseOBParserListener) EnterSelect_clause_set_with_order_and_limit(ctx *Select_clause_set_with_order_and_limitContext) {
+}
 
 // ExitSelect_clause_set_with_order_and_limit is called when production select_clause_set_with_order_and_limit is exited.
-func (s *BaseOBParserListener) ExitSelect_clause_set_with_order_and_limit(ctx *Select_clause_set_with_order_and_limitContext) {}
+func (s *BaseOBParserListener) ExitSelect_clause_set_with_order_and_limit(ctx *Select_clause_set_with_order_and_limitContext) {
+}
 
 // EnterSelect_clause_set is called when production select_clause_set is entered.
 func (s *BaseOBParserListener) EnterSelect_clause_set(ctx *Select_clause_setContext) {}
@@ -1389,22 +1429,28 @@ func (s *BaseOBParserListener) EnterSelect_clause_set_left(ctx *Select_clause_se
 func (s *BaseOBParserListener) ExitSelect_clause_set_left(ctx *Select_clause_set_leftContext) {}
 
 // EnterNo_table_select_with_order_and_limit is called when production no_table_select_with_order_and_limit is entered.
-func (s *BaseOBParserListener) EnterNo_table_select_with_order_and_limit(ctx *No_table_select_with_order_and_limitContext) {}
+func (s *BaseOBParserListener) EnterNo_table_select_with_order_and_limit(ctx *No_table_select_with_order_and_limitContext) {
+}
 
 // ExitNo_table_select_with_order_and_limit is called when production no_table_select_with_order_and_limit is exited.
-func (s *BaseOBParserListener) ExitNo_table_select_with_order_and_limit(ctx *No_table_select_with_order_and_limitContext) {}
+func (s *BaseOBParserListener) ExitNo_table_select_with_order_and_limit(ctx *No_table_select_with_order_and_limitContext) {
+}
 
 // EnterSimple_select_with_order_and_limit is called when production simple_select_with_order_and_limit is entered.
-func (s *BaseOBParserListener) EnterSimple_select_with_order_and_limit(ctx *Simple_select_with_order_and_limitContext) {}
+func (s *BaseOBParserListener) EnterSimple_select_with_order_and_limit(ctx *Simple_select_with_order_and_limitContext) {
+}
 
 // ExitSimple_select_with_order_and_limit is called when production simple_select_with_order_and_limit is exited.
-func (s *BaseOBParserListener) ExitSimple_select_with_order_and_limit(ctx *Simple_select_with_order_and_limitContext) {}
+func (s *BaseOBParserListener) ExitSimple_select_with_order_and_limit(ctx *Simple_select_with_order_and_limitContext) {
+}
 
 // EnterSelect_with_parens_with_order_and_limit is called when production select_with_parens_with_order_and_limit is entered.
-func (s *BaseOBParserListener) EnterSelect_with_parens_with_order_and_limit(ctx *Select_with_parens_with_order_and_limitContext) {}
+func (s *BaseOBParserListener) EnterSelect_with_parens_with_order_and_limit(ctx *Select_with_parens_with_order_and_limitContext) {
+}
 
 // ExitSelect_with_parens_with_order_and_limit is called when production select_with_parens_with_order_and_limit is exited.
-func (s *BaseOBParserListener) ExitSelect_with_parens_with_order_and_limit(ctx *Select_with_parens_with_order_and_limitContext) {}
+func (s *BaseOBParserListener) ExitSelect_with_parens_with_order_and_limit(ctx *Select_with_parens_with_order_and_limitContext) {
+}
 
 // EnterSelect_with_opt_hint is called when production select_with_opt_hint is entered.
 func (s *BaseOBParserListener) EnterSelect_with_opt_hint(ctx *Select_with_opt_hintContext) {}
@@ -1635,10 +1681,12 @@ func (s *BaseOBParserListener) EnterSort_key(ctx *Sort_keyContext) {}
 func (s *BaseOBParserListener) ExitSort_key(ctx *Sort_keyContext) {}
 
 // EnterQuery_expression_option_list is called when production query_expression_option_list is entered.
-func (s *BaseOBParserListener) EnterQuery_expression_option_list(ctx *Query_expression_option_listContext) {}
+func (s *BaseOBParserListener) EnterQuery_expression_option_list(ctx *Query_expression_option_listContext) {
+}
 
 // ExitQuery_expression_option_list is called when production query_expression_option_list is exited.
-func (s *BaseOBParserListener) ExitQuery_expression_option_list(ctx *Query_expression_option_listContext) {}
+func (s *BaseOBParserListener) ExitQuery_expression_option_list(ctx *Query_expression_option_listContext) {
+}
 
 // EnterQuery_expression_option is called when production query_expression_option is entered.
 func (s *BaseOBParserListener) EnterQuery_expression_option(ctx *Query_expression_optionContext) {}
@@ -1785,7 +1833,8 @@ func (s *BaseOBParserListener) EnterRelation_with_star_list(ctx *Relation_with_s
 func (s *BaseOBParserListener) ExitRelation_with_star_list(ctx *Relation_with_star_listContext) {}
 
 // EnterRelation_factor_with_star is called when production relation_factor_with_star is entered.
-func (s *BaseOBParserListener) EnterRelation_factor_with_star(ctx *Relation_factor_with_starContext) {}
+func (s *BaseOBParserListener) EnterRelation_factor_with_star(ctx *Relation_factor_with_starContext) {
+}
 
 // ExitRelation_factor_with_star is called when production relation_factor_with_star is exited.
 func (s *BaseOBParserListener) ExitRelation_factor_with_star(ctx *Relation_factor_with_starContext) {}
@@ -1815,10 +1864,12 @@ func (s *BaseOBParserListener) EnterQb_name_option(ctx *Qb_name_optionContext) {
 func (s *BaseOBParserListener) ExitQb_name_option(ctx *Qb_name_optionContext) {}
 
 // EnterRelation_factor_in_hint_list is called when production relation_factor_in_hint_list is entered.
-func (s *BaseOBParserListener) EnterRelation_factor_in_hint_list(ctx *Relation_factor_in_hint_listContext) {}
+func (s *BaseOBParserListener) EnterRelation_factor_in_hint_list(ctx *Relation_factor_in_hint_listContext) {
+}
 
 // ExitRelation_factor_in_hint_list is called when production relation_factor_in_hint_list is exited.
-func (s *BaseOBParserListener) ExitRelation_factor_in_hint_list(ctx *Relation_factor_in_hint_listContext) {}
+func (s *BaseOBParserListener) ExitRelation_factor_in_hint_list(ctx *Relation_factor_in_hint_listContext) {
+}
 
 // EnterRelation_sep_option is called when production relation_sep_option is entered.
 func (s *BaseOBParserListener) EnterRelation_sep_option(ctx *Relation_sep_optionContext) {}
@@ -1827,34 +1878,44 @@ func (s *BaseOBParserListener) EnterRelation_sep_option(ctx *Relation_sep_option
 func (s *BaseOBParserListener) ExitRelation_sep_option(ctx *Relation_sep_optionContext) {}
 
 // EnterRelation_factor_in_pq_hint is called when production relation_factor_in_pq_hint is entered.
-func (s *BaseOBParserListener) EnterRelation_factor_in_pq_hint(ctx *Relation_factor_in_pq_hintContext) {}
+func (s *BaseOBParserListener) EnterRelation_factor_in_pq_hint(ctx *Relation_factor_in_pq_hintContext) {
+}
 
 // ExitRelation_factor_in_pq_hint is called when production relation_factor_in_pq_hint is exited.
-func (s *BaseOBParserListener) ExitRelation_factor_in_pq_hint(ctx *Relation_factor_in_pq_hintContext) {}
+func (s *BaseOBParserListener) ExitRelation_factor_in_pq_hint(ctx *Relation_factor_in_pq_hintContext) {
+}
 
 // EnterRelation_factor_in_leading_hint is called when production relation_factor_in_leading_hint is entered.
-func (s *BaseOBParserListener) EnterRelation_factor_in_leading_hint(ctx *Relation_factor_in_leading_hintContext) {}
+func (s *BaseOBParserListener) EnterRelation_factor_in_leading_hint(ctx *Relation_factor_in_leading_hintContext) {
+}
 
 // ExitRelation_factor_in_leading_hint is called when production relation_factor_in_leading_hint is exited.
-func (s *BaseOBParserListener) ExitRelation_factor_in_leading_hint(ctx *Relation_factor_in_leading_hintContext) {}
+func (s *BaseOBParserListener) ExitRelation_factor_in_leading_hint(ctx *Relation_factor_in_leading_hintContext) {
+}
 
 // EnterRelation_factor_in_leading_hint_list is called when production relation_factor_in_leading_hint_list is entered.
-func (s *BaseOBParserListener) EnterRelation_factor_in_leading_hint_list(ctx *Relation_factor_in_leading_hint_listContext) {}
+func (s *BaseOBParserListener) EnterRelation_factor_in_leading_hint_list(ctx *Relation_factor_in_leading_hint_listContext) {
+}
 
 // ExitRelation_factor_in_leading_hint_list is called when production relation_factor_in_leading_hint_list is exited.
-func (s *BaseOBParserListener) ExitRelation_factor_in_leading_hint_list(ctx *Relation_factor_in_leading_hint_listContext) {}
+func (s *BaseOBParserListener) ExitRelation_factor_in_leading_hint_list(ctx *Relation_factor_in_leading_hint_listContext) {
+}
 
 // EnterRelation_factor_in_leading_hint_list_entry is called when production relation_factor_in_leading_hint_list_entry is entered.
-func (s *BaseOBParserListener) EnterRelation_factor_in_leading_hint_list_entry(ctx *Relation_factor_in_leading_hint_list_entryContext) {}
+func (s *BaseOBParserListener) EnterRelation_factor_in_leading_hint_list_entry(ctx *Relation_factor_in_leading_hint_list_entryContext) {
+}
 
 // ExitRelation_factor_in_leading_hint_list_entry is called when production relation_factor_in_leading_hint_list_entry is exited.
-func (s *BaseOBParserListener) ExitRelation_factor_in_leading_hint_list_entry(ctx *Relation_factor_in_leading_hint_list_entryContext) {}
+func (s *BaseOBParserListener) ExitRelation_factor_in_leading_hint_list_entry(ctx *Relation_factor_in_leading_hint_list_entryContext) {
+}
 
 // EnterRelation_factor_in_use_join_hint_list is called when production relation_factor_in_use_join_hint_list is entered.
-func (s *BaseOBParserListener) EnterRelation_factor_in_use_join_hint_list(ctx *Relation_factor_in_use_join_hint_listContext) {}
+func (s *BaseOBParserListener) EnterRelation_factor_in_use_join_hint_list(ctx *Relation_factor_in_use_join_hint_listContext) {
+}
 
 // ExitRelation_factor_in_use_join_hint_list is called when production relation_factor_in_use_join_hint_list is exited.
-func (s *BaseOBParserListener) ExitRelation_factor_in_use_join_hint_list(ctx *Relation_factor_in_use_join_hint_listContext) {}
+func (s *BaseOBParserListener) ExitRelation_factor_in_use_join_hint_list(ctx *Relation_factor_in_use_join_hint_listContext) {
+}
 
 // EnterTracing_num_list is called when production tracing_num_list is entered.
 func (s *BaseOBParserListener) EnterTracing_num_list(ctx *Tracing_num_listContext) {}
@@ -2001,10 +2062,12 @@ func (s *BaseOBParserListener) EnterPermanent_tablespace(ctx *Permanent_tablespa
 func (s *BaseOBParserListener) ExitPermanent_tablespace(ctx *Permanent_tablespaceContext) {}
 
 // EnterPermanent_tablespace_option is called when production permanent_tablespace_option is entered.
-func (s *BaseOBParserListener) EnterPermanent_tablespace_option(ctx *Permanent_tablespace_optionContext) {}
+func (s *BaseOBParserListener) EnterPermanent_tablespace_option(ctx *Permanent_tablespace_optionContext) {
+}
 
 // ExitPermanent_tablespace_option is called when production permanent_tablespace_option is exited.
-func (s *BaseOBParserListener) ExitPermanent_tablespace_option(ctx *Permanent_tablespace_optionContext) {}
+func (s *BaseOBParserListener) ExitPermanent_tablespace_option(ctx *Permanent_tablespace_optionContext) {
+}
 
 // EnterDrop_tablespace_stmt is called when production drop_tablespace_stmt is entered.
 func (s *BaseOBParserListener) EnterDrop_tablespace_stmt(ctx *Drop_tablespace_stmtContext) {}
@@ -2037,10 +2100,12 @@ func (s *BaseOBParserListener) EnterRotate_master_key_stmt(ctx *Rotate_master_ke
 func (s *BaseOBParserListener) ExitRotate_master_key_stmt(ctx *Rotate_master_key_stmtContext) {}
 
 // EnterPermanent_tablespace_options is called when production permanent_tablespace_options is entered.
-func (s *BaseOBParserListener) EnterPermanent_tablespace_options(ctx *Permanent_tablespace_optionsContext) {}
+func (s *BaseOBParserListener) EnterPermanent_tablespace_options(ctx *Permanent_tablespace_optionsContext) {
+}
 
 // ExitPermanent_tablespace_options is called when production permanent_tablespace_options is exited.
-func (s *BaseOBParserListener) ExitPermanent_tablespace_options(ctx *Permanent_tablespace_optionsContext) {}
+func (s *BaseOBParserListener) ExitPermanent_tablespace_options(ctx *Permanent_tablespace_optionsContext) {
+}
 
 // EnterCreate_user_stmt is called when production create_user_stmt is entered.
 func (s *BaseOBParserListener) EnterCreate_user_stmt(ctx *Create_user_stmtContext) {}
@@ -2403,13 +2468,16 @@ func (s *BaseOBParserListener) EnterAlter_partition_option(ctx *Alter_partition_
 func (s *BaseOBParserListener) ExitAlter_partition_option(ctx *Alter_partition_optionContext) {}
 
 // EnterOpt_partition_range_or_list is called when production opt_partition_range_or_list is entered.
-func (s *BaseOBParserListener) EnterOpt_partition_range_or_list(ctx *Opt_partition_range_or_listContext) {}
+func (s *BaseOBParserListener) EnterOpt_partition_range_or_list(ctx *Opt_partition_range_or_listContext) {
+}
 
 // ExitOpt_partition_range_or_list is called when production opt_partition_range_or_list is exited.
-func (s *BaseOBParserListener) ExitOpt_partition_range_or_list(ctx *Opt_partition_range_or_listContext) {}
+func (s *BaseOBParserListener) ExitOpt_partition_range_or_list(ctx *Opt_partition_range_or_listContext) {
+}
 
 // EnterAlter_tg_partition_option is called when production alter_tg_partition_option is entered.
-func (s *BaseOBParserListener) EnterAlter_tg_partition_option(ctx *Alter_tg_partition_optionContext) {}
+func (s *BaseOBParserListener) EnterAlter_tg_partition_option(ctx *Alter_tg_partition_optionContext) {
+}
 
 // ExitAlter_tg_partition_option is called when production alter_tg_partition_option is exited.
 func (s *BaseOBParserListener) ExitAlter_tg_partition_option(ctx *Alter_tg_partition_optionContext) {}
@@ -2499,10 +2567,12 @@ func (s *BaseOBParserListener) EnterAlter_system_stmt(ctx *Alter_system_stmtCont
 func (s *BaseOBParserListener) ExitAlter_system_stmt(ctx *Alter_system_stmtContext) {}
 
 // EnterChange_tenant_name_or_tenant_id is called when production change_tenant_name_or_tenant_id is entered.
-func (s *BaseOBParserListener) EnterChange_tenant_name_or_tenant_id(ctx *Change_tenant_name_or_tenant_idContext) {}
+func (s *BaseOBParserListener) EnterChange_tenant_name_or_tenant_id(ctx *Change_tenant_name_or_tenant_idContext) {
+}
 
 // ExitChange_tenant_name_or_tenant_id is called when production change_tenant_name_or_tenant_id is exited.
-func (s *BaseOBParserListener) ExitChange_tenant_name_or_tenant_id(ctx *Change_tenant_name_or_tenant_idContext) {}
+func (s *BaseOBParserListener) ExitChange_tenant_name_or_tenant_id(ctx *Change_tenant_name_or_tenant_idContext) {
+}
 
 // EnterCache_type is called when production cache_type is entered.
 func (s *BaseOBParserListener) EnterCache_type(ctx *Cache_typeContext) {}
@@ -2589,13 +2659,15 @@ func (s *BaseOBParserListener) EnterAdd_or_alter_zone_option(ctx *Add_or_alter_z
 func (s *BaseOBParserListener) ExitAdd_or_alter_zone_option(ctx *Add_or_alter_zone_optionContext) {}
 
 // EnterAdd_or_alter_zone_options is called when production add_or_alter_zone_options is entered.
-func (s *BaseOBParserListener) EnterAdd_or_alter_zone_options(ctx *Add_or_alter_zone_optionsContext) {}
+func (s *BaseOBParserListener) EnterAdd_or_alter_zone_options(ctx *Add_or_alter_zone_optionsContext) {
+}
 
 // ExitAdd_or_alter_zone_options is called when production add_or_alter_zone_options is exited.
 func (s *BaseOBParserListener) ExitAdd_or_alter_zone_options(ctx *Add_or_alter_zone_optionsContext) {}
 
 // EnterAlter_or_change_or_modify is called when production alter_or_change_or_modify is entered.
-func (s *BaseOBParserListener) EnterAlter_or_change_or_modify(ctx *Alter_or_change_or_modifyContext) {}
+func (s *BaseOBParserListener) EnterAlter_or_change_or_modify(ctx *Alter_or_change_or_modifyContext) {
+}
 
 // ExitAlter_or_change_or_modify is called when production alter_or_change_or_modify is exited.
 func (s *BaseOBParserListener) ExitAlter_or_change_or_modify(ctx *Alter_or_change_or_modifyContext) {}
@@ -2607,10 +2679,12 @@ func (s *BaseOBParserListener) EnterPartition_id_desc(ctx *Partition_id_descCont
 func (s *BaseOBParserListener) ExitPartition_id_desc(ctx *Partition_id_descContext) {}
 
 // EnterPartition_id_or_server_or_zone is called when production partition_id_or_server_or_zone is entered.
-func (s *BaseOBParserListener) EnterPartition_id_or_server_or_zone(ctx *Partition_id_or_server_or_zoneContext) {}
+func (s *BaseOBParserListener) EnterPartition_id_or_server_or_zone(ctx *Partition_id_or_server_or_zoneContext) {
+}
 
 // ExitPartition_id_or_server_or_zone is called when production partition_id_or_server_or_zone is exited.
-func (s *BaseOBParserListener) ExitPartition_id_or_server_or_zone(ctx *Partition_id_or_server_or_zoneContext) {}
+func (s *BaseOBParserListener) ExitPartition_id_or_server_or_zone(ctx *Partition_id_or_server_or_zoneContext) {
+}
 
 // EnterMigrate_action is called when production migrate_action is entered.
 func (s *BaseOBParserListener) EnterMigrate_action(ctx *Migrate_actionContext) {}
@@ -2685,22 +2759,28 @@ func (s *BaseOBParserListener) EnterCancel_task_type(ctx *Cancel_task_typeContex
 func (s *BaseOBParserListener) ExitCancel_task_type(ctx *Cancel_task_typeContext) {}
 
 // EnterAlter_system_set_parameter_actions is called when production alter_system_set_parameter_actions is entered.
-func (s *BaseOBParserListener) EnterAlter_system_set_parameter_actions(ctx *Alter_system_set_parameter_actionsContext) {}
+func (s *BaseOBParserListener) EnterAlter_system_set_parameter_actions(ctx *Alter_system_set_parameter_actionsContext) {
+}
 
 // ExitAlter_system_set_parameter_actions is called when production alter_system_set_parameter_actions is exited.
-func (s *BaseOBParserListener) ExitAlter_system_set_parameter_actions(ctx *Alter_system_set_parameter_actionsContext) {}
+func (s *BaseOBParserListener) ExitAlter_system_set_parameter_actions(ctx *Alter_system_set_parameter_actionsContext) {
+}
 
 // EnterAlter_system_set_parameter_action is called when production alter_system_set_parameter_action is entered.
-func (s *BaseOBParserListener) EnterAlter_system_set_parameter_action(ctx *Alter_system_set_parameter_actionContext) {}
+func (s *BaseOBParserListener) EnterAlter_system_set_parameter_action(ctx *Alter_system_set_parameter_actionContext) {
+}
 
 // ExitAlter_system_set_parameter_action is called when production alter_system_set_parameter_action is exited.
-func (s *BaseOBParserListener) ExitAlter_system_set_parameter_action(ctx *Alter_system_set_parameter_actionContext) {}
+func (s *BaseOBParserListener) ExitAlter_system_set_parameter_action(ctx *Alter_system_set_parameter_actionContext) {
+}
 
 // EnterAlter_system_settp_actions is called when production alter_system_settp_actions is entered.
-func (s *BaseOBParserListener) EnterAlter_system_settp_actions(ctx *Alter_system_settp_actionsContext) {}
+func (s *BaseOBParserListener) EnterAlter_system_settp_actions(ctx *Alter_system_settp_actionsContext) {
+}
 
 // ExitAlter_system_settp_actions is called when production alter_system_settp_actions is exited.
-func (s *BaseOBParserListener) ExitAlter_system_settp_actions(ctx *Alter_system_settp_actionsContext) {}
+func (s *BaseOBParserListener) ExitAlter_system_settp_actions(ctx *Alter_system_settp_actionsContext) {
+}
 
 // EnterSettp_option is called when production settp_option is entered.
 func (s *BaseOBParserListener) EnterSettp_option(ctx *Settp_optionContext) {}
@@ -2745,10 +2825,12 @@ func (s *BaseOBParserListener) EnterSet_transaction_stmt(ctx *Set_transaction_st
 func (s *BaseOBParserListener) ExitSet_transaction_stmt(ctx *Set_transaction_stmtContext) {}
 
 // EnterTransaction_characteristics is called when production transaction_characteristics is entered.
-func (s *BaseOBParserListener) EnterTransaction_characteristics(ctx *Transaction_characteristicsContext) {}
+func (s *BaseOBParserListener) EnterTransaction_characteristics(ctx *Transaction_characteristicsContext) {
+}
 
 // ExitTransaction_characteristics is called when production transaction_characteristics is exited.
-func (s *BaseOBParserListener) ExitTransaction_characteristics(ctx *Transaction_characteristicsContext) {}
+func (s *BaseOBParserListener) ExitTransaction_characteristics(ctx *Transaction_characteristicsContext) {
+}
 
 // EnterTransaction_access_mode is called when production transaction_access_mode is entered.
 func (s *BaseOBParserListener) EnterTransaction_access_mode(ctx *Transaction_access_modeContext) {}
@@ -2853,16 +2935,19 @@ func (s *BaseOBParserListener) EnterUnreserved_keyword(ctx *Unreserved_keywordCo
 func (s *BaseOBParserListener) ExitUnreserved_keyword(ctx *Unreserved_keywordContext) {}
 
 // EnterUnreserved_keyword_normal is called when production unreserved_keyword_normal is entered.
-func (s *BaseOBParserListener) EnterUnreserved_keyword_normal(ctx *Unreserved_keyword_normalContext) {}
+func (s *BaseOBParserListener) EnterUnreserved_keyword_normal(ctx *Unreserved_keyword_normalContext) {
+}
 
 // ExitUnreserved_keyword_normal is called when production unreserved_keyword_normal is exited.
 func (s *BaseOBParserListener) ExitUnreserved_keyword_normal(ctx *Unreserved_keyword_normalContext) {}
 
 // EnterUnreserved_keyword_special is called when production unreserved_keyword_special is entered.
-func (s *BaseOBParserListener) EnterUnreserved_keyword_special(ctx *Unreserved_keyword_specialContext) {}
+func (s *BaseOBParserListener) EnterUnreserved_keyword_special(ctx *Unreserved_keyword_specialContext) {
+}
 
 // ExitUnreserved_keyword_special is called when production unreserved_keyword_special is exited.
-func (s *BaseOBParserListener) ExitUnreserved_keyword_special(ctx *Unreserved_keyword_specialContext) {}
+func (s *BaseOBParserListener) ExitUnreserved_keyword_special(ctx *Unreserved_keyword_specialContext) {
+}
 
 // EnterEmpty is called when production empty is entered.
 func (s *BaseOBParserListener) EnterEmpty(ctx *EmptyContext) {}

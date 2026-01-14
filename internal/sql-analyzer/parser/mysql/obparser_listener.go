@@ -3,7 +3,6 @@
 package mysql // OBParser
 import "github.com/antlr4-go/antlr/v4"
 
-
 // OBParserListener is a complete listener for a parse tree produced by OBParser.
 type OBParserListener interface {
 	antlr.ParseTreeListener

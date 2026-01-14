@@ -3,7 +3,6 @@
 package mysql // OBParser
 import "github.com/antlr4-go/antlr/v4"
 
-
 // A complete Visitor for a parse tree produced by OBParser.
 type OBParserVisitor interface {
 	antlr.ParseTreeVisitor
@@ -1438,5 +1437,4 @@ type OBParserVisitor interface {
 
 	// Visit a parse tree produced by OBParser#forward_sql_stmt.
 	VisitForward_sql_stmt(ctx *Forward_sql_stmtContext) interface{}
-
 }

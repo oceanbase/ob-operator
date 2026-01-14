@@ -71,8 +71,14 @@ func GetOceanbaseOperationManager(p *connector.OceanBaseDataSource) (*OceanbaseO
 func (m *OceanbaseOperationManager) ExecWithTimeout(ctx context.Context, timeout time.Duration, sql string, params ...any) error {
 	c, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
+	m.Logger.Info(fmt.Sprintf("set timeout to %d seconds", timeout))
+	_, err := m.Connector.GetClient().ExecContext(c, "set ob_query_timeout=?", int64(timeout/time.Microsecond))
+	if err != nil {
+		return errors.Wrap(err, "Failed to set timeout variable")
+
+	}
 	m.Logger.Info(fmt.Sprintf("Execute sql %s with param %v", sql, params))
-	_, err := m.Connector.GetClient().ExecContext(c, sql, params...)
+	_, err = m.Connector.GetClient().ExecContext(c, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "Execute sql failed, sql %s, param %v", sql, params)
 		m.Logger.Error(err, "Execute sql failed")

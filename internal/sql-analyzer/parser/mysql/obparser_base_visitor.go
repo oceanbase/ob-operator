@@ -3,7 +3,6 @@
 package mysql // OBParser
 import "github.com/antlr4-go/antlr/v4"
 
-
 type BaseOBParserVisitor struct {
 	*antlr.BaseParseTreeVisitor
 }

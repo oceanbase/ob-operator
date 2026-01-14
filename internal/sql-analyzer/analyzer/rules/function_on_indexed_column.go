@@ -85,7 +85,6 @@ func (r *FunctionOnIndexedColumnRule) EnterColumn_ref(ctx *obmysql.Column_refCon
 	}
 }
 
-
 func (r *FunctionOnIndexedColumnRule) isColumnIndexed(tableName, colName string) bool {
 	for _, idx := range r.indexes {
 		if tableName != "" && !strings.EqualFold(idx.TableName, tableName) {

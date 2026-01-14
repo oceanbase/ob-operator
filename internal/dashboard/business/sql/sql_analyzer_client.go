@@ -234,8 +234,8 @@ func QueryPlanDetail(host string, tenantName string, req analyticmodel.SqlPlanId
 	}
 
 	var apiResp struct {
-		Successful bool                      `json:"successful"`
-		Message    string                    `json:"message"`
+		Successful bool                    `json:"successful"`
+		Message    string                  `json:"message"`
 		Data       []analyticmodel.SqlPlan `json:"data"`
 	}
 	if err := json.Unmarshal(respBody, &apiResp); err != nil {
