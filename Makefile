@@ -8,7 +8,6 @@ else
 endif
 
 include make/*
-include make/parser.mk
 
 VERSION ?= 2.3.4
 # Image URL to use all building/pushing image targets
