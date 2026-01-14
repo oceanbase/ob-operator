@@ -128,4 +128,59 @@ const (
 		GROUP BY
 			svr_ip, svr_port, tenant_id, tenant_name, user_id, user_name, db_id, db_name, sql_id, plan_id
 	`
+
+	GetMaxRequestIDFromParquet = "SELECT svr_ip, MAX(max_request_id) FROM read_parquet('%s') GROUP BY svr_ip"
+
+	QueryRequestStatisticsTotals = `
+		SELECT
+			sum(executions),
+			sum(fail_count_sum),
+			sum(elapsed_time_sum) / sum(executions)
+		%s %s`
+
+	QueryRequestStatisticsTrends = `
+		SELECT
+			strftime(to_timestamp(CAST(max_request_time / 1000000 AS BIGINT)), '%%Y-%%m-%%d') AS day,
+			sum(executions),
+			sum(elapsed_time_sum) / sum(executions)
+		%s %s
+		GROUP BY day
+		ORDER BY day`
+
+	QueryExecutionTrend = `
+		SELECT
+			CAST(epoch(time_bucket(INTERVAL %d SECOND, CAST(to_timestamp(CAST(max_request_time / 1000000 AS BIGINT)) AS TIMESTAMP))) AS BIGINT) AS time_bucket,
+			sum(plan_type_local_count),
+			sum(plan_type_remote_count),
+			sum(plan_type_distributed_count)
+		FROM read_parquet('%s/*.parquet')
+		WHERE
+			sql_id = ?
+			AND max_request_time >= ?
+			AND max_request_time <= ?
+		GROUP BY time_bucket
+		ORDER BY time_bucket`
+
+	QueryLatencyTrend = `
+			SELECT
+				CAST(epoch(time_bucket(INTERVAL %d SECOND, CAST(to_timestamp(CAST(max_request_time / 1000000 AS BIGINT)) AS TIMESTAMP))) AS BIGINT) AS time_bucket,
+				%s
+			FROM read_parquet('%s/*.parquet')
+			WHERE
+				sql_id = ?
+				AND max_request_time >= ?
+				AND max_request_time <= ?
+			GROUP BY time_bucket
+			ORDER BY time_bucket`
+
+	QuerySqlById = `
+		SELECT
+			query_sql
+		FROM
+			read_parquet('%s/*.parquet')
+		WHERE
+			sql_id = ?
+			AND max_request_time >= ?
+			AND max_request_time <= ?
+		LIMIT 1`
 )

@@ -80,4 +80,30 @@ const (
     `
 
 	GetTablePrimaryKey = `SELECT column_name FROM oceanbase.__all_virtual_column WHERE tenant_id = ? AND table_id = ? and rowkey_position <> 0 ORDER BY rowkey_position`
+	CheckPlanExistence = `SELECT COUNT(*) FROM sql_plan WHERE TENANT_ID = ? AND SVR_IP = ? AND SVR_PORT = ? AND PLAN_ID = ?`
+	GetPlanStats       = `
+		SELECT
+			TENANT_ID,
+			SVR_IP,
+			SVR_PORT,
+			PLAN_ID,
+			PLAN_HASH,
+			MIN(GMT_CREATE) as GMT_CREATE,
+			SUM(IO_COST) as IO_COST,
+			SUM(CPU_COST) as CPU_COST,
+			SUM(COST) as COST,
+			SUM(REAL_COST) as REAL_COST
+		FROM sql_plan
+		WHERE SQL_ID = ?
+		GROUP BY TENANT_ID, SVR_IP, SVR_PORT, PLAN_ID, PLAN_HASH
+	`
+	GetTableInfo = `
+		SELECT 
+			OBJECT_OWNER,
+			OBJECT_NAME,
+			MAX(OBJECT_ID) as OBJECT_ID
+		FROM sql_plan
+		WHERE SQL_ID = ? AND OBJECT_TYPE = 'BASIC TABLE'
+		GROUP BY OBJECT_OWNER, OBJECT_NAME
+	`
 )

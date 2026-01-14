@@ -97,7 +97,7 @@ func (s *SqlAuditStore) GetLastRequestIDs() (map[string]uint64, error) {
 	mostRecentFile := files[len(files)-1]
 
 	// Query only the most recent file.
-	query := fmt.Sprintf("SELECT svr_ip, MAX(max_request_id) FROM read_parquet('%s') GROUP BY svr_ip", mostRecentFile)
+	query := fmt.Sprintf(sqlconst.GetMaxRequestIDFromParquet, mostRecentFile)
 
 	rows, err := s.db.Query(query)
 	if err != nil {
@@ -524,12 +524,7 @@ func (s *SqlAuditStore) QueryRequestStatistics(req apimodel.RequestStatisticsReq
 	}
 
 	// Query for totals
-	totalsQuery := fmt.Sprintf(`
-		SELECT
-			sum(executions),
-			sum(fail_count_sum),
-			sum(elapsed_time_sum) / sum(executions)
-		%s %s`, fromClause, whereClause)
+	totalsQuery := fmt.Sprintf(sqlconst.QueryRequestStatisticsTotals, fromClause, whereClause)
 
 	var totalExecutions, failedExecutions, totalLatency sql.NullFloat64
 	err := s.db.QueryRowContext(s.ctx, totalsQuery, args...).Scan(&totalExecutions, &failedExecutions, &totalLatency)
@@ -546,14 +541,7 @@ func (s *SqlAuditStore) QueryRequestStatistics(req apimodel.RequestStatisticsReq
 	}
 
 	// Query for trends
-	trendsQuery := fmt.Sprintf(`
-		SELECT
-			strftime(to_timestamp(CAST(max_request_time / 1000000 AS BIGINT)), '%%Y-%%m-%%d') AS day,
-			sum(executions),
-			sum(elapsed_time_sum) / sum(executions)
-		%s %s
-		GROUP BY day
-		ORDER BY day`, fromClause, whereClause)
+	trendsQuery := fmt.Sprintf(sqlconst.QueryRequestStatisticsTrends, fromClause, whereClause)
 
 	rows, err := s.db.QueryContext(s.ctx, trendsQuery, args...)
 	if err != nil {
@@ -581,19 +569,7 @@ func (s *SqlAuditStore) QuerySqlHistoryInfo(req apimodel.SqlHistoryRequest) (*ap
 	}
 
 	// Execution Trend
-	execTrendQuery := fmt.Sprintf(`
-		SELECT
-			CAST(epoch(time_bucket(INTERVAL %d SECOND, CAST(to_timestamp(CAST(max_request_time / 1000000 AS BIGINT)) AS TIMESTAMP))) AS BIGINT) AS time_bucket,
-			sum(plan_type_local_count),
-			sum(plan_type_remote_count),
-			sum(plan_type_distributed_count)
-		FROM read_parquet('%s/*.parquet')
-		WHERE
-			sql_id = ?
-			AND max_request_time >= ?
-			AND max_request_time <= ?
-		GROUP BY time_bucket
-		ORDER BY time_bucket`, req.Interval, s.path)
+	execTrendQuery := fmt.Sprintf(sqlconst.QueryExecutionTrend, req.Interval, s.path)
 
 	rows, err := s.db.QueryContext(s.ctx, execTrendQuery, req.SqlId, req.StartTime*1000000, req.EndTime*1000000)
 	if err != nil {
@@ -624,17 +600,7 @@ func (s *SqlAuditStore) QuerySqlHistoryInfo(req apimodel.SqlHistoryRequest) (*ap
 			}
 		}
 
-		latencyTrendQuery := fmt.Sprintf(`
-			SELECT
-				CAST(epoch(time_bucket(INTERVAL %d SECOND, CAST(to_timestamp(CAST(max_request_time / 1000000 AS BIGINT)) AS TIMESTAMP))) AS BIGINT) AS time_bucket,
-				%s
-			FROM read_parquet('%s/*.parquet')
-			WHERE
-				sql_id = ?
-				AND max_request_time >= ?
-				AND max_request_time <= ?
-			GROUP BY time_bucket
-			ORDER BY time_bucket`, req.Interval, strings.Join(selectExpressions, ", "), s.path)
+		latencyTrendQuery := fmt.Sprintf(sqlconst.QueryLatencyTrend, req.Interval, strings.Join(selectExpressions, ", "), s.path)
 
 		rows, err := s.db.QueryContext(s.ctx, latencyTrendQuery, req.SqlId, req.StartTime*1000000, req.EndTime*1000000)
 		if err != nil {
@@ -686,16 +652,7 @@ func (s *SqlAuditStore) QuerySqlDetailInfo(planStore *PlanStore, req apimodel.Sq
 	}
 
 	// Fetch QuerySql for the given SqlId
-	querySqlQuery := fmt.Sprintf(`
-		SELECT
-			query_sql
-		FROM
-			read_parquet('%s/*.parquet')
-		WHERE
-			sql_id = ?
-			AND max_request_time >= ?
-			AND max_request_time <= ?
-		LIMIT 1`, s.path)
+	querySqlQuery := fmt.Sprintf(sqlconst.QuerySqlById, s.path)
 
 	var querySql string
 	err := s.db.QueryRowContext(s.ctx, querySqlQuery, req.SqlId, req.StartTime*1000000, req.EndTime*1000000).Scan(&querySql)

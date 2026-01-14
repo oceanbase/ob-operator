@@ -148,8 +148,7 @@ func (s *PlanStore) PlanExists(ident model.SqlPlanIdentifier) (bool, error) {
 	defer s.mu.RUnlock()
 
 	var count int
-	query := `SELECT COUNT(*) FROM sql_plan WHERE TENANT_ID = ? AND SVR_IP = ? AND SVR_PORT = ? AND PLAN_ID = ?`
-	err := s.db.QueryRow(query, ident.TenantID, ident.SvrIP, ident.SvrPort, ident.PlanID).Scan(&count)
+	err := s.db.QueryRow(sqlconst.CheckPlanExistence, ident.TenantID, ident.SvrIP, ident.SvrPort, ident.PlanID).Scan(&count)
 	if err != nil {
 		return false, errors.Wrap(err, "failed to query plan existence")
 	}
@@ -198,23 +197,7 @@ func (s *PlanStore) GetPlanStatsBySqlId(sqlId string) ([]model.PlanStatistic, er
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	query := `
-		SELECT
-			TENANT_ID,
-			SVR_IP,
-			SVR_PORT,
-			PLAN_ID,
-			PLAN_HASH,
-			MIN(GMT_CREATE) as GMT_CREATE,
-			SUM(IO_COST) as IO_COST,
-			SUM(CPU_COST) as CPU_COST,
-			SUM(COST) as COST,
-			SUM(REAL_COST) as REAL_COST
-		FROM sql_plan
-		WHERE SQL_ID = ?
-		GROUP BY TENANT_ID, SVR_IP, SVR_PORT, PLAN_ID, PLAN_HASH
-	`
-	rows, err := s.db.Query(query, sqlId)
+	rows, err := s.db.Query(sqlconst.GetPlanStats, sqlId)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to query plan statistics by sqlId")
 	}
@@ -252,16 +235,7 @@ func (s *PlanStore) GetTableInfoBySqlId(sqlId string) ([]model.TableInfo, error)
 	defer s.mu.RUnlock()
 
 	// keep the max object id(table id), tables may dropped and recreated
-	query := `
-		SELECT 
-			OBJECT_OWNER,
-			OBJECT_NAME,
-			MAX(OBJECT_ID) as OBJECT_ID
-		FROM sql_plan
-		WHERE SQL_ID = ? AND OBJECT_TYPE = 'BASIC TABLE'
-		GROUP BY OBJECT_OWNER, OBJECT_NAME
-	`
-	rows, err := s.db.Query(query, sqlId)
+	rows, err := s.db.Query(sqlconst.GetTableInfo, sqlId)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to query table info by sqlId")
 	}
