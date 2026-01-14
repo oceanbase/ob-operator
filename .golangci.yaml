@@ -6,8 +6,6 @@ linters:
     - asciicheck
     - errcheck
     - gocritic
-    - gofmt
-    - goimports
     # - gosimple
     - govet
     - ineffassign
@@ -17,15 +15,12 @@ linters:
     - rowserrcheck
     - sqlclosecheck
     - staticcheck
-    - typecheck
     # - unused
 
   settings:
     gocritic:
       disabled-checks:
         - ifElseChain
-    goimports:
-      local-prefixes: github.com/oceanbase/ob-operator
     revive:
       enable-all-rules: true
       rules:
@@ -71,6 +66,14 @@ linters:
           disabled: true
         - name: deep-exit
           disabled: true
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes: github.com/oceanbase/ob-operator
 
 issues:
   exclude-rules:
