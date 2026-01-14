@@ -3,13 +3,12 @@ import { STATUS_LIST } from '@/constants';
 import DetailLayout from '@/pages/Layouts/DetailLayout';
 import { getClusterDetailReq } from '@/services';
 import { intl } from '@/utils/intl';
-import { ApartmentOutlined, CaretDownFilled } from '@ant-design/icons';
+import { ApartmentOutlined } from '@ant-design/icons';
 import type { MenuItem } from '@oceanbase/design/es/BasicLayout';
 import { findByValue } from '@oceanbase/util';
 import { useAccess, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Badge } from 'antd';
-import { toNumber } from 'lodash';
 import styles from './index.less';
 
 export default () => {
@@ -83,11 +82,11 @@ export default () => {
               <ApartmentOutlined />
               <ClusterSelect
                 valueProp="id"
-                value={toNumber(clusterDetail?.info?.clusterId)}
+                value={`${clusterDetail?.info?.clusterName}:${clusterDetail?.info?.clusterId}`}
                 bordered={false}
                 showStandby={true}
                 showInnerStandby={false}
-                suffixIcon={<CaretDownFilled />}
+                suffixIcon={null}
                 optionLabelRender={(item) => item?.name}
                 className={styles.clusterSelect}
               />

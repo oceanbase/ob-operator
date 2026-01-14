@@ -13,9 +13,8 @@ const ClusterSelect = ({ value, ...restProps }) => {
   return (
     <Select
       onChange={(value) => {
-        const clusterItem = clusterList.find(
-          (item) => item.clusterId === value,
-        );
+        const id = value.spilt(':')[1];
+        const clusterItem = clusterList.find((item) => item.clusterId === id);
         history.push(
           `/cluster/${clusterItem.namespace}/${clusterItem.name}/${clusterItem.clusterName}/overview`,
         );
@@ -23,9 +22,10 @@ const ClusterSelect = ({ value, ...restProps }) => {
       }}
       value={value}
       options={clusterList?.map((item) => ({
-        value: item.clusterId,
+        value: `${item.clusterName}:${item.clusterId}`,
         label: `${item.clusterName}:${item.clusterId}`,
       }))}
+      popupMatchSelectWidth={120}
       {...restProps}
     />
   );

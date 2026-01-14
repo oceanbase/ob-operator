@@ -50,6 +50,7 @@ export async function getTenant({
     'scenario',
     'version',
     'sqlAnalyzerEnabled',
+    'uid',
   ];
   const res: API.TenantBasicInfo = {
     info: {},
