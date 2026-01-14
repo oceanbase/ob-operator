@@ -200,6 +200,21 @@ const ClusterOverview: React.FC = () => {
     },
   );
 
+  const { runAsync: patchOBCluster } = useRequest(obcluster.patchOBCluster, {
+    manual: true,
+    onSuccess: (res) => {
+      if (res.successful) {
+        message.success(
+          intl.formatMessage({
+            id: 'src.pages.Cluster.Detail.Overview.02AE8EA0',
+            defaultMessage: '修改删除保护已成功',
+          }),
+        );
+        clusterDetailRefresh?.();
+      }
+    },
+  });
+
   const handleDelete = async () => {
     const res = await deleteClusterReportWrap({ ns: ns!, name: name! });
     if (res.successful) {
@@ -211,6 +226,18 @@ const ClusterOverview: React.FC = () => {
       );
       history.replace('/cluster');
     }
+  };
+
+  const defaultDeletionProtection = clusterDetail?.info?.deletionProtection;
+  console.log('defaultDeletionProtection', defaultDeletionProtection);
+  const handDeletionProtection = () => {
+    const body = {} as API.ParamPatchOBClusterParam;
+    if (defaultDeletionProtection) {
+      body.removeDeletionProtection = true;
+    } else {
+      body.addDeletionProtection = true;
+    }
+    patchOBCluster(ns, name, body);
   };
 
   const operateSuccess = () => {
@@ -237,29 +264,6 @@ const ClusterOverview: React.FC = () => {
 
   // 不为空即为绑定了NFS
   const removeNFS = !!backupVolume;
-  const menuChange = ({ key }: { key: string }) => {
-    if (key === 'AddZone') {
-      return handleAddZone();
-    } else if (key === 'Upgrade') {
-      return handleUpgrade();
-    } else if (key === 'delete') {
-      return showDeleteConfirm({
-        onOk: handleDelete,
-        title: intl.formatMessage({
-          id: 'OBDashboard.Detail.Overview.AreYouSureYouWant',
-          defaultMessage: '你确定要删除该集群吗？',
-        }),
-      });
-    } else if (key === 'nfs') {
-      if (removeNFS) {
-        setRemoveNFSModal(true);
-      } else {
-        setMountNFSModal(true);
-      }
-    } else if (key === 'download') {
-      setDiagnoseModal(true);
-    }
-  };
 
   const items: MenuProps['items'] = [
     {
@@ -319,7 +323,59 @@ const ClusterOverview: React.FC = () => {
       }),
       disabled: isEmpty(clusterDetail),
     },
+    {
+      key: 'deleteProtection',
+      label: intl.formatMessage({
+        id: 'src.pages.Tenant.Detail.Overview.DeleteProtection',
+        defaultMessage: '删除保护',
+      }),
+    },
   ];
+
+  const menuChange = ({ key }: { key: string }) => {
+    if (key === 'AddZone') {
+      return handleAddZone();
+    } else if (key === 'Upgrade') {
+      return handleUpgrade();
+    } else if (key === 'delete') {
+      return showDeleteConfirm({
+        onOk: handleDelete,
+        title: intl.formatMessage({
+          id: 'OBDashboard.Detail.Overview.AreYouSureYouWant',
+          defaultMessage: '你确定要删除该集群吗？',
+        }),
+      });
+    } else if (key === 'nfs') {
+      if (removeNFS) {
+        setRemoveNFSModal(true);
+      } else {
+        setMountNFSModal(true);
+      }
+    } else if (key === 'download') {
+      setDiagnoseModal(true);
+    } else if (key === 'deleteProtection') {
+      showDeleteConfirm({
+        onOk: handDeletionProtection,
+        title: intl.formatMessage(
+          {
+            id: 'src.pages.Tenant.Detail.Overview.ConfirmDeleteProtection',
+            defaultMessage: '确认要{action}删除保护吗？',
+          },
+          {
+            action: !defaultDeletionProtection
+              ? intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Overview.Enable',
+                  defaultMessage: '开启',
+                })
+              : intl.formatMessage({
+                  id: 'src.pages.Tenant.Detail.Overview.Disable',
+                  defaultMessage: '关闭',
+                }),
+          },
+        ),
+      });
+    }
+  };
 
   const header = () => {
     return {
@@ -411,6 +467,7 @@ const ClusterOverview: React.FC = () => {
       }
     };
   }, []);
+
   const [form] = Form.useForm();
 
   return (

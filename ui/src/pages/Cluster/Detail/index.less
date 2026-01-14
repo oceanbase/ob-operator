@@ -1,0 +1,45 @@
+.sideHeader {
+  padding-top: 4px;
+  padding-bottom: 8px;
+  padding-left: 8px;
+
+  .clusterSelect {
+    width: 126px;
+    margin-left: -3px;
+    font-family: PingFangSC-Semibold;
+
+    :global {
+      .ant-select-selector {
+        padding: 0 8px 0 11px;
+      }
+    }
+  }
+
+  /* 非 focus 状态下，hover 时高亮选中 label 和下拉箭头*/
+  .clusterSelect:not(:global(.ant-select-focused)) {
+    &:hover {
+      :global {
+        .ant-select-selection-item {
+          color: #1890ff;
+          transition: none;
+        }
+
+        .ant-select-arrow {
+          color: #1890ff;
+        }
+      }
+    }
+  }
+
+  .id {
+    color: #595959;
+  }
+
+  .badge {
+    :global {
+      .ant-badge-status-text {
+        color: #595959;
+      }
+    }
+  }
+}
