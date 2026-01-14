@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.3.4 (Release on 2026.01.13)
+### Enhancement
+1. Support setting oceanbase-sdk's timeout via environment variables
+2. Skip observer in recover status when restarting
+3. Optimize some default timeout setting
+4. Optimize getting oceanbase's sys client
+
+### Bugfix
+1. Add annotation support-static-ip to newly added obzone
+2. Fix task fall back policy when pod is deleted during observer recovery process
+3. Fix panic problem when obtenant's unit is unexpected
+4. Check obzone spec changes during obzone rolling update
+
 ## 2.3.3 (Release on 2025.09.08)
 ### New Feature
 1. Support setting addressingModel for S3_COMPATIBLE storage.
