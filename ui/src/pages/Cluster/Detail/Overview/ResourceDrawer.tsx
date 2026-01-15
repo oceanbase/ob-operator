@@ -58,21 +58,24 @@ export const TooltipItemContent = ({ item }) => {
   );
 };
 
-const ResourceDrawer: React.FC<ParametersModalProps> = ({
+const ResourceDrawer: React.FC<
+  ParametersModalProps & { resource?: { cpu?: number; memory?: number } }
+> = ({
   visible,
   onCancel,
   initialValues,
   name,
   namespace,
   onSuccess,
+  resource,
 }) => {
   const [form] = Form.useForm<API.CreateClusterData>();
   const { validateFields, setFieldValue, resetFields } = form;
 
   useEffect(() => {
-    const data = {};
-    const log = {};
-    const redoLog = {};
+    const data: Record<string, any> = {};
+    const log: Record<string, any> = {};
+    const redoLog: Record<string, any> = {};
 
     initialValues?.forEach((item) => {
       if (item.type === 'data') {
@@ -91,7 +94,22 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
       log,
       redoLog,
     });
-  }, [initialValues]);
+
+    // 设置 CPU 和 Memory 的默认值
+    if (resource) {
+      if (resource.cpu) {
+        setFieldValue(['resource', 'cpu'], resource.cpu);
+      }
+      if (resource.memory) {
+        // memory 可能是以字节为单位，需要转换为 GB
+        const memoryInGB =
+          typeof resource.memory === 'number'
+            ? resource.memory / (1 << 30)
+            : resource.memory;
+        setFieldValue(['resource', 'memory'], memoryInGB);
+      }
+    }
+  }, [initialValues, resource, setFieldValue]);
 
   const { data: storageClassesRes } = useRequest(getStorageClasses, {});
 
@@ -122,7 +140,7 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
     <Drawer
       title={intl.formatMessage({
         id: 'src.pages.Cluster.Detail.Overview.41F76901',
-        defaultMessage: '存储资源编辑',
+        defaultMessage: '节点资源编辑',
       })}
       open={visible}
       destroyOnClose
@@ -155,7 +173,7 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
                   value,
                   intl.formatMessage({
                     id: 'src.pages.Cluster.Detail.Overview.DBF1120A',
-                    defaultMessage: '存储资源编辑成功',
+                    defaultMessage: '节点资源编辑成功',
                   }),
                 );
               });
@@ -174,8 +192,34 @@ const ResourceDrawer: React.FC<ParametersModalProps> = ({
           <Col span={24}>
             <p style={fontStyle}>
               {intl.formatMessage({
+                id: 'src.pages.Cluster.Detail.Overview.70C825D8',
+                defaultMessage: '计算资源',
+              })}
+            </p>
+            <CustomFormItem label="CPU" name={['resource', 'cpu']}>
+              <InputNumber
+                min={MINIMAL_CONFIG.cpu}
+                style={{ width: '180px' }}
+                placeholder={intl.formatMessage({
+                  id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
+                  defaultMessage: '请输入',
+                })}
+              />
+            </CustomFormItem>
+            <CustomFormItem label="Memory" name={['resource', 'memory']}>
+              <InputNumber
+                min={MINIMAL_CONFIG.memory}
+                addonAfter={SUFFIX_UNIT}
+                placeholder={intl.formatMessage({
+                  id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
+                  defaultMessage: '请输入',
+                })}
+              />
+            </CustomFormItem>
+            <p style={fontStyle}>
+              {intl.formatMessage({
                 id: 'src.pages.Cluster.Detail.Overview.77C825D8',
-                defaultMessage: '数据',
+                defaultMessage: '存储资源',
               })}
             </p>
             <div style={{ display: 'flex', justifyContent: 'flex-start' }}>

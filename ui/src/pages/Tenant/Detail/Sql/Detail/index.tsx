@@ -411,6 +411,7 @@ const SqlDetail: React.FC = () => {
               <Button
                 icon={<ArrowLeftOutlined />}
                 onClick={() => history.back()}
+                type="text"
               >
                 {intl.formatMessage({
                   id: 'src.pages.Tenant.Detail.Sql.Detail.Back',
