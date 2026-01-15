@@ -19,9 +19,4 @@ export default defineConfig({
   history: { type: 'hash' },
   npmClient: 'yarn',
   jsMinifier: 'terser',
-  proxy: {
-    '/api/v1': {
-      target: 'http://11.161.204.50:30275', //雪染的环境 admin: adminpass
-    },
-  },
 });
