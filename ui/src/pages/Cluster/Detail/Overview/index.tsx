@@ -229,7 +229,7 @@ const ClusterOverview: React.FC = () => {
   };
 
   const defaultDeletionProtection = clusterDetail?.info?.deletionProtection;
-  console.log('defaultDeletionProtection', defaultDeletionProtection);
+
   const handDeletionProtection = () => {
     const body = {} as API.ParamPatchOBClusterParam;
     if (defaultDeletionProtection) {
@@ -325,10 +325,15 @@ const ClusterOverview: React.FC = () => {
     },
     {
       key: 'deleteProtection',
-      label: intl.formatMessage({
-        id: 'src.pages.Tenant.Detail.Overview.DeleteProtection',
-        defaultMessage: '删除保护',
-      }),
+      label: !defaultDeletionProtection
+        ? intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.Overview.EnableDeleteProtection',
+            defaultMessage: '开启删除保护',
+          })
+        : intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.Overview.DisableDeleteProtection',
+            defaultMessage: '关闭删除保护',
+          }),
     },
   ];
 

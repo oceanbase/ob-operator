@@ -130,8 +130,8 @@ export default function BasicInfo({
         </Descriptions.Item>
         <Descriptions.Item
           label={intl.formatMessage({
-            id: 'src.pages.Tenant.Detail.Overview.BasicInfo.SqlDiagnosis',
-            defaultMessage: 'SQL 诊断',
+            id: 'src.pages.Tenant.Detail.Sql.SqlAnalysis',
+            defaultMessage: 'SQL 分析',
           })}
         >
           {info.sqlAnalyzerEnabled

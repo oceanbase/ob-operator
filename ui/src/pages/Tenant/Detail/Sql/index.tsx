@@ -205,6 +205,7 @@ export default function SqlList() {
           }
         } else if (metric.key === 'elapsed_time') {
           colConfig.width = 250;
+          colConfig.defaultSortOrder = 'descend';
           colConfig.render = (_, record) => {
             const elapsedStat = record.latencyStatistics?.find(
               (s) => s.name === 'elapsed_time',
@@ -548,11 +549,22 @@ export default function SqlList() {
                 endTime: effectiveEndTime,
               });
 
+              // 如果没有排序参数，默认使用 elapsed_time 降序
+              const sortKeys = Object.keys(sort);
+              const defaultSortColumn =
+                sortKeys.length > 0 ? Object.keys(sort)[0] : 'elapsed_time';
+              const defaultSortOrder =
+                sortKeys.length > 0
+                  ? Object.values(sort)[0] === 'ascend'
+                    ? 'asc'
+                    : 'desc'
+                  : 'desc';
+
               const msg = await listSqlStats({
                 namespace: ns,
                 obtenant: name,
-                sortColumn: Object.keys(sort)[0],
-                sortOrder: Object.values(sort)[0] === 'ascend' ? 'asc' : 'desc',
+                sortColumn: defaultSortColumn,
+                sortOrder: defaultSortOrder,
                 pageNum: restParams.current,
                 pageSize: restParams.pageSize,
                 keyword: restParams.keyword as string,
@@ -627,7 +639,7 @@ export default function SqlList() {
           >
             {intl.formatMessage({
               id: 'src.pages.Tenant.Detail.Sql.TenantHasNotEnabledSqlDiagnosis',
-              defaultMessage: '该租户尚未开启 SQL 诊断，是否立即开启？',
+              defaultMessage: '该租户尚未开启 SQL 分析，是否立即开启？',
             })}
           </p>
           <Button
@@ -637,7 +649,7 @@ export default function SqlList() {
                 onOk: handSqlAnalyzer,
                 title: intl.formatMessage({
                   id: 'src.pages.Tenant.Detail.Sql.ConfirmEnableSqlDiagnosis',
-                  defaultMessage: '确认要开启 SQL 诊断吗？',
+                  defaultMessage: '确认要开启 SQL 分析吗？',
                 }),
               });
             }}

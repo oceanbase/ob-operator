@@ -227,8 +227,8 @@ export default function BasicInfo({
         <Col span={locale ? 2 : 4}>
           <Space>
             {intl.formatMessage({
-              id: 'src.pages.Tenant.Detail.Overview.BasicInfo.SqlDiagnosis',
-              defaultMessage: 'SQL 诊断',
+              id: 'src.pages.Tenant.Detail.Sql.SqlAnalysis',
+              defaultMessage: 'SQL 分析',
             })}
             <Checkbox
               defaultChecked={sqlDiagnoseValue}

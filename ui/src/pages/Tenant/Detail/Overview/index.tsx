@@ -113,6 +113,8 @@ export default function TenantOverview() {
   const backupPolicy = backupPolicyResponse?.data;
   const backupJobs = backupJobsResponse?.data;
   const essentialParameter = essentialParameterRes?.data;
+  const defaultDeletionProtection = tenantDetail?.info?.deletionProtection;
+  const defaultSqlAnalyzer = tenantDetail?.info?.sqlAnalyzerEnabled;
 
   const operateSuccess = () => {
     setTimeout(() => {
@@ -179,17 +181,27 @@ export default function TenantOverview() {
         ]
       : []),
     {
-      label: intl.formatMessage({
-        id: 'src.pages.Tenant.Detail.Overview.DeleteProtection',
-        defaultMessage: '删除保护',
-      }),
+      label: !defaultDeletionProtection
+        ? intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.Overview.EnableDeleteProtection',
+            defaultMessage: '开启删除保护',
+          })
+        : intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.Overview.DisableDeleteProtection',
+            defaultMessage: '关闭删除保护',
+          }),
       key: 'deleteProtection',
     },
     {
-      label: intl.formatMessage({
-        id: 'src.pages.Tenant.Detail.Overview.BasicInfo.SqlDiagnosis',
-        defaultMessage: 'SQL 诊断',
-      }),
+      label: !defaultSqlAnalyzer
+        ? intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.Overview.EnableSqlAnalysis',
+            defaultMessage: '开启SQL分析',
+          })
+        : intl.formatMessage({
+            id: 'src.pages.Tenant.Detail.Overview.DisableSqlAnalysis',
+            defaultMessage: '关闭SQL分析',
+          }),
       key: 'sqlAnalyzer',
     },
     {
@@ -201,9 +213,6 @@ export default function TenantOverview() {
       danger: true,
     },
   ];
-
-  const defaultDeletionProtection = tenantDetail?.info?.deletionProtection;
-  const defaultSqlAnalyzer = tenantDetail?.info?.sqlAnalyzerEnabled;
 
   const menuChange = ({ key }) => {
     if (key === 'createBackupPolicy') {
@@ -245,7 +254,7 @@ export default function TenantOverview() {
         title: intl.formatMessage(
           {
             id: 'src.pages.Tenant.Detail.Overview.ConfirmSqlDiagnosis',
-            defaultMessage: '确认要{action} SQL 诊断吗？',
+            defaultMessage: '确认要{action} SQL 分析吗？',
           },
           {
             action: !defaultSqlAnalyzer
