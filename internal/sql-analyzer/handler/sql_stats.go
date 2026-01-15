@@ -14,6 +14,7 @@ package handler
 
 import (
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -55,8 +56,12 @@ func QuerySqlStats(c *gin.Context) (*model.SqlStatsResponse, error) {
 		req.PageSize = 10
 	}
 
-	// TODO: The data path should be configurable.
-	auditStore, err := store.NewSqlAuditStore(c.Request.Context(), "/data/sql_audit")
+	dataPath := os.Getenv("DATA_PATH")
+	if dataPath == "" {
+		dataPath = "/data"
+	}
+
+	auditStore, err := store.NewSqlAuditStore(c.Request.Context(), filepath.Join(dataPath, "sql_audit"), l)
 	if err != nil {
 		return nil, err
 	}

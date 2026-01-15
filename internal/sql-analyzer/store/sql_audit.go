@@ -38,12 +38,13 @@ import (
 )
 
 type SqlAuditStore struct {
-	ctx  context.Context
-	db   *sql.DB
-	path string
+	ctx    context.Context
+	db     *sql.DB
+	path   string
+	Logger *logger.Logger
 }
 
-func NewSqlAuditStore(c context.Context, path string) (*SqlAuditStore, error) {
+func NewSqlAuditStore(c context.Context, path string, l *logger.Logger) (*SqlAuditStore, error) {
 	// Use an in-memory DuckDB database for operations.
 	db, err := sql.Open("duckdb", "") // In-memory
 	if err != nil {
@@ -58,11 +59,11 @@ func NewSqlAuditStore(c context.Context, path string) (*SqlAuditStore, error) {
 			memLimit = "512MB"
 		}
 		if _, err := conn.ExecContext(c, fmt.Sprintf("PRAGMA memory_limit='%s'", memLimit)); err != nil {
-			logger.Warnf("Failed to set duckdb memory limit for sql audit store: %v", err)
+			l.Warnf("Failed to set duckdb memory limit for sql audit store: %v", err)
 		}
 		conn.Close()
 	} else {
-		logger.Warnf("Failed to get connection to set memory limit for sql audit store: %v", err)
+		l.Warnf("Failed to get connection to set memory limit for sql audit store: %v", err)
 	}
 
 	// Ensure the data directory exists
@@ -70,7 +71,7 @@ func NewSqlAuditStore(c context.Context, path string) (*SqlAuditStore, error) {
 		return nil, fmt.Errorf("failed to create data directory %s: %w", path, err)
 	}
 
-	store := &SqlAuditStore{db: db, path: path, ctx: c}
+	store := &SqlAuditStore{db: db, path: path, ctx: c, Logger: l}
 	return store, nil
 }
 
@@ -100,7 +101,7 @@ func (s *SqlAuditStore) GetLastRequestIDs() (map[string]uint64, error) {
 
 	rows, err := s.db.Query(query)
 	if err != nil {
-		logger.Printf("Error querying latest parquet file %s: %v", mostRecentFile, err)
+		s.Logger.Warnf("Error querying latest parquet file %s: %v", mostRecentFile, err)
 		return make(map[string]uint64), nil
 	}
 	defer rows.Close()
@@ -240,9 +241,9 @@ func (s *SqlAuditStore) Compact() error {
 		// This is a fast way to check if the file is readable by DuckDB.
 		err := s.db.QueryRowContext(s.ctx, fmt.Sprintf("SELECT count(*) FROM read_parquet('%s')", file)).Scan(&count)
 		if err != nil {
-			logger.Warnf("File %s appears to be invalid, deleting. Error: %v", file, err)
+			s.Logger.Warnf("File %s appears to be invalid, deleting. Error: %v", file, err)
 			if removeErr := os.Remove(file); removeErr != nil {
-				logger.Errorf("Failed to delete invalid file %s: %v", file, removeErr)
+				s.Logger.Errorf("Failed to delete invalid file %s: %v", file, removeErr)
 			}
 			continue // Skip to the next file
 		}
@@ -291,7 +292,7 @@ func (s *SqlAuditStore) Compact() error {
 	// Delete the original files that were compacted.
 	for _, file := range filesToCompact {
 		if err := os.Remove(file); err != nil {
-			logger.Printf("Failed to delete old file %s: %v", file, err)
+			s.Logger.Errorf("Failed to delete old file %s: %v", file, err)
 		}
 	}
 
@@ -430,7 +431,7 @@ func (s *SqlAuditStore) DeleteOldData(retentionDays int) error {
 	for _, filePath := range files {
 		fileTime, err := parseTimeFromFileName(filePath)
 		if err != nil {
-			logger.Printf("Skipping file %s with invalid date format: %v", filePath, err)
+			s.Logger.Warnf("Skipping file %s with invalid date format: %v", filePath, err)
 			continue
 		}
 
@@ -449,14 +450,14 @@ func (s *SqlAuditStore) StartCleanupWorker() {
 	retentionStr := os.Getenv("DATA_RETENTION_DAYS")
 	retentionDays, err := strconv.Atoi(retentionStr)
 	if err != nil {
-		logger.Fatalf("Invalid or missing DATA_RETENTION_DAYS environment variable: %v", err)
+		s.Logger.Fatalf("Invalid or missing DATA_RETENTION_DAYS environment variable: %v", err)
 	}
 
 	go func() {
 		// Run cleanup once at startup
-		logger.Println("Running initial cleanup of old data...")
+		s.Logger.Info("Running initial cleanup of old data...")
 		if err := s.DeleteOldData(retentionDays); err != nil {
-			logger.Printf("Error during initial data cleanup: %v", err)
+			s.Logger.Errorf("Error during initial data cleanup: %v", err)
 		}
 
 		// Then run periodically
@@ -465,9 +466,9 @@ func (s *SqlAuditStore) StartCleanupWorker() {
 		for {
 			select {
 			case <-cleanupTicker.C:
-				logger.Println("Running periodic cleanup of old data...")
+				s.Logger.Info("Running periodic cleanup of old data...")
 				if err := s.DeleteOldData(retentionDays); err != nil {
-					logger.Printf("Error during periodic data cleanup: %v", err)
+					s.Logger.Errorf("Error during periodic data cleanup: %v", err)
 				}
 			case <-s.ctx.Done():
 				return

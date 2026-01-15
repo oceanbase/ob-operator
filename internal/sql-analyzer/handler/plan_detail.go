@@ -13,11 +13,15 @@ See the Mulan PSL v2 for more details.
 package handler
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/business"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/model"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/store"
+	logger "github.com/sirupsen/logrus"
 )
 
 func GetPlanDetail(c *gin.Context) ([]model.SqlPlan, error) {
@@ -26,7 +30,17 @@ func GetPlanDetail(c *gin.Context) ([]model.SqlPlan, error) {
 		return nil, err
 	}
 
-	planStore, err := store.NewPlanStore(c.Request.Context(), "/data/sql_plan", true)
+	dataPath := os.Getenv("DATA_PATH")
+	if dataPath == "" {
+		dataPath = "/data"
+	}
+
+	l := HandlerLogger
+	if l == nil {
+		l = logger.StandardLogger()
+	}
+
+	planStore, err := store.NewPlanStore(c.Request.Context(), filepath.Join(dataPath, "sql_plan"), true, l)
 	if err != nil {
 		return nil, err
 	}

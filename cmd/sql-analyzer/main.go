@@ -14,6 +14,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -21,6 +22,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 
@@ -37,13 +39,13 @@ const (
 
 func newLogger(filename string, level string) *logrus.Logger {
 	l := logrus.New()
-	l.SetOutput(&lumberjack.Logger{
+	l.SetOutput(io.MultiWriter(os.Stdout, &lumberjack.Logger{
 		Filename:   filename,
 		MaxSize:    100, // megabytes
 		MaxBackups: 3,
 		MaxAge:     28,   // days
 		Compress:   true, // disabled by default
-	})
+	}))
 
 	lLevel, err := logrus.ParseLevel(level)
 	if err != nil {
@@ -58,6 +60,7 @@ func newLogger(filename string, level string) *logrus.Logger {
 
 func startHttpServer(ctx context.Context, logger *logrus.Logger) *webserver.HTTPServer {
 	httpServer := webserver.NewHTTPServer(ctx)
+	httpServer.Router.Use(gin.LoggerWithWriter(logger.Out), gin.RecoveryWithWriter(logger.Out))
 	router.Register(httpServer.Router)
 	logger.Info("Successfully registered router")
 	go func() {
@@ -88,8 +91,12 @@ func main() {
 	}
 
 	// Initialize Loggers
-	collectorLogPath := filepath.Join(dataPath, "collector.log")
-	analyzerLogPath := filepath.Join(dataPath, "analyzer.log")
+	logDir := filepath.Join(dataPath, "log")
+	if err := os.MkdirAll(logDir, 0755); err != nil {
+		logrus.Fatalf("Failed to create log directory: %v", err)
+	}
+	collectorLogPath := filepath.Join(logDir, "collector.log")
+	analyzerLogPath := filepath.Join(logDir, "analyzer.log")
 
 	collectorLogger := newLogger(collectorLogPath, logLevel)
 	analyzerLogger := newLogger(analyzerLogPath, logLevel)
@@ -109,7 +116,7 @@ func main() {
 		if val, err := strconv.Atoi(intervalStr); err == nil && val > 0 {
 			collectionIntervalSeconds = val
 		} else {
-			analyzerLogger.Printf("Invalid COLLECTION_INTERVAL_SECONDS value '%s', using default of 30 seconds.", intervalStr)
+			analyzerLogger.Warnf("Invalid COLLECTION_INTERVAL_SECONDS value '%s', using default of 30 seconds.", intervalStr)
 		}
 	}
 
@@ -120,7 +127,7 @@ func main() {
 		if val, err := strconv.Atoi(compactionIntervalStr); err == nil && val > 0 {
 			compactionIntervalSeconds = val
 		} else {
-			analyzerLogger.Printf("Invalid COMPACTION_INTERVAL_SECONDS value '%s', using default of 3600 seconds.", compactionIntervalStr)
+			analyzerLogger.Warnf("Invalid COMPACTION_INTERVAL_SECONDS value '%s', using default of 3600 seconds.", compactionIntervalStr)
 		}
 	}
 
@@ -136,7 +143,7 @@ func main() {
 		if val, err := strconv.Atoi(sqlAuditLimitStr); err == nil && val > 0 {
 			sqlAuditLimit = val
 		} else {
-			analyzerLogger.Printf("Invalid SQL_AUDIT_LIMIT value '%s', using default of 10000.", sqlAuditLimitStr)
+			analyzerLogger.Warnf("Invalid SQL_AUDIT_LIMIT value '%s', using default of 10000.", sqlAuditLimitStr)
 		}
 	}
 
@@ -147,7 +154,7 @@ func main() {
 		if val, err := strconv.Atoi(slowSqlThresholdMilliSecondsStr); err == nil && val >= 0 {
 			slowSqlThresholdMilliSeconds = val
 		} else {
-			analyzerLogger.Printf("Invalid SLOW_SQL_THRESHOLD_MILLISECONDS value '%s', using default of 1000ms.", slowSqlThresholdMilliSecondsStr)
+			analyzerLogger.Warnf("Invalid SLOW_SQL_THRESHOLD_MILLISECONDS value '%s', using default of 1000ms.", slowSqlThresholdMilliSecondsStr)
 		}
 	}
 
@@ -158,7 +165,7 @@ func main() {
 		if val, err := strconv.Atoi(workerNumStr); err == nil && val > 0 {
 			workerNum = val
 		} else {
-			analyzerLogger.Printf("Invalid PLAN_WORKER_NUM value '%s', using default of 1.", workerNumStr)
+			analyzerLogger.Warnf("Invalid PLAN_WORKER_NUM value '%s', using default of 1.", workerNumStr)
 		}
 	}
 
@@ -184,11 +191,11 @@ func main() {
 	httpServer := startHttpServer(ctx, analyzerLogger)
 	// Wait for a shutdown signal
 	<-sigChan
-	analyzerLogger.Println("Shutdown signal received, stopping...")
+	analyzerLogger.Info("Shutdown signal received, stopping...")
 	// Trigger graceful shutdown
 	cancel()
 	// Stop the collector
 	collector.Stop()
 	httpServer.Stop()
-	analyzerLogger.Println("Shutdown complete.")
+	analyzerLogger.Info("Shutdown complete.")
 }

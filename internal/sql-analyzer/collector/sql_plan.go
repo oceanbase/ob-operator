@@ -56,10 +56,10 @@ func (w *PlanWorker) Start(ctx context.Context, idx int) {
 }
 
 func (w *PlanWorker) processPlan(ctx context.Context, idx int, ident *model.SqlPlanIdentifier) {
-	w.collector.Logger.Printf("Fetching plan for tenant %d, server %s, port %d, plan %d in worker %d", ident.TenantID, ident.SvrIP, ident.SvrPort, ident.PlanID, idx)
+	w.collector.Logger.Infof("Fetching plan for tenant %d, server %s, port %d, plan %d in worker %d", ident.TenantID, ident.SvrIP, ident.SvrPort, ident.PlanID, idx)
 	cnx, err := w.connManager.GetSysReadonlyConnectionByIP(ident.SvrIP)
 	if err != nil {
-		w.collector.Logger.Printf("failed to get connection for plan worker: %v", err)
+		w.collector.Logger.Errorf("failed to get connection for plan worker: %v", err)
 		// Remove from cache if failed
 		w.collector.PlanCache.Remove(*ident) // Remove from cache
 		return
@@ -68,12 +68,12 @@ func (w *PlanWorker) processPlan(ctx context.Context, idx int, ident *model.SqlP
 
 	var plans []model.SqlPlan
 	if err := cnx.QueryList(ctx, &plans, sqlconst.SelectSqlPlan, ident.TenantID, ident.SvrIP, ident.SvrPort, ident.PlanID); err != nil {
-		w.collector.Logger.Printf("failed to query sql plan: %v", err)
+		w.collector.Logger.Errorf("failed to query sql plan: %v", err)
 		// Remove from cache if failed
 		w.collector.PlanCache.Remove(*ident) // Remove from cache
 		return
 	}
-	w.collector.Logger.Printf("Found %d plan details for tenant %d, server %s, port %d, plan %d", len(plans), ident.TenantID, ident.SvrIP, ident.SvrPort, ident.PlanID)
+	w.collector.Logger.Infof("Found %d plan details for tenant %d, server %s, port %d, plan %d", len(plans), ident.TenantID, ident.SvrIP, ident.SvrPort, ident.PlanID)
 	allStored := true
 	for _, plan := range plans {
 		if err := w.planStore.Store(plan); err != nil {

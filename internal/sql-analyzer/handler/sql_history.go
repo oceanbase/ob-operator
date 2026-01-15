@@ -20,6 +20,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/api/model"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/business"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/store"
+	logger "github.com/sirupsen/logrus"
 )
 
 // @ID GetSqlHistoryInfo
@@ -44,7 +45,12 @@ func GetSqlHistoryInfo(c *gin.Context) (*model.SqlHistoryResponse, error) {
 		dataPath = "/data"
 	}
 
-	auditStore, err := store.NewSqlAuditStore(c.Request.Context(), filepath.Join(dataPath, "sql_audit"))
+	l := HandlerLogger
+	if l == nil {
+		l = logger.StandardLogger() // fallback to standard logger if HandlerLogger is not set
+	}
+
+	auditStore, err := store.NewSqlAuditStore(c.Request.Context(), filepath.Join(dataPath, "sql_audit"), l)
 	if err != nil {
 		return nil, err
 	}

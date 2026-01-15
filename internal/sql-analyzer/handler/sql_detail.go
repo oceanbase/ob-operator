@@ -49,13 +49,19 @@ func GetSqlDetailInfo(c *gin.Context) (*model.SqlDetailResponse, error) {
 		dataPath = "/data"
 	}
 
-	auditStore, err := store.NewSqlAuditStore(c.Request.Context(), filepath.Join(dataPath, "sql_audit"))
+	// Setup logger
+	l := HandlerLogger
+	if l == nil {
+		l = logger.StandardLogger()
+	}
+
+	auditStore, err := store.NewSqlAuditStore(c.Request.Context(), filepath.Join(dataPath, "sql_audit"), l)
 	if err != nil {
 		return nil, err
 	}
 	defer auditStore.Close()
 
-	planStore, err := store.NewPlanStore(c.Request.Context(), filepath.Join(dataPath, "sql_plan"), true)
+	planStore, err := store.NewPlanStore(c.Request.Context(), filepath.Join(dataPath, "sql_plan"), true, l)
 	if err != nil {
 		return nil, err
 	}
@@ -66,10 +72,6 @@ func GetSqlDetailInfo(c *gin.Context) (*model.SqlDetailResponse, error) {
 	obTenantName := os.Getenv("OBTENANT")
 
 	var cm *oceanbase.ConnectionManager
-	l := HandlerLogger
-	if l == nil {
-		l = logger.StandardLogger()
-	}
 
 	if namespace != "" && obTenantName != "" {
 		obtenant, err := clients.GetOBTenant(c.Request.Context(), types.NamespacedName{
@@ -108,7 +110,12 @@ func DebugQuery(c *gin.Context) (any, error) {
 		dataPath = "/data"
 	}
 
-	planStore, err := store.NewPlanStore(c.Request.Context(), filepath.Join(dataPath, "sql_plan"), true)
+	l := HandlerLogger
+	if l == nil {
+		l = logger.StandardLogger()
+	}
+
+	planStore, err := store.NewPlanStore(c.Request.Context(), filepath.Join(dataPath, "sql_plan"), true, l)
 	if err != nil {
 		return nil, err
 	}

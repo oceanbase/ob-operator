@@ -66,13 +66,13 @@ func NewCollector(ctx context.Context, config *config.Config, logger *logrus.Log
 }
 
 func (c *Collector) Init() error {
-	sqlAuditStore, err := store.NewSqlAuditStore(c.Ctx, filepath.Join(c.Config.DataPath, "sql_audit"))
+	sqlAuditStore, err := store.NewSqlAuditStore(c.Ctx, filepath.Join(c.Config.DataPath, "sql_audit"), c.Logger)
 	if err != nil {
 		return fmt.Errorf("failed to initialize sql audit store: %w", err)
 	}
 	c.SqlAuditStore = sqlAuditStore
 
-	planStore, err := store.NewPlanStore(c.Ctx, filepath.Join(c.Config.DataPath, "sql_plan"), false)
+	planStore, err := store.NewPlanStore(c.Ctx, filepath.Join(c.Config.DataPath, "sql_plan"), false, c.Logger)
 	if err != nil {
 		return fmt.Errorf("failed to initialize sql plan store: %w", err)
 	}
@@ -153,14 +153,14 @@ func (c *Collector) Start() {
 		for {
 			select {
 			case <-c.CompactionChan:
-				c.Logger.Println("Compaction signal received, running compaction...")
+				c.Logger.Info("Compaction signal received, running compaction...")
 				if err := c.SqlAuditStore.Compact(); err != nil {
 					c.Logger.Errorf("Failed to compact sql audit data: %v", err)
 				} else {
-					c.Logger.Println("Sql audit data compacted successfully.")
+					c.Logger.Info("Sql audit data compacted successfully.")
 				}
 			case <-c.Ctx.Done():
-				c.Logger.Println("Compaction worker stopped.")
+				c.Logger.Info("Compaction worker stopped.")
 				return
 			}
 		}
@@ -187,7 +187,7 @@ func (c *Collector) Start() {
 				}
 			}
 		case <-c.Ctx.Done():
-			c.Logger.Println("Collector stopped. Stopping plan workers...")
+			c.Logger.Info("Collector stopped. Stopping plan workers...")
 			close(c.PlanIdentifierChan)
 			wg.Wait() // Wait for all workers (plan and compaction) to finish
 			return

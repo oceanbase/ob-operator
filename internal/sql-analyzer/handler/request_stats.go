@@ -13,11 +13,15 @@ See the Mulan PSL v2 for more details.
 package handler
 
 import (
+	"os"
+	"path/filepath"
+
 	"github.com/gin-gonic/gin"
 
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/api/model"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/business"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/store"
+	logger "github.com/sirupsen/logrus"
 )
 
 // @Summary Get request statistics
@@ -37,8 +41,17 @@ func GetRequestStatistics(c *gin.Context) (*model.RequestStatisticsResponse, err
 		return nil, err
 	}
 
-	// TODO: The data path should be configurable.
-	auditStore, err := store.NewSqlAuditStore(c.Request.Context(), "/data/sql_audit")
+	dataPath := os.Getenv("DATA_PATH")
+	if dataPath == "" {
+		dataPath = "/data"
+	}
+
+	l := HandlerLogger
+	if l == nil {
+		l = logger.StandardLogger()
+	}
+
+	auditStore, err := store.NewSqlAuditStore(c.Request.Context(), filepath.Join(dataPath, "sql_audit"), l)
 	if err != nil {
 		return nil, err
 	}

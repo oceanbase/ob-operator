@@ -66,7 +66,7 @@ func (c *Collector) collectSqlAuditData() {
 		wg.Add(1)
 		go func(svrIP string, lastRequestID uint64) {
 			defer wg.Done()
-			c.Logger.Printf("Collecting from observer %s since request_id %d", svrIP, lastRequestID)
+			c.Logger.Infof("Collecting from observer %s since request_id %d", svrIP, lastRequestID)
 			data, err := c.collectSqlAuditByOBServer(svrIP, lastRequestID)
 			if err != nil {
 				errChan <- fmt.Errorf("failed to collect from observer %s: %w", svrIP, err)
@@ -88,7 +88,7 @@ func (c *Collector) collectSqlAuditData() {
 	}
 
 	for err := range errChan {
-		c.Logger.Println("Error during collection:", err) // Log errors but don't fail the whole batch
+		c.Logger.Error("Error during collection:", err) // Log errors but don't fail the whole batch
 	}
 
 	totalRecords := 0
@@ -107,13 +107,13 @@ func (c *Collector) collectSqlAuditData() {
 			}
 		}
 	}
-	c.Logger.Printf("Collected %d new audit records.", totalRecords)
+	c.Logger.Infof("Collected %d new audit records.", totalRecords)
 
 	if totalRecords > 0 {
 		if err := c.SqlAuditStore.InsertBatch(allResults); err != nil {
-			c.Logger.Printf("Error inserting data into DuckDB: %v", err)
+			c.Logger.Errorf("Error inserting data into DuckDB: %v", err)
 		} else {
-			c.Logger.Printf("Saved %d sql audit records", totalRecords)
+			c.Logger.Infof("Saved %d sql audit records", totalRecords)
 		}
 	}
 

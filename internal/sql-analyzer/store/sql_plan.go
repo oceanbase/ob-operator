@@ -30,9 +30,10 @@ import (
 )
 
 type PlanStore struct {
-	ctx context.Context
-	db  *sql.DB
-	mu  sync.RWMutex
+	ctx    context.Context
+	db     *sql.DB
+	mu     sync.RWMutex
+	Logger *logger.Logger
 }
 
 func (s *PlanStore) InitSqlPlanTable() error {
@@ -41,8 +42,8 @@ func (s *PlanStore) InitSqlPlanTable() error {
 	return err
 }
 
-func NewPlanStore(c context.Context, path string, readOnly bool) (*PlanStore, error) {
-	logger.Printf("Using plan store at %s", path)
+func NewPlanStore(c context.Context, path string, readOnly bool, l *logger.Logger) (*PlanStore, error) {
+	l.Infof("Using plan store at %s", path)
 	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create data directory %s: %w", path, err)
 	}
@@ -56,7 +57,7 @@ func NewPlanStore(c context.Context, path string, readOnly bool) (*PlanStore, er
 	for i := 0; i < 30; i++ {
 		db, err = sql.Open("duckdb", dsn)
 		if err != nil {
-			logger.Warnf("Failed to acquire lock on duckdb, retrying in 2 seconds... Error: %v", err)
+			l.Warnf("Failed to acquire lock on duckdb, retrying in 2 seconds... Error: %v", err)
 			time.Sleep(2 * time.Second)
 			continue
 		}
@@ -68,7 +69,7 @@ func NewPlanStore(c context.Context, path string, readOnly bool) (*PlanStore, er
 		}
 
 		db.Close() // Close the db handle on failure
-		logger.Warnf("Failed to acquire lock on duckdb, retrying in 2 seconds... Error: %v", err)
+		l.Warnf("Failed to acquire lock on duckdb, retrying in 2 seconds... Error: %v", err)
 		time.Sleep(2 * time.Second)
 	}
 
@@ -82,12 +83,12 @@ func NewPlanStore(c context.Context, path string, readOnly bool) (*PlanStore, er
 		memLimit = "512MB"
 	}
 	if _, err := conn.ExecContext(c, fmt.Sprintf("PRAGMA memory_limit='%s'", memLimit)); err != nil {
-		logger.Warnf("Failed to set duckdb memory limit: %v", err)
+		l.Warnf("Failed to set duckdb memory limit: %v", err)
 	}
 
 	conn.Close() // Close the temporary connection, the pool will manage connections from here.
 
-	s := &PlanStore{db: db, ctx: c}
+	s := &PlanStore{db: db, ctx: c, Logger: l}
 	return s, nil
 }
 
