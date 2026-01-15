@@ -13,11 +13,25 @@ See the Mulan PSL v2 for more details.
 package router
 
 import (
+	"os"
+
+	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
+	swaggerfiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
+	docs "github.com/oceanbase/ob-operator/internal/sql-analyzer/generated/swagger"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/handler"
 )
 
 func Register(r *gin.Engine) {
+	// host docs
+	if os.Getenv("ENABLE_SWAGGER_DOC") == "true" {
+		docs.SwaggerInfo.BasePath = "/"
+		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
+		r.Use(static.Serve("/api-gen", static.LocalFile("internal/sql-analyzer/generated/swagger", false)))
+	}
+
 	apiV1 := r.Group("/api/v1")
 	{
 		// Debug route
