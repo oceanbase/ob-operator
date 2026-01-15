@@ -5,6 +5,7 @@ import { intl } from '@/utils/intl';
 import { Card, Checkbox, Col, Form, Input, Row, Select, Space } from 'antd';
 import type { FormInstance } from 'antd/lib/form';
 import { useEffect } from 'react';
+import { getLocale } from 'umi';
 
 const { Option } = Select;
 
@@ -28,6 +29,8 @@ export default function BasicInfo({
   sqlDiagnoseValue,
   setSqlDiagnoseValue,
 }: BasicInfoProps) {
+  const locale = getLocale() === 'zh-CN';
+
   const clusterOptions = clusterList
     .filter((cluster) => cluster.status !== 'failed')
     .map((cluster) => ({
@@ -207,7 +210,7 @@ export default function BasicInfo({
             <Select mode="tags" />
           </Form.Item>
         </Col>
-        <Col span={2}>
+        <Col span={locale ? 2 : 4}>
           <Space>
             {intl.formatMessage({
               id: 'src.pages.Tenant.New.3979BAB6',
@@ -221,9 +224,12 @@ export default function BasicInfo({
             />
           </Space>
         </Col>
-        <Col span={2}>
+        <Col span={locale ? 2 : 4}>
           <Space>
-            SQL 诊断
+            {intl.formatMessage({
+              id: 'src.pages.Tenant.Detail.Sql.SqlAnalysis',
+              defaultMessage: 'SQL 分析',
+            })}
             <Checkbox
               defaultChecked={sqlDiagnoseValue}
               onChange={(e) => {

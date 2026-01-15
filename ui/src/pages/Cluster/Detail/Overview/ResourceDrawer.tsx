@@ -2,7 +2,7 @@ import { obcluster } from '@/api';
 import { CustomFormItem } from '@/components/CustomFormItem';
 import InputNumber from '@/components/InputNumber';
 import SelectWithTooltip from '@/components/SelectWithTooltip';
-import { MINIMAL_CONFIG, SUFFIX_UNIT } from '@/constants';
+import { SUFFIX_UNIT } from '@/constants';
 import { getStorageClasses } from '@/services';
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
@@ -198,7 +198,6 @@ const ResourceDrawer: React.FC<
             </p>
             <CustomFormItem label="CPU" name={['resource', 'cpu']}>
               <InputNumber
-                min={MINIMAL_CONFIG.cpu}
                 style={{ width: '180px' }}
                 placeholder={intl.formatMessage({
                   id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
@@ -208,7 +207,6 @@ const ResourceDrawer: React.FC<
             </CustomFormItem>
             <CustomFormItem label="Memory" name={['resource', 'memory']}>
               <InputNumber
-                min={MINIMAL_CONFIG.memory}
                 addonAfter={SUFFIX_UNIT}
                 placeholder={intl.formatMessage({
                   id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
@@ -229,7 +227,6 @@ const ResourceDrawer: React.FC<
                 name={['storage', 'data', 'size']}
               >
                 <InputNumber
-                  min={MINIMAL_CONFIG.data}
                   addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
@@ -266,7 +263,6 @@ const ResourceDrawer: React.FC<
                 name={['storage', 'log', 'size']}
               >
                 <InputNumber
-                  min={MINIMAL_CONFIG.log}
                   addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
@@ -298,7 +294,6 @@ const ResourceDrawer: React.FC<
                 name={['storage', 'redoLog', 'size']}
               >
                 <InputNumber
-                  min={MINIMAL_CONFIG.redoLog}
                   addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
