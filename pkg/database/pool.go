@@ -13,9 +13,7 @@ See the Mulan PSL v2 for more details.
 package database
 
 import (
-	"time"
-
-	"github.com/hashicorp/golang-lru/v2/expirable"
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/pkg/errors"
 )
 
@@ -27,11 +25,15 @@ func onCacheEvicted(_ string, value *Connector) {
 
 func init() {
 	cacheSize := lruCacheSize
-	p.Cache = expirable.NewLRU[string, *Connector](cacheSize, onCacheEvicted, time.Hour)
+	var err error
+	p.Cache, err = lru.NewWithEvict[string, *Connector](cacheSize, onCacheEvicted)
+	if err != nil {
+		panic(err)
+	}
 }
 
 type pool struct {
-	Cache *expirable.LRU[string, *Connector]
+	Cache *lru.Cache[string, *Connector]
 }
 
 func GetConnector(dataSource DataSource) (*Connector, error) {

@@ -61,7 +61,7 @@ func NewRecorder(ctx context.Context, er record.EventRecorder) Recorder {
 // Implement record.EventRecorder interface
 func (t *recorder) Event(object runtime.Object, eventType, reason, message string) {
 	t.EventRecorder.Event(object, t.transformEventType(eventType), reason, message)
-	t.generateFromEvent(object, nil, eventType, reason, message)
+	t.generateFromEvent(object, nil, eventType, reason, "%s", message)
 }
 
 // Implement record.EventRecorder interface

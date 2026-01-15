@@ -21,13 +21,15 @@ const (
 )
 
 type SqlMetricMeta struct {
-	Name             string         `json:"name" binding:"required"`
-	Description      string         `json:"description" binding:"required"`
-	DisplayByDefault bool           `json:"displayByDefault" binding:"required"`
-	Category         MetricCategory `json:"category" binding:"required"`
+	Key              string `json:"key" binding:"required" yaml:"key"`
+	Name             string `json:"name" binding:"required" yaml:"name"`
+	Description      string `json:"description" binding:"required" yaml:"description"`
+	Unit             string `json:"unit" binding:"required" yaml:"unit"`
+	DisplayByDefault bool   `json:"displayByDefault" binding:"required" yaml:"displayByDefault"`
+	Immutable        bool   `json:"immutable" binding:"required" yaml:"immutable"`
 }
 
 type SqlMetricMetaCategory struct {
-	Category MetricCategory  `json:"category" binding:"required"`
-	Metrics  []SqlMetricMeta `json:"metrics" binding:"required"`
+	Category MetricCategory  `json:"category" binding:"required" yaml:"category"`
+	Metrics  []SqlMetricMeta `json:"metrics" binding:"required" yaml:"metrics"`
 }

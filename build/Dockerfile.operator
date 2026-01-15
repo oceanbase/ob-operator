@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM golang:1.22 AS builder
+FROM golang:1.25 AS builder
 
 ARG GOPROXY
 ARG GOSUMDB
@@ -8,7 +8,7 @@ ARG RACE
 WORKDIR /workspace
 # copy everything
 COPY . .
-RUN make build
+RUN make operator
 
 # start build docker image
 FROM openanolis/anolisos:8.8

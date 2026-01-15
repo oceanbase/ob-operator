@@ -1,11 +1,20 @@
+version: "2"
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes: 
+        - github.com/oceanbase/ob-operator
+
 linters:
-  disable-all: true
+  default: none
   enable:
     - asciicheck
     - errcheck
     - gocritic
-    - gofmt
-    - goimports
     # - gosimple
     - govet
     - ineffassign
@@ -15,65 +24,86 @@ linters:
     - rowserrcheck
     - sqlclosecheck
     - staticcheck
-    - typecheck
     # - unused
 
-issues:
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - errcheck
-        - revive
-        - unused
-
-linters-settings:
-  gocritic:
-    disabled-checks:
-      - ifElseChain
-  goimports:
-    local-prefixes: github.com/oceanbase/ob-operator
-  revive:
-    enable-all-rules: true
+  exclusions:
+    paths:
+      - internal/sql-analyzer/parser
     rules:
-      - name: struct-tag
-        disabled: true
-      - name: var-naming
-        disabled: true
-      - name: comment-spacings
-        disabled: true
-      - name: exported
-        disabled: true
-      - name: unused-receiver
-        disabled: true
-      - name: file-header
-        disabled: true
-      - name: line-length-limit
-        disabled: true
-      - name: function-length
-        disabled: true
-      - name: max-public-structs
-        disabled: true
-      - name: function-result-limit
-        disabled: true
-      - name: banned-characters
-        disabled: true
-      - name: argument-limit
-        disabled: true
-      - name: cognitive-complexity
-        disabled: true
-      - name: cyclomatic
-        disabled: true
-      - name: confusing-results
-        disabled: true
-      - name: add-constant
-        disabled: true
-      - name: flag-parameter
-        disabled: true
-      - name: nested-structs
-        disabled: true
-      - name: import-shadowing
-        disabled: true
-      - name: early-return
-        disabled: true
-      - name: deep-exit
-        disabled: true
+      - path: _test\.go
+        linters:
+          - errcheck
+          - revive
+          - unused
+      - text: "Error return value of .*.Close is not checked"
+        linters:
+          - errcheck
+      - text: "Error return value of .*MarkFlagRequired is not checked"
+        linters:
+          - errcheck
+      - text: "Error return value of .*Stop is not checked"
+        linters:
+          - errcheck
+      - text: "Error return value of os.*Setenv is not checked"
+        linters:
+          - errcheck
+
+  settings:
+    errcheck:
+      exclude-functions:
+        - (*os.File).Close
+        - (*net/http.Response).Body.Close
+        - (*database/sql.DB).Close
+        - (*database/sql.Conn).Close
+        - (*github.com/spf13/cobra.Command).MarkFlagRequired
+        - (*github.com/oceanbase/ob-operator/internal/server.HTTPServer).Stop
+        - io.ReadCloser.Close
+        - io.Closer.Close
+    gocritic:
+      disabled-checks:
+        - ifElseChain
+    revive:
+      enable-all-rules: true
+      rules:
+        - name: struct-tag
+          disabled: true
+        - name: var-naming
+          disabled: true
+        - name: comment-spacings
+          disabled: true
+        - name: exported
+          disabled: true
+        - name: unused-receiver
+          disabled: true
+        - name: file-header
+          disabled: true
+        - name: line-length-limit
+          disabled: true
+        - name: function-length
+          disabled: true
+        - name: max-public-structs
+          disabled: true
+        - name: function-result-limit
+          disabled: true
+        - name: banned-characters
+          disabled: true
+        - name: argument-limit
+          disabled: true
+        - name: cognitive-complexity
+          disabled: true
+        - name: cyclomatic
+          disabled: true
+        - name: confusing-results
+          disabled: true
+        - name: add-constant
+          disabled: true
+        - name: flag-parameter
+          disabled: true
+        - name: nested-structs
+          disabled: true
+        - name: import-shadowing
+          disabled: true
+        - name: early-return
+          disabled: true
+        - name: deep-exit
+          disabled: true

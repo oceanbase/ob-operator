@@ -38,6 +38,7 @@ type CreateOBTenantParam struct {
 	// Enum: express_oltp, express_oltp, olap, kv, htap, express_oltp_perf
 	Scenario           string          `json:"scenario" binding:"required"`
 	DeletionProtection bool            `json:"deletionProtection"`
+	EnableSQLAnalyzer  bool            `json:"enableSqlAnalyzer,omitempty"`
 	Parameters         []common.KVPair `json:"parameters"`
 	Variables          []common.KVPair `json:"variables"`
 }

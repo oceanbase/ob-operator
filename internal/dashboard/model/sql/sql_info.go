@@ -22,19 +22,36 @@ type SqlStatisticMetric struct {
 }
 
 type SqlDiagnoseInfo struct {
-	Reason     string `json:"reason" binding:"required"`
-	Suggestion string `json:"suggestion,omitempty"`
+	RuleName   string `json:"ruleName"`
+	Level      string `json:"level"`
+	Reason     string `json:"reason"`
+	Suggestion string `json:"suggestion"`
 }
 
 type SqlMetaInfo struct {
-	OBServer string `json:"observer" binding:"required"`
-	Tenant   string `json:"tenant" binding:"required"`
-	User     string `json:"user" binding:"required"`
-	Database string `json:"database" binding:"required"`
-	SqlType  string `json:"sqlType" binding:"required"`
-	SqlID    string `json:"sqlID" binding:"required"`
-	IsInner  bool   `json:"isInner" binding:"required"`
-	SqlText  string `json:"sqlText" binding:"required"`
+	SvrIP      string `json:"svrIp"`
+	SvrPort    int64  `json:"svrPort"`
+	TenantId   uint64 `json:"tenantId"`
+	TenantName string `json:"tenantName"`
+	UserId     int64  `json:"userId"`
+	UserName   string `json:"userName"`
+	DBId       uint64 `json:"dbId"`
+	DBName     string `json:"dbName"`
+	SqlId      string `json:"sqlId"`
+	PlanId     int64  `json:"planId"`
+
+	QuerySql          string `json:"querySql"`
+	ClientIp          string `json:"clientIp"`
+	Event             string `json:"event"`
+	FormatSqlId       string `json:"formatSqlId"`
+	EffectiveTenantId uint64 `json:"effectiveTenantId"`
+	TraceId           string `json:"traceId"`
+	Sid               uint64 `json:"sid"`
+	UserClientIp      string `json:"userClientIp"`
+	TxId              string `json:"txId"`
+	SubPlanCount      int64  `json:"subPlanCount"`
+	LastFailInfo      int64  `json:"lastFailInfo"`
+	CauseType         int64  `json:"causeType"`
 }
 
 type SqlInfo struct {
@@ -45,9 +62,17 @@ type SqlInfo struct {
 }
 
 type SqlDetailedInfo struct {
+	DiagnoseInfo []SqlDiagnoseInfo `json:"diagnoseInfo,omitempty"`
+	Plans        []PlanStatistic   `json:"plans" binding:"required"`
+	Indexies     []IndexInfo       `json:"indexies,omitempty"`
+}
+
+type SqlHistoryInfo struct {
 	ExecutionTrend []response.MetricData `json:"executionTrend" binding:"required"`
 	LatencyTrend   []response.MetricData `json:"latencyTrend" binding:"required"`
-	DiagnoseInfo   []SqlDiagnoseInfo     `json:"diagnoseInfo,omitempty"`
-	Plans          []PlanStatistic       `json:"plans" binding:"required"`
-	Indexies       []IndexInfo           `json:"indexies,omitempty"`
+}
+
+type SqlStatsList struct {
+	Items      []SqlInfo `json:"items"`
+	TotalCount int64     `json:"totalCount"`
 }

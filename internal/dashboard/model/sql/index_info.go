@@ -12,27 +12,11 @@ See the Mulan PSL v2 for more details.
 
 package sql
 
-type IndexCategory string
-type IndexStatus string
-
-const (
-	IndexCategoryPrimaryKey   IndexCategory = "primaryKey"
-	IndexCategoryGlobalNormal IndexCategory = "globalNormal"
-	IndexCategoryGlobalUnique IndexCategory = "globalUnique"
-	IndexCategoryLocalNormal  IndexCategory = "localNormal"
-	IndexCategoryLocalUnique  IndexCategory = "localUnique"
-)
-
-const (
-	IndexStatusCreating  IndexStatus = "creating"
-	IndexStatusAvailable IndexStatus = "available"
-	IndexStatusError     IndexStatus = "error"
-)
-
 type IndexInfo struct {
-	TableName string        `json:"tableName" binding:"required"`
-	Category  IndexCategory `json:"category" binding:"required"`
-	IndexName string        `json:"indexName" binding:"required"`
-	Columns   []string      `json:"columns" binding:"required"`
-	Status    IndexStatus   `json:"status" binding:"required"`
+	TableName  string   `json:"tableName" binding:"required"`
+	IndexType  string   `json:"indexType" binding:"required"`
+	Uniqueness string   `json:"uniqueness" binding:"required"`
+	IndexName  string   `json:"indexName" binding:"required"`
+	Columns    []string `json:"columns" binding:"required"`
+	Status     string   `json:"status" binding:"required"`
 }

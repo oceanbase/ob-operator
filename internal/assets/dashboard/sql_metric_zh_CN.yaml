@@ -1,0 +1,342 @@
+- category: meta
+  metrics:
+    - key: query_sql
+      name: 查询SQL
+      description: "SQL语句"
+      unit: ""
+      displayByDefault: true
+      immutable: true
+    - key: db_name
+      name: 数据库名
+      description: "数据库名称"
+      unit: ""
+      displayByDefault: true
+      immutable: false
+    - key: user_name
+      name: 用户名
+      description: "用户名称"
+      unit: ""
+      displayByDefault: true
+      immutable: false
+    - key: sql_id
+      name: SQL ID
+      description: "SQL语句的ID"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: svr_ip
+      name: 服务器IP
+      description: "服务器的IP地址"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: svr_port
+      name: 服务器端口
+      description: "服务器的端口"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+- category: latency
+  metrics:
+    - key: elapsed_time
+      name: 响应时间
+      description: "SQL执行的总耗时"
+      unit: "ms"
+      displayByDefault: true
+      immutable: true
+    - key: execute_time
+      name: 执行时间
+      description: "SQL执行阶段的耗时"
+      unit: "ms"
+      displayByDefault: true
+      immutable: false
+    - key: queue_time
+      name: 排队时间
+      description: "SQL在队列中等待执行的总时间"
+      unit: "ms"
+      displayByDefault: true
+      immutable: false
+    - key: get_plan_time
+      name: 获取计划时间
+      description: "获取执行计划的耗时"
+      unit: "ms"
+      displayByDefault: true
+      immutable: false
+    - key: wait_time_micro
+      name: 等待时间
+      description: "总等待时间"
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: total_wait_time_micro
+      name: 总等待时间
+      description: "包括所有事件的总等待时间"
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: net_time
+      name: 网络时间
+      description: "网络传输耗时"
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: net_wait_time
+      name: 网络等待时间
+      description: "网络I/O等待时间"
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: decode_time
+      name: 解码时间
+      description: "解码耗时"
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: application_wait_time
+      name: 应用等待时间
+      description: "应用等待时间"
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: concurrency_wait_time
+      name: 并发等待时间
+      description: "并发控制等待时间"
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: user_io_wait_time
+      name: 用户I/O等待时间
+      description: "用户I/O等待时间"
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: schedule_time
+      name: 调度时间
+      description: "调度耗时"
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: event_0_wait_time_sum
+      name: "事件0等待时间"
+      description: "事件0的等待时间"
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: event_1_wait_time_sum
+      name: "事件1等待时间"
+      description: "事件1的等待时间"
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: event_2_wait_time_sum
+      name: "事件2等待时间"
+      description: "事件2的等待时间"
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+    - key: event_3_wait_time_sum
+      name: "事件3等待时间"
+      description: "事件3的等待时间"
+      unit: "ms"
+      displayByDefault: false
+      immutable: false
+- category: execution
+  metrics:
+    - key: executions
+      name: 执行次数
+      description: "SQL执行总次数"
+      unit: ""
+      displayByDefault: true
+      immutable: false
+    - key: affected_rows
+      name: 影响行数
+      description: "SQL影响的行数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: return_rows
+      name: 返回行数
+      description: "SQL返回的行数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: partition_count
+      name: 分区数
+      description: "访问的分区数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: retry_count
+      name: 重试次数
+      description: "重试次数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: disk_reads
+      name: 磁盘读
+      description: "磁盘读取次数"
+      unit: ""
+      displayByDefault: true
+      immutable: false
+    - key: rpc_count
+      name: RPC次数
+      description: "RPC调用次数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: memstore_read_row_count
+      name: Memstore读取行数
+      description: "从memstore读取的行数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: ssstore_read_row_count
+      name: SSStore读取行数
+      description: "从ssstore读取的行数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: request_memory_used
+      name: 请求内存使用
+      description: "请求使用的内存"
+      unit: "bytes"
+      displayByDefault: false
+      immutable: false
+    - key: row_cache_hit
+      name: 行缓存命中率
+      description: "行缓存命中率"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: bloom_filter_cache_hit
+      name: 布隆过滤器缓存命中率
+      description: "布隆过滤器缓存命中率"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: block_cache_hit
+      name: 块缓存命中率
+      description: "块缓存命中率"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: index_block_cache_hit
+      name: 索引块缓存命中率
+      description: "索引块缓存命中率"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: expected_worker_count
+      name: 期望工作线程数
+      description: "期望的工作线程数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: used_worker_count
+      name: 使用工作线程数
+      description: "使用的工作线程数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: table_scan
+      name: 表扫描
+      description: "表扫描次数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: consistency_level_strong_count
+      name: 强一致性读计数
+      description: "强一致性读次数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: consistency_level_weak_count
+      name: 弱一致性读计数
+      description: "弱一致性读次数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: fail_count_sum
+      name: 失败计数
+      description: "总失败次数"
+      unit: ""
+      displayByDefault: true
+      immutable: false
+    - key: ret_code_4012_count_sum
+      name: "返回码4012计数"
+      description: "返回码4012的次数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: ret_code_4013_count_sum
+      name: "返回码4013计数"
+      description: "返回码4013的次数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: ret_code_5001_count_sum
+      name: "返回码5001计数"
+      description: "返回码5001的次数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: ret_code_5024_count_sum
+      name: "返回码5024计数"
+      description: "返回码5024的次数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: ret_code_5167_count_sum
+      name: "返回码5167计数"
+      description: "返回码5167的次数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: ret_code_5217_count_sum
+      name: "返回码5217计数"
+      description: "返回码5217的次数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: ret_code_6002_count_sum
+      name: "返回码6002计数"
+      description: "返回码6002的次数"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: plan_type_local_count
+      name: "本地计划计数"
+      description: "本地计划的数量"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: plan_type_remote_count
+      name: "远程计划计数"
+      description: "远程计划的数量"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: plan_type_distributed_count
+      name: "分布式计划计数"
+      description: "分布式计划的数量"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: inner_sql_count
+      name: "内部SQL计数"
+      description: "内部SQL的数量"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: miss_plan_count
+      name: "计划未命中计数"
+      description: "计划缓存未命中的数量"
+      unit: ""
+      displayByDefault: false
+      immutable: false
+    - key: executor_rpc_count
+      name: "执行器RPC计数"
+      description: "执行器RPC的数量"
+      unit: ""
+      displayByDefault: false
+      immutable: false

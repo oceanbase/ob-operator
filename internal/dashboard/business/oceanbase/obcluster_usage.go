@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/go-logr/logr"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/clients"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
@@ -68,8 +69,10 @@ func GetOBClusterUsages(ctx context.Context, nn *param.K8sObjectIdentity) (*resp
 	}
 	if manager == nil {
 		return nil, httpErr.NewInternal("no running observer is connectable")
+	} else {
+		managerLogger := logr.FromContextOrDiscard(ctx)
+		manager.Logger = &managerLogger
 	}
-	defer manager.Close()
 
 	parameters, err := manager.GetParameter(ctx, "__min_full_resource_pool_memory", nil)
 	if err != nil {

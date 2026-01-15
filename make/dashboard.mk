@@ -23,10 +23,10 @@ UNFMT_FILES ?= $(shell gofmt -l -s $(filter-out , $(GOFILES)))
 
 .PHONY: dashboard-doc-gen
 dashboard-doc-gen: dashboard-dep-install ## Generate swagger docs
-	swag init -g cmd/dashboard/main.go -o internal/dashboard/generated/swagger
+	swag init -g cmd/dashboard/main.go -o internal/dashboard/generated/swagger --exclude ./internal/sql-analyzer
 
-.PHONY: dashboard-build
-dashboard-build: dashboard-bindata-gen dashboard-doc-gen ## Build oceanbase-dashboard
+.PHONY: dashboard
+dashboard: dashboard-bindata-gen dashboard-doc-gen ## Build oceanbase-dashboard
 	$(GOBUILD) -o bin/oceanbase-dashboard ./cmd/dashboard/main.go
 
 .PHONY: dashboard-bindata-gen
@@ -51,8 +51,8 @@ dashboard-dep-install: ## Install dependencies for oceanbase-dashboard
 dashboard-run: ## Run oceanbase-dashboard in dev mode
 	go run $(BUILD_FLAG) ./cmd/dashboard/main.go
 
-.PHONY: dashboard-docker-build
-dashboard-docker-build: ## build oceanbase-dashboard image
+.PHONY: dashboard-image
+dashboard-image: ## build oceanbase-dashboard image
 	$(eval DOCKER_BUILD_ARGS :=)
 	$(if $(GOPROXY),$(eval DOCKER_BUILD_ARGS := --build-arg GOPROXY=$(GOPROXY)))
 	docker build $(DOCKER_BUILD_ARGS) -t ${DASHBOARD_IMG} -f build/Dockerfile.dashboard .

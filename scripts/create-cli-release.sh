@@ -31,7 +31,7 @@ function build_binary {
     for os in "${platforms[@]}"; do
         for arch in "${arch_list[@]}"; do
             echo "Building $os-$arch"
-            make cli-build GOOS=$os GOARCH=$arch BUILD_DIR=output/
+            make okctl GOOS=$os GOARCH=$arch BUILD_DIR=output/
             if [ $? -ne 0 ]; then
                 echo "Build failed for $os-$arch"
                 exit 1

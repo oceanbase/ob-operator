@@ -18,3 +18,15 @@ data:
         ttlSecondsAfterFinished: {{ .Values.job.inspection.ttlSecondsAfterFinished }}
       normal:
         ttlSecondsAfterFinished: {{ .Values.job.normal.ttlSecondsAfterFinished }}
+    sqlAnalyzer:
+      image: {{ .Values.sqlAnalyzer.image }}
+      retentionDays: {{ .Values.sqlAnalyzer.retentionDays }}
+      storageSize: {{ .Values.sqlAnalyzer.storageSize }}
+      collectionIntervalSeconds: {{ .Values.sqlAnalyzer.collectionIntervalSeconds }}
+      compactionIntervalSeconds: {{ .Values.sqlAnalyzer.compactionIntervalSeconds }}
+      cpuRequest: {{ .Values.sqlAnalyzer.cpuRequest }}
+      cpuLimit: {{ .Values.sqlAnalyzer.cpuLimit }}
+      memoryRequest: {{ .Values.sqlAnalyzer.memoryRequest }}
+      memoryLimit: {{ .Values.sqlAnalyzer.memoryLimit }}
+      sqlAuditLimit: {{ .Values.sqlAnalyzer.sqlAuditLimit }}
+      slowSqlThresholdMilliSeconds: {{ .Values.sqlAnalyzer.slowSqlThresholdMilliSeconds }}

@@ -29,7 +29,7 @@ Currently okctl is not released, you can build it from source code.
 ### Build okctl from source code
 
 ```bash
-make cli-build
+make okctl
 ```
 
 If build successfully, you can find the binary file in `./bin/okctl`, you can copy it to your `PATH` by the following command.
