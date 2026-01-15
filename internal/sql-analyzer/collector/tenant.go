@@ -17,8 +17,8 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/oceanbase/ob-operator/internal/sql-analyzer/model"
 	sqlconst "github.com/oceanbase/ob-operator/internal/sql-analyzer/const/sql"
+	"github.com/oceanbase/ob-operator/internal/sql-analyzer/model"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/oceanbase"
 )
 
