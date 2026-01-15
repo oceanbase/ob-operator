@@ -71,7 +71,6 @@ func NewSqlAuditStore(c context.Context, path string) (*SqlAuditStore, error) {
 	}
 
 	store := &SqlAuditStore{db: db, path: path, ctx: c}
-	store.StartCleanupWorker()
 	return store, nil
 }
 

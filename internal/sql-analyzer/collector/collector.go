@@ -25,6 +25,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/model"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/store"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -76,6 +77,14 @@ func (c *Collector) Init() error {
 		return fmt.Errorf("failed to initialize sql plan store: %w", err)
 	}
 	c.SqlPlanStore = planStore
+
+	err = c.SqlPlanStore.InitSqlPlanTable()
+	if err != nil {
+		c.SqlPlanStore.Close()
+		return errors.Wrap(err, "Failed to init sql plan table")
+	}
+
+	c.SqlAuditStore.StartCleanupWorker()
 
 	obtenant, err := clients.GetOBTenant(c.Ctx, types.NamespacedName{
 		Namespace: c.Config.Namespace,

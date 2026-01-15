@@ -35,7 +35,7 @@ type PlanStore struct {
 	mu  sync.RWMutex
 }
 
-func (s *PlanStore) initSqlPlanTable() error {
+func (s *PlanStore) InitSqlPlanTable() error {
 	// Create table if not exists
 	_, err := s.db.Exec(sqlconst.CreateSqlPlanTable)
 	return err
@@ -88,11 +88,6 @@ func NewPlanStore(c context.Context, path string, readOnly bool) (*PlanStore, er
 	conn.Close() // Close the temporary connection, the pool will manage connections from here.
 
 	s := &PlanStore{db: db, ctx: c}
-	err = s.initSqlPlanTable()
-	if err != nil {
-		db.Close()
-		return nil, err
-	}
 	return s, nil
 }
 
