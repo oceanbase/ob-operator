@@ -33,10 +33,6 @@ import (
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/router"
 )
 
-const (
-	PlanWorkerCount = 4
-)
-
 func newLogger(filename string, level string) *logrus.Logger {
 	l := logrus.New()
 	l.SetOutput(io.MultiWriter(os.Stdout, &lumberjack.Logger{
@@ -159,13 +155,35 @@ func main() {
 	}
 
 	// Configure worker num
-	workerNum := 1
+	workerNum := 4
 	workerNumStr := os.Getenv("PLAN_WORKER_NUM")
 	if workerNumStr != "" {
 		if val, err := strconv.Atoi(workerNumStr); err == nil && val > 0 {
 			workerNum = val
 		} else {
-			analyzerLogger.Warnf("Invalid PLAN_WORKER_NUM value '%s', using default of 1.", workerNumStr)
+			analyzerLogger.Warnf("Invalid PLAN_WORKER_NUM value '%s', using default of 4.", workerNumStr)
+		}
+	}
+
+	// Configure queue size
+	queueSize := 100
+	queueSizeStr := os.Getenv("PLAN_QUEUE_SIZE")
+	if queueSizeStr != "" {
+		if val, err := strconv.Atoi(queueSizeStr); err == nil && val > 0 {
+			queueSize = val
+		} else {
+			analyzerLogger.Warnf("Invalid PLAN_QUEUE_SIZE value '%s', using default of 100.", queueSizeStr)
+		}
+	}
+
+	// Configure plan cache size
+	planCacheSize := 10000
+	planCacheSizeStr := os.Getenv("PLAN_CACHE_SIZE")
+	if planCacheSizeStr != "" {
+		if val, err := strconv.Atoi(planCacheSizeStr); err == nil && val > 0 {
+			planCacheSize = val
+		} else {
+			analyzerLogger.Warnf("Invalid PLAN_CACHE_SIZE value '%s', using default of 10000.", planCacheSizeStr)
 		}
 	}
 
@@ -177,9 +195,9 @@ func main() {
 		CompactionThreshold:          compactionThreshold,
 		SqlAuditLimit:                sqlAuditLimit,
 		SlowSqlThresholdMilliSeconds: slowSqlThresholdMilliSeconds,
-		// config via environment variable
-		QueueSize: 100,
-		WorkerNum: workerNum,
+		QueueSize:                    queueSize,
+		WorkerNum:                    workerNum,
+		PlanCacheSize:                planCacheSize,
 	}
 
 	collector := collector.NewCollector(ctx, config, collectorLogger)

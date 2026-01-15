@@ -25,4 +25,5 @@ type Config struct {
 	CompactionThreshold          int
 	SqlAuditLimit                int
 	SlowSqlThresholdMilliSeconds int
+	PlanCacheSize                int
 }

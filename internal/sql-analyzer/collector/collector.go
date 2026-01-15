@@ -30,10 +30,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-const (
-	LRU_CACHE_SIZE = 10000
-)
-
 type Collector struct {
 	Ctx                context.Context
 	Config             *config.Config
@@ -58,7 +54,7 @@ func NewCollector(ctx context.Context, config *config.Config, logger *logrus.Log
 		Logger:             logger,
 	}
 	var err error
-	c.PlanCache, err = lru.New[model.SqlPlanIdentifier, struct{}](LRU_CACHE_SIZE)
+	c.PlanCache, err = lru.New[model.SqlPlanIdentifier, struct{}](config.PlanCacheSize)
 	if err != nil {
 		logger.Fatalf("Failed to create LRU cache: %v", err)
 	}
