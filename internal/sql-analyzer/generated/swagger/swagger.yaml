@@ -1,0 +1,457 @@
+definitions:
+  model.APIResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+      successful:
+        type: boolean
+    required:
+    - data
+    - message
+    - successful
+    type: object
+  model.DailyTrend:
+    properties:
+      date:
+        type: string
+      value:
+        type: number
+    type: object
+  model.IndexInfo:
+    properties:
+      columns:
+        items:
+          type: string
+        type: array
+      indexName:
+        type: string
+      indexType:
+        type: string
+      status:
+        type: string
+      tableName:
+        type: string
+      uniqueness:
+        type: string
+    required:
+    - columns
+    - indexName
+    - indexType
+    - status
+    - tableName
+    - uniqueness
+    type: object
+  model.LatencyTrendItem:
+    properties:
+      time:
+        type: integer
+      value:
+        additionalProperties:
+          type: number
+        type: object
+    type: object
+  model.PlanStats:
+    properties:
+      cost:
+        type: integer
+      cpuCost:
+        type: integer
+      generatedTime:
+        type: integer
+      ioCost:
+        type: integer
+      planHash:
+        type: integer
+      planId:
+        type: integer
+      realCost:
+        type: integer
+      svrIp:
+        type: string
+      svrPort:
+        type: integer
+      tenantId:
+        type: integer
+    type: object
+  model.PlanTypeTrend:
+    properties:
+      distributed:
+        type: number
+      local:
+        type: number
+      remote:
+        type: number
+      time:
+        type: integer
+    type: object
+  model.QuerySqlStatsRequest:
+    properties:
+      databaseName:
+        example: db1
+        type: string
+      endTime:
+        example: 1731812400
+        type: integer
+      filterInnerSql:
+        type: boolean
+      outputColumns:
+        example:
+        - query_sql
+        - request_time
+        - affected_rows
+        items:
+          type: string
+        type: array
+      pageNum:
+        type: integer
+      pageSize:
+        type: integer
+      querySqlKeyword:
+        example: SELECT
+        type: string
+      sortByColumn:
+        example: request_time
+        type: string
+      sortOrder:
+        example: DESC
+        type: string
+      startTime:
+        example: 1731808800
+        type: integer
+      suspiciousOnly:
+        type: boolean
+      userName:
+        example: user1
+        type: string
+    required:
+    - endTime
+    - startTime
+    type: object
+  model.RequestStatisticsRequest:
+    properties:
+      database:
+        type: string
+      endTime:
+        type: integer
+      filterInnerSql:
+        type: boolean
+      startTime:
+        type: integer
+      user:
+        type: string
+    type: object
+  model.RequestStatisticsResponse:
+    properties:
+      executionTrend:
+        items:
+          $ref: '#/definitions/model.DailyTrend'
+        type: array
+      failedExecutions:
+        type: number
+      latencyTrend:
+        items:
+          $ref: '#/definitions/model.DailyTrend'
+        type: array
+      totalExecutions:
+        type: number
+      totalLatency:
+        type: number
+    type: object
+  model.SqlDetailRequest:
+    properties:
+      endTime:
+        type: integer
+      sqlId:
+        type: string
+      startTime:
+        type: integer
+    required:
+    - sqlId
+    type: object
+  model.SqlDetailResponse:
+    properties:
+      diagnoseInfo:
+        items:
+          $ref: '#/definitions/model.SqlDiagnoseInfo'
+        type: array
+      indexes:
+        items:
+          $ref: '#/definitions/model.IndexInfo'
+        type: array
+      plans:
+        items:
+          $ref: '#/definitions/model.PlanStats'
+        type: array
+      querySql:
+        type: string
+      tables:
+        items:
+          $ref: '#/definitions/model.TableInfo'
+        type: array
+    type: object
+  model.SqlDiagnoseInfo:
+    properties:
+      level:
+        type: string
+      reason:
+        type: string
+      ruleName:
+        type: string
+      suggestion:
+        type: string
+    type: object
+  model.SqlHistoryRequest:
+    properties:
+      endTime:
+        type: integer
+      interval:
+        type: integer
+      latencyColumns:
+        items:
+          type: string
+        type: array
+      sqlId:
+        type: string
+      startTime:
+        type: integer
+    required:
+    - interval
+    - sqlId
+    type: object
+  model.SqlHistoryResponse:
+    properties:
+      executionTrend:
+        items:
+          $ref: '#/definitions/model.PlanTypeTrend'
+        type: array
+      latencyTrend:
+        items:
+          $ref: '#/definitions/model.LatencyTrendItem'
+        type: array
+    type: object
+  model.SqlStatsItem:
+    properties:
+      causeType:
+        type: integer
+      clientIp:
+        type: string
+      dbId:
+        type: integer
+      dbName:
+        type: string
+      effectiveTenantId:
+        type: integer
+      event:
+        type: string
+      formatSqlId:
+        type: string
+      lastFailInfo:
+        type: integer
+      planId:
+        type: integer
+      querySql:
+        type: string
+      sid:
+        type: integer
+      sqlId:
+        type: string
+      statistics:
+        description: Metrics
+        items:
+          $ref: '#/definitions/model.StatisticItem'
+        type: array
+      subPlanCount:
+        type: integer
+      svrIp:
+        description: Dimensions
+        type: string
+      svrPort:
+        type: integer
+      tenantId:
+        type: integer
+      tenantName:
+        type: string
+      traceId:
+        type: string
+      txId:
+        type: string
+      userClientIp:
+        type: string
+      userId:
+        type: integer
+      userName:
+        type: string
+    type: object
+  model.SqlStatsResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/model.SqlStatsItem'
+        type: array
+      totalCount:
+        type: integer
+    type: object
+  model.StatisticItem:
+    properties:
+      name:
+        type: string
+      value:
+        type: number
+    type: object
+  model.TableInfo:
+    properties:
+      databaseName:
+        type: string
+      tableID:
+        type: integer
+      tableName:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /api/v1/stats/sql_detail:
+    post:
+      consumes:
+      - application/json
+      description: Get SQL detail info
+      operationId: GetSqlDetailInfo
+      parameters:
+      - description: sql detail request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.SqlDetailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SqlDetailResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get SQL detail info
+      tags:
+      - SQL
+  /api/v1/tenants/{tenant_name}/request-stats:
+    post:
+      consumes:
+      - application/json
+      description: Get request statistics
+      parameters:
+      - description: Tenant Name
+        in: path
+        name: tenant_name
+        required: true
+        type: string
+      - description: Query parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.RequestStatisticsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: A list of aggregated SQL statistics
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.RequestStatisticsResponse'
+              type: object
+        "400":
+          description: 'Error: Invalid request'
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "500":
+          description: 'Error: Internal server error'
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      summary: Get request statistics
+      tags:
+      - sql-analyzer
+  /api/v1/tenants/{tenant_name}/sql-history:
+    post:
+      consumes:
+      - application/json
+      description: Get SQL history info
+      operationId: GetSqlHistoryInfo
+      parameters:
+      - description: sql history request
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/model.SqlHistoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SqlHistoryResponse'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get SQL history info
+      tags:
+      - SQL
+  /api/v1/tenants/{tenant_name}/sql-stats:
+    post:
+      consumes:
+      - application/json
+      description: Query SQL statistics data within a given time range and with optional
+        filters.
+      parameters:
+      - description: Tenant Name
+        in: path
+        name: tenant_name
+        required: true
+        type: string
+      - description: Query parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.QuerySqlStatsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: A list of aggregated SQL statistics
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.SqlStatsResponse'
+              type: object
+        "400":
+          description: 'Error: Invalid request'
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+        "500":
+          description: 'Error: Internal server error'
+          schema:
+            $ref: '#/definitions/model.APIResponse'
+      summary: Query SQL statistics
+      tags:
+      - sql-analyzer
+swagger: "2.0"

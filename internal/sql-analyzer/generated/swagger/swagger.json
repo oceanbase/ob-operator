@@ -1,0 +1,696 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/api/v1/stats/sql_detail": {
+            "post": {
+                "description": "Get SQL detail info",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SQL"
+                ],
+                "summary": "Get SQL detail info",
+                "operationId": "GetSqlDetailInfo",
+                "parameters": [
+                    {
+                        "description": "sql detail request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.SqlDetailRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SqlDetailResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants/{tenant_name}/request-stats": {
+            "post": {
+                "description": "Get request statistics",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sql-analyzer"
+                ],
+                "summary": "Get request statistics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Name",
+                        "name": "tenant_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Query parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.RequestStatisticsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "A list of aggregated SQL statistics",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/model.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.RequestStatisticsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Error: Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/model.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error: Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.APIResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants/{tenant_name}/sql-history": {
+            "post": {
+                "description": "Get SQL history info",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "SQL"
+                ],
+                "summary": "Get SQL history info",
+                "operationId": "GetSqlHistoryInfo",
+                "parameters": [
+                    {
+                        "description": "sql history request",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.SqlHistoryRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.SqlHistoryResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/tenants/{tenant_name}/sql-stats": {
+            "post": {
+                "description": "Query SQL statistics data within a given time range and with optional filters.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "sql-analyzer"
+                ],
+                "summary": "Query SQL statistics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Tenant Name",
+                        "name": "tenant_name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Query parameters",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.QuerySqlStatsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "A list of aggregated SQL statistics",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/model.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/model.SqlStatsResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Error: Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/model.APIResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Error: Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/model.APIResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "model.APIResponse": {
+            "type": "object",
+            "required": [
+                "data",
+                "message",
+                "successful"
+            ],
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string"
+                },
+                "successful": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "model.DailyTrend": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "number"
+                }
+            }
+        },
+        "model.IndexInfo": {
+            "type": "object",
+            "required": [
+                "columns",
+                "indexName",
+                "indexType",
+                "status",
+                "tableName",
+                "uniqueness"
+            ],
+            "properties": {
+                "columns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "indexName": {
+                    "type": "string"
+                },
+                "indexType": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "tableName": {
+                    "type": "string"
+                },
+                "uniqueness": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.LatencyTrendItem": {
+            "type": "object",
+            "properties": {
+                "time": {
+                    "type": "integer"
+                },
+                "value": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "number"
+                    }
+                }
+            }
+        },
+        "model.PlanStats": {
+            "type": "object",
+            "properties": {
+                "cost": {
+                    "type": "integer"
+                },
+                "cpuCost": {
+                    "type": "integer"
+                },
+                "generatedTime": {
+                    "type": "integer"
+                },
+                "ioCost": {
+                    "type": "integer"
+                },
+                "planHash": {
+                    "type": "integer"
+                },
+                "planId": {
+                    "type": "integer"
+                },
+                "realCost": {
+                    "type": "integer"
+                },
+                "svrIp": {
+                    "type": "string"
+                },
+                "svrPort": {
+                    "type": "integer"
+                },
+                "tenantId": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.PlanTypeTrend": {
+            "type": "object",
+            "properties": {
+                "distributed": {
+                    "type": "number"
+                },
+                "local": {
+                    "type": "number"
+                },
+                "remote": {
+                    "type": "number"
+                },
+                "time": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.QuerySqlStatsRequest": {
+            "type": "object",
+            "required": [
+                "endTime",
+                "startTime"
+            ],
+            "properties": {
+                "databaseName": {
+                    "type": "string",
+                    "example": "db1"
+                },
+                "endTime": {
+                    "type": "integer",
+                    "example": 1731812400
+                },
+                "filterInnerSql": {
+                    "type": "boolean"
+                },
+                "outputColumns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "query_sql",
+                        "request_time",
+                        "affected_rows"
+                    ]
+                },
+                "pageNum": {
+                    "type": "integer"
+                },
+                "pageSize": {
+                    "type": "integer"
+                },
+                "querySqlKeyword": {
+                    "type": "string",
+                    "example": "SELECT"
+                },
+                "sortByColumn": {
+                    "type": "string",
+                    "example": "request_time"
+                },
+                "sortOrder": {
+                    "type": "string",
+                    "example": "DESC"
+                },
+                "startTime": {
+                    "type": "integer",
+                    "example": 1731808800
+                },
+                "suspiciousOnly": {
+                    "type": "boolean"
+                },
+                "userName": {
+                    "type": "string",
+                    "example": "user1"
+                }
+            }
+        },
+        "model.RequestStatisticsRequest": {
+            "type": "object",
+            "properties": {
+                "database": {
+                    "type": "string"
+                },
+                "endTime": {
+                    "type": "integer"
+                },
+                "filterInnerSql": {
+                    "type": "boolean"
+                },
+                "startTime": {
+                    "type": "integer"
+                },
+                "user": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.RequestStatisticsResponse": {
+            "type": "object",
+            "properties": {
+                "executionTrend": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.DailyTrend"
+                    }
+                },
+                "failedExecutions": {
+                    "type": "number"
+                },
+                "latencyTrend": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.DailyTrend"
+                    }
+                },
+                "totalExecutions": {
+                    "type": "number"
+                },
+                "totalLatency": {
+                    "type": "number"
+                }
+            }
+        },
+        "model.SqlDetailRequest": {
+            "type": "object",
+            "required": [
+                "sqlId"
+            ],
+            "properties": {
+                "endTime": {
+                    "type": "integer"
+                },
+                "sqlId": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.SqlDetailResponse": {
+            "type": "object",
+            "properties": {
+                "diagnoseInfo": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SqlDiagnoseInfo"
+                    }
+                },
+                "indexes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.IndexInfo"
+                    }
+                },
+                "plans": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.PlanStats"
+                    }
+                },
+                "querySql": {
+                    "type": "string"
+                },
+                "tables": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.TableInfo"
+                    }
+                }
+            }
+        },
+        "model.SqlDiagnoseInfo": {
+            "type": "object",
+            "properties": {
+                "level": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "ruleName": {
+                    "type": "string"
+                },
+                "suggestion": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SqlHistoryRequest": {
+            "type": "object",
+            "required": [
+                "interval",
+                "sqlId"
+            ],
+            "properties": {
+                "endTime": {
+                    "type": "integer"
+                },
+                "interval": {
+                    "type": "integer"
+                },
+                "latencyColumns": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "sqlId": {
+                    "type": "string"
+                },
+                "startTime": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.SqlHistoryResponse": {
+            "type": "object",
+            "properties": {
+                "executionTrend": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.PlanTypeTrend"
+                    }
+                },
+                "latencyTrend": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.LatencyTrendItem"
+                    }
+                }
+            }
+        },
+        "model.SqlStatsItem": {
+            "type": "object",
+            "properties": {
+                "causeType": {
+                    "type": "integer"
+                },
+                "clientIp": {
+                    "type": "string"
+                },
+                "dbId": {
+                    "type": "integer"
+                },
+                "dbName": {
+                    "type": "string"
+                },
+                "effectiveTenantId": {
+                    "type": "integer"
+                },
+                "event": {
+                    "type": "string"
+                },
+                "formatSqlId": {
+                    "type": "string"
+                },
+                "lastFailInfo": {
+                    "type": "integer"
+                },
+                "planId": {
+                    "type": "integer"
+                },
+                "querySql": {
+                    "type": "string"
+                },
+                "sid": {
+                    "type": "integer"
+                },
+                "sqlId": {
+                    "type": "string"
+                },
+                "statistics": {
+                    "description": "Metrics",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.StatisticItem"
+                    }
+                },
+                "subPlanCount": {
+                    "type": "integer"
+                },
+                "svrIp": {
+                    "description": "Dimensions",
+                    "type": "string"
+                },
+                "svrPort": {
+                    "type": "integer"
+                },
+                "tenantId": {
+                    "type": "integer"
+                },
+                "tenantName": {
+                    "type": "string"
+                },
+                "traceId": {
+                    "type": "string"
+                },
+                "txId": {
+                    "type": "string"
+                },
+                "userClientIp": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "integer"
+                },
+                "userName": {
+                    "type": "string"
+                }
+            }
+        },
+        "model.SqlStatsResponse": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.SqlStatsItem"
+                    }
+                },
+                "totalCount": {
+                    "type": "integer"
+                }
+            }
+        },
+        "model.StatisticItem": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "value": {
+                    "type": "number"
+                }
+            }
+        },
+        "model.TableInfo": {
+            "type": "object",
+            "properties": {
+                "databaseName": {
+                    "type": "string"
+                },
+                "tableID": {
+                    "type": "integer"
+                },
+                "tableName": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}
