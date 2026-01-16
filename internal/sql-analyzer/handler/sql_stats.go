@@ -14,7 +14,6 @@ package handler
 
 import (
 	"os"
-	"path/filepath"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -56,17 +55,6 @@ func QuerySqlStats(c *gin.Context) (*model.SqlStatsResponse, error) {
 		req.PageSize = 10
 	}
 
-	dataPath := os.Getenv("DATA_PATH")
-	if dataPath == "" {
-		dataPath = "/data"
-	}
-
-	auditStore, err := store.NewSqlAuditStore(c.Request.Context(), filepath.Join(dataPath, "sql_audit"), l)
-	if err != nil {
-		return nil, err
-	}
-	defer auditStore.Close()
-
 	slowSqlThresholdMilliSeconds := 1000 // milliseconds
 	slowSqlThresholdMilliSecondsStr := os.Getenv("SLOW_SQL_THRESHOLD_MILLISECONDS")
 	if slowSqlThresholdMilliSecondsStr != "" {
@@ -79,6 +67,6 @@ func QuerySqlStats(c *gin.Context) (*model.SqlStatsResponse, error) {
 		SlowSqlThresholdMilliSeconds: slowSqlThresholdMilliSeconds,
 	}
 
-	service := business.NewSqlStatsService(auditStore, conf, l)
+	service := business.NewSqlStatsService(store.GetSqlAuditStore(), conf, l)
 	return service.QuerySqlStats(&req)
 }

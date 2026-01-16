@@ -15,7 +15,6 @@ package collector
 import (
 	"context"
 	"fmt" // Added import
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -53,6 +52,8 @@ func NewCollector(ctx context.Context, config *config.Config, logger *logrus.Log
 		PlanIdentifierChan: make(chan *model.SqlPlanIdentifier, config.QueueSize),
 		CompactionChan:     make(chan struct{}, 1),
 		Logger:             logger,
+		SqlAuditStore:      store.GetSqlAuditStore(),
+		SqlPlanStore:       store.GetPlanStore(),
 	}
 	var err error
 	c.PlanCache, err = lru.New[model.SqlPlanIdentifier, struct{}](config.PlanCacheSize)
@@ -63,21 +64,9 @@ func NewCollector(ctx context.Context, config *config.Config, logger *logrus.Log
 }
 
 func (c *Collector) Init() error {
-	sqlAuditStore, err := store.NewSqlAuditStore(c.Ctx, filepath.Join(c.Config.DataPath, "sql_audit"), c.Logger)
+	err := c.SqlPlanStore.InitSqlPlanTable()
 	if err != nil {
-		return fmt.Errorf("failed to initialize sql audit store: %w", err)
-	}
-	c.SqlAuditStore = sqlAuditStore
-
-	planStore, err := store.NewPlanStore(c.Ctx, filepath.Join(c.Config.DataPath, "sql_plan"), c.Logger)
-	if err != nil {
-		return fmt.Errorf("failed to initialize sql plan store: %w", err)
-	}
-	c.SqlPlanStore = planStore
-
-	err = c.SqlPlanStore.InitSqlPlanTable()
-	if err != nil {
-		c.SqlPlanStore.Close()
+		// c.SqlPlanStore.Close() // Global store, don't close
 		return errors.Wrap(err, "Failed to init sql plan table")
 	}
 
@@ -101,7 +90,7 @@ func (c *Collector) Init() error {
 	connectionManager := oceanbase.NewConnectionManager(c.Ctx, obcluster)
 	c.ConnectionManager = connectionManager
 
-	lastRequestIDs, err := sqlAuditStore.GetLastRequestIDs()
+	lastRequestIDs, err := c.SqlAuditStore.GetLastRequestIDs()
 	if err != nil {
 		return fmt.Errorf("failed to load request id from duckdb: %w", err)
 	} else {
@@ -112,7 +101,7 @@ func (c *Collector) Init() error {
 	c.RequestIdMap = lastRequestIDs
 
 	// what if there's a huge number of plans
-	existingPlans, err := planStore.LoadExistingPlans()
+	existingPlans, err := c.SqlPlanStore.LoadExistingPlans()
 	if err != nil {
 		return fmt.Errorf("failed to load plan identities from duckdb: %w", err)
 	}
@@ -130,8 +119,7 @@ func (c *Collector) Init() error {
 }
 
 func (c *Collector) Stop() {
-	defer c.SqlAuditStore.Close()
-	defer c.SqlPlanStore.Close()
+	// Stores are closed globally
 }
 
 func (c *Collector) Start() {

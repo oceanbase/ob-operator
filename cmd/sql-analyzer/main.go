@@ -15,6 +15,8 @@ package main
 import (
 	"context"
 	"io"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -31,6 +33,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/config"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/handler"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/router"
+	"github.com/oceanbase/ob-operator/internal/sql-analyzer/store"
 )
 
 func newLogger(filename string, level string) *logrus.Logger {
@@ -99,6 +102,16 @@ func main() {
 
 	// Set analyzer logger for handlers
 	handler.HandlerLogger = analyzerLogger
+
+	// Start pprof if enabled
+	if os.Getenv("ENABLE_PPROF") == "true" {
+		go func() {
+			analyzerLogger.Info("Starting pprof server on :6060")
+			if err := http.ListenAndServe("0.0.0.0:6060", nil); err != nil {
+				analyzerLogger.WithError(err).Error("Failed to start pprof server")
+			}
+		}()
+	}
 
 	// Set up a context that is canceled on interruption signals.
 	ctx, cancel := context.WithCancel(context.Background())
@@ -200,6 +213,11 @@ func main() {
 		PlanCacheSize:                planCacheSize,
 	}
 
+	// Initialize Stores
+	if err := store.InitGlobalStores(ctx, config.DataPath, collectorLogger); err != nil {
+		collectorLogger.Fatalf("Failed to initialize stores: %v", err)
+	}
+
 	collector := collector.NewCollector(ctx, config, collectorLogger)
 	if err := collector.Init(); err != nil {
 		collectorLogger.Fatalf("Failed to initialize collector: %v", err)
@@ -211,9 +229,10 @@ func main() {
 	<-sigChan
 	analyzerLogger.Info("Shutdown signal received, stopping...")
 	// Trigger graceful shutdown
-	cancel()
-	// Stop the collector
-	collector.Stop()
 	httpServer.Stop()
+	cancel()
+	// Stop the collector and close stores
+	collector.Stop()
+	store.CloseGlobalStores()
 	analyzerLogger.Info("Shutdown complete.")
 }
