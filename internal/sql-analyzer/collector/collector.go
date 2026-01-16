@@ -20,14 +20,15 @@ import (
 	"time"
 
 	lru "github.com/hashicorp/golang-lru/v2"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/types"
+
 	"github.com/oceanbase/ob-operator/internal/clients"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/config"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/model"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/store"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/types"
 )
 
 type Collector struct {

@@ -17,11 +17,11 @@ import (
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
+	logger "github.com/sirupsen/logrus"
 
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/business"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/model"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/store"
-	logger "github.com/sirupsen/logrus"
 )
 
 func GetPlanDetail(c *gin.Context) ([]model.SqlPlan, error) {

@@ -16,11 +16,12 @@ import (
 	"os"
 	"path/filepath"
 
+	logger "github.com/sirupsen/logrus"
+
 	"github.com/gin-gonic/gin"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/api/model"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/business"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/store"
-	logger "github.com/sirupsen/logrus"
 )
 
 // @ID GetSqlHistoryInfo
