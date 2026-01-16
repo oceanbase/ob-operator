@@ -82,20 +82,35 @@ const (
 	GetTablePrimaryKey = `SELECT column_name FROM oceanbase.__all_virtual_column WHERE tenant_id = ? AND table_id = ? and rowkey_position <> 0 ORDER BY rowkey_position`
 	CheckPlanExistence = `SELECT COUNT(*) FROM sql_plan WHERE TENANT_ID = ? AND SVR_IP = ? AND SVR_PORT = ? AND PLAN_ID = ?`
 	GetPlanStats       = `
+		WITH PlanAgg AS (
+			SELECT
+				TENANT_ID,
+				SVR_IP,
+				SVR_PORT,
+				PLAN_ID,
+				PLAN_HASH,
+				MAX(GMT_CREATE) as GMT_CREATE,
+				SUM(IO_COST) as IO_COST,
+				SUM(CPU_COST) as CPU_COST,
+				SUM(COST) as COST,
+				SUM(REAL_COST) as REAL_COST
+			FROM sql_plan
+			WHERE SQL_ID = ?
+			GROUP BY TENANT_ID, SVR_IP, SVR_PORT, PLAN_ID, PLAN_HASH
+		)
 		SELECT
-			TENANT_ID,
-			SVR_IP,
-			SVR_PORT,
-			PLAN_ID,
+			MAX(TENANT_ID) as TENANT_ID,
+			MAX(SVR_IP) as SVR_IP,
+			MAX(SVR_PORT) as SVR_PORT,
+			MAX(PLAN_ID) as PLAN_ID,
 			PLAN_HASH,
-			MIN(GMT_CREATE) as GMT_CREATE,
-			SUM(IO_COST) as IO_COST,
-			SUM(CPU_COST) as CPU_COST,
-			SUM(COST) as COST,
-			SUM(REAL_COST) as REAL_COST
-		FROM sql_plan
-		WHERE SQL_ID = ?
-		GROUP BY TENANT_ID, SVR_IP, SVR_PORT, PLAN_ID, PLAN_HASH
+			MAX(GMT_CREATE) as GMT_CREATE,
+			CAST(AVG(IO_COST) AS BIGINT) as IO_COST,
+			CAST(AVG(CPU_COST) AS BIGINT) as CPU_COST,
+			CAST(AVG(COST) AS BIGINT) as COST,
+			CAST(AVG(REAL_COST) AS BIGINT) as REAL_COST
+		FROM PlanAgg
+		GROUP BY PLAN_HASH
 	`
 	GetTableInfo = `
 		SELECT 

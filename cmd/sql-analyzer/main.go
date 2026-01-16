@@ -200,6 +200,17 @@ func main() {
 		}
 	}
 
+	// Configure DuckDB max open conns
+	duckDBMaxOpenConns := 10
+	duckDBMaxOpenConnsStr := os.Getenv("DUCKDB_MAX_OPEN_CONNS")
+	if duckDBMaxOpenConnsStr != "" {
+		if val, err := strconv.Atoi(duckDBMaxOpenConnsStr); err == nil && val > 0 {
+			duckDBMaxOpenConns = val
+		} else {
+			analyzerLogger.Warnf("Invalid DUCKDB_MAX_OPEN_CONNS value '%s', using default of 10.", duckDBMaxOpenConnsStr)
+		}
+	}
+
 	config := &config.Config{
 		Namespace:                    namespace,
 		OBTenant:                     obtenant,
@@ -211,10 +222,11 @@ func main() {
 		QueueSize:                    queueSize,
 		WorkerNum:                    workerNum,
 		PlanCacheSize:                planCacheSize,
+		DuckDBMaxOpenConns:           duckDBMaxOpenConns,
 	}
 
 	// Initialize Stores
-	if err := store.InitGlobalStores(ctx, config.DataPath, collectorLogger); err != nil {
+	if err := store.InitGlobalStores(ctx, config, collectorLogger); err != nil {
 		collectorLogger.Fatalf("Failed to initialize stores: %v", err)
 	}
 

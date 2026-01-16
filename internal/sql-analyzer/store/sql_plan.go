@@ -42,7 +42,7 @@ func (s *PlanStore) InitSqlPlanTable() error {
 	return err
 }
 
-func NewPlanStore(c context.Context, path string, l *logger.Logger) (*PlanStore, error) {
+func NewPlanStore(c context.Context, path string, maxOpenConns int, l *logger.Logger) (*PlanStore, error) {
 	l.Infof("Using plan store at %s", path)
 	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create data directory %s: %w", path, err)
@@ -76,6 +76,8 @@ func NewPlanStore(c context.Context, path string, l *logger.Logger) (*PlanStore,
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to open duckdb after retries at path %s", path)
 	}
+
+	db.SetMaxOpenConns(maxOpenConns)
 
 	// Set memory limit
 	memLimit := os.Getenv("DUCKDB_MEMORY_LIMIT")
