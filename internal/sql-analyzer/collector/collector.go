@@ -15,22 +15,19 @@ package collector
 import (
 	"context"
 	"fmt" // Added import
-	"path/filepath"
 	"sync"
 	"time"
 
 	lru "github.com/hashicorp/golang-lru/v2"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/types"
+
 	"github.com/oceanbase/ob-operator/internal/clients"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/config"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/model"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/store"
-	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/types"
-)
-
-const (
-	LRU_CACHE_SIZE = 10000
 )
 
 type Collector struct {
@@ -55,9 +52,11 @@ func NewCollector(ctx context.Context, config *config.Config, logger *logrus.Log
 		PlanIdentifierChan: make(chan *model.SqlPlanIdentifier, config.QueueSize),
 		CompactionChan:     make(chan struct{}, 1),
 		Logger:             logger,
+		SqlAuditStore:      store.GetSqlAuditStore(),
+		SqlPlanStore:       store.GetPlanStore(),
 	}
 	var err error
-	c.PlanCache, err = lru.New[model.SqlPlanIdentifier, struct{}](LRU_CACHE_SIZE)
+	c.PlanCache, err = lru.New[model.SqlPlanIdentifier, struct{}](config.PlanCacheSize)
 	if err != nil {
 		logger.Fatalf("Failed to create LRU cache: %v", err)
 	}
@@ -65,17 +64,13 @@ func NewCollector(ctx context.Context, config *config.Config, logger *logrus.Log
 }
 
 func (c *Collector) Init() error {
-	sqlAuditStore, err := store.NewSqlAuditStore(c.Ctx, filepath.Join(c.Config.DataPath, "sql_audit"))
+	err := c.SqlPlanStore.InitSqlPlanTable()
 	if err != nil {
-		return fmt.Errorf("failed to initialize sql audit store: %w", err)
+		// c.SqlPlanStore.Close() // Global store, don't close
+		return errors.Wrap(err, "Failed to init sql plan table")
 	}
-	c.SqlAuditStore = sqlAuditStore
 
-	planStore, err := store.NewPlanStore(c.Ctx, filepath.Join(c.Config.DataPath, "sql_plan"), false)
-	if err != nil {
-		return fmt.Errorf("failed to initialize sql plan store: %w", err)
-	}
-	c.SqlPlanStore = planStore
+	c.SqlAuditStore.StartCleanupWorker()
 
 	obtenant, err := clients.GetOBTenant(c.Ctx, types.NamespacedName{
 		Namespace: c.Config.Namespace,
@@ -95,7 +90,7 @@ func (c *Collector) Init() error {
 	connectionManager := oceanbase.NewConnectionManager(c.Ctx, obcluster)
 	c.ConnectionManager = connectionManager
 
-	lastRequestIDs, err := sqlAuditStore.GetLastRequestIDs()
+	lastRequestIDs, err := c.SqlAuditStore.GetLastRequestIDs()
 	if err != nil {
 		return fmt.Errorf("failed to load request id from duckdb: %w", err)
 	} else {
@@ -106,7 +101,7 @@ func (c *Collector) Init() error {
 	c.RequestIdMap = lastRequestIDs
 
 	// what if there's a huge number of plans
-	existingPlans, err := planStore.LoadExistingPlans()
+	existingPlans, err := c.SqlPlanStore.LoadExistingPlans()
 	if err != nil {
 		return fmt.Errorf("failed to load plan identities from duckdb: %w", err)
 	}
@@ -124,8 +119,7 @@ func (c *Collector) Init() error {
 }
 
 func (c *Collector) Stop() {
-	defer c.SqlAuditStore.Close()
-	defer c.SqlPlanStore.Close()
+	// Stores are closed globally
 }
 
 func (c *Collector) Start() {
@@ -144,14 +138,14 @@ func (c *Collector) Start() {
 		for {
 			select {
 			case <-c.CompactionChan:
-				c.Logger.Println("Compaction signal received, running compaction...")
+				c.Logger.Info("Compaction signal received, running compaction...")
 				if err := c.SqlAuditStore.Compact(); err != nil {
 					c.Logger.Errorf("Failed to compact sql audit data: %v", err)
 				} else {
-					c.Logger.Println("Sql audit data compacted successfully.")
+					c.Logger.Info("Sql audit data compacted successfully.")
 				}
 			case <-c.Ctx.Done():
-				c.Logger.Println("Compaction worker stopped.")
+				c.Logger.Info("Compaction worker stopped.")
 				return
 			}
 		}
@@ -178,7 +172,7 @@ func (c *Collector) Start() {
 				}
 			}
 		case <-c.Ctx.Done():
-			c.Logger.Println("Collector stopped. Stopping plan workers...")
+			c.Logger.Info("Collector stopped. Stopping plan workers...")
 			close(c.PlanIdentifierChan)
 			wg.Wait() // Wait for all workers (plan and compaction) to finish
 			return

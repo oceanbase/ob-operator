@@ -55,13 +55,6 @@ func QuerySqlStats(c *gin.Context) (*model.SqlStatsResponse, error) {
 		req.PageSize = 10
 	}
 
-	// TODO: The data path should be configurable.
-	auditStore, err := store.NewSqlAuditStore(c.Request.Context(), "/data/sql_audit")
-	if err != nil {
-		return nil, err
-	}
-	defer auditStore.Close()
-
 	slowSqlThresholdMilliSeconds := 1000 // milliseconds
 	slowSqlThresholdMilliSecondsStr := os.Getenv("SLOW_SQL_THRESHOLD_MILLISECONDS")
 	if slowSqlThresholdMilliSecondsStr != "" {
@@ -74,6 +67,6 @@ func QuerySqlStats(c *gin.Context) (*model.SqlStatsResponse, error) {
 		SlowSqlThresholdMilliSeconds: slowSqlThresholdMilliSeconds,
 	}
 
-	service := business.NewSqlStatsService(auditStore, conf, l)
+	service := business.NewSqlStatsService(store.GetSqlAuditStore(), conf, l)
 	return service.QuerySqlStats(&req)
 }

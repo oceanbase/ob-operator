@@ -37,12 +37,5 @@ func GetRequestStatistics(c *gin.Context) (*model.RequestStatisticsResponse, err
 		return nil, err
 	}
 
-	// TODO: The data path should be configurable.
-	auditStore, err := store.NewSqlAuditStore(c.Request.Context(), "/data/sql_audit")
-	if err != nil {
-		return nil, err
-	}
-	defer auditStore.Close()
-
-	return business.GetRequestStatistics(auditStore, req)
+	return business.GetRequestStatistics(store.GetSqlAuditStore(), req)
 }

@@ -31,7 +31,7 @@ func GetSqlDetailInfo(ctx context.Context, cm *oceanbase.ConnectionManager, audi
 	if err != nil {
 		return nil, err
 	}
-	logger.Infof("[GetSqlDetailInfo] QuerySqlDetailInfo took %v", time.Since(start))
+	logger.Debugf("[GetSqlDetailInfo] QuerySqlDetailInfo took %v", time.Since(start))
 
 	// If we have tables and connection manager, query indexes
 	if resp != nil && len(resp.Tables) > 0 && cm != nil {
@@ -71,13 +71,13 @@ func GetSqlDetailInfo(ctx context.Context, cm *oceanbase.ConnectionManager, audi
 						resp.Indexes = append(resp.Indexes, indexes...)
 						mu.Unlock()
 
-						logger.Infof("[GetSqlDetailInfo] QueryTableIndexes for %s.%s with table id %d took %v", t.DatabaseName, t.TableName, t.TableID, time.Since(tableStart))
+						logger.Debugf("[GetSqlDetailInfo] QueryTableIndexes for %s.%s with table id %d took %v", t.DatabaseName, t.TableName, t.TableID, time.Since(tableStart))
 					}(table)
 				}
 				wg.Wait()
 			}
 		}
-		logger.Infof("[GetSqlDetailInfo] Query Indexes total took %v", time.Since(indexStart))
+		logger.Debugf("[GetSqlDetailInfo] Query Indexes total took %v", time.Since(indexStart))
 	}
 
 	// Initialize the SQL Analyzer and run analysis
@@ -87,7 +87,7 @@ func GetSqlDetailInfo(ctx context.Context, cm *oceanbase.ConnectionManager, audi
 		analyzeStart := time.Now()
 		diagnoseResults := analyzerManager.Analyze(resp.QuerySql, resp.Indexes)
 		resp.DiagnoseInfo = diagnoseResults
-		logger.Infof("[GetSqlDetailInfo] Analyze took %v", time.Since(analyzeStart))
+		logger.Debugf("[GetSqlDetailInfo] Analyze took %v", time.Since(analyzeStart))
 	} else {
 		if resp == nil {
 			logger.Warn("[GetSqlDetailInfo] Response is nil, skipping analysis")
@@ -96,6 +96,6 @@ func GetSqlDetailInfo(ctx context.Context, cm *oceanbase.ConnectionManager, audi
 		}
 	}
 
-	logger.Infof("[GetSqlDetailInfo] Total execution time: %v", time.Since(start))
+	logger.Debugf("[GetSqlDetailInfo] Total execution time: %v", time.Since(start))
 	return resp, nil
 }

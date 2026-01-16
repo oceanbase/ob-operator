@@ -14,7 +14,6 @@ package handler
 
 import (
 	"os"
-	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	logger "github.com/sirupsen/logrus"
@@ -44,32 +43,17 @@ func GetSqlDetailInfo(c *gin.Context) (*model.SqlDetailResponse, error) {
 		return nil, err
 	}
 
-	dataPath := os.Getenv("DATA_PATH")
-	if dataPath == "" {
-		dataPath = "/data"
+	// Setup logger
+	l := HandlerLogger
+	if l == nil {
+		l = logger.StandardLogger()
 	}
-
-	auditStore, err := store.NewSqlAuditStore(c.Request.Context(), filepath.Join(dataPath, "sql_audit"))
-	if err != nil {
-		return nil, err
-	}
-	defer auditStore.Close()
-
-	planStore, err := store.NewPlanStore(c.Request.Context(), filepath.Join(dataPath, "sql_plan"), true)
-	if err != nil {
-		return nil, err
-	}
-	defer planStore.Close()
 
 	// Setup ConnectionManager
 	namespace := os.Getenv("NAMESPACE")
 	obTenantName := os.Getenv("OBTENANT")
 
 	var cm *oceanbase.ConnectionManager
-	l := HandlerLogger
-	if l == nil {
-		l = logger.StandardLogger()
-	}
 
 	if namespace != "" && obTenantName != "" {
 		obtenant, err := clients.GetOBTenant(c.Request.Context(), types.NamespacedName{
@@ -90,7 +74,7 @@ func GetSqlDetailInfo(c *gin.Context) (*model.SqlDetailResponse, error) {
 		l.Warn("NAMESPACE or OBTENANT env not set, skipping index query")
 	}
 
-	return business.GetSqlDetailInfo(c, cm, auditStore, planStore, req)
+	return business.GetSqlDetailInfo(c, cm, store.GetSqlAuditStore(), store.GetPlanStore(), req)
 }
 
 type DebugQueryRequest struct {
@@ -103,18 +87,7 @@ func DebugQuery(c *gin.Context) (any, error) {
 		return nil, err
 	}
 
-	dataPath := os.Getenv("DATA_PATH")
-	if dataPath == "" {
-		dataPath = "/data"
-	}
-
-	planStore, err := store.NewPlanStore(c.Request.Context(), filepath.Join(dataPath, "sql_plan"), true)
-	if err != nil {
-		return nil, err
-	}
-	defer planStore.Close()
-
-	results, err := planStore.DebugQuery(req.Query)
+	results, err := store.GetPlanStore().DebugQuery(req.Query)
 	if err != nil {
 		return nil, err
 	}

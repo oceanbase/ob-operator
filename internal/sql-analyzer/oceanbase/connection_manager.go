@@ -96,13 +96,16 @@ func (cm *ConnectionManager) GetSysReadonlyConnectionByIP(svrIP string) (*operat
 	for _, address := range addresses {
 		s = connector.NewOceanBaseDataSource(address, oceanbaseconst.SqlPort, obagentconst.MonitorUser, oceanbaseconst.SysTenant, password, oceanbaseconst.DefaultDatabase)
 		sysClient, err := operation.GetOceanbaseOperationManager(s)
+		if err != nil {
+			continue
+		}
 		clientLogger := logr.FromContextOrDiscard(cm.ctx)
 		sysClient.Logger = &clientLogger
 		var checkConnectionErr error
-		if cm.obcluster.Status.Status != clusterstatus.New && err == nil && sysClient != nil {
+		if cm.obcluster.Status.Status != clusterstatus.New && sysClient != nil {
 			_, checkConnectionErr = sysClient.ListServers(cm.ctx)
 		}
-		if err == nil && sysClient != nil && checkConnectionErr == nil {
+		if sysClient != nil && checkConnectionErr == nil {
 			return sysClient, nil
 		}
 	}

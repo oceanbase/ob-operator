@@ -26,11 +26,5 @@ func GetPlanDetail(c *gin.Context) ([]model.SqlPlan, error) {
 		return nil, err
 	}
 
-	planStore, err := store.NewPlanStore(c.Request.Context(), "/data/sql_plan", true)
-	if err != nil {
-		return nil, err
-	}
-	defer planStore.Close()
-
-	return business.GetPlanDetail(planStore, req)
+	return business.GetPlanDetail(store.GetPlanStore(), req)
 }
