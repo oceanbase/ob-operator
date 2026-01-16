@@ -87,11 +87,6 @@ func DebugQuery(c *gin.Context) (any, error) {
 		return nil, err
 	}
 
-	l := HandlerLogger
-	if l == nil {
-		l = logger.StandardLogger()
-	}
-
 	results, err := store.GetPlanStore().DebugQuery(req.Query)
 	if err != nil {
 		return nil, err

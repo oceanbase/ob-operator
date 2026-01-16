@@ -10,6 +10,7 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
+// Package store provides data storage and retrieval for SQL analysis results.
 package store
 
 import (
