@@ -61,7 +61,7 @@ func GetSqlDetailInfo(c *gin.Context) (*model.SqlDetailResponse, error) {
 	}
 	defer auditStore.Close()
 
-	planStore, err := store.NewPlanStore(c.Request.Context(), filepath.Join(dataPath, "sql_plan"), true, l)
+	planStore, err := store.NewPlanStore(c.Request.Context(), filepath.Join(dataPath, "sql_plan"), l)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func DebugQuery(c *gin.Context) (any, error) {
 		l = logger.StandardLogger()
 	}
 
-	planStore, err := store.NewPlanStore(c.Request.Context(), filepath.Join(dataPath, "sql_plan"), true, l)
+	planStore, err := store.NewPlanStore(c.Request.Context(), filepath.Join(dataPath, "sql_plan"), l)
 	if err != nil {
 		return nil, err
 	}

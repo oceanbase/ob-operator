@@ -40,7 +40,7 @@ func GetPlanDetail(c *gin.Context) ([]model.SqlPlan, error) {
 		l = logger.StandardLogger()
 	}
 
-	planStore, err := store.NewPlanStore(c.Request.Context(), filepath.Join(dataPath, "sql_plan"), true, l)
+	planStore, err := store.NewPlanStore(c.Request.Context(), filepath.Join(dataPath, "sql_plan"), l)
 	if err != nil {
 		return nil, err
 	}

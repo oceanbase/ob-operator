@@ -69,7 +69,7 @@ func (c *Collector) Init() error {
 	}
 	c.SqlAuditStore = sqlAuditStore
 
-	planStore, err := store.NewPlanStore(c.Ctx, filepath.Join(c.Config.DataPath, "sql_plan"), false, c.Logger)
+	planStore, err := store.NewPlanStore(c.Ctx, filepath.Join(c.Config.DataPath, "sql_plan"), c.Logger)
 	if err != nil {
 		return fmt.Errorf("failed to initialize sql plan store: %w", err)
 	}
