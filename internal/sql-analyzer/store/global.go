@@ -17,8 +17,9 @@ import (
 	"context"
 	"path/filepath"
 
-	"github.com/oceanbase/ob-operator/internal/sql-analyzer/config"
 	"github.com/sirupsen/logrus"
+
+	"github.com/oceanbase/ob-operator/internal/sql-analyzer/config"
 )
 
 var (
