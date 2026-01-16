@@ -64,7 +64,7 @@ func startHttpServer(ctx context.Context, logger *logrus.Logger) *webserver.HTTP
 	logger.Info("Successfully registered router")
 	go func() {
 		err := httpServer.Run()
-		if err != nil {
+		if err != nil && err != http.ErrServerClosed {
 			logger.WithError(err).Errorln("Start server failed")
 			os.Exit(1)
 		}
