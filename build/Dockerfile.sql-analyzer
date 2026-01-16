@@ -3,6 +3,7 @@ FROM golang:1.25 AS builder
 
 ARG GOPROXY
 ARG GOSUMDB
+ARG ASAN_ENABLED
 
 WORKDIR /workspace
 # copy everything
@@ -12,7 +13,7 @@ COPY . .
 RUN if [ -n "$GOPROXY" ]; then go env -w GOPROXY=$GOPROXY; fi
 RUN if [ -n "$GOSUMDB" ]; then go env -w GOSUMDB=$GOSUMDB; fi
 
-RUN make sql-analyzer
+RUN ASAN_ENABLED=$ASAN_ENABLED make sql-analyzer
 
 # start build docker image
 # Use ubuntu:24.04 as the base image
