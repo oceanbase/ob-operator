@@ -101,12 +101,14 @@ func (m *Manager) Analyze(sql string, indexes []model.IndexInfo) []model.SqlDiag
 			logger.Debugf("[Manager] Rule %s returned %d results", r.Name(), len(results))
 			if len(results) > 0 {
 				mu.Lock()
-				diagnostics = append(diagnostics, results...)
+				// Only keep the first result for each rule, currently each rule returns the same record, can be enriched to include the detailed sql statement part.
+				diagnostics = append(diagnostics, results[0])
 				mu.Unlock()
 			}
 		}(rule)
 	}
 	wg.Wait()
+
 	logger.Debugf("[Manager] Total diagnostics found: %d", len(diagnostics))
 
 	return diagnostics
