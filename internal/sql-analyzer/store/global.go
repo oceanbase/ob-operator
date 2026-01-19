@@ -18,6 +18,8 @@ import (
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
+
+	"github.com/oceanbase/ob-operator/internal/sql-analyzer/config"
 )
 
 var (
@@ -25,14 +27,14 @@ var (
 	globalPlanStore     *PlanStore
 )
 
-func InitGlobalStores(ctx context.Context, dataPath string, logger *logrus.Logger) error {
+func InitGlobalStores(ctx context.Context, conf *config.Config, logger *logrus.Logger) error {
 	var err error
-	globalSqlAuditStore, err = NewSqlAuditStore(ctx, filepath.Join(dataPath, "sql_audit"), logger)
+	globalSqlAuditStore, err = NewSqlAuditStore(ctx, filepath.Join(conf.DataPath, "sql_audit"), conf.DuckDBMaxOpenConns, logger)
 	if err != nil {
 		return err
 	}
 
-	globalPlanStore, err = NewPlanStore(ctx, filepath.Join(dataPath, "sql_plan"), logger)
+	globalPlanStore, err = NewPlanStore(ctx, filepath.Join(conf.DataPath, "sql_plan"), conf.DuckDBMaxOpenConns, logger)
 	if err != nil {
 		return err
 	}

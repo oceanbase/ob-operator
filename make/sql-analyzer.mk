@@ -15,10 +15,16 @@ sql-analyzer-doc-gen: sql-analyzer-dep-install ## Generate swagger docs for sql-
 sql-analyzer: sql-analyzer-doc-gen
 	@echo Building sql-analyzer...
 	@mkdir -p bin
+ifneq ($(ASAN_ENABLED),)
+	@echo "Building with AddressSanitizer..."
+	CGO_ENABLED=1 CGO_CFLAGS="-fsanitize=address -g" CGO_LDFLAGS="-fsanitize=address" go build -tags dynamic -o bin/sql-analyzer cmd/sql-analyzer/main.go
+else
 	@go build -o bin/sql-analyzer cmd/sql-analyzer/main.go
+endif
 
 .PHONY: sql-analyzer-image
 sql-analyzer-image:
 	$(eval DOCKER_BUILD_ARGS :=)
 	$(if $(GOPROXY),$(eval DOCKER_BUILD_ARGS := --build-arg GOPROXY=$(GOPROXY)))
+	$(if $(ASAN_ENABLED),$(eval DOCKER_BUILD_ARGS := $(DOCKER_BUILD_ARGS) --build-arg ASAN_ENABLED=$(ASAN_ENABLED)))
 	docker build $(DOCKER_BUILD_ARGS) -t ${SQL_ANALYZER_IMG} -f build/Dockerfile.sql-analyzer .

@@ -44,12 +44,14 @@ type SqlAuditStore struct {
 	Logger *logger.Logger
 }
 
-func NewSqlAuditStore(c context.Context, path string, l *logger.Logger) (*SqlAuditStore, error) {
+func NewSqlAuditStore(c context.Context, path string, maxOpenConns int, l *logger.Logger) (*SqlAuditStore, error) {
 	// Use an in-memory DuckDB database for operations.
 	db, err := sql.Open("duckdb", "") // In-memory
 	if err != nil {
 		return nil, fmt.Errorf("failed to open in-memory duckdb: %w", err)
 	}
+
+	db.SetMaxOpenConns(maxOpenConns)
 
 	// Set memory limit for in-memory DB
 	conn, err := db.Conn(c)

@@ -26,4 +26,5 @@ type Config struct {
 	SqlAuditLimit                int
 	SlowSqlThresholdMilliSeconds int
 	PlanCacheSize                int
+	DuckDBMaxOpenConns           int
 }
