@@ -64,7 +64,6 @@ func (w *PlanWorker) processPlan(ctx context.Context, idx int, ident *model.SqlP
 		w.collector.PlanCache.Remove(*ident) // Remove from cache
 		return
 	}
-	defer cnx.Close()
 
 	var plans []model.SqlPlan
 	if err := cnx.QueryList(ctx, &plans, sqlconst.SelectSqlPlan, ident.TenantID, ident.SvrIP, ident.SvrPort, ident.PlanID); err != nil {
