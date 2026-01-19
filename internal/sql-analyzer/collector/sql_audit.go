@@ -33,7 +33,6 @@ func (c *Collector) getMaxRequestIDs() (map[string]uint64, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to get oceanbase connection")
 	}
-	defer cnx.Close()
 
 	if err := cnx.QueryList(c.Ctx, &observers, sqlconst.GetMaxRequestIDByIP, c.TenantID); err != nil {
 		return nil, errors.Wrap(err, "Failed to query max request ids")
@@ -149,7 +148,6 @@ func (c *Collector) collectSqlAuditByOBServer(svrIP string, lastRequestID uint64
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to get oceanbase connection")
 	}
-	defer cnx.Close()
 
 	if err := cnx.QueryList(c.Ctx, &results, sqlconst.GetSqlStatistics, c.TenantID, svrIP, lastRequestID); err != nil {
 		return nil, err
