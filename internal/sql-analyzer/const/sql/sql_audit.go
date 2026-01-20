@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package sql
 
 const (
-	GetMaxRequestIDByIP             = "SELECT svr_ip, MAX(request_id) as max_request_id FROM gv$ob_sql_audit WHERE tenant_id = ? GROUP BY svr_ip"
+	GetMaxRequestIDByIP             = "SELECT svr_ip, MAX(request_id) as max_request_id FROM gv$ob_sql_audit WHERE tenant_id = ? and svr_port = ? GROUP BY svr_ip"
 	CreateSqlAuditTempTableTemplate = `CREATE TEMP TABLE ` + "%s" + ` (
         svr_ip VARCHAR, svr_port BIGINT, tenant_id BIGINT, tenant_name VARCHAR, user_id BIGINT, user_name VARCHAR,
         db_id BIGINT, db_name VARCHAR, sql_id VARCHAR, plan_id BIGINT,
@@ -124,7 +124,7 @@ const (
 			SUM(CASE is_hit_plan WHEN 1 THEN 0 ELSE 1 END) as miss_plan_count,
 			SUM(CASE is_executor_rpc WHEN 1 THEN 1 ELSE 0 END) as executor_rpc_count
 		FROM gv$ob_sql_audit
-		WHERE tenant_id = ? AND svr_ip = ? AND request_id > ?
+		WHERE tenant_id = ? AND svr_ip = ? and svr_port = ? AND request_id > ? and query_sql is not NULL and query_sql <> ''
 		GROUP BY
 			svr_ip, svr_port, tenant_id, tenant_name, user_id, user_name, db_id, db_name, sql_id, plan_id
 	`
