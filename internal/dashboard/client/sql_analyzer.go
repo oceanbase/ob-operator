@@ -20,10 +20,11 @@ import (
 	"net/http"
 	"os"
 
-	apimodel "github.com/oceanbase/ob-operator/internal/sql-analyzer/api/model"
-	analyticmodel "github.com/oceanbase/ob-operator/internal/sql-analyzer/model"
 	"github.com/pkg/errors"
 	logger "github.com/sirupsen/logrus"
+
+	apimodel "github.com/oceanbase/ob-operator/internal/sql-analyzer/api/model"
+	analyticmodel "github.com/oceanbase/ob-operator/internal/sql-analyzer/model"
 )
 
 type SqlAnalyzerClient struct {
