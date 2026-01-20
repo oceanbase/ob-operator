@@ -1543,6 +1543,7 @@
   "src.pages.Tenant.Detail.Sql.Detail.HistoryRequestInfo": "历史请求信息",
   "src.pages.Tenant.Detail.Sql.Detail.Executions": "执行次数",
   "src.pages.Tenant.Detail.Sql.Detail.Latency": "延迟",
+  "src.pages.Tenant.Detail.Sql.Detail.SelectAll": "全选",
   "src.pages.Tenant.Detail.Sql.Detail.DiagnosisAndAdvice": "诊断与建议",
   "src.pages.Tenant.Detail.Sql.Detail.Level": "级别",
   "src.pages.Tenant.Detail.Sql.Detail.RuleName": "规则名称",

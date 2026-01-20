@@ -8,13 +8,22 @@ import { intl } from '@/utils/intl';
 import { SettingOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
-import { Link, useParams, useRequest, useSearchParams } from '@umijs/max';
+import {
+  Link,
+  history,
+  useLocation,
+  useParams,
+  useRequest,
+  useSearchParams,
+} from '@umijs/max';
 import { Button, Card, Checkbox, Tooltip, message } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker';
 import dayjs from 'dayjs';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getLocale } from 'umi';
 import ColumnSelectionDrawer from './ColumnSelectionDrawer';
+
+const SQL_LIST_STORAGE_KEY = 'sql_list_params';
 
 export default function SqlList() {
   const { ns, name, tenantName } = useParams<{
@@ -22,6 +31,7 @@ export default function SqlList() {
     name: string;
     tenantName: string;
   }>();
+  const location = useLocation();
   const actionRef = useRef<ActionType>();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedMetricKeys, setSelectedMetricKeys] = useState<string[]>([]);
@@ -34,6 +44,134 @@ export default function SqlList() {
     startTime?: number;
     endTime?: number;
   }>({});
+
+  // 检测是否从 SQL 详情页返回，如果是则恢复保存的参数
+  useEffect(() => {
+    const savedParams = sessionStorage.getItem(SQL_LIST_STORAGE_KEY);
+    if (savedParams) {
+      try {
+        const params = JSON.parse(savedParams);
+        // 检查是否是从详情页返回（通过 location.state 或 URL 参数判断）
+        const isFromDetail = (location.state as any)?.fromDetail || false;
+
+        if (isFromDetail && params) {
+          // 恢复参数到 URL
+          const newSearchParams = new URLSearchParams();
+          if (params.activeTab) {
+            newSearchParams.set('activeTab', params.activeTab);
+            setActiveTab(params.activeTab);
+          }
+          if (params.startTime) {
+            newSearchParams.set('startTime', params.startTime.toString());
+          }
+          if (params.endTime) {
+            newSearchParams.set('endTime', params.endTime.toString());
+          }
+          if (params.keyword) {
+            newSearchParams.set('keyword', params.keyword);
+          }
+          if (params.user) {
+            newSearchParams.set('user', params.user);
+          }
+          if (params.database) {
+            newSearchParams.set('database', params.database);
+          }
+          if (params.includeInnerSql !== undefined) {
+            newSearchParams.set(
+              'includeInnerSql',
+              params.includeInnerSql.toString(),
+            );
+          }
+
+          setSearchParams(newSearchParams);
+          // 清除保存的参数
+          sessionStorage.removeItem(SQL_LIST_STORAGE_KEY);
+
+          // 延迟刷新表格，确保参数已更新
+          setTimeout(() => {
+            actionRef.current?.reload();
+          }, 100);
+        }
+      } catch (e) {
+        console.error('Failed to restore SQL list params:', e);
+        sessionStorage.removeItem(SQL_LIST_STORAGE_KEY);
+      }
+    }
+  }, [location.state, setSearchParams]);
+
+  // 监听路由变化，当离开 SQL 页面时清除 SQL 相关参数
+  useEffect(() => {
+    const sqlRelatedParams = [
+      'startTime',
+      'endTime',
+      'includeInnerSql',
+      'keyword',
+      'user',
+      'database',
+      'activeTab',
+      'current',
+      'pageSize',
+    ];
+
+    const unlisten = history.listen(({ location: newLocation }) => {
+      const isSqlPage = newLocation.pathname.includes('/sql');
+
+      if (!isSqlPage) {
+        // 如果不在 SQL 页面，只清除 SQL 相关的 URL 参数，保留路径和其他参数
+        const currentParams = new URLSearchParams(newLocation.search);
+        let hasChanges = false;
+
+        // 只删除 SQL 相关的参数，保留其他所有参数
+        sqlRelatedParams.forEach((param) => {
+          if (currentParams.has(param)) {
+            currentParams.delete(param);
+            hasChanges = true;
+          }
+        });
+
+        if (hasChanges) {
+          // 保留原始路径，只更新查询参数
+          const newSearch = currentParams.toString();
+          const newUrl = `${newLocation.pathname}${
+            newSearch ? `?${newSearch}` : ''
+          }${newLocation.hash || ''}`;
+
+          // 使用 replace 而不是 push，避免在历史记录中留下带参数的 URL
+          // 延迟执行，确保路由已经完成跳转
+          setTimeout(() => {
+            history.replace(newUrl);
+          }, 0);
+        }
+      }
+    });
+
+    // 组件卸载时也清除参数（如果还在当前页面）
+    return () => {
+      unlisten();
+      // 检查当前路径是否还是 SQL 页面
+      const currentPath = window.location.pathname;
+      if (!currentPath.includes('/sql')) {
+        const currentParams = new URLSearchParams(window.location.search);
+        let hasChanges = false;
+
+        // 只删除 SQL 相关的参数，保留其他所有参数
+        sqlRelatedParams.forEach((param) => {
+          if (currentParams.has(param)) {
+            currentParams.delete(param);
+            hasChanges = true;
+          }
+        });
+
+        if (hasChanges) {
+          const newSearch = currentParams.toString();
+          const newUrl = `${currentPath}${newSearch ? `?${newSearch}` : ''}${
+            window.location.hash || ''
+          }`;
+          window.history.replaceState({ ...window.history.state }, '', newUrl);
+        }
+      }
+    };
+  }, []);
 
   // Helper to robustly extract metrics array regardless of response format
   const getMetricsList = (data: any): API.SqlMetricMetaCategory[] => {
@@ -180,6 +318,25 @@ export default function SqlList() {
             colConfig.ellipsis = true;
             colConfig.copyable = true;
             colConfig.render = (dom, record) => {
+              const handleClick = () => {
+                // 保存当前表单参数到 sessionStorage
+                // 从 URL 参数和当前状态获取表单值
+                const paramsToSave = {
+                  activeTab,
+                  startTime: currentParams.startTime,
+                  endTime: currentParams.endTime,
+                  keyword: searchParams.get('keyword') || undefined,
+                  user: searchParams.get('user') || undefined,
+                  database: searchParams.get('database') || undefined,
+                  includeInnerSql:
+                    searchParams.get('includeInnerSql') === 'true',
+                };
+                sessionStorage.setItem(
+                  SQL_LIST_STORAGE_KEY,
+                  JSON.stringify(paramsToSave),
+                );
+              };
+
               const params = new URLSearchParams();
               params.append('dbName', record.dbName);
               if (currentParams.startTime) {
@@ -195,6 +352,7 @@ export default function SqlList() {
                     search: params.toString(),
                   }}
                   state={record}
+                  onClick={handleClick}
                 >
                   {dom}
                 </Link>

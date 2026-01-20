@@ -1,7 +1,6 @@
 import { DATE_TIME_FORMAT, DateSelectOption } from '@/constants/datetime';
 import {
   listSqlMetrics,
-  listSqlStats,
   queryPlanDetailInfo,
   querySqlDetailInfo,
   querySqlHistoryInfo,
@@ -19,6 +18,7 @@ import {
 } from '@umijs/max';
 import {
   Button,
+  Checkbox,
   DatePicker,
   Drawer,
   Select,
@@ -120,9 +120,10 @@ const SqlTrendChart: React.FC<SqlTrendChartProps> = ({
 // --- Main Page Component ---
 
 const SqlDetail: React.FC = () => {
-  const { ns, name, sqlId } = useParams<{
+  const { ns, name, tenantName, sqlId } = useParams<{
     ns: string;
     name: string;
+    tenantName: string;
     sqlId: string;
   }>();
   const [searchParams] = useSearchParams();
@@ -147,6 +148,10 @@ const SqlDetail: React.FC = () => {
   const [selectedLatencyMetrics, setSelectedLatencyMetrics] = useState<
     string[]
   >(['elapsed_time']);
+  // 临时存储选中的指标，等下拉框关闭后再更新到正式状态
+  const [tempSelectedLatencyMetrics, setTempSelectedLatencyMetrics] = useState<
+    string[]
+  >(['elapsed_time']);
 
   // Fetch metrics meta to populate latency selector
   useRequest(
@@ -164,10 +169,12 @@ const SqlDetail: React.FC = () => {
             .map((m: any) => m.key);
           if (defaults.length > 0) {
             setSelectedLatencyMetrics(defaults);
+            setTempSelectedLatencyMetrics(defaults);
           } else {
             // Fallback to first if no defaults
             if (latencyCat.metrics.length > 0) {
               setSelectedLatencyMetrics([latencyCat.metrics[0].key]);
+              setTempSelectedLatencyMetrics([latencyCat.metrics[0].key]);
             }
           }
         }
@@ -204,7 +211,11 @@ const SqlDetail: React.FC = () => {
   );
 
   // 2. Fetch History Trend Info
-  const { data: historyData, loading: historyLoading } = useRequest(
+  const {
+    data: historyData,
+    loading: historyLoading,
+    run: refreshHistoryData,
+  } = useRequest(
     async () => {
       if (!ns || !name || !sqlId) return;
       const start = timeRange[0].unix();
@@ -272,28 +283,6 @@ const SqlDetail: React.FC = () => {
       setTimeRange([dates[0], dates[1]]);
     }
   };
-
-  const { data: sqlMetaData } = useRequest(
-    async () => {
-      if (!ns || !name || !sqlId) return;
-      return listSqlStats({
-        // Reuse existing list API to get meta
-        namespace: ns,
-        obtenant: name,
-        startTime: timeRange[0].unix(),
-        endTime: timeRange[1].unix(),
-        keyword: sqlId, // Filter by SQL ID
-        outputColumns: ['query_sql', 'user_name', 'db_name', 'sql_id'], // metrics
-        pageSize: 1,
-        pageNum: 1,
-      } as any);
-    },
-    {
-      refreshDeps: [ns, name, sqlId, timeRange],
-    },
-  );
-
-  const sqlMeta = stateSqlMeta || sqlMetaData?.data?.items?.[0];
 
   const [planDrawerOpen, setPlanDrawerOpen] = useState(false);
 
@@ -410,7 +399,13 @@ const SqlDetail: React.FC = () => {
             <Space>
               <Button
                 icon={<ArrowLeftOutlined />}
-                onClick={() => history.back()}
+                onClick={() => {
+                  // 返回到列表页，并带上标记表示是从详情页返回的
+                  history.push({
+                    pathname: `/tenant/${ns}/${name}/${tenantName}/sql`,
+                    state: { fromDetail: true },
+                  });
+                }}
                 type="text"
               >
                 {intl.formatMessage({
@@ -445,7 +440,7 @@ const SqlDetail: React.FC = () => {
                 ellipsis={{ rows: 2, expandable: true, symbol: 'more' }}
                 copyable
               >
-                {sqlMeta?.querySql || sqlInfo?.querySql || '-'}
+                {stateSqlMeta?.querySql || sqlInfo?.querySql || '-'}
               </Typography.Paragraph>
             </ProDescriptions.Item>
 
@@ -464,7 +459,7 @@ const SqlDetail: React.FC = () => {
                 defaultMessage: '数据库',
               })}
             >
-              {dbName || sqlMeta?.dbName || '-'}
+              {stateSqlMeta?.dbName || dbName || '-'}
             </ProDescriptions.Item>
 
             <ProDescriptions.Item
@@ -473,7 +468,7 @@ const SqlDetail: React.FC = () => {
                 defaultMessage: '用户',
               })}
             >
-              {sqlMeta?.userName || '-'}
+              {stateSqlMeta?.userName || '-'}
             </ProDescriptions.Item>
           </ProDescriptions>
         </ProCard>
@@ -532,14 +527,61 @@ const SqlDetail: React.FC = () => {
                   <Select
                     mode="multiple"
                     maxTagCount="responsive"
-                    value={selectedLatencyMetrics}
-                    onChange={setSelectedLatencyMetrics}
+                    value={tempSelectedLatencyMetrics}
+                    onChange={setTempSelectedLatencyMetrics}
+                    onDropdownVisibleChange={(open) => {
+                      // 当下拉框关闭时，更新正式状态并刷新数据
+                      if (!open) {
+                        setSelectedLatencyMetrics(tempSelectedLatencyMetrics);
+                        // 延迟刷新，确保状态已更新
+                        setTimeout(() => {
+                          refreshHistoryData();
+                        }, 0);
+                      }
+                    }}
                     style={{ width: 400 }}
                     options={latencyMetricsMeta.map((m) => ({
                       label: m.name,
-
                       value: m.key,
                     }))}
+                    dropdownRender={(menu) => (
+                      <div>
+                        <div
+                          style={{
+                            padding: '4px 8px',
+                            borderBottom: '1px solid #f0f0f0',
+                          }}
+                        >
+                          <Checkbox
+                            indeterminate={
+                              tempSelectedLatencyMetrics.length > 0 &&
+                              tempSelectedLatencyMetrics.length <
+                                latencyMetricsMeta.length
+                            }
+                            checked={
+                              latencyMetricsMeta.length > 0 &&
+                              tempSelectedLatencyMetrics.length ===
+                                latencyMetricsMeta.length
+                            }
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setTempSelectedLatencyMetrics(
+                                  latencyMetricsMeta.map((m) => m.key),
+                                );
+                              } else {
+                                setTempSelectedLatencyMetrics([]);
+                              }
+                            }}
+                          >
+                            {intl.formatMessage({
+                              id: 'src.pages.Tenant.Detail.Sql.Detail.SelectAll',
+                              defaultMessage: '全选',
+                            })}
+                          </Checkbox>
+                        </div>
+                        {menu}
+                      </div>
+                    )}
                   />
                 </Space>
               }

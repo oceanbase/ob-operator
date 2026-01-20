@@ -1543,6 +1543,7 @@
   "src.pages.Tenant.Detail.Sql.Detail.HistoryRequestInfo": "History Request Info",
   "src.pages.Tenant.Detail.Sql.Detail.Executions": "Executions",
   "src.pages.Tenant.Detail.Sql.Detail.Latency": "Latency",
+  "src.pages.Tenant.Detail.Sql.Detail.SelectAll": "Select All",
   "src.pages.Tenant.Detail.Sql.Detail.DiagnosisAndAdvice": "Diagnosis & Advice",
   "src.pages.Tenant.Detail.Sql.Detail.Level": "Level",
   "src.pages.Tenant.Detail.Sql.Detail.RuleName": "Rule Name",
