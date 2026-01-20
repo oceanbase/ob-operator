@@ -1,7 +1,6 @@
 import { DATE_TIME_FORMAT, DateSelectOption } from '@/constants/datetime';
 import {
   listSqlMetrics,
-  listSqlStats,
   queryPlanDetailInfo,
   querySqlDetailInfo,
   querySqlHistoryInfo,
@@ -120,9 +119,10 @@ const SqlTrendChart: React.FC<SqlTrendChartProps> = ({
 // --- Main Page Component ---
 
 const SqlDetail: React.FC = () => {
-  const { ns, name, sqlId } = useParams<{
+  const { ns, name, tenantName, sqlId } = useParams<{
     ns: string;
     name: string;
+    tenantName: string;
     sqlId: string;
   }>();
   const [searchParams] = useSearchParams();
@@ -273,28 +273,6 @@ const SqlDetail: React.FC = () => {
     }
   };
 
-  const { data: sqlMetaData } = useRequest(
-    async () => {
-      if (!ns || !name || !sqlId) return;
-      return listSqlStats({
-        // Reuse existing list API to get meta
-        namespace: ns,
-        obtenant: name,
-        startTime: timeRange[0].unix(),
-        endTime: timeRange[1].unix(),
-        keyword: sqlId, // Filter by SQL ID
-        outputColumns: ['query_sql', 'user_name', 'db_name', 'sql_id'], // metrics
-        pageSize: 1,
-        pageNum: 1,
-      } as any);
-    },
-    {
-      refreshDeps: [ns, name, sqlId, timeRange],
-    },
-  );
-
-  const sqlMeta = stateSqlMeta || sqlMetaData?.data?.items?.[0];
-
   const [planDrawerOpen, setPlanDrawerOpen] = useState(false);
 
   const [currentPlanId, setCurrentPlanId] = useState<number>();
@@ -410,7 +388,13 @@ const SqlDetail: React.FC = () => {
             <Space>
               <Button
                 icon={<ArrowLeftOutlined />}
-                onClick={() => history.back()}
+                onClick={() => {
+                  // 返回到列表页，并带上标记表示是从详情页返回的
+                  history.push({
+                    pathname: `/tenant/${ns}/${name}/${tenantName}/sql`,
+                    state: { fromDetail: true },
+                  });
+                }}
                 type="text"
               >
                 {intl.formatMessage({
@@ -445,7 +429,7 @@ const SqlDetail: React.FC = () => {
                 ellipsis={{ rows: 2, expandable: true, symbol: 'more' }}
                 copyable
               >
-                {sqlMeta?.querySql || sqlInfo?.querySql || '-'}
+                {stateSqlMeta?.querySql || sqlInfo?.querySql || '-'}
               </Typography.Paragraph>
             </ProDescriptions.Item>
 
@@ -464,7 +448,7 @@ const SqlDetail: React.FC = () => {
                 defaultMessage: '数据库',
               })}
             >
-              {dbName || sqlMeta?.dbName || '-'}
+              {stateSqlMeta?.dbName || dbName || '-'}
             </ProDescriptions.Item>
 
             <ProDescriptions.Item
@@ -473,7 +457,7 @@ const SqlDetail: React.FC = () => {
                 defaultMessage: '用户',
               })}
             >
-              {sqlMeta?.userName || '-'}
+              {stateSqlMeta?.userName || '-'}
             </ProDescriptions.Item>
           </ProDescriptions>
         </ProCard>
