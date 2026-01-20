@@ -18,6 +18,7 @@ import {
 } from '@umijs/max';
 import {
   Button,
+  Checkbox,
   DatePicker,
   Drawer,
   Select,
@@ -147,6 +148,10 @@ const SqlDetail: React.FC = () => {
   const [selectedLatencyMetrics, setSelectedLatencyMetrics] = useState<
     string[]
   >(['elapsed_time']);
+  // 临时存储选中的指标，等下拉框关闭后再更新到正式状态
+  const [tempSelectedLatencyMetrics, setTempSelectedLatencyMetrics] = useState<
+    string[]
+  >(['elapsed_time']);
 
   // Fetch metrics meta to populate latency selector
   useRequest(
@@ -164,10 +169,12 @@ const SqlDetail: React.FC = () => {
             .map((m: any) => m.key);
           if (defaults.length > 0) {
             setSelectedLatencyMetrics(defaults);
+            setTempSelectedLatencyMetrics(defaults);
           } else {
             // Fallback to first if no defaults
             if (latencyCat.metrics.length > 0) {
               setSelectedLatencyMetrics([latencyCat.metrics[0].key]);
+              setTempSelectedLatencyMetrics([latencyCat.metrics[0].key]);
             }
           }
         }
@@ -204,7 +211,11 @@ const SqlDetail: React.FC = () => {
   );
 
   // 2. Fetch History Trend Info
-  const { data: historyData, loading: historyLoading } = useRequest(
+  const {
+    data: historyData,
+    loading: historyLoading,
+    run: refreshHistoryData,
+  } = useRequest(
     async () => {
       if (!ns || !name || !sqlId) return;
       const start = timeRange[0].unix();
@@ -516,14 +527,61 @@ const SqlDetail: React.FC = () => {
                   <Select
                     mode="multiple"
                     maxTagCount="responsive"
-                    value={selectedLatencyMetrics}
-                    onChange={setSelectedLatencyMetrics}
+                    value={tempSelectedLatencyMetrics}
+                    onChange={setTempSelectedLatencyMetrics}
+                    onDropdownVisibleChange={(open) => {
+                      // 当下拉框关闭时，更新正式状态并刷新数据
+                      if (!open) {
+                        setSelectedLatencyMetrics(tempSelectedLatencyMetrics);
+                        // 延迟刷新，确保状态已更新
+                        setTimeout(() => {
+                          refreshHistoryData();
+                        }, 0);
+                      }
+                    }}
                     style={{ width: 400 }}
                     options={latencyMetricsMeta.map((m) => ({
                       label: m.name,
-
                       value: m.key,
                     }))}
+                    dropdownRender={(menu) => (
+                      <div>
+                        <div
+                          style={{
+                            padding: '4px 8px',
+                            borderBottom: '1px solid #f0f0f0',
+                          }}
+                        >
+                          <Checkbox
+                            indeterminate={
+                              tempSelectedLatencyMetrics.length > 0 &&
+                              tempSelectedLatencyMetrics.length <
+                                latencyMetricsMeta.length
+                            }
+                            checked={
+                              latencyMetricsMeta.length > 0 &&
+                              tempSelectedLatencyMetrics.length ===
+                                latencyMetricsMeta.length
+                            }
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setTempSelectedLatencyMetrics(
+                                  latencyMetricsMeta.map((m) => m.key),
+                                );
+                              } else {
+                                setTempSelectedLatencyMetrics([]);
+                              }
+                            }}
+                          >
+                            {intl.formatMessage({
+                              id: 'src.pages.Tenant.Detail.Sql.Detail.SelectAll',
+                              defaultMessage: '全选',
+                            })}
+                          </Checkbox>
+                        </div>
+                        {menu}
+                      </div>
+                    )}
                   />
                 </Space>
               }
