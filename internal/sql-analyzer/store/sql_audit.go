@@ -313,6 +313,9 @@ type QueryOptions struct {
 }
 
 func (s *SqlAuditStore) CountSqlAudits(opts *QueryOptions) (int64, error) {
+	if !s.hasParquetFiles() {
+		return 0, nil
+	}
 	var args []any
 	var whereClauses []string
 
@@ -342,6 +345,9 @@ func (s *SqlAuditStore) CountSqlAudits(opts *QueryOptions) (int64, error) {
 }
 
 func (s *SqlAuditStore) QuerySqlAudits(opts *QueryOptions) ([]map[string]any, error) {
+	if !s.hasParquetFiles() {
+		return []map[string]any{}, nil
+	}
 	var args []any
 	var whereClauses []string
 
@@ -416,6 +422,11 @@ func (s *SqlAuditStore) Close() {
 	if s.db != nil {
 		s.db.Close()
 	}
+}
+
+func (s *SqlAuditStore) hasParquetFiles() bool {
+	files, _ := filepath.Glob(filepath.Join(s.path, "*.parquet"))
+	return len(files) > 0
 }
 
 // DeleteOldData deletes data from parquet files older than the retention period.
@@ -496,6 +507,12 @@ func parseTimeFromFileName(fileName string) (time.Time, error) {
 }
 
 func (s *SqlAuditStore) QueryRequestStatistics(req apimodel.RequestStatisticsRequest) (*apimodel.RequestStatisticsResponse, error) {
+	if !s.hasParquetFiles() {
+		return &apimodel.RequestStatisticsResponse{
+			ExecutionTrend: []apimodel.DailyTrend{},
+			LatencyTrend:   []apimodel.DailyTrend{},
+		}, nil
+	}
 	var args []any
 	var whereClauses []string
 
@@ -565,6 +582,12 @@ func (s *SqlAuditStore) QueryRequestStatistics(req apimodel.RequestStatisticsReq
 }
 
 func (s *SqlAuditStore) QuerySqlHistoryInfo(req apimodel.SqlHistoryRequest) (*apimodel.SqlHistoryResponse, error) {
+	if !s.hasParquetFiles() {
+		return &apimodel.SqlHistoryResponse{
+			ExecutionTrend: []apimodel.PlanTypeTrend{},
+			LatencyTrend:   []apimodel.LatencyTrendItem{},
+		}, nil
+	}
 	resp := &apimodel.SqlHistoryResponse{
 		ExecutionTrend: []apimodel.PlanTypeTrend{},
 		LatencyTrend:   []apimodel.LatencyTrendItem{},
@@ -647,6 +670,13 @@ func (s *SqlAuditStore) QuerySqlHistoryInfo(req apimodel.SqlHistoryRequest) (*ap
 }
 
 func (s *SqlAuditStore) QuerySqlDetailInfo(planStore *PlanStore, req apimodel.SqlDetailRequest) (*apimodel.SqlDetailResponse, error) {
+	if !s.hasParquetFiles() {
+		return &apimodel.SqlDetailResponse{
+			Plans:   []apimodel.PlanStats{},
+			Tables:  []apimodel.TableInfo{},
+			Indexes: []apimodel.IndexInfo{},
+		}, nil
+	}
 	resp := &apimodel.SqlDetailResponse{
 		Plans:   []apimodel.PlanStats{},
 		Tables:  []apimodel.TableInfo{},

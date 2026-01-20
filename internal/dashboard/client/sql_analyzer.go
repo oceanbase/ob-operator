@@ -20,9 +20,11 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/pkg/errors"
+	logger "github.com/sirupsen/logrus"
+
 	apimodel "github.com/oceanbase/ob-operator/internal/sql-analyzer/api/model"
 	analyticmodel "github.com/oceanbase/ob-operator/internal/sql-analyzer/model"
-	"github.com/pkg/errors"
 )
 
 type SqlAnalyzerClient struct {
@@ -61,17 +63,20 @@ func (c *SqlAnalyzerClient) QuerySqlStats(tenantName string, req apimodel.QueryS
 
 	resp, err := http.DefaultClient.Do(httpReq)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to send request to sql-analyzer")
+		logger.Errorf("failed to send request to sql-analyzer: %v", err)
+		return &apimodel.SqlStatsResponse{Items: []apimodel.SqlStatsItem{}, TotalCount: 0}, nil
 	}
 	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to read response body")
+		logger.Errorf("failed to read response body from sql-analyzer: %v", err)
+		return &apimodel.SqlStatsResponse{Items: []apimodel.SqlStatsItem{}, TotalCount: 0}, nil
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("sql-analyzer returned non-200 status: %d, body: %s", resp.StatusCode, string(respBody))
+		logger.Errorf("sql-analyzer returned non-200 status: %d, body: %s", resp.StatusCode, string(respBody))
+		return &apimodel.SqlStatsResponse{Items: []apimodel.SqlStatsItem{}, TotalCount: 0}, nil
 	}
 
 	var apiResp struct {
@@ -80,7 +85,8 @@ func (c *SqlAnalyzerClient) QuerySqlStats(tenantName string, req apimodel.QueryS
 		Data       *apimodel.SqlStatsResponse `json:"data"`
 	}
 	if err := json.Unmarshal(respBody, &apiResp); err != nil {
-		return nil, errors.Wrap(err, "failed to unmarshal response body")
+		logger.Errorf("failed to unmarshal response body from sql-analyzer: %v, body: %s", err, string(respBody))
+		return &apimodel.SqlStatsResponse{Items: []apimodel.SqlStatsItem{}, TotalCount: 0}, nil
 	}
 
 	if !apiResp.Successful {
@@ -124,16 +130,6 @@ func (c *SqlAnalyzerClient) QueryRequestStatistics(tenantName string, req apimod
 		Message    string                              `json:"message"`
 		Data       *apimodel.RequestStatisticsResponse `json:"data"`
 	}
-	// Note: previous implementation in business/sql_analyzer_client.go checked for Successful/Message/Data wrapper
-	// BUT QuerySqlStats implementation in client/sql_analyzer.go (original) did NOT check for wrapper, it unmarshaled directly to SqlStatsResponse.
-	// business/sql_analyzer_client.go implementations ALL used the wrapper struct {Successful, Message, Data}.
-	// I should probably follow the wrapper pattern if that's what the server returns.
-	// I'll check QuerySqlStats in business/sql_analyzer_client.go again.
-	// Yes, it used the wrapper.
-	// So my QuerySqlStats above is WRONG if the server returns a wrapper.
-	// The original client/sql_analyzer.go implementation MIGHT have been wrong or for a different endpoint?
-	// Given business/sql_analyzer_client.go was working (presumably), I should use the wrapper.
-
 	if err := json.Unmarshal(respBody, &apiResp); err != nil {
 		return nil, errors.Wrap(err, "failed to unmarshal response body")
 	}
