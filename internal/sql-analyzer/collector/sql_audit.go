@@ -18,6 +18,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	sqlconst "github.com/oceanbase/ob-operator/internal/sql-analyzer/const/sql"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/model"
 )
@@ -34,7 +35,7 @@ func (c *Collector) getMaxRequestIDs() (map[string]uint64, error) {
 		return nil, errors.Wrap(err, "Failed to get oceanbase connection")
 	}
 
-	if err := cnx.QueryList(c.Ctx, &observers, sqlconst.GetMaxRequestIDByIP, c.TenantID); err != nil {
+	if err := cnx.QueryList(c.Ctx, &observers, sqlconst.GetMaxRequestIDByIP, c.TenantID, oceanbaseconst.RpcPort); err != nil {
 		return nil, errors.Wrap(err, "Failed to query max request ids")
 	}
 
@@ -149,7 +150,7 @@ func (c *Collector) collectSqlAuditByOBServer(svrIP string, lastRequestID uint64
 		return nil, errors.Wrap(err, "Failed to get oceanbase connection")
 	}
 
-	if err := cnx.QueryList(c.Ctx, &results, sqlconst.GetSqlStatistics, c.TenantID, svrIP, lastRequestID); err != nil {
+	if err := cnx.QueryList(c.Ctx, &results, sqlconst.GetSqlStatistics, c.TenantID, svrIP, oceanbaseconst.RpcPort, lastRequestID); err != nil {
 		return nil, err
 	}
 	return results, nil
