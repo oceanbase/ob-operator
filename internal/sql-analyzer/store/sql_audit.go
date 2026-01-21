@@ -69,6 +69,9 @@ func NewSqlAuditStore(c context.Context, path string, maxOpenConns int, l *logge
 		if _, err := conn.ExecContext(c, "SET preserve_insertion_order=false"); err != nil {
 			l.Warnf("Failed to set preserve_insertion_order=false for sql audit store: %v", err)
 		}
+		if _, err := conn.ExecContext(c, "SET threads=4"); err != nil {
+			l.Warnf("Failed to set threads=4 for sql audit store: %v", err)
+		}
 		conn.Close()
 	} else {
 		l.Warnf("Failed to get connection to set memory limit for sql audit store: %v", err)
