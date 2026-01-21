@@ -20,7 +20,7 @@ import (
 	logger "github.com/sirupsen/logrus"
 )
 
-func StartMemoryMonitoring(ctx context.Context, db *sql.DB, l *logger.Logger) {
+func StartMemoryMonitoring(ctx context.Context, name string, db *sql.DB, l *logger.Logger) {
 	go func() {
 		ticker := time.NewTicker(1 * time.Minute)
 		defer ticker.Stop()
@@ -29,7 +29,7 @@ func StartMemoryMonitoring(ctx context.Context, db *sql.DB, l *logger.Logger) {
 			case <-ticker.C:
 				rows, err := db.QueryContext(ctx, "SELECT * FROM duckdb_memory()")
 				if err != nil {
-					l.Warnf("Failed to query duckdb_memory: %v", err)
+					l.Warnf("[%s] Failed to query duckdb_memory: %v", name, err)
 					continue
 				}
 
@@ -42,7 +42,7 @@ func StartMemoryMonitoring(ctx context.Context, db *sql.DB, l *logger.Logger) {
 					}
 
 					if err := rows.Scan(columnPointers...); err != nil {
-						l.Warnf("Failed to scan duckdb_memory row: %v", err)
+						l.Warnf("[%s] Failed to scan duckdb_memory row: %v", name, err)
 						break
 					}
 
@@ -51,7 +51,7 @@ func StartMemoryMonitoring(ctx context.Context, db *sql.DB, l *logger.Logger) {
 						val := columnPointers[i].(*any)
 						rowMap[colName] = *val
 					}
-					l.Infof("DuckDB Memory: %v", rowMap)
+					l.Infof("[%s] DuckDB Memory: %v", name, rowMap)
 				}
 				rows.Close()
 			case <-ctx.Done():

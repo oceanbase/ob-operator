@@ -496,7 +496,7 @@ func (s *SqlAuditStore) StartCleanupWorker() {
 func (s *SqlAuditStore) StartBackgroundWorkers() {
 	s.StartCleanupWorker()
 	// Start memory monitoring
-	StartMemoryMonitoring(s.ctx, s.db, s.Logger)
+	StartMemoryMonitoring(s.ctx, "SqlAudit", s.db, s.Logger)
 }
 
 func parseTimeFromFileName(fileName string) (time.Time, error) {

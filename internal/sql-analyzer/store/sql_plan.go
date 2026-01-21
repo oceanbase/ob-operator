@@ -306,5 +306,5 @@ func (s *PlanStore) DebugQuery(query string, args ...interface{}) ([]map[string]
 
 func (s *PlanStore) StartBackgroundWorkers() {
 	// Start memory monitoring
-	StartMemoryMonitoring(s.ctx, s.db, s.Logger)
+	StartMemoryMonitoring(s.ctx, "SqlPlan", s.db, s.Logger)
 }
