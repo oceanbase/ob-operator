@@ -47,4 +47,5 @@ type ConfigItem struct {
 	NeedReboot   bool   `json:"needReboot" db:"need_reboot"`
 	VisibleLevel string `json:"visibleLevel" db:"visible_level"`
 	Range        string `json:"range" db:"range"`
+	ConfigLevel  string `json:"configLevel" db:"config_level"`
 }
