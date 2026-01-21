@@ -303,3 +303,8 @@ func (s *PlanStore) DebugQuery(query string, args ...interface{}) ([]map[string]
 	}
 	return results, nil
 }
+
+func (s *PlanStore) StartBackgroundWorkers() {
+	// Start memory monitoring
+	StartMemoryMonitoring(s.ctx, s.db, s.Logger)
+}
