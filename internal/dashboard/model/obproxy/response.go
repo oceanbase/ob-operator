@@ -41,11 +41,11 @@ type OBProxyOverview struct {
 }
 
 type ConfigItem struct {
-	Name         string `json:"name"`
-	Value        string `json:"value"`
-	Info         string `json:"info"`
-	NeedReboot   bool   `json:"needReboot" db:"need_reboot"`
-	VisibleLevel string `json:"visibleLevel" db:"visible_level"`
-	Range        string `json:"range" db:"range"`
-	ConfigLevel  string `json:"configLevel" db:"config_level"`
+	Name         string  `json:"name"`
+	Value        string  `json:"value"`
+	Info         string  `json:"info"`
+	NeedReboot   bool    `json:"needReboot" db:"need_reboot"`
+	VisibleLevel string  `json:"visibleLevel" db:"visible_level"`
+	Range        *string `json:"range" db:"range"`
+	ConfigLevel  *string `json:"configLevel" db:"config_level"`
 }
