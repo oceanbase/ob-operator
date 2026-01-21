@@ -63,6 +63,9 @@ func NewSqlAuditStore(c context.Context, path string, maxOpenConns int, l *logge
 		if _, err := conn.ExecContext(c, fmt.Sprintf("PRAGMA memory_limit='%s'", memLimit)); err != nil {
 			l.Warnf("Failed to set duckdb memory limit for sql audit store: %v", err)
 		}
+		if _, err := conn.ExecContext(c, "SET allocator_background_threads=true"); err != nil {
+			l.Warnf("Failed to set allocator_background_threads for sql audit store: %v", err)
+		}
 		conn.Close()
 	} else {
 		l.Warnf("Failed to get connection to set memory limit for sql audit store: %v", err)

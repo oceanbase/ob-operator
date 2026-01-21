@@ -88,6 +88,10 @@ func NewPlanStore(c context.Context, path string, maxOpenConns int, l *logger.Lo
 		l.Warnf("Failed to set duckdb memory limit: %v", err)
 	}
 
+	if _, err := conn.ExecContext(c, "SET allocator_background_threads=true"); err != nil {
+		l.Warnf("Failed to set allocator_background_threads: %v", err)
+	}
+
 	conn.Close() // Close the temporary connection, the pool will manage connections from here.
 
 	s := &PlanStore{db: db, ctx: c, Logger: l}
