@@ -16,8 +16,8 @@ sql-analyzer: sql-analyzer-doc-gen
 	@echo Building sql-analyzer...
 	@mkdir -p bin
 ifneq ($(ASAN_ENABLED),)
-	@echo "Building with AddressSanitizer..."
-	CGO_ENABLED=1 CGO_CFLAGS="-fsanitize=address -g" CGO_LDFLAGS="-fsanitize=address" go build -tags dynamic -o bin/sql-analyzer cmd/sql-analyzer/main.go
+	@echo "Building with AddressSanitizer (Clang)..."
+	CC=clang CGO_ENABLED=1 CGO_LDFLAGS='-fsanitize=address' CGO_CFLAGS='-O0 -g3 -fsanitize=address' go build -asan -o bin/sql-analyzer cmd/sql-analyzer/main.go
 else
 	@go build -o bin/sql-analyzer cmd/sql-analyzer/main.go
 endif
