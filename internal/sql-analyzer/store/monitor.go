@@ -15,6 +15,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"runtime"
 	"time"
 
 	logger "github.com/sirupsen/logrus"
@@ -27,6 +28,16 @@ func StartMemoryMonitoring(ctx context.Context, name string, db *sql.DB, l *logg
 		for {
 			select {
 			case <-ticker.C:
+				// Log Go Memory Stats
+				var m runtime.MemStats
+				runtime.ReadMemStats(&m)
+				// bToMb helper closure
+				bToMb := func(b uint64) uint64 {
+					return b / 1024 / 1024
+				}
+				l.Infof("[%s] Go Memory: Alloc=%v MiB, Sys=%v MiB, HeapSys=%v MiB, StackSys=%v MiB, NumGC=%v",
+					name, bToMb(m.Alloc), bToMb(m.Sys), bToMb(m.HeapSys), bToMb(m.StackSys), m.NumGC)
+
 				rows, err := db.QueryContext(ctx, "SELECT * FROM duckdb_memory()")
 				if err != nil {
 					l.Warnf("[%s] Failed to query duckdb_memory: %v", name, err)
