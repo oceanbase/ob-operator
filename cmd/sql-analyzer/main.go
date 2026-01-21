@@ -168,13 +168,13 @@ func main() {
 	}
 
 	// Configure worker num
-	workerNum := 4
+	workerNum := 1
 	workerNumStr := os.Getenv("PLAN_WORKER_NUM")
 	if workerNumStr != "" {
 		if val, err := strconv.Atoi(workerNumStr); err == nil && val > 0 {
 			workerNum = val
 		} else {
-			analyzerLogger.Warnf("Invalid PLAN_WORKER_NUM value '%s', using default of 4.", workerNumStr)
+			analyzerLogger.Warnf("Invalid PLAN_WORKER_NUM value '%s', using default of 1.", workerNumStr)
 		}
 	}
 
@@ -201,13 +201,13 @@ func main() {
 	}
 
 	// Configure DuckDB max open conns
-	duckDBMaxOpenConns := 10
+	duckDBMaxOpenConns := 1
 	duckDBMaxOpenConnsStr := os.Getenv("DUCKDB_MAX_OPEN_CONNS")
 	if duckDBMaxOpenConnsStr != "" {
 		if val, err := strconv.Atoi(duckDBMaxOpenConnsStr); err == nil && val > 0 {
 			duckDBMaxOpenConns = val
 		} else {
-			analyzerLogger.Warnf("Invalid DUCKDB_MAX_OPEN_CONNS value '%s', using default of 10.", duckDBMaxOpenConnsStr)
+			analyzerLogger.Warnf("Invalid DUCKDB_MAX_OPEN_CONNS value '%s', using default of 1.", duckDBMaxOpenConnsStr)
 		}
 	}
 
