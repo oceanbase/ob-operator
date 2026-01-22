@@ -144,7 +144,11 @@ func (s *SqlAuditStore) InsertBatch(resultsSlices [][]model.SqlAudit) error {
 	if _, err := conn.ExecContext(s.ctx, fmt.Sprintf(sqlconst.CreateSqlAuditTempTableTemplate, tempTableName)); err != nil {
 		return fmt.Errorf("failed to create temp table: %w", err)
 	}
-	defer conn.ExecContext(s.ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s", tempTableName))
+	defer func() {
+		if _, err := conn.ExecContext(s.ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s", tempTableName)); err != nil {
+			s.Logger.Warnf("Failed to drop temp table %s: %v", tempTableName, err)
+		}
+	}()
 
 	if _, err := conn.ExecContext(s.ctx, "SET preserve_insertion_order=false"); err != nil {
 		s.Logger.Warnf("Failed to set preserve_insertion_order=false for batch insert: %v", err)
