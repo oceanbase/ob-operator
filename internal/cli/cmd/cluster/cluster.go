@@ -31,5 +31,6 @@ func NewCmd() *cobra.Command {
 	cmd.AddCommand(NewListCmd())
 	cmd.AddCommand(NewScaleCmd())
 	cmd.AddCommand(NewShowCmd())
+	cmd.AddCommand(NewConnectCmd())
 	return cmd
 }
