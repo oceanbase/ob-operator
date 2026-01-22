@@ -739,7 +739,39 @@ OBCLUSTER_OVERVIEW:
       key: wait_event_rt
       name: wait_time
       unit: "\u03BCs"
-    name: "\u7B49\u5F85\u4E8B\u4EF6\u8017\u65F6"
+    name: "等待事件耗时"
+OBPROXY_OVERVIEW:
+- name: OBProxy 概览指标
+  description: OBProxy 概览指标
+  metricGroups:
+  - name: TPS
+    description: 每秒事务数
+    metrics:
+    - name: total
+      description: 每秒事务数
+      key: transaction_total
+      unit: 
+  - name: QPS
+    description: 每秒请求数
+    metrics:
+    - name: total
+      description: 每秒请求数
+      key: request_total
+      unit: 
+  - name: 连接数
+    description: OBProxy 连接数
+    metrics:
+    - name: connections
+      description: 连接数
+      key: current_session
+      unit: 
+  - name: SQL 响应时间
+    description: 平均每条 SQL 响应时间
+    metrics:
+    - name: response_time
+      description: 平均每次请求耗时
+      key: request_cost
+      unit: "μs"
 OBPROXY:
 - name: OBProxy 服务监控
   description: OBProxy 服务监控

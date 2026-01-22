@@ -37,6 +37,7 @@ const (
 	ScopeTenantOverview  = "OBTENANT_OVERVIEW"
 	ScopeTenant          = "OBTENANT"
 	ScopeOBProxy         = "OBPROXY"
+	ScopeOBProxyOverview = "OBPROXY_OVERVIEW"
 )
 
 const (
