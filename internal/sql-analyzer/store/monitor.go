@@ -23,7 +23,7 @@ import (
 
 func StartMemoryMonitoring(ctx context.Context, name string, db *sql.DB, l *logger.Logger) {
 	go func() {
-		ticker := time.NewTicker(1 * time.Minute)
+		ticker := time.NewTicker(30 * time.Minute)
 		defer ticker.Stop()
 		for {
 			select {
