@@ -722,6 +722,38 @@ OBCLUSTER_OVERVIEW:
       name: wait_time
       unit: us
     name: Waiting for event time
+OBPROXY_OVERVIEW:
+- name: OBProxy overview metrics
+  description: Obproxy overview metrics
+  metricGroups:
+  - name: TPS
+    description: transaction count per second
+    metrics:
+    - name: total
+      description: transaction count per second
+      key: transaction_total
+      unit: 
+  - name: QPS
+    description: request count per second
+    metrics:
+    - name: total
+      description: request count per second
+      key: request_total
+      unit: 
+  - name: Connections
+    description: obproxy connections
+    metrics:
+    - name: connections
+      description: connections
+      key: current_session
+      unit: 
+  - name: SQL response time
+    description: average response time per SQL query
+    metrics:
+    - name: response_time
+      description: average elapsed time for request
+      key: request_cost
+      unit: "μs"
 OBPROXY:
 - name: OBProxy service monitoring
   description: Obproxy service monitoring
