@@ -66,9 +66,6 @@ func NewSqlAuditStore(c context.Context, path string, maxOpenConns int, threads 
 		if _, err := conn.ExecContext(c, "SET allocator_background_threads=true"); err != nil {
 			l.Warnf("Failed to set allocator_background_threads for sql audit store: %v", err)
 		}
-		if _, err := conn.ExecContext(c, "SET preserve_insertion_order=false"); err != nil {
-			l.Warnf("Failed to set preserve_insertion_order=false for sql audit store: %v", err)
-		}
 		if _, err := conn.ExecContext(c, fmt.Sprintf("SET threads=%d", threads)); err != nil {
 			l.Warnf("Failed to set threads=%d for sql audit store: %v", threads, err)
 		}
@@ -84,6 +81,17 @@ func NewSqlAuditStore(c context.Context, path string, maxOpenConns int, threads 
 
 	store := &SqlAuditStore{db: db, path: path, ctx: c, Logger: l}
 	return store, nil
+}
+
+func (s *SqlAuditStore) GetConnection() (*sql.Conn, error) {
+	conn, err := s.db.Conn(s.ctx)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := conn.ExecContext(s.ctx, "SET preserve_insertion_order=false"); err != nil {
+		s.Logger.Warnf("Failed to set preserve_insertion_order=false: %v", err)
+	}
+	return conn, nil
 }
 
 func (s *SqlAuditStore) GetLastRequestIDs() (map[string]uint64, error) {
@@ -134,7 +142,7 @@ func (s *SqlAuditStore) InsertBatch(resultsSlices [][]model.SqlAudit) error {
 		return nil
 	}
 
-	conn, err := s.db.Conn(s.ctx)
+	conn, err := s.GetConnection()
 	if err != nil {
 		return fmt.Errorf("failed to get connection: %w", err)
 	}
@@ -149,10 +157,6 @@ func (s *SqlAuditStore) InsertBatch(resultsSlices [][]model.SqlAudit) error {
 			s.Logger.Warnf("Failed to drop temp table %s: %v", tempTableName, err)
 		}
 	}()
-
-	if _, err := conn.ExecContext(s.ctx, "SET preserve_insertion_order=false"); err != nil {
-		s.Logger.Warnf("Failed to set preserve_insertion_order=false for batch insert: %v", err)
-	}
 
 	// Use the appender to load data into the temp table.
 	err = conn.Raw(func(driverConn any) error {
@@ -242,15 +246,11 @@ func (s *SqlAuditStore) InsertBatch(resultsSlices [][]model.SqlAudit) error {
 }
 
 func (s *SqlAuditStore) Compact() error {
-	conn, err := s.db.Conn(s.ctx)
+	conn, err := s.GetConnection()
 	if err != nil {
 		return errors.Wrap(err, "Failed to get connection")
 	}
 	defer conn.Close()
-
-	if _, err := conn.ExecContext(s.ctx, "SET preserve_insertion_order=false"); err != nil {
-		s.Logger.Warnf("Failed to set preserve_insertion_order=false for compaction: %v", err)
-	}
 
 	smallFiles, err := filepath.Glob(filepath.Join(s.path, parquet.SmallFilePattern))
 	if err != nil {
