@@ -46,7 +46,8 @@ func ListMetricMetas(c *gin.Context) ([]response.MetricClass, error) {
 		metricconst.ScopeTenant,
 		metricconst.ScopeClusterOverview,
 		metricconst.ScopeTenantOverview,
-		metricconst.ScopeOBProxy:
+		metricconst.ScopeOBProxy,
+		metricconst.ScopeOBProxyOverview:
 	default:
 		return nil, httpErr.NewBadRequest("invalid scope")
 	}
