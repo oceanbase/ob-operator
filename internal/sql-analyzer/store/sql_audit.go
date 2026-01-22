@@ -44,7 +44,7 @@ type SqlAuditStore struct {
 	Logger *logger.Logger
 }
 
-func NewSqlAuditStore(c context.Context, path string, maxOpenConns int, l *logger.Logger) (*SqlAuditStore, error) {
+func NewSqlAuditStore(c context.Context, path string, maxOpenConns int, threads int, l *logger.Logger) (*SqlAuditStore, error) {
 	// Use an in-memory DuckDB database for operations.
 	db, err := sql.Open("duckdb", "") // In-memory
 	if err != nil {
@@ -62,6 +62,15 @@ func NewSqlAuditStore(c context.Context, path string, maxOpenConns int, l *logge
 		}
 		if _, err := conn.ExecContext(c, fmt.Sprintf("PRAGMA memory_limit='%s'", memLimit)); err != nil {
 			l.Warnf("Failed to set duckdb memory limit for sql audit store: %v", err)
+		}
+		if _, err := conn.ExecContext(c, "SET allocator_background_threads=true"); err != nil {
+			l.Warnf("Failed to set allocator_background_threads for sql audit store: %v", err)
+		}
+		if _, err := conn.ExecContext(c, "SET preserve_insertion_order=false"); err != nil {
+			l.Warnf("Failed to set preserve_insertion_order=false for sql audit store: %v", err)
+		}
+		if _, err := conn.ExecContext(c, fmt.Sprintf("SET threads=%d", threads)); err != nil {
+			l.Warnf("Failed to set threads=%d for sql audit store: %v", threads, err)
 		}
 		conn.Close()
 	} else {
@@ -125,17 +134,25 @@ func (s *SqlAuditStore) InsertBatch(resultsSlices [][]model.SqlAudit) error {
 		return nil
 	}
 
-	conn, err := s.db.Conn(context.Background())
+	conn, err := s.db.Conn(s.ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get connection: %w", err)
 	}
 	defer conn.Close()
 
 	tempTableName := "sql_audit_batch_" + uuid.New().String()[:8] // Use a unique temp table name
-	if _, err := conn.ExecContext(context.Background(), fmt.Sprintf(sqlconst.CreateSqlAuditTempTableTemplate, tempTableName)); err != nil {
+	if _, err := conn.ExecContext(s.ctx, fmt.Sprintf(sqlconst.CreateSqlAuditTempTableTemplate, tempTableName)); err != nil {
 		return fmt.Errorf("failed to create temp table: %w", err)
 	}
-	defer conn.ExecContext(context.Background(), fmt.Sprintf("DROP TABLE IF EXISTS %s", tempTableName))
+	defer func() {
+		if _, err := conn.ExecContext(s.ctx, fmt.Sprintf("DROP TABLE IF EXISTS %s", tempTableName)); err != nil {
+			s.Logger.Warnf("Failed to drop temp table %s: %v", tempTableName, err)
+		}
+	}()
+
+	if _, err := conn.ExecContext(s.ctx, "SET preserve_insertion_order=false"); err != nil {
+		s.Logger.Warnf("Failed to set preserve_insertion_order=false for batch insert: %v", err)
+	}
 
 	// Use the appender to load data into the temp table.
 	err = conn.Raw(func(driverConn any) error {
@@ -282,7 +299,7 @@ func (s *SqlAuditStore) Compact() error {
 	// Use a single, streaming COPY command instead of loading into a temp table.
 	copySql := fmt.Sprintf("COPY (SELECT * FROM read_parquet(['%s'])) TO '%s' (FORMAT PARQUET)", strings.Join(filesToCompact, "','"), tempCompactedFile)
 
-	if _, err := conn.ExecContext(context.Background(), copySql); err != nil {
+	if _, err := conn.ExecContext(s.ctx, copySql); err != nil {
 		return fmt.Errorf("failed to compact files: %w", err)
 	}
 
@@ -488,6 +505,12 @@ func (s *SqlAuditStore) StartCleanupWorker() {
 			}
 		}
 	}()
+}
+
+func (s *SqlAuditStore) StartBackgroundWorkers() {
+	s.StartCleanupWorker()
+	// Start memory monitoring
+	StartMemoryMonitoring(s.ctx, "SqlAudit", s.db, s.Logger)
 }
 
 func parseTimeFromFileName(fileName string) (time.Time, error) {

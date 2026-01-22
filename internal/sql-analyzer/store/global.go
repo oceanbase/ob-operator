@@ -29,12 +29,12 @@ var (
 
 func InitGlobalStores(ctx context.Context, conf *config.Config, logger *logrus.Logger) error {
 	var err error
-	globalSqlAuditStore, err = NewSqlAuditStore(ctx, filepath.Join(conf.DataPath, "sql_audit"), conf.DuckDBMaxOpenConns, logger)
+	globalSqlAuditStore, err = NewSqlAuditStore(ctx, filepath.Join(conf.DataPath, "sql_audit"), conf.DuckDBMaxOpenConns, conf.DuckDBThreads, logger)
 	if err != nil {
 		return err
 	}
 
-	globalPlanStore, err = NewPlanStore(ctx, filepath.Join(conf.DataPath, "sql_plan"), conf.DuckDBMaxOpenConns, logger)
+	globalPlanStore, err = NewPlanStore(ctx, filepath.Join(conf.DataPath, "sql_plan"), conf.DuckDBMaxOpenConns, conf.DuckDBThreads, logger)
 	if err != nil {
 		return err
 	}

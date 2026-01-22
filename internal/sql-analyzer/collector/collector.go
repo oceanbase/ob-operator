@@ -70,7 +70,8 @@ func (c *Collector) Init() error {
 		return errors.Wrap(err, "Failed to init sql plan table")
 	}
 
-	c.SqlAuditStore.StartCleanupWorker()
+	c.SqlAuditStore.StartBackgroundWorkers()
+	c.SqlPlanStore.StartBackgroundWorkers()
 
 	obtenant, err := clients.GetOBTenant(c.Ctx, types.NamespacedName{
 		Namespace: c.Config.Namespace,

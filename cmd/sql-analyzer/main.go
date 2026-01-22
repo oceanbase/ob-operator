@@ -211,6 +211,17 @@ func main() {
 		}
 	}
 
+	// Configure DuckDB threads
+	duckDBThreads := 4
+	duckDBThreadsStr := os.Getenv("DUCKDB_THREADS")
+	if duckDBThreadsStr != "" {
+		if val, err := strconv.Atoi(duckDBThreadsStr); err == nil && val > 0 {
+			duckDBThreads = val
+		} else {
+			analyzerLogger.Warnf("Invalid DUCKDB_THREADS value '%s', using default of 4.", duckDBThreadsStr)
+		}
+	}
+
 	config := &config.Config{
 		Namespace:                    namespace,
 		OBTenant:                     obtenant,
@@ -223,6 +234,7 @@ func main() {
 		WorkerNum:                    workerNum,
 		PlanCacheSize:                planCacheSize,
 		DuckDBMaxOpenConns:           duckDBMaxOpenConns,
+		DuckDBThreads:                duckDBThreads,
 	}
 
 	// Initialize Stores

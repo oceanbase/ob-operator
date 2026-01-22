@@ -42,7 +42,7 @@ func (s *PlanStore) InitSqlPlanTable() error {
 	return err
 }
 
-func NewPlanStore(c context.Context, path string, maxOpenConns int, l *logger.Logger) (*PlanStore, error) {
+func NewPlanStore(c context.Context, path string, maxOpenConns int, threads int, l *logger.Logger) (*PlanStore, error) {
 	l.Infof("Using plan store at %s", path)
 	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create data directory %s: %w", path, err)
@@ -86,6 +86,16 @@ func NewPlanStore(c context.Context, path string, maxOpenConns int, l *logger.Lo
 	}
 	if _, err := conn.ExecContext(c, fmt.Sprintf("PRAGMA memory_limit='%s'", memLimit)); err != nil {
 		l.Warnf("Failed to set duckdb memory limit: %v", err)
+	}
+
+	if _, err := conn.ExecContext(c, "SET allocator_background_threads=true"); err != nil {
+		l.Warnf("Failed to set allocator_background_threads: %v", err)
+	}
+	if _, err := conn.ExecContext(c, "SET preserve_insertion_order=false"); err != nil {
+		l.Warnf("Failed to set preserve_insertion_order=false: %v", err)
+	}
+	if _, err := conn.ExecContext(c, fmt.Sprintf("SET threads=%d", threads)); err != nil {
+		l.Warnf("Failed to set threads=%d: %v", threads, err)
 	}
 
 	conn.Close() // Close the temporary connection, the pool will manage connections from here.
@@ -298,4 +308,9 @@ func (s *PlanStore) DebugQuery(query string, args ...interface{}) ([]map[string]
 		results = append(results, m)
 	}
 	return results, nil
+}
+
+func (s *PlanStore) StartBackgroundWorkers() {
+	// Start memory monitoring
+	StartMemoryMonitoring(s.ctx, "SqlPlan", s.db, s.Logger)
 }

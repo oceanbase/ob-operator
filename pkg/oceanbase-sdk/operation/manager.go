@@ -68,14 +68,18 @@ func GetOceanbaseOperationManager(p *connector.OceanBaseDataSource) (*OceanbaseO
 	return NewOceanbaseOperationManager(connector), nil
 }
 
+func (m *OceanbaseOperationManager) setQueryTimeoutVariable(ctx context.Context, timeout time.Duration) error {
+	m.Logger.V(1).Info(fmt.Sprintf("set timeout to %d seconds", int64(timeout/time.Second)))
+	_, err := m.Connector.GetClient().ExecContext(ctx, "set ob_query_timeout=?", int64(timeout/time.Microsecond))
+	return err
+}
+
 func (m *OceanbaseOperationManager) ExecWithTimeout(ctx context.Context, timeout time.Duration, sql string, params ...any) error {
 	c, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
-	m.Logger.V(1).Info(fmt.Sprintf("set timeout to %d seconds", int64(timeout/time.Second)))
-	_, err := m.Connector.GetClient().ExecContext(c, "set ob_query_timeout=?", int64(timeout/time.Microsecond))
+	err := m.setQueryTimeoutVariable(c, timeout)
 	if err != nil {
 		return errors.Wrap(err, "Failed to set timeout variable")
-
 	}
 	m.Logger.V(1).Info(fmt.Sprintf("Execute sql %s with param %v", sql, params))
 	_, err = m.Connector.GetClient().ExecContext(c, sql, params...)
@@ -94,7 +98,11 @@ func (m *OceanbaseOperationManager) ExecWithDefaultTimeout(ctx context.Context, 
 func (m *OceanbaseOperationManager) QueryRowWithTimeout(ctx context.Context, timeout time.Duration, ret any, sql string, params ...any) error {
 	c, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
-	err := m.Connector.GetClient().GetContext(c, ret, sql, params...)
+	err := m.setQueryTimeoutVariable(c, timeout)
+	if err != nil {
+		return errors.Wrap(err, "Failed to set timeout variable")
+	}
+	err = m.Connector.GetClient().GetContext(c, ret, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "Query row, sql %s, param %v", sql, params)
 	}
@@ -108,7 +116,11 @@ func (m *OceanbaseOperationManager) QueryRow(ctx context.Context, ret any, sql s
 func (m *OceanbaseOperationManager) QueryListWithTimeout(ctx context.Context, timeout time.Duration, ret any, sql string, params ...any) error {
 	c, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
-	err := m.Connector.GetClient().SelectContext(c, ret, sql, params...)
+	err := m.setQueryTimeoutVariable(c, timeout)
+	if err != nil {
+		return errors.Wrap(err, "Failed to set timeout variable")
+	}
+	err = m.Connector.GetClient().SelectContext(c, ret, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "Query list failed, sql %s, param %v", sql, params)
 		m.Logger.Error(err, "Query list failed")

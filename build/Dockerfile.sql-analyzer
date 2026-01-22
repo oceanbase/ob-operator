@@ -5,6 +5,13 @@ ARG GOPROXY
 ARG GOSUMDB
 ARG ASAN_ENABLED
 
+# Install clang if ASAN_ENABLED is set
+RUN if [ -n "$ASAN_ENABLED" ]; then \
+    apt-get update && \
+    apt-get install -y libasan8 clang && \
+    rm -rf /var/lib/apt/lists/*; \
+    fi
+
 WORKDIR /workspace
 # copy everything
 COPY . .
@@ -20,7 +27,7 @@ RUN ASAN_ENABLED=$ASAN_ENABLED make sql-analyzer
 FROM ubuntu:24.04
 
 ARG ASAN_ENABLED
-# Install libasan if ASAN_ENABLED is set
+# Install libasan runtime if ASAN_ENABLED is set
 RUN if [ -n "$ASAN_ENABLED" ]; then \
     apt-get update && \
     apt-get install -y libasan8 && \
