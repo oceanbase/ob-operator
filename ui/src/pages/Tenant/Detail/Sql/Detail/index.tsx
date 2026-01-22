@@ -28,7 +28,7 @@ import {
 } from 'antd';
 import type { RangePickerProps } from 'antd/es/date-picker';
 import dayjs from 'dayjs';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getLocale } from 'umi';
 
 const { RangePicker } = DatePicker;
@@ -40,11 +40,13 @@ interface SqlTrendChartProps {
   data: API.MetricData[];
   type: 'execution' | 'latency';
   height?: number;
+  loading?: boolean;
 }
 
 const SqlTrendChart: React.FC<SqlTrendChartProps> = ({
   data,
   type,
+  loading,
   height = 300,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -114,7 +116,7 @@ const SqlTrendChart: React.FC<SqlTrendChartProps> = ({
     };
   }, [data, type, height]);
 
-  return <div ref={containerRef} style={{ height }} />;
+  return <div ref={containerRef} style={{ height }} loading={loading} />;
 };
 
 // --- Main Page Component ---
@@ -130,7 +132,17 @@ const SqlDetail: React.FC = () => {
   const location = useLocation();
   const stateSqlMeta = location.state as API.SqlInfo | undefined;
 
-  const dbName = searchParams.get('dbName') || '';
+  // 优先使用从列表页传递的数据，避免重复加载
+  // 从列表页传递的数据包含：querySql, dbName, userName, sqlId 等完整信息
+  // 使用 useMemo 确保这些值在 stateSqlMeta 变化时更新
+  const dbName = useMemo(
+    () => stateSqlMeta?.dbName || searchParams.get('dbName') || '',
+    [stateSqlMeta?.dbName, searchParams],
+  );
+  const userName = useMemo(
+    () => stateSqlMeta?.userName || searchParams.get('userName') || '',
+    [stateSqlMeta?.userName, searchParams],
+  );
   const urlStartTime = searchParams.get('startTime');
   const urlEndTime = searchParams.get('endTime');
 
@@ -184,6 +196,8 @@ const SqlDetail: React.FC = () => {
 
   // 1. Fetch Static Detail Info (Plans, Indexes, etc.)
   // Use a wider range or the initial range to find the SQL text
+  // 注意：SQL 文本、数据库、用户等基本信息优先使用从列表页传递的 stateSqlMeta，避免重复加载
+  // 如果从列表页传递了完整数据，API 主要用于获取 Plans 和 Indexes 等详细信息
   const { data: detailData, loading: detailLoading } = useRequest(
     async () => {
       if (!ns || !name || !sqlId) return;
@@ -195,18 +209,31 @@ const SqlDetail: React.FC = () => {
         : dayjs().subtract(24, 'hour').unix();
       const end = urlEndTime ? Number(urlEndTime) : dayjs().unix();
 
+      // 优先使用从列表页传递的数据，确保 API 调用时使用正确的参数
+      // 这样后端可以更精确地查询，避免重复加载基本信息
+      const effectiveDbName = stateSqlMeta?.dbName || dbName;
+      const effectiveUserName = stateSqlMeta?.userName || userName;
+
       return querySqlDetailInfo({
         namespace: ns,
         obtenant: name,
         sqlId,
-        database: dbName,
+        database: effectiveDbName,
+        user: effectiveUserName,
         startTime: start,
         endTime: end,
-        interval: 60,
       } as any);
     },
     {
-      refreshDeps: [ns, name, sqlId, dbName], // Only reload if identity changes
+      // 添加 stateSqlMeta 到依赖项，确保当传递的数据变化时重新调用
+      refreshDeps: [
+        ns,
+        name,
+        sqlId,
+        dbName,
+        stateSqlMeta?.dbName,
+        stateSqlMeta?.userName,
+      ],
     },
   );
 
@@ -224,11 +251,16 @@ const SqlDetail: React.FC = () => {
       let interval = Math.floor((end - start) / 60);
       if (interval < 1) interval = 1;
 
+      // 优先使用从列表页传递的数据，确保 API 调用时使用正确的参数
+      const effectiveDbName = stateSqlMeta?.dbName || dbName;
+      const effectiveUserName = stateSqlMeta?.userName || userName;
+
       return querySqlHistoryInfo({
         namespace: ns,
         obtenant: name,
         sqlId,
-        database: dbName,
+        database: effectiveDbName,
+        user: effectiveUserName,
         startTime: start,
         endTime: end,
         interval,
@@ -236,7 +268,17 @@ const SqlDetail: React.FC = () => {
       });
     },
     {
-      refreshDeps: [timeRange, selectedLatencyMetrics, ns, name, sqlId, dbName],
+      // 添加 stateSqlMeta 到依赖项，确保当传递的数据变化时重新调用
+      refreshDeps: [
+        timeRange,
+        selectedLatencyMetrics,
+        ns,
+        name,
+        sqlId,
+        dbName,
+        stateSqlMeta?.dbName,
+        stateSqlMeta?.userName,
+      ],
     },
   );
 
@@ -292,11 +334,7 @@ const SqlDetail: React.FC = () => {
 
   const [planDataSource, setPlanDataSource] = useState<any[]>([]);
 
-  const {
-    loading: planDetailLoading,
-
-    run: fetchPlanDetail,
-  } = useRequest(
+  const { loading: planDetailLoading, run: fetchPlanDetail } = useRequest(
     async (record: API.PlanStatistic) => {
       if (!ns || !name) return;
 
@@ -386,13 +424,12 @@ const SqlDetail: React.FC = () => {
       {/* Header & Basic Info */}
 
       <ProCard ghost gutter={[16, 16]} direction="column">
-        <ProCard loading={detailLoading}>
+        {/* 基本信息卡片：如果有传递的数据，不显示加载状态 */}
+        <ProCard loading={!stateSqlMeta && detailLoading}>
           <Space
             style={{
               marginBottom: 16,
-
               justifyContent: 'space-between',
-
               width: '100%',
             }}
           >
@@ -440,7 +477,8 @@ const SqlDetail: React.FC = () => {
                 ellipsis={{ rows: 2, expandable: true, symbol: 'more' }}
                 copyable
               >
-                {stateSqlMeta?.querySql || sqlInfo?.querySql || '-'}
+                {/* 只使用从列表页传递的数据，不等待 API 返回 */}
+                {stateSqlMeta?.querySql || '-'}
               </Typography.Paragraph>
             </ProDescriptions.Item>
 
@@ -459,7 +497,8 @@ const SqlDetail: React.FC = () => {
                 defaultMessage: '数据库',
               })}
             >
-              {stateSqlMeta?.dbName || dbName || '-'}
+              {/* 只使用从列表页传递的数据，不等待 API 返回 */}
+              {stateSqlMeta?.dbName || '-'}
             </ProDescriptions.Item>
 
             <ProDescriptions.Item
@@ -468,6 +507,7 @@ const SqlDetail: React.FC = () => {
                 defaultMessage: '用户',
               })}
             >
+              {/* 只使用从列表页传递的数据，不等待 API 返回 */}
               {stateSqlMeta?.userName || '-'}
             </ProDescriptions.Item>
           </ProDescriptions>
@@ -481,7 +521,6 @@ const SqlDetail: React.FC = () => {
             defaultMessage: '历史请求信息',
           })}
           headerBordered
-          loading={historyLoading}
           extra={
             <RangePicker
               showTime
@@ -509,6 +548,7 @@ const SqlDetail: React.FC = () => {
               colSpan={12}
             >
               <SqlTrendChart
+                loading={historyLoading}
                 data={historyInfo?.executionTrend || []}
                 type="execution"
               />
@@ -590,6 +630,7 @@ const SqlDetail: React.FC = () => {
               <SqlTrendChart
                 data={historyInfo?.latencyTrend || []}
                 type="latency"
+                loading={historyLoading}
               />
             </ProCard>
           </ProCard>
@@ -603,10 +644,10 @@ const SqlDetail: React.FC = () => {
             defaultMessage: '诊断与建议',
           })}
           headerBordered
-          loading={detailLoading}
         >
           {sqlInfo?.diagnoseInfo && sqlInfo.diagnoseInfo.length > 0 ? (
             <ProTable<any>
+              loading={detailLoading}
               rowKey={(record, index) => `${record.ruleName}-${index}`}
               dataSource={sqlInfo.diagnoseInfo}
               search={false}
@@ -672,9 +713,9 @@ const SqlDetail: React.FC = () => {
             defaultMessage: '执行计划统计',
           })}
           headerBordered
-          loading={detailLoading}
         >
           <ProTable<API.PlanStatistic>
+            loading={detailLoading}
             rowKey={(record) =>
               `${record.svrIP}-${record.svrPort}-${record.planID}`
             }
@@ -778,9 +819,9 @@ const SqlDetail: React.FC = () => {
             defaultMessage: '索引信息',
           })}
           headerBordered
-          loading={detailLoading}
         >
           <ProTable<API.IndexInfo>
+            loading={detailLoading}
             dataSource={sqlInfo?.indexies || []}
             columns={[
               {

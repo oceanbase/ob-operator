@@ -265,7 +265,6 @@ export default function NodesTable({
   return (
     <Col span={24}>
       <Card
-        loading={loading || nodeLoading}
         title={
           <h2 style={{ marginBottom: 0 }}>
             {intl.formatMessage({
@@ -286,6 +285,7 @@ export default function NodesTable({
         }
       >
         <Table
+          loading={loading || nodeLoading}
           rowSelection={rowSelection}
           columns={columns}
           dataSource={type === 'k8s' ? K8sClustersNodeList : data}

@@ -122,7 +122,6 @@ export default function TenantsList({
   const access = useAccess();
   return (
     <Card
-      loading={loading}
       title={
         <div className={styles.clusterHeader}>
           <h2 style={{ marginBottom: 0 }}>
@@ -143,6 +142,7 @@ export default function TenantsList({
       }
     >
       <Table
+        loading={loading}
         columns={columns}
         dataSource={tenantsList}
         scroll={{ x: 1200 }}

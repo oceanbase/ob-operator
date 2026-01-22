@@ -92,7 +92,6 @@ export default function Replicas({
   return (
     <Col span={24}>
       <CollapsibleCard
-        loading={!cluster?.topology?.length}
         title={
           <h2 style={{ marginBottom: 0 }}>
             {intl.formatMessage({

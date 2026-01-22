@@ -209,7 +209,6 @@ export default function EventsTable({
 
   return (
     <CustomCard
-      loading={loading || externalLoading}
       title={
         <h2 style={{ marginBottom: 0 }}>
           {intl.formatMessage({
@@ -224,6 +223,7 @@ export default function EventsTable({
         pagination={{ simple: true }}
         columns={columns}
         dataSource={dataList}
+        loading={loading || externalLoading}
       />
     </CustomCard>
   );

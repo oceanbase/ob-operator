@@ -338,7 +338,13 @@ export default function SqlList() {
               };
 
               const params = new URLSearchParams();
-              params.append('dbName', record.dbName);
+              // 传递数据库名、用户等基本信息到 URL，方便详情页直接使用
+              if (record.dbName) {
+                params.append('dbName', record.dbName);
+              }
+              if (record.userName) {
+                params.append('userName', record.userName);
+              }
               if (currentParams.startTime) {
                 params.append('startTime', currentParams.startTime.toString());
               }

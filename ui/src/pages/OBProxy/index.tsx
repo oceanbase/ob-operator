@@ -59,7 +59,7 @@ export default function OBProxy() {
       </Row>
       <MonitorComp
         filterLabel={[]}
-        queryScope="OBPROXY"
+        queryScope="OBPROXY_OVERVIEW"
         type="OVERVIEW"
         groupLabels={['cluster']}
         queryRange={DEFAULT_QUERY_RANGE}

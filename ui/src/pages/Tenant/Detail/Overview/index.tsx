@@ -398,11 +398,10 @@ export default function TenantOverview() {
 
   return (
     <div id="tenant-detail-container" className={styles.tenantContainer}>
-      <PageContainer header={header()}>
+      <PageContainer header={header()} loading={loading}>
         <Row justify="start" gutter={[16, 16]}>
           <Col span={24}>
             <BasicInfo
-              loading={loading}
               info={tenantDetail?.info}
               source={tenantDetail?.source}
               name={name}

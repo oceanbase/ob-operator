@@ -163,6 +163,7 @@ export default () => {
                 showInnerStandby={false}
                 suffixIcon={null}
                 optionLabelRender={(item) => item?.name}
+                clusterResourceName={tenantDetail?.info?.clusterResourceName}
               />
             </div>
 
