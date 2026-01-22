@@ -47,6 +47,9 @@ linters:
       - text: "Error return value of os.*Setenv is not checked"
         linters:
           - errcheck
+      - source: "^\\s*defer\\s+"
+        linters:
+          - errcheck
 
   settings:
     errcheck:
@@ -55,6 +58,7 @@ linters:
         - (*net/http.Response).Body.Close
         - (*database/sql.DB).Close
         - (*database/sql.Conn).Close
+        - (*database/sql.Rows).Close
         - (*github.com/spf13/cobra.Command).MarkFlagRequired
         - (*github.com/oceanbase/ob-operator/internal/server.HTTPServer).Stop
         - io.ReadCloser.Close

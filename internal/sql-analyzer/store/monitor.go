@@ -59,10 +59,17 @@ func StartMemoryMonitoring(ctx context.Context, name string, db *sql.DB, l *logg
 
 					rowMap := make(map[string]any)
 					for i, colName := range cols {
-						val := columnPointers[i].(*any)
+						val, ok := columnPointers[i].(*any)
+						if !ok {
+							l.Warnf("[%s] Failed to type assert column pointer for %s", name, colName)
+							continue
+						}
 						rowMap[colName] = *val
 					}
 					l.Infof("[%s] DuckDB Memory: %v", name, rowMap)
+				}
+				if err := rows.Err(); err != nil {
+					l.Warnf("[%s] Error during duckdb_memory iteration: %v", name, err)
 				}
 				rows.Close()
 			case <-ctx.Done():
