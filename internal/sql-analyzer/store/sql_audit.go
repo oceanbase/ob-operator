@@ -248,6 +248,10 @@ func (s *SqlAuditStore) Compact() error {
 	}
 	defer conn.Close()
 
+	if _, err := conn.ExecContext(s.ctx, "SET preserve_insertion_order=false"); err != nil {
+		s.Logger.Warnf("Failed to set preserve_insertion_order=false for compaction: %v", err)
+	}
+
 	smallFiles, err := filepath.Glob(filepath.Join(s.path, parquet.SmallFilePattern))
 	if err != nil {
 		return fmt.Errorf("failed to glob small parquet files: %w", err)
