@@ -60,8 +60,15 @@ func (c *Collector) collectSqlAuditData() {
 
 	for svrIP, maxRequestID := range maxRequestIDs {
 		lastRequestID, ok := c.RequestIdMap[svrIP]
-		if ok && lastRequestID == maxRequestID {
-			continue
+		if ok {
+			if lastRequestID == maxRequestID {
+				continue
+			}
+			if lastRequestID > maxRequestID {
+				c.Logger.Infof("Detected request_id reset for observer %s (last: %d, current max: %d). Resetting cursor.", svrIP, lastRequestID, maxRequestID)
+				lastRequestID = 0
+				c.RequestIdMap[svrIP] = 0
+			}
 		}
 
 		wg.Add(1)
