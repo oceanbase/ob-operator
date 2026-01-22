@@ -8,13 +8,19 @@ interface TenantSelectProps {
   [key: string]: any;
 }
 
-const TenantSelect = ({ value, ...restProps }: TenantSelectProps) => {
+const TenantSelect = ({
+  value,
+  clusterResourceName,
+  ...restProps
+}: TenantSelectProps) => {
   const location = useLocation();
   const { data: tenantsListResponse } = useRequest(getAllTenants, {
     defaultParams: [],
   });
 
-  const tenantsList = tenantsListResponse?.data || [];
+  const tenantsList = (tenantsListResponse?.data || [])?.filter(
+    (item) => item.clusterResourceName === clusterResourceName,
+  );
 
   return (
     <Select

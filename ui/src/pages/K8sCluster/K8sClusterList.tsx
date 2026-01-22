@@ -126,7 +126,6 @@ export default function K8sClusterList() {
 
   return (
     <Card
-      loading={loading}
       title={
         <div>
           <h2 style={{ marginBottom: 0 }}>
@@ -154,6 +153,7 @@ export default function K8sClusterList() {
       }
     >
       <Table
+        loading={loading}
         columns={columns}
         dataSource={K8sClustersList}
         pagination={{ simple: true }}
