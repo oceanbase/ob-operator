@@ -8,6 +8,7 @@ import { intl } from '@/utils/intl';
 import { SettingOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns } from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
+import { Spin } from '@oceanbase/design';
 import {
   Link,
   history,
@@ -201,12 +202,13 @@ export default function SqlList() {
     },
   );
 
-  const { data: tenantDetailResponse, run: getTenantDetail } = useRequest(
-    getTenant,
-    {
-      defaultParams: [{ ns: ns!, name: name! }],
-    },
-  );
+  const {
+    data: tenantDetailResponse,
+    run: getTenantDetail,
+    loading: tenantDetailLoading,
+  } = useRequest(getTenant, {
+    defaultParams: [{ ns: ns!, name: name! }],
+  });
 
   const defaultSqlAnalyzer = tenantDetailResponse?.info?.sqlAnalyzerEnabled;
 
@@ -603,13 +605,25 @@ export default function SqlList() {
         padding: 24,
       }}
     >
-      {defaultSqlAnalyzer ? (
+      {tenantDetailLoading ? (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 'calc(100vh - 98px)',
+          }}
+        >
+          <Spin />
+        </div>
+      ) : defaultSqlAnalyzer ? (
         <>
           <ProTable<API.SqlInfo>
             headerTitle={intl.formatMessage({
               id: 'src.pages.Tenant.Detail.Sql.SqlAnalysis',
               defaultMessage: 'SQL 分析',
             })}
+            loading={tenantDetailLoading}
             actionRef={actionRef}
             rowKey={(record) =>
               `${record.sqlId}_${record.svrIp}_${record.svrPort}_${record.planId}_${record.userName}_${record.dbName}`
