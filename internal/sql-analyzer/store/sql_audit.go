@@ -45,16 +45,10 @@ type SqlAuditStore struct {
 }
 
 func NewSqlAuditStore(c context.Context, path string, maxOpenConns int, threads int, l *logger.Logger) (*SqlAuditStore, error) {
-	// Ensure the data directory exists
-	if err := os.MkdirAll(path, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create data directory %s: %w", path, err)
-	}
-
-	// Use a disk-based DuckDB database for operations to reduce memory pressure.
-	dbPath := filepath.Join(path, "sql_audit.duckdb")
-	db, err := sql.Open("duckdb", dbPath)
+	// Use an in-memory DuckDB database for operations.
+	db, err := sql.Open("duckdb", "") // In-memory
 	if err != nil {
-		return nil, fmt.Errorf("failed to open disk-based duckdb at %s: %w", dbPath, err)
+		return nil, fmt.Errorf("failed to open in-memory duckdb: %w", err)
 	}
 
 	db.SetMaxOpenConns(maxOpenConns)
@@ -81,6 +75,11 @@ func NewSqlAuditStore(c context.Context, path string, maxOpenConns int, threads 
 		conn.Close()
 	} else {
 		l.Warnf("Failed to get connection to set memory limit for sql audit store: %v", err)
+	}
+
+	// Ensure the data directory exists
+	if err := os.MkdirAll(path, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create data directory %s: %w", path, err)
 	}
 
 	store := &SqlAuditStore{db: db, path: path, ctx: c, Logger: l}
