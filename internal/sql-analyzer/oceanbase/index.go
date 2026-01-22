@@ -15,6 +15,7 @@ package oceanbase
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/api/model"
 	sqlconst "github.com/oceanbase/ob-operator/internal/sql-analyzer/const/sql"
@@ -36,7 +37,7 @@ type PrimaryKeyRow struct {
 func QueryTableIndexes(ctx context.Context, opMgr *operation.OceanbaseOperationManager, tenantID uint64, dbName, tableName string, tableID int64) ([]model.IndexInfo, error) {
 	var indexes []model.IndexInfo
 	var pkRows []PrimaryKeyRow
-	err := opMgr.QueryList(ctx, &pkRows, sqlconst.GetTablePrimaryKey, tenantID, tableID)
+	err := opMgr.QueryListWithTimeout(ctx, sqlconst.QueryOceanBaseTimeoutSeconds*time.Second, &pkRows, sqlconst.GetTablePrimaryKey, tenantID, tableID)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +59,7 @@ func QueryTableIndexes(ctx context.Context, opMgr *operation.OceanbaseOperationM
 	}
 
 	var rows []IndexRow
-	err = opMgr.QueryList(ctx, &rows, sqlconst.GetTableIndex, tenantID, dbName, tableName)
+	err = opMgr.QueryListWithTimeout(ctx, sqlconst.QueryOceanBaseTimeoutSeconds*time.Second, &rows, sqlconst.GetTableIndex, tenantID, dbName, tableName)
 	if err != nil {
 		return nil, err
 	}

@@ -15,6 +15,7 @@ package collector
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -150,7 +151,7 @@ func (c *Collector) collectSqlAuditByOBServer(svrIP string, lastRequestID uint64
 		return nil, errors.Wrap(err, "Failed to get oceanbase connection")
 	}
 
-	if err := cnx.QueryList(c.Ctx, &results, sqlconst.GetSqlStatistics, c.TenantID, svrIP, oceanbaseconst.RpcPort, lastRequestID); err != nil {
+	if err := cnx.QueryListWithTimeout(c.Ctx, sqlconst.QueryOceanBaseTimeoutSeconds*time.Second, &results, sqlconst.GetSqlStatistics, c.TenantID, svrIP, oceanbaseconst.RpcPort, lastRequestID); err != nil {
 		return nil, err
 	}
 	return results, nil
