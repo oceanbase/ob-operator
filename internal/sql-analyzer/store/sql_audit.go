@@ -44,7 +44,7 @@ type SqlAuditStore struct {
 	Logger *logger.Logger
 }
 
-func NewSqlAuditStore(c context.Context, path string, maxOpenConns int, l *logger.Logger) (*SqlAuditStore, error) {
+func NewSqlAuditStore(c context.Context, path string, maxOpenConns int, threads int, l *logger.Logger) (*SqlAuditStore, error) {
 	// Ensure the data directory exists
 	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create data directory %s: %w", path, err)
@@ -75,8 +75,8 @@ func NewSqlAuditStore(c context.Context, path string, maxOpenConns int, l *logge
 		if _, err := conn.ExecContext(c, "SET preserve_insertion_order=false"); err != nil {
 			l.Warnf("Failed to set preserve_insertion_order=false for sql audit store: %v", err)
 		}
-		if _, err := conn.ExecContext(c, "SET threads=1"); err != nil {
-			l.Warnf("Failed to set threads=1 for sql audit store: %v", err)
+		if _, err := conn.ExecContext(c, fmt.Sprintf("SET threads=%d", threads)); err != nil {
+			l.Warnf("Failed to set threads=%d for sql audit store: %v", threads, err)
 		}
 		conn.Close()
 	} else {

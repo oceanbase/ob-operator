@@ -42,7 +42,7 @@ func (s *PlanStore) InitSqlPlanTable() error {
 	return err
 }
 
-func NewPlanStore(c context.Context, path string, maxOpenConns int, l *logger.Logger) (*PlanStore, error) {
+func NewPlanStore(c context.Context, path string, maxOpenConns int, threads int, l *logger.Logger) (*PlanStore, error) {
 	l.Infof("Using plan store at %s", path)
 	if err := os.MkdirAll(path, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create data directory %s: %w", path, err)
@@ -94,8 +94,8 @@ func NewPlanStore(c context.Context, path string, maxOpenConns int, l *logger.Lo
 	if _, err := conn.ExecContext(c, "SET preserve_insertion_order=false"); err != nil {
 		l.Warnf("Failed to set preserve_insertion_order=false: %v", err)
 	}
-	if _, err := conn.ExecContext(c, "SET threads=1"); err != nil {
-		l.Warnf("Failed to set threads=1: %v", err)
+	if _, err := conn.ExecContext(c, fmt.Sprintf("SET threads=%d", threads)); err != nil {
+		l.Warnf("Failed to set threads=%d: %v", threads, err)
 	}
 
 	conn.Close() // Close the temporary connection, the pool will manage connections from here.

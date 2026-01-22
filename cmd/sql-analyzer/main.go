@@ -168,13 +168,13 @@ func main() {
 	}
 
 	// Configure worker num
-	workerNum := 1
+	workerNum := 4
 	workerNumStr := os.Getenv("PLAN_WORKER_NUM")
 	if workerNumStr != "" {
 		if val, err := strconv.Atoi(workerNumStr); err == nil && val > 0 {
 			workerNum = val
 		} else {
-			analyzerLogger.Warnf("Invalid PLAN_WORKER_NUM value '%s', using default of 1.", workerNumStr)
+			analyzerLogger.Warnf("Invalid PLAN_WORKER_NUM value '%s', using default of 4.", workerNumStr)
 		}
 	}
 
@@ -201,13 +201,24 @@ func main() {
 	}
 
 	// Configure DuckDB max open conns
-	duckDBMaxOpenConns := 1
+	duckDBMaxOpenConns := 10
 	duckDBMaxOpenConnsStr := os.Getenv("DUCKDB_MAX_OPEN_CONNS")
 	if duckDBMaxOpenConnsStr != "" {
 		if val, err := strconv.Atoi(duckDBMaxOpenConnsStr); err == nil && val > 0 {
 			duckDBMaxOpenConns = val
 		} else {
-			analyzerLogger.Warnf("Invalid DUCKDB_MAX_OPEN_CONNS value '%s', using default of 1.", duckDBMaxOpenConnsStr)
+			analyzerLogger.Warnf("Invalid DUCKDB_MAX_OPEN_CONNS value '%s', using default of 10.", duckDBMaxOpenConnsStr)
+		}
+	}
+
+	// Configure DuckDB threads
+	duckDBThreads := 4
+	duckDBThreadsStr := os.Getenv("DUCKDB_THREADS")
+	if duckDBThreadsStr != "" {
+		if val, err := strconv.Atoi(duckDBThreadsStr); err == nil && val > 0 {
+			duckDBThreads = val
+		} else {
+			analyzerLogger.Warnf("Invalid DUCKDB_THREADS value '%s', using default of 4.", duckDBThreadsStr)
 		}
 	}
 
@@ -223,6 +234,7 @@ func main() {
 		WorkerNum:                    workerNum,
 		PlanCacheSize:                planCacheSize,
 		DuckDBMaxOpenConns:           duckDBMaxOpenConns,
+		DuckDBThreads:                duckDBThreads,
 	}
 
 	// Initialize Stores
