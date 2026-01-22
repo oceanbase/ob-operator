@@ -43,6 +43,7 @@ func StartMemoryMonitoring(ctx context.Context, name string, db *sql.DB, l *logg
 					l.Warnf("[%s] Failed to query duckdb_memory: %v", name, err)
 					continue
 				}
+				defer rows.Close()
 
 				cols, _ := rows.Columns()
 				for rows.Next() {
@@ -71,7 +72,6 @@ func StartMemoryMonitoring(ctx context.Context, name string, db *sql.DB, l *logg
 				if err := rows.Err(); err != nil {
 					l.Warnf("[%s] Error during duckdb_memory iteration: %v", name, err)
 				}
-				rows.Close()
 			case <-ctx.Done():
 				return
 			}
