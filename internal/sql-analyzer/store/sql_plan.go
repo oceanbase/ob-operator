@@ -117,6 +117,9 @@ func (s *PlanStore) LoadExistingPlans() ([]model.SqlPlanIdentifier, error) {
 			PlanID:   planID,
 		})
 	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "error during rows iteration")
+	}
 	return existingPlans, nil
 }
 
@@ -178,6 +181,9 @@ func (s *PlanStore) GetPlanDetail(ident model.SqlPlanIdentifier) ([]model.SqlPla
 		}
 		plans = append(plans, plan)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "error during rows iteration")
+	}
 	return plans, nil
 }
 
@@ -222,6 +228,9 @@ func (s *PlanStore) GetPlanStatsBySqlId(sqlId string) ([]model.PlanStatistic, er
 		}
 		stats = append(stats, stat)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "error during rows iteration")
+	}
 	return stats, nil
 }
 
@@ -247,6 +256,9 @@ func (s *PlanStore) GetTableInfoBySqlId(sqlId string) ([]model.TableInfo, error)
 			return nil, errors.Wrap(err, "failed to scan table info")
 		}
 		tables = append(tables, table)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrap(err, "error during rows iteration")
 	}
 	return tables, nil
 }
@@ -293,6 +305,9 @@ func (s *PlanStore) DebugQuery(query string, args ...interface{}) ([]map[string]
 			}
 		}
 		results = append(results, m)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return results, nil
 }
