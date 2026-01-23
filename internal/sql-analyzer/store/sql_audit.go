@@ -45,42 +45,24 @@ type SqlAuditStore struct {
 }
 
 func NewSqlAuditStore(c context.Context, path string, maxOpenConns int, threads int, l *logger.Logger) (*SqlAuditStore, error) {
-	// Use an in-memory DuckDB database for operations.
-	db, err := sql.Open("duckdb", "") // In-memory
+	// Ensure the data directory exists
+	if err := os.MkdirAll(path, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create data directory %s: %w", path, err)
+	}
+
+	memLimit := os.Getenv("DUCKDB_MEMORY_LIMIT")
+	if memLimit == "" {
+		memLimit = "512MB"
+	}
+
+	// Use an in-memory DuckDB database with configuration parameters in the DSN.
+	dsn := fmt.Sprintf("?memory_limit=%s&allocator_background_threads=true&preserve_insertion_order=false&threads=%d", memLimit, threads)
+	db, err := sql.Open("duckdb", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open in-memory duckdb: %w", err)
 	}
 
 	db.SetMaxOpenConns(maxOpenConns)
-
-	// Set memory limit for in-memory DB
-	conn, err := db.Conn(c)
-	if err == nil {
-		memLimit := os.Getenv("DUCKDB_MEMORY_LIMIT")
-		if memLimit == "" {
-			memLimit = "512MB"
-		}
-		if _, err := conn.ExecContext(c, fmt.Sprintf("PRAGMA memory_limit='%s'", memLimit)); err != nil {
-			l.Warnf("Failed to set duckdb memory limit for sql audit store: %v", err)
-		}
-		if _, err := conn.ExecContext(c, "SET allocator_background_threads=true"); err != nil {
-			l.Warnf("Failed to set allocator_background_threads for sql audit store: %v", err)
-		}
-		if _, err := conn.ExecContext(c, "SET preserve_insertion_order=false"); err != nil {
-			l.Warnf("Failed to set preserve_insertion_order=false for sql audit store: %v", err)
-		}
-		if _, err := conn.ExecContext(c, fmt.Sprintf("SET threads=%d", threads)); err != nil {
-			l.Warnf("Failed to set threads=%d for sql audit store: %v", threads, err)
-		}
-		conn.Close()
-	} else {
-		l.Warnf("Failed to get connection to set memory limit for sql audit store: %v", err)
-	}
-
-	// Ensure the data directory exists
-	if err := os.MkdirAll(path, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create data directory %s: %w", path, err)
-	}
 
 	store := &SqlAuditStore{db: db, path: path, ctx: c, Logger: l}
 	return store, nil
@@ -149,10 +131,6 @@ func (s *SqlAuditStore) InsertBatch(resultsSlices [][]model.SqlAudit) error {
 			s.Logger.Warnf("Failed to drop temp table %s: %v", tempTableName, err)
 		}
 	}()
-
-	if _, err := conn.ExecContext(s.ctx, "SET preserve_insertion_order=false"); err != nil {
-		s.Logger.Warnf("Failed to set preserve_insertion_order=false for batch insert: %v", err)
-	}
 
 	// Use the appender to load data into the temp table.
 	err = conn.Raw(func(driverConn any) error {

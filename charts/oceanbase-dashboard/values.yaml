@@ -51,7 +51,7 @@ sqlAnalyzer:
   cpuRequest: "100m"
   cpuLimit: "1"
   memoryRequest: "128Mi"
-  memoryLimit: "1Gi"
+  memoryLimit: "2Gi"
   sqlAuditLimit: 10000
   slowSqlThresholdMilliSeconds: 1000
 
