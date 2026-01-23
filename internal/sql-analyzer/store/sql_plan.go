@@ -38,7 +38,7 @@ type PlanStore struct {
 
 func (s *PlanStore) InitSqlPlanTable() error {
 	// Create table if not exists
-	_, err := s.db.Exec(sqlconst.CreateSqlPlanTable)
+	_, err := s.db.ExecContext(s.ctx, sqlconst.CreateSqlPlanTable)
 	return err
 }
 
@@ -48,7 +48,14 @@ func NewPlanStore(c context.Context, path string, maxOpenConns int, threads int,
 		return nil, fmt.Errorf("failed to create data directory %s: %w", path, err)
 	}
 
-	dsn := filepath.Join(path, "sql_plan.duckdb")
+	memLimit := os.Getenv("DUCKDB_MEMORY_LIMIT")
+	if memLimit == "" {
+		memLimit = "512MB"
+	}
+
+	dsn := fmt.Sprintf("%s?memory_limit=%s&allocator_background_threads=true&preserve_insertion_order=false&threads=%d",
+		filepath.Join(path, "sql_plan.duckdb"), memLimit, threads)
+
 	var db *sql.DB
 	var err error
 	var conn *sql.Conn
@@ -65,7 +72,8 @@ func NewPlanStore(c context.Context, path string, maxOpenConns int, threads int,
 		// sql.Open doesn't actually connect. We need to try to get a connection.
 		conn, err = db.Conn(c)
 		if err == nil {
-			break // Success
+			conn.Close() // Close check connection
+			break        // Success
 		}
 
 		db.Close() // Close the db handle on failure
@@ -79,27 +87,6 @@ func NewPlanStore(c context.Context, path string, maxOpenConns int, threads int,
 
 	db.SetMaxOpenConns(maxOpenConns)
 
-	// Set memory limit
-	memLimit := os.Getenv("DUCKDB_MEMORY_LIMIT")
-	if memLimit == "" {
-		memLimit = "512MB"
-	}
-	if _, err := conn.ExecContext(c, fmt.Sprintf("PRAGMA memory_limit='%s'", memLimit)); err != nil {
-		l.Warnf("Failed to set duckdb memory limit: %v", err)
-	}
-
-	if _, err := conn.ExecContext(c, "SET allocator_background_threads=true"); err != nil {
-		l.Warnf("Failed to set allocator_background_threads: %v", err)
-	}
-	if _, err := conn.ExecContext(c, "SET preserve_insertion_order=false"); err != nil {
-		l.Warnf("Failed to set preserve_insertion_order=false: %v", err)
-	}
-	if _, err := conn.ExecContext(c, fmt.Sprintf("SET threads=%d", threads)); err != nil {
-		l.Warnf("Failed to set threads=%d: %v", threads, err)
-	}
-
-	conn.Close() // Close the temporary connection, the pool will manage connections from here.
-
 	s := &PlanStore{db: db, ctx: c, Logger: l}
 	return s, nil
 }
@@ -108,7 +95,7 @@ func (s *PlanStore) LoadExistingPlans() ([]model.SqlPlanIdentifier, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	rows, err := s.db.Query(sqlconst.ListSqlPlanIdentifier)
+	rows, err := s.db.QueryContext(s.ctx, sqlconst.ListSqlPlanIdentifier)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to query existing plans")
 	}
@@ -144,7 +131,7 @@ func (s *PlanStore) Store(plan model.SqlPlan) error {
 		plan.PartitionStart, plan.Other, plan.AccessPredicates, plan.FilterPredicates, plan.StartupPredicates,
 		plan.Projection, plan.SpecialPredicates, plan.QblockName, plan.Remarks, plan.OtherXML}
 
-	if _, err := s.db.Exec(sqlconst.StoreSqlPlanStatement, valueArgs...); err != nil {
+	if _, err := s.db.ExecContext(s.ctx, sqlconst.StoreSqlPlanStatement, valueArgs...); err != nil {
 		return err
 	}
 
@@ -156,7 +143,7 @@ func (s *PlanStore) PlanExists(ident model.SqlPlanIdentifier) (bool, error) {
 	defer s.mu.RUnlock()
 
 	var count int
-	err := s.db.QueryRow(sqlconst.CheckPlanExistence, ident.TenantID, ident.SvrIP, ident.SvrPort, ident.PlanID).Scan(&count)
+	err := s.db.QueryRowContext(s.ctx, sqlconst.CheckPlanExistence, ident.TenantID, ident.SvrIP, ident.SvrPort, ident.PlanID).Scan(&count)
 	if err != nil {
 		return false, errors.Wrap(err, "failed to query plan existence")
 	}
@@ -167,7 +154,7 @@ func (s *PlanStore) GetPlanDetail(ident model.SqlPlanIdentifier) ([]model.SqlPla
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	rows, err := s.db.Query(sqlconst.SelectSqlPlanFromDuckdb, ident.TenantID, ident.SvrIP, ident.SvrPort, ident.PlanID)
+	rows, err := s.db.QueryContext(s.ctx, sqlconst.SelectSqlPlanFromDuckdb, ident.TenantID, ident.SvrIP, ident.SvrPort, ident.PlanID)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to query plans by sqlId and planHash")
 	}
@@ -205,7 +192,7 @@ func (s *PlanStore) GetPlanStatsBySqlId(sqlId string) ([]model.PlanStatistic, er
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	rows, err := s.db.Query(sqlconst.GetPlanStats, sqlId)
+	rows, err := s.db.QueryContext(s.ctx, sqlconst.GetPlanStats, sqlId)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to query plan statistics by sqlId")
 	}
@@ -243,7 +230,7 @@ func (s *PlanStore) GetTableInfoBySqlId(sqlId string) ([]model.TableInfo, error)
 	defer s.mu.RUnlock()
 
 	// keep the max object id(table id), tables may dropped and recreated
-	rows, err := s.db.Query(sqlconst.GetTableInfo, sqlId)
+	rows, err := s.db.QueryContext(s.ctx, sqlconst.GetTableInfo, sqlId)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to query table info by sqlId")
 	}
@@ -268,7 +255,7 @@ func (s *PlanStore) DebugQuery(query string, args ...interface{}) ([]map[string]
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	rows, err := s.db.Query(query, args...)
+	rows, err := s.db.QueryContext(s.ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
