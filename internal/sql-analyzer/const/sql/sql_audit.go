@@ -18,7 +18,7 @@ const (
         svr_ip VARCHAR, svr_port BIGINT, tenant_id BIGINT, tenant_name VARCHAR, user_id BIGINT, user_name VARCHAR,
         db_id BIGINT, db_name VARCHAR, sql_id VARCHAR, plan_id BIGINT,
         query_sql TEXT, client_ip VARCHAR, event VARCHAR,
-        format_sql_id VARCHAR, effective_tenant_id BIGINT, trace_id VARCHAR, sid BIGINT,
+        effective_tenant_id BIGINT, trace_id VARCHAR, sid BIGINT,
         user_client_ip VARCHAR, tx_id VARCHAR,
         executions BIGINT, min_request_time BIGINT, max_request_time BIGINT,
         max_request_id BIGINT, min_request_id BIGINT,
@@ -71,7 +71,7 @@ const (
 		SELECT
 			svr_ip, svr_port, tenant_id, tenant_name, user_id, user_name, db_id, db_name, sql_id, plan_id,
 			MAX(query_sql) as query_sql, MAX(client_ip) as client_ip, MAX(event) as event, 
-			MAX(format_sql_id) as format_sql_id, MAX(effective_tenant_id) as effective_tenant_id, MAX(trace_id) as trace_id, MAX(sid) as sid, MAX(user_client_ip) as user_client_ip, MAX(tx_id) as tx_id,
+			MAX(effective_tenant_id) as effective_tenant_id, MAX(trace_id) as trace_id, MAX(sid) as sid, MAX(user_client_ip) as user_client_ip, MAX(tx_id) as tx_id,
 			COUNT(*) as executions, MIN(request_time) as min_request_time, MAX(request_time) as max_request_time,
 			MAX(request_id) as max_request_id, MIN(request_id) as min_request_id,
 			SUM(elapsed_time) as elapsed_time_sum, MAX(elapsed_time) as elapsed_time_max, MIN(elapsed_time) as elapsed_time_min,
