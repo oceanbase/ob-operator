@@ -16,7 +16,6 @@ import (
 	"github.com/antlr4-go/antlr/v4"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/api/model"
 	obmysql "github.com/oceanbase/ob-operator/internal/sql-analyzer/parser/mysql"
-	logger "github.com/sirupsen/logrus"
 )
 
 // SelectAllRule checks for the usage of SELECT *
@@ -47,7 +46,6 @@ func (r *SelectAllRule) Description() string {
 func (r *SelectAllRule) Analyze(tree antlr.ParseTree, indexes []model.IndexInfo) []model.SqlDiagnoseInfo {
 	r.diagnoseResults = []model.SqlDiagnoseInfo{} // Reset results for each analysis
 
-	logger.Infof("[SelectAllRule] Starting analysis")
 	// Use ParseTreeWalker to walk the tree with the listener
 	walker := antlr.NewParseTreeWalker()
 	walker.Walk(r, tree)
@@ -58,16 +56,12 @@ func (r *SelectAllRule) Analyze(tree antlr.ParseTree, indexes []model.IndexInfo)
 // EnterProjection is called when the listener enters a 'projection' rule.
 // Matches: projection : bit_expr | bit_expr AS? column_label | bit_expr AS? STRING_VALUE | Star ;
 func (r *SelectAllRule) EnterProjection(ctx *obmysql.ProjectionContext) {
-	logger.Infof("[SelectAllRule] Entering Projection. Text: %s", ctx.GetText())
 	if ctx.Star() != nil { // Check if the '*' token exists in this projection context
-		logger.Infof("[SelectAllRule] Found Star in Projection")
 		r.diagnoseResults = append(r.diagnoseResults, model.SqlDiagnoseInfo{
 			RuleName:   r.Name(),
 			Level:      "WARN",
 			Suggestion: "Specify specific columns instead of using SELECT * to improve performance and clarity.",
 			Reason:     "Using SELECT * retrieves all columns, which can be inefficient and return unnecessary data.",
 		})
-	} else {
-		logger.Infof("[SelectAllRule] No Star in Projection")
 	}
 }
