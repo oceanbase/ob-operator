@@ -141,7 +141,6 @@ func ListSqlStats(ctx context.Context, filter *sql.SqlFilter) (*sql.SqlStatsList
 				QuerySql:          item.QuerySql,
 				ClientIp:          item.ClientIp,
 				Event:             item.Event,
-				FormatSqlId:       item.FormatSqlId,
 				EffectiveTenantId: item.EffectiveTenantId,
 				TraceId:           item.TraceId,
 				Sid:               item.Sid,

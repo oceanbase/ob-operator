@@ -29,7 +29,6 @@ type SqlAudit struct {
 	QuerySql          string `db:"query_sql"`
 	ClientIp          string `db:"client_ip"`
 	Event             string `db:"event"`
-	FormatSqlId       string `db:"format_sql_id"`
 	EffectiveTenantId uint64 `db:"effective_tenant_id"`
 	TraceId           string `db:"trace_id"`
 	Sid               uint64 `db:"sid"`

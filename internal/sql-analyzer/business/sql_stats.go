@@ -24,12 +24,11 @@ import (
 )
 
 var fixedDimensions = map[string]any{
-	"tenant_name":   struct{}{},
-	"user_name":     struct{}{},
-	"db_name":       struct{}{},
-	"sql_id":        struct{}{},
-	"plan_id":       struct{}{},
-	"format_sql_id": struct{}{},
+	"tenant_name": struct{}{},
+	"user_name":   struct{}{},
+	"db_name":     struct{}{},
+	"sql_id":      struct{}{},
+	"plan_id":     struct{}{},
 }
 
 var dimensions = map[string]any{
@@ -177,8 +176,6 @@ func (s *SqlStatsService) transformResults(results []map[string]any) []apimodel.
 				item.ClientIp, _ = val.(string)
 			case "event":
 				item.Event, _ = val.(string)
-			case "format_sql_id":
-				item.FormatSqlId, _ = val.(string)
 			case "effective_tenant_id":
 				if v, ok := val.(int64); ok {
 					item.EffectiveTenantId = uint64(v)

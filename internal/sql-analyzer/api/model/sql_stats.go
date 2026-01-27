@@ -51,7 +51,6 @@ type SqlStatsItem struct {
 	QuerySql          string `json:"querySql"`
 	ClientIp          string `json:"clientIp"`
 	Event             string `json:"event"`
-	FormatSqlId       string `json:"formatSqlId"`
 	EffectiveTenantId uint64 `json:"effectiveTenantId"`
 	TraceId           string `json:"traceId"`
 	Sid               uint64 `json:"sid"`

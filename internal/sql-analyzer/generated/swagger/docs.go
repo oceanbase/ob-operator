@@ -606,9 +606,6 @@ const docTemplate = `{
                 "event": {
                     "type": "string"
                 },
-                "formatSqlId": {
-                    "type": "string"
-                },
                 "lastFailInfo": {
                     "type": "integer"
                 },
