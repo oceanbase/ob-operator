@@ -49,9 +49,9 @@ sqlAnalyzer:
   collectionIntervalSeconds: 30
   compactionIntervalSeconds: 3600
   cpuRequest: "100m"
-  cpuLimit: "1"
+  cpuLimit: "2"
   memoryRequest: "128Mi"
-  memoryLimit: "2Gi"
+  memoryLimit: "4Gi"
   sqlAuditLimit: 10000
   slowSqlThresholdMilliSeconds: 1000
 
