@@ -129,7 +129,7 @@ func NewCustomBailErrorStrategy() *CustomBailErrorStrategy {
 	}
 }
 
-func (s *CustomBailErrorStrategy) ReportError(recognizer antlr.Parser, e antlr.RecognitionException) {
+func (s *CustomBailErrorStrategy) ReportError(_ antlr.Parser, _ antlr.RecognitionException) {
 	// Avoid calling DefaultErrorStrategy.ReportError which might panic with "implement me"
 	// Instead, explicitly bail out with ParseCancellationException, which is what BailErrorStrategy intends.
 	panic(antlr.NewParseCancellationException())
