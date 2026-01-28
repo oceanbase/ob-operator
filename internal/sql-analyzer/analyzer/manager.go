@@ -69,7 +69,7 @@ func (m *Manager) Analyze(sql string, indexes []model.IndexInfo) []model.SqlDiag
 
 	// Use SLL prediction mode for better performance, fallback to LL if it fails
 	p.GetInterpreter().SetPredictionMode(antlr.PredictionModeSLL)
-	p.SetErrorHandler(antlr.NewBailErrorStrategy())
+	p.SetErrorHandler(NewCustomBailErrorStrategy())
 
 	// Parse the SQL (assuming 'Sql_stmt' is the entry point rule)
 	parseStart := time.Now()
@@ -112,4 +112,19 @@ func (m *Manager) Analyze(sql string, indexes []model.IndexInfo) []model.SqlDiag
 	logger.Debugf("[Manager] Total diagnostics found: %d", len(diagnostics))
 
 	return diagnostics
+}
+
+type CustomBailErrorStrategy struct {
+	*antlr.BailErrorStrategy
+}
+
+func NewCustomBailErrorStrategy() *CustomBailErrorStrategy {
+	return &CustomBailErrorStrategy{
+		BailErrorStrategy: antlr.NewBailErrorStrategy(),
+	}
+}
+
+func (s *CustomBailErrorStrategy) ReportError(recognizer antlr.Parser, e antlr.RecognitionException) {
+	// No-op to avoid calling DefaultErrorStrategy.ReportError which might panic
+	// The Recover method will be called immediately after and will throw ParseCancellationException
 }
