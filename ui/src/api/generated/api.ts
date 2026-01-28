@@ -7886,7 +7886,7 @@ export interface SqlPlanDetail {
      * @type {number}
      * @memberof SqlPlanDetail
      */
-    'planHash': number;
+    'planHash': string;
     /**
      * 
      * @type {number}
@@ -8033,7 +8033,7 @@ export interface SqlPlanStatistic {
      * @type {number}
      * @memberof SqlPlanStatistic
      */
-    'planHash': number;
+    'planHash': string;
     /**
      * 
      * @type {number}
