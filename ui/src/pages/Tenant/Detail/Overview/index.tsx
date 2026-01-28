@@ -238,11 +238,11 @@ export default function TenantOverview() {
           {
             action: !defaultDeletionProtection
               ? intl.formatMessage({
-                  id: 'src.pages.Tenant.Detail.Overview.Enable',
+                  id: 'src.pages.Tenant.Detail.Overview.ActionEnable',
                   defaultMessage: '开启',
                 })
               : intl.formatMessage({
-                  id: 'src.pages.Tenant.Detail.Overview.Disable',
+                  id: 'src.pages.Tenant.Detail.Overview.ActionDisable',
                   defaultMessage: '关闭',
                 }),
           },
@@ -259,11 +259,11 @@ export default function TenantOverview() {
           {
             action: !defaultSqlAnalyzer
               ? intl.formatMessage({
-                  id: 'src.pages.Tenant.Detail.Overview.Enable',
+                  id: 'src.pages.Tenant.Detail.Overview.ActionEnable',
                   defaultMessage: '开启',
                 })
               : intl.formatMessage({
-                  id: 'src.pages.Tenant.Detail.Overview.Disable',
+                  id: 'src.pages.Tenant.Detail.Overview.ActionDisable',
                   defaultMessage: '关闭',
                 }),
           },

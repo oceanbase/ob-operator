@@ -239,11 +239,11 @@ export default function BasicInfo({
         >
           {deletionProtection
             ? intl.formatMessage({
-                id: 'src.pages.Tenant.Detail.Overview.Enable',
+                id: 'src.pages.Tenant.Detail.Overview.Enabled',
                 defaultMessage: '开启',
               })
             : intl.formatMessage({
-                id: 'src.pages.Tenant.Detail.Overview.Disable',
+                id: 'src.pages.Tenant.Detail.Overview.Disabled',
                 defaultMessage: '关闭',
               })}
         </Descriptions.Item>
