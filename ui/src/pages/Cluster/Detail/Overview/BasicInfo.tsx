@@ -237,7 +237,15 @@ export default function BasicInfo({
             defaultMessage: '删除保护',
           })}
         >
-          {deletionProtection ? '开启' : '关闭'}
+          {deletionProtection
+            ? intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Overview.Enabled',
+                defaultMessage: '开启',
+              })
+            : intl.formatMessage({
+                id: 'src.pages.Tenant.Detail.Overview.Disabled',
+                defaultMessage: '关闭',
+              })}
         </Descriptions.Item>
         <Descriptions.Item
           label={intl.formatMessage({

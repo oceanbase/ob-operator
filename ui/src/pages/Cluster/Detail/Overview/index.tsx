@@ -369,11 +369,11 @@ const ClusterOverview: React.FC = () => {
           {
             action: !defaultDeletionProtection
               ? intl.formatMessage({
-                  id: 'src.pages.Tenant.Detail.Overview.Enable',
+                  id: 'src.pages.Tenant.Detail.Overview.ActionEnable',
                   defaultMessage: '开启',
                 })
               : intl.formatMessage({
-                  id: 'src.pages.Tenant.Detail.Overview.Disable',
+                  id: 'src.pages.Tenant.Detail.Overview.ActionDisable',
                   defaultMessage: '关闭',
                 }),
           },

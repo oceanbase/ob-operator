@@ -38,7 +38,7 @@ export const INSPECTION_SCHEDULE_MODE_LIST = [
   {
     value: 'Dayly',
     label: intl.formatMessage({
-      id: 'Dashboard.src.constants.schedule.Day',
+      id: 'Dashboard.src.constants.schedule.Daily',
       defaultMessage: '日',
     }),
   },
@@ -119,7 +119,7 @@ export const WEEK_OPTIONS = [
   },
   {
     label: intl.formatMessage({
-      id: 'Dashboard.src.constants.schedule.Day',
+      id: 'Dashboard.src.constants.schedule.Seven',
       defaultMessage: '日',
     }),
     fullLabel: intl.formatMessage({
