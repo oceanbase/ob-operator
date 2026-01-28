@@ -72,7 +72,6 @@ export default function ResetPwdModal({
       <Form form={form} onFinish={onFinish}>
         {showOriginPwd && (
           <Form.Item
-            labelCol={{ span: 4 }}
             rules={[
               {
                 required: true,
@@ -100,7 +99,6 @@ export default function ResetPwdModal({
 
         <Form.Item
           validateFirst
-          labelCol={{ span: 4 }}
           rules={[
             ...passwordRules,
             ({ getFieldValue }) => ({
@@ -134,7 +132,6 @@ export default function ResetPwdModal({
         </Form.Item>
         <Form.Item
           validateFirst
-          labelCol={{ span: 4 }}
           rules={[
             {
               required: true,

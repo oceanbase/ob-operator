@@ -1590,5 +1590,6 @@
   "src.pages.Tenant.Detail.Overview.EnableDeleteProtection": "Enable Deletion Protection",
   "src.pages.Tenant.Detail.Overview.DisableDeleteProtection": "Disable Deletion Protection",
   "src.pages.Tenant.Detail.Overview.EnableSqlAnalysis": "Enable SQL Analysis",
-  "src.pages.Tenant.Detail.Overview.DisableSqlAnalysis": "Disable SQL Analysis"
+  "src.pages.Tenant.Detail.Overview.DisableSqlAnalysis": "Disable SQL Analysis",
+  "src.components.customModal.User": "User"
 }

@@ -87,7 +87,7 @@ export default function HandleAccountModal({
       title={intl.formatMessage(
         {
           id: 'src.components.customModal.3487AEC1',
-          defaultMessage: '{ConditionalExpression0}用户',
+          defaultMessage: '{ConditionalExpression0}{User}',
         },
         {
           ConditionalExpression0:
@@ -100,6 +100,10 @@ export default function HandleAccountModal({
                   id: 'src.components.customModal.2EDC3613',
                   defaultMessage: '创建',
                 }),
+          User: intl.formatMessage({
+            id: 'src.components.customModal.User',
+            defaultMessage: '用户',
+          }),
         },
       )}
       open={visible}
@@ -109,7 +113,7 @@ export default function HandleAccountModal({
         setVisible(false);
       }}
     >
-      <Form form={form} labelCol={{ span: 4 }} onFinish={onFinish}>
+      <Form form={form} onFinish={onFinish}>
         {type === Type.CREATE && (
           <Form.Item
             rules={[
