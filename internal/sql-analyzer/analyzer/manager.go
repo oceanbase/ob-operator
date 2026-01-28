@@ -78,11 +78,16 @@ func (m *Manager) Analyze(sql string, indexes []model.IndexInfo) []model.SqlDiag
 		defer func() {
 			if r := recover(); r != nil {
 				// Fallback to LL prediction mode
-				stream.Seek(0)
-				p.SetTokenStream(stream)
-				p.GetInterpreter().SetPredictionMode(antlr.PredictionModeLL)
-				p.SetErrorHandler(antlr.NewDefaultErrorStrategy())
-				tree = p.Sql_stmt()
+				// Recreate the entire stack to ensure no state pollution
+				inputStream := antlr.NewInputStream(sql)
+				lexer := obmysql.NewOBLexer(inputStream)
+				stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
+
+				p2 := obmysql.NewOBParser(stream)
+				p2.RemoveErrorListeners()
+				p2.GetInterpreter().SetPredictionMode(antlr.PredictionModeLL)
+				p2.SetErrorHandler(antlr.NewDefaultErrorStrategy())
+				tree = p2.Sql_stmt()
 			}
 		}()
 		tree = p.Sql_stmt()
@@ -125,6 +130,7 @@ func NewCustomBailErrorStrategy() *CustomBailErrorStrategy {
 }
 
 func (s *CustomBailErrorStrategy) ReportError(recognizer antlr.Parser, e antlr.RecognitionException) {
-	// No-op to avoid calling DefaultErrorStrategy.ReportError which might panic
-	// The Recover method will be called immediately after and will throw ParseCancellationException
+	// Avoid calling DefaultErrorStrategy.ReportError which might panic with "implement me"
+	// Instead, explicitly bail out with ParseCancellationException, which is what BailErrorStrategy intends.
+	panic(antlr.NewParseCancellationException())
 }
