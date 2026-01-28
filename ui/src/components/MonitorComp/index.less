@@ -11,9 +11,22 @@
 .monitorContainer {
   display: flex;
   flex-wrap: wrap;
+  width: 100%;
+  margin: 0;
+  padding: 0;
   .monitorItem {
-    width: calc(1 / 2 * 100%);
+    width: 50%;
     border-radius: 0;
+    margin: 0;
+    box-shadow: none;
+    border-right: 1px solid #f0f0f0;
+    border-bottom: 1px solid #f0f0f0;
+    &:nth-child(2n) {
+      border-right: none;
+    }
+    &:nth-last-child(-n + 2) {
+      border-bottom: none;
+    }
     .graphHeader {
       margin-bottom: 20px;
       display: flex;

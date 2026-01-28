@@ -219,10 +219,25 @@ export default function LineGraph({
 
   return (
     <div style={{ height: `${height}px` }}>
-      <Spin spinning={isloading}>
-        {isEmpty ? (
-          <div ref={lineGraphRef}>
-            <Empty />
+      <Spin
+        spinning={isloading}
+        style={{ marginTop: '50px', textAlign: 'center' }}
+      >
+        {isEmpty && !isloading ? (
+          <div
+            ref={lineGraphRef}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+            }}
+          >
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={'暂无数据'}
+              style={{ marginTop: '50px', textAlign: 'center' }}
+            />
           </div>
         ) : (
           <div id={id} ref={lineGraphRef}></div>
