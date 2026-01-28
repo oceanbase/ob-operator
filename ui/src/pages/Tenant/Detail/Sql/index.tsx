@@ -6,7 +6,11 @@ import { listSqlMetrics, listSqlStats } from '@/services/sql';
 import { getTenant } from '@/services/tenant';
 import { intl } from '@/utils/intl';
 import { SettingOutlined } from '@ant-design/icons';
-import type { ActionType, ProColumns } from '@ant-design/pro-components';
+import type {
+  ActionType,
+  ProColumns,
+  ProFormInstance,
+} from '@ant-design/pro-components';
 import { ProTable } from '@ant-design/pro-components';
 import { Spin } from '@oceanbase/design';
 import {
@@ -34,6 +38,7 @@ export default function SqlList() {
   }>();
   const location = useLocation();
   const actionRef = useRef<ActionType>();
+  const formRef = useRef<ProFormInstance>();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedMetricKeys, setSelectedMetricKeys] = useState<string[]>([]);
   const [maxElapsedTime, setMaxElapsedTime] = useState<number>(0);
@@ -52,10 +57,15 @@ export default function SqlList() {
     if (savedParams) {
       try {
         const params = JSON.parse(savedParams);
-        // 检查是否是从详情页返回（通过 location.state 或 URL 参数判断）
-        const isFromDetail = (location.state as any)?.fromDetail || false;
+        // 检查是否是从详情页返回：当前路径是 SQL 列表页（不包含 sqlId），且有保存的参数
+        const currentPath = location.pathname;
+        // SQL 列表页路径格式: /tenant/{ns}/{name}/{tenantName}/sql
+        // SQL 详情页路径格式: /tenant/{ns}/{name}/{tenantName}/sql/{sqlId}
+        const isSqlListPage =
+          currentPath.includes('/sql') && !currentPath.match(/\/sql\/[^/]+$/);
 
-        if (isFromDetail && params) {
+        // 如果当前是 SQL 列表页，且有保存的参数，则恢复
+        if (isSqlListPage && params && Object.keys(params).length > 0) {
           // 恢复参数到 URL
           const newSearchParams = new URLSearchParams();
           if (params.activeTab) {
@@ -85,20 +95,49 @@ export default function SqlList() {
           }
 
           setSearchParams(newSearchParams);
-          // 清除保存的参数
-          sessionStorage.removeItem(SQL_LIST_STORAGE_KEY);
 
-          // 延迟刷新表格，确保参数已更新
+          // 恢复表单值，使用保存的参数（这是用户最后一次修改的值）
+          const formValues: any = {};
+
+          // 恢复所有字段，包括空字符串（如果用户清空了某个字段，也应该恢复为空）
+          // 只有当字段在保存的参数中存在时才设置，这样可以区分"未设置"和"设置为空"
+          if ('keyword' in params) {
+            formValues.keyword = params.keyword || '';
+          }
+          if ('user' in params) {
+            formValues.user = params.user || '';
+          }
+          if ('database' in params) {
+            formValues.database = params.database || '';
+          }
+          if ('includeInnerSql' in params) {
+            formValues.includeInnerSql = params.includeInnerSql;
+          }
+          if (params.startTime && params.endTime) {
+            formValues.timeRange = [
+              dayjs.unix(params.startTime),
+              dayjs.unix(params.endTime),
+            ];
+          }
+
+          // 延迟设置表单值，确保表单已渲染
           setTimeout(() => {
+            if (formRef.current) {
+              // 设置表单值，确保恢复的是最后一次保存的值
+              formRef.current.setFieldsValue(formValues);
+            }
+            // 清除保存的参数
+            sessionStorage.removeItem(SQL_LIST_STORAGE_KEY);
+            // 刷新表格，确保参数已更新
             actionRef.current?.reload();
-          }, 100);
+          }, 300);
         }
       } catch (e) {
         console.error('Failed to restore SQL list params:', e);
         sessionStorage.removeItem(SQL_LIST_STORAGE_KEY);
       }
     }
-  }, [location.state, setSearchParams]);
+  }, [location.pathname, setSearchParams]);
 
   // 监听路由变化，当离开 SQL 页面时清除 SQL 相关参数
   useEffect(() => {
@@ -322,17 +361,54 @@ export default function SqlList() {
             colConfig.render = (dom, record) => {
               const handleClick = () => {
                 // 保存当前表单参数到 sessionStorage
-                // 从 URL 参数和当前状态获取表单值
-                const paramsToSave = {
+                // 优先从表单获取最新的值，确保保存的是用户最后一次修改的数据
+                const formValues = formRef.current?.getFieldsValue() || {};
+
+                // 从表单获取时间范围，如果表单中有值则使用表单值，否则使用 currentParams
+                let startTime: number | undefined;
+                let endTime: number | undefined;
+
+                if (
+                  formValues.timeRange &&
+                  formValues.timeRange[0] &&
+                  formValues.timeRange[1]
+                ) {
+                  // 表单中有时间范围，使用表单值
+                  startTime = dayjs(formValues.timeRange[0]).unix();
+                  endTime = dayjs(formValues.timeRange[1]).unix();
+                } else {
+                  // 表单中没有时间范围，使用 currentParams（可能是默认值）
+                  startTime = currentParams.startTime;
+                  endTime = currentParams.endTime;
+                }
+
+                // 保存所有字段，包括空字符串，确保能正确恢复用户最后一次的输入
+                const paramsToSave: any = {
                   activeTab,
-                  startTime: currentParams.startTime,
-                  endTime: currentParams.endTime,
-                  keyword: searchParams.get('keyword') || undefined,
-                  user: searchParams.get('user') || undefined,
-                  database: searchParams.get('database') || undefined,
-                  includeInnerSql:
-                    searchParams.get('includeInnerSql') === 'true',
+                  startTime,
+                  endTime,
                 };
+
+                // 保存搜索字段，如果字段存在（包括空字符串）则保存，否则不保存该字段
+                if (
+                  formValues.keyword !== undefined &&
+                  formValues.keyword !== null
+                ) {
+                  paramsToSave.keyword = formValues.keyword;
+                }
+                if (formValues.user !== undefined && formValues.user !== null) {
+                  paramsToSave.user = formValues.user;
+                }
+                if (
+                  formValues.database !== undefined &&
+                  formValues.database !== null
+                ) {
+                  paramsToSave.database = formValues.database;
+                }
+                if (formValues.includeInnerSql !== undefined) {
+                  paramsToSave.includeInnerSql = formValues.includeInnerSql;
+                }
+
                 sessionStorage.setItem(
                   SQL_LIST_STORAGE_KEY,
                   JSON.stringify(paramsToSave),
@@ -631,6 +707,7 @@ export default function SqlList() {
             })}
             loading={tenantDetailLoading}
             actionRef={actionRef}
+            formRef={formRef}
             rowKey={(record) =>
               `${record.sqlId}_${record.svrIp}_${record.svrPort}_${record.planId}_${record.userName}_${record.dbName}`
             }
