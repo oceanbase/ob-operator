@@ -106,7 +106,7 @@ export default function Shield() {
           <div>
             {Object.keys(temp).map((key, index) => (
               <p key={index}>
-                {key}：{temp[key].join(',')}
+                {key}: {temp[key].join(',')}
               </p>
             ))}
           </div>
@@ -117,7 +117,7 @@ export default function Shield() {
             <div>
               {Object.keys(temp).map((key) => (
                 <Text ellipsis style={{ width: 200 }}>
-                  {key}：{temp[key].join(',')}
+                  {key}: {temp[key].join(',')}
                 </Text>
               ))}
             </div>
