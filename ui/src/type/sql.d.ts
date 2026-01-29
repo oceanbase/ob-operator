@@ -111,7 +111,7 @@ declare namespace API {
   }
 
   export interface PlanMeta extends PlanIdentity {
-    planHash: number;
+    planHash: string;
     generatedTime: number;
   }
 

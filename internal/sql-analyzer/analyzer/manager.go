@@ -69,7 +69,7 @@ func (m *Manager) Analyze(sql string, indexes []model.IndexInfo) []model.SqlDiag
 
 	// Use SLL prediction mode for better performance, fallback to LL if it fails
 	p.GetInterpreter().SetPredictionMode(antlr.PredictionModeSLL)
-	p.SetErrorHandler(antlr.NewBailErrorStrategy())
+	p.SetErrorHandler(NewCustomBailErrorStrategy())
 
 	// Parse the SQL (assuming 'Sql_stmt' is the entry point rule)
 	parseStart := time.Now()
@@ -78,11 +78,16 @@ func (m *Manager) Analyze(sql string, indexes []model.IndexInfo) []model.SqlDiag
 		defer func() {
 			if r := recover(); r != nil {
 				// Fallback to LL prediction mode
-				stream.Seek(0)
-				p.SetTokenStream(stream)
-				p.GetInterpreter().SetPredictionMode(antlr.PredictionModeLL)
-				p.SetErrorHandler(antlr.NewDefaultErrorStrategy())
-				tree = p.Sql_stmt()
+				// Recreate the entire stack to ensure no state pollution
+				inputStream := antlr.NewInputStream(sql)
+				lexer := obmysql.NewOBLexer(inputStream)
+				stream := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
+
+				p2 := obmysql.NewOBParser(stream)
+				p2.RemoveErrorListeners()
+				p2.GetInterpreter().SetPredictionMode(antlr.PredictionModeLL)
+				p2.SetErrorHandler(antlr.NewDefaultErrorStrategy())
+				tree = p2.Sql_stmt()
 			}
 		}()
 		tree = p.Sql_stmt()
@@ -112,4 +117,20 @@ func (m *Manager) Analyze(sql string, indexes []model.IndexInfo) []model.SqlDiag
 	logger.Debugf("[Manager] Total diagnostics found: %d", len(diagnostics))
 
 	return diagnostics
+}
+
+type CustomBailErrorStrategy struct {
+	*antlr.BailErrorStrategy
+}
+
+func NewCustomBailErrorStrategy() *CustomBailErrorStrategy {
+	return &CustomBailErrorStrategy{
+		BailErrorStrategy: antlr.NewBailErrorStrategy(),
+	}
+}
+
+func (s *CustomBailErrorStrategy) ReportError(_ antlr.Parser, _ antlr.RecognitionException) {
+	// Avoid calling DefaultErrorStrategy.ReportError which might panic with "implement me"
+	// Instead, explicitly bail out with ParseCancellationException, which is what BailErrorStrategy intends.
+	panic(antlr.NewParseCancellationException())
 }

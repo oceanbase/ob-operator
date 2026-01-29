@@ -35,7 +35,7 @@ type PlanStats struct {
 	SvrIP         string `json:"svrIp"`
 	SvrPort       int64  `json:"svrPort"`
 	PlanID        int64  `json:"planId"`
-	PlanHash      uint64 `json:"planHash"`
+	PlanHash      uint64 `json:"planHash,string"`
 	GeneratedTime int64  `json:"generatedTime"`
 	IoCost        int64  `json:"ioCost"`
 	CpuCost       int64  `json:"cpuCost"`
