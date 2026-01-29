@@ -39,6 +39,10 @@ export default function SqlList() {
   const location = useLocation();
   const actionRef = useRef<ActionType>();
   const formRef = useRef<ProFormInstance>();
+  const restoringPaginationRef = useRef<{
+    current?: number;
+    pageSize?: number;
+  } | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedMetricKeys, setSelectedMetricKeys] = useState<string[]>([]);
   const [maxElapsedTime, setMaxElapsedTime] = useState<number>(0);
@@ -50,6 +54,13 @@ export default function SqlList() {
     startTime?: number;
     endTime?: number;
   }>({});
+  const [pagination, setPagination] = useState<{
+    current?: number;
+    pageSize?: number;
+  }>({
+    current: parseInt(searchParams.get('current') || '1', 10),
+    pageSize: parseInt(searchParams.get('pageSize') || '20', 10),
+  });
 
   // 检测是否从 SQL 详情页返回，如果是则恢复保存的参数
   useEffect(() => {
@@ -78,14 +89,15 @@ export default function SqlList() {
           if (params.endTime) {
             newSearchParams.set('endTime', params.endTime.toString());
           }
-          if (params.keyword) {
-            newSearchParams.set('keyword', params.keyword);
+          // 恢复搜索字段，包括空字符串
+          if ('keyword' in params) {
+            newSearchParams.set('keyword', params.keyword || '');
           }
-          if (params.user) {
-            newSearchParams.set('user', params.user);
+          if ('user' in params) {
+            newSearchParams.set('user', params.user || '');
           }
-          if (params.database) {
-            newSearchParams.set('database', params.database);
+          if ('database' in params) {
+            newSearchParams.set('database', params.database || '');
           }
           if (params.includeInnerSql !== undefined) {
             newSearchParams.set(
@@ -93,8 +105,26 @@ export default function SqlList() {
               params.includeInnerSql.toString(),
             );
           }
+          // 恢复分页参数
+          if (params.current) {
+            newSearchParams.set('current', params.current.toString());
+          }
+          if (params.pageSize) {
+            newSearchParams.set('pageSize', params.pageSize.toString());
+          }
 
           setSearchParams(newSearchParams);
+
+          // 设置分页状态
+          if (params.current || params.pageSize) {
+            const restoredPagination = {
+              current: params.current || 1,
+              pageSize: params.pageSize || 20,
+            };
+            // 保存恢复的分页参数到 ref
+            restoringPaginationRef.current = restoredPagination;
+            setPagination(restoredPagination);
+          }
 
           // 恢复表单值，使用保存的参数（这是用户最后一次修改的值）
           const formValues: any = {};
@@ -120,17 +150,29 @@ export default function SqlList() {
             ];
           }
 
-          // 延迟设置表单值，确保表单已渲染
+          // 延迟设置表单值并触发请求，确保表单已渲染且分页状态已更新
+          // 使用更长的延迟，确保 React 状态更新和 ProTable 的 pagination prop 都已更新
           setTimeout(() => {
             if (formRef.current) {
               // 设置表单值，确保恢复的是最后一次保存的值
               formRef.current.setFieldsValue(formValues);
+              // 再次延迟，确保 pagination prop 已经更新到 ProTable 并触发重新渲染
+              setTimeout(() => {
+                // 使用 submit 触发请求，它会使用表单值和当前的 pagination.current、pagination.pageSize
+                // submit 会正确使用 ProTable 的 pagination prop
+                if (formRef.current) {
+                  formRef.current.submit();
+                }
+              }, 300);
+            } else {
+              // 如果表单还未准备好，等待后再刷新表格
+              setTimeout(() => {
+                actionRef.current?.reload();
+              }, 300);
             }
             // 清除保存的参数
             sessionStorage.removeItem(SQL_LIST_STORAGE_KEY);
-            // 刷新表格，确保参数已更新
-            actionRef.current?.reload();
-          }, 300);
+          }, 500);
         }
       } catch (e) {
         console.error('Failed to restore SQL list params:', e);
@@ -138,6 +180,41 @@ export default function SqlList() {
       }
     }
   }, [location.pathname, setSearchParams]);
+
+  // 同步 URL 参数中的分页信息到分页状态（仅在初始化或 URL 参数变化时更新）
+  useEffect(() => {
+    const current = searchParams.get('current');
+    const pageSize = searchParams.get('pageSize');
+    const urlCurrent = current ? parseInt(current, 10) : 1;
+    const urlPageSize = pageSize ? parseInt(pageSize, 10) : 20;
+
+    // 只有当 URL 参数与当前分页状态不同时才更新（避免循环更新）
+    if (
+      urlCurrent !== (pagination.current || 1) ||
+      urlPageSize !== (pagination.pageSize || 20)
+    ) {
+      setPagination({
+        current: urlCurrent,
+        pageSize: urlPageSize,
+      });
+    }
+  }, [searchParams]);
+
+  // 当分页状态与恢复的分页参数匹配时，触发数据加载（作为备用方案）
+  // 主要恢复逻辑在恢复 useEffect 中通过 submit() 完成
+  useEffect(() => {
+    if (
+      restoringPaginationRef.current &&
+      pagination.current === restoringPaginationRef.current.current &&
+      pagination.pageSize === restoringPaginationRef.current.pageSize
+    ) {
+      // 延迟清除恢复标记，避免在恢复过程中清除
+      const timer = setTimeout(() => {
+        restoringPaginationRef.current = null;
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [pagination.current, pagination.pageSize]);
 
   // 监听路由变化，当离开 SQL 页面时清除 SQL 相关参数
   useEffect(() => {
@@ -388,6 +465,16 @@ export default function SqlList() {
                   startTime,
                   endTime,
                 };
+
+                // 保存分页参数
+                // 从 URL 参数获取，如果没有则使用默认值
+                const currentPage = searchParams.get('current');
+                const pageSize = searchParams.get('pageSize');
+                // 保存分页参数，如果没有则使用默认值（第一页，每页20条）
+                paramsToSave.current = currentPage
+                  ? parseInt(currentPage, 10)
+                  : 1;
+                paramsToSave.pageSize = pageSize ? parseInt(pageSize, 10) : 20;
 
                 // 保存搜索字段，如果字段存在（包括空字符串）则保存，否则不保存该字段
                 if (
@@ -711,7 +798,10 @@ export default function SqlList() {
             rowKey={(record) =>
               `${record.sqlId}_${record.svrIp}_${record.svrPort}_${record.planId}_${record.userName}_${record.dbName}`
             }
-            params={{ outputColumns: selectedMetricKeys, activeTab }}
+            params={{
+              outputColumns: selectedMetricKeys,
+              activeTab,
+            }}
             toolbar={{
               menu: {
                 type: 'tab',
@@ -804,6 +894,11 @@ export default function SqlList() {
                 endTime: effectiveEndTime,
               });
 
+              // 获取分页参数，优先使用 pagination state（用于恢复场景），否则使用 ProTable 传递的参数
+              const currentPage = pagination.current || params.current || 1;
+              const currentPageSize =
+                pagination.pageSize || params.pageSize || 20;
+
               // 如果没有排序参数，默认使用 elapsed_time 降序
               const sortKeys = Object.keys(sort);
               const defaultSortColumn =
@@ -820,8 +915,8 @@ export default function SqlList() {
                 obtenant: name,
                 sortColumn: defaultSortColumn,
                 sortOrder: defaultSortOrder,
-                pageNum: restParams.current,
-                pageSize: restParams.pageSize,
+                pageNum: currentPage,
+                pageSize: currentPageSize,
                 keyword: restParams.keyword as string,
                 user: restParams.user as string,
                 database: restParams.database as string,
@@ -846,13 +941,31 @@ export default function SqlList() {
                 data: items,
                 success: msg.successful,
                 total: msg.data?.totalCount || 0,
-                page: params.current,
+                current: currentPage,
+                pageSize: currentPageSize,
               };
             }}
             columns={columns}
             pagination={{
-              defaultPageSize: 20,
+              current: pagination.current || 1,
+              pageSize: pagination.pageSize || 20,
               showSizeChanger: true,
+              onChange: (page, size) => {
+                // 更新 state
+                setPagination({
+                  current: page,
+                  pageSize: size,
+                });
+                // 更新 URL 参数
+                const newParams = new URLSearchParams(searchParams);
+                newParams.set('current', page.toString());
+                newParams.set('pageSize', size.toString());
+                setSearchParams(newParams);
+                // 触发表格重新加载，确保使用新的分页参数
+                setTimeout(() => {
+                  actionRef.current?.reload();
+                }, 0);
+              },
             }}
           />
           <ColumnSelectionDrawer
