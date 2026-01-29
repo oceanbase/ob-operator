@@ -1,6 +1,6 @@
 import { intl } from '@/utils/intl';
 import { useRequest } from 'ahooks';
-import { Card, Row } from 'antd';
+import { Card, Col, Row } from 'antd';
 
 import { getAllMetrics } from '@/services';
 import { useMemo, useState } from 'react';
@@ -66,7 +66,11 @@ export default function MonitorComp({
       <div className={styles.monitorContainer}>
         {currentContainer?.metricGroups?.map(
           (graphContainer: any, graphIdx: number) => (
-            <Card className={styles.monitorItem} key={graphIdx}>
+            <Card
+              className={styles.monitorItem}
+              key={graphIdx}
+              bodyStyle={{ padding: '20px' }}
+            >
               <div className={styles.graphHeader}>
                 <IconTip
                   tip={graphContainer.description}
@@ -124,23 +128,25 @@ export default function MonitorComp({
 
   return (
     <Row style={{ marginTop: 16 }}>
-      {allMetrics && tabList.length > 0 && (
-        <Card
-          tabList={tabList}
-          bodyStyle={{ padding: 0 }}
-          activeTabKey={activeTabKey}
-          onTabChange={(key) => setActiveTabKey(key)}
-        >
-          {currentTabContent || (
-            <div style={{ padding: 20, textAlign: 'center', color: '#999' }}>
-              {intl.formatMessage({
-                id: 'src.components.MonitorComp.9E85EFCC',
-                defaultMessage: '暂无数据',
-              })}
-            </div>
-          )}
-        </Card>
-      )}
+      <Col span={24}>
+        {allMetrics && tabList.length > 0 && (
+          <Card
+            tabList={tabList}
+            bodyStyle={{ padding: 0 }}
+            activeTabKey={activeTabKey}
+            onTabChange={(key) => setActiveTabKey(key)}
+          >
+            {currentTabContent || (
+              <div style={{ padding: 20, textAlign: 'center', color: '#999' }}>
+                {intl.formatMessage({
+                  id: 'src.components.MonitorComp.9E85EFCC',
+                  defaultMessage: '暂无数据',
+                })}
+              </div>
+            )}
+          </Card>
+        )}
+      </Col>
     </Row>
   );
 }
