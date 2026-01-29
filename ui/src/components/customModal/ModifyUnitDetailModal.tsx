@@ -19,6 +19,7 @@ import SelectWithTooltip from '../SelectWithTooltip';
 
 import { Col, Form, Row, Select, message } from 'antd';
 
+import { getLocale } from '@umijs/max';
 import CustomModal from '.';
 
 export type PoolDetailType = {
@@ -284,7 +285,6 @@ export default function ModifyUnitDetailModal({
                 rules={RULER_ZONE}
                 style={{ marginRight: 24 }}
               >
-                {/* <Input placeholder={'请输入'} /> */}
                 <Select
                   onChange={(val: string) => {
                     setSelectZones([val]);
@@ -355,7 +355,10 @@ export default function ModifyUnitDetailModal({
         )}
 
         <Row>
-          <Col span={8}>
+          <Col
+            span={getLocale() === 'en-US' ? 7 : 8}
+            style={{ marginRight: 16 }}
+          >
             <Form.Item
               label="CPU"
               name={['unitConfig', 'cpuCount']}

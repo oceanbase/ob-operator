@@ -1,7 +1,7 @@
 import InputNumber from '@/components/InputNumber';
 import { intl } from '@/utils/intl';
 import { isGte4_2, isGte4_3_3 } from '@/utils/package';
-import { Checkbox, Col, Form, Select } from 'antd';
+import { Checkbox, Col, Form, Select, Tooltip } from 'antd';
 
 interface ZoneItemProps {
   name: string;
@@ -118,25 +118,46 @@ export default function ZoneItem({
 
       {obZoneResource && (
         <Col style={{ marginLeft: 12 }} span={16}>
-          <span style={{ marginRight: 12 }}>
-            {intl.formatMessage({
+          <Tooltip
+            title={`${intl.formatMessage({
               id: 'Dashboard.Tenant.New.ResourcePools.AvailableResources',
               defaultMessage: '可用资源：',
-            })}
-          </span>
-          <span style={{ marginRight: 12 }}>
-            CPU {obZoneResource['availableCPU']}
-          </span>
-          <span style={{ marginRight: 12 }}>
-            Memory {obZoneResource['availableMemory']}GB
-          </span>
-          <span>
-            {intl.formatMessage({
+            })} CPU ${obZoneResource['availableCPU']} Memory ${
+              obZoneResource['availableMemory']
+            }GB ${intl.formatMessage({
               id: 'Dashboard.Tenant.New.ResourcePools.LogDiskSize',
               defaultMessage: '日志磁盘大小',
-            })}
-            {obZoneResource['availableLogDisk']}GB
-          </span>
+            })} ${obZoneResource['availableLogDisk']}GB`}
+          >
+            <div
+              style={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                width: '70%',
+              }}
+            >
+              <span style={{ marginRight: 12 }}>
+                {intl.formatMessage({
+                  id: 'Dashboard.Tenant.New.ResourcePools.AvailableResources',
+                  defaultMessage: '可用资源：',
+                })}
+              </span>
+              <span style={{ marginRight: 12 }}>
+                CPU {obZoneResource['availableCPU']}
+              </span>
+              <span style={{ marginRight: 12 }}>
+                Memory {obZoneResource['availableMemory']}GB
+              </span>
+              <span>
+                {intl.formatMessage({
+                  id: 'Dashboard.Tenant.New.ResourcePools.LogDiskSize',
+                  defaultMessage: '日志磁盘大小',
+                })}
+                {obZoneResource['availableLogDisk']}GB
+              </span>
+            </div>
+          </Tooltip>
         </Col>
       )}
     </div>
