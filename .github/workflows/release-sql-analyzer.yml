@@ -61,6 +61,9 @@ jobs:
             ${{ vars.DOCKER_PUSH_BASE }}/sql-analyzer:${{ steps.set_version_vars.outputs.version }}
             quay.io/${{ vars.QUAY_IO_PUSH_BASE }}/sql-analyzer:${{ steps.set_version_vars.outputs.version }}
             ghcr.io/${{ github.repository_owner }}/sql-analyzer:${{ steps.set_version_vars.outputs.version }}
+            ${{ vars.DOCKER_PUSH_BASE }}/sql-analyzer:latest
+            quay.io/${{ vars.QUAY_IO_PUSH_BASE }}/sql-analyzer:latest
+            ghcr.io/${{ github.repository_owner }}/sql-analyzer:latest
           build-args: |
             VERSION=${{ steps.set_version_vars.outputs.version }}
             COMMIT_HASH=${{ github.sha }}
