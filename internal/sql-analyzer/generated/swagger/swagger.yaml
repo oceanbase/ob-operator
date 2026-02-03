@@ -62,7 +62,8 @@ definitions:
       ioCost:
         type: integer
       planHash:
-        type: integer
+        example: "0"
+        type: string
       planId:
         type: integer
       realCost:
