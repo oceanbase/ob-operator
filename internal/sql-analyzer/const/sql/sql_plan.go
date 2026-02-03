@@ -89,50 +89,28 @@ const (
 				SVR_PORT,
 				PLAN_ID,
 				PLAN_HASH,
-				MAX(GMT_CREATE) as GMT_CREATE,
-				SUM(IO_COST) as IO_COST,
-				SUM(CPU_COST) as CPU_COST,
-				SUM(COST) as COST,
-				SUM(REAL_COST) as REAL_COST
-			FROM sql_plan
-			WHERE SQL_ID = ?
-			GROUP BY TENANT_ID, SVR_IP, SVR_PORT, PLAN_ID, PLAN_HASH
-		),
-		PlanStats AS (
-			SELECT
-				PLAN_HASH,
-				CAST(AVG(IO_COST) AS BIGINT) as IO_COST,
-				CAST(AVG(CPU_COST) AS BIGINT) as CPU_COST,
-				CAST(AVG(COST) AS BIGINT) as COST,
-				CAST(AVG(REAL_COST) AS BIGINT) as REAL_COST
-			FROM PlanAgg
-			GROUP BY PLAN_HASH
-		),
-		LatestPlan AS (
-			SELECT
-				TENANT_ID,
-				SVR_IP,
-				SVR_PORT,
-				PLAN_ID,
-				PLAN_HASH,
 				GMT_CREATE,
-				ROW_NUMBER() OVER (PARTITION BY PLAN_HASH ORDER BY GMT_CREATE DESC, PLAN_ID DESC) as rn
-			FROM PlanAgg
+				IO_COST,
+				CPU_COST,
+				COST,
+				REAL_COST,
+				ROW_NUMBER() OVER (PARTITION BY TENANT_ID, SVR_IP, SVR_PORT, PLAN_HASH ORDER BY GMT_CREATE DESC, PLAN_ID DESC) as rn
+			FROM sql_plan
+			WHERE SQL_ID = ? AND ID = 0
 		)
 		SELECT
-			lp.TENANT_ID,
-			lp.SVR_IP,
-			lp.SVR_PORT,
-			lp.PLAN_ID,
-			lp.PLAN_HASH,
-			lp.GMT_CREATE,
-			ps.IO_COST,
-			ps.CPU_COST,
-			ps.COST,
-			ps.REAL_COST
-		FROM LatestPlan lp
-		JOIN PlanStats ps ON lp.PLAN_HASH = ps.PLAN_HASH
-		WHERE lp.rn = 1
+			TENANT_ID,
+			SVR_IP,
+			SVR_PORT,
+			PLAN_ID,
+			PLAN_HASH,
+			GMT_CREATE,
+			IO_COST,
+			CPU_COST,
+			COST,
+			REAL_COST
+		FROM PlanAgg
+		WHERE rn = 1
 	`
 	GetTableInfo = `
 		SELECT 

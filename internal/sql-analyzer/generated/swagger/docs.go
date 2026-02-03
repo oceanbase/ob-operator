@@ -333,7 +333,8 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "planHash": {
-                    "type": "integer"
+                    "type": "string",
+                    "example": "0"
                 },
                 "planId": {
                     "type": "integer"
