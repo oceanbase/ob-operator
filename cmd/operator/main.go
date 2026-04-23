@@ -239,6 +239,14 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "OBClusterOperation")
 		os.Exit(1)
 	}
+	if err = (&controller.OBProxyReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: telemetry.NewRecorder(ctx, mgr.GetEventRecorderFor(config.OBProxyControllerName)),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "Unable to create controller", "controller", "OBProxy")
+		os.Exit(1)
+	}
 	if err = (&controller.K8sClusterReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),

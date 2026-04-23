@@ -18,5 +18,6 @@ const (
 	FinalizerDeleteOBServer = "finalizers.oceanbase.com.deleteobserver"
 	FinalizerOBServer       = "observer.oceanbase.com.finalizers"
 	FinalizerDeleteOBTenant = "finalizers.oceanbase.com.deleteobtenant"
+	FinalizerDeleteOBProxy  = "finalizers.oceanbase.com.deleteobproxy"
 	FinalizerBackupPolicy   = "obtenantbackuppolicy.finalizers.oceanbase.com"
 )

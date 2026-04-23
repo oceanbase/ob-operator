@@ -1,0 +1,17 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBProxy
+metadata:
+  name: ${OBPROXY_NAME}
+  namespace: ${NAMESPACE}
+spec:
+  obCluster:
+    name: ${OBCLUSTER_NAME}
+    namespace: ${NAMESPACE}
+  proxyClusterName: ${OBPROXY_NAME}
+  proxySysSecret: ${PROXY_SYS_SECRET}
+  image: ${OBPROXY_IMAGE}
+  serviceType: ClusterIP
+  replicas: ${OBPROXY_REPLICAS}
+  resource:
+    memory: 1Gi
+    cpu: 500m
