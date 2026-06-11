@@ -14,6 +14,7 @@ package handler
 
 import (
 	"context"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	logger "github.com/sirupsen/logrus"
@@ -518,10 +519,22 @@ func DownloadOBClusterLog(c *gin.Context) (*job.Job, error) {
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
 	}
+	const timeLayout = "2006-01-02 15:04:05"
 	startTime := c.Query("startTime")
 	endTime := c.Query("endTime")
 	if startTime == "" || endTime == "" {
 		return nil, httpErr.NewBadRequest("startTime and endTime are required")
 	}
-	return oceanbase.DownloadOBClusterLog(c, nn, startTime, endTime)
+	parsedStart, err := time.Parse(timeLayout, startTime)
+	if err != nil {
+		return nil, httpErr.NewBadRequest("startTime must be in format 'YYYY-MM-DD HH:MM:SS'")
+	}
+	parsedEnd, err := time.Parse(timeLayout, endTime)
+	if err != nil {
+		return nil, httpErr.NewBadRequest("endTime must be in format 'YYYY-MM-DD HH:MM:SS'")
+	}
+	if !parsedEnd.After(parsedStart) {
+		return nil, httpErr.NewBadRequest("endTime must be after startTime")
+	}
+	return oceanbase.DownloadOBClusterLog(c, nn, parsedStart.Format(timeLayout), parsedEnd.Format(timeLayout))
 }
