@@ -257,7 +257,7 @@ func BootstrapLogService(m *OBLogServiceClusterManager) tasktypes.TaskError {
 	}
 
 	jobName := fmt.Sprintf("%s-ls-bootstrap", m.Resource.Name)
-	output, exitCode, jobErr := resourceutils.RunJob(
+	_, exitCode, jobErr := resourceutils.RunJob(
 		m.Ctx, m.Client, m.Logger, m.Resource.Namespace,
 		jobName,
 		m.Resource.Spec.Image,
@@ -266,10 +266,10 @@ func BootstrapLogService(m *OBLogServiceClusterManager) tasktypes.TaskError {
 		volumeConfig,
 	)
 	if jobErr != nil {
-		return errors.Wrapf(jobErr, "run log service bootstrap job, exitCode=%d, output=%s", exitCode, output)
+		return errors.Wrapf(jobErr, "run log service bootstrap job, exitCode=%d", exitCode)
 	}
 
-	m.Logger.Info("Log service bootstrap succeeded", "output", output)
+	m.Logger.Info("Log service bootstrap succeeded")
 	m.Recorder.Event(m.Resource, "Bootstrap", "", "Log service bootstrap succeeded")
 	return nil
 }
