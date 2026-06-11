@@ -2,7 +2,7 @@ apiVersion: oceanbase.oceanbase.com/v1alpha1
 kind: OBLogServiceCluster
 metadata:
   name: ls-test
-  namespace: oceanbase-ss
+  namespace: oceanbase-ai
 spec:
   clusterId: 1004
   image: oblogservice:1.2.0

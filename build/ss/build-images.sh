@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RPM_DIR="${RPM_DIR:?Set RPM_DIR to directory containing SS RPMs}"
 TAG_LS="${TAG_LS:-1.2.0}"
-TAG_OB="${TAG_OB:-4.6.0.0-ss}"
+TAG_OB="${TAG_OB:-4.6.0.0}"
 
 info() { echo ">>> $*"; }
 
@@ -33,9 +33,9 @@ info "Building oblogservice:${TAG_LS} ..."
 cp "${SCRIPT_DIR}/Dockerfile.oblogservice" "${CTX}/Dockerfile"
 ${DOCKER} build -t "oblogservice:${TAG_LS}" "${CTX}"
 
-info "Building oceanbase-ss:${TAG_OB} ..."
-cp "${SCRIPT_DIR}/Dockerfile.observer-ss" "${CTX}/Dockerfile"
-${DOCKER} build -t "oceanbase-ss:${TAG_OB}" "${CTX}"
+info "Building oceanbase-ai:${TAG_OB} ..."
+cp "${SCRIPT_DIR}/Dockerfile.observer-ai" "${CTX}/Dockerfile"
+${DOCKER} build -t "oceanbase-ai:${TAG_OB}" "${CTX}"
 
 info "Done."
-${DOCKER} images | grep -E "oblogservice|oceanbase-ss"
+${DOCKER} images | grep -E "oblogservice|oceanbase-ai"

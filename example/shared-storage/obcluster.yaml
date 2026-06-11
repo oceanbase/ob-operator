@@ -1,15 +1,15 @@
 apiVersion: oceanbase.oceanbase.com/v1alpha1
 kind: OBCluster
 metadata:
-  name: ob-ss-test
-  namespace: oceanbase-ss
+  name: ob-ai-test
+  namespace: oceanbase-ai
 spec:
-  clusterName: ob-ss-test
+  clusterName: ob-ai-test
   clusterId: 2004
   deploymentMode: shared_storage
   serviceAccount: default
   userSecrets:
-    root: ss-root-password
+    root: ai-root-password
   logServiceRef:
     name: ls-test
   sharedStorageInfo:
@@ -21,7 +21,7 @@ spec:
     - zone: zone1
       replica: 1
   observer:
-    image: oceanbase-ss:4.6.0.0-ss
+    image: oceanbase-ai:4.6.0.0
     resource:
       cpu: 2
       memory: 10Gi
