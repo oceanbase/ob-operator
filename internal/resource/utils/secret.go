@@ -23,6 +23,18 @@ import (
 	secretconst "github.com/oceanbase/ob-operator/internal/const/secret"
 )
 
+func GetSecret(c client.Client, namespace, secretName string) (*corev1.Secret, error) {
+	secret := &corev1.Secret{}
+	err := c.Get(context.Background(), types.NamespacedName{
+		Namespace: namespace,
+		Name:      secretName,
+	}, secret)
+	if err != nil {
+		return nil, errors.Wrapf(err, "Get secret %s failed", secretName)
+	}
+	return secret, nil
+}
+
 func ReadPassword(c client.Client, namespace, secretName string) (string, error) {
 	secret := &corev1.Secret{}
 	err := c.Get(context.Background(), types.NamespacedName{

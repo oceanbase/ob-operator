@@ -1264,7 +1264,6 @@ spec:
                           required:
                           - dataStorage
                           - logStorage
-                          - redoLogStorage
                           type: object
                       required:
                       - image
@@ -4835,6 +4834,19 @@ spec:
                         type: integer
                       clusterName:
                         type: string
+                      deploymentMode:
+                        default: normal
+                        enum:
+                        - normal
+                        - shared_storage
+                        type: string
+                      logServiceRef:
+                        properties:
+                          name:
+                            type: string
+                        required:
+                        - name
+                        type: object
                       monitor:
                         properties:
                           image:
@@ -5134,7 +5146,6 @@ spec:
                             required:
                             - dataStorage
                             - logStorage
-                            - redoLogStorage
                             type: object
                         required:
                         - image
@@ -5159,6 +5170,30 @@ spec:
                       serviceAccount:
                         default: default
                         type: string
+                      sharedStorageInfo:
+                        properties:
+                          bucketURL:
+                            type: string
+                          maxBandwidth:
+                            type: string
+                          maxIOPS:
+                            type: string
+                          secretRef:
+                            description: |-
+                              LocalObjectReference contains enough information to let you locate the
+                              referenced object inside the same namespace.
+                            properties:
+                              name:
+                                description: |-
+                                  Name of the referent.
+                                  More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                type: string
+                            type: object
+                            x-kubernetes-map-type: atomic
+                        required:
+                        - bucketURL
+                        - secretRef
+                        type: object
                       topology:
                         items:
                           properties:
@@ -6379,7 +6414,6 @@ spec:
                                   required:
                                   - dataStorage
                                   - logStorage
-                                  - redoLogStorage
                                   type: object
                               required:
                               - image

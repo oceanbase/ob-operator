@@ -166,7 +166,7 @@ func (m *OBServerManager) checkIfStorageExpand(pvcs *corev1.PersistentVolumeClai
 				return true
 			}
 		case strings.HasSuffix(pvc.Name, oceanbaseconst.ClogVolumeSuffix):
-			if pvc.Spec.Resources.Requests.Storage().Cmp(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0 {
+			if m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil && pvc.Spec.Resources.Requests.Storage().Cmp(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0 {
 				return true
 			}
 		case strings.HasSuffix(pvc.Name, oceanbaseconst.LogVolumeSuffix):
@@ -176,7 +176,9 @@ func (m *OBServerManager) checkIfStorageExpand(pvcs *corev1.PersistentVolumeClai
 		case pvc.Name == m.OBServer.Name:
 			sum := resource.Quantity{}
 			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size)
-			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
+			if m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
+				sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
+			}
 			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size)
 			if pvc.Spec.Resources.Requests.Storage().Cmp(sum) < 0 {
 				return true
@@ -242,6 +244,17 @@ func (m *OBServerManager) generatePVCSpec(storageSpec *apitypes.StorageSpec) cor
 	return *pvcSpec
 }
 
+func (m *OBServerManager) isSharedStorageMode(obcluster *v1alpha1.OBCluster) bool {
+	if obcluster != nil && obcluster.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
+		return true
+	}
+	if obcluster == nil {
+		m.Logger.Info("obcluster is nil, falling back to annotation for shared storage detection")
+	}
+	deployModeAnnoVal, _ := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsDeploymentMode)
+	return deployModeAnnoVal == oceanbaseconst.DeploymentModeSharedStorage
+}
+
 func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.PodSpec {
 	containers := make([]corev1.Container, 0)
 	observerContainer := m.createOBServerContainer(obcluster)
@@ -249,6 +262,7 @@ func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.
 
 	volumes := make([]corev1.Volume, 0)
 
+	isSharedStorage := m.isSharedStorageMode(obcluster)
 	singlePvcAnnoVal, singlePvcExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSinglePVC)
 	if singlePvcExist && singlePvcAnnoVal == "true" {
 		singleVolume := corev1.Volume{}
@@ -265,19 +279,22 @@ func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.
 		volumeDataFileSource.ClaimName = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix)
 		volumeDataFile.VolumeSource.PersistentVolumeClaim = volumeDataFileSource
 
-		volumeDataLog := corev1.Volume{}
-		volumeDataLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix)
-		volumeDataLogSource := &corev1.PersistentVolumeClaimVolumeSource{}
-		volumeDataLogSource.ClaimName = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix)
-		volumeDataLog.VolumeSource.PersistentVolumeClaim = volumeDataLogSource
-
 		volumeLog := corev1.Volume{}
 		volumeLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix)
 		volumeLogSource := &corev1.PersistentVolumeClaimVolumeSource{}
 		volumeLogSource.ClaimName = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix)
 		volumeLog.VolumeSource.PersistentVolumeClaim = volumeLogSource
 
-		volumes = append(volumes, volumeDataFile, volumeDataLog, volumeLog)
+		volumes = append(volumes, volumeDataFile)
+		if !isSharedStorage {
+			volumeDataLog := corev1.Volume{}
+			volumeDataLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix)
+			volumeDataLogSource := &corev1.PersistentVolumeClaimVolumeSource{}
+			volumeDataLogSource.ClaimName = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix)
+			volumeDataLog.VolumeSource.PersistentVolumeClaim = volumeDataLogSource
+			volumes = append(volumes, volumeDataLog)
+		}
+		volumes = append(volumes, volumeLog)
 	}
 
 	if m.OBServer.Spec.BackupVolume != nil {
@@ -492,24 +509,31 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 	volumeMountLog := corev1.VolumeMount{}
 	volumeMountLog.MountPath = oceanbaseconst.LogPath
 
+	isSharedStorage := m.isSharedStorageMode(obcluster)
 	// set subpath
 	singlePvcAnnoVal, singlePvcExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSinglePVC)
 	if singlePvcExist && singlePvcAnnoVal == "true" {
 		volumeMountDataFile.Name = m.OBServer.Name
-		volumeMountDataLog.Name = m.OBServer.Name
 		volumeMountLog.Name = m.OBServer.Name
 		volumeMountDataFile.SubPath = oceanbaseconst.DataVolumeSuffix
-		volumeMountDataLog.SubPath = oceanbaseconst.ClogVolumeSuffix
 		volumeMountLog.SubPath = oceanbaseconst.LogVolumeSuffix
+		if !isSharedStorage {
+			volumeMountDataLog.Name = m.OBServer.Name
+			volumeMountDataLog.SubPath = oceanbaseconst.ClogVolumeSuffix
+		}
 	} else {
 		volumeMountDataFile.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix)
-		volumeMountDataLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix)
 		volumeMountLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix)
+		if !isSharedStorage {
+			volumeMountDataLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix)
+		}
 	}
 
 	volumeMounts := make([]corev1.VolumeMount, 0)
 	volumeMounts = append(volumeMounts, volumeMountDataFile)
-	volumeMounts = append(volumeMounts, volumeMountDataLog)
+	if !isSharedStorage {
+		volumeMounts = append(volumeMounts, volumeMountDataLog)
+	}
 	volumeMounts = append(volumeMounts, volumeMountLog)
 
 	if m.OBServer.Spec.BackupVolume != nil {
@@ -557,13 +581,16 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 		Name:  "DATAFILE_SIZE",
 		Value: fmt.Sprintf("%dG", datafileSize*int64(obcfg.GetConfig().Resource.InitialDataDiskUsePercent)/oceanbaseconst.GigaConverter/100),
 	}
-	clogDiskSize, ok := m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.AsInt64()
-	if !ok {
-		m.Logger.Error(errors.New("Parse log disk size failed"), "failed to parse log disk size")
-	}
-	envLogDisk := corev1.EnvVar{
-		Name:  "LOG_DISK_SIZE",
-		Value: fmt.Sprintf("%dG", clogDiskSize*int64(obcfg.GetConfig().Resource.DefaultDiskUsePercent)/oceanbaseconst.GigaConverter/100),
+	var envLogDisk corev1.EnvVar
+	if m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
+		clogDiskSize, ok := m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.AsInt64()
+		if !ok {
+			m.Logger.Error(errors.New("Parse log disk size failed"), "failed to parse log disk size")
+		}
+		envLogDisk = corev1.EnvVar{
+			Name:  "LOG_DISK_SIZE",
+			Value: fmt.Sprintf("%dG", clogDiskSize*int64(obcfg.GetConfig().Resource.DefaultDiskUsePercent)/oceanbaseconst.GigaConverter/100),
+		}
 	}
 	envClusterName := corev1.EnvVar{
 		Name:  "CLUSTER_NAME",
@@ -603,7 +630,18 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 			}
 		}
 	}
+	if obcluster.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
+		envDeployMode := corev1.EnvVar{
+			Name:  "DEPLOY_MODE",
+			Value: oceanbaseconst.DeploymentModeSharedStorage,
+		}
+		env = append(env, envDeployMode)
+	}
+
 	startupParameters := make([]string, 0)
+	if obcluster.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
+		startupParameters = append(startupParameters, "enable_logservice=True")
+	}
 	for _, parameter := range obcluster.Spec.Parameters {
 		reserved := false
 		for _, reservedParameter := range oceanbaseconst.ReservedParameters {
@@ -626,7 +664,9 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 	env = append(env, envLib)
 	env = append(env, envCpu)
 	env = append(env, envDataFile)
-	env = append(env, envLogDisk)
+	if obcluster.Spec.DeploymentMode != oceanbaseconst.DeploymentModeSharedStorage {
+		env = append(env, envLogDisk)
+	}
 	env = append(env, envClusterName)
 	env = append(env, envClusterId)
 	env = append(env, envZoneName)

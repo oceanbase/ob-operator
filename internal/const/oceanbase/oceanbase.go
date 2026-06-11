@@ -21,6 +21,11 @@ const (
 )
 
 const (
+	LogServiceRpcPort  = 2886
+	LogServiceHttpPort = 2887
+)
+
+const (
 	SqlPortName = "sql"
 	RpcPortName = "rpc"
 )

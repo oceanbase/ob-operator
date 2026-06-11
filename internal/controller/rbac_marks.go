@@ -91,6 +91,18 @@ package controller
 // +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenantvariables/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obtenantvariables/finalizers,verbs=update
 
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=oblogserviceclusters,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=oblogserviceclusters/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=oblogserviceclusters/finalizers,verbs=update
+
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=oblogservicezones,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=oblogservicezones/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=oblogservicezones/finalizers,verbs=update
+
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=oblogservicenodes,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=oblogservicenodes/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=oblogservicenodes/finalizers,verbs=update
+
 /**
 **  [GROUP] k8s.oceanbase.com
 **/

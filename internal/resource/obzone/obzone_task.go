@@ -282,12 +282,15 @@ func ExpandPVC(m *OBZoneManager) tasktypes.TaskError {
 		serverStorage := observer.Spec.OBServerTemplate.Storage
 		if serverStorage.DataStorage.Size.Cmp(zoneStorage.DataStorage.Size) < 0 ||
 			serverStorage.LogStorage.Size.Cmp(zoneStorage.LogStorage.Size) < 0 ||
-			serverStorage.RedoLogStorage.Size.Cmp(zoneStorage.RedoLogStorage.Size) < 0 {
+			(serverStorage.RedoLogStorage != nil && zoneStorage.RedoLogStorage != nil &&
+				serverStorage.RedoLogStorage.Size.Cmp(zoneStorage.RedoLogStorage.Size) < 0) {
 			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 				m.Logger.Info("Expand pvc of observer", "observer", observer.Name)
 				serverStorage.DataStorage.Size = zoneStorage.DataStorage.Size
 				serverStorage.LogStorage.Size = zoneStorage.LogStorage.Size
-				serverStorage.RedoLogStorage.Size = zoneStorage.RedoLogStorage.Size
+				if serverStorage.RedoLogStorage != nil && zoneStorage.RedoLogStorage != nil {
+					serverStorage.RedoLogStorage.Size = zoneStorage.RedoLogStorage.Size
+				}
 				return m.Client.Update(m.Ctx, &observer)
 			})
 			if err != nil {

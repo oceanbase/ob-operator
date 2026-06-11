@@ -27,9 +27,9 @@ type ZoneTopology struct {
 }
 
 type OBServerStorageSpec struct {
-	Data    common.StorageSpec `json:"data" binding:"required"`
-	RedoLog common.StorageSpec `json:"redoLog" binding:"required"`
-	Log     common.StorageSpec `json:"log" binding:"required"`
+	Data    common.StorageSpec  `json:"data" binding:"required"`
+	RedoLog *common.StorageSpec `json:"redoLog,omitempty"`
+	Log     common.StorageSpec  `json:"log" binding:"required"`
 }
 
 type MonitorStorageSpec struct {

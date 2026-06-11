@@ -1,0 +1,31 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBLogServiceCluster
+metadata:
+  name: ls-test
+  namespace: oceanbase-ss
+spec:
+  clusterId: 1004
+  image: oblogservice:1.2.0
+  serviceAccount: default
+  objectStoreUrl:
+    # TODO: Replace <MINIO_HOST> with your MinIO/S3 endpoint
+    bucketURL: s3://logservice?host=http://<MINIO_HOST>:9000&s3_region=us-east-1
+    secretRef:
+      name: minio-credentials
+  topology:
+    - zone: zone1
+      region: region1
+      replica: 1
+    - zone: zone2
+      region: region1
+      replica: 1
+    - zone: zone3
+      region: region1
+      replica: 1
+  storage:
+    storeStorage:
+      storageClass: local-path
+      size: 20Gi
+    logStorage:
+      storageClass: local-path
+      size: 10Gi

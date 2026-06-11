@@ -71,15 +71,24 @@ func init() {
 }
 
 func prepareDir() error {
+	deployMode := os.Getenv("DEPLOY_MODE")
 	makeLogDirCmd := fmt.Sprintf("mkdir -p %s/log && ln -sf %s/log %s/log", DefaultLogPath, DefaultLogPath, DefaultHomePath)
 	makeStoreDirCmd := fmt.Sprintf("mkdir -p %s/store", DefaultHomePath)
-	makeCLogDirCmd := fmt.Sprintf("mkdir -p %s/clog && ln -sf %s/clog %s/store/clog", DefaultClogPath, DefaultClogPath, DefaultHomePath)
-	makeILogDirCmd := fmt.Sprintf("mkdir -p %s/ilog && ln -sf %s/ilog %s/store/ilog", DefaultClogPath, DefaultClogPath, DefaultHomePath)
 	makeSLogDirCmd := fmt.Sprintf("mkdir -p %s/slog && ln -sf %s/slog %s/store/slog", DefaultDataFilePath, DefaultDataFilePath, DefaultHomePath)
 	makeEtcDirCmd := fmt.Sprintf("mkdir -p %s/etc && ln -sf %s/etc %s/store/etc", DefaultDataFilePath, DefaultDataFilePath, DefaultHomePath)
 	makeSortDirCmd := fmt.Sprintf("mkdir -p %s/sort_dir && ln -sf %s/sort_dir %s/store/sort_dir", DefaultDataFilePath, DefaultDataFilePath, DefaultHomePath)
 	makeSstableDirCmd := fmt.Sprintf("mkdir -p %s/sstable && ln -sf %s/sstable %s/store/sstable", DefaultDataFilePath, DefaultDataFilePath, DefaultHomePath)
-	cmd := fmt.Sprintf("%s && %s && %s && %s && %s && %s && %s && %s", makeLogDirCmd, makeStoreDirCmd, makeCLogDirCmd, makeILogDirCmd, makeSLogDirCmd, makeEtcDirCmd, makeSortDirCmd, makeSstableDirCmd)
+
+	if deployMode == "shared_storage" {
+		cmd := fmt.Sprintf("%s && %s && %s && %s && %s && %s",
+			makeLogDirCmd, makeStoreDirCmd, makeSLogDirCmd, makeEtcDirCmd, makeSortDirCmd, makeSstableDirCmd)
+		return exec.Command("bash", "-c", cmd).Run()
+	}
+
+	makeCLogDirCmd := fmt.Sprintf("mkdir -p %s/clog && ln -sf %s/clog %s/store/clog", DefaultClogPath, DefaultClogPath, DefaultHomePath)
+	makeILogDirCmd := fmt.Sprintf("mkdir -p %s/ilog && ln -sf %s/ilog %s/store/ilog", DefaultClogPath, DefaultClogPath, DefaultHomePath)
+	cmd := fmt.Sprintf("%s && %s && %s && %s && %s && %s && %s && %s",
+		makeLogDirCmd, makeStoreDirCmd, makeCLogDirCmd, makeILogDirCmd, makeSLogDirCmd, makeEtcDirCmd, makeSortDirCmd, makeSstableDirCmd)
 	return exec.Command("bash", "-c", cmd).Run()
 }
 
@@ -135,7 +144,14 @@ func startOBServerWithParam() error {
 	if found {
 		standalone = "true"
 	}
-	optStr := fmt.Sprintf("cpu_count=%s,datafile_size=%s,log_disk_size=%s,enable_syslog_recycle=true,max_syslog_file_count=4", cpuCountOpt, datafileSizeOpt, logDiskSizeOpt)
+	deployMode := os.Getenv("DEPLOY_MODE")
+
+	var optStr string
+	if deployMode == "shared_storage" {
+		optStr = fmt.Sprintf("cpu_count=%s,datafile_size=%s,enable_syslog_recycle=true,max_syslog_file_count=4", cpuCountOpt, datafileSizeOpt)
+	} else {
+		optStr = fmt.Sprintf("cpu_count=%s,datafile_size=%s,log_disk_size=%s,enable_syslog_recycle=true,max_syslog_file_count=4", cpuCountOpt, datafileSizeOpt, logDiskSizeOpt)
+	}
 	if extraOptStr != "" {
 		optStr = fmt.Sprintf("%s,%s", optStr, extraOptStr)
 	}
@@ -147,14 +163,20 @@ func startOBServerWithParam() error {
 	if err != nil {
 		return errors.Wrap(err, "Failed to parse current version")
 	}
+
+	modeFlag := ""
+	if deployMode == "shared_storage" {
+		modeFlag = "-m shared_storage "
+	}
+
 	var cmd string
 	svcIP := os.Getenv("SVC_IP")
 	if standalone != "" && obv.Cmp(MinStandaloneVersion) >= 0 {
-		cmd = fmt.Sprintf("cd %s && %s/bin/observer --nodaemon --appname %s --cluster_id %s --zone %s --devname lo -p %d -P %d -d %s/store -l info -o config_additional_dir=%s/store/etc,%s", DefaultHomePath, DefaultHomePath, clusterName, clusterId, zoneName, DefaultSqlPort, DefaultRpcPort, DefaultHomePath, DefaultHomePath, optStr)
+		cmd = fmt.Sprintf("cd %s && %s/bin/observer %s--nodaemon --appname %s --cluster_id %s --zone %s --devname lo -p %d -P %d -d %s/store -l info -o config_additional_dir=%s/store/etc,%s", DefaultHomePath, DefaultHomePath, modeFlag, clusterName, clusterId, zoneName, DefaultSqlPort, DefaultRpcPort, DefaultHomePath, DefaultHomePath, optStr)
 	} else if svcIP != "" {
-		cmd = fmt.Sprintf("cd %s && %s/bin/observer --nodaemon --appname %s --cluster_id %s --zone %s -I %s -p %d -P %d -d %s/store -l info -o config_additional_dir=%s/store/etc,%s", DefaultHomePath, DefaultHomePath, clusterName, clusterId, zoneName, svcIP, DefaultSqlPort, DefaultRpcPort, DefaultHomePath, DefaultHomePath, optStr)
+		cmd = fmt.Sprintf("cd %s && %s/bin/observer %s--nodaemon --appname %s --cluster_id %s --zone %s -I %s -p %d -P %d -d %s/store -l info -o config_additional_dir=%s/store/etc,%s", DefaultHomePath, DefaultHomePath, modeFlag, clusterName, clusterId, zoneName, svcIP, DefaultSqlPort, DefaultRpcPort, DefaultHomePath, DefaultHomePath, optStr)
 	} else {
-		cmd = fmt.Sprintf("cd %s && %s/bin/observer --nodaemon --appname %s --cluster_id %s --zone %s -i %s -p %d -P %d -d %s/store -l info -o config_additional_dir=%s/store/etc,%s", DefaultHomePath, DefaultHomePath, clusterName, clusterId, zoneName, DefaultDevName, DefaultSqlPort, DefaultRpcPort, DefaultHomePath, DefaultHomePath, optStr)
+		cmd = fmt.Sprintf("cd %s && %s/bin/observer %s--nodaemon --appname %s --cluster_id %s --zone %s -i %s -p %d -P %d -d %s/store -l info -o config_additional_dir=%s/store/etc,%s", DefaultHomePath, DefaultHomePath, modeFlag, clusterName, clusterId, zoneName, DefaultDevName, DefaultSqlPort, DefaultRpcPort, DefaultHomePath, DefaultHomePath, optStr)
 	}
 	log.Println("Start commands: ", cmd)
 	return exec.Command("bash", "-c", cmd).Run()

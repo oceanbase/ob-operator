@@ -14,6 +14,6 @@ package types
 
 type OceanbaseStorageSpec struct {
 	DataStorage    *StorageSpec `json:"dataStorage"`
-	RedoLogStorage *StorageSpec `json:"redoLogStorage"`
+	RedoLogStorage *StorageSpec `json:"redoLogStorage,omitempty"`
 	LogStorage     *StorageSpec `json:"logStorage"`
 }

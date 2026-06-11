@@ -50,6 +50,7 @@ func GetJob(ctx context.Context, c client.Client, namespace string, jobName stri
 type JobContainerVolumes struct {
 	VolumeMounts []corev1.VolumeMount
 	Volumes      []corev1.Volume
+	Env          []corev1.EnvVar
 }
 
 func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace string,
@@ -60,9 +61,11 @@ func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace
 	var ttl int32 = 300
 	var mounts []corev1.VolumeMount
 	var volumes []corev1.Volume
+	var envVars []corev1.EnvVar
 	for _, vc := range volumeConfigs {
 		mounts = append(mounts, vc.VolumeMounts...)
 		volumes = append(volumes, vc.Volumes...)
+		envVars = append(envVars, vc.Env...)
 	}
 
 	container := corev1.Container{
@@ -70,6 +73,7 @@ func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace
 		Image:        image,
 		Command:      []string{"bash", "-c", cmd},
 		VolumeMounts: mounts,
+		Env:          envVars,
 	}
 	job := batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{

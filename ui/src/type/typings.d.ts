@@ -50,7 +50,7 @@ declare namespace API {
           memory: number;
           name: string;
           namespace: string;
-          redoLogStorage: {
+          redoLogStorage?: {
             storageClass: string;
             storageSize: number;
           };
@@ -291,7 +291,7 @@ declare namespace API {
     };
     storage?: {
       dataStorage: Storage;
-      redoLogStorage: Storage;
+      redoLogStorage?: Storage;
       sysLogStorage: Storage;
     };
     backupVolume?: {

@@ -147,6 +147,7 @@ func CreateOBZone(m *OBClusterManager) tasktypes.TaskError {
 	singlePVCAnnoVal, singlePVCAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsSinglePVC)
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 	migrateAnnoVal, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsSourceClusterAddress)
+	deploymentMode := m.OBCluster.Spec.DeploymentMode
 	for _, zone := range m.OBCluster.Spec.Topology {
 		zoneName := m.generateZoneName(zone.Zone)
 		zoneExists := false
@@ -196,6 +197,9 @@ func CreateOBZone(m *OBClusterManager) tasktypes.TaskError {
 		if migrateAnnoExist {
 			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSourceClusterAddress] = migrateAnnoVal
 		}
+		if deploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
+			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsDeploymentMode] = oceanbaseconst.DeploymentModeSharedStorage
+		}
 		m.Logger.Info("Create obzone", "zone", zoneName)
 		err := m.Client.Create(m.Ctx, obzone)
 		if err != nil {
@@ -204,6 +208,26 @@ func CreateOBZone(m *OBClusterManager) tasktypes.TaskError {
 		}
 		m.Recorder.Event(m.OBCluster, "CreateOBZone", "", fmt.Sprintf("Create obzone %s successfully", zoneName))
 	}
+	return nil
+}
+
+func WaitLogServiceReady(m *OBClusterManager) tasktypes.TaskError {
+	if m.OBCluster.Spec.LogServiceRef == nil {
+		return errors.New("logServiceRef is required for shared_storage mode")
+	}
+	lsCluster := &v1alpha1.OBLogServiceCluster{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.OBCluster.Namespace,
+		Name:      m.OBCluster.Spec.LogServiceRef.Name,
+	}, lsCluster)
+	if err != nil {
+		return errors.Wrap(err, "get OBLogServiceCluster")
+	}
+	if lsCluster.Status.Status != "running" {
+		return errors.Errorf("OBLogServiceCluster %s is not running, current status: %s",
+			lsCluster.Name, lsCluster.Status.Status)
+	}
+	m.Logger.Info("LogService cluster is ready", "name", lsCluster.Name)
 	return nil
 }
 
@@ -266,7 +290,19 @@ func Bootstrap(m *OBClusterManager) tasktypes.TaskError {
 		}
 	}
 
-	err = manager.Bootstrap(m.Ctx, bootstrapServers)
+	if m.OBCluster.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
+		logServiceAccessPoint, buildErr := m.buildLogServiceAccessPoint()
+		if buildErr != nil {
+			return errors.Wrap(buildErr, "build logservice access point")
+		}
+		sharedStorageInfo, buildErr := m.buildSharedStorageInfo()
+		if buildErr != nil {
+			return errors.Wrap(buildErr, "build shared storage info")
+		}
+		err = manager.BootstrapSharedStorage(m.Ctx, bootstrapServers, logServiceAccessPoint, sharedStorageInfo)
+	} else {
+		err = manager.Bootstrap(m.Ctx, bootstrapServers)
+	}
 	if err != nil {
 		m.Logger.Error(err, "bootstrap failed")
 	} else {
@@ -961,8 +997,13 @@ func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
 	volumeName := m.OBCluster.Name + "check-clog-volume-" + rand.String(6)
 	claimName := m.OBCluster.Name + "check-clog-claim-" + rand.String(6)
 	jobName := m.OBCluster.Name + "-check-fs-" + rand.String(6)
-	// Create PVC
-	storageSpec := m.OBCluster.Spec.OBServerTemplate.Storage.RedoLogStorage
+
+	var storageSpec *apitypes.StorageSpec
+	if m.OBCluster.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
+		storageSpec = m.OBCluster.Spec.OBServerTemplate.Storage.DataStorage
+	} else {
+		storageSpec = m.OBCluster.Spec.OBServerTemplate.Storage.RedoLogStorage
+	}
 	requestsResources := corev1.ResourceList{}
 	// Try fallocate to check if the filesystem meet the requirement.
 	// The checker requires 4Mi space, we set the request to 64Mi for safety.

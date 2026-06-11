@@ -143,6 +143,30 @@ func main() {
 
 	ctx, cancel := context.WithCancel(context.TODO())
 
+	if err = (&controller.OBLogServiceClusterReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: telemetry.NewRecorder(ctx, mgr.GetEventRecorderFor("OBLogServiceCluster")),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "Unable to create controller", "controller", "OBLogServiceCluster")
+		os.Exit(1)
+	}
+	if err = (&controller.OBLogServiceZoneReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: telemetry.NewRecorder(ctx, mgr.GetEventRecorderFor("OBLogServiceZone")),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "Unable to create controller", "controller", "OBLogServiceZone")
+		os.Exit(1)
+	}
+	if err = (&controller.OBLogServiceNodeReconciler{
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		Recorder: telemetry.NewRecorder(ctx, mgr.GetEventRecorderFor("OBLogServiceNode")),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "Unable to create controller", "controller", "OBLogServiceNode")
+		os.Exit(1)
+	}
 	if err = (&controller.OBClusterReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
@@ -273,6 +297,10 @@ func main() {
 		}
 		if err = (&k8sv1alpha1.K8sCluster{}).SetupWebhookWithManager(mgr); err != nil {
 			setupLog.Error(err, "unable to create webhook", "webhook", "K8sCluster")
+			os.Exit(1)
+		}
+		if err = (&v1alpha1.OBLogServiceCluster{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "OBLogServiceCluster")
 			os.Exit(1)
 		}
 	}

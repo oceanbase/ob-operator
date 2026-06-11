@@ -1,0 +1,11 @@
+FROM oceanbase/oceanbase-helper:4.3.3.1-101000012024102216
+
+COPY oceanbase-*.rpm /tmp/
+RUN yum install -y /tmp/oceanbase-*.rpm && yum clean all && rm -f /tmp/oceanbase-*.rpm
+
+ENV LD_LIBRARY_PATH=/home/admin/oceanbase/lib
+
+COPY observer-prestart-wrapper.sh /home/admin/oceanbase/bin/observer-prestart-wrapper.sh
+COPY oceanbase-helper /home/admin/oceanbase/bin/oceanbase-helper.real
+RUN chmod +x /home/admin/oceanbase/bin/observer-prestart-wrapper.sh /home/admin/oceanbase/bin/oceanbase-helper.real && \
+    ln -sf /home/admin/oceanbase/bin/observer-prestart-wrapper.sh /home/admin/oceanbase/bin/oceanbase-helper

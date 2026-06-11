@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package sql
 
 const (
-	BootstrapServer = "ZONE '%s' SERVER '%s:%d'"
-	Bootstrap       = "ALTER SYSTEM BOOTSTRAP %s"
+	BootstrapServer         = "ZONE '%s' SERVER '%s:%d'"
+	Bootstrap               = "ALTER SYSTEM BOOTSTRAP %s"
+	BootstrapWithLogService = "ALTER SYSTEM BOOTSTRAP %s, LOGSERVICE_ACCESS_POINT \"%s\" SHARED_STORAGE_INFO \"%s\""
 )

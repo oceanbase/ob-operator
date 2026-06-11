@@ -31,8 +31,18 @@ const (
 )
 
 const (
-	ModeStandalone = "standalone"
-	ModeService    = "service"
+	AnnotationsDeploymentMode = "oceanbase.oceanbase.com/deployment-mode"
+)
+
+const (
+	ModeStandalone    = "standalone"
+	ModeService       = "service"
+	ModeSharedStorage = "shared_storage"
+)
+
+const (
+	DeploymentModeNormal        = "normal"
+	DeploymentModeSharedStorage = "shared_storage"
 )
 
 const (

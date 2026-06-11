@@ -44,15 +44,33 @@ func (m *OBZoneManager) generateServerName() string {
 }
 
 func (m *OBZoneManager) checkIfStorageSizeExpand(observer *v1alpha1.OBServer) bool {
-	return observer.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.DataStorage.Size) < 0 ||
-		observer.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.LogStorage.Size) < 0 ||
-		observer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0
+	expanded := observer.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.DataStorage.Size) < 0 ||
+		observer.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(m.OBZone.Spec.OBServerTemplate.Storage.LogStorage.Size) < 0
+	observerRedo := observer.Spec.OBServerTemplate.Storage.RedoLogStorage
+	zoneRedo := m.OBZone.Spec.OBServerTemplate.Storage.RedoLogStorage
+	if (observerRedo == nil) != (zoneRedo == nil) {
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("RedoLogStorage nil mismatch between observer and zone",
+			"observer", observer.Name, "observerHasRedo", observerRedo != nil, "zoneHasRedo", zoneRedo != nil)
+	}
+	if observerRedo != nil && zoneRedo != nil {
+		expanded = expanded || observerRedo.Size.Cmp(zoneRedo.Size) < 0
+	}
+	return expanded
 }
 
 func (m *OBZoneManager) checkIfStorageClassChanged(observer *v1alpha1.OBServer) bool {
-	return observer.Spec.OBServerTemplate.Storage.DataStorage.StorageClass != m.OBZone.Spec.OBServerTemplate.Storage.DataStorage.StorageClass ||
-		observer.Spec.OBServerTemplate.Storage.LogStorage.StorageClass != m.OBZone.Spec.OBServerTemplate.Storage.LogStorage.StorageClass ||
-		observer.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass != m.OBZone.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass
+	changed := observer.Spec.OBServerTemplate.Storage.DataStorage.StorageClass != m.OBZone.Spec.OBServerTemplate.Storage.DataStorage.StorageClass ||
+		observer.Spec.OBServerTemplate.Storage.LogStorage.StorageClass != m.OBZone.Spec.OBServerTemplate.Storage.LogStorage.StorageClass
+	observerRedo := observer.Spec.OBServerTemplate.Storage.RedoLogStorage
+	zoneRedo := m.OBZone.Spec.OBServerTemplate.Storage.RedoLogStorage
+	if (observerRedo == nil) != (zoneRedo == nil) {
+		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("RedoLogStorage nil mismatch between observer and zone",
+			"observer", observer.Name, "observerHasRedo", observerRedo != nil, "zoneHasRedo", zoneRedo != nil)
+	}
+	if observerRedo != nil && zoneRedo != nil {
+		changed = changed || observerRedo.StorageClass != zoneRedo.StorageClass
+	}
+	return changed
 }
 
 func (m *OBZoneManager) checkIfCalcResourceChange(observer *v1alpha1.OBServer) bool {
@@ -159,6 +177,7 @@ func (m *OBZoneManager) createOneOBServer(serverName string) (*v1alpha1.OBServer
 	singlePVCAnnoVal, singlePVCAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSinglePVC)
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsMode)
 	migrateAnnoVal, migrateAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsSourceClusterAddress)
+	deployModeAnnoVal, deployModeAnnoExist := resourceutils.GetAnnotationField(m.OBZone, oceanbaseconst.AnnotationsDeploymentMode)
 	finalizerName := oceanbaseconst.FinalizerDeleteOBServer
 	finalizers := []string{finalizerName}
 	labels := make(map[string]string)
@@ -207,6 +226,9 @@ func (m *OBZoneManager) createOneOBServer(serverName string) (*v1alpha1.OBServer
 	}
 	if migrateAnnoExist {
 		observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSourceClusterAddress] = migrateAnnoVal
+	}
+	if deployModeAnnoExist {
+		observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsDeploymentMode] = deployModeAnnoVal
 	}
 	m.Logger.Info("Create observer", "server", serverName)
 	err := m.Client.Create(m.Ctx, observer)

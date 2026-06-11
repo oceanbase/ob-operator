@@ -41,7 +41,9 @@ type UpdateOptions struct {
 
 func NewUpdateOptions() *UpdateOptions {
 	return &UpdateOptions{
-		Storage: &param.OBServerStorageSpec{},
+		Storage: &param.OBServerStorageSpec{
+			RedoLog: &common.StorageSpec{},
+		},
 	}
 }
 

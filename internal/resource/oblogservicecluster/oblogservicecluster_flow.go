@@ -1,0 +1,51 @@
+/*
+Copyright (c) 2023 OceanBase
+ob-operator is licensed under Mulan PSL v2.
+You can use this software according to the terms and conditions of the Mulan PSL v2.
+You may obtain a copy of Mulan PSL v2 at:
+         http://license.coscl.org.cn/MulanPSL2
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+See the Mulan PSL v2 for more details.
+*/
+
+package oblogservicecluster
+
+import (
+	lsstatus "github.com/oceanbase/ob-operator/internal/const/status/oblogservicecluster"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
+)
+
+func genBootstrapLogServiceFlow(_ *OBLogServiceClusterManager) *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name:         "bootstrap log service cluster",
+			Tasks:        []tasktypes.TaskName{tCreateZones, tWaitZonesBootstrapReady, tBootstrapLogService},
+			TargetStatus: lsstatus.Running,
+			OnFailure: tasktypes.FailureRule{
+				NextTryStatus: lsstatus.Failed,
+			},
+		},
+	}
+}
+
+func genAddZoneFlow(_ *OBLogServiceClusterManager) *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name:         "add log service zone",
+			Tasks:        []tasktypes.TaskName{tCreateZones, tWaitZonesRunning},
+			TargetStatus: lsstatus.Running,
+		},
+	}
+}
+
+func genDeleteZoneFlow(_ *OBLogServiceClusterManager) *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name:         "delete log service zone",
+			Tasks:        []tasktypes.TaskName{tDeleteExcessZones},
+			TargetStatus: lsstatus.Running,
+		},
+	}
+}

@@ -1,0 +1,39 @@
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBCluster
+metadata:
+  name: ob-ss-test
+  namespace: oceanbase-ss
+spec:
+  clusterName: ob-ss-test
+  clusterId: 2004
+  deploymentMode: shared_storage
+  serviceAccount: default
+  userSecrets:
+    root: ss-root-password
+  logServiceRef:
+    name: ls-test
+  sharedStorageInfo:
+    # TODO: Replace <MINIO_HOST> with your MinIO/S3 endpoint
+    bucketURL: s3://sharedstorage?host=http://<MINIO_HOST>:9000&s3_region=us-east-1
+    secretRef:
+      name: minio-credentials
+  topology:
+    - zone: zone1
+      replica: 1
+  observer:
+    image: oceanbase-ss:4.6.0.0-ss
+    resource:
+      cpu: 2
+      memory: 10Gi
+    storage:
+      dataStorage:
+        storageClass: local-path
+        size: 50Gi
+      logStorage:
+        storageClass: local-path
+        size: 20Gi
+  parameters:
+    - name: system_memory
+      value: 1G
+    - name: "__min_full_resource_pool_memory"
+      value: "2147483648"
