@@ -5,6 +5,6 @@ import ttypes "github.com/oceanbase/ob-operator/pkg/task/types"
 
 const (
 	tStartRestoreJobInOB ttypes.TaskName = "start restore job in ob"
-	tStartLogReplay ttypes.TaskName = "start log replay"
-	tActivateStandby ttypes.TaskName = "activate standby"
+	tStartLogReplay      ttypes.TaskName = "start log replay"
+	tActivateStandby     ttypes.TaskName = "activate standby"
 )

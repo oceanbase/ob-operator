@@ -4,13 +4,13 @@ package obtenantoperation
 import ttypes "github.com/oceanbase/ob-operator/pkg/task/types"
 
 const (
-	tChangeTenantRootPassword ttypes.TaskName = "change tenant root password"
-	tActivateStandbyTenant ttypes.TaskName = "activate standby tenant"
+	tChangeTenantRootPassword       ttypes.TaskName = "change tenant root password"
+	tActivateStandbyTenant          ttypes.TaskName = "activate standby tenant"
 	tCreateUsersForActivatedStandby ttypes.TaskName = "create users for activated standby"
-	tSwitchTenantsRole ttypes.TaskName = "switch tenants role"
-	tSetTenantLogRestoreSource ttypes.TaskName = "set tenant log restore source"
-	tUpgradeTenant ttypes.TaskName = "upgrade tenant"
-	tReplayLogOfStandby ttypes.TaskName = "replay log of standby"
-	tUpdateOBTenantResource ttypes.TaskName = "update obtenant resource"
-	tWaitForOBTenantReturnRunning ttypes.TaskName = "wait for obtenant return running"
+	tSwitchTenantsRole              ttypes.TaskName = "switch tenants role"
+	tSetTenantLogRestoreSource      ttypes.TaskName = "set tenant log restore source"
+	tUpgradeTenant                  ttypes.TaskName = "upgrade tenant"
+	tReplayLogOfStandby             ttypes.TaskName = "replay log of standby"
+	tUpdateOBTenantResource         ttypes.TaskName = "update obtenant resource"
+	tWaitForOBTenantReturnRunning   ttypes.TaskName = "wait for obtenant return running"
 )
