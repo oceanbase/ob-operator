@@ -7,22 +7,7 @@ rules:
 - apiGroups:
   - ""
   resources:
-  - events
-  verbs:
-  - create
-  - patch
-- apiGroups:
-  - ""
-  resources:
-  - nodes
-  - serviceaccounts
-  verbs:
-  - get
-  - list
-  - watch
-- apiGroups:
-  - ""
-  resources:
+  - configmaps
   - persistentvolumeclaims
   - persistentvolumes
   - pods
@@ -35,6 +20,22 @@ rules:
   - list
   - patch
   - update
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  - serviceaccounts
+  verbs:
+  - get
+  - list
   - watch
 - apiGroups:
   - ""
@@ -62,6 +63,26 @@ rules:
   - pods/log
   verbs:
   - get
+- apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - apps
+  resources:
+  - deployments/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - batch
   resources:
@@ -120,6 +141,7 @@ rules:
   - obclusteroperations
   - obclusters
   - obparameters
+  - obproxies
   - obresourcerescues
   - observers
   - obtenantbackuppolicies
@@ -144,6 +166,7 @@ rules:
   - obclusteroperations/finalizers
   - obclusters/finalizers
   - obparameters/finalizers
+  - obproxies/finalizers
   - obresourcerescues/finalizers
   - observers/finalizers
   - obtenantbackuppolicies/finalizers
@@ -161,6 +184,7 @@ rules:
   - obclusteroperations/status
   - obclusters/status
   - obparameters/status
+  - obproxies/status
   - obresourcerescues/status
   - observers/status
   - obtenantbackuppolicies/status

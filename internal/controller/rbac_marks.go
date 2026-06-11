@@ -52,6 +52,10 @@ package controller
 // +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obparameters/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obparameters/finalizers,verbs=update
 
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obproxies,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obproxies/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obproxies/finalizers,verbs=update
+
 // +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obresourcerescues,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obresourcerescues/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=oceanbase.oceanbase.com,resources=obresourcerescues/finalizers,verbs=update

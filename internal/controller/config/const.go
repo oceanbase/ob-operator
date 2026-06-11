@@ -25,4 +25,5 @@ const (
 	OBTenantOperationControllerName    = "obtenantoperation-controller"
 	OBResourceRescueControllerName     = "obresourcerescue-controller"
 	OBClusterOperationControllerName   = "obclusteroperation-controller"
+	OBProxyControllerName              = "obproxy-controller"
 )
