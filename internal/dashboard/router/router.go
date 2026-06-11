@@ -13,6 +13,8 @@ See the Mulan PSL v2 for more details.
 package router
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"os"
 
 	"github.com/gin-contrib/gzip"
@@ -30,8 +32,16 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/server/constant"
 )
 
+func randomSecret() string {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		panic("failed to generate session secret: " + err.Error())
+	}
+	return hex.EncodeToString(b)
+}
+
 func InitRoutes(router *gin.Engine) {
-	sessionSecret := "secret"
+	sessionSecret := randomSecret()
 	if secretEnv := os.Getenv("SESSION_SECRET"); secretEnv != "" {
 		sessionSecret = secretEnv
 	}
