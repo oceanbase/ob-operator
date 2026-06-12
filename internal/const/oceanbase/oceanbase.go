@@ -21,8 +21,8 @@ const (
 )
 
 const (
-	LogServiceRpcPort  = 2886
-	LogServiceHttpPort = 2887
+	LogServiceRpcPort  = 50031
+	LogServiceHttpPort = 50051
 )
 
 const (
