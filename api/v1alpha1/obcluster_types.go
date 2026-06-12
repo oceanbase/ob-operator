@@ -48,8 +48,8 @@ type OBClusterSpec struct {
 	//+kubebuilder:default=normal
 	//+kubebuilder:validation:Enum=normal;shared_storage
 	DeploymentMode    string                        `json:"deploymentMode,omitempty"`
-	SharedStorageInfo *apitypes.SharedStorageSpec    `json:"sharedStorageInfo,omitempty"`
-	LogServiceRef     *apitypes.LogServiceReference  `json:"logServiceRef,omitempty"`
+	SharedStorageInfo *apitypes.SharedStorageSpec   `json:"sharedStorageInfo,omitempty"`
+	LogServiceRef     *apitypes.LogServiceReference `json:"logServiceRef,omitempty"`
 }
 
 // OBClusterStatus defines the observed state of OBCluster

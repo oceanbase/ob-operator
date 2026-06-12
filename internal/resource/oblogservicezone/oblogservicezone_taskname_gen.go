@@ -4,9 +4,9 @@ package oblogservicezone
 import ttypes "github.com/oceanbase/ob-operator/pkg/task/types"
 
 const (
-	tCreateNodes      ttypes.TaskName = "create log service nodes"
-	tWaitNodesReady   ttypes.TaskName = "wait log service nodes ready"
-	tWaitNodesRunning ttypes.TaskName = "wait log service nodes running"
-	tDeleteExcessNodes ttypes.TaskName = "delete excess log service nodes"
-	tDeleteAllNodes   ttypes.TaskName = "delete all log service nodes"
+	tCreateNodes       ttypes.TaskName = "create nodes"
+	tWaitNodesReady    ttypes.TaskName = "wait nodes ready"
+	tWaitNodesRunning  ttypes.TaskName = "wait nodes running"
+	tDeleteExcessNodes ttypes.TaskName = "delete excess nodes"
+	tDeleteAllNodes    ttypes.TaskName = "delete all nodes"
 )

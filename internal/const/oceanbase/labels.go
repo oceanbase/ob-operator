@@ -13,17 +13,17 @@ See the Mulan PSL v2 for more details.
 package oceanbase
 
 const (
-	LabelRefOBTenant              = "ref-obtenant"
-	LabelRefOBCluster             = "ref-obcluster"
-	LabelRefOBZone                = "ref-obzone"
-	LabelRefOBServer              = "ref-observer"
-	LabelRefUID                   = "ref-uid"
-	LabelJobName                  = "job-name"
-	LabelRefBackupPolicy          = "ref-backuppolicy"
-	LabelRefOBClusterOp           = "ref-obclusterop"
-	LabelRefOBTenantOp            = "ref-obtenantop"
-	LabelRefOBLogServiceCluster   = "ref-oblogservicecluster"
-	LabelRefOBLogServiceZone      = "ref-oblogservicezone"
+	LabelRefOBTenant            = "ref-obtenant"
+	LabelRefOBCluster           = "ref-obcluster"
+	LabelRefOBZone              = "ref-obzone"
+	LabelRefOBServer            = "ref-observer"
+	LabelRefUID                 = "ref-uid"
+	LabelJobName                = "job-name"
+	LabelRefBackupPolicy        = "ref-backuppolicy"
+	LabelRefOBClusterOp         = "ref-obclusterop"
+	LabelRefOBTenantOp          = "ref-obtenantop"
+	LabelRefOBLogServiceCluster = "ref-oblogservicecluster"
+	LabelRefOBLogServiceZone    = "ref-oblogservicezone"
 )
 
 const (

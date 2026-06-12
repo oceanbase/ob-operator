@@ -156,9 +156,9 @@ func (r *OBCluster) Default() {
 				if r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass == "" {
 					r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass = defaults[0]
 				}
-			if r.Spec.OBServerTemplate.Storage.RedoLogStorage != nil && r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == "" {
-				r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass = defaults[0]
-			}
+				if r.Spec.OBServerTemplate.Storage.RedoLogStorage != nil && r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == "" {
+					r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass = defaults[0]
+				}
 			}
 		}
 	}

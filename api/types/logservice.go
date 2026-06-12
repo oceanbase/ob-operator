@@ -15,15 +15,15 @@ package types
 import corev1 "k8s.io/api/core/v1"
 
 type LogServiceZoneTopology struct {
-	Zone         string                    `json:"zone"`
-	Region       string                    `json:"region"`
-	Replica      int                       `json:"replica"`
-	Resource     *ResourceSpec             `json:"resource,omitempty"`
-	NodeSelector map[string]string         `json:"nodeSelector,omitempty"`
-	Affinity     *corev1.Affinity          `json:"affinity,omitempty"`
-	Tolerations  []corev1.Toleration       `json:"tolerations,omitempty"`
-	RpcPort      int32                     `json:"rpcPort,omitempty"`
-	HttpPort     int32                     `json:"httpPort,omitempty"`
+	Zone         string              `json:"zone"`
+	Region       string              `json:"region"`
+	Replica      int                 `json:"replica"`
+	Resource     *ResourceSpec       `json:"resource,omitempty"`
+	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`
+	Affinity     *corev1.Affinity    `json:"affinity,omitempty"`
+	Tolerations  []corev1.Toleration `json:"tolerations,omitempty"`
+	RpcPort      int32               `json:"rpcPort,omitempty"`
+	HttpPort     int32               `json:"httpPort,omitempty"`
 }
 
 type ObjectStoreConfig struct {

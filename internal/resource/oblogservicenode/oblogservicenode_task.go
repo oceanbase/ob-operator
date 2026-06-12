@@ -109,7 +109,7 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 
 	// Create per-pod Service for stable network identity
 	podLabels := map[string]string{
-		"app":                                     "oblogservice",
+		"app": "oblogservice",
 		oceanbaseconst.LabelRefOBLogServiceCluster: m.Resource.Spec.ClusterName,
 		oceanbaseconst.LabelRefOBLogServiceZone:    fmt.Sprintf("%s-%s", m.Resource.Spec.ClusterName, m.Resource.Spec.Zone),
 		"oblogservice-node":                        podName,
@@ -186,12 +186,14 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 							memReq = m.Resource.Spec.Resource.Memory
 						}
 					}
-					return corev1.ResourceRequirements{
-						Requests: corev1.ResourceList{
-							corev1.ResourceCPU:    cpuReq,
-							corev1.ResourceMemory: memReq,
-						},
-					}
+				resList := corev1.ResourceList{
+					corev1.ResourceCPU:    cpuReq,
+					corev1.ResourceMemory: memReq,
+				}
+				return corev1.ResourceRequirements{
+					Requests: resList,
+					Limits:   resList,
+				}
 				}(),
 				VolumeMounts: []corev1.VolumeMount{
 					{Name: "store", MountPath: storeMountPath},
@@ -222,6 +224,8 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 				},
 			},
 			NodeSelector: m.Resource.Spec.NodeSelector,
+			Affinity:     m.Resource.Spec.Affinity,
+			Tolerations:  m.Resource.Spec.Tolerations,
 		},
 	}
 	if err := m.Client.Create(m.Ctx, pod); err != nil && !kubeerrors.IsAlreadyExists(err) {

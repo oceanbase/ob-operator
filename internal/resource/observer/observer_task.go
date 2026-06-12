@@ -515,23 +515,23 @@ outer:
 					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
 					continue outer
 				}
-		case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix):
-			if serverStorage.RedoLogStorage != nil && serverStorage.RedoLogStorage.Size.Cmp(pvcSize) != 0 {
-				m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
-				continue outer
-			}
-		case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix):
-			if serverStorage.LogStorage.Size.Cmp(pvcSize) != 0 {
-				m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
-				continue outer
-			}
-		case m.OBServer.Name:
-			sum := resource.Quantity{}
-			sum.Add(serverStorage.DataStorage.Size)
-			if serverStorage.RedoLogStorage != nil {
-				sum.Add(serverStorage.RedoLogStorage.Size)
-			}
-			sum.Add(serverStorage.LogStorage.Size)
+			case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix):
+				if serverStorage.RedoLogStorage != nil && serverStorage.RedoLogStorage.Size.Cmp(pvcSize) != 0 {
+					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
+					continue outer
+				}
+			case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix):
+				if serverStorage.LogStorage.Size.Cmp(pvcSize) != 0 {
+					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
+					continue outer
+				}
+			case m.OBServer.Name:
+				sum := resource.Quantity{}
+				sum.Add(serverStorage.DataStorage.Size)
+				if serverStorage.RedoLogStorage != nil {
+					sum.Add(serverStorage.RedoLogStorage.Size)
+				}
+				sum.Add(serverStorage.LogStorage.Size)
 				if sum.Cmp(pvcSize) != 0 {
 					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
 					continue outer

@@ -75,6 +75,8 @@ func CreateNodes(m *OBLogServiceZoneManager) tasktypes.TaskError {
 				RpcPort:        m.Resource.Spec.Topology.RpcPort,
 				HttpPort:       m.Resource.Spec.Topology.HttpPort,
 				NodeSelector:   m.Resource.Spec.Topology.NodeSelector,
+				Affinity:       m.Resource.Spec.Topology.Affinity,
+				Tolerations:    m.Resource.Spec.Topology.Tolerations,
 				ObjectStoreURL: m.Resource.Spec.ObjectStoreURL,
 				Storage:        m.Resource.Spec.Storage,
 				ServiceAccount: m.Resource.Spec.ServiceAccount,

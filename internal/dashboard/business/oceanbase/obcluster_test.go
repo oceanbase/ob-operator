@@ -81,7 +81,7 @@ func getMockedCreateClusterParam() *param.CreateOBClusterParam {
 					StorageClass: "local-path",
 					SizeGB:       30,
 				},
-				RedoLog: common.StorageSpec{
+				RedoLog: &common.StorageSpec{
 					StorageClass: "local-path",
 					SizeGB:       40,
 				},

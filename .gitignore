@@ -28,6 +28,8 @@ vendor/
 cover.out
 testbin/*
 custom_scripts/*
+build/ss/
+build/scripts/observer-prestart-wrapper.sh
 insert_license.py
 deploy/*secret*
 

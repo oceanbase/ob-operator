@@ -4,7 +4,7 @@ package oblogservicenode
 import ttypes "github.com/oceanbase/ob-operator/pkg/task/types"
 
 const (
-	tCreatePod    ttypes.TaskName = "create log service node pod"
-	tWaitPodReady ttypes.TaskName = "wait log service node pod ready"
-	tDeletePod    ttypes.TaskName = "delete log service node pod"
+	tCreatePod    ttypes.TaskName = "create pod"
+	tWaitPodReady ttypes.TaskName = "wait pod ready"
+	tDeletePod    ttypes.TaskName = "delete pod"
 )

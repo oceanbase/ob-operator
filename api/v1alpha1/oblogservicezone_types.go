@@ -20,17 +20,17 @@ import (
 )
 
 type OBLogServiceZoneSpec struct {
-	ClusterName    string                           `json:"clusterName"`
-	ClusterId      int64                            `json:"clusterId"`
-	Image          string                           `json:"image"`
-	Topology       apitypes.LogServiceZoneTopology  `json:"topology"`
-	ObjectStoreURL apitypes.ObjectStoreConfig       `json:"objectStoreUrl"`
-	Storage        *apitypes.LogServiceStorageSpec  `json:"storage"`
-	ServiceAccount string                           `json:"serviceAccount,omitempty"`
+	ClusterName    string                          `json:"clusterName"`
+	ClusterId      int64                           `json:"clusterId"`
+	Image          string                          `json:"image"`
+	Topology       apitypes.LogServiceZoneTopology `json:"topology"`
+	ObjectStoreURL apitypes.ObjectStoreConfig      `json:"objectStoreUrl"`
+	Storage        *apitypes.LogServiceStorageSpec `json:"storage"`
+	ServiceAccount string                          `json:"serviceAccount,omitempty"`
 }
 
 type OBLogServiceZoneStatus struct {
-	Status           string                                `json:"status"`
+	Status           string                                 `json:"status"`
 	OperationContext *tasktypes.OperationContext            `json:"operationContext,omitempty"`
 	NodeStatus       []apitypes.LogServiceNodeReplicaStatus `json:"nodeStatus,omitempty"`
 }

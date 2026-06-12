@@ -30,19 +30,21 @@ type OBLogServiceNodeSpec struct {
 	RpcPort        int32                           `json:"rpcPort,omitempty"`
 	HttpPort       int32                           `json:"httpPort,omitempty"`
 	NodeSelector   map[string]string               `json:"nodeSelector,omitempty"`
+	Affinity       *corev1.Affinity                `json:"affinity,omitempty"`
+	Tolerations    []corev1.Toleration             `json:"tolerations,omitempty"`
 	ObjectStoreURL apitypes.ObjectStoreConfig      `json:"objectStoreUrl"`
 	Storage        *apitypes.LogServiceStorageSpec `json:"storage"`
 	ServiceAccount string                          `json:"serviceAccount,omitempty"`
 }
 
 type OBLogServiceNodeStatus struct {
-	Status           string                     `json:"status"`
+	Status           string                      `json:"status"`
 	OperationContext *tasktypes.OperationContext `json:"operationContext,omitempty"`
-	PodName          string                     `json:"podName,omitempty"`
-	PodIP            string                     `json:"podIP,omitempty"`
-	ServiceIP        string                     `json:"serviceIP,omitempty"`
-	PodPhase         corev1.PodPhase            `json:"podPhase,omitempty"`
-	Ready            bool                       `json:"ready"`
+	PodName          string                      `json:"podName,omitempty"`
+	PodIP            string                      `json:"podIP,omitempty"`
+	ServiceIP        string                      `json:"serviceIP,omitempty"`
+	PodPhase         corev1.PodPhase             `json:"podPhase,omitempty"`
+	Ready            bool                        `json:"ready"`
 }
 
 func (s *OBLogServiceNodeStatus) GetConnectAddr() string {

@@ -4,7 +4,7 @@ package oblogservicecluster
 import ttypes "github.com/oceanbase/ob-operator/pkg/task/types"
 
 const (
-	tCreateZones             ttypes.TaskName = "create log service zones"
+	tCreateZones             ttypes.TaskName = "create zones"
 	tWaitZonesBootstrapReady ttypes.TaskName = "wait zones bootstrap ready"
 	tWaitZonesRunning        ttypes.TaskName = "wait zones running"
 	tBootstrapLogService     ttypes.TaskName = "bootstrap log service"

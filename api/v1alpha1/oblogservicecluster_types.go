@@ -30,7 +30,7 @@ type OBLogServiceClusterSpec struct {
 }
 
 type OBLogServiceClusterStatus struct {
-	Status           string                                `json:"status"`
+	Status           string                                 `json:"status"`
 	OperationContext *tasktypes.OperationContext            `json:"operationContext,omitempty"`
 	ZoneStatus       []apitypes.LogServiceZoneReplicaStatus `json:"zoneStatus,omitempty"`
 }
