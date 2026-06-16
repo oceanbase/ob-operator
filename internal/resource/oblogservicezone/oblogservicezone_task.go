@@ -66,12 +66,17 @@ func CreateNodes(m *OBLogServiceZoneManager) tasktypes.TaskError {
 				},
 			},
 			Spec: v1alpha1.OBLogServiceNodeSpec{
-				ClusterName:    m.Resource.Spec.ClusterName,
-				ClusterId:      m.Resource.Spec.ClusterId,
-				Zone:           m.Resource.Spec.Topology.Zone,
-				Region:         m.Resource.Spec.Topology.Region,
-				Image:          m.Resource.Spec.Image,
-				Resource:       m.Resource.Spec.Topology.Resource,
+				ClusterName: m.Resource.Spec.ClusterName,
+				ClusterId:   m.Resource.Spec.ClusterId,
+				Zone:        m.Resource.Spec.Topology.Zone,
+				Region:      m.Resource.Spec.Topology.Region,
+				Image:       m.Resource.Spec.Image,
+				Resource: func() *apitypes.ResourceSpec {
+					if m.Resource.Spec.Topology.Resource != nil {
+						return m.Resource.Spec.Topology.Resource
+					}
+					return &m.Resource.Spec.Resource
+				}(),
 				RpcPort:        m.Resource.Spec.Topology.RpcPort,
 				HttpPort:       m.Resource.Spec.Topology.HttpPort,
 				NodeSelector:   m.Resource.Spec.Topology.NodeSelector,

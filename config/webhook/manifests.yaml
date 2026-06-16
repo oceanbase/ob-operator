@@ -70,6 +70,26 @@ webhooks:
     service:
       name: webhook-service
       namespace: system
+      path: /mutate-oceanbase-oceanbase-com-v1alpha1-oblogservicecluster
+  failurePolicy: Fail
+  name: moblogservicecluster.kb.io
+  rules:
+  - apiGroups:
+    - oceanbase.oceanbase.com
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - oblogserviceclusters
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
       path: /mutate-oceanbase-oceanbase-com-v1alpha1-obresourcerescue
   failurePolicy: Fail
   name: mobresourcerescue.kb.io

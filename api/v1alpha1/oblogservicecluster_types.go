@@ -22,6 +22,7 @@ import (
 type OBLogServiceClusterSpec struct {
 	ClusterId      int64                             `json:"clusterId"`
 	Image          string                            `json:"image"`
+	Resource       apitypes.ResourceSpec             `json:"resource"`
 	Topology       []apitypes.LogServiceZoneTopology `json:"topology"`
 	ObjectStoreURL apitypes.ObjectStoreConfig        `json:"objectStoreUrl"`
 	Storage        *apitypes.LogServiceStorageSpec   `json:"storage"`

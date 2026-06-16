@@ -20,11 +20,11 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
+	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
@@ -55,8 +55,8 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 		httpPort = int32(oceanbaseconst.LogServiceHttpPort)
 	}
 
-	storePvcName := fmt.Sprintf("%s-store", podName)
-	logPvcName := fmt.Sprintf("%s-log", podName)
+	storePvcName := fmt.Sprintf("%s-%s", podName, oceanbaseconst.LogServiceStoreVolumeSuffix)
+	logPvcName := fmt.Sprintf("%s-%s", podName, oceanbaseconst.LogServiceLogVolumeSuffix)
 
 	if m.Resource.Spec.Storage.StoreStorage == nil {
 		return errors.New("storage.storeStorage is required but was nil")
@@ -138,18 +138,39 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 		m.Resource.Status.ServiceIP = existingSvc.Spec.ClusterIP
 	}
 
-	storeMountPath := "/home/admin/oblogservice/store"
-	logMountPath := "/home/admin/oblogservice/log"
+	storeMountPath := oceanbaseconst.LogServiceStoreMountPath
+	logMountPath := oceanbaseconst.LogServiceLogMountPath
+
+	// Calculate log_disk_size from storeStorage PVC size, aligned with OBCluster's approach
+	logDiskSizeParam := ""
+	if m.Resource.Spec.Storage.StoreStorage != nil {
+		storeSizeBytes, ok := m.Resource.Spec.Storage.StoreStorage.Size.AsInt64()
+		if ok && storeSizeBytes > 0 {
+			logDiskSizeG := storeSizeBytes * int64(obcfg.GetConfig().Resource.DefaultDiskUsePercent) / int64(oceanbaseconst.GigaConverter) / 100
+			if logDiskSizeG > 0 {
+				logDiskSizeParam = fmt.Sprintf(",log_disk_size=%dG", logDiskSizeG)
+			}
+		}
+	}
 
 	extraParams := ""
 	for _, p := range m.Resource.Spec.Parameters {
-		extraParams += fmt.Sprintf(",%s=%s", p.Name, p.Value)
+		reserved := false
+		for _, rp := range oceanbaseconst.LogServiceReservedParameters {
+			if p.Name == rp {
+				reserved = true
+				break
+			}
+		}
+		if !reserved {
+			extraParams += fmt.Sprintf(",%s=%s", p.Name, p.Value)
+		}
 	}
 
 	startCmd := fmt.Sprintf(
-		`mkdir -p %s %s && while [ -z "${POD_IP}" ]; do sleep 1; done && /home/admin/oblogservice/bin/oblogservice -g "cluster_id=%d,local_ip=${POD_IP},port=%d,http_ip_addr=${POD_IP}:%d,local_storage_dir=%s%s" & sleep infinity`,
+		`mkdir -p %s %s && while [ -z "${POD_IP}" ]; do sleep 1; done && /home/admin/oblogservice/bin/oblogservice -g "cluster_id=%d,local_ip=${POD_IP},port=%d,http_ip_addr=${POD_IP}:%d,local_storage_dir=%s%s%s" & sleep infinity`,
 		storeMountPath, logMountPath,
-		m.Resource.Spec.ClusterId, rpcPort, httpPort, storeMountPath, extraParams,
+		m.Resource.Spec.ClusterId, rpcPort, httpPort, storeMountPath, logDiskSizeParam, extraParams,
 	)
 
 	pod := &corev1.Pod{
@@ -179,19 +200,11 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 					{Name: "http", ContainerPort: httpPort, Protocol: corev1.ProtocolTCP},
 				},
 				Resources: func() corev1.ResourceRequirements {
-					cpuReq := resource.MustParse("2")
-					memReq := resource.MustParse("4Gi")
-					if m.Resource.Spec.Resource != nil {
-						if !m.Resource.Spec.Resource.Cpu.IsZero() {
-							cpuReq = m.Resource.Spec.Resource.Cpu
-						}
-						if !m.Resource.Spec.Resource.Memory.IsZero() {
-							memReq = m.Resource.Spec.Resource.Memory
-						}
-					}
 					resList := corev1.ResourceList{
-						corev1.ResourceCPU:    cpuReq,
-						corev1.ResourceMemory: memReq,
+						corev1.ResourceMemory: m.Resource.Spec.Resource.Memory,
+					}
+					if !m.Resource.Spec.Resource.Cpu.IsZero() {
+						resList[corev1.ResourceCPU] = m.Resource.Spec.Resource.Cpu
 					}
 					return corev1.ResourceRequirements{
 						Requests: resList,
@@ -199,8 +212,8 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 					}
 				}(),
 				VolumeMounts: []corev1.VolumeMount{
-					{Name: "store", MountPath: storeMountPath},
-					{Name: "log", MountPath: logMountPath},
+					{Name: oceanbaseconst.LogServiceStoreVolumeName, MountPath: storeMountPath},
+					{Name: oceanbaseconst.LogServiceLogVolumeName, MountPath: logMountPath},
 				},
 				ReadinessProbe: &corev1.Probe{
 					ProbeHandler: corev1.ProbeHandler{
@@ -214,13 +227,13 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 			}},
 			Volumes: []corev1.Volume{
 				{
-					Name: "store",
+					Name: oceanbaseconst.LogServiceStoreVolumeName,
 					VolumeSource: corev1.VolumeSource{
 						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: storePvcName},
 					},
 				},
 				{
-					Name: "log",
+					Name: oceanbaseconst.LogServiceLogVolumeName,
 					VolumeSource: corev1.VolumeSource{
 						PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: logPvcName},
 					},

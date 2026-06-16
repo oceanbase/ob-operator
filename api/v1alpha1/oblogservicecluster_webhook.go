@@ -18,18 +18,53 @@ import (
 	"reflect"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
+
+var oblogserviceclusterlog = logf.Log.WithName("oblogservicecluster-resource")
 
 func (r *OBLogServiceCluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
+}
+
+//+kubebuilder:webhook:path=/mutate-oceanbase-oceanbase-com-v1alpha1-oblogservicecluster,mutating=true,failurePolicy=fail,sideEffects=None,groups=oceanbase.oceanbase.com,resources=oblogserviceclusters,verbs=create;update,versions=v1alpha1,name=moblogservicecluster.kb.io,admissionReviewVersions=v1
+
+var _ webhook.Defaulter = &OBLogServiceCluster{}
+
+func (r *OBLogServiceCluster) Default() {
+	logger := oblogserviceclusterlog.WithValues("namespace", r.Namespace, "name", r.Name)
+
+	parameterMap := make(map[string]apitypes.Parameter)
+	memorySize, ok := r.Spec.Resource.Memory.AsInt64()
+	if ok {
+		memoryLimit := fmt.Sprintf("%dM", memorySize*int64(obcfg.GetConfig().Resource.DefaultMemoryLimitPercent)/100/int64(oceanbaseconst.MegaConverter))
+		parameterMap["memory_limit"] = apitypes.Parameter{
+			Name:  "memory_limit",
+			Value: memoryLimit,
+		}
+	} else {
+		logger.Error(errors.New("Failed to parse memory size"), "parse logservice's memory size failed")
+	}
+
+	for _, parameter := range r.Spec.Parameters {
+		parameterMap[parameter.Name] = parameter
+	}
+	parameters := make([]apitypes.Parameter, 0, len(parameterMap))
+	for _, v := range parameterMap {
+		parameters = append(parameters, v)
+	}
+	r.Spec.Parameters = parameters
 }
 
 //+kubebuilder:webhook:path=/validate-oceanbase-oceanbase-com-v1alpha1-oblogservicecluster,mutating=false,failurePolicy=fail,sideEffects=None,groups=oceanbase.oceanbase.com,resources=oblogserviceclusters,verbs=create;update;delete,versions=v1alpha1,name=voblogservicecluster.kb.io,admissionReviewVersions=v1
@@ -70,6 +105,21 @@ func (r *OBLogServiceCluster) ValidateCreate() (admission.Warnings, error) {
 	}
 	if r.Spec.Storage == nil {
 		return nil, errors.New("storage is required")
+	}
+	if r.Spec.Resource.Memory.IsZero() {
+		return nil, errors.New("resource.memory is required")
+	}
+	for _, p := range r.Spec.Parameters {
+		if p.Name == "memory_limit" {
+			memoryLimit, err := resource.ParseQuantity(p.Value)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse memory_limit parameter: %w", err)
+			}
+			if memoryLimit.AsApproximateFloat64() > r.Spec.Resource.Memory.AsApproximateFloat64() {
+				return nil, errors.New("memory_limit exceeds resource.memory")
+			}
+			break
+		}
 	}
 	return nil, nil
 }

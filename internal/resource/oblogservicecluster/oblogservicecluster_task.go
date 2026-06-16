@@ -72,6 +72,7 @@ func CreateZones(m *OBLogServiceClusterManager) tasktypes.TaskError {
 				ClusterName:    m.Resource.Name,
 				ClusterId:      m.Resource.Spec.ClusterId,
 				Image:          m.Resource.Spec.Image,
+				Resource:       m.Resource.Spec.Resource,
 				Topology:       topo,
 				ObjectStoreURL: m.Resource.Spec.ObjectStoreURL,
 				Storage:        m.Resource.Spec.Storage,

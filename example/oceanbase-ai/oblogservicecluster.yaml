@@ -7,6 +7,9 @@ spec:
   clusterId: 1004
   image: oblogservice:1.2.0
   serviceAccount: default
+  resource:
+    cpu: 2
+    memory: 4Gi
   objectStoreUrl:
     # TODO: Replace <MINIO_HOST> with your MinIO/S3 endpoint
     bucketURL: s3://logservice?host=http://<MINIO_HOST>:9000&s3_region=us-east-1

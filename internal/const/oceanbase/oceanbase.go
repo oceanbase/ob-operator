@@ -21,9 +21,17 @@ const (
 )
 
 const (
-	LogServiceRpcPort  = 50031
-	LogServiceHttpPort = 50051
+	LogServiceRpcPort           = 50031
+	LogServiceHttpPort          = 50051
+	LogServiceStoreMountPath    = "/home/admin/oblogservice/store"
+	LogServiceLogMountPath      = "/home/admin/oblogservice/log"
+	LogServiceStoreVolumeName   = "store"
+	LogServiceLogVolumeName     = "log"
+	LogServiceStoreVolumeSuffix = "store"
+	LogServiceLogVolumeSuffix   = "log"
 )
+
+var LogServiceReservedParameters = [...]string{"log_disk_size", "log_disk_percentage"}
 
 const (
 	SqlPortName = "sql"
