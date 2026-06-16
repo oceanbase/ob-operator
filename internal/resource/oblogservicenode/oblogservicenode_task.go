@@ -141,12 +141,15 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 	storeMountPath := "/home/admin/oblogservice/store"
 	logMountPath := "/home/admin/oblogservice/log"
 
-	// oblogservice binds directly to local_ip, so it must use PodIP (not ServiceIP).
-	// Unlike observer which uses -I as an advertise address, oblogservice binds on local_ip.
+	extraParams := ""
+	for _, p := range m.Resource.Spec.Parameters {
+		extraParams += fmt.Sprintf(",%s=%s", p.Name, p.Value)
+	}
+
 	startCmd := fmt.Sprintf(
-		`mkdir -p %s %s && while [ -z "${POD_IP}" ]; do sleep 1; done && /home/admin/oblogservice/bin/oblogservice -g "cluster_id=%d,local_ip=${POD_IP},port=%d,http_ip_addr=${POD_IP}:%d,local_storage_dir=%s" & sleep infinity`,
+		`mkdir -p %s %s && while [ -z "${POD_IP}" ]; do sleep 1; done && /home/admin/oblogservice/bin/oblogservice -g "cluster_id=%d,local_ip=${POD_IP},port=%d,http_ip_addr=${POD_IP}:%d,local_storage_dir=%s%s" & sleep infinity`,
 		storeMountPath, logMountPath,
-		m.Resource.Spec.ClusterId, rpcPort, httpPort, storeMountPath,
+		m.Resource.Spec.ClusterId, rpcPort, httpPort, storeMountPath, extraParams,
 	)
 
 	pod := &corev1.Pod{
@@ -186,14 +189,14 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 							memReq = m.Resource.Spec.Resource.Memory
 						}
 					}
-				resList := corev1.ResourceList{
-					corev1.ResourceCPU:    cpuReq,
-					corev1.ResourceMemory: memReq,
-				}
-				return corev1.ResourceRequirements{
-					Requests: resList,
-					Limits:   resList,
-				}
+					resList := corev1.ResourceList{
+						corev1.ResourceCPU:    cpuReq,
+						corev1.ResourceMemory: memReq,
+					}
+					return corev1.ResourceRequirements{
+						Requests: resList,
+						Limits:   resList,
+					}
 				}(),
 				VolumeMounts: []corev1.VolumeMount{
 					{Name: "store", MountPath: storeMountPath},

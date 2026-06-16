@@ -34,6 +34,7 @@ type OBLogServiceNodeSpec struct {
 	Tolerations    []corev1.Toleration             `json:"tolerations,omitempty"`
 	ObjectStoreURL apitypes.ObjectStoreConfig      `json:"objectStoreUrl"`
 	Storage        *apitypes.LogServiceStorageSpec `json:"storage"`
+	Parameters     []apitypes.Parameter            `json:"parameters,omitempty"`
 	ServiceAccount string                          `json:"serviceAccount,omitempty"`
 }
 

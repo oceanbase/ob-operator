@@ -79,6 +79,7 @@ func CreateNodes(m *OBLogServiceZoneManager) tasktypes.TaskError {
 				Tolerations:    m.Resource.Spec.Topology.Tolerations,
 				ObjectStoreURL: m.Resource.Spec.ObjectStoreURL,
 				Storage:        m.Resource.Spec.Storage,
+				Parameters:     m.Resource.Spec.Parameters,
 				ServiceAccount: m.Resource.Spec.ServiceAccount,
 			},
 		}

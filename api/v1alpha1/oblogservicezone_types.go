@@ -26,6 +26,7 @@ type OBLogServiceZoneSpec struct {
 	Topology       apitypes.LogServiceZoneTopology `json:"topology"`
 	ObjectStoreURL apitypes.ObjectStoreConfig      `json:"objectStoreUrl"`
 	Storage        *apitypes.LogServiceStorageSpec `json:"storage"`
+	Parameters     []apitypes.Parameter            `json:"parameters,omitempty"`
 	ServiceAccount string                          `json:"serviceAccount,omitempty"`
 }
 

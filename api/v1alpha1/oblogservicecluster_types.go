@@ -25,6 +25,7 @@ type OBLogServiceClusterSpec struct {
 	Topology       []apitypes.LogServiceZoneTopology `json:"topology"`
 	ObjectStoreURL apitypes.ObjectStoreConfig        `json:"objectStoreUrl"`
 	Storage        *apitypes.LogServiceStorageSpec   `json:"storage"`
+	Parameters     []apitypes.Parameter              `json:"parameters,omitempty"`
 	//+kubebuilder:default=default
 	ServiceAccount string `json:"serviceAccount,omitempty"`
 }

@@ -22,6 +22,11 @@ spec:
     - zone: zone3
       region: region1
       replica: 1
+  parameters:
+    - name: log_level
+      value: INFO
+    - name: rootservice_list
+      value: ""
   storage:
     storeStorage:
       storageClass: local-path

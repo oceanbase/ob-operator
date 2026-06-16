@@ -84,6 +84,18 @@ spec:
                 - bucketURL
                 - secretRef
                 type: object
+              parameters:
+                items:
+                  properties:
+                    name:
+                      type: string
+                    value:
+                      type: string
+                  required:
+                  - name
+                  - value
+                  type: object
+                type: array
               serviceAccount:
                 default: default
                 type: string
