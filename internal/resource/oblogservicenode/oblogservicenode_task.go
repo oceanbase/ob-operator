@@ -58,11 +58,20 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 	storePvcName := fmt.Sprintf("%s-%s", podName, oceanbaseconst.LogServiceStoreVolumeSuffix)
 	logPvcName := fmt.Sprintf("%s-%s", podName, oceanbaseconst.LogServiceLogVolumeSuffix)
 
+	if m.Resource.Spec.Storage == nil {
+		return errors.New("storage is required but was nil")
+	}
 	if m.Resource.Spec.Storage.StoreStorage == nil {
 		return errors.New("storage.storeStorage is required but was nil")
 	}
 	if m.Resource.Spec.Storage.LogStorage == nil {
 		return errors.New("storage.logStorage is required but was nil")
+	}
+	if m.Resource.Spec.Resource == nil {
+		return errors.New("resource is required but was nil")
+	}
+	if m.Resource.Spec.Resource.Memory.IsZero() {
+		return errors.New("resource.memory is required but was zero")
 	}
 
 	// Create store PVC
@@ -200,11 +209,12 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 					{Name: "http", ContainerPort: httpPort, Protocol: corev1.ProtocolTCP},
 				},
 				Resources: func() corev1.ResourceRequirements {
+					nodeResource := m.Resource.Spec.Resource
 					resList := corev1.ResourceList{
-						corev1.ResourceMemory: m.Resource.Spec.Resource.Memory,
+						corev1.ResourceMemory: nodeResource.Memory,
 					}
-					if !m.Resource.Spec.Resource.Cpu.IsZero() {
-						resList[corev1.ResourceCPU] = m.Resource.Spec.Resource.Cpu
+					if !nodeResource.Cpu.IsZero() {
+						resList[corev1.ResourceCPU] = nodeResource.Cpu
 					}
 					return corev1.ResourceRequirements{
 						Requests: resList,
