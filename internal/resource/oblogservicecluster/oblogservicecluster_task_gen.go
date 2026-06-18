@@ -7,4 +7,5 @@ func init() {
 	taskMap.Register(tWaitZonesRunning, WaitZonesRunning)
 	taskMap.Register(tBootstrapLogService, BootstrapLogService)
 	taskMap.Register(tDeleteExcessZones, DeleteExcessZones)
+	taskMap.Register(tModifyZoneReplica, ModifyZoneReplica)
 }

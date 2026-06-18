@@ -17,6 +17,7 @@ const (
 	Running           = "running"
 	AddZone           = "add zone"
 	DeleteZone        = "delete zone"
+	ModifyZoneReplica = "modify zone replica"
 	Failed            = "failed"
 	FinalizerFinished = "finalizer finished"
 )

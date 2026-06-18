@@ -21,6 +21,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -300,4 +301,26 @@ func DeleteExcessZones(m *OBLogServiceClusterManager) tasktypes.TaskError {
 		}
 	}
 	return nil
+}
+
+func ModifyZoneReplica(m *OBLogServiceClusterManager) tasktypes.TaskError {
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		zoneList, err := m.listZones()
+		if err != nil {
+			return errors.Wrap(err, "list zones")
+		}
+		for _, topo := range m.Resource.Spec.Topology {
+			for i := range zoneList.Items {
+				zone := &zoneList.Items[i]
+				if topo.Zone == zone.Spec.Topology.Zone && topo.Replica != zone.Spec.Topology.Replica {
+					m.Logger.Info("Modify zone replica", "zone", topo.Zone, "from", zone.Spec.Topology.Replica, "to", topo.Replica)
+					zone.Spec.Topology.Replica = topo.Replica
+					if err := m.Client.Update(m.Ctx, zone); err != nil {
+						return errors.Wrapf(err, "modify zone %s replica", topo.Zone)
+					}
+				}
+			}
+		}
+		return nil
+	})
 }

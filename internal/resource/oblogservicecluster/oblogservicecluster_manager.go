@@ -80,6 +80,8 @@ func (m *OBLogServiceClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) 
 		taskFlow = genAddZoneFlow(m)
 	case lsstatus.DeleteZone:
 		taskFlow = genDeleteZoneFlow(m)
+	case lsstatus.ModifyZoneReplica:
+		taskFlow = genModifyZoneReplicaFlow(m)
 	default:
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("No need to run anything for log service cluster")
 		return nil, nil
@@ -160,6 +162,19 @@ func (m *OBLogServiceClusterManager) UpdateStatus() error {
 			for zone := range existingZones {
 				if !specZones[zone] {
 					m.Resource.Status.Status = lsstatus.DeleteZone
+					break
+				}
+			}
+		}
+		if m.Resource.Status.Status == lsstatus.Running && zoneList != nil {
+			for _, topo := range m.Resource.Spec.Topology {
+				for _, zone := range zoneList.Items {
+					if topo.Zone == zone.Spec.Topology.Zone && topo.Replica != zone.Spec.Topology.Replica {
+						m.Resource.Status.Status = lsstatus.ModifyZoneReplica
+						break
+					}
+				}
+				if m.Resource.Status.Status != lsstatus.Running {
 					break
 				}
 			}

@@ -4,9 +4,10 @@ package oblogservicecluster
 import ttypes "github.com/oceanbase/ob-operator/pkg/task/types"
 
 const (
-	tCreateZones             ttypes.TaskName = "create zones"
+	tCreateZones ttypes.TaskName = "create zones"
 	tWaitZonesBootstrapReady ttypes.TaskName = "wait zones bootstrap ready"
-	tWaitZonesRunning        ttypes.TaskName = "wait zones running"
-	tBootstrapLogService     ttypes.TaskName = "bootstrap log service"
-	tDeleteExcessZones       ttypes.TaskName = "delete excess zones"
+	tWaitZonesRunning ttypes.TaskName = "wait zones running"
+	tBootstrapLogService ttypes.TaskName = "bootstrap log service"
+	tDeleteExcessZones ttypes.TaskName = "delete excess zones"
+	tModifyZoneReplica ttypes.TaskName = "modify zone replica"
 )

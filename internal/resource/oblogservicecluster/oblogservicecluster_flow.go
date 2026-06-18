@@ -49,3 +49,13 @@ func genDeleteZoneFlow(_ *OBLogServiceClusterManager) *tasktypes.TaskFlow {
 		},
 	}
 }
+
+func genModifyZoneReplicaFlow(_ *OBLogServiceClusterManager) *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name:         "modify log service zone replica",
+			Tasks:        []tasktypes.TaskName{tModifyZoneReplica, tWaitZonesRunning},
+			TargetStatus: lsstatus.Running,
+		},
+	}
+}
