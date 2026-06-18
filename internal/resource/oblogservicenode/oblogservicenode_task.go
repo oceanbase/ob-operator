@@ -27,6 +27,7 @@ import (
 
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
@@ -192,12 +193,15 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 		strings.Join(startupParameters, ","),
 	)
 
+	podAnnotations := m.generateStaticIpAnnotation()
+
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            podName,
 			Namespace:       m.Resource.Namespace,
 			OwnerReferences: []metav1.OwnerReference{ownerRef},
 			Labels:          podLabels,
+			Annotations:     podAnnotations,
 		},
 		Spec: corev1.PodSpec{
 			ServiceAccountName: m.Resource.Spec.ServiceAccount,
@@ -290,6 +294,7 @@ func WaitPodReady(m *OBLogServiceNodeManager) tasktypes.TaskError {
 		}
 		if pod.Status.Phase == corev1.PodRunning && pod.Status.PodIP != "" {
 			m.Resource.Status.PodIP = pod.Status.PodIP
+			m.Resource.Status.CNI = resourceutils.GetCNIFromAnnotation(pod)
 			m.Resource.Status.Ready = true
 			m.Resource.Status.PodPhase = pod.Status.Phase
 			// Update ServiceIP if not set yet
@@ -334,4 +339,19 @@ func DeletePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 	m.Resource.Status.Ready = false
 	m.Resource.Status.PodIP = ""
 	return nil
+}
+
+func (m *OBLogServiceNodeManager) generateStaticIpAnnotation() map[string]string {
+	annotations := make(map[string]string)
+	switch m.Resource.Status.CNI {
+	case oceanbaseconst.CNICalico:
+		if m.Resource.Status.PodIP != "" {
+			annotations[oceanbaseconst.AnnotationCalicoIpAddrs] = fmt.Sprintf("[\"%s\"]", m.Resource.Status.PodIP)
+		}
+	case oceanbaseconst.CNIKubeOvn:
+		if m.Resource.Status.PodIP != "" {
+			annotations[oceanbaseconst.AnnotationKubeOvnIpAddrs] = m.Resource.Status.PodIP
+		}
+	}
+	return annotations
 }

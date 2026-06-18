@@ -154,7 +154,7 @@ func (m *OBLogServiceZoneManager) UpdateStatus() error {
 		expectedReplica := m.Resource.Spec.Topology.Replica
 		if expectedReplica > availableNodes {
 			m.Resource.Status.Status = zonestatus.AddNode
-		} else if expectedReplica < len(nodeList.Items) {
+		} else if len(nodeList.Items) > expectedReplica {
 			m.Resource.Status.Status = zonestatus.DeleteNode
 		}
 	}

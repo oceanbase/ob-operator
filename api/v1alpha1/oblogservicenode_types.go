@@ -17,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
@@ -44,6 +45,7 @@ type OBLogServiceNodeStatus struct {
 	PodName          string                      `json:"podName,omitempty"`
 	PodIP            string                      `json:"podIP,omitempty"`
 	ServiceIP        string                      `json:"serviceIP,omitempty"`
+	CNI              string                      `json:"cni,omitempty"`
 	PodPhase         corev1.PodPhase             `json:"podPhase,omitempty"`
 	Ready            bool                        `json:"ready"`
 }
@@ -53,6 +55,17 @@ func (s *OBLogServiceNodeStatus) GetConnectAddr() string {
 		return s.ServiceIP
 	}
 	return s.PodIP
+}
+
+func (n *OBLogServiceNode) SupportStaticIP() bool {
+	switch n.Status.CNI {
+	case oceanbaseconst.CNICalico:
+		return true
+	case oceanbaseconst.CNIKubeOvn:
+		return true
+	default:
+		return false
+	}
 }
 
 //+kubebuilder:object:root=true

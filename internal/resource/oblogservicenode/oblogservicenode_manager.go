@@ -116,7 +116,7 @@ func (m *OBLogServiceNodeManager) UpdateStatus() error {
 		if err != nil {
 			if kubeerrors.IsNotFound(err) {
 				m.Logger.Info("LogService node pod not found, need recovery", "pod", m.Resource.Status.PodName)
-				m.Resource.Status.Status = nodestatus.Recover
+				m.setRecoveryStatus()
 			} else {
 				return err
 			}
@@ -126,7 +126,7 @@ func (m *OBLogServiceNodeManager) UpdateStatus() error {
 			m.Resource.Status.Ready = pod.Status.Phase == corev1.PodRunning
 			if pod.Status.Phase == corev1.PodFailed {
 				m.Logger.Info("LogService node pod in Failed phase, need recovery", "pod", m.Resource.Status.PodName)
-				m.Resource.Status.Status = nodestatus.Recover
+				m.setRecoveryStatus()
 			}
 		}
 	}
@@ -165,6 +165,16 @@ func (m *OBLogServiceNodeManager) HandleFailure() {
 			operationContext.TaskStatus = taskstatus.Pending
 		case strategy.Pause:
 		}
+	}
+}
+
+func (m *OBLogServiceNodeManager) setRecoveryStatus() {
+	if m.Resource.SupportStaticIP() {
+		m.Logger.Info("LogService node supports static IP, recovering by recreating pod")
+		m.Resource.Status.Status = nodestatus.Recover
+	} else {
+		m.Logger.Info("LogService node does not support static IP, marking unrecoverable")
+		m.Resource.Status.Status = nodestatus.Unrecoverable
 	}
 }
 

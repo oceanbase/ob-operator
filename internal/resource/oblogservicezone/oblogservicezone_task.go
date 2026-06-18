@@ -41,7 +41,12 @@ func CreateNodes(m *OBLogServiceZoneManager) tasktypes.TaskError {
 		return errors.Wrap(err, "list existing nodes")
 	}
 
-	existingCount := len(nodeList.Items)
+	existingCount := 0
+	for _, node := range nodeList.Items {
+		if node.Status.Status != nodestatus.Unrecoverable {
+			existingCount++
+		}
+	}
 	desiredCount := m.Resource.Spec.Topology.Replica
 
 	blockOwnerDeletion := true
@@ -140,18 +145,13 @@ func WaitNodesRunning(m *OBLogServiceZoneManager) tasktypes.TaskError {
 		if err != nil {
 			return errors.Wrap(err, "list nodes")
 		}
-		if len(nodeList.Items) < m.Resource.Spec.Topology.Replica {
-			time.Sleep(time.Second)
-			continue
-		}
-		allRunning := true
+		runningCount := 0
 		for _, node := range nodeList.Items {
-			if node.Status.Status != nodestatus.Running {
-				allRunning = false
-				break
+			if node.Status.Status == nodestatus.Running {
+				runningCount++
 			}
 		}
-		if allRunning {
+		if runningCount >= m.Resource.Spec.Topology.Replica {
 			m.Logger.Info("All log service nodes are running")
 			return nil
 		}
@@ -174,8 +174,13 @@ func DeleteExcessNodes(m *OBLogServiceZoneManager) tasktypes.TaskError {
 	}
 
 	toDelete := currentCount - desiredCount
-	// Sort by creation timestamp descending — delete newest nodes first
+	// Sort: unrecoverable nodes first, then newest first
 	sort.Slice(nodeList.Items, func(i, j int) bool {
+		iUnrecoverable := nodeList.Items[i].Status.Status == nodestatus.Unrecoverable
+		jUnrecoverable := nodeList.Items[j].Status.Status == nodestatus.Unrecoverable
+		if iUnrecoverable != jUnrecoverable {
+			return iUnrecoverable
+		}
 		return nodeList.Items[i].CreationTimestamp.After(nodeList.Items[j].CreationTimestamp.Time)
 	})
 	for i := 0; i < toDelete && i < len(nodeList.Items); i++ {

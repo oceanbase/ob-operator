@@ -1092,6 +1092,8 @@ spec:
             type: object
           status:
             properties:
+              cni:
+                type: string
               operationContext:
                 properties:
                   failureRule:

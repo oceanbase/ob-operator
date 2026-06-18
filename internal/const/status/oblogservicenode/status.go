@@ -16,6 +16,7 @@ const (
 	New               = "new"
 	Running           = "running"
 	Recover           = "recover"
+	Unrecoverable     = "unrecoverable"
 	Deleting          = "deleting"
 	Failed            = "failed"
 	FinalizerFinished = "finalizer finished"
