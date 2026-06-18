@@ -15,6 +15,7 @@ package oblogservicenode
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -157,12 +158,21 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 		if ok && storeSizeBytes > 0 {
 			logDiskSizeG := storeSizeBytes * int64(obcfg.GetConfig().Resource.DefaultDiskUsePercent) / int64(oceanbaseconst.GigaConverter) / 100
 			if logDiskSizeG > 0 {
-				logDiskSizeParam = fmt.Sprintf(",log_disk_size=%dG", logDiskSizeG)
+				logDiskSizeParam = fmt.Sprintf("log_disk_size=%dG", logDiskSizeG)
 			}
 		}
 	}
 
-	extraParams := ""
+	startupParameters := []string{
+		fmt.Sprintf("cluster_id=%d", m.Resource.Spec.ClusterId),
+		"local_ip=${POD_IP}",
+		fmt.Sprintf("port=%d", rpcPort),
+		fmt.Sprintf("http_ip_addr=${POD_IP}:%d", httpPort),
+		fmt.Sprintf("local_storage_dir=%s", storeMountPath),
+	}
+	if logDiskSizeParam != "" {
+		startupParameters = append(startupParameters, logDiskSizeParam)
+	}
 	for _, p := range m.Resource.Spec.Parameters {
 		reserved := false
 		for _, rp := range oceanbaseconst.LogServiceReservedParameters {
@@ -172,14 +182,14 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 			}
 		}
 		if !reserved {
-			extraParams += fmt.Sprintf(",%s=%s", p.Name, p.Value)
+			startupParameters = append(startupParameters, fmt.Sprintf("%s='%s'", p.Name, p.Value))
 		}
 	}
 
 	startCmd := fmt.Sprintf(
-		`mkdir -p %s %s && while [ -z "${POD_IP}" ]; do sleep 1; done && /home/admin/oblogservice/bin/oblogservice -g "cluster_id=%d,local_ip=${POD_IP},port=%d,http_ip_addr=${POD_IP}:%d,local_storage_dir=%s%s%s" & sleep infinity`,
+		`mkdir -p %s %s && while [ -z "${POD_IP}" ]; do sleep 1; done && /home/admin/oblogservice/bin/oblogservice -g "%s" & sleep infinity`,
 		storeMountPath, logMountPath,
-		m.Resource.Spec.ClusterId, rpcPort, httpPort, storeMountPath, logDiskSizeParam, extraParams,
+		strings.Join(startupParameters, ","),
 	)
 
 	pod := &corev1.Pod{
