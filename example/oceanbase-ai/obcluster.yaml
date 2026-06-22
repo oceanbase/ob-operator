@@ -21,7 +21,7 @@ spec:
     - zone: zone1
       replica: 1
   observer:
-    image: oceanbase-ai:4.6.0.0
+    image: oceanbase/oceanbase-ai-cloud-native:4.6.0.0
     resource:
       cpu: 2
       memory: 10Gi
