@@ -298,32 +298,6 @@ func BootstrapLogService(m *OBLogServiceClusterManager) tasktypes.TaskError {
 	return nil
 }
 
-func DeleteExcessZones(m *OBLogServiceClusterManager) tasktypes.TaskError {
-	m.Logger.Info("Deleting excess log service zones")
-	specZones := make(map[string]bool)
-	for _, topo := range m.Resource.Spec.Topology {
-		specZones[topo.Zone] = true
-	}
-
-	zoneList, err := m.listZones()
-	if err != nil {
-		return errors.Wrap(err, "list zones")
-	}
-
-	for i := range zoneList.Items {
-		zone := &zoneList.Items[i]
-		if !specZones[zone.Spec.Topology.Zone] {
-			if err := m.Client.Delete(m.Ctx, zone); err != nil {
-				if client.IgnoreNotFound(err) != nil {
-					return errors.Wrapf(err, "delete zone %s", zone.Name)
-				}
-			}
-			m.Logger.Info("Deleted log service zone", "name", zone.Name)
-		}
-	}
-	return nil
-}
-
 func ModifyZoneReplica(m *OBLogServiceClusterManager) tasktypes.TaskError {
 	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		zoneList, err := m.listZones()

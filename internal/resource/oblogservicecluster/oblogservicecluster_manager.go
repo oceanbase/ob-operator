@@ -76,10 +76,6 @@ func (m *OBLogServiceClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) 
 	switch m.Resource.Status.Status {
 	case lsstatus.New:
 		taskFlow = genBootstrapLogServiceFlow(m)
-	case lsstatus.AddZone:
-		taskFlow = genAddZoneFlow(m)
-	case lsstatus.DeleteZone:
-		taskFlow = genDeleteZoneFlow(m)
 	case lsstatus.ModifyZoneReplica:
 		taskFlow = genModifyZoneReplicaFlow(m)
 	default:
@@ -141,32 +137,7 @@ func (m *OBLogServiceClusterManager) UpdateStatus() error {
 	}
 
 	if m.Resource.Status.Status == lsstatus.Running {
-		specZones := make(map[string]bool)
-		for _, topo := range m.Resource.Spec.Topology {
-			specZones[topo.Zone] = true
-		}
-		existingZones := make(map[string]bool)
 		if zoneList != nil {
-			for _, zone := range zoneList.Items {
-				existingZones[zone.Spec.Topology.Zone] = true
-			}
-		}
-
-		for zone := range specZones {
-			if !existingZones[zone] {
-				m.Resource.Status.Status = lsstatus.AddZone
-				break
-			}
-		}
-		if m.Resource.Status.Status == lsstatus.Running {
-			for zone := range existingZones {
-				if !specZones[zone] {
-					m.Resource.Status.Status = lsstatus.DeleteZone
-					break
-				}
-			}
-		}
-		if m.Resource.Status.Status == lsstatus.Running && zoneList != nil {
 			for _, topo := range m.Resource.Spec.Topology {
 				for _, zone := range zoneList.Items {
 					if topo.Zone == zone.Spec.Topology.Zone && topo.Replica != zone.Spec.Topology.Replica {

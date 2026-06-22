@@ -30,26 +30,6 @@ func genBootstrapLogServiceFlow(_ *OBLogServiceClusterManager) *tasktypes.TaskFl
 	}
 }
 
-func genAddZoneFlow(_ *OBLogServiceClusterManager) *tasktypes.TaskFlow {
-	return &tasktypes.TaskFlow{
-		OperationContext: &tasktypes.OperationContext{
-			Name:         "add log service zone",
-			Tasks:        []tasktypes.TaskName{tCreateZones, tWaitZonesRunning},
-			TargetStatus: lsstatus.Running,
-		},
-	}
-}
-
-func genDeleteZoneFlow(_ *OBLogServiceClusterManager) *tasktypes.TaskFlow {
-	return &tasktypes.TaskFlow{
-		OperationContext: &tasktypes.OperationContext{
-			Name:         "delete log service zone",
-			Tasks:        []tasktypes.TaskName{tDeleteExcessZones},
-			TargetStatus: lsstatus.Running,
-		},
-	}
-}
-
 func genModifyZoneReplicaFlow(_ *OBLogServiceClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{

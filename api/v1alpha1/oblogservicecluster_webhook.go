@@ -141,6 +141,24 @@ func (r *OBLogServiceCluster) ValidateUpdate(old runtime.Object) (admission.Warn
 	if !reflect.DeepEqual(oldLS.Spec.Storage, r.Spec.Storage) {
 		return nil, errors.New("storage cannot be changed after creation")
 	}
+	oldZones := make(map[string]bool, len(oldLS.Spec.Topology))
+	for _, t := range oldLS.Spec.Topology {
+		oldZones[t.Zone] = true
+	}
+	newZones := make(map[string]bool, len(r.Spec.Topology))
+	for _, t := range r.Spec.Topology {
+		newZones[t.Zone] = true
+	}
+	for z := range newZones {
+		if !oldZones[z] {
+			return nil, errors.New("adding zones is not supported for OBLogServiceCluster")
+		}
+	}
+	for z := range oldZones {
+		if !newZones[z] {
+			return nil, errors.New("removing zones is not supported for OBLogServiceCluster")
+		}
+	}
 	return nil, nil
 }
 

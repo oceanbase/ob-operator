@@ -8,6 +8,5 @@ const (
 	tWaitZonesBootstrapReady ttypes.TaskName = "wait zones bootstrap ready"
 	tWaitZonesRunning ttypes.TaskName = "wait zones running"
 	tBootstrapLogService ttypes.TaskName = "bootstrap log service"
-	tDeleteExcessZones ttypes.TaskName = "delete excess zones"
 	tModifyZoneReplica ttypes.TaskName = "modify zone replica"
 )
