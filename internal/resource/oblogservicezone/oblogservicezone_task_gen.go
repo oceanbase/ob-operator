@@ -7,4 +7,7 @@ func init() {
 	taskMap.Register(tWaitNodesRunning, WaitNodesRunning)
 	taskMap.Register(tDeleteExcessNodes, DeleteExcessNodes)
 	taskMap.Register(tDeleteAllNodes, DeleteAllNodes)
+	taskMap.Register(tRegisterNodeToCluster, RegisterNodeToCluster)
+	taskMap.Register(tUnregisterNodeFromCluster, UnregisterNodeFromCluster)
+	taskMap.Register(tUnregisterAllNodesFromCluster, UnregisterAllNodesFromCluster)
 }

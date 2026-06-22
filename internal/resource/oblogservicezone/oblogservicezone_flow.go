@@ -51,7 +51,7 @@ func genAddNodeFlow(_ *OBLogServiceZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         "add log service node",
-			Tasks:        []tasktypes.TaskName{tCreateNodes, tWaitNodesRunning},
+			Tasks:        []tasktypes.TaskName{tCreateNodes, tWaitNodesRunning, tRegisterNodeToCluster},
 			TargetStatus: zonestatus.Running,
 		},
 	}
@@ -61,7 +61,7 @@ func genDeleteNodeFlow(_ *OBLogServiceZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         "delete log service node",
-			Tasks:        []tasktypes.TaskName{tDeleteExcessNodes},
+			Tasks:        []tasktypes.TaskName{tUnregisterNodeFromCluster, tDeleteExcessNodes},
 			TargetStatus: zonestatus.Running,
 		},
 	}
@@ -71,7 +71,7 @@ func genDeleteZoneFlow(_ *OBLogServiceZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         "delete log service zone",
-			Tasks:        []tasktypes.TaskName{tDeleteAllNodes},
+			Tasks:        []tasktypes.TaskName{tUnregisterAllNodesFromCluster, tDeleteAllNodes},
 			TargetStatus: zonestatus.FinalizerFinished,
 		},
 	}

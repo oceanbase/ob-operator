@@ -9,4 +9,7 @@ const (
 	tWaitNodesRunning ttypes.TaskName = "wait nodes running"
 	tDeleteExcessNodes ttypes.TaskName = "delete excess nodes"
 	tDeleteAllNodes ttypes.TaskName = "delete all nodes"
+	tRegisterNodeToCluster ttypes.TaskName = "register node to cluster"
+	tUnregisterNodeFromCluster ttypes.TaskName = "unregister node from cluster"
+	tUnregisterAllNodesFromCluster ttypes.TaskName = "unregister all nodes from cluster"
 )
