@@ -214,21 +214,21 @@ func (m *OBZoneManager) createOneOBServer(serverName string) (*v1alpha1.OBServer
 	if zoneTopo.MonitorTemplate != nil {
 		observer.Spec.MonitorTemplate = zoneTopo.MonitorTemplate
 	}
-	observer.ObjectMeta.Annotations = make(map[string]string)
+	observer.Annotations = make(map[string]string)
 	if independentVolumeAnnoExist {
-		observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsIndependentPVCLifecycle] = independentVolumeAnnoVal
+		observer.Annotations[oceanbaseconst.AnnotationsIndependentPVCLifecycle] = independentVolumeAnnoVal
 	}
 	if singlePVCAnnoExist {
-		observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSinglePVC] = singlePVCAnnoVal
+		observer.Annotations[oceanbaseconst.AnnotationsSinglePVC] = singlePVCAnnoVal
 	}
 	if modeAnnoExist {
-		observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
+		observer.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
 	}
 	if migrateAnnoExist {
-		observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSourceClusterAddress] = migrateAnnoVal
+		observer.Annotations[oceanbaseconst.AnnotationsSourceClusterAddress] = migrateAnnoVal
 	}
 	if deployModeAnnoExist {
-		observer.ObjectMeta.Annotations[oceanbaseconst.AnnotationsDeploymentMode] = deployModeAnnoVal
+		observer.Annotations[oceanbaseconst.AnnotationsDeploymentMode] = deployModeAnnoVal
 	}
 	m.Logger.Info("Create observer", "server", serverName)
 	err := m.Client.Create(m.Ctx, observer)

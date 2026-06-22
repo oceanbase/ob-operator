@@ -10,6 +10,7 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
+// Package oblogservicecluster implements the resource manager for OBLogServiceCluster.
 package oblogservicecluster
 
 import (

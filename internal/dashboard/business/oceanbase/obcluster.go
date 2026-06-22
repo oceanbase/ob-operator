@@ -188,7 +188,7 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 			},
 		}
 		if obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
-			respCluster.OBClusterExtra.Storage.RedoLogStorage = &response.StorageSpec{
+			respCluster.Storage.RedoLogStorage = &response.StorageSpec{
 				StorageClass: obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass,
 				Size:         obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Value(),
 			}

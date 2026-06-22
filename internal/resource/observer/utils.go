@@ -291,7 +291,7 @@ func (m *OBServerManager) createOBPodSpec(obcluster *v1alpha1.OBCluster) corev1.
 			volumeDataLog.Name = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix)
 			volumeDataLogSource := &corev1.PersistentVolumeClaimVolumeSource{}
 			volumeDataLogSource.ClaimName = fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix)
-			volumeDataLog.VolumeSource.PersistentVolumeClaim = volumeDataLogSource
+			volumeDataLog.PersistentVolumeClaim = volumeDataLogSource
 			volumes = append(volumes, volumeDataLog)
 		}
 		volumes = append(volumes, volumeLog)

@@ -59,9 +59,7 @@ func (s *OBLogServiceNodeStatus) GetConnectAddr() string {
 
 func (n *OBLogServiceNode) SupportStaticIP() bool {
 	switch n.Status.CNI {
-	case oceanbaseconst.CNICalico:
-		return true
-	case oceanbaseconst.CNIKubeOvn:
+	case oceanbaseconst.CNICalico, oceanbaseconst.CNIKubeOvn:
 		return true
 	default:
 		return false

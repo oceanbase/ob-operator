@@ -352,6 +352,8 @@ func (m *OBLogServiceNodeManager) generateStaticIpAnnotation() map[string]string
 		if m.Resource.Status.PodIP != "" {
 			annotations[oceanbaseconst.AnnotationKubeOvnIpAddrs] = m.Resource.Status.PodIP
 		}
+	default:
+		// unsupported CNI, no static IP annotation
 	}
 	return annotations
 }

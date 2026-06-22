@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
-	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	lsstatus "github.com/oceanbase/ob-operator/internal/const/status/oblogservicecluster"
 	nodestatus "github.com/oceanbase/ob-operator/internal/const/status/oblogservicenode"
@@ -115,7 +115,7 @@ func (m *OBLogServiceZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 
 func (m *OBLogServiceZoneManager) CheckAndUpdateFinalizers() error {
 	if m.Resource.Status.Status == zonestatus.FinalizerFinished {
-		m.Resource.ObjectMeta.Finalizers = make([]string, 0)
+		m.Resource.Finalizers = make([]string, 0)
 		return m.Client.Update(m.Ctx, m.Resource)
 	}
 	// Transition to Deleting to run the delete flow instead of skipping cleanup
@@ -192,7 +192,8 @@ func (m *OBLogServiceZoneManager) HandleFailure() {
 			}
 		case strategy.RetryFromCurrent:
 			operationContext.TaskStatus = taskstatus.Pending
-		case strategy.Pause:
+		default:
+			// strategy.Pause intentionally does nothing
 		}
 	}
 }

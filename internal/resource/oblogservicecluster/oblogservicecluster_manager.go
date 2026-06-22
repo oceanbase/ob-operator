@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
-	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	lsstatus "github.com/oceanbase/ob-operator/internal/const/status/oblogservicecluster"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
@@ -94,7 +94,7 @@ func (m *OBLogServiceClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) 
 
 func (m *OBLogServiceClusterManager) CheckAndUpdateFinalizers() error {
 	if m.Resource.Status.Status == lsstatus.FinalizerFinished {
-		m.Resource.ObjectMeta.Finalizers = make([]string, 0)
+		m.Resource.Finalizers = make([]string, 0)
 		return m.Client.Update(m.Ctx, m.Resource)
 	}
 	// Check if any OBCluster references this LogService
@@ -185,7 +185,8 @@ func (m *OBLogServiceClusterManager) HandleFailure() {
 		}
 	case strategy.RetryFromCurrent:
 		operationContext.TaskStatus = taskstatus.Pending
-	case strategy.Pause:
+	default:
+		// strategy.Pause intentionally does nothing
 	}
 }
 

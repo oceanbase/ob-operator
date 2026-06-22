@@ -10,6 +10,7 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
+// Package oblogservicezone defines status constants for the OBLogServiceZone resource.
 package oblogservicezone
 
 const (

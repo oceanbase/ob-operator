@@ -54,7 +54,7 @@ func (r *OBLogServiceCluster) Default() {
 			Value: memoryLimit,
 		}
 	} else {
-		logger.Error(errors.New("Failed to parse memory size"), "parse logservice's memory size failed")
+		logger.Error(errors.New("failed to parse memory size"), "parse logservice's memory size failed")
 	}
 
 	for _, parameter := range r.Spec.Parameters {

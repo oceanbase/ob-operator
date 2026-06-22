@@ -184,21 +184,21 @@ func CreateOBZone(m *OBClusterManager) tasktypes.TaskError {
 				ServiceAccount:   m.OBCluster.Spec.ServiceAccount,
 			},
 		}
-		obzone.ObjectMeta.Annotations = make(map[string]string)
+		obzone.Annotations = make(map[string]string)
 		if independentVolumeAnnoExist {
-			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsIndependentPVCLifecycle] = independentVolumeAnnoVal
+			obzone.Annotations[oceanbaseconst.AnnotationsIndependentPVCLifecycle] = independentVolumeAnnoVal
 		}
 		if singlePVCAnnoExist {
-			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSinglePVC] = singlePVCAnnoVal
+			obzone.Annotations[oceanbaseconst.AnnotationsSinglePVC] = singlePVCAnnoVal
 		}
 		if modeAnnoExist {
-			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
+			obzone.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
 		}
 		if migrateAnnoExist {
-			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsSourceClusterAddress] = migrateAnnoVal
+			obzone.Annotations[oceanbaseconst.AnnotationsSourceClusterAddress] = migrateAnnoVal
 		}
 		if deploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
-			obzone.ObjectMeta.Annotations[oceanbaseconst.AnnotationsDeploymentMode] = oceanbaseconst.DeploymentModeSharedStorage
+			obzone.Annotations[oceanbaseconst.AnnotationsDeploymentMode] = oceanbaseconst.DeploymentModeSharedStorage
 		}
 		m.Logger.Info("Create obzone", "zone", zoneName)
 		err := m.Client.Create(m.Ctx, obzone)
