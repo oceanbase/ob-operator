@@ -41,7 +41,7 @@ func genCreateNodesFlow(_ *OBLogServiceZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         "create log service nodes",
-			Tasks:        []tasktypes.TaskName{tCreateNodes, tWaitNodesRunning},
+			Tasks:        []tasktypes.TaskName{tCreateNodes, tWaitNodesRunning, tRegisterNodeToCluster},
 			TargetStatus: zonestatus.Running,
 		},
 	}

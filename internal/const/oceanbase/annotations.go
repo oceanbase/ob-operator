@@ -35,6 +35,10 @@ const (
 )
 
 const (
+	AnnotationsLogServiceNodeRegistered = "oceanbase.oceanbase.com/logservice-node-registered"
+)
+
+const (
 	ModeStandalone    = "standalone"
 	ModeService       = "service"
 	ModeSharedStorage = "shared_storage"

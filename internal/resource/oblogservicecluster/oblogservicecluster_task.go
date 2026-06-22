@@ -274,6 +274,27 @@ func BootstrapLogService(m *OBLogServiceClusterManager) tasktypes.TaskError {
 
 	m.Logger.Info("Log service bootstrap succeeded")
 	m.Recorder.Event(m.Resource, "Bootstrap", "", "Log service bootstrap succeeded")
+
+	// Mark all bootstrap nodes as registered
+	for _, zone := range zoneList.Items {
+		nodeList := &v1alpha1.OBLogServiceNodeList{}
+		if err := m.Client.List(m.Ctx, nodeList, client.MatchingLabels{
+			oceanbaseconst.LabelRefOBLogServiceZone: zone.Name,
+		}, client.InNamespace(m.Resource.Namespace)); err != nil {
+			return errors.Wrapf(err, "list nodes for zone %s annotation", zone.Name)
+		}
+		for i := range nodeList.Items {
+			node := &nodeList.Items[i]
+			patch := client.MergeFrom(node.DeepCopy())
+			if node.Annotations == nil {
+				node.Annotations = make(map[string]string)
+			}
+			node.Annotations[oceanbaseconst.AnnotationsLogServiceNodeRegistered] = "true"
+			if err := m.Client.Patch(m.Ctx, node, patch); err != nil {
+				return errors.Wrapf(err, "annotate node %s as registered", node.Name)
+			}
+		}
+	}
 	return nil
 }
 

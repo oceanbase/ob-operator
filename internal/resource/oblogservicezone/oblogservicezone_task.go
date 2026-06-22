@@ -212,21 +212,40 @@ func DeleteAllNodes(m *OBLogServiceZoneManager) tasktypes.TaskError {
 
 func RegisterNodeToCluster(m *OBLogServiceZoneManager) tasktypes.TaskError {
 	m.Logger.Info("Registering new nodes to log service cluster")
-	hostAddr, err := m.getRunningNodeHttpAddr()
-	if err != nil {
-		return errors.Wrap(err, "get running node http addr")
-	}
 
 	nodeList, err := m.listNodes()
 	if err != nil {
 		return errors.Wrap(err, "list nodes")
 	}
 
+	// Collect nodes that need registration
+	var newNodes []*v1alpha1.OBLogServiceNode
 	for i := range nodeList.Items {
 		node := &nodeList.Items[i]
 		if node.Status.Status != nodestatus.Running || node.Status.PodIP == "" {
 			continue
 		}
+		if node.Annotations != nil && node.Annotations[oceanbaseconst.AnnotationsLogServiceNodeRegistered] == "true" {
+			continue
+		}
+		newNodes = append(newNodes, node)
+	}
+	if len(newNodes) == 0 {
+		m.Logger.Info("No new nodes need registration")
+		return nil
+	}
+
+	excludeNames := make([]string, 0, len(newNodes))
+	for _, node := range newNodes {
+		excludeNames = append(excludeNames, node.Name)
+	}
+	hostAddr, err := m.getRunningNodeHttpAddr(excludeNames...)
+	if err != nil {
+		return errors.Wrap(err, "get running node http addr")
+	}
+
+	var lastErr error
+	for _, node := range newNodes {
 		rpcPort := node.Spec.RpcPort
 		if rpcPort == 0 {
 			rpcPort = int32(oceanbaseconst.LogServiceRpcPort)
@@ -244,10 +263,27 @@ func RegisterNodeToCluster(m *OBLogServiceZoneManager) tasktypes.TaskError {
 			jobName, m.Resource.Spec.Image, nil, cmd,
 		)
 		if jobErr != nil {
-			m.Logger.Info("ls_ctrl add ln warning", "node", nodeAddr, "exitCode", exitCode, "err", jobErr)
+			m.Logger.Info("ls_ctrl add ln failed", "node", nodeAddr, "exitCode", exitCode, "err", jobErr)
+			lastErr = jobErr
+			continue
+		}
+		if patchErr := m.annotateNodeRegistered(node); patchErr != nil {
+			return errors.Wrapf(patchErr, "annotate node %s as registered", node.Name)
 		}
 	}
+	if lastErr != nil {
+		return errors.Wrap(lastErr, "some nodes failed to register")
+	}
 	return nil
+}
+
+func (m *OBLogServiceZoneManager) annotateNodeRegistered(node *v1alpha1.OBLogServiceNode) error {
+	patch := client.MergeFrom(node.DeepCopy())
+	if node.Annotations == nil {
+		node.Annotations = make(map[string]string)
+	}
+	node.Annotations[oceanbaseconst.AnnotationsLogServiceNodeRegistered] = "true"
+	return m.Client.Patch(m.Ctx, node, patch)
 }
 
 func UnregisterNodeFromCluster(m *OBLogServiceZoneManager) tasktypes.TaskError {
