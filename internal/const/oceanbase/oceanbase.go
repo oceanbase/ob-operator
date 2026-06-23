@@ -23,6 +23,7 @@ const (
 const (
 	LogServiceRpcPort           = 50031
 	LogServiceHttpPort          = 50051
+	LogServiceDefaultRegion     = "region1"
 	LogServiceStoreMountPath    = "/home/admin/oblogservice/store"
 	LogServiceLogMountPath      = "/home/admin/oblogservice/log"
 	LogServiceStoreVolumeName   = "store"

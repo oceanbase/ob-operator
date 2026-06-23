@@ -177,7 +177,7 @@ func BootstrapLogService(m *OBLogServiceClusterManager) tasktypes.TaskError {
 				rpcPort = int32(oceanbaseconst.LogServiceRpcPort)
 			}
 			nodes = append(nodes, nodeInfo{
-				region:  node.Spec.Region,
+				region:  oceanbaseconst.LogServiceDefaultRegion,
 				zone:    node.Spec.Zone,
 				addr:    addr,
 				rpcPort: rpcPort,

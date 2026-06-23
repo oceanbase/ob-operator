@@ -16,7 +16,6 @@ import corev1 "k8s.io/api/core/v1"
 
 type LogServiceZoneTopology struct {
 	Zone         string              `json:"zone"`
-	Region       string              `json:"region"`
 	Replica      int                 `json:"replica"`
 	Resource     *ResourceSpec       `json:"resource,omitempty"`
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`

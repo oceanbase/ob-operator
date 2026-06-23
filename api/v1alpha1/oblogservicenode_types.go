@@ -25,7 +25,6 @@ type OBLogServiceNodeSpec struct {
 	ClusterName    string                          `json:"clusterName"`
 	ClusterId      int64                           `json:"clusterId"`
 	Zone           string                          `json:"zone"`
-	Region         string                          `json:"region"`
 	Image          string                          `json:"image"`
 	Resource       *apitypes.ResourceSpec          `json:"resource,omitempty"`
 	RpcPort        int32                           `json:"rpcPort,omitempty"`

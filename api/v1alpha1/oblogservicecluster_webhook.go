@@ -84,9 +84,6 @@ func (r *OBLogServiceCluster) ValidateCreate() (admission.Warnings, error) {
 			return nil, fmt.Errorf("topology[%d].zone %q is duplicated", i, topo.Zone)
 		}
 		seenZones[topo.Zone] = true
-		if topo.Region == "" {
-			return nil, fmt.Errorf("topology[%d].region is required", i)
-		}
 		if topo.Replica < 1 {
 			return nil, fmt.Errorf("topology[%d].replica must be at least 1", i)
 		}

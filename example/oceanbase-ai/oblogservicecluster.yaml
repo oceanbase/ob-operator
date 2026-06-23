@@ -17,13 +17,10 @@ spec:
       name: minio-credentials
   topology:
     - zone: zone1
-      region: region1
       replica: 1
     - zone: zone2
-      region: region1
       replica: 1
     - zone: zone3
-      region: region1
       replica: 1
   parameters:
     - name: log_level

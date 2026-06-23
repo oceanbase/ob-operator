@@ -75,7 +75,6 @@ func CreateNodes(m *OBLogServiceZoneManager) tasktypes.TaskError {
 				ClusterName: m.Resource.Spec.ClusterName,
 				ClusterId:   m.Resource.Spec.ClusterId,
 				Zone:        m.Resource.Spec.Topology.Zone,
-				Region:      m.Resource.Spec.Topology.Region,
 				Image:       m.Resource.Spec.Image,
 				Resource: func() *apitypes.ResourceSpec {
 					if m.Resource.Spec.Topology.Resource != nil {
