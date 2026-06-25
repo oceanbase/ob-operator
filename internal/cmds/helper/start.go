@@ -78,10 +78,11 @@ func prepareDir() error {
 	makeEtcDirCmd := fmt.Sprintf("mkdir -p %s/etc && ln -sf %s/etc %s/store/etc", DefaultDataFilePath, DefaultDataFilePath, DefaultHomePath)
 	makeSortDirCmd := fmt.Sprintf("mkdir -p %s/sort_dir && ln -sf %s/sort_dir %s/store/sort_dir", DefaultDataFilePath, DefaultDataFilePath, DefaultHomePath)
 	makeSstableDirCmd := fmt.Sprintf("mkdir -p %s/sstable && ln -sf %s/sstable %s/store/sstable", DefaultDataFilePath, DefaultDataFilePath, DefaultHomePath)
+	makeWalletDirCmd := fmt.Sprintf("mkdir -p %s/wallet && ln -sf %s/wallet %s/wallet", DefaultDataFilePath, DefaultDataFilePath, DefaultHomePath)
 
 	if deployMode == "shared_storage" {
-		cmd := fmt.Sprintf("%s && %s && %s && %s && %s && %s",
-			makeLogDirCmd, makeStoreDirCmd, makeSLogDirCmd, makeEtcDirCmd, makeSortDirCmd, makeSstableDirCmd)
+		cmd := fmt.Sprintf("%s && %s && %s && %s && %s && %s && %s",
+			makeLogDirCmd, makeStoreDirCmd, makeSLogDirCmd, makeEtcDirCmd, makeSortDirCmd, makeSstableDirCmd, makeWalletDirCmd)
 		return exec.Command("bash", "-c", cmd).Run()
 	}
 
