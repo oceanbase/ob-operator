@@ -46,15 +46,19 @@ func (r *OBLogServiceCluster) Default() {
 	logger := oblogserviceclusterlog.WithValues("namespace", r.Namespace, "name", r.Name)
 
 	parameterMap := make(map[string]apitypes.Parameter)
-	memorySize, ok := r.Spec.Resource.Memory.AsInt64()
-	if ok {
-		memoryLimit := fmt.Sprintf("%dM", memorySize*int64(obcfg.GetConfig().Resource.DefaultMemoryLimitPercent)/100/int64(oceanbaseconst.MegaConverter))
-		parameterMap["memory_limit"] = apitypes.Parameter{
-			Name:  "memory_limit",
-			Value: memoryLimit,
-		}
+	if r.Spec.LogService == nil || r.Spec.LogService.Resource.Memory.IsZero() {
+		logger.Error(errors.New("logService.resource.memory is missing"), "parse logservice's memory size failed")
 	} else {
-		logger.Error(errors.New("failed to parse memory size"), "parse logservice's memory size failed")
+		memorySize, ok := r.Spec.LogService.Resource.Memory.AsInt64()
+		if ok {
+			memoryLimit := fmt.Sprintf("%dM", memorySize*int64(obcfg.GetConfig().Resource.DefaultMemoryLimitPercent)/100/int64(oceanbaseconst.MegaConverter))
+			parameterMap["memory_limit"] = apitypes.Parameter{
+				Name:  "memory_limit",
+				Value: memoryLimit,
+			}
+		} else {
+			logger.Error(errors.New("failed to parse memory size"), "parse logservice's memory size failed")
+		}
 	}
 
 	for _, parameter := range r.Spec.Parameters {
@@ -91,8 +95,11 @@ func (r *OBLogServiceCluster) ValidateCreate() (admission.Warnings, error) {
 	if r.Spec.ClusterId <= 0 {
 		return nil, errors.New("clusterId must be a positive integer")
 	}
-	if r.Spec.Image == "" {
-		return nil, errors.New("image is required")
+	if r.Spec.LogService == nil {
+		return nil, errors.New("logService is required")
+	}
+	if r.Spec.LogService.Image == "" {
+		return nil, errors.New("logService.image is required")
 	}
 	if r.Spec.ObjectStoreURL.BucketURL == "" {
 		return nil, errors.New("objectStoreUrl.bucketURL is required")
@@ -100,11 +107,11 @@ func (r *OBLogServiceCluster) ValidateCreate() (admission.Warnings, error) {
 	if r.Spec.ObjectStoreURL.SecretRef.Name == "" {
 		return nil, errors.New("objectStoreUrl.secretRef.name is required")
 	}
-	if r.Spec.Storage == nil {
-		return nil, errors.New("storage is required")
+	if r.Spec.LogService.Storage == nil {
+		return nil, errors.New("logService.storage is required")
 	}
-	if r.Spec.Resource.Memory.IsZero() {
-		return nil, errors.New("resource.memory is required")
+	if r.Spec.LogService.Resource.Memory.IsZero() {
+		return nil, errors.New("logService.resource.memory is required")
 	}
 	for _, p := range r.Spec.Parameters {
 		if p.Name == "memory_limit" {
@@ -112,8 +119,8 @@ func (r *OBLogServiceCluster) ValidateCreate() (admission.Warnings, error) {
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse memory_limit parameter: %w", err)
 			}
-			if memoryLimit.AsApproximateFloat64() > r.Spec.Resource.Memory.AsApproximateFloat64() {
-				return nil, errors.New("memory_limit exceeds resource.memory")
+			if memoryLimit.AsApproximateFloat64() > r.Spec.LogService.Resource.Memory.AsApproximateFloat64() {
+				return nil, errors.New("memory_limit exceeds logService.resource.memory")
 			}
 			break
 		}
@@ -126,17 +133,18 @@ func (r *OBLogServiceCluster) ValidateUpdate(old runtime.Object) (admission.Warn
 	if !ok {
 		return nil, errors.New("failed to convert old object to OBLogServiceCluster")
 	}
-	if oldLS.Spec.Image != r.Spec.Image {
-		return nil, errors.New("OBLogServiceCluster does not support image upgrade in this version")
-	}
 	if oldLS.Spec.ClusterId != r.Spec.ClusterId {
 		return nil, errors.New("clusterId cannot be changed after creation")
 	}
 	if !reflect.DeepEqual(oldLS.Spec.ObjectStoreURL, r.Spec.ObjectStoreURL) {
 		return nil, errors.New("objectStoreUrl cannot be changed after creation")
 	}
-	if !reflect.DeepEqual(oldLS.Spec.Storage, r.Spec.Storage) {
-		return nil, errors.New("storage cannot be changed after creation")
+	// The entire logService template (image/resource/storage) is immutable. Only
+	// topology[].replica is mutable (handled by the ModifyZoneReplica flow); there
+	// is no flow that reconciles resource changes, so allowing them would be a
+	// silent no-op.
+	if !reflect.DeepEqual(oldLS.Spec.LogService, r.Spec.LogService) {
+		return nil, errors.New("logService template cannot be changed after creation")
 	}
 	oldZones := make(map[string]bool, len(oldLS.Spec.Topology))
 	for _, t := range oldLS.Spec.Topology {

@@ -21,11 +21,9 @@ import (
 
 type OBLogServiceClusterSpec struct {
 	ClusterId      int64                             `json:"clusterId"`
-	Image          string                            `json:"image"`
-	Resource       apitypes.ResourceSpec             `json:"resource"`
+	LogService     *apitypes.LogServiceTemplate      `json:"logService"`
 	Topology       []apitypes.LogServiceZoneTopology `json:"topology"`
 	ObjectStoreURL apitypes.ObjectStoreConfig        `json:"objectStoreUrl"`
-	Storage        *apitypes.LogServiceStorageSpec   `json:"storage"`
 	Parameters     []apitypes.Parameter              `json:"parameters,omitempty"`
 	//+kubebuilder:default=default
 	ServiceAccount string `json:"serviceAccount,omitempty"`

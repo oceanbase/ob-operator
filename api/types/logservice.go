@@ -14,6 +14,12 @@ package types
 
 import corev1 "k8s.io/api/core/v1"
 
+type LogServiceTemplate struct {
+	Image    string                 `json:"image"`
+	Resource ResourceSpec           `json:"resource"`
+	Storage  *LogServiceStorageSpec `json:"storage"`
+}
+
 type LogServiceZoneTopology struct {
 	Zone         string              `json:"zone"`
 	Replica      int                 `json:"replica"`

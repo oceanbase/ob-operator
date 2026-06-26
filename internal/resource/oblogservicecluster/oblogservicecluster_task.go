@@ -72,11 +72,11 @@ func CreateZones(m *OBLogServiceClusterManager) tasktypes.TaskError {
 			Spec: v1alpha1.OBLogServiceZoneSpec{
 				ClusterName:    m.Resource.Name,
 				ClusterId:      m.Resource.Spec.ClusterId,
-				Image:          m.Resource.Spec.Image,
-				Resource:       m.Resource.Spec.Resource,
+				Image:          m.Resource.Spec.LogService.Image,
+				Resource:       m.Resource.Spec.LogService.Resource,
 				Topology:       topo,
 				ObjectStoreURL: m.Resource.Spec.ObjectStoreURL,
-				Storage:        m.Resource.Spec.Storage,
+				Storage:        m.Resource.Spec.LogService.Storage,
 				Parameters:     m.Resource.Spec.Parameters,
 				ServiceAccount: m.Resource.Spec.ServiceAccount,
 			},
@@ -263,7 +263,7 @@ func BootstrapLogService(m *OBLogServiceClusterManager) tasktypes.TaskError {
 	_, exitCode, jobErr := resourceutils.RunJob(
 		m.Ctx, m.Client, m.Logger, m.Resource.Namespace,
 		jobName,
-		m.Resource.Spec.Image,
+		m.Resource.Spec.LogService.Image,
 		nil,
 		bootstrapCmd,
 		volumeConfig,

@@ -62,8 +62,64 @@ spec:
               clusterId:
                 format: int64
                 type: integer
-              image:
-                type: string
+              logService:
+                properties:
+                  image:
+                    type: string
+                  resource:
+                    properties:
+                      cpu:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                      memory:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                    required:
+                    - memory
+                    type: object
+                  storage:
+                    properties:
+                      logStorage:
+                        properties:
+                          size:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          storageClass:
+                            type: string
+                        required:
+                        - size
+                        type: object
+                      storeStorage:
+                        properties:
+                          size:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          storageClass:
+                            type: string
+                        required:
+                        - size
+                        type: object
+                    required:
+                    - logStorage
+                    - storeStorage
+                    type: object
+                required:
+                - image
+                - resource
+                - storage
+                type: object
               objectStoreUrl:
                 properties:
                   bucketURL:
@@ -96,58 +152,9 @@ spec:
                   - value
                   type: object
                 type: array
-              resource:
-                properties:
-                  cpu:
-                    anyOf:
-                    - type: integer
-                    - type: string
-                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                    x-kubernetes-int-or-string: true
-                  memory:
-                    anyOf:
-                    - type: integer
-                    - type: string
-                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                    x-kubernetes-int-or-string: true
-                required:
-                - memory
-                type: object
               serviceAccount:
                 default: default
                 type: string
-              storage:
-                properties:
-                  logStorage:
-                    properties:
-                      size:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                        x-kubernetes-int-or-string: true
-                      storageClass:
-                        type: string
-                    required:
-                    - size
-                    type: object
-                  storeStorage:
-                    properties:
-                      size:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                        x-kubernetes-int-or-string: true
-                      storageClass:
-                        type: string
-                    required:
-                    - size
-                    type: object
-                required:
-                - logStorage
-                - storeStorage
-                type: object
               topology:
                 items:
                   properties:
@@ -1121,10 +1128,8 @@ spec:
                 type: array
             required:
             - clusterId
-            - image
+            - logService
             - objectStoreUrl
-            - resource
-            - storage
             - topology
             type: object
           status:
