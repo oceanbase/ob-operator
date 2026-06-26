@@ -143,14 +143,28 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 		return errors.Wrap(err, "create service")
 	}
 
-	// Retrieve Service ClusterIP
-	existingSvc := &corev1.Service{}
-	if err := m.Client.Get(m.Ctx, types.NamespacedName{Namespace: m.Resource.Namespace, Name: svcName}, existingSvc); err == nil {
-		m.Resource.Status.ServiceIP = existingSvc.Spec.ClusterIP
+	// Retrieve Service ClusterIP. Prefer the object returned by Create (the
+	// apiserver assigns ClusterIP synchronously); fall back to a Get for the
+	// AlreadyExists case or when the create response lacks it.
+	m.Resource.Status.ServiceIP = svc.Spec.ClusterIP
+	if m.Resource.Status.ServiceIP == "" {
+		existingSvc := &corev1.Service{}
+		if err := m.Client.Get(m.Ctx, types.NamespacedName{Namespace: m.Resource.Namespace, Name: svcName}, existingSvc); err == nil {
+			m.Resource.Status.ServiceIP = existingSvc.Spec.ClusterIP
+		}
 	}
 
 	storeMountPath := oceanbaseconst.LogServiceStoreMountPath
 	logMountPath := oceanbaseconst.LogServiceLogMountPath
+
+	// oblogservice (>=1.3.0) binds 0.0.0.0 for both the net_frame (rpc_port) and
+	// the HTTP management server (http_port); local_ip is the advertise/identity
+	// address only. Use the stable ServiceIP (GetConnectAddr) so node identity
+	// survives pod restarts, aligned with OBCluster's service mode.
+	advertiseIP := m.Resource.Status.GetConnectAddr()
+	if advertiseIP == "" {
+		return errors.New("logservice node has no ServiceIP; cannot determine advertise address")
+	}
 
 	// Calculate log_disk_size from storeStorage PVC size, aligned with OBCluster's approach
 	logDiskSizeParam := ""
@@ -166,9 +180,9 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 
 	startupParameters := []string{
 		fmt.Sprintf("cluster_id=%d", m.Resource.Spec.ClusterId),
-		"local_ip=${POD_IP}",
-		fmt.Sprintf("port=%d", rpcPort),
-		fmt.Sprintf("http_ip_addr=${POD_IP}:%d", httpPort),
+		fmt.Sprintf("local_ip=%s", advertiseIP),
+		fmt.Sprintf("rpc_port=%d", rpcPort),
+		fmt.Sprintf("http_port=%d", httpPort),
 		fmt.Sprintf("local_storage_dir=%s", storeMountPath),
 	}
 	if logDiskSizeParam != "" {
@@ -188,7 +202,7 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 	}
 
 	startCmd := fmt.Sprintf(
-		`mkdir -p %s %s && while [ -z "${POD_IP}" ]; do sleep 1; done && /home/admin/oblogservice/bin/oblogservice -g "%s" & sleep infinity`,
+		`mkdir -p %s %s && /home/admin/oblogservice/bin/oblogservice -g "%s" & sleep infinity`,
 		storeMountPath, logMountPath,
 		strings.Join(startupParameters, ","),
 	)
@@ -210,14 +224,6 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 				Image:           m.Resource.Spec.Image,
 				ImagePullPolicy: corev1.PullIfNotPresent,
 				Command:         []string{"bash", "-c", startCmd},
-				Env: []corev1.EnvVar{{
-					Name: "POD_IP",
-					ValueFrom: &corev1.EnvVarSource{
-						FieldRef: &corev1.ObjectFieldSelector{
-							FieldPath: "status.podIP",
-						},
-					},
-				}},
 				Ports: []corev1.ContainerPort{
 					{Name: "rpc", ContainerPort: rpcPort, Protocol: corev1.ProtocolTCP},
 					{Name: "http", ContainerPort: httpPort, Protocol: corev1.ProtocolTCP},

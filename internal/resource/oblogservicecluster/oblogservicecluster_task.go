@@ -168,10 +168,14 @@ func BootstrapLogService(m *OBLogServiceClusterManager) tasktypes.TaskError {
 			return errors.Wrapf(err, "list nodes for zone %s", zone.Name)
 		}
 		for _, node := range nodeList.Items {
-			// Use PodIP for bootstrap because oblogservice binds directly to local_ip (PodIP).
-			// Unlike observer which separates bind addr from advertise addr, oblogservice
-			// requires SERVER address to match its local_ip for election to work.
-			addr := node.Status.PodIP
+			// oblogservice (>=1.3.0) binds 0.0.0.0 and advertises local_ip; the
+			// SERVER address must match the node's advertised address (ServiceIP,
+			// stable across pod restarts). GetConnectAddr returns ServiceIP when
+			// set, falling back to PodIP.
+			addr := node.Status.GetConnectAddr()
+			if addr == "" {
+				return errors.Errorf("node %s has no connect address, not ready for bootstrap", node.Name)
+			}
 			rpcPort := node.Spec.RpcPort
 			if rpcPort == 0 {
 				rpcPort = int32(oceanbaseconst.LogServiceRpcPort)
@@ -205,7 +209,7 @@ func BootstrapLogService(m *OBLogServiceClusterManager) tasktypes.TaskError {
 	if httpPort == 0 {
 		httpPort = int32(oceanbaseconst.LogServiceHttpPort)
 	}
-	httpAddr := fmt.Sprintf("%s:%d", firstNode.Status.PodIP, httpPort)
+	httpAddr := fmt.Sprintf("%s:%d", firstNode.Status.GetConnectAddr(), httpPort)
 
 	// Build server args — use env vars for user-supplied values to prevent shell injection
 	serverArgs := ""

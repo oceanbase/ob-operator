@@ -249,7 +249,7 @@ func RegisterNodeToCluster(m *OBLogServiceZoneManager) tasktypes.TaskError {
 		if rpcPort == 0 {
 			rpcPort = int32(oceanbaseconst.LogServiceRpcPort)
 		}
-		nodeAddr := fmt.Sprintf("%s:%d", node.Status.PodIP, rpcPort)
+		nodeAddr := fmt.Sprintf("%s:%d", node.Status.GetConnectAddr(), rpcPort)
 		zoneName := node.Spec.Zone
 
 		cmd := fmt.Sprintf(`/home/admin/oblogservice/bin/ls_ctrl --host %s add ln "%s" "%s"`,
@@ -321,16 +321,16 @@ func UnregisterNodeFromCluster(m *OBLogServiceZoneManager) tasktypes.TaskError {
 
 	for i := 0; i < toDelete && i < len(nodeList.Items); i++ {
 		node := &nodeList.Items[i]
-		podIP := node.Status.PodIP
-		if podIP == "" {
-			m.Logger.Info("Node has no PodIP, skip unregister", "node", node.Name)
+		nodeAddr := node.Status.GetConnectAddr()
+		if nodeAddr == "" {
+			m.Logger.Info("Node has no address, skip unregister", "node", node.Name)
 			continue
 		}
 		rpcPort := node.Spec.RpcPort
 		if rpcPort == 0 {
 			rpcPort = int32(oceanbaseconst.LogServiceRpcPort)
 		}
-		nodeAddr := fmt.Sprintf("%s:%d", podIP, rpcPort)
+		nodeAddr = fmt.Sprintf("%s:%d", nodeAddr, rpcPort)
 
 		cmd := fmt.Sprintf(`/home/admin/oblogservice/bin/ls_ctrl --host %s delete ln "%s"`,
 			hostAddr, nodeAddr)
@@ -364,15 +364,15 @@ func UnregisterAllNodesFromCluster(m *OBLogServiceZoneManager) tasktypes.TaskErr
 
 	for i := range nodeList.Items {
 		node := &nodeList.Items[i]
-		podIP := node.Status.PodIP
-		if podIP == "" {
+		nodeAddr := node.Status.GetConnectAddr()
+		if nodeAddr == "" {
 			continue
 		}
 		rpcPort := node.Spec.RpcPort
 		if rpcPort == 0 {
 			rpcPort = int32(oceanbaseconst.LogServiceRpcPort)
 		}
-		nodeAddr := fmt.Sprintf("%s:%d", podIP, rpcPort)
+		nodeAddr = fmt.Sprintf("%s:%d", nodeAddr, rpcPort)
 
 		cmd := fmt.Sprintf(`/home/admin/oblogservice/bin/ls_ctrl --host %s delete ln "%s"`,
 			hostAddr, nodeAddr)
@@ -411,7 +411,7 @@ func (m *OBLogServiceZoneManager) getRunningNodeHttpAddr(excludeNames ...string)
 			if httpPort == 0 {
 				httpPort = int32(oceanbaseconst.LogServiceHttpPort)
 			}
-			return fmt.Sprintf("%s:%d", node.Status.PodIP, httpPort), nil
+			return fmt.Sprintf("%s:%d", node.Status.GetConnectAddr(), httpPort), nil
 		}
 	}
 	return "", errors.New("no running node with PodIP found in cluster")

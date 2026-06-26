@@ -6,7 +6,7 @@ metadata:
 spec:
   clusterId: 1004
   logService:
-    image: oblogservice:1.2.0
+    image: oblogservice:1.3.0
     resource:
       cpu: 2
       memory: 4Gi
