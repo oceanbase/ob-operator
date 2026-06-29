@@ -603,8 +603,7 @@ func (in *OBLogServiceClusterSpec) DeepCopyInto(out *OBLogServiceClusterSpec) {
 	*out = *in
 	if in.LogService != nil {
 		in, out := &in.LogService, &out.LogService
-		*out = new(types.LogServiceTemplate)
-		(*in).DeepCopyInto(*out)
+		*out = (*in).DeepCopy()
 	}
 	if in.Topology != nil {
 		in, out := &in.Topology, &out.Topology

@@ -116,7 +116,7 @@ func WaitNodesReady(m *OBLogServiceZoneManager) tasktypes.TaskError {
 		}
 		allReady := true
 		for _, node := range nodeList.Items {
-			if node.Status.Status != nodestatus.Running {
+			if node.Status.Status != nodestatus.BootstrapReady && node.Status.Status != nodestatus.Running {
 				allReady = false
 				break
 			}

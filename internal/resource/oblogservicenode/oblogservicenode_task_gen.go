@@ -2,7 +2,10 @@
 package oblogservicenode
 
 func init() {
+	taskMap.Register(tCreateSvc, CreateSvc)
+	taskMap.Register(tCreatePVC, CreatePVC)
 	taskMap.Register(tCreatePod, CreatePod)
 	taskMap.Register(tWaitPodReady, WaitPodReady)
+	taskMap.Register(tWaitClusterBootstrapped, WaitClusterBootstrapped)
 	taskMap.Register(tDeletePod, DeletePod)
 }

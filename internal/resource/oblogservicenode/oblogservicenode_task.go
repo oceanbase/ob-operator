@@ -24,9 +24,12 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	lsstatus "github.com/oceanbase/ob-operator/internal/const/status/oblogservicecluster"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
@@ -34,17 +37,8 @@ import (
 
 var taskMap = builder.NewTaskHub[*OBLogServiceNodeManager]()
 
-func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
-	m.Logger.Info("Creating log service node pod")
-	blockOwnerDeletion := true
-	ownerRef := metav1.OwnerReference{
-		APIVersion:         m.Resource.APIVersion,
-		Kind:               m.Resource.Kind,
-		Name:               m.Resource.Name,
-		UID:                m.Resource.GetUID(),
-		BlockOwnerDeletion: &blockOwnerDeletion,
-	}
-
+func CreateSvc(m *OBLogServiceNodeManager) tasktypes.TaskError {
+	m.Logger.Info("Creating log service node service")
 	podName := m.Resource.Name
 	svcName := fmt.Sprintf("%s-svc", podName)
 
@@ -57,8 +51,43 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 		httpPort = int32(oceanbaseconst.LogServiceHttpPort)
 	}
 
-	storePvcName := fmt.Sprintf("%s-%s", podName, oceanbaseconst.LogServiceStoreVolumeSuffix)
-	logPvcName := fmt.Sprintf("%s-%s", podName, oceanbaseconst.LogServiceLogVolumeSuffix)
+	blockOwnerDeletion := true
+	ownerRef := metav1.OwnerReference{
+		APIVersion:         m.Resource.APIVersion,
+		Kind:               m.Resource.Kind,
+		Name:               m.Resource.Name,
+		UID:                m.Resource.GetUID(),
+		BlockOwnerDeletion: &blockOwnerDeletion,
+	}
+
+	podLabels := m.buildPodLabels()
+	svc := &corev1.Service{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            svcName,
+			Namespace:       m.Resource.Namespace,
+			OwnerReferences: []metav1.OwnerReference{ownerRef},
+		},
+		Spec: corev1.ServiceSpec{
+			Selector: podLabels,
+			Ports: []corev1.ServicePort{
+				{Name: "rpc", Port: rpcPort, TargetPort: intstr.FromInt32(rpcPort)},
+				{Name: "http", Port: httpPort, TargetPort: intstr.FromInt32(httpPort)},
+			},
+		},
+	}
+	if err := m.Client.Create(m.Ctx, svc); err != nil && !kubeerrors.IsAlreadyExists(err) {
+		return errors.Wrap(err, "create service")
+	}
+
+	existingSvc := &corev1.Service{}
+	if err := m.Client.Get(m.Ctx, types.NamespacedName{Namespace: m.Resource.Namespace, Name: svcName}, existingSvc); err == nil {
+		m.Resource.Status.ServiceIP = existingSvc.Spec.ClusterIP
+	}
+	return nil
+}
+
+func CreatePVC(m *OBLogServiceNodeManager) tasktypes.TaskError {
+	m.Logger.Info("Creating log service node PVCs")
 
 	if m.Resource.Spec.Storage == nil {
 		return errors.New("storage is required but was nil")
@@ -69,14 +98,20 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 	if m.Resource.Spec.Storage.LogStorage == nil {
 		return errors.New("storage.logStorage is required but was nil")
 	}
-	if m.Resource.Spec.Resource == nil {
-		return errors.New("resource is required but was nil")
-	}
-	if m.Resource.Spec.Resource.Memory.IsZero() {
-		return errors.New("resource.memory is required but was zero")
+
+	podName := m.Resource.Name
+	storePvcName := fmt.Sprintf("%s-%s", podName, oceanbaseconst.LogServiceStoreVolumeSuffix)
+	logPvcName := fmt.Sprintf("%s-%s", podName, oceanbaseconst.LogServiceLogVolumeSuffix)
+
+	blockOwnerDeletion := true
+	ownerRef := metav1.OwnerReference{
+		APIVersion:         m.Resource.APIVersion,
+		Kind:               m.Resource.Kind,
+		Name:               m.Resource.Name,
+		UID:                m.Resource.GetUID(),
+		BlockOwnerDeletion: &blockOwnerDeletion,
 	}
 
-	// Create store PVC
 	storePvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            storePvcName,
@@ -97,7 +132,6 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 		return errors.Wrap(err, "create store pvc")
 	}
 
-	// Create log PVC
 	logPvc := &corev1.PersistentVolumeClaim{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            logPvcName,
@@ -118,76 +152,63 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 		return errors.Wrap(err, "create log pvc")
 	}
 
-	// Create per-pod Service for stable network identity
-	podLabels := map[string]string{
-		"app": "oblogservice",
-		oceanbaseconst.LabelRefOBLogServiceCluster: m.Resource.Spec.ClusterName,
-		oceanbaseconst.LabelRefOBLogServiceZone:    fmt.Sprintf("%s-%s", m.Resource.Spec.ClusterName, m.Resource.Spec.Zone),
-		"oblogservice-node":                        podName,
+	return nil
+}
+
+func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
+	m.Logger.Info("Creating log service node pod")
+
+	if m.Resource.Spec.Resource == nil {
+		return errors.New("resource is required but was nil")
 	}
-	svc := &corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:            svcName,
-			Namespace:       m.Resource.Namespace,
-			OwnerReferences: []metav1.OwnerReference{ownerRef},
-		},
-		Spec: corev1.ServiceSpec{
-			Selector: podLabels,
-			Ports: []corev1.ServicePort{
-				{Name: "rpc", Port: rpcPort, TargetPort: intstr.FromInt32(rpcPort)},
-				{Name: "http", Port: httpPort, TargetPort: intstr.FromInt32(httpPort)},
-			},
-		},
-	}
-	if err := m.Client.Create(m.Ctx, svc); err != nil && !kubeerrors.IsAlreadyExists(err) {
-		return errors.Wrap(err, "create service")
+	if m.Resource.Spec.Resource.Memory.IsZero() {
+		return errors.New("resource.memory is required but was zero")
 	}
 
-	// Retrieve Service ClusterIP. Prefer the object returned by Create (the
-	// apiserver assigns ClusterIP synchronously); fall back to a Get for the
-	// AlreadyExists case or when the create response lacks it.
-	m.Resource.Status.ServiceIP = svc.Spec.ClusterIP
-	if m.Resource.Status.ServiceIP == "" {
-		existingSvc := &corev1.Service{}
-		if err := m.Client.Get(m.Ctx, types.NamespacedName{Namespace: m.Resource.Namespace, Name: svcName}, existingSvc); err == nil {
-			m.Resource.Status.ServiceIP = existingSvc.Spec.ClusterIP
-		}
+	podName := m.Resource.Name
+	storePvcName := fmt.Sprintf("%s-%s", podName, oceanbaseconst.LogServiceStoreVolumeSuffix)
+	logPvcName := fmt.Sprintf("%s-%s", podName, oceanbaseconst.LogServiceLogVolumeSuffix)
+
+	rpcPort := m.Resource.Spec.RpcPort
+	if rpcPort == 0 {
+		rpcPort = int32(oceanbaseconst.LogServiceRpcPort)
+	}
+	httpPort := m.Resource.Spec.HttpPort
+	if httpPort == 0 {
+		httpPort = int32(oceanbaseconst.LogServiceHttpPort)
 	}
 
 	storeMountPath := oceanbaseconst.LogServiceStoreMountPath
 	logMountPath := oceanbaseconst.LogServiceLogMountPath
 
-	// oblogservice (>=1.3.0) binds 0.0.0.0 for both the net_frame (rpc_port) and
-	// the HTTP management server (http_port); local_ip is the advertise/identity
-	// address only. Use the stable ServiceIP (GetConnectAddr) so node identity
-	// survives pod restarts, aligned with OBCluster's service mode.
+	// Fetch ServiceIP from existing Service if not already in status
+	// (needed because tasks run in separate reconcile cycles)
+	if m.Resource.Status.ServiceIP == "" {
+		svcName := fmt.Sprintf("%s-svc", podName)
+		svc := &corev1.Service{}
+		if err := m.Client.Get(m.Ctx, types.NamespacedName{Namespace: m.Resource.Namespace, Name: svcName}, svc); err == nil {
+			m.Resource.Status.ServiceIP = svc.Spec.ClusterIP
+		}
+	}
 	advertiseIP := m.Resource.Status.GetConnectAddr()
 	if advertiseIP == "" {
 		return errors.New("logservice node has no ServiceIP; cannot determine advertise address")
 	}
 
-	// Calculate log_disk_size from storeStorage PVC size, aligned with OBCluster's approach
-	logDiskSizeParam := ""
-	if m.Resource.Spec.Storage.StoreStorage != nil {
+	// Calculate log_disk_size from storeStorage PVC size
+	logDiskSizeEnv := ""
+	if m.Resource.Spec.Storage != nil && m.Resource.Spec.Storage.StoreStorage != nil {
 		storeSizeBytes, ok := m.Resource.Spec.Storage.StoreStorage.Size.AsInt64()
 		if ok && storeSizeBytes > 0 {
 			logDiskSizeG := storeSizeBytes * int64(obcfg.GetConfig().Resource.DefaultDiskUsePercent) / int64(oceanbaseconst.GigaConverter) / 100
 			if logDiskSizeG > 0 {
-				logDiskSizeParam = fmt.Sprintf("log_disk_size=%dG", logDiskSizeG)
+				logDiskSizeEnv = fmt.Sprintf("%dG", logDiskSizeG)
 			}
 		}
 	}
 
-	startupParameters := []string{
-		fmt.Sprintf("cluster_id=%d", m.Resource.Spec.ClusterId),
-		fmt.Sprintf("local_ip=%s", advertiseIP),
-		fmt.Sprintf("rpc_port=%d", rpcPort),
-		fmt.Sprintf("http_port=%d", httpPort),
-		fmt.Sprintf("local_storage_dir=%s", storeMountPath),
-	}
-	if logDiskSizeParam != "" {
-		startupParameters = append(startupParameters, logDiskSizeParam)
-	}
+	// Build extra parameters from spec (excluding reserved ones)
+	var extraParams []string
 	for _, p := range m.Resource.Spec.Parameters {
 		reserved := false
 		for _, rp := range oceanbaseconst.LogServiceReservedParameters {
@@ -197,17 +218,36 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 			}
 		}
 		if !reserved {
-			startupParameters = append(startupParameters, fmt.Sprintf("%s='%s'", p.Name, p.Value))
+			extraParams = append(extraParams, fmt.Sprintf("%s=%s", p.Name, p.Value))
 		}
 	}
 
-	startCmd := fmt.Sprintf(
-		`mkdir -p %s %s && /home/admin/oblogservice/bin/oblogservice -g "%s" & sleep infinity`,
-		storeMountPath, logMountPath,
-		strings.Join(startupParameters, ","),
-	)
+	blockOwnerDeletion := true
+	ownerRef := metav1.OwnerReference{
+		APIVersion:         m.Resource.APIVersion,
+		Kind:               m.Resource.Kind,
+		Name:               m.Resource.Name,
+		UID:                m.Resource.GetUID(),
+		BlockOwnerDeletion: &blockOwnerDeletion,
+	}
 
+	podLabels := m.buildPodLabels()
 	podAnnotations := m.generateStaticIpAnnotation()
+
+	envVars := []corev1.EnvVar{
+		{Name: "CLUSTER_ID", Value: fmt.Sprintf("%d", m.Resource.Spec.ClusterId)},
+		{Name: "LOCAL_IP", Value: advertiseIP},
+		{Name: "RPC_PORT", Value: fmt.Sprintf("%d", rpcPort)},
+		{Name: "HTTP_PORT", Value: fmt.Sprintf("%d", httpPort)},
+		{Name: "STORE_MOUNT_PATH", Value: storeMountPath},
+		{Name: "LOG_MOUNT_PATH", Value: logMountPath},
+	}
+	if logDiskSizeEnv != "" {
+		envVars = append(envVars, corev1.EnvVar{Name: "LOG_DISK_SIZE", Value: logDiskSizeEnv})
+	}
+	if len(extraParams) > 0 {
+		envVars = append(envVars, corev1.EnvVar{Name: "EXTRA_PARAMETERS", Value: strings.Join(extraParams, ",")})
+	}
 
 	pod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -223,7 +263,8 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 				Name:            "oblogservice",
 				Image:           m.Resource.Spec.Image,
 				ImagePullPolicy: corev1.PullIfNotPresent,
-				Command:         []string{"bash", "-c", startCmd},
+				Command:         []string{"/home/admin/oblogservice/bin/oceanbase-helper", "logservice", "start"},
+				Env:             envVars,
 				Ports: []corev1.ContainerPort{
 					{Name: "rpc", ContainerPort: rpcPort, Protocol: corev1.ProtocolTCP},
 					{Name: "http", ContainerPort: httpPort, Protocol: corev1.ProtocolTCP},
@@ -279,7 +320,7 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 	}
 
 	m.Resource.Status.PodName = podName
-	return m.Client.Status().Update(m.Ctx, m.Resource)
+	return nil
 }
 
 func WaitPodReady(m *OBLogServiceNodeManager) tasktypes.TaskError {
@@ -289,7 +330,7 @@ func WaitPodReady(m *OBLogServiceNodeManager) tasktypes.TaskError {
 		podName = m.Resource.Name
 	}
 
-	for i := 0; i < 600; i++ {
+	for range 600 {
 		pod := &corev1.Pod{}
 		err := m.Client.Get(m.Ctx, types.NamespacedName{
 			Namespace: m.Resource.Namespace,
@@ -303,7 +344,6 @@ func WaitPodReady(m *OBLogServiceNodeManager) tasktypes.TaskError {
 			m.Resource.Status.CNI = resourceutils.GetCNIFromAnnotation(pod)
 			m.Resource.Status.Ready = true
 			m.Resource.Status.PodPhase = pod.Status.Phase
-			// Update ServiceIP if not set yet
 			if m.Resource.Status.ServiceIP == "" {
 				svcName := fmt.Sprintf("%s-svc", podName)
 				svc := &corev1.Service{}
@@ -315,11 +355,36 @@ func WaitPodReady(m *OBLogServiceNodeManager) tasktypes.TaskError {
 				}
 			}
 			m.Logger.Info("Log service node pod is ready", "pod", podName, "ip", pod.Status.PodIP)
-			return m.Client.Status().Update(m.Ctx, m.Resource)
+			return nil
 		}
 		time.Sleep(time.Second)
 	}
 	return errors.New("timeout waiting for log service node pod to be ready")
+}
+
+func WaitClusterBootstrapped(m *OBLogServiceNodeManager) tasktypes.TaskError {
+	m.Logger.Info("Waiting for log service cluster to finish bootstrap")
+	clusterName := m.Resource.Spec.ClusterName
+
+	for range 600 {
+		lsCluster := &v1alpha1.OBLogServiceCluster{}
+		err := m.Client.Get(m.Ctx, client.ObjectKey{
+			Namespace: m.Resource.Namespace,
+			Name:      clusterName,
+		}, lsCluster)
+		if err != nil {
+			return errors.Wrap(err, "get log service cluster")
+		}
+		if lsCluster.Status.Status == lsstatus.Running {
+			m.Logger.Info("Log service cluster bootstrap completed")
+			return nil
+		}
+		if lsCluster.Status.Status == lsstatus.Failed {
+			return errors.New("log service cluster bootstrap failed")
+		}
+		time.Sleep(time.Second)
+	}
+	return errors.New("timeout waiting for log service cluster bootstrap")
 }
 
 func DeletePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
@@ -347,6 +412,15 @@ func DeletePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 	return nil
 }
 
+func (m *OBLogServiceNodeManager) buildPodLabels() map[string]string {
+	return map[string]string{
+		"app": "oblogservice",
+		oceanbaseconst.LabelRefOBLogServiceCluster: m.Resource.Spec.ClusterName,
+		oceanbaseconst.LabelRefOBLogServiceZone:    fmt.Sprintf("%s-%s", m.Resource.Spec.ClusterName, m.Resource.Spec.Zone),
+		"oblogservice-node":                        m.Resource.Name,
+	}
+}
+
 func (m *OBLogServiceNodeManager) generateStaticIpAnnotation() map[string]string {
 	annotations := make(map[string]string)
 	switch m.Resource.Status.CNI {
@@ -359,7 +433,6 @@ func (m *OBLogServiceNodeManager) generateStaticIpAnnotation() map[string]string
 			annotations[oceanbaseconst.AnnotationKubeOvnIpAddrs] = m.Resource.Status.PodIP
 		}
 	default:
-		// unsupported CNI, no static IP annotation
 	}
 	return annotations
 }

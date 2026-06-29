@@ -18,14 +18,40 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
+func genPrepareNodeForBootstrapFlow(_ *OBLogServiceNodeManager) *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name:         "prepare log service node for bootstrap",
+			Tasks:        []tasktypes.TaskName{tCreateSvc, tCreatePVC, tCreatePod, tWaitPodReady},
+			TargetStatus: nodestatus.BootstrapReady,
+			OnFailure: tasktypes.FailureRule{
+				NextTryStatus: nodestatus.Failed,
+			},
+		},
+	}
+}
+
 func genCreateNodeFlow(_ *OBLogServiceNodeManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         "create log service node",
-			Tasks:        []tasktypes.TaskName{tCreatePod, tWaitPodReady},
+			Tasks:        []tasktypes.TaskName{tCreateSvc, tCreatePVC, tCreatePod, tWaitPodReady},
 			TargetStatus: nodestatus.Running,
 			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: nodestatus.Failed,
+			},
+		},
+	}
+}
+
+func genMaintainNodeAfterBootstrapFlow(_ *OBLogServiceNodeManager) *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name:         "maintain log service node after bootstrap",
+			Tasks:        []tasktypes.TaskName{tWaitClusterBootstrapped},
+			TargetStatus: nodestatus.Running,
+			OnFailure: tasktypes.FailureRule{
+				NextTryStatus: nodestatus.BootstrapReady,
 			},
 		},
 	}

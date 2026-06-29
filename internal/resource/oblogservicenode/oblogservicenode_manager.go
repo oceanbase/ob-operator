@@ -14,6 +14,7 @@ package oblogservicenode
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -25,6 +26,7 @@ import (
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	lsstatus "github.com/oceanbase/ob-operator/internal/const/status/oblogservicecluster"
 	nodestatus "github.com/oceanbase/ob-operator/internal/const/status/oblogservicenode"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
@@ -73,7 +75,27 @@ func (m *OBLogServiceNodeManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	var taskFlow *tasktypes.TaskFlow
 	switch m.Resource.Status.Status {
 	case nodestatus.New:
-		taskFlow = genCreateNodeFlow(m)
+		clusterName := m.Resource.Spec.ClusterName
+		lsCluster := &v1alpha1.OBLogServiceCluster{}
+		err := m.Client.Get(m.Ctx, client.ObjectKey{
+			Namespace: m.Resource.Namespace,
+			Name:      clusterName,
+		}, lsCluster)
+		if err != nil {
+			if kubeerrors.IsNotFound(err) {
+				taskFlow = genCreateNodeFlow(m)
+			} else {
+				return nil, err
+			}
+		} else if lsCluster.Status.Status == lsstatus.New {
+			m.Logger.Info("Prepare log service node for bootstrap")
+			taskFlow = genPrepareNodeForBootstrapFlow(m)
+		} else {
+			m.Logger.Info("Create log service node (cluster already bootstrapped)")
+			taskFlow = genCreateNodeFlow(m)
+		}
+	case nodestatus.BootstrapReady:
+		taskFlow = genMaintainNodeAfterBootstrapFlow(m)
 	case nodestatus.Recover:
 		taskFlow = genRecoverNodeFlow(m)
 	case nodestatus.Deleting:
@@ -107,6 +129,19 @@ func (m *OBLogServiceNodeManager) UpdateStatus() error {
 		m.Resource.Status.Status = nodestatus.Deleting
 		return m.Client.Status().Update(m.Ctx, m.Resource)
 	}
+
+	// Populate ServiceIP from existing Service if not yet set
+	if m.Resource.Status.ServiceIP == "" {
+		svcName := fmt.Sprintf("%s-svc", m.Resource.Name)
+		svc := &corev1.Service{}
+		if err := m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.Resource.Namespace,
+			Name:      svcName,
+		}, svc); err == nil {
+			m.Resource.Status.ServiceIP = svc.Spec.ClusterIP
+		}
+	}
+
 	if m.Resource.Status.Status == nodestatus.Running {
 		pod := &corev1.Pod{}
 		err := m.Client.Get(m.Ctx, types.NamespacedName{

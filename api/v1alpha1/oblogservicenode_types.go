@@ -61,7 +61,11 @@ func (n *OBLogServiceNode) SupportStaticIP() bool {
 	case oceanbaseconst.CNICalico, oceanbaseconst.CNIKubeOvn:
 		return true
 	default:
-		return false
+		// In service-IP advertise mode (oblogservice >=1.3.0) the per-pod Service
+		// provides a stable identity, so the pod can be recreated for the same
+		// node and rejoin at the same ServiceIP — mirroring observer's service
+		// mode (SupportStaticIP returns true when mode=service).
+		return n.Status.ServiceIP != ""
 	}
 }
 
