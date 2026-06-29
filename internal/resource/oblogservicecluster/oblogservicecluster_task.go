@@ -25,6 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/oblogservicezone"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
@@ -229,10 +230,22 @@ func BootstrapLogService(m *OBLogServiceClusterManager) tasktypes.TaskError {
 	}
 
 	secretMountPath := "/etc/oss-credentials"
+	// Retry ls_ctrl bootstrap to absorb transient Connection-refused errors that
+	// occur when the bootstrap runs right after the per-node Services are created
+	// and kube-proxy has not yet installed the DNAT rules for the ServiceIPs
+	// (aligned with OBCluster's connection-retry before bootstrap).
+	maxRetries := obcfg.GetConfig().Time.GetConnectionMaxRetries
+	if maxRetries < 1 {
+		maxRetries = 6
+	}
+	interval := obcfg.GetConfig().Time.CheckConnectionInterval
+	if interval < 1 {
+		interval = 5
+	}
 	bootstrapCmd := fmt.Sprintf(
-		`ACCESS_ID=$(cat %s/access_id) && ACCESS_KEY=$(cat %s/access_key) && /home/admin/oblogservice/bin/ls_ctrl --host %s bootstrap --object-store-url "${BUCKET_URL}&access_id=${ACCESS_ID}&access_key=${ACCESS_KEY}" %s`,
+		`ACCESS_ID=$(cat %s/access_id) && ACCESS_KEY=$(cat %s/access_key) && for i in $(seq 1 %d); do /home/admin/oblogservice/bin/ls_ctrl --host %s bootstrap --object-store-url "${BUCKET_URL}&access_id=${ACCESS_ID}&access_key=${ACCESS_KEY}" %s && exit 0; echo "logservice bootstrap attempt $i/%d failed, retrying in %ds" >&2; sleep %d; done; exit 1`,
 		secretMountPath, secretMountPath,
-		httpAddr, serverArgs,
+		maxRetries, httpAddr, serverArgs, maxRetries, interval, interval,
 	)
 
 	serverEnvVars = append(serverEnvVars, corev1.EnvVar{
