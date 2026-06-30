@@ -93,6 +93,13 @@ func CreateNodes(m *OBLogServiceZoneManager) tasktypes.TaskError {
 				ServiceAccount: m.Resource.Spec.ServiceAccount,
 			},
 		}
+		modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.Resource, oceanbaseconst.AnnotationsMode)
+		if modeAnnoExist {
+			if node.Annotations == nil {
+				node.Annotations = make(map[string]string)
+			}
+			node.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
+		}
 		if err := m.Client.Create(m.Ctx, node); err != nil {
 			if !kubeerrors.IsAlreadyExists(err) {
 				return errors.Wrapf(err, "create log service node %s", nodeName)

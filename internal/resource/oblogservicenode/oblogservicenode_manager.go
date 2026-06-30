@@ -28,6 +28,7 @@ import (
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	lsstatus "github.com/oceanbase/ob-operator/internal/const/status/oblogservicecluster"
 	nodestatus "github.com/oceanbase/ob-operator/internal/const/status/oblogservicenode"
+	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/internal/telemetry"
 	opresource "github.com/oceanbase/ob-operator/pkg/coordinator"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
@@ -130,15 +131,18 @@ func (m *OBLogServiceNodeManager) UpdateStatus() error {
 		return m.Client.Status().Update(m.Ctx, m.Resource)
 	}
 
-	// Populate ServiceIP from existing Service if not yet set
+	// Populate ServiceIP from existing Service if not yet set (service mode only)
 	if m.Resource.Status.ServiceIP == "" {
-		svcName := fmt.Sprintf("%s-svc", m.Resource.Name)
-		svc := &corev1.Service{}
-		if err := m.Client.Get(m.Ctx, types.NamespacedName{
-			Namespace: m.Resource.Namespace,
-			Name:      svcName,
-		}, svc); err == nil {
-			m.Resource.Status.ServiceIP = svc.Spec.ClusterIP
+		mode, modeAnnoExist := resourceutils.GetAnnotationField(m.Resource, oceanbaseconst.AnnotationsMode)
+		if modeAnnoExist && mode == oceanbaseconst.ModeService {
+			svcName := fmt.Sprintf("%s-svc", m.Resource.Name)
+			svc := &corev1.Service{}
+			if err := m.Client.Get(m.Ctx, types.NamespacedName{
+				Namespace: m.Resource.Namespace,
+				Name:      svcName,
+			}, svc); err == nil {
+				m.Resource.Status.ServiceIP = svc.Spec.ClusterIP
+			}
 		}
 	}
 

@@ -58,14 +58,17 @@ func (s *OBLogServiceNodeStatus) GetConnectAddr() string {
 
 func (n *OBLogServiceNode) SupportStaticIP() bool {
 	switch n.Status.CNI {
-	case oceanbaseconst.CNICalico, oceanbaseconst.CNIKubeOvn:
+	case oceanbaseconst.CNICalico:
+		return true
+	case oceanbaseconst.CNIKubeOvn:
 		return true
 	default:
-		// In service-IP advertise mode (oblogservice >=1.3.0) the per-pod Service
-		// provides a stable identity, so the pod can be recreated for the same
-		// node and rejoin at the same ServiceIP — mirroring observer's service
-		// mode (SupportStaticIP returns true when mode=service).
-		return n.Status.ServiceIP != ""
+		annos := n.GetAnnotations()
+		if annos == nil {
+			return false
+		}
+		mode, modeAnnoExist := annos[oceanbaseconst.AnnotationsMode]
+		return modeAnnoExist && (mode == oceanbaseconst.ModeStandalone || mode == oceanbaseconst.ModeService)
 	}
 }
 

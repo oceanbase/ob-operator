@@ -38,6 +38,11 @@ import (
 var taskMap = builder.NewTaskHub[*OBLogServiceNodeManager]()
 
 func CreateSvc(m *OBLogServiceNodeManager) tasktypes.TaskError {
+	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.Resource, oceanbaseconst.AnnotationsMode)
+	if !modeAnnoExist || mode != oceanbaseconst.ModeService {
+		m.Logger.Info("Skipping service creation (mode annotation not set to service)")
+		return nil
+	}
 	m.Logger.Info("Creating log service node service")
 	podName := m.Resource.Name
 	svcName := fmt.Sprintf("%s-svc", podName)
@@ -181,18 +186,33 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 	storeMountPath := oceanbaseconst.LogServiceStoreMountPath
 	logMountPath := oceanbaseconst.LogServiceLogMountPath
 
-	// Fetch ServiceIP from existing Service if not already in status
-	// (needed because tasks run in separate reconcile cycles)
-	if m.Resource.Status.ServiceIP == "" {
+	// In service mode, fetch ServiceIP from existing Service if not already in status
+	mode, modeAnnoExist := resourceutils.GetAnnotationField(m.Resource, oceanbaseconst.AnnotationsMode)
+	isServiceMode := modeAnnoExist && mode == oceanbaseconst.ModeService
+	if isServiceMode && m.Resource.Status.ServiceIP == "" {
 		svcName := fmt.Sprintf("%s-svc", podName)
 		svc := &corev1.Service{}
 		if err := m.Client.Get(m.Ctx, types.NamespacedName{Namespace: m.Resource.Namespace, Name: svcName}, svc); err == nil {
 			m.Resource.Status.ServiceIP = svc.Spec.ClusterIP
+		} else {
+			m.Logger.Error(err, "Failed to get service for ServiceIP lookup", "service", svcName)
 		}
 	}
-	advertiseIP := m.Resource.Status.GetConnectAddr()
-	if advertiseIP == "" {
-		return errors.New("logservice node has no ServiceIP; cannot determine advertise address")
+	// Service mode uses ServiceIP as advertise address; pod-IP mode uses downward API
+	var localIPEnv corev1.EnvVar
+	if isServiceMode {
+		advertiseIP := m.Resource.Status.GetConnectAddr()
+		if advertiseIP == "" {
+			return errors.New("logservice node has no ServiceIP; cannot determine advertise address")
+		}
+		localIPEnv = corev1.EnvVar{Name: "LOCAL_IP", Value: advertiseIP}
+	} else {
+		localIPEnv = corev1.EnvVar{
+			Name: "LOCAL_IP",
+			ValueFrom: &corev1.EnvVarSource{
+				FieldRef: &corev1.ObjectFieldSelector{FieldPath: "status.podIP"},
+			},
+		}
 	}
 
 	// Calculate log_disk_size from storeStorage PVC size
@@ -236,7 +256,7 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 
 	envVars := []corev1.EnvVar{
 		{Name: "CLUSTER_ID", Value: fmt.Sprintf("%d", m.Resource.Spec.ClusterId)},
-		{Name: "LOCAL_IP", Value: advertiseIP},
+		localIPEnv,
 		{Name: "RPC_PORT", Value: fmt.Sprintf("%d", rpcPort)},
 		{Name: "HTTP_PORT", Value: fmt.Sprintf("%d", httpPort)},
 		{Name: "STORE_MOUNT_PATH", Value: storeMountPath},
@@ -345,13 +365,16 @@ func WaitPodReady(m *OBLogServiceNodeManager) tasktypes.TaskError {
 			m.Resource.Status.Ready = true
 			m.Resource.Status.PodPhase = pod.Status.Phase
 			if m.Resource.Status.ServiceIP == "" {
-				svcName := fmt.Sprintf("%s-svc", podName)
-				svc := &corev1.Service{}
-				if svcErr := m.Client.Get(m.Ctx, types.NamespacedName{
-					Namespace: m.Resource.Namespace,
-					Name:      svcName,
-				}, svc); svcErr == nil {
-					m.Resource.Status.ServiceIP = svc.Spec.ClusterIP
+				mode, modeExist := resourceutils.GetAnnotationField(m.Resource, oceanbaseconst.AnnotationsMode)
+				if modeExist && mode == oceanbaseconst.ModeService {
+					svcName := fmt.Sprintf("%s-svc", podName)
+					svc := &corev1.Service{}
+					if svcErr := m.Client.Get(m.Ctx, types.NamespacedName{
+						Namespace: m.Resource.Namespace,
+						Name:      svcName,
+					}, svc); svcErr == nil {
+						m.Resource.Status.ServiceIP = svc.Spec.ClusterIP
+					}
 				}
 			}
 			m.Logger.Info("Log service node pod is ready", "pod", podName, "ip", pod.Status.PodIP)

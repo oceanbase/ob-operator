@@ -82,6 +82,13 @@ func CreateZones(m *OBLogServiceClusterManager) tasktypes.TaskError {
 				ServiceAccount: m.Resource.Spec.ServiceAccount,
 			},
 		}
+		modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.Resource, oceanbaseconst.AnnotationsMode)
+		if modeAnnoExist {
+			if zone.Annotations == nil {
+				zone.Annotations = make(map[string]string)
+			}
+			zone.Annotations[oceanbaseconst.AnnotationsMode] = modeAnnoVal
+		}
 		if err := m.Client.Create(m.Ctx, zone); err != nil {
 			if !kubeerrors.IsAlreadyExists(err) {
 				return errors.Wrapf(err, "create zone %s", zoneName)
