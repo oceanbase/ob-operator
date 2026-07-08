@@ -15,6 +15,7 @@ package operation
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"sync"
 	"time"
 
@@ -25,6 +26,10 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/config"
 )
+
+// credentialRedactor masks access_id/access_key values that may be embedded in
+// bootstrap/SQL strings so they are never written to logs or error messages.
+var credentialRedactor = regexp.MustCompile(`(access_id|access_key)=[^&"\s]+`)
 
 type ManagerConfig struct {
 	DefaultSqlTimeout    time.Duration
@@ -81,10 +86,10 @@ func (m *OceanbaseOperationManager) ExecWithTimeout(ctx context.Context, timeout
 	if err != nil {
 		return errors.Wrap(err, "Failed to set timeout variable")
 	}
-	m.Logger.V(1).Info(fmt.Sprintf("Execute sql %s with param %v", sql, params))
+	m.Logger.V(1).Info(fmt.Sprintf("Execute sql %s with param %v", credentialRedactor.ReplaceAllString(sql, "$1=***"), params))
 	_, err = m.Connector.GetClient().ExecContext(c, sql, params...)
 	if err != nil {
-		err = errors.Wrapf(err, "Execute sql failed, sql %s, param %v", sql, params)
+		err = errors.Wrapf(err, "Execute sql failed, sql %s, param %v", credentialRedactor.ReplaceAllString(sql, "$1=***"), params)
 		m.Logger.Error(err, "Execute sql failed")
 	}
 	return err

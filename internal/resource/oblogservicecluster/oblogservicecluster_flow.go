@@ -15,6 +15,7 @@ package oblogservicecluster
 
 import (
 	lsstatus "github.com/oceanbase/ob-operator/internal/const/status/oblogservicecluster"
+	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
@@ -22,10 +23,10 @@ func genBootstrapLogServiceFlow(_ *OBLogServiceClusterManager) *tasktypes.TaskFl
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         "bootstrap log service cluster",
-			Tasks:        []tasktypes.TaskName{tCreateZones, tWaitZonesBootstrapReady, tBootstrapLogService},
+			Tasks:        []tasktypes.TaskName{tCreateZones, tWaitZonesBootstrapReady, tBootstrapLogService, tMarkNodesRegistered},
 			TargetStatus: lsstatus.Running,
 			OnFailure: tasktypes.FailureRule{
-				NextTryStatus: lsstatus.Failed,
+				Strategy: strategy.RetryFromCurrent,
 			},
 		},
 	}

@@ -250,7 +250,7 @@ func BootstrapLogService(m *OBLogServiceClusterManager) tasktypes.TaskError {
 		interval = 5
 	}
 	bootstrapCmd := fmt.Sprintf(
-		`ACCESS_ID=$(cat %s/access_id) && ACCESS_KEY=$(cat %s/access_key) && for i in $(seq 1 %d); do /home/admin/oblogservice/bin/ls_ctrl --host %s bootstrap --object-store-url "${BUCKET_URL}&access_id=${ACCESS_ID}&access_key=${ACCESS_KEY}" %s && exit 0; echo "logservice bootstrap attempt $i/%d failed, retrying in %ds" >&2; sleep %d; done; exit 1`,
+		`ACCESS_ID=$(cat %s/access_id) && ACCESS_KEY=$(cat %s/access_key) && for i in $(seq 1 %d); do OUTPUT=$(/home/admin/oblogservice/bin/ls_ctrl --host %s bootstrap --object-store-url "${BUCKET_URL}&access_id=${ACCESS_ID}&access_key=${ACCESS_KEY}" %s 2>&1) && exit 0; if echo "$OUTPUT" | grep -qi "already bootstrap"; then echo "cluster already bootstrapped, treating as success" >&2; exit 0; fi; echo "logservice bootstrap attempt $i/%d failed: $OUTPUT, retrying in %ds" >&2; sleep %d; done; exit 1`,
 		secretMountPath, secretMountPath,
 		maxRetries, httpAddr, serverArgs, maxRetries, interval, interval,
 	)
@@ -298,8 +298,15 @@ func BootstrapLogService(m *OBLogServiceClusterManager) tasktypes.TaskError {
 
 	m.Logger.Info("Log service bootstrap succeeded")
 	m.Recorder.Event(m.Resource, "Bootstrap", "", "Log service bootstrap succeeded")
+	return nil
+}
 
-	// Mark all bootstrap nodes as registered
+func MarkNodesRegistered(m *OBLogServiceClusterManager) tasktypes.TaskError {
+	m.Logger.Info("Marking all bootstrap nodes as registered")
+	zoneList, err := m.listZones()
+	if err != nil {
+		return errors.Wrap(err, "list zones for node annotation")
+	}
 	for _, zone := range zoneList.Items {
 		nodeList := &v1alpha1.OBLogServiceNodeList{}
 		if err := m.Client.List(m.Ctx, nodeList, client.MatchingLabels{
@@ -309,6 +316,9 @@ func BootstrapLogService(m *OBLogServiceClusterManager) tasktypes.TaskError {
 		}
 		for i := range nodeList.Items {
 			node := &nodeList.Items[i]
+			if node.Annotations != nil && node.Annotations[oceanbaseconst.AnnotationsLogServiceNodeRegistered] == "true" {
+				continue
+			}
 			patch := client.MergeFrom(node.DeepCopy())
 			if node.Annotations == nil {
 				node.Annotations = make(map[string]string)

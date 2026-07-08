@@ -74,7 +74,7 @@ func (m *OBLogServiceClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) 
 	m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Create task flow according to status")
 
 	switch m.Resource.Status.Status {
-	case lsstatus.New:
+	case lsstatus.New, lsstatus.Failed:
 		taskFlow = genBootstrapLogServiceFlow(m)
 	case lsstatus.ModifyZoneReplica:
 		taskFlow = genModifyZoneReplicaFlow(m)

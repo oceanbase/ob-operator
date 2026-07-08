@@ -177,22 +177,58 @@ func DeleteExcessNodes(m *OBLogServiceZoneManager) tasktypes.TaskError {
 	desiredCount := m.Resource.Spec.Topology.Replica
 	currentCount := len(nodeList.Items)
 	if currentCount <= desiredCount {
+		// No excess — clear any stale to-be-deleted marks (scale-up between
+		// unregister and delete).
+		for i := range nodeList.Items {
+			node := &nodeList.Items[i]
+			if node.Annotations != nil && node.Annotations[oceanbaseconst.AnnotationsLogServiceNodeToBeDeleted] == "true" {
+				if err := m.clearToBeDeletedAnnotation(node); err != nil {
+					return errors.Wrapf(err, "clear stale to-be-deleted mark on %s", node.Name)
+				}
+			}
+		}
 		return nil
 	}
 
 	toDelete := currentCount - desiredCount
-	// Sort: unrecoverable nodes first, then newest first
-	sort.Slice(nodeList.Items, func(i, j int) bool {
-		iUnrecoverable := nodeList.Items[i].Status.Status == nodestatus.Unrecoverable
-		jUnrecoverable := nodeList.Items[j].Status.Status == nodestatus.Unrecoverable
-		if iUnrecoverable != jUnrecoverable {
-			return iUnrecoverable
+
+	// Prefer nodes marked to-be-deleted by UnregisterNodeFromCluster so the
+	// exact same set is deleted (the annotation is the source of truth).
+	marked := make([]v1alpha1.OBLogServiceNode, 0, toDelete)
+	unmarked := make([]v1alpha1.OBLogServiceNode, 0, len(nodeList.Items))
+	for i := range nodeList.Items {
+		if nodeList.Items[i].Annotations != nil && nodeList.Items[i].Annotations[oceanbaseconst.AnnotationsLogServiceNodeToBeDeleted] == "true" {
+			marked = append(marked, nodeList.Items[i])
+		} else {
+			unmarked = append(unmarked, nodeList.Items[i])
 		}
-		return nodeList.Items[i].CreationTimestamp.After(nodeList.Items[j].CreationTimestamp.Time)
-	})
-	for i := 0; i < toDelete && i < len(nodeList.Items); i++ {
-		node := &nodeList.Items[i]
-		if err := m.Client.Delete(m.Ctx, node); err != nil {
+	}
+
+	// Build the deletion list: marked nodes first (up to toDelete), then
+	// sorted fallback from unmarked if not enough marks exist.
+	var candidates []v1alpha1.OBLogServiceNode
+	if len(marked) >= toDelete {
+		sortDeleteCandidates(marked)
+		candidates = marked[:toDelete]
+		// Clear marks on surplus marked nodes that won't be deleted.
+		for i := toDelete; i < len(marked); i++ {
+			if err := m.clearToBeDeletedAnnotation(&marked[i]); err != nil {
+				return errors.Wrapf(err, "clear surplus mark on %s", marked[i].Name)
+			}
+		}
+	} else {
+		candidates = append(candidates, marked...)
+		sortDeleteCandidates(unmarked)
+		need := toDelete - len(marked)
+		if need > len(unmarked) {
+			need = len(unmarked)
+		}
+		candidates = append(candidates, unmarked[:need]...)
+	}
+
+	for i := range candidates {
+		node := &candidates[i]
+		if err := m.Client.Delete(m.Ctx, node); err != nil && !kubeerrors.IsNotFound(err) {
 			return errors.Wrapf(err, "delete node %s", node.Name)
 		}
 		m.Logger.Info("Deleted log service node", "name", node.Name)
@@ -292,6 +328,12 @@ func (m *OBLogServiceZoneManager) annotateNodeRegistered(node *v1alpha1.OBLogSer
 	return m.Client.Patch(m.Ctx, node, patch)
 }
 
+func (m *OBLogServiceZoneManager) clearToBeDeletedAnnotation(node *v1alpha1.OBLogServiceNode) error {
+	patch := client.MergeFrom(node.DeepCopy())
+	delete(node.Annotations, oceanbaseconst.AnnotationsLogServiceNodeToBeDeleted)
+	return m.Client.Patch(m.Ctx, node, patch)
+}
+
 func UnregisterNodeFromCluster(m *OBLogServiceZoneManager) tasktypes.TaskError {
 	m.Logger.Info("Unregistering nodes from log service cluster")
 
@@ -303,31 +345,81 @@ func UnregisterNodeFromCluster(m *OBLogServiceZoneManager) tasktypes.TaskError {
 	desiredCount := m.Resource.Spec.Topology.Replica
 	currentCount := len(nodeList.Items)
 	if currentCount <= desiredCount {
+		// Scale-up happened after we were scheduled — clear any stale marks.
+		for i := range nodeList.Items {
+			node := &nodeList.Items[i]
+			if node.Annotations != nil && node.Annotations[oceanbaseconst.AnnotationsLogServiceNodeToBeDeleted] == "true" {
+				if err := m.clearToBeDeletedAnnotation(node); err != nil {
+					return errors.Wrapf(err, "clear stale to-be-deleted mark on %s", node.Name)
+				}
+			}
+		}
 		return nil
 	}
 
 	toDelete := currentCount - desiredCount
-	sort.Slice(nodeList.Items, func(i, j int) bool {
-		iUnrecoverable := nodeList.Items[i].Status.Status == nodestatus.Unrecoverable
-		jUnrecoverable := nodeList.Items[j].Status.Status == nodestatus.Unrecoverable
-		if iUnrecoverable != jUnrecoverable {
-			return iUnrecoverable
+
+	// Prefer nodes already marked from a prior run (idempotent retry).
+	alreadyMarked := make([]v1alpha1.OBLogServiceNode, 0)
+	unmarked := make([]v1alpha1.OBLogServiceNode, 0)
+	for i := range nodeList.Items {
+		if nodeList.Items[i].Annotations != nil && nodeList.Items[i].Annotations[oceanbaseconst.AnnotationsLogServiceNodeToBeDeleted] == "true" {
+			alreadyMarked = append(alreadyMarked, nodeList.Items[i])
+		} else {
+			unmarked = append(unmarked, nodeList.Items[i])
 		}
-		return nodeList.Items[i].CreationTimestamp.After(nodeList.Items[j].CreationTimestamp.Time)
-	})
+	}
+
+	var toDeleteNodes []v1alpha1.OBLogServiceNode
+	if len(alreadyMarked) >= toDelete {
+		// Enough are already marked — use them and clear surplus marks.
+		sortDeleteCandidates(alreadyMarked)
+		toDeleteNodes = alreadyMarked[:toDelete]
+		for i := toDelete; i < len(alreadyMarked); i++ {
+			if err := m.clearToBeDeletedAnnotation(&alreadyMarked[i]); err != nil {
+				return errors.Wrapf(err, "clear surplus mark on %s", alreadyMarked[i].Name)
+			}
+		}
+	} else {
+		// Need more candidates beyond what's already marked.
+		toDeleteNodes = append(toDeleteNodes, alreadyMarked...)
+		sortDeleteCandidates(unmarked)
+		need := toDelete - len(alreadyMarked)
+		if need > len(unmarked) {
+			need = len(unmarked)
+		}
+		toDeleteNodes = append(toDeleteNodes, unmarked[:need]...)
+	}
+
+	// Persistently mark selected nodes so DeleteExcessNodes deletes the exact
+	// same set even if the underlying list order changes between the two steps.
+	for i := range toDeleteNodes {
+		node := &toDeleteNodes[i]
+		if node.Annotations != nil && node.Annotations[oceanbaseconst.AnnotationsLogServiceNodeToBeDeleted] == "true" {
+			continue
+		}
+		patch := client.MergeFrom(node.DeepCopy())
+		if node.Annotations == nil {
+			node.Annotations = make(map[string]string)
+		}
+		node.Annotations[oceanbaseconst.AnnotationsLogServiceNodeToBeDeleted] = "true"
+		if err := m.Client.Patch(m.Ctx, node, patch); err != nil {
+			return errors.Wrapf(err, "mark node %s to-be-deleted", node.Name)
+		}
+	}
 
 	// Collect names of nodes to be deleted so we don't pick them as --host
-	excludeNames := make([]string, 0, toDelete)
-	for i := 0; i < toDelete && i < len(nodeList.Items); i++ {
-		excludeNames = append(excludeNames, nodeList.Items[i].Name)
+	excludeNames := make([]string, 0, len(toDeleteNodes))
+	for i := range toDeleteNodes {
+		excludeNames = append(excludeNames, toDeleteNodes[i].Name)
 	}
 	hostAddr, err := m.getRunningNodeHttpAddr(excludeNames...)
 	if err != nil {
 		return errors.Wrap(err, "get running node http addr")
 	}
 
-	for i := 0; i < toDelete && i < len(nodeList.Items); i++ {
-		node := &nodeList.Items[i]
+	for i := range toDeleteNodes {
+		node := &toDeleteNodes[i]
 		nodeAddr := node.Status.GetConnectAddr()
 		if nodeAddr == "" {
 			m.Logger.Info("Node has no address, skip unregister", "node", node.Name)
@@ -395,6 +487,22 @@ func UnregisterAllNodesFromCluster(m *OBLogServiceZoneManager) tasktypes.TaskErr
 		}
 	}
 	return nil
+}
+
+func sortDeleteCandidates(nodes []v1alpha1.OBLogServiceNode) {
+	sort.SliceStable(nodes, func(i, j int) bool {
+		iUnrecoverable := nodes[i].Status.Status == nodestatus.Unrecoverable
+		jUnrecoverable := nodes[j].Status.Status == nodestatus.Unrecoverable
+		if iUnrecoverable != jUnrecoverable {
+			return iUnrecoverable
+		}
+		ti := nodes[i].CreationTimestamp.Time
+		tj := nodes[j].CreationTimestamp.Time
+		if !ti.Equal(tj) {
+			return ti.After(tj)
+		}
+		return nodes[i].Name < nodes[j].Name
+	})
 }
 
 func (m *OBLogServiceZoneManager) getRunningNodeHttpAddr(excludeNames ...string) (string, error) {

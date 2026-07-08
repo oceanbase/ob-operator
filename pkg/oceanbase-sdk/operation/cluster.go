@@ -50,7 +50,7 @@ func (m *OceanbaseOperationManager) BootstrapSharedStorage(ctx context.Context, 
 	m.Logger.Info("Execute shared storage bootstrap sql", "servers", bootstrapInfo, "datasource", m.Connector.DataSource().String())
 	err := m.ExecWithTimeout(ctx, config.BootstrapTimeout, bootstrapSql)
 	if err != nil {
-		m.Logger.Error(err, "Got exception when bootstrap with shared storage")
+		m.Logger.Error(err, "Got exception when bootstrap with shared storage", "servers", bootstrapInfo, "datasource", m.Connector.DataSource().String())
 		return errors.Wrap(err, "Bootstrap with shared storage")
 	}
 	return nil

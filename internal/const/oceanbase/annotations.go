@@ -36,6 +36,9 @@ const (
 
 const (
 	AnnotationsLogServiceNodeRegistered = "oceanbase.oceanbase.com/logservice-node-registered"
+	// AnnotationsLogServiceNodeToBeDeleted marks nodes selected for deletion by
+	// UnregisterNodeFromCluster so DeleteExcessNodes deletes the exact same set.
+	AnnotationsLogServiceNodeToBeDeleted = "oceanbase.oceanbase.com/logservice-node-to-be-deleted"
 )
 
 const (
