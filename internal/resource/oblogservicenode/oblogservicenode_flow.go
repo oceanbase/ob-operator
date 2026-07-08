@@ -61,7 +61,7 @@ func genRecoverNodeFlow(_ *OBLogServiceNodeManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         "recover log service node",
-			Tasks:        []tasktypes.TaskName{tDeletePod, tCreatePod, tWaitPodReady},
+			Tasks:        []tasktypes.TaskName{tDeletePod, tWaitPodDeleted, tCreatePod, tWaitPodReady},
 			TargetStatus: nodestatus.Running,
 			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: nodestatus.Running,

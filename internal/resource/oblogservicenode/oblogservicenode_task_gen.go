@@ -8,4 +8,5 @@ func init() {
 	taskMap.Register(tWaitPodReady, WaitPodReady)
 	taskMap.Register(tWaitClusterBootstrapped, WaitClusterBootstrapped)
 	taskMap.Register(tDeletePod, DeletePod)
+	taskMap.Register(tWaitPodDeleted, WaitPodDeleted)
 }

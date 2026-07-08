@@ -10,4 +10,5 @@ const (
 	tWaitPodReady            ttypes.TaskName = "wait pod ready"
 	tWaitClusterBootstrapped ttypes.TaskName = "wait cluster bootstrapped"
 	tDeletePod               ttypes.TaskName = "delete pod"
+	tWaitPodDeleted          ttypes.TaskName = "wait pod deleted"
 )

@@ -430,9 +430,30 @@ func DeletePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 	if err := m.Client.Delete(m.Ctx, pod); err != nil && !kubeerrors.IsNotFound(err) {
 		return errors.Wrap(err, "delete pod")
 	}
+	// Keep Status.PodIP: generateStaticIpAnnotation needs the old IP to pin
+	// the recreated pod to the same address (Calico/KubeOvn), so the ln
+	// registration recorded in logservice metadata stays valid.
 	m.Resource.Status.Ready = false
-	m.Resource.Status.PodIP = ""
 	return nil
+}
+
+func WaitPodDeleted(m *OBLogServiceNodeManager) tasktypes.TaskError {
+	m.Logger.Info("Waiting for log service node pod to be deleted")
+	podName := m.Resource.Status.PodName
+	if podName == "" {
+		podName = m.Resource.Name
+	}
+	for range obcfg.GetConfig().Time.DefaultStateWaitTimeout {
+		err := m.Client.Get(m.Ctx, types.NamespacedName{
+			Namespace: m.Resource.Namespace,
+			Name:      podName,
+		}, &corev1.Pod{})
+		if err != nil && kubeerrors.IsNotFound(err) {
+			return nil
+		}
+		time.Sleep(time.Second)
+	}
+	return errors.New("timeout waiting for log service node pod to be deleted")
 }
 
 func (m *OBLogServiceNodeManager) buildPodLabels() map[string]string {
