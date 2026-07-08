@@ -104,6 +104,13 @@ func CreatePVC(m *OBLogServiceNodeManager) tasktypes.TaskError {
 		return errors.New("storage.logStorage is required but was nil")
 	}
 
+	// Snapshot the storage fields into locals after the nil checks so that any
+	// hypothetical concurrent mutation of m.Resource.Spec.Storage between the
+	// checks and the PVC construction cannot turn a non-nil check into a nil
+	// deref (observed as an intermittent panic at the LogStorage.Size use).
+	storeStorage := m.Resource.Spec.Storage.StoreStorage
+	logStorage := m.Resource.Spec.Storage.LogStorage
+
 	podName := m.Resource.Name
 	storePvcName := fmt.Sprintf("%s-%s", podName, oceanbaseconst.LogServiceStoreVolumeSuffix)
 	logPvcName := fmt.Sprintf("%s-%s", podName, oceanbaseconst.LogServiceLogVolumeSuffix)
@@ -127,10 +134,10 @@ func CreatePVC(m *OBLogServiceNodeManager) tasktypes.TaskError {
 			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 			Resources: corev1.VolumeResourceRequirements{
 				Requests: corev1.ResourceList{
-					"storage": m.Resource.Spec.Storage.StoreStorage.Size,
+					"storage": storeStorage.Size,
 				},
 			},
-			StorageClassName: &m.Resource.Spec.Storage.StoreStorage.StorageClass,
+			StorageClassName: &storeStorage.StorageClass,
 		},
 	}
 	if err := m.Client.Create(m.Ctx, storePvc); err != nil && !kubeerrors.IsAlreadyExists(err) {
@@ -147,10 +154,10 @@ func CreatePVC(m *OBLogServiceNodeManager) tasktypes.TaskError {
 			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 			Resources: corev1.VolumeResourceRequirements{
 				Requests: corev1.ResourceList{
-					"storage": m.Resource.Spec.Storage.LogStorage.Size,
+					"storage": logStorage.Size,
 				},
 			},
-			StorageClassName: &m.Resource.Spec.Storage.LogStorage.StorageClass,
+			StorageClassName: &logStorage.StorageClass,
 		},
 	}
 	if err := m.Client.Create(m.Ctx, logPvc); err != nil && !kubeerrors.IsAlreadyExists(err) {

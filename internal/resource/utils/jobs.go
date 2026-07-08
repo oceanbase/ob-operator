@@ -120,14 +120,20 @@ func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace
 		time.Sleep(time.Second * time.Duration(obcfg.GetConfig().Time.CheckJobInterval))
 	}
 	if !finished {
-		return "", int32(cmdconst.ExitCodeNotExecuted), errors.Wrapf(err, "Run job %s timeout", fullJobName)
+		// NOTE: do not use errors.Wrapf here — when the last GetJob succeeded
+		// (job still running), err is nil and Wrapf(nil, ...) returns nil,
+		// which would make RunJob falsely report success.
+		return "", int32(cmdconst.ExitCodeNotExecuted), errors.Errorf("Run job %s timeout", fullJobName)
 	}
 	clientSet := k8sclient.GetClient()
 	podList, err := clientSet.ClientSet.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("job-name=%s", fullJobName),
 	})
 	if err != nil || len(podList.Items) == 0 {
-		return "", int32(cmdconst.ExitCodeNotExecuted), errors.Wrapf(err, "failed to get pods of job %s", jobName)
+		if err != nil {
+			return "", int32(cmdconst.ExitCodeNotExecuted), errors.Wrapf(err, "failed to get pods of job %s", jobName)
+		}
+		return "", int32(cmdconst.ExitCodeNotExecuted), errors.Errorf("failed to get pods of job %s: no pods found", jobName)
 	}
 	var outputBuffer bytes.Buffer
 	podLogOpts := corev1.PodLogOptions{}
