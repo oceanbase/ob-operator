@@ -161,7 +161,11 @@ func (m *OBLogServiceNodeManager) UpdateStatus() error {
 			}
 		} else {
 			m.Resource.Status.PodPhase = pod.Status.Phase
-			m.Resource.Status.PodIP = pod.Status.PodIP
+			// A failed/evicted pod may report an empty PodIP; keep the last
+			// known IP so recovery can pin the recreated pod to it.
+			if pod.Status.PodIP != "" {
+				m.Resource.Status.PodIP = pod.Status.PodIP
+			}
 			m.Resource.Status.Ready = pod.Status.Phase == corev1.PodRunning
 			if pod.Status.Phase == corev1.PodFailed {
 				m.Logger.Info("LogService node pod in Failed phase, need recovery", "pod", m.Resource.Status.PodName)
