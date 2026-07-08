@@ -146,26 +146,36 @@ func (m *OBLogServiceNodeManager) UpdateStatus() error {
 		}
 	}
 
-	if m.Resource.Status.Status == nodestatus.Running {
-		pod := &corev1.Pod{}
+	// Refresh PodIP/phase from the current pod whenever it exists, so that
+	// bootstrap (which needs the node connect address) can read the PodIP even
+	// before the node reaches Running. This mirrors the unconditional ServiceIP
+	// refresh above and is required for Pod-IP mode where the connect address
+	// is the PodIP itself.
+	pod := &corev1.Pod{}
+	if m.Resource.Status.PodName != "" {
 		err := m.Client.Get(m.Ctx, types.NamespacedName{
 			Namespace: m.Resource.Namespace,
 			Name:      m.Resource.Status.PodName,
 		}, pod)
-		if err != nil {
-			if kubeerrors.IsNotFound(err) {
-				m.Logger.Info("LogService node pod not found, need recovery", "pod", m.Resource.Status.PodName)
-				m.setRecoveryStatus()
-			} else {
-				return err
-			}
-		} else {
+		if err != nil && !kubeerrors.IsNotFound(err) {
+			return err
+		}
+		if err == nil {
 			m.Resource.Status.PodPhase = pod.Status.Phase
 			// A failed/evicted pod may report an empty PodIP; keep the last
 			// known IP so recovery can pin the recreated pod to it.
 			if pod.Status.PodIP != "" {
 				m.Resource.Status.PodIP = pod.Status.PodIP
 			}
+		}
+	}
+
+	if m.Resource.Status.Status == nodestatus.Running {
+		if m.Resource.Status.PodName != "" && pod.Name == "" {
+			// Pod lookup above returned NotFound; need recovery.
+			m.Logger.Info("LogService node pod not found, need recovery", "pod", m.Resource.Status.PodName)
+			m.setRecoveryStatus()
+		} else if pod.Name != "" {
 			m.Resource.Status.Ready = pod.Status.Phase == corev1.PodRunning
 			if pod.Status.Phase == corev1.PodFailed {
 				m.Logger.Info("LogService node pod in Failed phase, need recovery", "pod", m.Resource.Status.PodName)

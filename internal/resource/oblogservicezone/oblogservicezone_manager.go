@@ -14,6 +14,7 @@ package oblogservicezone
 
 import (
 	"context"
+	"sort"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -222,4 +223,25 @@ func (m *OBLogServiceZoneManager) listNodes() (*v1alpha1.OBLogServiceNodeList, e
 		return nil, err
 	}
 	return nodeList, nil
+}
+
+// sortDeleteCandidates orders nodes for deletion: unrecoverable first, then
+// newest first, with node name as a deterministic tiebreaker so two independent
+// list+sort calls select the same set even when CreationTimestamps are equal.
+// Defined here (not in _task.go) because it has no return value, which the
+// task_register generator cannot scan.
+func sortDeleteCandidates(nodes []v1alpha1.OBLogServiceNode) {
+	sort.SliceStable(nodes, func(i, j int) bool {
+		iUnrecoverable := nodes[i].Status.Status == nodestatus.Unrecoverable
+		jUnrecoverable := nodes[j].Status.Status == nodestatus.Unrecoverable
+		if iUnrecoverable != jUnrecoverable {
+			return iUnrecoverable
+		}
+		ti := nodes[i].CreationTimestamp.Time
+		tj := nodes[j].CreationTimestamp.Time
+		if !ti.Equal(tj) {
+			return ti.After(tj)
+		}
+		return nodes[i].Name < nodes[j].Name
+	})
 }

@@ -15,7 +15,6 @@ package oblogservicezone
 
 import (
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/pkg/errors"
@@ -487,22 +486,6 @@ func UnregisterAllNodesFromCluster(m *OBLogServiceZoneManager) tasktypes.TaskErr
 		}
 	}
 	return nil
-}
-
-func sortDeleteCandidates(nodes []v1alpha1.OBLogServiceNode) {
-	sort.SliceStable(nodes, func(i, j int) bool {
-		iUnrecoverable := nodes[i].Status.Status == nodestatus.Unrecoverable
-		jUnrecoverable := nodes[j].Status.Status == nodestatus.Unrecoverable
-		if iUnrecoverable != jUnrecoverable {
-			return iUnrecoverable
-		}
-		ti := nodes[i].CreationTimestamp.Time
-		tj := nodes[j].CreationTimestamp.Time
-		if !ti.Equal(tj) {
-			return ti.After(tj)
-		}
-		return nodes[i].Name < nodes[j].Name
-	})
 }
 
 func (m *OBLogServiceZoneManager) getRunningNodeHttpAddr(excludeNames ...string) (string, error) {
