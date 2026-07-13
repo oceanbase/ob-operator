@@ -11,6 +11,7 @@ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
 MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
+
 package helper
 
 import (
@@ -191,8 +192,8 @@ func getDaemonPid() int {
 	if pidStr == "" {
 		return 0
 	}
-	pid := 0
-	fmt.Sscanf(pidStr, "%d", &pid)
+	var pid int
+	_, _ = fmt.Sscanf(pidStr, "%d", &pid)
 	return pid
 }
 
