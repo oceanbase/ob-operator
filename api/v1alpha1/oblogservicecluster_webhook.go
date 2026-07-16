@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package v1alpha1
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"reflect"
@@ -21,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -170,6 +172,16 @@ func (r *OBLogServiceCluster) ValidateUpdate(old runtime.Object) (admission.Warn
 func (r *OBLogServiceCluster) ValidateDelete() (admission.Warnings, error) {
 	if r.Annotations[oceanbaseconst.AnnotationsIgnoreDeletion] == "true" {
 		return nil, apierrors.NewBadRequest("OBLogServiceCluster " + r.Name + " is protected from deletion by annotation " + oceanbaseconst.AnnotationsIgnoreDeletion)
+	}
+	obclusterList := &OBClusterList{}
+	if err := clt.List(context.TODO(), obclusterList, client.InNamespace(r.Namespace)); err != nil {
+		return nil, fmt.Errorf("failed to list OBClusters: %w", err)
+	}
+	for i := range obclusterList.Items {
+		cluster := &obclusterList.Items[i]
+		if cluster.Spec.LogServiceRef != nil && cluster.Spec.LogServiceRef.Name == r.Name {
+			return nil, fmt.Errorf("cannot delete OBLogServiceCluster %s: still referenced by OBCluster %s", r.Name, cluster.Name)
+		}
 	}
 	return nil, nil
 }
