@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"sort"
 
 	v1 "k8s.io/api/core/v1"
@@ -193,6 +194,12 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 	if r.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
 		if oldCluster.Spec.OBServerTemplate.Image != r.Spec.OBServerTemplate.Image {
 			return nil, errors.New("shared_storage mode does not support image upgrade in this version")
+		}
+		if !reflect.DeepEqual(oldCluster.Spec.SharedStorageInfo, r.Spec.SharedStorageInfo) {
+			return nil, errors.New("sharedStorageInfo cannot be changed after creation")
+		}
+		if !reflect.DeepEqual(oldCluster.Spec.LogServiceRef, r.Spec.LogServiceRef) {
+			return nil, errors.New("logServiceRef cannot be changed after creation")
 		}
 	}
 	if !oldCluster.SupportStaticIP() && (oldResource.Cpu != newResource.Cpu || oldResource.Memory != newResource.Memory) {
