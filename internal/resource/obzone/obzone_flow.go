@@ -58,6 +58,19 @@ func genCreateOBZoneFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	}
 }
 
+func genCreateSharedStorageOBZoneFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
+	return &tasktypes.TaskFlow{
+		OperationContext: &tasktypes.OperationContext{
+			Name:         "create shared storage obzone",
+			Tasks:        []tasktypes.TaskName{tAddZone, tAddSharedStorageDest, tStartOBZone, tCreateOBServer, tWaitOBServerRunning},
+			TargetStatus: zonestatus.Running,
+			OnFailure: tasktypes.FailureRule{
+				Strategy: strategy.RetryFromCurrent,
+			},
+		},
+	}
+}
+
 func genAddOBServerFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
