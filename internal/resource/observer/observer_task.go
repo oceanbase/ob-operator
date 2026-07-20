@@ -397,14 +397,23 @@ func WaitOBServerDeletedInCluster(m *OBServerManager) tasktypes.TaskError {
 		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
 	}
+	deploymentMode, _ := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsDeploymentMode)
+	isSharedStorage := deploymentMode == oceanbaseconst.DeploymentModeSharedStorage
 	deleted := false
 	for i := 0; i < obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds; i++ {
 		operationManager, err := m.getOceanbaseOperationManager()
 		if err != nil {
 			return errors.Wrapf(err, "Get oceanbase operation manager failed")
 		}
-		observer, err := operationManager.GetServer(m.Ctx, observerInfo)
-		if observer == nil && err == nil {
+		serverExists := false
+		if isSharedStorage {
+			serverExists, err = operationManager.CheckServerExistInDBAOBServers(m.Ctx, observerInfo)
+		} else {
+			var observer *model.OBServer
+			observer, err = operationManager.GetServer(m.Ctx, observerInfo)
+			serverExists = observer != nil
+		}
+		if !serverExists && err == nil {
 			m.Logger.Info("OBServer deleted")
 			deleted = true
 			break

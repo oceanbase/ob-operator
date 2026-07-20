@@ -34,6 +34,15 @@ func (m *OceanbaseOperationManager) GetServer(ctx context.Context, s *model.Serv
 	return &observers[0], nil
 }
 
+func (m *OceanbaseOperationManager) CheckServerExistInDBAOBServers(ctx context.Context, s *model.ServerInfo) (bool, error) {
+	var count int
+	err := m.QueryCount(ctx, &count, sql.GetServerCountFromDBAOBServers, s.Ip, s.Port)
+	if err != nil {
+		return false, errors.Wrap(err, "Check whether observer exists in DBA_OB_SERVERS")
+	}
+	return count != 0, nil
+}
+
 func (m *OceanbaseOperationManager) ListServers(ctx context.Context) ([]model.OBServer, error) {
 	observers := make([]model.OBServer, 0)
 	err := m.QueryList(ctx, &observers, sql.ListServer)
