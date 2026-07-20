@@ -24,6 +24,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	apipod "k8s.io/kubernetes/pkg/api/v1/pod"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -366,7 +367,7 @@ func WaitPodReady(m *OBLogServiceNodeManager) tasktypes.TaskError {
 		if err != nil {
 			return errors.Wrap(err, "get pod")
 		}
-		if pod.Status.Phase == corev1.PodRunning && pod.Status.PodIP != "" {
+		if pod.Status.Phase == corev1.PodRunning && pod.Status.PodIP != "" && apipod.IsPodReady(pod) {
 			m.Resource.Status.PodIP = pod.Status.PodIP
 			m.Resource.Status.CNI = resourceutils.GetCNIFromAnnotation(pod)
 			m.Resource.Status.Ready = true
