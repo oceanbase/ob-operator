@@ -141,8 +141,8 @@ func CreatePVC(m *OBLogServiceNodeManager) tasktypes.TaskError {
 			StorageClassName: &storeStorage.StorageClass,
 		},
 	}
-	if err := m.Client.Create(m.Ctx, storePvc); err != nil && !kubeerrors.IsAlreadyExists(err) {
-		return errors.Wrap(err, "create store pvc")
+	if err := createOrValidateLogServicePVC(m, storePvc, "store"); err != nil {
+		return err
 	}
 
 	logPvc := &corev1.PersistentVolumeClaim{
@@ -161,11 +161,119 @@ func CreatePVC(m *OBLogServiceNodeManager) tasktypes.TaskError {
 			StorageClassName: &logStorage.StorageClass,
 		},
 	}
-	if err := m.Client.Create(m.Ctx, logPvc); err != nil && !kubeerrors.IsAlreadyExists(err) {
-		return errors.Wrap(err, "create log pvc")
+	if err := createOrValidateLogServicePVC(m, logPvc, "log"); err != nil {
+		return err
 	}
 
 	return nil
+}
+
+func createOrValidateLogServicePVC(m *OBLogServiceNodeManager, desired *corev1.PersistentVolumeClaim, role string) error {
+	if err := m.Client.Create(m.Ctx, desired); err != nil {
+		if !kubeerrors.IsAlreadyExists(err) {
+			return errors.Wrapf(err, "create %s pvc", role)
+		}
+
+		existing := &corev1.PersistentVolumeClaim{}
+		key := types.NamespacedName{Namespace: desired.Namespace, Name: desired.Name}
+		if m.APIReader == nil {
+			return errors.Errorf("validate existing %s pvc %s: uncached Kubernetes API reader is not configured", role, key.String())
+		}
+		if err := m.APIReader.Get(m.Ctx, key, existing); err != nil {
+			return errors.Wrapf(err, "get existing %s pvc %s", role, key.String())
+		}
+		if err := validateLogServicePVC(existing, desired, role); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func validateLogServicePVC(existing, desired *corev1.PersistentVolumeClaim, role string) error {
+	if existing.DeletionTimestamp != nil {
+		return errors.Errorf("existing %s pvc %s/%s is being deleted and cannot be reused", role, existing.Namespace, existing.Name)
+	}
+	if len(desired.OwnerReferences) == 0 {
+		return errors.Errorf("cannot validate existing %s pvc %s/%s without the current OBLogServiceNode owner reference", role, existing.Namespace, existing.Name)
+	}
+	desiredOwner := desired.OwnerReferences[0]
+	if desiredOwner.APIVersion == "" || desiredOwner.Kind == "" || desiredOwner.Name == "" || desiredOwner.UID == "" {
+		return errors.Errorf("cannot validate existing %s pvc %s/%s with an incomplete OBLogServiceNode owner reference", role, existing.Namespace, existing.Name)
+	}
+	ownedByCurrentNode := false
+	for _, owner := range existing.OwnerReferences {
+		if owner.APIVersion == desiredOwner.APIVersion && owner.Kind == desiredOwner.Kind &&
+			owner.Name == desiredOwner.Name && owner.UID == desiredOwner.UID {
+			ownedByCurrentNode = true
+			break
+		}
+	}
+	if !ownedByCurrentNode {
+		return errors.Errorf("existing %s pvc %s/%s is not owned by the current OBLogServiceNode %s (UID %q)", role, existing.Namespace, existing.Name, desiredOwner.Name, desiredOwner.UID)
+	}
+
+	if !storageClassNamesEqual(existing.Spec.StorageClassName, desired.Spec.StorageClassName) {
+		return errors.Errorf("existing %s pvc %s/%s has storage class %q, expected %q", role, existing.Namespace, existing.Name, storageClassName(existing.Spec.StorageClassName), storageClassName(desired.Spec.StorageClassName))
+	}
+
+	existingSize, hasExistingSize := existing.Spec.Resources.Requests[corev1.ResourceStorage]
+	desiredSize, hasDesiredSize := desired.Spec.Resources.Requests[corev1.ResourceStorage]
+	// A PVC storage request is a minimum. Keep an already-expanded claim compatible,
+	// but reject a smaller claim because CreatePVC does not expand it here.
+	if !hasExistingSize || !hasDesiredSize || existingSize.Cmp(desiredSize) < 0 {
+		return errors.Errorf("existing %s pvc %s/%s requests storage %q, expected at least %q", role, existing.Namespace, existing.Name, existingSize.String(), desiredSize.String())
+	}
+
+	if !accessModesEqual(existing.Spec.AccessModes, desired.Spec.AccessModes) {
+		return errors.Errorf("existing %s pvc %s/%s has access modes %v, expected %v", role, existing.Namespace, existing.Name, existing.Spec.AccessModes, desired.Spec.AccessModes)
+	}
+	if volumeMode(existing) != volumeMode(desired) {
+		return errors.Errorf("existing %s pvc %s/%s has volume mode %q, expected %q", role, existing.Namespace, existing.Name, volumeMode(existing), volumeMode(desired))
+	}
+	if existing.Spec.Selector != nil || existing.Spec.DataSource != nil || existing.Spec.DataSourceRef != nil {
+		return errors.Errorf("existing %s pvc %s/%s uses a selector or data source and cannot be safely reused", role, existing.Namespace, existing.Name)
+	}
+
+	return nil
+}
+
+func storageClassNamesEqual(existing, desired *string) bool {
+	if existing == nil || desired == nil {
+		return existing == nil && desired == nil
+	}
+	return *existing == *desired
+}
+
+func storageClassName(name *string) string {
+	if name == nil {
+		return "<nil>"
+	}
+	return *name
+}
+
+func accessModesEqual(existing, desired []corev1.PersistentVolumeAccessMode) bool {
+	if len(existing) != len(desired) {
+		return false
+	}
+
+	modeCounts := make(map[corev1.PersistentVolumeAccessMode]int, len(existing))
+	for _, mode := range existing {
+		modeCounts[mode]++
+	}
+	for _, mode := range desired {
+		modeCounts[mode]--
+		if modeCounts[mode] < 0 {
+			return false
+		}
+	}
+	return true
+}
+
+func volumeMode(pvc *corev1.PersistentVolumeClaim) corev1.PersistentVolumeMode {
+	if pvc.Spec.VolumeMode == nil {
+		return corev1.PersistentVolumeFilesystem
+	}
+	return *pvc.Spec.VolumeMode
 }
 
 func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
@@ -176,6 +284,11 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 	}
 	if m.Resource.Spec.Resource.Memory.IsZero() {
 		return errors.New("resource.memory is required but was zero")
+	}
+	for i, parameter := range m.Resource.Spec.Parameters {
+		if oceanbaseconst.ContainsManagedParameter(parameter.Name, parameter.Value, oceanbaseconst.LogServiceManagedParameters[:]) {
+			return errors.Errorf("spec.parameters[%d] contains an operator-managed parameter; managed parameters are %v", i, oceanbaseconst.LogServiceManagedParameters)
+		}
 	}
 
 	podName := m.Resource.Name

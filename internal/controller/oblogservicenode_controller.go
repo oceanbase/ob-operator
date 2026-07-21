@@ -30,9 +30,10 @@ import (
 )
 
 type OBLogServiceNodeReconciler struct {
-	Client   client.Client
-	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	Client    client.Client
+	APIReader client.Reader
+	Scheme    *runtime.Scheme
+	Recorder  record.EventRecorder
 }
 
 func (r *OBLogServiceNodeReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -48,17 +49,21 @@ func (r *OBLogServiceNodeReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	}
 
 	manager := &resoblogservicenode.OBLogServiceNodeManager{
-		Ctx:      ctx,
-		Resource: resource,
-		Client:   r.Client,
-		Logger:   &logger,
-		Recorder: telemetry.NewRecorder(ctx, r.Recorder),
+		Ctx:       ctx,
+		Resource:  resource,
+		Client:    r.Client,
+		APIReader: r.APIReader,
+		Logger:    &logger,
+		Recorder:  telemetry.NewRecorder(ctx, r.Recorder),
 	}
 	coord := coordinator.NewCoordinator(manager, &logger)
 	return coord.Coordinate()
 }
 
 func (r *OBLogServiceNodeReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if r.APIReader == nil {
+		r.APIReader = mgr.GetAPIReader()
+	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.OBLogServiceNode{}).
 		Owns(&corev1.Pod{}).

@@ -366,6 +366,15 @@ func (r *OBCluster) validateMutation() error {
 		if r.Spec.LogServiceRef == nil {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("logServiceRef"), "logServiceRef is required for shared_storage mode"))
 		}
+		for i, parameter := range r.Spec.Parameters {
+			if oceanbaseconst.ContainsManagedParameter(parameter.Name, parameter.Value, oceanbaseconst.SharedStorageManagedParameters[:]) {
+				allErrs = append(allErrs, field.Invalid(
+					field.NewPath("spec").Child("parameters").Index(i),
+					parameter.Name,
+					"enable_logservice is managed by ob-operator in shared_storage mode",
+				))
+			}
+		}
 	}
 	if len(allErrs) != 0 {
 		return allErrs.ToAggregate()

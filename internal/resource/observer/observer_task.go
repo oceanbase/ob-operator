@@ -108,6 +108,13 @@ func CreateOBServerPod(m *OBServerManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrap(err, "Get obcluster from K8s")
 	}
+	if obcluster.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
+		for i, parameter := range obcluster.Spec.Parameters {
+			if oceanbaseconst.ContainsManagedParameter(parameter.Name, parameter.Value, oceanbaseconst.SharedStorageManagedParameters[:]) {
+				return errors.Errorf("spec.parameters[%d] contains enable_logservice, which is managed by ob-operator in shared_storage mode", i)
+			}
+		}
+	}
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
 	ownerReference := metav1.OwnerReference{
 		APIVersion: m.OBServer.APIVersion,

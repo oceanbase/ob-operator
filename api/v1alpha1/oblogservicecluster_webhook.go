@@ -115,6 +115,9 @@ func (r *OBLogServiceCluster) ValidateCreate() (admission.Warnings, error) {
 	if r.Spec.LogService.Resource.Memory.IsZero() {
 		return nil, errors.New("logService.resource.memory is required")
 	}
+	if err := validateLogServiceManagedParameters(r.Spec.Parameters); err != nil {
+		return nil, err
+	}
 	for _, p := range r.Spec.Parameters {
 		if p.Name == "memory_limit" {
 			memoryLimit, err := resource.ParseQuantity(p.Value)
@@ -134,6 +137,9 @@ func (r *OBLogServiceCluster) ValidateUpdate(old runtime.Object) (admission.Warn
 	oldLS, ok := old.(*OBLogServiceCluster)
 	if !ok {
 		return nil, errors.New("failed to convert old object to OBLogServiceCluster")
+	}
+	if err := validateLogServiceManagedParameters(r.Spec.Parameters); err != nil {
+		return nil, err
 	}
 	if oldLS.Spec.ClusterId != r.Spec.ClusterId {
 		return nil, errors.New("clusterId cannot be changed after creation")
@@ -167,6 +173,15 @@ func (r *OBLogServiceCluster) ValidateUpdate(old runtime.Object) (admission.Warn
 		}
 	}
 	return nil, nil
+}
+
+func validateLogServiceManagedParameters(parameters []apitypes.Parameter) error {
+	for i, parameter := range parameters {
+		if oceanbaseconst.ContainsManagedParameter(parameter.Name, parameter.Value, oceanbaseconst.LogServiceManagedParameters[:]) {
+			return fmt.Errorf("parameters[%d] contains an operator-managed parameter; managed parameters are %v", i, oceanbaseconst.LogServiceManagedParameters)
+		}
+	}
+	return nil
 }
 
 func (r *OBLogServiceCluster) ValidateDelete() (admission.Warnings, error) {

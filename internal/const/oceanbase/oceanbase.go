@@ -12,8 +12,11 @@ See the Mulan PSL v2 for more details.
 
 package oceanbase
 
+import "strings"
+
 var UpgradeEssentialParameters = [...]string{"server_permanent_offline_time", "enable_rebalance", "enable_rereplication"}
 var ReservedParameters = [...]string{"cpu_count", "datafile_size", "log_disk_size", "enable_syslog_recycle", "max_syslog_file_count"}
+var SharedStorageManagedParameters = [...]string{"enable_logservice"}
 
 const (
 	SqlPort = 2881
@@ -32,7 +35,43 @@ const (
 	LogServiceLogVolumeSuffix   = "log"
 )
 
-var LogServiceReservedParameters = [...]string{"log_disk_size", "log_disk_percentage"}
+var LogServiceReservedParameters = [...]string{
+	"log_disk_size",
+	"log_disk_percentage",
+}
+
+var LogServiceManagedParameters = [...]string{
+	"cluster_id",
+	"local_ip",
+	"rpc_port",
+	"http_port",
+	"local_storage_dir",
+}
+
+// ContainsManagedParameter reports whether a structured parameter, including
+// any comma-delimited parameters injected through its name or value, contains
+// an operator-owned key.
+func ContainsManagedParameter(name, value string, managed []string) bool {
+	return containsManagedParameterString(name+"="+value, managed)
+}
+
+// containsManagedParameterString reports whether a comma-delimited parameter
+// string contains an operator-owned key.
+func containsManagedParameterString(serialized string, managed []string) bool {
+	for _, item := range strings.Split(serialized, ",") {
+		key, _, found := strings.Cut(strings.TrimSpace(item), "=")
+		if !found {
+			continue
+		}
+		key = strings.Trim(strings.TrimSpace(key), "'\"")
+		for _, managedKey := range managed {
+			if strings.EqualFold(key, managedKey) {
+				return true
+			}
+		}
+	}
+	return false
+}
 
 const (
 	SqlPortName = "sql"

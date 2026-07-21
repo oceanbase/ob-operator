@@ -39,11 +39,12 @@ import (
 var _ opresource.ResourceManager = &OBLogServiceNodeManager{}
 
 type OBLogServiceNodeManager struct {
-	Ctx      context.Context
-	Resource *v1alpha1.OBLogServiceNode
-	Client   client.Client
-	Recorder telemetry.Recorder
-	Logger   *logr.Logger
+	Ctx       context.Context
+	Resource  *v1alpha1.OBLogServiceNode
+	Client    client.Client
+	APIReader client.Reader
+	Recorder  telemetry.Recorder
+	Logger    *logr.Logger
 }
 
 func (m *OBLogServiceNodeManager) GetMeta() metav1.Object {
