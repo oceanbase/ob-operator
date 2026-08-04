@@ -45,7 +45,7 @@ func (m *OceanbaseOperationManager) AddZone(ctx context.Context, zoneName string
 }
 
 func (m *OceanbaseOperationManager) AddSharedStorageDest(ctx context.Context, path, accessInfo, attribute, zoneName string) error {
-	return m.addSharedStorageDest(
+	return m.addSharedStorageDestWithWaitConfig(
 		ctx,
 		path,
 		accessInfo,
@@ -56,7 +56,7 @@ func (m *OceanbaseOperationManager) AddSharedStorageDest(ctx context.Context, pa
 	)
 }
 
-func (m *OceanbaseOperationManager) addSharedStorageDest(
+func (m *OceanbaseOperationManager) addSharedStorageDestWithWaitConfig(
 	ctx context.Context,
 	path, accessInfo, attribute, zoneName string,
 	pollInterval, waitTimeout time.Duration,

@@ -161,11 +161,7 @@ func CreatePVC(m *OBLogServiceNodeManager) tasktypes.TaskError {
 			StorageClassName: &logStorage.StorageClass,
 		},
 	}
-	if err := createOrValidateLogServicePVC(m, logPvc, "log"); err != nil {
-		return err
-	}
-
-	return nil
+	return createOrValidateLogServicePVC(m, logPvc, "log")
 }
 
 func createOrValidateLogServicePVC(m *OBLogServiceNodeManager, desired *corev1.PersistentVolumeClaim, role string) error {
