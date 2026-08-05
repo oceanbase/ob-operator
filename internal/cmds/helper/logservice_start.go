@@ -20,12 +20,15 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
 
 const (
@@ -35,6 +38,7 @@ const (
 	DefaultLogServiceEtcPath        = "/home/admin/oblogservice/etc"
 	DefaultLogServiceRpcPort        = "50051"
 	DefaultLogServiceHttpPort       = "50052"
+	logServiceStartTimeoutEnv       = "LOGSERVICE_START_TIMEOUT_SECONDS"
 )
 
 var logserviceStartCmd = &cobra.Command{
@@ -138,31 +142,57 @@ func startLogServiceWithParam() error {
 // the daemon process. It forwards SIGTERM/SIGINT to the daemon and exits when
 // the daemon exits, so kubelet can detect the failure and restart the container.
 func runAndSupervise(cmd *exec.Cmd) error {
-	if err := cmd.Start(); err != nil {
-		return errors.Wrap(err, "start oblogservice")
+	startTimeout := getLogServiceStartTimeout()
+	deadline, err := startAndWaitForLauncher(cmd, startTimeout)
+	if err != nil {
+		return err
 	}
-	// Wait for the parent process to exit (oblogservice daemonizes via fork)
-	_ = cmd.Wait()
+	return monitorDaemon(deadline, startTimeout)
+}
 
-	// The daemon has forked; find and monitor the actual daemon process
-	return monitorDaemon()
+func startAndWaitForLauncher(cmd *exec.Cmd, startTimeout time.Duration) (time.Time, error) {
+	if err := cmd.Start(); err != nil {
+		return time.Time{}, errors.Wrap(err, "start oblogservice launcher")
+	}
+	deadline := time.Now().Add(startTimeout)
+	waitResult := make(chan error, 1)
+	go func() {
+		waitResult <- cmd.Wait()
+	}()
+
+	timer := time.NewTimer(startTimeout)
+	defer timer.Stop()
+	select {
+	case err := <-waitResult:
+		if err != nil {
+			return time.Time{}, errors.Wrap(err, "oblogservice launcher exited with an error")
+		}
+		return deadline, nil
+	case <-timer.C:
+		// Prefer a concurrently completed Wait result over reporting a timeout.
+		select {
+		case err := <-waitResult:
+			if err != nil {
+				return time.Time{}, errors.Wrap(err, "oblogservice launcher exited with an error")
+			}
+			return deadline, nil
+		default:
+		}
+		killErr := cmd.Process.Kill()
+		<-waitResult // Reap the launcher after Kill so no process or goroutine leaks.
+		if killErr != nil && !errors.Is(killErr, os.ErrProcessDone) {
+			return time.Time{}, errors.Wrap(killErr, "kill timed-out oblogservice launcher")
+		}
+		return time.Time{}, errors.Errorf("oblogservice launcher failed to exit within %s", startTimeout)
+	}
 }
 
 // monitorDaemon polls for the oblogservice daemon process and exits if it dies.
 // It also forwards SIGTERM/SIGINT to the daemon PID for graceful shutdown.
-func monitorDaemon() error {
-	// Wait for daemon to appear (up to 30s for slow startup)
-	var daemonPid int
-	for range 30 {
-		time.Sleep(time.Second)
-		pid := getDaemonPid()
-		if pid > 0 {
-			daemonPid = pid
-			break
-		}
-	}
-	if daemonPid == 0 {
-		return errors.New("oblogservice daemon failed to start within 30s")
+func monitorDaemon(deadline time.Time, startTimeout time.Duration) error {
+	daemonPid, err := waitForDaemon(deadline, startTimeout)
+	if err != nil {
+		return err
 	}
 	log.Printf("oblogservice daemon running with pid %d", daemonPid)
 
@@ -181,6 +211,42 @@ func monitorDaemon() error {
 			return errors.New("oblogservice daemon exited unexpectedly")
 		}
 	}
+}
+
+func waitForDaemon(deadline time.Time, startTimeout time.Duration) (int, error) {
+	remaining := time.Until(deadline)
+	if remaining <= 0 {
+		return 0, errors.Errorf("oblogservice daemon failed to start within %s", startTimeout)
+	}
+	startTimer := time.NewTimer(remaining)
+	pollTicker := time.NewTicker(time.Second)
+	defer startTimer.Stop()
+	defer pollTicker.Stop()
+
+	for {
+		daemonPid := getDaemonPid()
+		if daemonPid > 0 {
+			return daemonPid, nil
+		}
+		select {
+		case <-pollTicker.C:
+		case <-startTimer.C:
+			return 0, errors.Errorf("oblogservice daemon failed to start within %s", startTimeout)
+		}
+	}
+}
+
+func getLogServiceStartTimeout() time.Duration {
+	rawTimeout := os.Getenv(logServiceStartTimeoutEnv)
+	if rawTimeout == "" {
+		return time.Duration(oceanbaseconst.LogServiceStartTimeoutSeconds) * time.Second
+	}
+	seconds, err := strconv.ParseInt(rawTimeout, 10, 32)
+	if err != nil || seconds <= 0 {
+		log.Printf("Invalid %s value %q, using default %ds", logServiceStartTimeoutEnv, rawTimeout, oceanbaseconst.LogServiceStartTimeoutSeconds)
+		return time.Duration(oceanbaseconst.LogServiceStartTimeoutSeconds) * time.Second
+	}
+	return time.Duration(seconds) * time.Second
 }
 
 func getDaemonPid() int {

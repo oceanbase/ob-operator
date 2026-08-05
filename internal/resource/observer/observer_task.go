@@ -414,6 +414,11 @@ func WaitOBServerDeletedInCluster(m *OBServerManager) tasktypes.TaskError {
 		}
 		serverExists := false
 		if isSharedStorage {
+			// In shared-storage mode, __all_server retains a deleted server in the
+			// cleanup state until _shared_gc_file_expiration_time expires (7 days by
+			// default). DBA_OB_SERVERS filters cleanup rows, so it reflects logical
+			// deletion promptly and does not block the finalizer for that retention
+			// period. Keep the legacy __all_server check for normal mode.
 			serverExists, err = operationManager.CheckServerExistInDBAOBServers(m.Ctx, observerInfo)
 		} else {
 			var observer *model.OBServer

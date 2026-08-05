@@ -15,6 +15,7 @@ package oblogservicenode
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -378,6 +379,7 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 		{Name: "HTTP_PORT", Value: fmt.Sprintf("%d", httpPort)},
 		{Name: "STORE_MOUNT_PATH", Value: storeMountPath},
 		{Name: "LOG_MOUNT_PATH", Value: logMountPath},
+		{Name: "LOGSERVICE_START_TIMEOUT_SECONDS", Value: strconv.Itoa(obcfg.GetConfig().Time.LogServiceStartTimeoutSeconds)},
 	}
 	if logDiskSizeEnv != "" {
 		envVars = append(envVars, corev1.EnvVar{Name: "LOG_DISK_SIZE", Value: logDiskSizeEnv})

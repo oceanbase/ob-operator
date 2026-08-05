@@ -76,6 +76,7 @@ var defaultConfigMap = map[string]any{
 	"time.timeConsumingStateWaitTimeout":    oc.TimeConsumingStateWaitTimeout,
 	"time.waitForJobTimeoutSeconds":         oc.WaitForJobTimeoutSeconds,
 	"time.serverDeleteTimeoutSeconds":       oc.ServerDeleteTimeoutSeconds,
+	"time.logServiceStartTimeoutSeconds":    oc.LogServiceStartTimeoutSeconds,
 	"time.tolerateServerPodNotReadyMinutes": oc.TolerateServerPodNotReadyMinutes,
 
 	"time.defaultSqlTimeoutSeconds":    oc.DefaultSqlTimeoutSeconds,

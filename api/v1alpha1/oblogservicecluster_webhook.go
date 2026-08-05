@@ -18,9 +18,11 @@ import (
 	"fmt"
 	"reflect"
 
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -33,8 +35,10 @@ import (
 )
 
 var oblogserviceclusterlog = logf.Log.WithName("oblogservicecluster-resource")
+var oblogserviceclusterReader client.Reader
 
 func (r *OBLogServiceCluster) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	oblogserviceclusterReader = mgr.GetAPIReader()
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -109,6 +113,9 @@ func (r *OBLogServiceCluster) ValidateCreate() (admission.Warnings, error) {
 	if r.Spec.ObjectStoreURL.SecretRef.Name == "" {
 		return nil, errors.New("objectStoreUrl.secretRef.name is required")
 	}
+	if err := validateLogServiceObjectStoreSecret(context.Background(), oblogserviceclusterReader, r.Namespace, r.Spec.ObjectStoreURL.SecretRef.Name); err != nil {
+		return nil, err
+	}
 	if r.Spec.LogService.Storage == nil {
 		return nil, errors.New("logService.storage is required")
 	}
@@ -131,6 +138,23 @@ func (r *OBLogServiceCluster) ValidateCreate() (admission.Warnings, error) {
 		}
 	}
 	return nil, nil
+}
+
+func validateLogServiceObjectStoreSecret(ctx context.Context, reader client.Reader, namespace, name string) error {
+	secret := &corev1.Secret{}
+	err := reader.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, secret)
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return fmt.Errorf("objectStoreUrl secret %q not found in namespace %q", name, namespace)
+		}
+		return fmt.Errorf("failed to get objectStoreUrl secret %q in namespace %q: %w", name, namespace, err)
+	}
+	for _, key := range []string{"access_id", "access_key"} {
+		if len(secret.Data[key]) == 0 {
+			return fmt.Errorf("objectStoreUrl secret %q must contain non-empty %q", name, key)
+		}
+	}
+	return nil
 }
 
 func (r *OBLogServiceCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
@@ -189,7 +213,7 @@ func (r *OBLogServiceCluster) ValidateDelete() (admission.Warnings, error) {
 		return nil, apierrors.NewBadRequest("OBLogServiceCluster " + r.Name + " is protected from deletion by annotation " + oceanbaseconst.AnnotationsIgnoreDeletion)
 	}
 	obclusterList := &OBClusterList{}
-	if err := clt.List(context.TODO(), obclusterList, client.InNamespace(r.Namespace)); err != nil {
+	if err := oblogserviceclusterReader.List(context.TODO(), obclusterList, client.InNamespace(r.Namespace)); err != nil {
 		return nil, fmt.Errorf("failed to list OBClusters: %w", err)
 	}
 	for i := range obclusterList.Items {

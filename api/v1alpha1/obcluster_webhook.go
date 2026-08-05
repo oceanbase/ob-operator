@@ -193,6 +193,9 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 	}
 	if r.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
 		if oldCluster.Spec.OBServerTemplate.Image != r.Spec.OBServerTemplate.Image {
+			// Shared storage makes observer data external, but an image change still
+			// requires a coordinated database-version upgrade and LogService
+			// compatibility checks. Keep it immutable until that flow is supported.
 			return nil, errors.New("shared_storage mode does not support image upgrade in this version")
 		}
 		if !reflect.DeepEqual(oldCluster.Spec.SharedStorageInfo, r.Spec.SharedStorageInfo) {
@@ -365,6 +368,10 @@ func (r *OBCluster) validateMutation() error {
 		}
 		if r.Spec.LogServiceRef == nil {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("logServiceRef"), "logServiceRef is required for shared_storage mode"))
+		} else if r.Spec.LogServiceRef.Name == "" {
+			// The referenced resource may be created later; reconciliation waits for
+			// it to become Running before bootstrap.
+			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("logServiceRef").Child("name"), "logServiceRef.name is required for shared_storage mode"))
 		}
 		for i, parameter := range r.Spec.Parameters {
 			if oceanbaseconst.ContainsManagedParameter(parameter.Name, parameter.Value, oceanbaseconst.SharedStorageManagedParameters[:]) {

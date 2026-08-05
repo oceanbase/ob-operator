@@ -39,6 +39,7 @@ const (
 	TimeConsumingStateWaitTimeout = 3600
 	WaitForJobTimeoutSeconds      = 7200
 	ServerDeleteTimeoutSeconds    = 604800 // 7 days
+	LogServiceStartTimeoutSeconds = 300
 	DefaultSqlTimeoutSeconds      = 60
 	TenantSqlTimeoutSeconds       = 600
 	TenantRestoreTimeoutSeconds   = 600

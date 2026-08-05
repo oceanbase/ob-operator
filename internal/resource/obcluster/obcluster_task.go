@@ -14,6 +14,7 @@ See the Mulan PSL v2 for more details.
 package obcluster
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -28,6 +29,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/rand"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -38,6 +40,7 @@ import (
 	cmdconst "github.com/oceanbase/ob-operator/internal/const/cmd"
 	obagentconst "github.com/oceanbase/ob-operator/internal/const/obagent"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	logserviceclusterstatus "github.com/oceanbase/ob-operator/internal/const/status/oblogservicecluster"
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/helper"
@@ -215,19 +218,52 @@ func WaitLogServiceReady(m *OBClusterManager) tasktypes.TaskError {
 	if m.OBCluster.Spec.LogServiceRef == nil {
 		return errors.New("logServiceRef is required for shared_storage mode")
 	}
-	lsCluster := &v1alpha1.OBLogServiceCluster{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{
+	key := types.NamespacedName{
 		Namespace: m.OBCluster.Namespace,
 		Name:      m.OBCluster.Spec.LogServiceRef.Name,
-	}, lsCluster)
+	}
+	timeoutSeconds := obcfg.GetConfig().Time.DefaultStateWaitTimeout
+	if timeoutSeconds <= 0 {
+		timeoutSeconds = oceanbaseconst.DefaultStateWaitTimeout
+	}
+	intervalSeconds := obcfg.GetConfig().Time.CommonCheckInterval
+	if intervalSeconds <= 0 {
+		intervalSeconds = oceanbaseconst.CommonCheckInterval
+	}
+	err := waitForLogServiceReady(
+		m.Ctx,
+		m.Client,
+		key,
+		time.Duration(timeoutSeconds)*time.Second,
+		time.Duration(intervalSeconds)*time.Second,
+	)
 	if err != nil {
-		return errors.Wrap(err, "get OBLogServiceCluster")
+		return err
 	}
-	if lsCluster.Status.Status != "running" {
-		return errors.Errorf("OBLogServiceCluster %s is not running, current status: %s",
-			lsCluster.Name, lsCluster.Status.Status)
+	m.Logger.Info("LogService cluster is ready", "name", key.Name)
+	return nil
+}
+
+func waitForLogServiceReady(ctx context.Context, kubeClient client.Client, key types.NamespacedName, timeout, interval time.Duration) error {
+	lastObservedStatus := "not found"
+	err := wait.PollUntilContextTimeout(ctx, interval, timeout, true, func(ctx context.Context) (bool, error) {
+		lsCluster := &v1alpha1.OBLogServiceCluster{}
+		if err := kubeClient.Get(ctx, key, lsCluster); err != nil {
+			if kubeerrors.IsNotFound(err) {
+				lastObservedStatus = "not found"
+				return false, nil
+			}
+			return false, errors.Wrap(err, "get OBLogServiceCluster")
+		}
+		lastObservedStatus = lsCluster.Status.Status
+		if lastObservedStatus == "" {
+			lastObservedStatus = "empty"
+		}
+		return lsCluster.Status.Status == logserviceclusterstatus.Running, nil
+	})
+	if err != nil {
+		return errors.Wrapf(err, "wait for OBLogServiceCluster %s to become running; last observed status: %s", key.Name, lastObservedStatus)
 	}
-	m.Logger.Info("LogService cluster is ready", "name", lsCluster.Name)
 	return nil
 }
 
