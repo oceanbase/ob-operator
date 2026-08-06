@@ -31,6 +31,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	podconst "github.com/oceanbase/ob-operator/internal/const/pod"
 	lsstatus "github.com/oceanbase/ob-operator/internal/const/status/oblogservicecluster"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
@@ -469,7 +470,7 @@ func WaitPodReady(m *OBLogServiceNodeManager) tasktypes.TaskError {
 		podName = m.Resource.Name
 	}
 
-	for range 600 {
+	for range podconst.ReadyTimeoutSeconds {
 		pod := &corev1.Pod{}
 		err := m.Client.Get(m.Ctx, types.NamespacedName{
 			Namespace: m.Resource.Namespace,

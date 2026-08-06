@@ -12,6 +12,8 @@ See the Mulan PSL v2 for more details.
 
 package oceanbase
 
+import podconst "github.com/oceanbase/ob-operator/internal/const/pod"
+
 const (
 	TenantOpRetryTimes      = 9
 	TenantOpRetryGapSeconds = 9
@@ -39,7 +41,7 @@ const (
 	TimeConsumingStateWaitTimeout = 3600
 	WaitForJobTimeoutSeconds      = 7200
 	ServerDeleteTimeoutSeconds    = 604800 // 7 days
-	LogServiceStartTimeoutSeconds = 300
+	LogServiceStartTimeoutSeconds = podconst.ReadyTimeoutSeconds
 	DefaultSqlTimeoutSeconds      = 60
 	TenantSqlTimeoutSeconds       = 600
 	TenantRestoreTimeoutSeconds   = 600
