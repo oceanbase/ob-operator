@@ -5,6 +5,7 @@ import ttypes "github.com/oceanbase/ob-operator/pkg/task/types"
 
 const (
 	tAddZone                          ttypes.TaskName = "add zone"
+	tAddSharedStorageDest             ttypes.TaskName = "add shared storage dest"
 	tStartOBZone                      ttypes.TaskName = "start obzone"
 	tCreateOBServer                   ttypes.TaskName = "create observer"
 	tDeleteOBServer                   ttypes.TaskName = "delete observer"

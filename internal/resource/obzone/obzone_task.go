@@ -14,6 +14,7 @@ package obzone
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -43,6 +44,57 @@ func AddZone(m *OBZoneManager) tasktypes.TaskError {
 		return errors.Wrap(err, "Get oceanbase operation manager")
 	}
 	return oceanbaseOperationManager.AddZone(m.Ctx, m.OBZone.Spec.Topology.Zone)
+}
+
+func AddSharedStorageDest(m *OBZoneManager) tasktypes.TaskError {
+	obcluster, err := m.getOBCluster()
+	if err != nil {
+		return errors.Wrap(err, "Get obcluster")
+	}
+	if obcluster.Spec.DeploymentMode != oceanbaseconst.DeploymentModeSharedStorage {
+		return nil
+	}
+	if obcluster.Spec.SharedStorageInfo == nil {
+		return errors.New("sharedStorageInfo is required for shared_storage mode")
+	}
+
+	secret, err := resourceutils.GetSecret(m.Client, obcluster.Namespace, obcluster.Spec.SharedStorageInfo.SecretRef.Name)
+	if err != nil {
+		return errors.Wrap(err, "Get shared storage secret")
+	}
+	accessID, ok := secret.Data["access_id"]
+	if !ok || len(accessID) == 0 {
+		return errors.New("access_id is required in shared storage secret")
+	}
+	accessKey, ok := secret.Data["access_key"]
+	if !ok || len(accessKey) == 0 {
+		return errors.New("access_key is required in shared storage secret")
+	}
+
+	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
+	if err != nil {
+		return errors.Wrap(err, "Get oceanbase operation manager")
+	}
+	accessInfo := fmt.Sprintf("access_id=%s&access_key=%s", accessID, accessKey)
+	attribute := buildSharedStorageAttribute(obcluster.Spec.SharedStorageInfo.MaxIOPS, obcluster.Spec.SharedStorageInfo.MaxBandwidth)
+	return oceanbaseOperationManager.AddSharedStorageDest(
+		m.Ctx,
+		obcluster.Spec.SharedStorageInfo.BucketURL,
+		accessInfo,
+		attribute,
+		m.OBZone.Spec.Topology.Zone,
+	)
+}
+
+func buildSharedStorageAttribute(maxIOPS, maxBandwidth string) string {
+	attributes := make([]string, 0, 2)
+	if maxIOPS != "" {
+		attributes = append(attributes, "max_iops="+maxIOPS)
+	}
+	if maxBandwidth != "" {
+		attributes = append(attributes, "max_bandwidth="+maxBandwidth)
+	}
+	return strings.Join(attributes, "&")
 }
 
 func StartOBZone(m *OBZoneManager) tasktypes.TaskError {
@@ -282,12 +334,15 @@ func ExpandPVC(m *OBZoneManager) tasktypes.TaskError {
 		serverStorage := observer.Spec.OBServerTemplate.Storage
 		if serverStorage.DataStorage.Size.Cmp(zoneStorage.DataStorage.Size) < 0 ||
 			serverStorage.LogStorage.Size.Cmp(zoneStorage.LogStorage.Size) < 0 ||
-			serverStorage.RedoLogStorage.Size.Cmp(zoneStorage.RedoLogStorage.Size) < 0 {
+			(serverStorage.RedoLogStorage != nil && zoneStorage.RedoLogStorage != nil &&
+				serverStorage.RedoLogStorage.Size.Cmp(zoneStorage.RedoLogStorage.Size) < 0) {
 			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 				m.Logger.Info("Expand pvc of observer", "observer", observer.Name)
 				serverStorage.DataStorage.Size = zoneStorage.DataStorage.Size
 				serverStorage.LogStorage.Size = zoneStorage.LogStorage.Size
-				serverStorage.RedoLogStorage.Size = zoneStorage.RedoLogStorage.Size
+				if serverStorage.RedoLogStorage != nil && zoneStorage.RedoLogStorage != nil {
+					serverStorage.RedoLogStorage.Size = zoneStorage.RedoLogStorage.Size
+				}
 				return m.Client.Update(m.Ctx, &observer)
 			})
 			if err != nil {

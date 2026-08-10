@@ -31,8 +31,25 @@ const (
 )
 
 const (
-	ModeStandalone = "standalone"
-	ModeService    = "service"
+	AnnotationsDeploymentMode = "oceanbase.oceanbase.com/deployment-mode"
+)
+
+const (
+	AnnotationsLogServiceNodeRegistered = "oceanbase.oceanbase.com/logservice-node-registered"
+	// AnnotationsLogServiceNodeToBeDeleted marks nodes selected for deletion by
+	// UnregisterNodeFromCluster so DeleteExcessNodes deletes the exact same set.
+	AnnotationsLogServiceNodeToBeDeleted = "oceanbase.oceanbase.com/logservice-node-to-be-deleted"
+)
+
+const (
+	ModeStandalone    = "standalone"
+	ModeService       = "service"
+	ModeSharedStorage = "shared_storage"
+)
+
+const (
+	DeploymentModeNormal        = "normal"
+	DeploymentModeSharedStorage = "shared_storage"
 )
 
 const (

@@ -2924,7 +2924,6 @@ spec:
                     required:
                     - dataStorage
                     - logStorage
-                    - redoLogStorage
                     type: object
                 required:
                 - image

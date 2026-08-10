@@ -14,17 +14,86 @@ package operation
 
 import (
 	"context"
+	stdsql "database/sql"
 	"fmt"
+	"regexp"
 	"sync"
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/go-sql-driver/mysql"
 	"github.com/pkg/errors"
 
 	"github.com/oceanbase/ob-operator/pkg/database"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/config"
 )
+
+const (
+	redactedSQL             = "<redacted: SQL contains sensitive credentials>"
+	sensitiveDetailsOmitted = "details omitted because the statement contains sensitive credentials"
+)
+
+var sharedStorageCredentialAssignment = regexp.MustCompile(`(?i)(^|[^[:alnum:]_])access_(id|key)[[:space:]]*=`)
+
+func containsCredentials(value string) bool {
+	return sharedStorageCredentialAssignment.MatchString(value)
+}
+
+func redactSQLForLog(statement string) (string, bool) {
+	if containsCredentials(statement) {
+		return redactedSQL, true
+	}
+	return statement, false
+}
+
+func redactParamsForLog(params []any) (string, bool) {
+	return redactParamsForLogWithPolicy(params, false)
+}
+
+func redactParamsForLogWithPolicy(params []any, redactAll bool) (string, bool) {
+	redacted := make([]string, len(params))
+	containsSensitiveParam := redactAll
+	for i, param := range params {
+		if redactAll || containsCredentials(paramValueForCredentialDetection(param)) {
+			redacted[i] = "***"
+			containsSensitiveParam = true
+		} else {
+			redacted[i] = fmt.Sprint(param)
+		}
+	}
+	return fmt.Sprintf("%v", redacted), containsSensitiveParam
+}
+
+func paramValueForCredentialDetection(param any) string {
+	switch value := param.(type) {
+	case []byte:
+		return string(value)
+	case stdsql.RawBytes:
+		return string(value)
+	default:
+		return fmt.Sprint(value)
+	}
+}
+
+func redactSensitiveExecutionError(err error) error {
+	if errors.Is(err, context.Canceled) {
+		return errors.Wrap(context.Canceled, "database execution canceled; "+sensitiveDetailsOmitted)
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return errors.Wrap(context.DeadlineExceeded, "database execution timed out; "+sensitiveDetailsOmitted)
+	}
+
+	var mysqlError *mysql.MySQLError
+	if errors.As(err, &mysqlError) {
+		return &mysql.MySQLError{
+			Number:   mysqlError.Number,
+			SQLState: mysqlError.SQLState,
+			Message:  sensitiveDetailsOmitted,
+		}
+	}
+	return errors.New("database execution failed; " + sensitiveDetailsOmitted)
+}
 
 type ManagerConfig struct {
 	DefaultSqlTimeout    time.Duration
@@ -81,10 +150,19 @@ func (m *OceanbaseOperationManager) ExecWithTimeout(ctx context.Context, timeout
 	if err != nil {
 		return errors.Wrap(err, "Failed to set timeout variable")
 	}
-	m.Logger.V(1).Info(fmt.Sprintf("Execute sql %s with param %v", sql, params))
+	redactedSQL, sqlContainsCredentials := redactSQLForLog(sql)
+	redactedParams, paramsContainCredentials := redactParamsForLogWithPolicy(params, sqlContainsCredentials)
+	containsSensitiveCredentials := sqlContainsCredentials || paramsContainCredentials
+	m.Logger.V(1).Info(fmt.Sprintf("Execute sql %s with param %s", redactedSQL, redactedParams))
 	_, err = m.Connector.GetClient().ExecContext(c, sql, params...)
 	if err != nil {
-		err = errors.Wrapf(err, "Execute sql failed, sql %s, param %v", sql, params)
+		if containsSensitiveCredentials {
+			// Drivers may echo an interpolated SQL statement in their error. Do not
+			// retain the original error in the returned chain when credentials were
+			// present, otherwise logs and Kubernetes events can expose the secret.
+			err = redactSensitiveExecutionError(err)
+		}
+		err = errors.Wrapf(err, "Execute sql failed, sql %s, param %s", redactedSQL, redactedParams)
 		m.Logger.Error(err, "Execute sql failed")
 	}
 	return err

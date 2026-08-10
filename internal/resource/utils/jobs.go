@@ -50,6 +50,7 @@ func GetJob(ctx context.Context, c client.Client, namespace string, jobName stri
 type JobContainerVolumes struct {
 	VolumeMounts []corev1.VolumeMount
 	Volumes      []corev1.Volume
+	Env          []corev1.EnvVar
 }
 
 func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace string,
@@ -60,9 +61,11 @@ func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace
 	var ttl int32 = 300
 	var mounts []corev1.VolumeMount
 	var volumes []corev1.Volume
+	var envVars []corev1.EnvVar
 	for _, vc := range volumeConfigs {
 		mounts = append(mounts, vc.VolumeMounts...)
 		volumes = append(volumes, vc.Volumes...)
+		envVars = append(envVars, vc.Env...)
 	}
 
 	container := corev1.Container{
@@ -70,6 +73,7 @@ func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace
 		Image:        image,
 		Command:      []string{"bash", "-c", cmd},
 		VolumeMounts: mounts,
+		Env:          envVars,
 	}
 	job := batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
@@ -116,14 +120,20 @@ func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace
 		time.Sleep(time.Second * time.Duration(obcfg.GetConfig().Time.CheckJobInterval))
 	}
 	if !finished {
-		return "", int32(cmdconst.ExitCodeNotExecuted), errors.Wrapf(err, "Run job %s timeout", fullJobName)
+		// NOTE: do not use errors.Wrapf here — when the last GetJob succeeded
+		// (job still running), err is nil and Wrapf(nil, ...) returns nil,
+		// which would make RunJob falsely report success.
+		return "", int32(cmdconst.ExitCodeNotExecuted), errors.Errorf("Run job %s timeout", fullJobName)
 	}
 	clientSet := k8sclient.GetClient()
 	podList, err := clientSet.ClientSet.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("job-name=%s", fullJobName),
 	})
 	if err != nil || len(podList.Items) == 0 {
-		return "", int32(cmdconst.ExitCodeNotExecuted), errors.Wrapf(err, "failed to get pods of job %s", jobName)
+		if err != nil {
+			return "", int32(cmdconst.ExitCodeNotExecuted), errors.Wrapf(err, "failed to get pods of job %s", jobName)
+		}
+		return "", int32(cmdconst.ExitCodeNotExecuted), errors.Errorf("failed to get pods of job %s: no pods found", jobName)
 	}
 	var outputBuffer bytes.Buffer
 	podLogOpts := corev1.PodLogOptions{}

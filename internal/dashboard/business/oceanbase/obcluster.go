@@ -105,6 +105,7 @@ func buildOBClusterOverview(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 				ClusterId:   obcluster.Spec.ClusterId,
 			},
 			Mode:               clusterMode,
+			DeploymentMode:     obcluster.Spec.DeploymentMode,
 			SupportStaticIP:    obcluster.SupportStaticIP(),
 			DeletionProtection: deletionProtection,
 			PvcIndependent:     pvcIndependent,
@@ -181,14 +182,16 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 				StorageClass: obcluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass,
 				Size:         obcluster.Spec.OBServerTemplate.Storage.DataStorage.Size.Value(),
 			},
-			RedoLogStorage: response.StorageSpec{
-				StorageClass: obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass,
-				Size:         obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Value(),
-			},
 			SysLogStorage: response.StorageSpec{
 				StorageClass: obcluster.Spec.OBServerTemplate.Storage.LogStorage.StorageClass,
 				Size:         obcluster.Spec.OBServerTemplate.Storage.LogStorage.Size.Value(),
 			},
+		}
+		if obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
+			respCluster.Storage.RedoLogStorage = &response.StorageSpec{
+				StorageClass: obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass,
+				Size:         obcluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Value(),
+			}
 		}
 	}
 	if obcluster.Annotations != nil {
@@ -429,15 +432,17 @@ func buildOBServerTemplate(observerSpec *param.OBServerSpec) *apitypes.OBServerT
 				StorageClass: observerSpec.Storage.Data.StorageClass,
 				Size:         *apiresource.NewQuantity(observerSpec.Storage.Data.SizeGB*constant.GB, apiresource.BinarySI),
 			},
-			RedoLogStorage: &apitypes.StorageSpec{
-				StorageClass: observerSpec.Storage.RedoLog.StorageClass,
-				Size:         *apiresource.NewQuantity(observerSpec.Storage.RedoLog.SizeGB*constant.GB, apiresource.BinarySI),
-			},
 			LogStorage: &apitypes.StorageSpec{
 				StorageClass: observerSpec.Storage.Log.StorageClass,
 				Size:         *apiresource.NewQuantity(observerSpec.Storage.Log.SizeGB*constant.GB, apiresource.BinarySI),
 			},
 		},
+	}
+	if observerSpec.Storage.RedoLog != nil {
+		observerTemplate.Storage.RedoLogStorage = &apitypes.StorageSpec{
+			StorageClass: observerSpec.Storage.RedoLog.StorageClass,
+			Size:         *apiresource.NewQuantity(observerSpec.Storage.RedoLog.SizeGB*constant.GB, apiresource.BinarySI),
+		}
 	}
 	return observerTemplate
 }
@@ -848,20 +853,23 @@ func PatchOBCluster(ctx context.Context, nn *param.K8sObjectIdentity, param *par
 		}
 	} else if param.Storage != nil && obcluster.Spec.OBServerTemplate != nil {
 		// Update storage if specified
-		obcluster.Spec.OBServerTemplate.Storage = &apitypes.OceanbaseStorageSpec{
+		storageSpec := &apitypes.OceanbaseStorageSpec{
 			DataStorage: &apitypes.StorageSpec{
 				StorageClass: param.Storage.Data.StorageClass,
 				Size:         *apiresource.NewQuantity(param.Storage.Data.SizeGB*constant.GB, apiresource.BinarySI),
-			},
-			RedoLogStorage: &apitypes.StorageSpec{
-				StorageClass: param.Storage.RedoLog.StorageClass,
-				Size:         *apiresource.NewQuantity(param.Storage.RedoLog.SizeGB*constant.GB, apiresource.BinarySI),
 			},
 			LogStorage: &apitypes.StorageSpec{
 				StorageClass: param.Storage.Log.StorageClass,
 				Size:         *apiresource.NewQuantity(param.Storage.Log.SizeGB*constant.GB, apiresource.BinarySI),
 			},
 		}
+		if param.Storage.RedoLog != nil {
+			storageSpec.RedoLogStorage = &apitypes.StorageSpec{
+				StorageClass: param.Storage.RedoLog.StorageClass,
+				Size:         *apiresource.NewQuantity(param.Storage.RedoLog.SizeGB*constant.GB, apiresource.BinarySI),
+			}
+		}
+		obcluster.Spec.OBServerTemplate.Storage = storageSpec
 	} else if param.Monitor != nil && obcluster.Spec.MonitorTemplate == nil {
 		// Update monitor if specified
 		obcluster.Spec.MonitorTemplate = &apitypes.MonitorTemplate{

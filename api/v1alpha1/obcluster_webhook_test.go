@@ -38,6 +38,17 @@ var _ = Describe("Test OBCluster Webhook", Label("webhook"), func() {
 		Expect(k8sClient.Create(ctx, cluster)).ShouldNot(Succeed())
 	})
 
+	It("requires logServiceRef.name in shared storage mode", func() {
+		cluster := newOBCluster("shared-storage-empty-logservice-ref", 1, 1)
+		cluster.Spec.DeploymentMode = oceanbaseconst.DeploymentModeSharedStorage
+		cluster.Spec.SharedStorageInfo = &apitypes.SharedStorageSpec{
+			BucketURL: "s3://bucket?host=http://object-store:9000",
+			SecretRef: corev1.LocalObjectReference{Name: "shared-storage-secret"},
+		}
+		cluster.Spec.LogServiceRef = &apitypes.LogServiceReference{}
+		Expect(k8sClient.Create(ctx, cluster)).ShouldNot(Succeed())
+	})
+
 	It("Check storage class", func() {
 		cluster := newOBCluster("test", 3, 1)
 		cluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass = "storage-class-that-does-not-exist"

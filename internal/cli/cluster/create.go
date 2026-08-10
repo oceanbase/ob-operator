@@ -55,7 +55,9 @@ type CreateOptions struct {
 func NewCreateOptions() *CreateOptions {
 	return &CreateOptions{
 		OBServer: &param.OBServerSpec{
-			Storage: &param.OBServerStorageSpec{},
+			Storage: &param.OBServerStorageSpec{
+				RedoLog: &modelcommon.StorageSpec{},
+			},
 		},
 		BackupVolume: &param.NFSVolumeSpec{},
 		Parameters:   make([]modelcommon.KVPair, 0),
@@ -118,26 +120,29 @@ func buildOBServerTemplate(observerSpec *param.OBServerSpec) *apitypes.OBServerT
 	if observerSpec == nil {
 		return nil
 	}
+	storageSpec := &apitypes.OceanbaseStorageSpec{
+		DataStorage: &apitypes.StorageSpec{
+			StorageClass: observerSpec.Storage.Data.StorageClass,
+			Size:         *apiresource.NewQuantity(observerSpec.Storage.Data.SizeGB*constant.GB, apiresource.BinarySI),
+		},
+		LogStorage: &apitypes.StorageSpec{
+			StorageClass: observerSpec.Storage.Log.StorageClass,
+			Size:         *apiresource.NewQuantity(observerSpec.Storage.Log.SizeGB*constant.GB, apiresource.BinarySI),
+		},
+	}
+	if observerSpec.Storage.RedoLog != nil {
+		storageSpec.RedoLogStorage = &apitypes.StorageSpec{
+			StorageClass: observerSpec.Storage.RedoLog.StorageClass,
+			Size:         *apiresource.NewQuantity(observerSpec.Storage.RedoLog.SizeGB*constant.GB, apiresource.BinarySI),
+		}
+	}
 	observerTemplate := &apitypes.OBServerTemplate{
 		Image: observerSpec.Image,
 		Resource: &apitypes.ResourceSpec{
 			Cpu:    *apiresource.NewQuantity(observerSpec.Resource.Cpu, apiresource.DecimalSI),
 			Memory: *apiresource.NewQuantity(observerSpec.Resource.MemoryGB*constant.GB, apiresource.BinarySI),
 		},
-		Storage: &apitypes.OceanbaseStorageSpec{
-			DataStorage: &apitypes.StorageSpec{
-				StorageClass: observerSpec.Storage.Data.StorageClass,
-				Size:         *apiresource.NewQuantity(observerSpec.Storage.Data.SizeGB*constant.GB, apiresource.BinarySI),
-			},
-			RedoLogStorage: &apitypes.StorageSpec{
-				StorageClass: observerSpec.Storage.RedoLog.StorageClass,
-				Size:         *apiresource.NewQuantity(observerSpec.Storage.RedoLog.SizeGB*constant.GB, apiresource.BinarySI),
-			},
-			LogStorage: &apitypes.StorageSpec{
-				StorageClass: observerSpec.Storage.Log.StorageClass,
-				Size:         *apiresource.NewQuantity(observerSpec.Storage.Log.SizeGB*constant.GB, apiresource.BinarySI),
-			},
-		},
+		Storage: storageSpec,
 	}
 	return observerTemplate
 }

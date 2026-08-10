@@ -37,17 +37,23 @@ import (
 func (m *OBClusterManager) checkIfStorageSizeExpand(obzone *v1alpha1.OBZone) bool {
 	newStorage := m.OBCluster.Spec.OBServerTemplate.Storage
 	oldStorage := obzone.Spec.OBServerTemplate.Storage
-	return oldStorage.DataStorage.Size.Cmp(newStorage.DataStorage.Size) < 0 ||
-		oldStorage.LogStorage.Size.Cmp(newStorage.LogStorage.Size) < 0 ||
-		oldStorage.RedoLogStorage.Size.Cmp(newStorage.RedoLogStorage.Size) < 0
+	expanded := oldStorage.DataStorage.Size.Cmp(newStorage.DataStorage.Size) < 0 ||
+		oldStorage.LogStorage.Size.Cmp(newStorage.LogStorage.Size) < 0
+	if oldStorage.RedoLogStorage != nil && newStorage.RedoLogStorage != nil {
+		expanded = expanded || oldStorage.RedoLogStorage.Size.Cmp(newStorage.RedoLogStorage.Size) < 0
+	}
+	return expanded
 }
 
 func (m *OBClusterManager) checkIfStorageClassChange(obzone *v1alpha1.OBZone) bool {
 	newStorage := m.OBCluster.Spec.OBServerTemplate.Storage
 	oldStorage := obzone.Spec.OBServerTemplate.Storage
-	return oldStorage.DataStorage.StorageClass != newStorage.DataStorage.StorageClass ||
-		oldStorage.LogStorage.StorageClass != newStorage.LogStorage.StorageClass ||
-		oldStorage.RedoLogStorage.StorageClass != newStorage.RedoLogStorage.StorageClass
+	changed := oldStorage.DataStorage.StorageClass != newStorage.DataStorage.StorageClass ||
+		oldStorage.LogStorage.StorageClass != newStorage.LogStorage.StorageClass
+	if oldStorage.RedoLogStorage != nil && newStorage.RedoLogStorage != nil {
+		changed = changed || oldStorage.RedoLogStorage.StorageClass != newStorage.RedoLogStorage.StorageClass
+	}
+	return changed
 }
 
 func (m *OBClusterManager) checkIfCalcResourceChange(obzone *v1alpha1.OBZone) bool {
@@ -185,7 +191,9 @@ func (m *OBClusterManager) changeZonesWhenScaling(obzone *v1alpha1.OBZone) {
 func (m *OBClusterManager) changeZonesWhenExpandingPVC(obzone *v1alpha1.OBZone) {
 	obzone.Spec.OBServerTemplate.Storage.DataStorage.Size = m.OBCluster.Spec.OBServerTemplate.Storage.DataStorage.Size
 	obzone.Spec.OBServerTemplate.Storage.LogStorage.Size = m.OBCluster.Spec.OBServerTemplate.Storage.LogStorage.Size
-	obzone.Spec.OBServerTemplate.Storage.RedoLogStorage.Size = m.OBCluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size
+	if obzone.Spec.OBServerTemplate.Storage.RedoLogStorage != nil && m.OBCluster.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
+		obzone.Spec.OBServerTemplate.Storage.RedoLogStorage.Size = m.OBCluster.Spec.OBServerTemplate.Storage.RedoLogStorage.Size
+	}
 }
 
 func (m *OBClusterManager) changeZonesWhenUpdatingOBServers(obzone *v1alpha1.OBZone) {
@@ -414,6 +422,53 @@ func (m *OBClusterManager) DeleteOBParameter(parameter *apitypes.Parameter) erro
 		return errors.Wrap(err, "Delete obparameter")
 	}
 	return nil
+}
+
+func (m *OBClusterManager) buildLogServiceAccessPoint() (string, error) {
+	if m.OBCluster.Spec.LogServiceRef == nil {
+		return "", errors.New("logServiceRef is required for shared_storage mode")
+	}
+	lsCluster := &v1alpha1.OBLogServiceCluster{}
+	err := m.Client.Get(m.Ctx, types.NamespacedName{
+		Namespace: m.OBCluster.Namespace,
+		Name:      m.OBCluster.Spec.LogServiceRef.Name,
+	}, lsCluster)
+	if err != nil {
+		return "", errors.Wrap(err, "get OBLogServiceCluster")
+	}
+
+	secret, err := resourceutils.GetSecret(m.Client, m.OBCluster.Namespace, lsCluster.Spec.ObjectStoreURL.SecretRef.Name)
+	if err != nil {
+		return "", errors.Wrap(err, "get logservice object store secret")
+	}
+	accessId := string(secret.Data["access_id"])
+	accessKey := string(secret.Data["access_key"])
+
+	accessPoint := fmt.Sprintf("%s&access_id=%s&access_key=%s&logservice_cluster_id=%d",
+		lsCluster.Spec.ObjectStoreURL.BucketURL, accessId, accessKey, lsCluster.Spec.ClusterId)
+	return accessPoint, nil
+}
+
+func (m *OBClusterManager) buildSharedStorageInfo() (string, error) {
+	if m.OBCluster.Spec.SharedStorageInfo == nil {
+		return "", errors.New("sharedStorageInfo is required for shared_storage mode")
+	}
+	secret, err := resourceutils.GetSecret(m.Client, m.OBCluster.Namespace, m.OBCluster.Spec.SharedStorageInfo.SecretRef.Name)
+	if err != nil {
+		return "", errors.Wrap(err, "get shared storage secret")
+	}
+	accessId := string(secret.Data["access_id"])
+	accessKey := string(secret.Data["access_key"])
+
+	info := fmt.Sprintf("%s&access_id=%s&access_key=%s",
+		m.OBCluster.Spec.SharedStorageInfo.BucketURL, accessId, accessKey)
+	if m.OBCluster.Spec.SharedStorageInfo.MaxIOPS != "" {
+		info += "&max_iops=" + m.OBCluster.Spec.SharedStorageInfo.MaxIOPS
+	}
+	if m.OBCluster.Spec.SharedStorageInfo.MaxBandwidth != "" {
+		info += "&max_bandwidth=" + m.OBCluster.Spec.SharedStorageInfo.MaxBandwidth
+	}
+	return info, nil
 }
 
 func (m *OBClusterManager) WaitOBZoneUpgradeFinished(zoneName string) error {

@@ -215,11 +215,17 @@ func (m *OBClusterManager) UpdateStatus() error {
 			}
 		}
 
-		// check for upgrade
+		// The webhook rejects shared-storage image changes, but retain this guard
+		// for persisted resources admitted before the validation existed or while
+		// admission was bypassed/unavailable.
 		if m.OBCluster.Status.Status == clusterstatus.Running {
 			if m.OBCluster.Spec.OBServerTemplate.Image != m.OBCluster.Status.Image {
-				m.Logger.Info("Check obcluster image not match, need upgrade")
-				m.OBCluster.Status.Status = clusterstatus.Upgrade
+				if m.OBCluster.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
+					m.Logger.Info("Shared storage mode does not support upgrade, skipping image change detection")
+				} else {
+					m.Logger.Info("Check obcluster image not match, need upgrade")
+					m.OBCluster.Status.Status = clusterstatus.Upgrade
+				}
 			}
 		}
 

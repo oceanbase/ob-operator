@@ -119,6 +119,9 @@ rules:
   resources:
   - obclusteroperations
   - obclusters
+  - oblogserviceclusters
+  - oblogservicenodes
+  - oblogservicezones
   - obparameters
   - obresourcerescues
   - observers
@@ -143,6 +146,9 @@ rules:
   resources:
   - obclusteroperations/finalizers
   - obclusters/finalizers
+  - oblogserviceclusters/finalizers
+  - oblogservicenodes/finalizers
+  - oblogservicezones/finalizers
   - obparameters/finalizers
   - obresourcerescues/finalizers
   - observers/finalizers
@@ -160,6 +166,9 @@ rules:
   resources:
   - obclusteroperations/status
   - obclusters/status
+  - oblogserviceclusters/status
+  - oblogservicenodes/status
+  - oblogservicezones/status
   - obparameters/status
   - obresourcerescues/status
   - observers/status

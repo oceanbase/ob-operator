@@ -9,6 +9,7 @@ const (
 	tModifyOBZoneReplica        ttypes.TaskName = "modify obzone replica"
 	tDeleteOBZone               ttypes.TaskName = "delete obzone"
 	tCreateOBZone               ttypes.TaskName = "create obzone"
+	tWaitLogServiceReady        ttypes.TaskName = "wait log service ready"
 	tBootstrap                  ttypes.TaskName = "bootstrap"
 	tCreateUsers                ttypes.TaskName = "create users"
 	tMaintainOBParameter        ttypes.TaskName = "maintain obparameter"

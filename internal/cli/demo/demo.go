@@ -46,7 +46,7 @@ func SetDefaultClusterConf(clusterType string, o *cluster.CreateOptions) error {
 				StorageClass: cluster.DEFAULT_DATA_STORAGE_CLASS,
 				SizeGB:       cluster.DEFAULT_DATA_STORAGE_SIZE,
 			},
-			RedoLog: modelcommon.StorageSpec{
+			RedoLog: &modelcommon.StorageSpec{
 				StorageClass: cluster.DEFAULT_REDO_LOG_STORAGE_CLASS,
 				SizeGB:       cluster.DEFAULT_REDO_LOG_STORAGE_SIZE,
 			},

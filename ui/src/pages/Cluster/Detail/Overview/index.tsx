@@ -425,24 +425,30 @@ const ClusterOverview: React.FC = () => {
       label: 'size',
       value: floorToTwoDecimalPlaces(storage?.dataStorage?.size / (1 << 30)),
     },
-    {
-      key: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.BasicInfo.RedologStorageClass',
-        defaultMessage: 'RedoLog 存储类',
-      }),
-      type: 'redoLog',
-      label: 'storageClass',
-      value: storage?.redoLogStorage?.storageClass,
-    },
-    {
-      key: intl.formatMessage({
-        id: 'Dashboard.Detail.Overview.BasicInfo.RedologSize',
-        defaultMessage: 'RedoLog 大小',
-      }),
-      type: 'redoLog',
-      label: 'size',
-      value: floorToTwoDecimalPlaces(storage?.redoLogStorage?.size / (1 << 30)),
-    },
+    ...(storage?.redoLogStorage
+      ? [
+          {
+            key: intl.formatMessage({
+              id: 'Dashboard.Detail.Overview.BasicInfo.RedologStorageClass',
+              defaultMessage: 'RedoLog 存储类',
+            }),
+            type: 'redoLog',
+            label: 'storageClass',
+            value: storage?.redoLogStorage?.storageClass,
+          },
+          {
+            key: intl.formatMessage({
+              id: 'Dashboard.Detail.Overview.BasicInfo.RedologSize',
+              defaultMessage: 'RedoLog 大小',
+            }),
+            type: 'redoLog',
+            label: 'size',
+            value: floorToTwoDecimalPlaces(
+              storage?.redoLogStorage?.size / (1 << 30),
+            ),
+          },
+        ]
+      : []),
     {
       key: intl.formatMessage({
         id: 'Dashboard.Detail.Overview.BasicInfo.SystemLogStorageClass',

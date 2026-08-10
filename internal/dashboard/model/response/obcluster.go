@@ -64,6 +64,7 @@ type OBClusterMetaBasic struct {
 type OBClusterMeta struct {
 	OBClusterMetaBasic `json:",inline"`
 	Mode               common.ClusterMode `json:"mode" binding:"required"`
+	DeploymentMode     string             `json:"deploymentMode,omitempty"`
 	SupportStaticIP    bool               `json:"supportStaticIP" binding:"required"`
 	DeletionProtection bool               `json:"deletionProtection" binding:"required"`
 	PvcIndependent     bool               `json:"pvcIndependent" binding:"required"`
@@ -118,9 +119,9 @@ type NFSVolumeSpec struct {
 }
 
 type OBServerStorage struct {
-	DataStorage    StorageSpec `json:"dataStorage" binding:"required"`
-	RedoLogStorage StorageSpec `json:"redoLogStorage" binding:"required"`
-	SysLogStorage  StorageSpec `json:"sysLogStorage" binding:"required"`
+	DataStorage    StorageSpec  `json:"dataStorage" binding:"required"`
+	RedoLogStorage *StorageSpec `json:"redoLogStorage,omitempty"`
+	SysLogStorage  StorageSpec  `json:"sysLogStorage" binding:"required"`
 }
 
 type StorageSpec struct {

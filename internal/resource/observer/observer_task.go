@@ -108,6 +108,13 @@ func CreateOBServerPod(m *OBServerManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrap(err, "Get obcluster from K8s")
 	}
+	if obcluster.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
+		for i, parameter := range obcluster.Spec.Parameters {
+			if oceanbaseconst.ContainsManagedParameter(parameter.Name, parameter.Value, oceanbaseconst.SharedStorageManagedParameters[:]) {
+				return errors.Errorf("spec.parameters[%d] contains enable_logservice, which is managed by ob-operator in shared_storage mode", i)
+			}
+		}
+	}
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
 	ownerReference := metav1.OwnerReference{
 		APIVersion: m.OBServer.APIVersion,
@@ -181,10 +188,15 @@ func CreateOBServerPVC(m *OBServerManager) tasktypes.TaskError {
 	pvcLabels[oceanbaseconst.LabelRefUID] = string(m.OBServer.UID)
 	pvcLabels[oceanbaseconst.LabelRefOBServer] = string(m.OBServer.Name)
 
+	deployModeAnnoVal, _ := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsDeploymentMode)
+	isSharedStorage := deployModeAnnoVal == oceanbaseconst.DeploymentModeSharedStorage
+
 	if singlePvcExist && singlePvcAnnoVal == "true" {
 		sumQuantity := resource.Quantity{}
 		sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size)
-		sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
+		if !isSharedStorage && m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
+			sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
+		}
 		sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size)
 		storageSpec := &apitypes.StorageSpec{
 			StorageClass: m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.StorageClass,
@@ -219,19 +231,21 @@ func CreateOBServerPVC(m *OBServerManager) tasktypes.TaskError {
 			return errors.Wrap(err, "Create pvc of data file")
 		}
 
-		objectMeta = metav1.ObjectMeta{
-			Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix),
-			Namespace:       m.OBServer.Namespace,
-			OwnerReferences: ownerReferenceList,
-			Labels:          pvcLabels,
-		}
-		pvc = &corev1.PersistentVolumeClaim{
-			ObjectMeta: objectMeta,
-			Spec:       m.generatePVCSpec(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage),
-		}
-		err = m.K8sResClient.Create(m.Ctx, pvc)
-		if err != nil {
-			return errors.Wrap(err, "Create pvc of data log")
+		if !isSharedStorage && m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
+			objectMeta = metav1.ObjectMeta{
+				Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix),
+				Namespace:       m.OBServer.Namespace,
+				OwnerReferences: ownerReferenceList,
+				Labels:          pvcLabels,
+			}
+			pvc = &corev1.PersistentVolumeClaim{
+				ObjectMeta: objectMeta,
+				Spec:       m.generatePVCSpec(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage),
+			}
+			err = m.K8sResClient.Create(m.Ctx, pvc)
+			if err != nil {
+				return errors.Wrap(err, "Create pvc of data log")
+			}
 		}
 
 		objectMeta = metav1.ObjectMeta{
@@ -390,14 +404,28 @@ func WaitOBServerDeletedInCluster(m *OBServerManager) tasktypes.TaskError {
 		Ip:   m.OBServer.Status.GetConnectAddr(),
 		Port: oceanbaseconst.RpcPort,
 	}
+	deploymentMode, _ := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsDeploymentMode)
+	isSharedStorage := deploymentMode == oceanbaseconst.DeploymentModeSharedStorage
 	deleted := false
 	for i := 0; i < obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds; i++ {
 		operationManager, err := m.getOceanbaseOperationManager()
 		if err != nil {
 			return errors.Wrapf(err, "Get oceanbase operation manager failed")
 		}
-		observer, err := operationManager.GetServer(m.Ctx, observerInfo)
-		if observer == nil && err == nil {
+		serverExists := false
+		if isSharedStorage {
+			// In shared-storage mode, __all_server retains a deleted server in the
+			// cleanup state until _shared_gc_file_expiration_time expires (7 days by
+			// default). DBA_OB_SERVERS filters cleanup rows, so it reflects logical
+			// deletion promptly and does not block the finalizer for that retention
+			// period. Keep the legacy __all_server check for normal mode.
+			serverExists, err = operationManager.CheckServerExistInDBAOBServers(m.Ctx, observerInfo)
+		} else {
+			var observer *model.OBServer
+			observer, err = operationManager.GetServer(m.Ctx, observerInfo)
+			serverExists = observer != nil
+		}
+		if !serverExists && err == nil {
 			m.Logger.Info("OBServer deleted")
 			deleted = true
 			break
@@ -460,10 +488,12 @@ func ExpandPVC(m *OBServerManager) tasktypes.TaskError {
 				return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
 			}
 		case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix):
-			pvc.Spec.Resources.Requests[corev1.ResourceStorage] = m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size
-			err = m.K8sResClient.Update(m.Ctx, &pvc)
-			if err != nil {
-				return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
+			if m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
+				pvc.Spec.Resources.Requests[corev1.ResourceStorage] = m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size
+				err = m.K8sResClient.Update(m.Ctx, &pvc)
+				if err != nil {
+					return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
+				}
 			}
 		case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix):
 			pvc.Spec.Resources.Requests[corev1.ResourceStorage] = m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size
@@ -474,7 +504,9 @@ func ExpandPVC(m *OBServerManager) tasktypes.TaskError {
 		case m.OBServer.Name: // single pvc
 			sum := resource.Quantity{}
 			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size)
-			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
+			if m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
+				sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
+			}
 			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size)
 			pvc.Spec.Resources.Requests[corev1.ResourceStorage] = sum
 			err = m.K8sResClient.Update(m.Ctx, &pvc)
@@ -505,7 +537,7 @@ outer:
 					continue outer
 				}
 			case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix):
-				if serverStorage.RedoLogStorage.Size.Cmp(pvcSize) != 0 {
+				if serverStorage.RedoLogStorage != nil && serverStorage.RedoLogStorage.Size.Cmp(pvcSize) != 0 {
 					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
 					continue outer
 				}
@@ -517,7 +549,9 @@ outer:
 			case m.OBServer.Name:
 				sum := resource.Quantity{}
 				sum.Add(serverStorage.DataStorage.Size)
-				sum.Add(serverStorage.RedoLogStorage.Size)
+				if serverStorage.RedoLogStorage != nil {
+					sum.Add(serverStorage.RedoLogStorage.Size)
+				}
 				sum.Add(serverStorage.LogStorage.Size)
 				if sum.Cmp(pvcSize) != 0 {
 					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)

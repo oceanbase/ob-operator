@@ -94,6 +94,9 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 			// created when create obcluster
 			m.Logger.Info("Create obzone when create obcluster")
 			taskFlow = genPrepareOBZoneForBootstrapFlow(m)
+		} else if obcluster.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
+			m.Logger.Info("Create shared storage obzone when obcluster already exists")
+			taskFlow = genCreateSharedStorageOBZoneFlow(m)
 		} else {
 			// created normally
 			m.Logger.Info("Create obzone when obcluster already exists")

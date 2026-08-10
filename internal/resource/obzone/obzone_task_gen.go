@@ -3,6 +3,7 @@ package obzone
 
 func init() {
 	taskMap.Register(tAddZone, AddZone)
+	taskMap.Register(tAddSharedStorageDest, AddSharedStorageDest)
 	taskMap.Register(tStartOBZone, StartOBZone)
 	taskMap.Register(tCreateOBServer, CreateOBServer)
 	taskMap.Register(tDeleteOBServer, DeleteOBServer)

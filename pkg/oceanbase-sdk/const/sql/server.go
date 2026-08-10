@@ -13,10 +13,11 @@ See the Mulan PSL v2 for more details.
 package sql
 
 const (
-	ListServer   = "select id, zone, svr_ip, svr_port, inner_port, with_rootserver, with_partition, lower(status) as status, start_service_time, build_version from __all_server"
-	GetServer    = "select id, zone, svr_ip, svr_port, inner_port, with_rootserver, with_partition, lower(status) as status, start_service_time, build_version from __all_server where svr_ip = ? and svr_port = ?"
-	AddServer    = "alter system add server ?"
-	DeleteServer = "alter system delete server ?"
+	ListServer                     = "select id, zone, svr_ip, svr_port, inner_port, with_rootserver, with_partition, lower(status) as status, start_service_time, build_version from __all_server"
+	GetServer                      = "select id, zone, svr_ip, svr_port, inner_port, with_rootserver, with_partition, lower(status) as status, start_service_time, build_version from __all_server where svr_ip = ? and svr_port = ?"
+	GetServerCountFromDBAOBServers = "select count(*) from oceanbase.DBA_OB_SERVERS where svr_ip = ? and svr_port = ?"
+	AddServer                      = "alter system add server ?"
+	DeleteServer                   = "alter system delete server ?"
 )
 
 const (

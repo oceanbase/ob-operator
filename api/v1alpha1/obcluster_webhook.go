@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"sort"
 
 	v1 "k8s.io/api/core/v1"
@@ -124,9 +125,12 @@ func (r *OBCluster) Default() {
 	if r.Spec.ServiceAccount == "" {
 		r.Spec.ServiceAccount = "default"
 	}
-	if r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass == "" ||
-		r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass == "" ||
-		r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == "" {
+	needDefaultSC := r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass == "" ||
+		r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass == ""
+	if r.Spec.DeploymentMode != oceanbaseconst.DeploymentModeSharedStorage && r.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
+		needDefaultSC = needDefaultSC || r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == ""
+	}
+	if needDefaultSC {
 		scList := &storagev1.StorageClassList{}
 		err := clt.List(context.TODO(), scList)
 		var defaults []string
@@ -153,7 +157,7 @@ func (r *OBCluster) Default() {
 				if r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass == "" {
 					r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass = defaults[0]
 				}
-				if r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == "" {
+				if r.Spec.OBServerTemplate.Storage.RedoLogStorage != nil && r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == "" {
 					r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass = defaults[0]
 				}
 			}
@@ -183,7 +187,25 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 	newResource := r.Spec.OBServerTemplate.Resource
 	if existOld && exist && oldMode != mode {
 		return nil, errors.New("mode cannot be changed")
-	} else if !oldCluster.SupportStaticIP() && (oldResource.Cpu != newResource.Cpu || oldResource.Memory != newResource.Memory) {
+	}
+	if oldCluster.Spec.DeploymentMode != r.Spec.DeploymentMode {
+		return nil, errors.New("deploymentMode cannot be changed after creation")
+	}
+	if r.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
+		if oldCluster.Spec.OBServerTemplate.Image != r.Spec.OBServerTemplate.Image {
+			// Shared storage makes observer data external, but an image change still
+			// requires a coordinated database-version upgrade and LogService
+			// compatibility checks. Keep it immutable until that flow is supported.
+			return nil, errors.New("shared_storage mode does not support image upgrade in this version")
+		}
+		if !reflect.DeepEqual(oldCluster.Spec.SharedStorageInfo, r.Spec.SharedStorageInfo) {
+			return nil, errors.New("sharedStorageInfo cannot be changed after creation")
+		}
+		if !reflect.DeepEqual(oldCluster.Spec.LogServiceRef, r.Spec.LogServiceRef) {
+			return nil, errors.New("logServiceRef cannot be changed after creation")
+		}
+	}
+	if !oldCluster.SupportStaticIP() && (oldResource.Cpu != newResource.Cpu || oldResource.Memory != newResource.Memory) {
 		return nil, errors.New("forbid to modify cpu or memory quota of non-static-ip cluster")
 	}
 	if newResource.Memory.Cmp(oldResource.Memory) < 0 || newResource.Cpu.Cmp(oldResource.Cpu) < 0 {
@@ -242,7 +264,7 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 	if newStorage.LogStorage.Size.Cmp(oldStorage.LogStorage.Size) > 0 {
 		err = errors.Join(err, validateStorageClassAllowExpansion(newStorage.LogStorage.StorageClass))
 	}
-	if newStorage.RedoLogStorage.Size.Cmp(oldStorage.RedoLogStorage.Size) > 0 {
+	if newStorage.RedoLogStorage != nil && oldStorage.RedoLogStorage != nil && newStorage.RedoLogStorage.Size.Cmp(oldStorage.RedoLogStorage.Size) > 0 {
 		err = errors.Join(err, validateStorageClassAllowExpansion(newStorage.RedoLogStorage.StorageClass))
 	}
 	if err != nil {
@@ -255,7 +277,7 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 	if newStorage.LogStorage.Size.Cmp(oldStorage.LogStorage.Size) < 0 {
 		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("logStorage").Child("size"), newStorage.LogStorage.Size.String(), "forbid to shrink log storage size"))
 	}
-	if newStorage.RedoLogStorage.Size.Cmp(oldStorage.RedoLogStorage.Size) < 0 {
+	if newStorage.RedoLogStorage != nil && oldStorage.RedoLogStorage != nil && newStorage.RedoLogStorage.Size.Cmp(oldStorage.RedoLogStorage.Size) < 0 {
 		err = errors.Join(err, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("size"), newStorage.RedoLogStorage.Size.String(), "forbid to shrink redo log storage size"))
 	}
 	if err != nil {
@@ -332,8 +354,34 @@ func (r *OBCluster) validateMutation() error {
 	if r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass == "" {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("logStorage").Child("storageClass"), "", "storageClass is required, default storage class is not found"))
 	}
-	if r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == "" {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("storageClass"), "", "storageClass is required, default storage class is not found"))
+	if r.Spec.DeploymentMode != oceanbaseconst.DeploymentModeSharedStorage {
+		if r.Spec.OBServerTemplate.Storage.RedoLogStorage == nil {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage"), "redoLogStorage is required for normal deployment mode"))
+		} else if r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass == "" {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("storageClass"), "", "storageClass is required, default storage class is not found"))
+		}
+	}
+
+	if r.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
+		if r.Spec.SharedStorageInfo == nil {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("sharedStorageInfo"), "sharedStorageInfo is required for shared_storage mode"))
+		}
+		if r.Spec.LogServiceRef == nil {
+			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("logServiceRef"), "logServiceRef is required for shared_storage mode"))
+		} else if r.Spec.LogServiceRef.Name == "" {
+			// The referenced resource may be created later; reconciliation waits for
+			// it to become Running before bootstrap.
+			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("logServiceRef").Child("name"), "logServiceRef.name is required for shared_storage mode"))
+		}
+		for i, parameter := range r.Spec.Parameters {
+			if oceanbaseconst.ContainsManagedParameter(parameter.Name, parameter.Value, oceanbaseconst.SharedStorageManagedParameters[:]) {
+				allErrs = append(allErrs, field.Invalid(
+					field.NewPath("spec").Child("parameters").Index(i),
+					parameter.Name,
+					"enable_logservice is managed by ob-operator in shared_storage mode",
+				))
+			}
+		}
 	}
 	if len(allErrs) != 0 {
 		return allErrs.ToAggregate()
@@ -343,7 +391,9 @@ func (r *OBCluster) validateMutation() error {
 	storageClassMapping := make(map[string]bool)
 	storageClassMapping[r.Spec.OBServerTemplate.Storage.DataStorage.StorageClass] = true
 	storageClassMapping[r.Spec.OBServerTemplate.Storage.LogStorage.StorageClass] = true
-	storageClassMapping[r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass] = true
+	if r.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
+		storageClassMapping[r.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass] = true
+	}
 
 	for key := range storageClassMapping {
 		err := clt.Get(context.TODO(), types.NamespacedName{
@@ -370,7 +420,7 @@ func (r *OBCluster) validateMutation() error {
 	if r.Spec.OBServerTemplate.Storage.DataStorage.Size.Cmp(resource.MustParse(obcfg.GetConfig().Resource.MinDataDiskSize)) < 0 {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("size"), r.Spec.OBServerTemplate.Storage.DataStorage.Size.String(), "The minimum data storage size of OBCluster is "+oceanbaseconst.MinDataDiskSize.String()))
 	}
-	if r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(resource.MustParse(obcfg.GetConfig().Resource.MinRedoLogDiskSize)) < 0 {
+	if r.Spec.OBServerTemplate.Storage.RedoLogStorage != nil && r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Cmp(resource.MustParse(obcfg.GetConfig().Resource.MinRedoLogDiskSize)) < 0 {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("size"), r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.String(), "The minimum redo log storage size of OBCluster is "+oceanbaseconst.MinRedoLogDiskSize.String()))
 	}
 	if r.Spec.OBServerTemplate.Storage.LogStorage.Size.Cmp(resource.MustParse(obcfg.GetConfig().Resource.MinLogDiskSize)) < 0 {
@@ -401,7 +451,7 @@ func (r *OBCluster) validateMutation() error {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("dataStorage").Child("size"), r.Spec.OBServerTemplate.Storage.DataStorage.Size.String(), "The minimum size of data storage should be larger than 3 times of memory limit"))
 		}
 
-		if r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.AsApproximateFloat64() < 3*memoryLimit.AsApproximateFloat64() {
+		if r.Spec.OBServerTemplate.Storage.RedoLogStorage != nil && r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.AsApproximateFloat64() < 3*memoryLimit.AsApproximateFloat64() {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("spec").Child("observer").Child("storage").Child("redoLogStorage").Child("size"), r.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.String(), "The minimum size of redo log storage should be larger than 3 times of memory limit"))
 		}
 	}

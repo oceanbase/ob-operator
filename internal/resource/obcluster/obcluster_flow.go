@@ -15,6 +15,7 @@ See the Mulan PSL v2 for more details.
 package obcluster
 
 import (
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
@@ -46,20 +47,24 @@ func genMigrateOBClusterFromExistingFlow(_ *OBClusterManager) *tasktypes.TaskFlo
 	}
 }
 
-func genBootstrapOBClusterFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
+func genBootstrapOBClusterFlow(m *OBClusterManager) *tasktypes.TaskFlow {
+	tasks := []tasktypes.TaskName{
+		tCheckImageReady,
+		tCheckEnvironment,
+		tCheckClusterMode,
+		tCheckAndCreateNs,
+		tCheckAndCreateUserSecrets,
+		tCreateOBZone,
+		tWaitOBZoneBootstrapReady,
+		tBootstrap,
+	}
+	if m.OBCluster.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
+		tasks = append([]tasktypes.TaskName{tWaitLogServiceReady}, tasks...)
+	}
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: "bootstrap obcluster",
-			Tasks: []tasktypes.TaskName{
-				tCheckImageReady,
-				tCheckEnvironment,
-				tCheckClusterMode,
-				tCheckAndCreateNs,
-				tCheckAndCreateUserSecrets,
-				tCreateOBZone,
-				tWaitOBZoneBootstrapReady,
-				tBootstrap,
-			},
+			Name:         "bootstrap obcluster",
+			Tasks:        tasks,
 			TargetStatus: clusterstatus.Bootstrapped,
 			OnFailure: tasktypes.FailureRule{
 				NextTryStatus: clusterstatus.Failed,

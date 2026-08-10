@@ -98,6 +98,7 @@ type Time struct {
 	TimeConsumingStateWaitTimeout int `mapstructure:"timeConsumingStateWaitTimeout" yaml:"timeConsumingStateWaitTimeout"`
 	WaitForJobTimeoutSeconds      int `mapstructure:"waitForJobTimeoutSeconds" yaml:"waitForJobTimeoutSeconds"`
 	ServerDeleteTimeoutSeconds    int `mapstructure:"serverDeleteTimeoutSeconds" yaml:"serverDeleteTimeoutSeconds"`
+	LogServiceStartTimeoutSeconds int `mapstructure:"logServiceStartTimeoutSeconds" yaml:"logServiceStartTimeoutSeconds"`
 
 	DefaultSqlTimeoutSeconds    int `mapstructure:"defaultSqlTimeoutSeconds" yaml:"defaultSqlTimeoutSeconds"`
 	TenantSqlTimeoutSeconds     int `mapstructure:"tenantSqlTimeoutSeconds" yaml:"tenantSqlTimeoutSeconds"`

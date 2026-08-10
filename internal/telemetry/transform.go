@@ -54,17 +54,23 @@ func TransformReportOBCluster(c *v1alpha1.OBCluster) *models.OBCluster {
 		res.Image = c.Spec.OBServerTemplate.Image
 		res.CPU = c.Spec.OBServerTemplate.Resource.Cpu.Value()
 		res.Memory = c.Spec.OBServerTemplate.Resource.Memory.Value()
-		res.SysLogStorage = &models.StorageSpec{
-			StorageClass: c.Spec.OBServerTemplate.Storage.LogStorage.StorageClass,
-			StorageSize:  c.Spec.OBServerTemplate.Storage.LogStorage.Size.Value(),
+		if c.Spec.OBServerTemplate.Storage.LogStorage != nil {
+			res.SysLogStorage = &models.StorageSpec{
+				StorageClass: c.Spec.OBServerTemplate.Storage.LogStorage.StorageClass,
+				StorageSize:  c.Spec.OBServerTemplate.Storage.LogStorage.Size.Value(),
+			}
 		}
-		res.DataStorage = &models.StorageSpec{
-			StorageClass: c.Spec.OBServerTemplate.Storage.DataStorage.StorageClass,
-			StorageSize:  c.Spec.OBServerTemplate.Storage.DataStorage.Size.Value(),
+		if c.Spec.OBServerTemplate.Storage.DataStorage != nil {
+			res.DataStorage = &models.StorageSpec{
+				StorageClass: c.Spec.OBServerTemplate.Storage.DataStorage.StorageClass,
+				StorageSize:  c.Spec.OBServerTemplate.Storage.DataStorage.Size.Value(),
+			}
 		}
-		res.RedoLogStorage = &models.StorageSpec{
-			StorageClass: c.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass,
-			StorageSize:  c.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Value(),
+		if c.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
+			res.RedoLogStorage = &models.StorageSpec{
+				StorageClass: c.Spec.OBServerTemplate.Storage.RedoLogStorage.StorageClass,
+				StorageSize:  c.Spec.OBServerTemplate.Storage.RedoLogStorage.Size.Value(),
+			}
 		}
 	}
 	replicaMapping := make(map[string]int, len(c.Status.OBZoneStatus))

@@ -28,8 +28,13 @@ vendor/
 cover.out
 testbin/*
 custom_scripts/*
+build/ss/
+build/scripts/observer-prestart-wrapper.sh
 insert_license.py
 deploy/*secret*
+
+# Local OceanBase AI test manifests
+/example/oceanbase-ai/
 
 
 # Kubernetes Generated files - skip generated files, except for vendored files

@@ -40,6 +40,22 @@ func (m *OceanbaseOperationManager) Bootstrap(ctx context.Context, bootstrapServ
 	return nil
 }
 
+func (m *OceanbaseOperationManager) BootstrapSharedStorage(ctx context.Context, bootstrapServerList []model.BootstrapServerInfo, logServiceAccessPoint string, sharedStorageInfo string) error {
+	serverInfoList := make([]string, 0, len(bootstrapServerList))
+	for _, bootstrapServer := range bootstrapServerList {
+		serverInfoList = append(serverInfoList, fmt.Sprintf(sql.BootstrapServer, bootstrapServer.Zone, bootstrapServer.Server.Ip, bootstrapServer.Server.Port))
+	}
+	bootstrapInfo := strings.Join(serverInfoList, ", ")
+	bootstrapSql := fmt.Sprintf(sql.BootstrapWithLogService, bootstrapInfo, logServiceAccessPoint, sharedStorageInfo)
+	m.Logger.Info("Execute shared storage bootstrap sql", "servers", bootstrapInfo, "datasource", m.Connector.DataSource().String())
+	err := m.ExecWithTimeout(ctx, config.BootstrapTimeout, bootstrapSql)
+	if err != nil {
+		m.Logger.Error(err, "Got exception when bootstrap with shared storage", "servers", bootstrapInfo, "datasource", m.Connector.DataSource().String())
+		return errors.Wrap(err, "Bootstrap with shared storage")
+	}
+	return nil
+}
+
 // GetVersion gets oceanbase version from every observer with build number
 func (m *OceanbaseOperationManager) GetVersion(ctx context.Context) (*model.OBVersion, error) {
 	observers, err := m.ListServers(ctx)
