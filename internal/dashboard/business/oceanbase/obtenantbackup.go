@@ -316,16 +316,7 @@ func GetTenantBackupPolicy(ctx context.Context, nn types.NamespacedName) (*respo
 	}
 	events.Items = append(events.Items, jobEvents.Items...)
 	for _, event := range events.Items {
-		respPolicy.Events = append(respPolicy.Events, response.K8sEvent{
-			Namespace:  event.Namespace,
-			Type:       event.Type,
-			Count:      event.Count,
-			FirstOccur: event.FirstTimestamp.Unix(),
-			LastSeen:   event.LastTimestamp.Unix(),
-			Reason:     event.Reason,
-			Message:    event.Message,
-			Object:     fmt.Sprintf("%s/%s", event.InvolvedObject.Kind, event.InvolvedObject.Name),
-		})
+		respPolicy.Events = append(respPolicy.Events, response.NewK8sEvent(event))
 	}
 	return respPolicy, nil
 }

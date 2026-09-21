@@ -272,6 +272,13 @@ definitions:
     - key
     - value
     type: object
+  common.ObjectReference:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
   common.ResourceSpec:
     properties:
       cpu:
@@ -281,6 +288,20 @@ definitions:
     required:
     - cpu
     - memory
+    type: object
+  common.SharedStorageSpec:
+    properties:
+      bucketURL:
+        type: string
+      maxBandwidth:
+        type: string
+      maxIOPS:
+        type: string
+      secretRef:
+        $ref: '#/definitions/common.ObjectReference'
+    required:
+    - bucketURL
+    - secretRef
     type: object
   common.StorageSpec:
     properties:
@@ -550,6 +571,122 @@ definitions:
       kubeConfig:
         type: string
     type: object
+  logservice.CreateRequest:
+    properties:
+      name:
+        type: string
+      namespace:
+        type: string
+      spec:
+        type: object
+    type: object
+  logservice.DeleteRequest:
+    properties:
+      confirmName:
+        type: string
+      resourceVersion:
+        type: string
+    type: object
+  logservice.Detail:
+    properties:
+      createdAt:
+        type: string
+      deleting:
+        type: boolean
+      events:
+        items:
+          $ref: '#/definitions/logservice.Event'
+        type: array
+      name:
+        type: string
+      namespace:
+        type: string
+      nodes:
+        items:
+          $ref: '#/definitions/logservice.Node'
+        type: array
+      protected:
+        type: boolean
+      references:
+        items:
+          type: string
+        type: array
+      resourceVersion:
+        type: string
+      spec:
+        type: object
+      status:
+        type: object
+      volumes:
+        items:
+          $ref: '#/definitions/logservice.Volume'
+        type: array
+    type: object
+  logservice.Event:
+    properties:
+      message:
+        type: string
+      object:
+        type: string
+      reason:
+        type: string
+      time:
+        type: string
+      type:
+        type: string
+    type: object
+  logservice.Item:
+    properties:
+      createdAt:
+        type: string
+      deleting:
+        type: boolean
+      name:
+        type: string
+      namespace:
+        type: string
+      protected:
+        type: boolean
+      references:
+        items:
+          type: string
+        type: array
+      resourceVersion:
+        type: string
+      spec:
+        type: object
+      status:
+        type: object
+    type: object
+  logservice.Node:
+    properties:
+      deleting:
+        type: boolean
+      name:
+        type: string
+      status:
+        type: object
+      zone:
+        type: string
+    type: object
+  logservice.ScaleRequest:
+    properties:
+      replicas:
+        additionalProperties:
+          type: integer
+        type: object
+      resourceVersion:
+        type: string
+    type: object
+  logservice.Volume:
+    properties:
+      name:
+        type: string
+      phase:
+        type: string
+      size:
+        type: string
+    type: object
   models.K8sEvent:
     properties:
       count:
@@ -789,12 +926,16 @@ definitions:
     type: object
   obproxy.ConfigItem:
     properties:
+      configLevel:
+        type: string
       info:
         type: string
       name:
         type: string
       needReboot:
         type: boolean
+      range:
+        type: string
       value:
         type: string
       visibleLevel:
@@ -970,6 +1111,8 @@ definitions:
     type: object
   oceanbase.OBInstance:
     properties:
+      logservice:
+        type: string
       obcluster:
         type: string
       observer:
@@ -991,6 +1134,7 @@ definitions:
     - obzone
     - obtenant
     - observer
+    - logservice
     type: string
     x-enum-varnames:
     - TypeUnknown
@@ -998,6 +1142,7 @@ definitions:
     - TypeOBZone
     - TypeOBTenant
     - TypeOBServer
+    - TypeLogService
   param.BackupDestType:
     enum:
     - NFS
@@ -1128,6 +1273,14 @@ definitions:
         type: string
       deletionProtection:
         type: boolean
+      deploymentMode:
+        description: DeploymentMode is independent of the networking mode (NORMAL/SERVICE/STANDALONE).
+        enum:
+        - normal
+        - shared_storage
+        type: string
+      logServiceRef:
+        $ref: '#/definitions/common.ObjectReference'
       mode:
         $ref: '#/definitions/common.ClusterMode'
       monitor:
@@ -1151,6 +1304,8 @@ definitions:
       scenario:
         description: 'Enum: express_oltp, express_oltp, olap, kv, htap, express_oltp_perf'
         type: string
+      sharedStorageInfo:
+        $ref: '#/definitions/common.SharedStorageSpec'
       topology:
         items:
           $ref: '#/definitions/param.ZoneTopology'
@@ -1318,7 +1473,6 @@ definitions:
     required:
     - data
     - log
-    - redoLog
     type: object
   param.PatchOBClusterParam:
     properties:
@@ -2264,8 +2418,12 @@ definitions:
         type: integer
       deletionProtection:
         type: boolean
+      deploymentMode:
+        type: string
       image:
         type: string
+      logServiceRef:
+        $ref: '#/definitions/common.ObjectReference'
       metrics:
         $ref: '#/definitions/response.OBMetrics'
       mode:
@@ -2286,6 +2444,8 @@ definitions:
         $ref: '#/definitions/response.ResourceSpecRender'
       rootPasswordSecret:
         type: string
+      sharedStorageInfo:
+        $ref: '#/definitions/common.SharedStorageSpec'
       status:
         type: string
       statusDetail:
@@ -2330,6 +2490,8 @@ definitions:
         type: string
       deletionProtection:
         type: boolean
+      deploymentMode:
+        type: string
       mode:
         $ref: '#/definitions/common.ClusterMode'
       name:
@@ -2382,6 +2544,8 @@ definitions:
         type: integer
       deletionProtection:
         type: boolean
+      deploymentMode:
+        type: string
       image:
         type: string
       mode:
@@ -2546,7 +2710,6 @@ definitions:
         $ref: '#/definitions/response.StorageSpec'
     required:
     - dataStorage
-    - redoLogStorage
     - sysLogStorage
     type: object
   response.OBTenantDetail:
@@ -3260,7 +3423,8 @@ definitions:
       planDetail:
         $ref: '#/definitions/sql.PlanOperator'
       planHash:
-        type: integer
+        example: "0"
+        type: string
       planID:
         type: integer
       svrIP:
@@ -3332,7 +3496,8 @@ definitions:
       ioCost:
         type: integer
       planHash:
-        type: integer
+        example: "0"
+        type: string
       planID:
         type: integer
       realCost:
@@ -3544,8 +3709,6 @@ definitions:
         items:
           $ref: '#/definitions/sql.SqlStatisticMetric'
         type: array
-      formatSqlId:
-        type: string
       lastFailInfo:
         type: integer
       latencyStatistics:
@@ -6348,6 +6511,159 @@ paths:
       summary: User logout
       tags:
       - User
+  /api/v1/logservices:
+    get:
+      operationId: ListLogServices
+      parameters:
+      - description: Namespace
+        in: query
+        name: namespace
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/logservice.Item'
+                  type: array
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: List LogServices
+      tags:
+      - LogService
+    post:
+      consumes:
+      - application/json
+      operationId: CreateLogService
+      parameters:
+      - description: Creation configuration
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/logservice.CreateRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/logservice.Item'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Create a LogService with existing namespace, storage classes and Secret
+      tags:
+      - LogService
+  /api/v1/logservices/{namespace}/{name}:
+    delete:
+      consumes:
+      - application/json
+      operationId: DeleteLogService
+      parameters:
+      - description: Namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: Name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: Exact name and current resourceVersion
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/logservice.DeleteRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  type: boolean
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Delete an unreferenced, unprotected LogService after exact-name confirmation
+      tags:
+      - LogService
+    get:
+      operationId: GetLogService
+      parameters:
+      - description: Namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: Name
+        in: path
+        name: name
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/logservice.Detail'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Read LogService topology, nodes, PVCs, references and events
+      tags:
+      - LogService
+  /api/v1/logservices/{namespace}/{name}/replicas:
+    patch:
+      consumes:
+      - application/json
+      operationId: ScaleLogService
+      parameters:
+      - description: Namespace
+        in: path
+        name: namespace
+        required: true
+        type: string
+      - description: Name
+        in: path
+        name: name
+        required: true
+        type: string
+      - description: Current resourceVersion and every existing zone replica count
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/logservice.ScaleRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/logservice.Item'
+              type: object
+      security:
+      - ApiKeyAuth: []
+      summary: Scale replicas in existing zones with optimistic concurrency
+      tags:
+      - LogService
   /api/v1/metrics:
     get:
       consumes:

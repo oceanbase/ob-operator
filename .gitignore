@@ -35,6 +35,7 @@ deploy/*secret*
 
 # Local OceanBase AI test manifests
 /example/oceanbase-ai/
+/tests/ss-rules.generated.yaml
 
 
 # Kubernetes Generated files - skip generated files, except for vendored files

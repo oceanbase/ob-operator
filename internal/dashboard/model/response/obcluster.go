@@ -97,9 +97,11 @@ type ParameterSpec struct {
 }
 
 type OBClusterExtra struct {
-	Version  string             `json:"version"`
-	Resource ResourceSpecRender `json:"resource" binding:"required"`
-	Storage  OBServerStorage    `json:"storage" binding:"required"`
+	SharedStorageInfo *common.SharedStorageSpec `json:"sharedStorageInfo,omitempty"`
+	LogServiceRef     *common.ObjectReference   `json:"logServiceRef,omitempty"`
+	Version           string                    `json:"version"`
+	Resource          ResourceSpecRender        `json:"resource" binding:"required"`
+	Storage           OBServerStorage           `json:"storage" binding:"required"`
 
 	RootPasswordSecret string          `json:"rootPasswordSecret" binding:"required"`
 	Parameters         []ParameterSpec `json:"parameters" binding:"required"`

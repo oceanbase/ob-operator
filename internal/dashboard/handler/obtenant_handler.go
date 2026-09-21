@@ -801,15 +801,7 @@ func ListOBTenantRelatedEvents(c *gin.Context) ([]response.K8sEvent, error) {
 		}
 
 		for _, e := range policyEvents.Items {
-			events = append(events, response.K8sEvent{
-				Namespace:  e.Namespace,
-				Reason:     e.Reason,
-				Message:    e.Message,
-				Type:       e.Type,
-				Object:     e.InvolvedObject.Kind + "/" + e.InvolvedObject.Name,
-				FirstOccur: e.FirstTimestamp.Unix(),
-				LastSeen:   e.LastTimestamp.Unix(),
-			})
+			events = append(events, response.NewK8sEvent(e))
 		}
 
 		backupJobs := &v1alpha1.OBTenantBackupList{}

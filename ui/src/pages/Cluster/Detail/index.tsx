@@ -10,12 +10,18 @@ import { useAccess, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Badge } from 'antd';
 import styles from './index.less';
+import { L } from '@/pages/LogService/common';
 
 export default () => {
   const params = useParams();
   const { ns, name, clusterName } = params;
   const access = useAccess();
+  const { data: clusterDetail } = useRequest(getClusterDetailReq, {
+    defaultParams: [{ ns: ns!, name: name! }],
+    refreshDeps: [ns, name],
+  });
   const menus: MenuItem[] = [
+    ...(clusterDetail?.info?.deploymentMode === 'shared_storage' ? [{ title: L('湖库配置', 'Lakehouse configuration'), key: 'lakehouse', link: `/cluster/${ns}/${name}/${clusterName}/lakehouse` }] : []),
     {
       title: intl.formatMessage({
         id: 'dashboard.Cluster.Detail.Overview',
@@ -65,10 +71,6 @@ export default () => {
       accessible: access.obclusterwrite,
     },
   ];
-  const { data: clusterDetail } = useRequest(getClusterDetailReq, {
-    defaultParams: [{ ns: ns!, name: name! }],
-  });
-
   const statusDetailItem = findByValue(STATUS_LIST, clusterDetail?.status);
 
   return (

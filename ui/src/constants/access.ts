@@ -1,6 +1,8 @@
 import { intl } from '@/utils/intl';
 
 export const ACCESS_ROLES_LIST = [
+  { label: intl.formatMessage({ id: 'dashboard.ObjectStorage.Access', defaultMessage: '对象存储凭据' }), value: 'objectstorage', descriptions: 'Read credential names; create new credentials and run read-only bucket checks. No secret-value reads, updates or deletes.' },
+  { label: 'LogService', value: 'oblogservice', descriptions: 'LogService: read / create / scale replicas / delete' },
   {
     label: intl.formatMessage({
       id: 'src.constants.D057DB4A',

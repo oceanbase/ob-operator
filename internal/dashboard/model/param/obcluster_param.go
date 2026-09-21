@@ -13,6 +13,9 @@ See the Mulan PSL v2 for more details.
 package param
 
 import (
+	"fmt"
+	"strings"
+
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 )
@@ -53,23 +56,73 @@ type NFSVolumeSpec struct {
 }
 
 type CreateOBClusterParam struct {
-	Namespace       string             `json:"namespace" binding:"required"`
-	Name            string             `json:"name" binding:"required"`
-	ClusterName     string             `json:"clusterName" binding:"required"`
-	ClusterId       int64              `json:"clusterId" binding:"required"`
-	RootPassword    string             `json:"rootPassword" binding:"required"`
-	ProxyroPassword string             `json:"proxyroPassword"`
-	Topology        []ZoneTopology     `json:"topology" binding:"required"`
-	OBServer        *OBServerSpec      `json:"observer" binding:"required"`
-	Monitor         *MonitorSpec       `json:"monitor"`
-	Parameters      []common.KVPair    `json:"parameters"`
-	BackupVolume    *NFSVolumeSpec     `json:"backupVolume"`
-	Mode            common.ClusterMode `json:"mode" binding:"required"`
+	// DeploymentMode is independent of the networking mode (NORMAL/SERVICE/STANDALONE).
+	DeploymentMode    string                    `json:"deploymentMode,omitempty" enums:"normal,shared_storage"`
+	SharedStorageInfo *common.SharedStorageSpec `json:"sharedStorageInfo,omitempty"`
+	LogServiceRef     *common.ObjectReference   `json:"logServiceRef,omitempty"`
+	Namespace         string                    `json:"namespace" binding:"required"`
+	Name              string                    `json:"name" binding:"required"`
+	ClusterName       string                    `json:"clusterName" binding:"required"`
+	ClusterId         int64                     `json:"clusterId" binding:"required"`
+	RootPassword      string                    `json:"rootPassword" binding:"required"`
+	ProxyroPassword   string                    `json:"proxyroPassword"`
+	Topology          []ZoneTopology            `json:"topology" binding:"required"`
+	OBServer          *OBServerSpec             `json:"observer" binding:"required"`
+	Monitor           *MonitorSpec              `json:"monitor"`
+	Parameters        []common.KVPair           `json:"parameters"`
+	BackupVolume      *NFSVolumeSpec            `json:"backupVolume"`
+	Mode              common.ClusterMode        `json:"mode" binding:"required"`
 
 	// Enum: express_oltp, express_oltp, olap, kv, htap, express_oltp_perf
 	Scenario           string `json:"scenario" binding:"required"`
 	DeletionProtection bool   `json:"deletionProtection"`
 	PvcIndependent     bool   `json:"pvcIndependent"`
+}
+
+// ValidateStorageMode runs before creating password Secrets. Older clients may
+// omit deploymentMode; they retain the normal deployment behavior.
+func (p *CreateOBClusterParam) ValidateStorageMode() error {
+	if p.DeploymentMode != "" && p.DeploymentMode != "normal" && p.DeploymentMode != "shared_storage" {
+		return fmt.Errorf("deploymentMode must be normal or shared_storage")
+	}
+	if p.OBServer == nil || p.OBServer.Storage == nil {
+		return fmt.Errorf("observer.storage is required")
+	}
+	if p.DeploymentMode != "shared_storage" {
+		if p.SharedStorageInfo != nil || p.LogServiceRef != nil {
+			return fmt.Errorf("sharedStorageInfo and logServiceRef require shared_storage deploymentMode")
+		}
+		if p.OBServer.Storage.RedoLog == nil {
+			return fmt.Errorf("observer.storage.redoLog is required for normal deploymentMode")
+		}
+		return nil
+	}
+	if p.LogServiceRef == nil || strings.TrimSpace(p.LogServiceRef.Name) == "" {
+		return fmt.Errorf("logServiceRef.name is required for shared_storage deploymentMode")
+	}
+	if p.SharedStorageInfo == nil || strings.TrimSpace(p.SharedStorageInfo.BucketURL) == "" || strings.TrimSpace(p.SharedStorageInfo.SecretRef.Name) == "" {
+		return fmt.Errorf("sharedStorageInfo.bucketURL and secretRef.name are required for shared_storage deploymentMode")
+	}
+	if p.OBServer.Storage.RedoLog != nil {
+		return fmt.Errorf("observer.storage.redoLog must be omitted for shared_storage deploymentMode")
+	}
+	// The 30 GiB normal preset initializes only 6 GiB of cache, which fails
+	// SS startup (system cache allocation plus reserved space). Use the
+	// conservative minimum verified with oceanbase-ai 4.6.2.0.
+	if p.OBServer.Storage.Data.SizeGB < 50 {
+		return fmt.Errorf("shared_storage requires at least 50 GiB of local data cache in this Dashboard")
+	}
+	seen := make(map[string]bool)
+	if len(p.Topology) == 0 {
+		return fmt.Errorf("topology must contain at least one zone")
+	}
+	for _, zone := range p.Topology {
+		if strings.TrimSpace(zone.Zone) == "" || seen[zone.Zone] || zone.Replicas < 1 {
+			return fmt.Errorf("topology must contain unique non-empty zones with replicas >= 1")
+		}
+		seen[zone.Zone] = true
+	}
+	return nil
 }
 
 type UpgradeOBClusterParam struct {

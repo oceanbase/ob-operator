@@ -76,7 +76,8 @@ func (m *OceanbaseOperationManager) addSharedStorageDestWithWaitConfig(
 		return sharedStorageDestNotReadyError(zoneName, states)
 	}
 
-	execErr := m.ExecWithDefaultTimeout(ctx, sql.AddSharedStorageDest, path, accessInfo, attribute, zoneName)
+	statement, parameters := sharedStorageDestStatement(path, accessInfo, attribute, zoneName)
+	execErr := m.ExecWithDefaultTimeout(ctx, statement, parameters...)
 	// The DDL may have committed even when the client observed a timeout or
 	// connection error. Wait through the normal ADDING/ROTATING transition so
 	// the flow cannot start the zone early or report a transient Task failed
@@ -93,6 +94,15 @@ func (m *OceanbaseOperationManager) addSharedStorageDestWithWaitConfig(
 		return errors.Wrap(execErr, "Add shared storage destination")
 	}
 	return errors.Wrap(waitErr, "Wait shared storage destination after add")
+}
+
+func sharedStorageDestStatement(path, accessInfo, attribute, zoneName string) (string, []any) {
+	// ADD STORAGE requires a non-empty ATTRIBUTE in OceanBase AI 4.6.2.
+	// Match BOOTSTRAP's unset limits (0); bandwidth needs a unit, even at zero.
+	if strings.TrimSpace(attribute) == "" {
+		attribute = "max_iops=0&max_bandwidth=0B"
+	}
+	return sql.AddSharedStorageDest, []any{path, accessInfo, attribute, zoneName}
 }
 
 type sharedStorageDestRecord struct {

@@ -277,11 +277,26 @@ const ClusterOverview: React.FC = () => {
     },
     {
       key: 'Upgrade',
-      label: intl.formatMessage({
-        id: 'OBDashboard.Detail.Overview.Upgrade',
-        defaultMessage: '升级',
-      }),
-      disabled: !isEmpty(clusterDetail) && clusterDetail?.status !== 'running',
+      label: (
+        <Tooltip
+          title={
+            clusterDetail?.info?.deploymentMode === 'shared_storage'
+              ? intl.formatMessage({
+                  id: 'dashboard.Cluster.SharedStorage.NoUpgrade',
+                  defaultMessage: '当前版本的 SS 集群不支持镜像升级',
+                })
+              : undefined
+          }
+        >
+          {intl.formatMessage({
+            id: 'OBDashboard.Detail.Overview.Upgrade',
+            defaultMessage: '升级',
+          })}
+        </Tooltip>
+      ),
+      disabled:
+        clusterDetail?.info?.deploymentMode === 'shared_storage' ||
+        (!isEmpty(clusterDetail) && clusterDetail?.status !== 'running'),
     },
     {
       key: 'delete',

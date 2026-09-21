@@ -1,4 +1,5 @@
 import { obcluster } from '@/api';
+import type { ParamPatchOBClusterParam } from '@/api/generated';
 import { CustomFormItem } from '@/components/CustomFormItem';
 import InputNumber from '@/components/InputNumber';
 import SelectWithTooltip from '@/components/SelectWithTooltip';
@@ -16,6 +17,7 @@ export interface ParametersModalProps {
   initialValues: any[];
   name: string;
   namespace: string;
+  deploymentMode?: string;
 }
 
 export const TooltipItemContent = ({ item }) => {
@@ -68,8 +70,10 @@ const ResourceDrawer: React.FC<
   namespace,
   onSuccess,
   resource,
+  deploymentMode,
 }) => {
-  const [form] = Form.useForm<API.CreateClusterData>();
+  const isSharedStorage = deploymentMode === 'shared_storage';
+  const [form] = Form.useForm<ParamPatchOBClusterParam>();
   const { validateFields, setFieldValue, resetFields } = form;
 
   useEffect(() => {
@@ -92,7 +96,7 @@ const ResourceDrawer: React.FC<
     setFieldValue(['storage'], {
       data,
       log,
-      redoLog,
+      ...(isSharedStorage ? {} : { redoLog }),
     });
 
     // 设置 CPU 和 Memory 的默认值
@@ -109,7 +113,7 @@ const ResourceDrawer: React.FC<
         setFieldValue(['resource', 'memory'], memoryInGB);
       }
     }
-  }, [initialValues, resource, setFieldValue]);
+  }, [initialValues, resource, setFieldValue, isSharedStorage]);
 
   const { data: storageClassesRes } = useRequest(getStorageClasses, {});
 
@@ -167,6 +171,8 @@ const ResourceDrawer: React.FC<
             loading={loading}
             onClick={() => {
               validateFields().then((value) => {
+                if (isSharedStorage && value.storage)
+                  delete value.storage.redoLog;
                 patchOBCluster(
                   namespace,
                   name,
@@ -285,38 +291,40 @@ const ResourceDrawer: React.FC<
               </CustomFormItem>
             </div>
           </Col>
-          <Col span={24}>
-            <p style={fontStyle}>redoLog</p>
-            <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-              <CustomFormItem
-                style={{ marginRight: '8px' }}
-                label="size"
-                name={['storage', 'redoLog', 'size']}
-              >
-                <InputNumber
-                  addonAfter={SUFFIX_UNIT}
-                  placeholder={intl.formatMessage({
-                    id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
-                    defaultMessage: '请输入',
-                  })}
-                />
-              </CustomFormItem>
-              <CustomFormItem
-                label="storageClass"
-                validateTrigger="onBlur"
-                name={['storage', 'redoLog', 'storageClass']}
-              >
-                {storageClasses && (
-                  <SelectWithTooltip
-                    form={form}
-                    name={['storage', 'redoLog', 'storageClass']}
-                    selectList={storageClasses}
-                    TooltipItemContent={TooltipItemContent}
+          {!isSharedStorage && (
+            <Col span={24}>
+              <p style={fontStyle}>redoLog</p>
+              <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
+                <CustomFormItem
+                  style={{ marginRight: '8px' }}
+                  label="size"
+                  name={['storage', 'redoLog', 'size']}
+                >
+                  <InputNumber
+                    addonAfter={SUFFIX_UNIT}
+                    placeholder={intl.formatMessage({
+                      id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
+                      defaultMessage: '请输入',
+                    })}
                   />
-                )}
-              </CustomFormItem>
-            </div>
-          </Col>
+                </CustomFormItem>
+                <CustomFormItem
+                  label="storageClass"
+                  validateTrigger="onBlur"
+                  name={['storage', 'redoLog', 'storageClass']}
+                >
+                  {storageClasses && (
+                    <SelectWithTooltip
+                      form={form}
+                      name={['storage', 'redoLog', 'storageClass']}
+                      selectList={storageClasses}
+                      TooltipItemContent={TooltipItemContent}
+                    />
+                  )}
+                </CustomFormItem>
+              </div>
+            </Col>
+          )}
         </Row>
       </Form>
     </Drawer>

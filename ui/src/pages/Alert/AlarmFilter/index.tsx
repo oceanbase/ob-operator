@@ -8,7 +8,8 @@ import { Alert } from '@/type/alert';
 import { intl } from '@/utils/intl';
 import { DownOutlined, UpOutlined } from '@ant-design/icons';
 import { useAccess, useModel } from '@umijs/max';
-import { useDebounceFn, useUpdateEffect } from 'ahooks';
+import { useDebounceFn, useUpdateEffect, useRequest } from 'ahooks';
+import { LSItem, lsRequest } from '@/services/logservice';
 import type { FormInstance } from 'antd';
 import { Button, Col, DatePicker, Form, Input, Row, Select, Tag } from 'antd';
 import { useEffect, useState } from 'react';
@@ -33,8 +34,10 @@ export default function AlarmFilter({ form, type, depend }: AlarmFilterProps) {
   const { clusterList, tenantList } = useModel('alarm');
   const [isExpand, setIsExpand] = useState(true);
   const access = useAccess();
+  const { data: logServices } = useRequest(() => lsRequest<LSItem[]>(), { ready: !!access.oblogserviceread });
   const [visibleConfig, setVisibleConfig] = useState(DEFAULT_VISIBLE_CONFIG);
   const getOptionsFromType = (type: OceanbaseOBInstanceType) => {
+    if (type === 'logservice') return logServices?.map(ls => ({ value: `${ls.namespace}/${ls.name}`, label: `${ls.namespace}/${ls.name}` })) || [];
     if (!type || !clusterList || (type === 'obtenant' && !tenantList))
       return [];
     const list = getSelectList(clusterList, type, tenantList);

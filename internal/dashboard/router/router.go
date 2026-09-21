@@ -27,6 +27,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	docs "github.com/oceanbase/ob-operator/internal/dashboard/generated/swagger"
+	"github.com/oceanbase/ob-operator/internal/dashboard/handler"
 	"github.com/oceanbase/ob-operator/internal/dashboard/middleware"
 	v1 "github.com/oceanbase/ob-operator/internal/dashboard/router/v1"
 	"github.com/oceanbase/ob-operator/internal/dashboard/server/constant"
@@ -61,7 +62,7 @@ func InitRoutes(router *gin.Engine) {
 	)
 
 	// host web dist
-	router.Use(static.Serve("/", static.LocalFile("ui/dist", false)))
+	router.Use(serveFrontend("ui/dist"))
 	router.NoRoute(func(c *gin.Context) {
 		c.Redirect(302, "/")
 	})
@@ -74,6 +75,7 @@ func InitRoutes(router *gin.Engine) {
 	}
 
 	v1Group := router.Group("/api/v1")
+	router.GET("/internal/ss-metrics", handler.CollectSSMetrics)
 	// login api does not require login
 	if os.Getenv("DEBUG_DASHBOARD") != "true" {
 		v1Group = router.Group("/api/v1",
@@ -95,6 +97,8 @@ func InitRoutes(router *gin.Engine) {
 	v1.InitTerminalRoutes(v1Group)
 	v1.InitAlarmRoutes(v1Group)
 	v1.InitOBProxyRoutes(v1Group)
+	v1.InitLogServiceRoutes(v1Group)
+	v1.InitObjectStorageRoutes(v1Group)
 	v1.InitAccessControlRoutes(v1Group)
 	v1.InitInspectionRoutes(v1Group)
 	v1.InitSqlRoutes(v1Group)

@@ -13,6 +13,7 @@ export default [
             component: 'Layouts/BasicLayout',
             name: '概览布局',
             routes: [
+              { path: 'logservice', component: 'LogService', name: 'LogService' },
               {
                 path: 'cluster',
                 component: 'Cluster',
@@ -99,6 +100,8 @@ export default [
             component: 'Tenant/New',
             name: '创建租户',
           },
+          { path: 'logservice/new', component: 'LogService/New', name: 'Create LogService' },
+          { path: 'logservice/:ns/:name', component: 'LogService/Detail', name: 'LogService details' },
           {
             path: 'cluster/new',
             component: 'Cluster/New',
@@ -114,6 +117,7 @@ export default [
             component: 'Cluster/Detail',
             name: '集群详情',
             routes: [
+              { path: 'lakehouse', component: 'Cluster/Detail/Lakehouse', name: '湖库配置' },
               {
                 path: 'overview',
                 component: 'Cluster/Detail/Overview',

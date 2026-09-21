@@ -176,3 +176,4 @@ data:
         annotations:
           description: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} thread used percent is {{ $value }}.'
           summary: 'Tenant {{ $labels.tenant_name }} of obcluster {{ $labels.ob_cluster_name }} used too much thread.'`}}
+{{ .Files.Get "files/ss-rules.yaml" | indent 4 }}

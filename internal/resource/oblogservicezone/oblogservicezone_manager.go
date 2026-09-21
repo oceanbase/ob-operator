@@ -74,7 +74,7 @@ func (m *OBLogServiceZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 
 	var taskFlow *tasktypes.TaskFlow
 	switch m.Resource.Status.Status {
-	case zonestatus.New:
+	case zonestatus.New, zonestatus.Failed:
 		clusterName := m.Resource.Labels[oceanbaseconst.LabelRefOBLogServiceCluster]
 		lsCluster := &v1alpha1.OBLogServiceCluster{}
 		err := m.Client.Get(m.Ctx, client.ObjectKey{
@@ -87,7 +87,7 @@ func (m *OBLogServiceZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 			} else {
 				return nil, err
 			}
-		} else if lsCluster.Status.Status == lsstatus.New {
+		} else if lsCluster.Status.Status == lsstatus.New || lsCluster.Status.Status == lsstatus.Failed {
 			taskFlow = genPrepareZoneForBootstrapFlow(m)
 		} else {
 			taskFlow = genCreateNodesFlow(m)
@@ -200,7 +200,10 @@ func (m *OBLogServiceZoneManager) HandleFailure() {
 }
 
 func (m *OBLogServiceZoneManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
-	return taskMap.GetTask(name, m)
+	// Status updates decode into the reconciler's Resource while tasks run.
+	taskManager := *m
+	taskManager.Resource = m.Resource.DeepCopy()
+	return taskMap.GetTask(name, &taskManager)
 }
 
 func (m *OBLogServiceZoneManager) PrintErrEvent(err error) {

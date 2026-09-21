@@ -3,6 +3,7 @@ import { DATE_TIME_FORMAT } from '@/constants/datetime';
 import { formatClusterData } from '@/pages/Cluster/Detail/Overview/helper';
 import { floorToTwoDecimalPlaces, formatStatisticData } from '@/utils/helper';
 import { intl } from '@/utils/intl';
+import { formatEventTime } from '@/utils/eventTime';
 import { request } from '@umijs/max';
 import dayjs from 'dayjs';
 import _ from 'lodash';
@@ -48,8 +49,8 @@ export async function getEventsReq(params: API.EventParams) {
     r.data.sort((pre, next) => next.lastSeen - pre.lastSeen);
     for (const event of r.data) {
       event.id = ++count;
-      event.firstOccur = dayjs.unix(event.firstOccur).format(DATE_TIME_FORMAT);
-      event.lastSeen = dayjs.unix(event.lastSeen).format(DATE_TIME_FORMAT);
+      event.firstOccur = formatEventTime(event.firstOccur);
+      event.lastSeen = formatEventTime(event.lastSeen);
     }
   }
   return r.data;
@@ -65,8 +66,8 @@ export async function getK8sEventsReq(params: API.EventParams) {
     r.data.sort((pre, next) => next.lastSeen - pre.lastSeen);
     for (const event of r.data) {
       event.id = ++count;
-      event.firstOccur = dayjs.unix(event.firstOccur).format(DATE_TIME_FORMAT);
-      event.lastSeen = dayjs.unix(event.lastSeen).format(DATE_TIME_FORMAT);
+      event.firstOccur = formatEventTime(event.firstOccur);
+      event.lastSeen = formatEventTime(event.lastSeen);
     }
   }
   return r.data;

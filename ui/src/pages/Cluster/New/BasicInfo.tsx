@@ -14,6 +14,8 @@ const { Option } = Select;
 
 interface BasicInfoProps {
   form: FormInstance<API.CreateClusterData>;
+  deleteValue: boolean;
+  setDeleteValue: React.Dispatch<React.SetStateAction<boolean>>;
   passwordVal: string;
   proxyroPasswordVal: string;
   setPasswordVal: React.Dispatch<React.SetStateAction<string>>;

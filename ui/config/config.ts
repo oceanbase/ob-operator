@@ -11,6 +11,8 @@ export default defineConfig({
   title: 'OceanBase Dashboard',
   layout: false,
   mock: false,
+  // Keep clients from combining scripts from different Dashboard releases.
+  hash: true,
   locale: {
     default: 'zh-CN',
     baseSeparator: '-',

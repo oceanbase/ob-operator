@@ -4373,6 +4373,269 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/logservices": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "tags": [
+                    "LogService"
+                ],
+                "summary": "List LogServices",
+                "operationId": "ListLogServices",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Namespace",
+                        "name": "namespace",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/logservice.Item"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "LogService"
+                ],
+                "summary": "Create a LogService with existing namespace, storage classes and Secret",
+                "operationId": "CreateLogService",
+                "parameters": [
+                    {
+                        "description": "Creation configuration",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/logservice.CreateRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/logservice.Item"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/logservices/{namespace}/{name}": {
+            "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "tags": [
+                    "LogService"
+                ],
+                "summary": "Read LogService topology, nodes, PVCs, references and events",
+                "operationId": "GetLogService",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/logservice.Detail"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "LogService"
+                ],
+                "summary": "Delete an unreferenced, unprotected LogService after exact-name confirmation",
+                "operationId": "DeleteLogService",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Exact name and current resourceVersion",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/logservice.DeleteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/logservices/{namespace}/{name}/replicas": {
+            "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "LogService"
+                ],
+                "summary": "Scale replicas in existing zones with optimistic concurrency",
+                "operationId": "ScaleLogService",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Namespace",
+                        "name": "namespace",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Current resourceVersion and every existing zone replica count",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/logservice.ScaleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.APIResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/logservice.Item"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/metrics": {
             "get": {
                 "security": [
@@ -9186,6 +9449,17 @@ const docTemplate = `{
                 }
             }
         },
+        "common.ObjectReference": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "common.ResourceSpec": {
             "type": "object",
             "required": [
@@ -9198,6 +9472,27 @@ const docTemplate = `{
                 },
                 "memory": {
                     "type": "integer"
+                }
+            }
+        },
+        "common.SharedStorageSpec": {
+            "type": "object",
+            "required": [
+                "bucketURL",
+                "secretRef"
+            ],
+            "properties": {
+                "bucketURL": {
+                    "type": "string"
+                },
+                "maxBandwidth": {
+                    "type": "string"
+                },
+                "maxIOPS": {
+                    "type": "string"
+                },
+                "secretRef": {
+                    "$ref": "#/definitions/common.ObjectReference"
                 }
             }
         },
@@ -9595,6 +9890,184 @@ const docTemplate = `{
                 }
             }
         },
+        "logservice.CreateRequest": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "spec": {
+                    "type": "object"
+                }
+            }
+        },
+        "logservice.DeleteRequest": {
+            "type": "object",
+            "properties": {
+                "confirmName": {
+                    "type": "string"
+                },
+                "resourceVersion": {
+                    "type": "string"
+                }
+            }
+        },
+        "logservice.Detail": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "deleting": {
+                    "type": "boolean"
+                },
+                "events": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/logservice.Event"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "nodes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/logservice.Node"
+                    }
+                },
+                "protected": {
+                    "type": "boolean"
+                },
+                "references": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "resourceVersion": {
+                    "type": "string"
+                },
+                "spec": {
+                    "type": "object"
+                },
+                "status": {
+                    "type": "object"
+                },
+                "volumes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/logservice.Volume"
+                    }
+                }
+            }
+        },
+        "logservice.Event": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "object": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "time": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "logservice.Item": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "deleting": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "namespace": {
+                    "type": "string"
+                },
+                "protected": {
+                    "type": "boolean"
+                },
+                "references": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "resourceVersion": {
+                    "type": "string"
+                },
+                "spec": {
+                    "type": "object"
+                },
+                "status": {
+                    "type": "object"
+                }
+            }
+        },
+        "logservice.Node": {
+            "type": "object",
+            "properties": {
+                "deleting": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "object"
+                },
+                "zone": {
+                    "type": "string"
+                }
+            }
+        },
+        "logservice.ScaleRequest": {
+            "type": "object",
+            "properties": {
+                "replicas": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "integer"
+                    }
+                },
+                "resourceVersion": {
+                    "type": "string"
+                }
+            }
+        },
+        "logservice.Volume": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "phase": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "string"
+                }
+            }
+        },
         "models.K8sEvent": {
             "type": "object",
             "properties": {
@@ -9958,6 +10431,9 @@ const docTemplate = `{
         "obproxy.ConfigItem": {
             "type": "object",
             "properties": {
+                "configLevel": {
+                    "type": "string"
+                },
                 "info": {
                     "type": "string"
                 },
@@ -9966,6 +10442,9 @@ const docTemplate = `{
                 },
                 "needReboot": {
                     "type": "boolean"
+                },
+                "range": {
+                    "type": "string"
                 },
                 "value": {
                     "type": "string"
@@ -10213,6 +10692,9 @@ const docTemplate = `{
                 "type"
             ],
             "properties": {
+                "logservice": {
+                    "type": "string"
+                },
                 "obcluster": {
                     "type": "string"
                 },
@@ -10238,14 +10720,16 @@ const docTemplate = `{
                 "obcluster",
                 "obzone",
                 "obtenant",
-                "observer"
+                "observer",
+                "logservice"
             ],
             "x-enum-varnames": [
                 "TypeUnknown",
                 "TypeOBCluster",
                 "TypeOBZone",
                 "TypeOBTenant",
-                "TypeOBServer"
+                "TypeOBServer",
+                "TypeLogService"
             ]
         },
         "param.BackupDestType": {
@@ -10440,6 +10924,17 @@ const docTemplate = `{
                 "deletionProtection": {
                     "type": "boolean"
                 },
+                "deploymentMode": {
+                    "description": "DeploymentMode is independent of the networking mode (NORMAL/SERVICE/STANDALONE).",
+                    "type": "string",
+                    "enum": [
+                        "normal",
+                        "shared_storage"
+                    ]
+                },
+                "logServiceRef": {
+                    "$ref": "#/definitions/common.ObjectReference"
+                },
                 "mode": {
                     "$ref": "#/definitions/common.ClusterMode"
                 },
@@ -10473,6 +10968,9 @@ const docTemplate = `{
                 "scenario": {
                     "description": "Enum: express_oltp, express_oltp, olap, kv, htap, express_oltp_perf",
                     "type": "string"
+                },
+                "sharedStorageInfo": {
+                    "$ref": "#/definitions/common.SharedStorageSpec"
                 },
                 "topology": {
                     "type": "array",
@@ -10695,8 +11193,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "data",
-                "log",
-                "redoLog"
+                "log"
             ],
             "properties": {
                 "data": {
@@ -12092,8 +12589,14 @@ const docTemplate = `{
                 "deletionProtection": {
                     "type": "boolean"
                 },
+                "deploymentMode": {
+                    "type": "string"
+                },
                 "image": {
                     "type": "string"
+                },
+                "logServiceRef": {
+                    "$ref": "#/definitions/common.ObjectReference"
                 },
                 "metrics": {
                     "$ref": "#/definitions/response.OBMetrics"
@@ -12124,6 +12627,9 @@ const docTemplate = `{
                 },
                 "rootPasswordSecret": {
                     "type": "string"
+                },
+                "sharedStorageInfo": {
+                    "$ref": "#/definitions/common.SharedStorageSpec"
                 },
                 "status": {
                     "type": "string"
@@ -12173,6 +12679,9 @@ const docTemplate = `{
                 },
                 "deletionProtection": {
                     "type": "boolean"
+                },
+                "deploymentMode": {
+                    "type": "string"
                 },
                 "mode": {
                     "$ref": "#/definitions/common.ClusterMode"
@@ -12251,6 +12760,9 @@ const docTemplate = `{
                 },
                 "deletionProtection": {
                     "type": "boolean"
+                },
+                "deploymentMode": {
+                    "type": "string"
                 },
                 "image": {
                     "type": "string"
@@ -12457,7 +12969,6 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "dataStorage",
-                "redoLogStorage",
                 "sysLogStorage"
             ],
             "properties": {
@@ -13480,7 +13991,8 @@ const docTemplate = `{
                     "$ref": "#/definitions/sql.PlanOperator"
                 },
                 "planHash": {
-                    "type": "integer"
+                    "type": "string",
+                    "example": "0"
                 },
                 "planID": {
                     "type": "integer"
@@ -13582,7 +14094,8 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "planHash": {
-                    "type": "integer"
+                    "type": "string",
+                    "example": "0"
                 },
                 "planID": {
                     "type": "integer"
@@ -13889,9 +14402,6 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/sql.SqlStatisticMetric"
                     }
-                },
-                "formatSqlId": {
-                    "type": "string"
                 },
                 "lastFailInfo": {
                     "type": "integer"

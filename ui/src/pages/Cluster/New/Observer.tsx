@@ -3,8 +3,10 @@ import IconTip from '@/components/IconTip';
 import SelectWithTooltip from '@/components/SelectWithTooltip';
 import { MINIMAL_CONFIG, SUFFIX_UNIT } from '@/constants';
 import { MIRROR_SERVER } from '@/constants/doc';
+import { L } from '@/pages/LogService/common';
 import { intl } from '@/utils/intl';
 import {
+  Alert,
   Button,
   Card,
   Checkbox,
@@ -19,11 +21,12 @@ import {
 import { FormInstance } from 'antd/lib/form';
 import { clone } from 'lodash';
 import styles from './index.less';
+import { minimumDataGiB } from './sharedStorageSizing';
 
 interface ObserverProps {
   storageClasses: API.TooltipData[] | undefined;
   form: FormInstance<API.CreateClusterData>;
-  setPvcValue: boolean;
+  setPvcValue: React.Dispatch<React.SetStateAction<boolean>>;
   pvcValue: boolean;
 }
 
@@ -79,6 +82,9 @@ export default function Observer({
   pvcValue,
   setPvcValue,
 }: ObserverProps) {
+  const isSharedStorage =
+    Form.useWatch('deploymentMode', form) === 'shared_storage';
+  const minimumData = minimumDataGiB(isSharedStorage, MINIMAL_CONFIG.data);
   const setMinimalConfiguration = () => {
     const originObserver = clone(form.getFieldsValue());
     form.setFieldsValue({
@@ -92,7 +98,7 @@ export default function Observer({
         storage: {
           ...originObserver.observer.storage,
           data: {
-            size: MINIMAL_CONFIG.data,
+            size: minimumData,
           },
           log: {
             size: MINIMAL_CONFIG.log,
@@ -192,6 +198,17 @@ export default function Observer({
           </Col>
         </Row>
         <p className={styles.titleText}>storage</p>
+        {isSharedStorage && (
+          <Alert
+            showIcon
+            type="info"
+            style={{ marginBottom: 16 }}
+            message={L(
+              'SS 本地缓存采用已验证的最低 50 GiB 配置（4.6.2.0）。普通模式的 30 GiB 初始化容量不足以容纳系统缓存及预留空间。',
+              'SS requires at least 50 GiB of local cache in this Dashboard (verified with 4.6.2.0). The normal-mode 30 GiB preset cannot initialize sufficient system cache and reserved space.',
+            )}
+          />
+        )}
         <p className={styles.subTitleText}>
           {intl.formatMessage({
             id: 'src.pages.Cluster.New.3F941911',
@@ -225,15 +242,20 @@ export default function Observer({
                 id: 'OBDashboard.Cluster.New.Observer.Data',
                 defaultMessage: '数据',
               })}
+              {isSharedStorage && ` · ${L('本地缓存', 'Local cache')}`}
             </p>
             <div className={styles.dataContent}>
               <CustomFormItem
                 className={styles.leftContent}
                 label="size"
                 name={['observer', 'storage', 'data', 'size']}
+                rules={[
+                  { required: true },
+                  { type: 'number', min: minimumData },
+                ]}
               >
                 <InputNumber
-                  min={MINIMAL_CONFIG.data}
+                  min={minimumData}
                   addonAfter={SUFFIX_UNIT}
                   placeholder={intl.formatMessage({
                     id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
@@ -291,38 +313,40 @@ export default function Observer({
               </Form.Item>
             </div>
           </Col>
-          <Col span={8}>
-            <p className={styles.subTitleText}>redoLog</p>
-            <div className={styles.redologContent}>
-              <CustomFormItem
-                className={styles.leftContent}
-                label="size"
-                name={['observer', 'storage', 'redoLog', 'size']}
-              >
-                <InputNumber
-                  min={MINIMAL_CONFIG.redoLog}
-                  addonAfter={SUFFIX_UNIT}
-                  placeholder={intl.formatMessage({
-                    id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
-                    defaultMessage: '请输入',
-                  })}
-                />
-              </CustomFormItem>
-              <Form.Item
-                label="storageClass"
-                validateTrigger="onBlur"
-                name={['observer', 'storage', 'redoLog', 'storageClass']}
-              >
-                <SelectWithTooltip
-                  type="observer"
+          {!isSharedStorage && (
+            <Col span={8}>
+              <p className={styles.subTitleText}>redoLog</p>
+              <div className={styles.redologContent}>
+                <CustomFormItem
+                  className={styles.leftContent}
+                  label="size"
+                  name={['observer', 'storage', 'redoLog', 'size']}
+                >
+                  <InputNumber
+                    min={MINIMAL_CONFIG.redoLog}
+                    addonAfter={SUFFIX_UNIT}
+                    placeholder={intl.formatMessage({
+                      id: 'OBDashboard.Cluster.New.Observer.PleaseEnter',
+                      defaultMessage: '请输入',
+                    })}
+                  />
+                </CustomFormItem>
+                <Form.Item
+                  label="storageClass"
+                  validateTrigger="onBlur"
                   name={['observer', 'storage', 'redoLog', 'storageClass']}
-                  form={form}
-                  selectList={storageClasses}
-                  TooltipItemContent={TooltipItemContent}
-                />
-              </Form.Item>
-            </div>
-          </Col>
+                >
+                  <SelectWithTooltip
+                    type="observer"
+                    name={['observer', 'storage', 'redoLog', 'storageClass']}
+                    form={form}
+                    selectList={storageClasses}
+                    TooltipItemContent={TooltipItemContent}
+                  />
+                </Form.Item>
+              </div>
+            </Col>
+          )}
         </Row>
       </Card>
     </Col>

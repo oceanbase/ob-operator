@@ -21,6 +21,12 @@ data:
           - "127.0.0.1:9093"
 
     scrape_configs:
+      - job_name: 'ss-specialized'
+        scrape_interval: 30s
+        scrape_timeout: 25s
+        metrics_path: '/internal/ss-metrics'
+        static_configs:
+          - targets: ['127.0.0.1:8080']
       - job_name: 'obagent-monitor-basic'
         http_sd_configs:
           - url: 'http://127.0.0.1:8080/api/v1/monitor/endpoints'
@@ -37,4 +43,3 @@ data:
         - source_labels: [__meta_kubernetes_pod_container_name, __meta_kubernetes_pod_container_port_name, __meta_kubernetes_pod_container_port_number, __meta_kubernetes_pod_container_port_protocol]
           regex: obproxy;prometheus;2884;TCP
           action: keep
-

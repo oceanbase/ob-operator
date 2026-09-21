@@ -134,7 +134,7 @@ export default function Event() {
             id: 'src.pages.Alert.Event.3EAC0543',
             defaultMessage: '对象：',
           })}
-          {instance[instance.type]}
+          {instance[instance.type] || '-'}
           <br />
           {intl.formatMessage({
             id: 'src.pages.Alert.Event.AB6EB56A',
@@ -215,7 +215,7 @@ export default function Event() {
       render: (_, record) => (
         <Space>
           <Button
-            disabled={record?.status?.state !== 'active' || !access.alarmwrite}
+            disabled={record?.status?.state !== 'active' || !access.alarmwrite || record.instance.type === 'unknown'}
             // style={{ paddingLeft: 0 }}
             type="link"
             onClick={() => {
@@ -237,7 +237,7 @@ export default function Event() {
             })}
           </Button>
           <Button
-            // disabled={record?.status?.state !== 'active' || !access.alarmwrite}
+            disabled={record.instance.type === 'logservice' || record.instance.type === 'unknown' || !access.alarmwrite}
             // style={{ paddingLeft: 0 }}
             type="link"
             onClick={() => {
