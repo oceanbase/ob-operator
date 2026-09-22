@@ -1,6 +1,6 @@
 import { PageContainer } from '@ant-design/pro-components';
-import { Alert, Button, Card, Descriptions, Form, Input, InputNumber, Modal, Space, Table, Tabs, Tag, message } from 'antd';
-import { history, useAccess, useParams } from '@umijs/max';
+import { Alert, Button, Card, Descriptions, Form, Input, InputNumber, Modal, Space, Table, Tag, message } from 'antd';
+import { history, useAccess, useLocation, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { useState } from 'react';
 import { LSDetail, lsPath, lsRequest } from '@/services/logservice';
@@ -10,6 +10,7 @@ import { StoragePreflight, StorageSummary } from '@/pages/SharedStorage/ObjectSt
 
 export default function LogServiceDetail() {
   const { ns = '', name = '' } = useParams();
+  const section = useLocation().pathname.split('/').filter(Boolean).pop();
   const access = useAccess();
   const [scaleForm] = Form.useForm();
   const [scaleVersion, setScaleVersion] = useState('');
@@ -43,7 +44,7 @@ export default function LogServiceDetail() {
     {data && <>
       {data.references.length > 0 && <Alert type="info" showIcon message={`${L('被以下 OB 集群引用，禁止删除', 'Referenced by these OBClusters; deletion is blocked')}: ${data.references.join(', ')}`} style={{ marginBottom: 16 }} />}
       {busy && <Alert type={data.status.status === 'failed' ? 'error' : 'info'} showIcon message={`${L('当前状态', 'Current state')}: ${data.deleting ? 'deleting' : data.status.status || 'pending'}`} description={`${data.status.operationContext?.task || ''} ${data.status.operationContext?.taskStatus || ''}`} style={{ marginBottom: 16 }} />}
-      <Tabs defaultActiveKey="overview" items={[
+      {[
         { key: 'storage', label: L('日志对象存储', 'Log object storage'), children: <Card><Alert type="info" showIcon message={L('这是 LogService 日志存储，不是 OB 数据存储。创建后不支持在线修改位置或切换凭据。', 'This is LogService log storage, not OB data storage. Online location or credential-reference changes are unsupported.')} /><StorageSummary bucketURL={data.spec.objectStoreUrl.bucketURL} secretName={data.spec.objectStoreUrl.secretRef.name} /><StoragePreflight namespace={ns} bucketURL={data.spec.objectStoreUrl.bucketURL} secretName={data.spec.objectStoreUrl.secretRef.name} /></Card> },
         { key: 'overview', label: L('概览与拓扑', 'Overview & topology'), children: <Space direction="vertical" style={{ width: '100%' }} size="large">
           <Card><Descriptions column={2} items={[
@@ -75,7 +76,7 @@ export default function LogServiceDetail() {
           { title: L('时间', 'Time'), render: (_, e) => new Date(e.time).toLocaleString() }, { title: L('对象', 'Object'), dataIndex: 'object' },
           { title: L('类型', 'Type'), dataIndex: 'type' }, { title: L('原因', 'Reason'), dataIndex: 'reason' }, { title: L('详情', 'Message'), dataIndex: 'message' },
         ]} /> },
-      ]} />
+      ].find(item => item.key === section)?.children}
     </>}
     <Modal open={!!scaleVersion} title={L('扩缩容 LogService 副本', 'Scale LogService replicas')} confirmLoading={saving} onCancel={() => !saving && setScaleVersion('')} onOk={scale} destroyOnClose>
       <Alert showIcon type="warning" message={L('缩容会注销并删除对应 LN 和节点资源。每个已有 Zone 至少保留一个副本；不更改 Zone、镜像或存储。', 'Scale-in unregisters the selected LN and removes its node resources. Every existing zone keeps at least one replica. Zones, image and storage remain unchanged.')} />

@@ -47,6 +47,13 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
 
   const subSideMenus: MenuItem[] = [
     {
+      title: 'LogService',
+      key: 'logservice',
+      link: '/logservice',
+      icon: <IconFont type="cluster" />,
+      accessible: access.oblogserviceread || access.oblogservicewrite,
+    },
+    {
       title: intl.formatMessage({
         id: 'dashboard.Cluster.Detail.Overview',
         defaultMessage: '概览',

@@ -101,7 +101,19 @@ export default [
             name: '创建租户',
           },
           { path: 'logservice/new', component: 'LogService/New', name: 'Create LogService' },
-          { path: 'logservice/:ns/:name', component: 'LogService/Detail', name: 'LogService details' },
+          {
+            path: 'logservice/:ns/:name',
+            component: 'LogService/DetailLayout',
+            name: 'LogService details',
+            routes: [
+              { path: 'overview', component: 'LogService/Detail', name: 'LogService overview' },
+              { path: 'storage', component: 'LogService/Detail', name: 'LogService object storage' },
+              { path: 'monitor', component: 'LogService/Detail', name: 'LogService monitoring' },
+              { path: 'parameters', component: 'LogService/Detail', name: 'LogService parameters' },
+              { path: 'events', component: 'LogService/Detail', name: 'LogService events' },
+              { path: '/logservice/:ns/:name', redirect: 'overview' },
+            ],
+          },
           {
             path: 'cluster/new',
             component: 'Cluster/New',
