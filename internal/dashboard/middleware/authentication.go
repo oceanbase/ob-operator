@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package middleware
 
 import (
-	"strings"
+	"net/http"
 	"time"
 
 	"github.com/gin-contrib/sessions"
@@ -26,25 +26,34 @@ import (
 
 // authentication
 
+// Match registered routes, not request text: query values and path parameters
+// must never make a protected endpoint anonymous.
+func isAnonymousRoute(c *gin.Context) bool {
+	switch c.FullPath() {
+	case "/api/v1/info", "/api/v1/monitor/endpoints":
+		return c.Request.Method == http.MethodGet
+	case "/api/v1/login", "/api/v1/webhook/alert/log", "/api/v1/auth/:token":
+		return c.Request.Method == http.MethodPost
+	default:
+		return false
+	}
+}
+
 func LoginRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if strings.HasSuffix(c.Request.RequestURI, "login") ||
-			strings.HasSuffix(c.Request.RequestURI, "info") ||
-			strings.HasSuffix(c.Request.RequestURI, "monitor/endpoints") ||
-			strings.HasSuffix(c.Request.RequestURI, "webhook/alert/log") ||
-			strings.HasPrefix(c.Request.RequestURI, "/api/v1/auth/") {
+		if isAnonymousRoute(c) {
 			c.Next()
 			return
 		}
 		session := sessions.Default(c)
-		if session.Get("username") == nil {
+		username, ok := session.Get("username").(string)
+		if !ok || username == "" {
 			c.AbortWithStatusJSON(401, gin.H{
 				"message": "login required",
 			})
 			return
 		}
 
-		username := session.Get("username").(string)
 		_, exist := store.GetCache().Load(username)
 		if !exist {
 			c.AbortWithStatusJSON(401, gin.H{
@@ -53,14 +62,14 @@ func LoginRequired() gin.HandlerFunc {
 			return
 		}
 
-		expr := session.Get("expiration")
-		if expr == nil || expr.(int64) < 0 {
+		expr, ok := session.Get("expiration").(int64)
+		if !ok || expr < 0 {
 			c.AbortWithStatusJSON(403, gin.H{
 				"message": "cookie broken",
 			})
 			return
 		}
-		expriration := time.Unix(expr.(int64), 0)
+		expriration := time.Unix(expr, 0)
 		if expriration.Before(time.Now()) {
 			session.Clear()
 			session.Options(sessions.Options{Path: "/", MaxAge: -1}) // this sets the cookie with a MaxAge of 0
@@ -84,7 +93,7 @@ func LoginRequired() gin.HandlerFunc {
 
 func RefreshExpiration() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if strings.HasSuffix(c.Request.RequestURI, "login") || strings.HasSuffix(c.Request.RequestURI, "info") {
+		if isAnonymousRoute(c) {
 			c.Next()
 			return
 		}
