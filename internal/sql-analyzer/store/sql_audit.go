@@ -274,8 +274,9 @@ func (s *SqlAuditStore) Compact() error {
 	compactedFile := filepath.Join(s.path, "compacted-"+timestamp.Format(parquet.FileTimeFormat)+".parquet")
 	tempCompactedFile := compactedFile + ".tmp"
 
-	// Use a single, streaming COPY command instead of loading into a temp table.
-	copySql := fmt.Sprintf("COPY (SELECT * FROM read_parquet(['%s'])) TO '%s' (FORMAT PARQUET)", strings.Join(filesToCompact, "','"), tempCompactedFile)
+	// Unify schemas before copying so older files cannot drop newer columns.
+	// Missing fields remain NULL; rows and their existing values are preserved.
+	copySql := fmt.Sprintf("COPY (SELECT * FROM read_parquet(['%s'], union_by_name = true)) TO '%s' (FORMAT PARQUET)", strings.Join(filesToCompact, "','"), tempCompactedFile)
 
 	if _, err := conn.ExecContext(s.ctx, copySql); err != nil {
 		return fmt.Errorf("failed to compact files: %w", err)
@@ -319,7 +320,7 @@ func (s *SqlAuditStore) CountSqlAudits(opts *QueryOptions) (int64, error) {
 		args = append(args, value)
 	}
 
-	fromClause := fmt.Sprintf("FROM read_parquet('%s/*.parquet')", s.path)
+	fromClause := fmt.Sprintf("FROM read_parquet('%s/*.parquet', union_by_name = true)", s.path)
 	whereClause := ""
 	if len(whereClauses) > 0 {
 		whereClause = "WHERE " + strings.Join(whereClauses, " AND ")
@@ -351,7 +352,7 @@ func (s *SqlAuditStore) QuerySqlAudits(opts *QueryOptions) ([]map[string]any, er
 		args = append(args, value)
 	}
 
-	fromClause := fmt.Sprintf("FROM read_parquet('%s/*.parquet')", s.path)
+	fromClause := fmt.Sprintf("FROM read_parquet('%s/*.parquet', union_by_name = true)", s.path)
 	whereClause := ""
 	if len(whereClauses) > 0 {
 		whereClause = "WHERE " + strings.Join(whereClauses, " AND ")
@@ -537,7 +538,7 @@ func (s *SqlAuditStore) QueryRequestStatistics(req apimodel.RequestStatisticsReq
 		whereClauses = append(whereClauses, "inner_sql_count = 0")
 	}
 
-	fromClause := fmt.Sprintf("FROM read_parquet('%s/*.parquet')", s.path)
+	fromClause := fmt.Sprintf("FROM read_parquet('%s/*.parquet', union_by_name = true)", s.path)
 	whereClause := ""
 	if len(whereClauses) > 0 {
 		whereClause = "WHERE " + strings.Join(whereClauses, " AND ")
