@@ -104,6 +104,7 @@ function loadComponent(relative) {
           props.children);
       },
     };
+    if (id === './index.less') return {};
     return realRequire(id);
   };
   mod._compile(ts.transpileModule(fs.readFileSync(filename, 'utf8'), {

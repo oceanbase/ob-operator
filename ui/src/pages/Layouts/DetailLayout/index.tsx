@@ -16,6 +16,7 @@ import { BasicLayout, IconFont } from '@oceanbase/ui';
 import { Outlet, history, useAccess, useLocation, useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { useEffect, useState } from 'react';
+import './index.less';
 
 interface DetailLayoutProps {
   subSideSelectKey: string;
@@ -172,6 +173,7 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
   return (
     <div>
       <BasicLayout
+        className="dashboard-detail-layout"
         logoUrl={logoImg}
         simpleLogoUrl={logoImg}
         topHeader={{

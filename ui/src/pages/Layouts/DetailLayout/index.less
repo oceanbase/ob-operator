@@ -1,0 +1,15 @@
+// Allow the detail pane to shrink beside the fixed icon rail, even with long names.
+:global(.dashboard-detail-layout) {
+  :global(.ob-layout-sider-wrapper) > :global(.ob-layout-sub-sider) {
+    flex-shrink: 0;
+  }
+
+  :global(.ob-layout-sider-wrapper) > :global(.ob-layout-sub-sider) + div {
+    flex: 1;
+    min-width: 0;
+  }
+
+  :global(.ob-layout-sider-content) {
+    min-width: 0;
+  }
+}
