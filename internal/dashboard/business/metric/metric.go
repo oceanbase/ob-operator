@@ -108,8 +108,8 @@ func extractMetricData(name string, resp *external.PrometheusQueryRangeResponse)
 			if err != nil {
 				logger.Warnf("failed to parse value %v", value)
 				invalidTimestamps = append(invalidTimestamps, t)
-			} else if math.IsNaN(v) {
-				logger.Debugf("value at timestamp %f is NaN", t)
+			} else if math.IsNaN(v) || math.IsInf(v, 0) {
+				logger.Debugf("value at timestamp %f is not finite", t)
 				invalidTimestamps = append(invalidTimestamps, t)
 			} else {
 				// if there are invalid timestamps, interpolate them
