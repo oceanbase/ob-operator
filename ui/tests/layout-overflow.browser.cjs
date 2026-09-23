@@ -79,36 +79,31 @@ async function run() {
           }));
           build.onLoad({ filter: /\.less$/ }, async (args) => ({
             contents: (
-              await less.render(
-                fs
-                  .readFileSync(args.path, 'utf8')
-                  .replace(/:global\(([^)]+)\)/g, '$1'),
-                {
-                  filename: args.path,
-                  javascriptEnabled: true,
-                  plugins: [
-                    {
-                      install(_, manager) {
-                        class Modules extends less.FileManager {
-                          supports(name) {
-                            return name.startsWith('~');
-                          }
-                          loadFile(name) {
-                            const file = require.resolve(name.slice(1), {
-                              paths: [root],
-                            });
-                            return Promise.resolve({
-                              filename: file,
-                              contents: fs.readFileSync(file, 'utf8'),
-                            });
-                          }
+              await less.render(fs.readFileSync(args.path, 'utf8'), {
+                filename: args.path,
+                javascriptEnabled: true,
+                plugins: [
+                  {
+                    install(_, manager) {
+                      class Modules extends less.FileManager {
+                        supports(name) {
+                          return name.startsWith('~');
                         }
-                        manager.addFileManager(new Modules());
-                      },
+                        loadFile(name) {
+                          const file = require.resolve(name.slice(1), {
+                            paths: [root],
+                          });
+                          return Promise.resolve({
+                            filename: file,
+                            contents: fs.readFileSync(file, 'utf8'),
+                          });
+                        }
+                      }
+                      manager.addFileManager(new Modules());
                     },
-                  ],
-                },
-              )
+                  },
+                ],
+              })
             ).css,
             loader: 'css',
           }));
