@@ -447,7 +447,10 @@ export function StorageSummary({
   maxIOPS?: string;
   maxBandwidth?: string;
 }) {
-  const loc = bucketURL && parseBucketURL(bucketURL);
+  const loc = bucketURL ? parseBucketURL(bucketURL) : undefined;
+  // Explicit CR fields take precedence, matching the operator's attribute parser.
+  const resolvedIOPS = maxIOPS?.trim() || loc?.maxIOPS;
+  const resolvedBandwidth = maxBandwidth?.trim() || loc?.maxBandwidth;
   return (
     <>
       {!loc && (
@@ -477,20 +480,23 @@ export function StorageSummary({
         <Descriptions.Item label={L('路径前缀', 'Prefix')}>
           {loc ? loc.prefix || '/' : '-'}
         </Descriptions.Item>
+        {loc?.scope !== undefined && (
+          <Descriptions.Item label="Scope">{loc.scope}</Descriptions.Item>
+        )}
         <Descriptions.Item label="Secret">
           {secretName || '-'}
         </Descriptions.Item>
         <Descriptions.Item label="TLS">
           {loc ? (loc.endpoint.startsWith('https:') ? 'HTTPS' : 'HTTP') : '-'}
         </Descriptions.Item>
-        {maxIOPS !== undefined && (
+        {(maxIOPS !== undefined || loc?.maxIOPS !== undefined) && (
           <Descriptions.Item label={L('最大 IOPS', 'Max IOPS')}>
-            {maxIOPS || L('未配置', 'Not configured')}
+            {resolvedIOPS || L('未配置', 'Not configured')}
           </Descriptions.Item>
         )}
-        {maxBandwidth !== undefined && (
+        {(maxBandwidth !== undefined || loc?.maxBandwidth !== undefined) && (
           <Descriptions.Item label={L('最大带宽', 'Max bandwidth')}>
-            {maxBandwidth || L('未配置', 'Not configured')}
+            {resolvedBandwidth || L('未配置', 'Not configured')}
           </Descriptions.Item>
         )}
       </Descriptions>

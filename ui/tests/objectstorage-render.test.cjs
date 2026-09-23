@@ -55,3 +55,25 @@ test('preflight requires storage write permission and documents its limited scop
   assert(html.includes('disabled=""')); assert(html.includes('需要对象存储写权限'));
   assert(html.includes('不验证对象读写/删除和路径权限'));
 });
+
+test('storage summary and structured input accept supported OceanBase URL options', () => {
+  const value = 's3://data-bucket/?host=https://s3.example.com&s3_region=cn-wulanchabu&scope=region1&max_iops=10000&max_bandwidth=1GB';
+  const html = render(StorageSummary, { bucketURL: value, secretName: 'data-credentials', maxIOPS: '', maxBandwidth: '' });
+  for (const text of ['https://s3.example.com', 'data-bucket', 'cn-wulanchabu', 'region1', '10000', '1GB']) assert(html.includes(text), text);
+  assert(!html.includes('无法按当前 S3 表单解析'));
+  assert(!html.includes('未配置'));
+  const fields = render(BucketInput, { value });
+  assert(fields.includes('value="https://s3.example.com"'));
+  assert(fields.includes('value="data-bucket"'));
+  access = { objectstoragewrite: true };
+  const preflight = render(StoragePreflight, { namespace: 'test', bucketURL: value, secretName: 'data-credentials' });
+  assert(!preflight.includes('disabled=""'));
+  access = {};
+});
+
+test('explicit resource limits override URL fallback values in the summary', () => {
+  const value = raw + '&max_iops=10000&max_bandwidth=1GB';
+  const html = render(StorageSummary, { bucketURL: value, maxIOPS: '5000', maxBandwidth: '2GB' });
+  assert(html.includes('5000')); assert(html.includes('2GB'));
+  assert(!html.includes('10000')); assert(!html.includes('1GB'));
+});

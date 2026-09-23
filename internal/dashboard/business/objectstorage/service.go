@@ -50,20 +50,36 @@ type Location struct{ Endpoint, Bucket, Prefix, Region string }
 var bucketName = regexp.MustCompile(`^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$`)
 var regionName = regexp.MustCompile(`^[a-zA-Z0-9-]{1,64}$`)
 var prefixName = regexp.MustCompile(`^[a-zA-Z0-9_./-]*$`)
+var locationOptions = map[string]*regexp.Regexp{
+	"scope":         regexp.MustCompile(`^[a-zA-Z0-9_-]{1,64}$`),
+	"max_iops":      regexp.MustCompile(`^[0-9]{1,20}$`),
+	"max_bandwidth": regexp.MustCompile(`(?i)^[0-9]+(?:\.[0-9]+)?(?:[KMGTPE]?B)?$`),
+}
 
 // Keep OceanBase's raw host=http://... grammar. This deliberately accepts only
 // the S3 subset surfaced by the form; providers/STS are not inferred from names.
 func ParseLocation(raw string) (*Location, error) {
 	fail := func() (*Location, error) {
-		return nil, oberr.NewBadRequest("Use s3://bucket[/prefix]?host=http(s)://endpoint&s3_region=region; inline credentials and extra options are not supported")
+		return nil, oberr.NewBadRequest("Use s3://bucket[/prefix]?host=http(s)://endpoint&s3_region=region; only scope, max_iops and max_bandwidth options are supported; inline credentials are not supported")
 	}
 	u, err := url.Parse(raw)
 	if err != nil || len(raw) > 2048 || u.Scheme != "s3" || u.User != nil || u.Fragment != "" || !bucketName.MatchString(u.Host) || strings.Contains(u.Host, "..") || net.ParseIP(u.Host) != nil {
 		return fail()
 	}
 	q, err := url.ParseQuery(u.RawQuery)
-	if err != nil || len(q) != 2 || len(q["host"]) != 1 || len(q["s3_region"]) != 1 || !regionName.MatchString(q.Get("s3_region")) {
+	if err != nil || len(q["host"]) != 1 || len(q["s3_region"]) != 1 || !regionName.MatchString(q.Get("s3_region")) {
 		return fail()
+	}
+	// Extra options describe OceanBase placement/limits, not the S3 request.
+	// Reject unknown keys rather than silently accepting inline credentials.
+	for key, values := range q {
+		if key == "host" || key == "s3_region" {
+			continue
+		}
+		pattern, ok := locationOptions[key]
+		if !ok || len(values) != 1 || len(values[0]) > 64 || !pattern.MatchString(values[0]) {
+			return fail()
+		}
 	}
 	e, err := url.Parse(q.Get("host"))
 	if err != nil || (e.Scheme != "http" && e.Scheme != "https") || e.Hostname() == "" || e.User != nil || e.RawQuery != "" || e.Fragment != "" || (e.Path != "" && e.Path != "/") || strings.ContainsAny(e.Host, "\\%") {
