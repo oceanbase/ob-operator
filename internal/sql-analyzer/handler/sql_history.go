@@ -17,6 +17,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/api/model"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/business"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/store"
+	httperr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
 // @ID GetSqlHistoryInfo
@@ -33,8 +34,17 @@ import (
 func GetSqlHistoryInfo(c *gin.Context) (*model.SqlHistoryResponse, error) {
 	var req model.SqlHistoryRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		return nil, err
+		return nil, httperr.NewBadRequest("invalid SQL history request")
 	}
 
-	return business.GetSqlHistoryInfo(c.Request.Context(), store.GetSqlAuditStore(), req)
+	resp, err := business.GetSqlHistoryInfo(c.Request.Context(), store.GetSqlAuditStore(), req)
+	if err != nil {
+		if obErr, ok := err.(httperr.ObError); ok && obErr.IsType(httperr.ErrBadRequest) {
+			return nil, err
+		}
+		// Preserve diagnostic detail in server logs, not in the public response.
+		logHandlerError(c, err)
+		return nil, httperr.NewInternal("failed to query SQL history")
+	}
+	return resp, nil
 }

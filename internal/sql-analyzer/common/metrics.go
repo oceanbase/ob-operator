@@ -12,7 +12,11 @@ See the Mulan PSL v2 for more details.
 
 package common
 
-import "fmt"
+import (
+	"fmt"
+
+	httperr "github.com/oceanbase/ob-operator/pkg/errors"
+)
 
 // ColumnAggregations defines how to aggregate each metric column.
 var ColumnAggregations = map[string]string{
@@ -206,4 +210,16 @@ func BuildMetricExpression(col string) string {
 		return columnExpr
 	}
 	return ""
+}
+
+// ValidateMetricColumns accepts only server-defined metric keys, never SQL
+// expressions or identifiers supplied by a caller. Do not normalize the input:
+// removing punctuation would turn an invalid request into a different query.
+func ValidateMetricColumns(columns []string) error {
+	for _, col := range columns {
+		if _, ok := ColumnAggregations[col]; !ok {
+			return httperr.NewBadRequest("invalid SQL metric column")
+		}
+	}
+	return nil
 }
