@@ -12952,6 +12952,10 @@ const docTemplate = `{
                     "type": "integer",
                     "example": 5368709120
                 },
+                "logDiskUnlimited": {
+                    "description": "LogDiskUnlimited indicates shared log service has no local log disk quota.\nWhen true, AvailableLogDisk is zero and must not be used as a capacity.",
+                    "type": "boolean"
+                },
                 "obServerIP": {
                     "type": "string"
                 },
@@ -13327,6 +13331,10 @@ const docTemplate = `{
                 "availableMemory": {
                     "type": "integer",
                     "example": 5368709120
+                },
+                "logDiskUnlimited": {
+                    "description": "LogDiskUnlimited indicates shared log service has no local log disk quota.\nWhen true, AvailableLogDisk is zero and must not be used as a capacity.",
+                    "type": "boolean"
                 },
                 "obZone": {
                     "type": "string",

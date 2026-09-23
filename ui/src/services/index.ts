@@ -489,14 +489,21 @@ export async function getEssentialParameters({
     r.data.minPoolMemory = r.data.minPoolMemory / (1 << 30);
     r.data.obServerResources.forEach((item) => {
       for (const attr of formatResourceAttr) {
-        item[attr] = floorToTwoDecimalPlaces(item[attr] / (1 << 30));
+        // Infinity stays in the UI resource model; tenant requests use
+        // the user-entered allocation, never this capacity value.
+        item[attr] =
+          attr === 'availableLogDisk' && item.logDiskUnlimited
+            ? Infinity
+            : floorToTwoDecimalPlaces(item[attr] / (1 << 30));
       }
     });
     Object.keys(r.data.obZoneResourceMap).forEach((key) => {
       for (const attr of formatResourceAttr) {
-        r.data.obZoneResourceMap[key][attr] = floorToTwoDecimalPlaces(
-          r.data.obZoneResourceMap[key][attr] / (1 << 30),
-        );
+        const zone = r.data.obZoneResourceMap[key];
+        zone[attr] =
+          attr === 'availableLogDisk' && zone.logDiskUnlimited
+            ? Infinity
+            : floorToTwoDecimalPlaces(zone[attr] / (1 << 30));
       }
     });
     return r;

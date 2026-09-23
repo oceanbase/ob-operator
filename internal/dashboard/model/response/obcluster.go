@@ -143,12 +143,15 @@ type OBServerAvailableResource struct {
 }
 
 type OBZoneAvailableResource struct {
-	ServerCount       int64  `json:"serverCount" example:"3" binding:"required"`
-	OBZone            string `json:"obZone" example:"zone1" binding:"required"`
-	AvailableLogDisk  int64  `json:"availableLogDisk" example:"5368709120" binding:"required"`
-	AvailableDataDisk int64  `json:"availableDataDisk" example:"16106127360" binding:"required"`
-	AvailableMemory   int64  `json:"availableMemory" example:"5368709120" binding:"required"`
-	AvailableCPU      int64  `json:"availableCPU" example:"12" binding:"required"`
+	ServerCount int64  `json:"serverCount" example:"3" binding:"required"`
+	OBZone      string `json:"obZone" example:"zone1" binding:"required"`
+	// LogDiskUnlimited indicates shared log service has no local log disk quota.
+	// When true, AvailableLogDisk is zero and must not be used as a capacity.
+	LogDiskUnlimited  bool  `json:"logDiskUnlimited,omitempty"`
+	AvailableLogDisk  int64 `json:"availableLogDisk" example:"5368709120" binding:"required"`
+	AvailableDataDisk int64 `json:"availableDataDisk" example:"16106127360" binding:"required"`
+	AvailableMemory   int64 `json:"availableMemory" example:"5368709120" binding:"required"`
+	AvailableCPU      int64 `json:"availableCPU" example:"12" binding:"required"`
 }
 
 type ParameterMeta struct {

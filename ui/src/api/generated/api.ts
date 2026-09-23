@@ -6674,6 +6674,13 @@ export interface ResponseOBServerAvailableResource {
      */
     'availableMemory': number;
     /**
+     * LogDiskUnlimited indicates shared log service has no local log disk quota.
+     * When true, AvailableLogDisk is zero and must not be used as a capacity.
+     * @type {boolean}
+     * @memberof ResponseOBServerAvailableResource
+     */
+    'logDiskUnlimited'?: boolean;
+    /**
      * 
      * @type {string}
      * @memberof ResponseOBServerAvailableResource
@@ -7154,6 +7161,13 @@ export interface ResponseOBZoneAvailableResource {
      * @memberof ResponseOBZoneAvailableResource
      */
     'availableMemory': number;
+    /**
+     * LogDiskUnlimited indicates shared log service has no local log disk quota.
+     * When true, AvailableLogDisk is zero and must not be used as a capacity.
+     * @type {boolean}
+     * @memberof ResponseOBZoneAvailableResource
+     */
+    'logDiskUnlimited'?: boolean;
     /**
      * 
      * @type {string}

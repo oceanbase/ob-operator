@@ -657,6 +657,7 @@ declare namespace API {
     availableCPU: number;
     availableDataDisk: number;
     availableLogDisk: number;
+    logDiskUnlimited?: boolean;
     availableMemory: number;
     obServerIP: string;
     obZone: string;
@@ -666,6 +667,7 @@ declare namespace API {
     availableCPU: number;
     availableDataDisk: number;
     availableLogDisk: number;
+    logDiskUnlimited?: boolean;
     availableMemory: number;
     obZone: string;
   };

@@ -1,4 +1,5 @@
 {
+  "Dashboard.Tenant.ResourcePools.NoLocalLogDiskLimit": "No local log disk limit",
   "dashboard.Cluster.SharedStorage.Title": "Storage architecture",
   "dashboard.Cluster.SharedStorage.Mode": "Deployment mode",
   "dashboard.Cluster.SharedStorage.Normal": "Shared-nothing (normal)",

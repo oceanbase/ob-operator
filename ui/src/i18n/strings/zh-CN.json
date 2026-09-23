@@ -1,4 +1,5 @@
 {
+  "Dashboard.Tenant.ResourcePools.NoLocalLogDiskLimit": "无本地日志盘限制",
   "dashboard.Cluster.SharedStorage.Title": "存储架构",
   "dashboard.Cluster.SharedStorage.Mode": "部署模式",
   "dashboard.Cluster.SharedStorage.Normal": "存算一体（normal）",
