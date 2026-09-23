@@ -340,6 +340,9 @@ func (s *SqlAuditStore) CountSqlAudits(opts *QueryOptions) (int64, error) {
 }
 
 func (s *SqlAuditStore) QuerySqlAudits(opts *QueryOptions) ([]map[string]any, error) {
+	if err := common.ValidateSortColumn(opts.OrderBy); err != nil {
+		return nil, err
+	}
 	if !s.hasParquetFiles() {
 		return []map[string]any{}, nil
 	}
@@ -366,12 +369,12 @@ func (s *SqlAuditStore) QuerySqlAudits(opts *QueryOptions) ([]map[string]any, er
 
 	var orderByClause string
 	if opts.OrderBy != "" {
-		safeOrderBy := strings.ReplaceAll(opts.OrderBy, ";", "")
 		safeSortOrder := "ASC"
 		if strings.ToUpper(opts.SortOrder) == "DESC" {
 			safeSortOrder = "DESC"
 		}
-		orderByClause = fmt.Sprintf("ORDER BY %s %s", safeOrderBy, safeSortOrder)
+		// The exact allowlisted name is an identifier, not a SQL expression.
+		orderByClause = fmt.Sprintf("ORDER BY \"%s\" %s", opts.OrderBy, safeSortOrder)
 	}
 
 	limitClause := fmt.Sprintf("LIMIT %d OFFSET %d", opts.Limit, opts.Offset)
@@ -583,6 +586,9 @@ func (s *SqlAuditStore) QueryRequestStatistics(req apimodel.RequestStatisticsReq
 }
 
 func (s *SqlAuditStore) QuerySqlHistoryInfo(req apimodel.SqlHistoryRequest) (*apimodel.SqlHistoryResponse, error) {
+	if err := common.ValidateMetricColumns(req.LatencyColumns); err != nil {
+		return nil, err
+	}
 	if !s.hasParquetFiles() {
 		return &apimodel.SqlHistoryResponse{
 			ExecutionTrend: []apimodel.PlanTypeTrend{},
@@ -615,15 +621,8 @@ func (s *SqlAuditStore) QuerySqlHistoryInfo(req apimodel.SqlHistoryRequest) (*ap
 	if len(req.LatencyColumns) > 0 {
 		var selectExpressions []string
 		for _, col := range req.LatencyColumns {
-			// Basic validation to prevent SQL injection
-			safeCol := strings.ReplaceAll(col, ";", "")
-			expr := common.BuildMetricExpression(safeCol)
-			if expr != "" {
-				selectExpressions = append(selectExpressions, fmt.Sprintf("%s AS %s", expr, safeCol))
-			} else {
-				// Fallback for unknown metrics, assume they are raw columns we want to sum
-				selectExpressions = append(selectExpressions, fmt.Sprintf("sum(%s) AS %s", safeCol, safeCol))
-			}
+			expr := common.BuildMetricExpression(col)
+			selectExpressions = append(selectExpressions, fmt.Sprintf("%s AS %s", expr, col))
 		}
 
 		latencyTrendQuery := fmt.Sprintf(sqlconst.QueryLatencyTrend, req.Interval, strings.Join(selectExpressions, ", "), s.path)
