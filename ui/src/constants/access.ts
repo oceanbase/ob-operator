@@ -1,8 +1,27 @@
 import { intl } from '@/utils/intl';
 
 export const ACCESS_ROLES_LIST = [
-  { label: intl.formatMessage({ id: 'dashboard.ObjectStorage.Access', defaultMessage: '对象存储凭据' }), value: 'objectstorage', descriptions: 'Read credential names; create new credentials and run read-only bucket checks. No secret-value reads, updates or deletes.' },
-  { label: 'LogService', value: 'oblogservice', descriptions: 'LogService: read / create / scale replicas / delete' },
+  {
+    label: intl.formatMessage({
+      id: 'dashboard.ObjectStorage.Access',
+      defaultMessage: '对象存储凭据',
+    }),
+    value: 'objectstorage',
+    descriptions: intl.formatMessage({
+      id: 'dashboard.ObjectStorage.AccessDescription',
+      defaultMessage:
+        '读取凭据名称；创建新凭据并执行只读存储桶检查。不支持读取密钥值、更新或删除凭据。',
+    }),
+  },
+  {
+    label: 'LogService',
+    value: 'oblogservice',
+    descriptions: intl.formatMessage({
+      id: 'dashboard.LogService.AccessDescription',
+      defaultMessage:
+        'LogService：读权限用于查看服务，写权限用于创建服务、调整副本数和删除服务。',
+    }),
+  },
   {
     label: intl.formatMessage({
       id: 'src.constants.D057DB4A',
@@ -58,6 +77,18 @@ export const ACCESS_ROLES_LIST = [
       id: 'src.components.customModal.2169D3CC',
       defaultMessage:
         '权限控制: 读权限涉及账号和角色的获取，写权限涉及它们的创建、更新和删除',
+    }),
+  },
+  {
+    label: intl.formatMessage({
+      id: 'dashboard.K8sCluster.Access',
+      defaultMessage: 'K8s 集群',
+    }),
+    value: 'k8s-cluster',
+    descriptions: intl.formatMessage({
+      id: 'dashboard.K8sCluster.AccessDescription',
+      defaultMessage:
+        'K8s 集群：读权限用于查看集群、节点和事件，写权限用于创建、修改、删除集群以及更新节点。',
     }),
   },
 ];

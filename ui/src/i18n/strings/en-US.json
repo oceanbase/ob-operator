@@ -779,7 +779,7 @@
   "src.pages.Alert.Shield.3B8541B0": "Tenant",
   "src.pages.Alert.Subscriptions.D2F05048": "Aggregation Configuration",
   "src.pages.Alert.Shield.1F7B5A21": "Mask Application/Object Type",
-  "src.components.customModal.1F81961E": "{type === Type.EDIT? 'Edit': 'Create'} Role",
+  "src.components.customModal.1F81961E": "{ConditionalExpression0} Role",
   "src.components.customModal.80E5AC42": "Please enter",
   "src.components.customModal.FC52C4E2": "The new password cannot be the same as the original password",
   "src.pages.Alert.Shield.11B30410": "Mask End Time",
@@ -1602,5 +1602,10 @@
   "src.pages.Tenant.Detail.Overview.DisableDeleteProtection": "Disable Deletion Protection",
   "src.pages.Tenant.Detail.Overview.EnableSqlAnalysis": "Enable SQL Analysis",
   "src.pages.Tenant.Detail.Overview.DisableSqlAnalysis": "Disable SQL Analysis",
-  "src.components.customModal.User": "User"
+  "src.components.customModal.User": "User",
+  "dashboard.ObjectStorage.Access": "Object storage credentials",
+  "dashboard.ObjectStorage.AccessDescription": "Read credential names; create new credentials and run read-only bucket checks. No secret-value reads, updates or deletes.",
+  "dashboard.LogService.AccessDescription": "LogService: read permission allows viewing services; write permission allows creating services, scaling replicas and deleting services.",
+  "dashboard.K8sCluster.Access": "K8s clusters",
+  "dashboard.K8sCluster.AccessDescription": "K8s clusters: read permission allows viewing clusters, nodes and events; write permission allows creating, updating and deleting clusters and updating nodes."
 }

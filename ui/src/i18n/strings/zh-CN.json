@@ -1118,7 +1118,7 @@
   "src.components.customModal.6FC754B4": "写",
   "src.components.customModal.1E76C4F3": "所有权限",
   "src.components.customModal.66C28C4A": "操作成功！",
-  "src.components.customModal.1F81961E": "{type === Type.EDIT ? '编辑' : '创建'}角色",
+  "src.components.customModal.1F81961E": "{ConditionalExpression0}角色",
   "src.components.customModal.1920004B": "编辑",
   "src.components.customModal.D7653D14": "创建",
   "src.components.customModal.FECE2219": "请输入角色名称",
@@ -1601,5 +1601,10 @@
   "src.pages.Tenant.Detail.Overview.EnableDeleteProtection": "开启删除保护",
   "src.pages.Tenant.Detail.Overview.DisableDeleteProtection": "关闭删除保护",
   "src.pages.Tenant.Detail.Overview.EnableSqlAnalysis": "开启SQL分析",
-  "src.pages.Tenant.Detail.Overview.DisableSqlAnalysis": "关闭SQL分析"
+  "src.pages.Tenant.Detail.Overview.DisableSqlAnalysis": "关闭SQL分析",
+  "dashboard.ObjectStorage.Access": "对象存储凭据",
+  "dashboard.ObjectStorage.AccessDescription": "读取凭据名称；创建新凭据并执行只读存储桶检查。不支持读取密钥值、更新或删除凭据。",
+  "dashboard.LogService.AccessDescription": "LogService：读权限用于查看服务，写权限用于创建服务、调整副本数和删除服务。",
+  "dashboard.K8sCluster.Access": "K8s 集群",
+  "dashboard.K8sCluster.AccessDescription": "K8s 集群：读权限用于查看集群、节点和事件，写权限用于创建、修改、删除集群以及更新节点。"
 }
