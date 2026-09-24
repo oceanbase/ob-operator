@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -52,6 +53,13 @@ func dayToNumber(day string) int {
 }
 
 func setScheduleDatesToPolicy(policy *v1alpha1.OBTenantBackupPolicy, p *param.ScheduleBase) error {
+	if p.ScheduleType != "Weekly" && p.ScheduleType != "Monthly" {
+		return oberr.NewBadRequest("Schedule type must be Weekly or Monthly")
+	}
+	scheduleTime, err := time.Parse("15:04", p.ScheduleTime)
+	if err != nil || scheduleTime.Format("15:04") != p.ScheduleTime {
+		return oberr.NewBadRequest("Schedule time must use HH:MM in the 24-hour format")
+	}
 	hourMinutes := strings.Split(p.ScheduleTime, ":")
 	crontabParts := fmt.Sprintf("%s %s", hourMinutes[1], hourMinutes[0])
 

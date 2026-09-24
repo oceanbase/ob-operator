@@ -21,6 +21,46 @@ import (
 )
 
 var _ = Describe("OBTenantBackup", func() {
+	It("Rejects unsupported schedule types", func() {
+		for _, scheduleType := range []string{"weekly", "Daily", "Weekly\n"} {
+			p := param.CreateBackupPolicy{
+				BackupPolicyBase: param.BackupPolicyBase{
+					ScheduleBase: param.ScheduleBase{
+						ScheduleType: scheduleType,
+						ScheduleDates: []param.ScheduleDate{
+							{Day: 1, BackupType: "Full"},
+							{Day: 2, BackupType: "Incremental"},
+						},
+						ScheduleTime: "04:00",
+					},
+				},
+			}
+
+			_, err := buildBackupPolicyApiType(types.NamespacedName{Name: "t1", Namespace: "default"}, "fake-cluster", &p)
+			Expect(err).To(MatchError(ContainSubstring("Schedule type must be Weekly or Monthly")))
+		}
+	})
+
+	It("Rejects invalid schedule times", func() {
+		for _, scheduleTime := range []string{"", "04", "04:00:00", "24:00"} {
+			p := param.CreateBackupPolicy{
+				BackupPolicyBase: param.BackupPolicyBase{
+					ScheduleBase: param.ScheduleBase{
+						ScheduleType: "Weekly",
+						ScheduleDates: []param.ScheduleDate{
+							{Day: 1, BackupType: "Full"},
+							{Day: 2, BackupType: "Incremental"},
+						},
+						ScheduleTime: scheduleTime,
+					},
+				},
+			}
+
+			_, err := buildBackupPolicyApiType(types.NamespacedName{Name: "t1", Namespace: "default"}, "fake-cluster", &p)
+			Expect(err).To(MatchError(ContainSubstring("Schedule time must use HH:MM in the 24-hour format")))
+		}
+	})
+
 	It("Rejects a weekly schedule without an incremental backup day", func() {
 		p := param.CreateBackupPolicy{
 			BackupPolicyBase: param.BackupPolicyBase{
