@@ -69,12 +69,11 @@ func setScheduleDatesToPolicy(policy *v1alpha1.OBTenantBackupPolicy, p *param.Sc
 		if len(fullCrontabWeekdays) == 0 {
 			return oberr.NewBadRequest("At least one full backup day is required")
 		}
-		policy.Spec.DataBackup.FullCrontab = crontabParts + " " + strings.Join(fullCrontabWeekdays, ",")
-		if len(incrementalCrontabWeekdays) > 0 {
-			policy.Spec.DataBackup.IncrementalCrontab = crontabParts + " " + strings.Join(incrementalCrontabWeekdays, ",")
-		} else {
-			policy.Spec.DataBackup.IncrementalCrontab = crontabParts + " *"
+		if len(incrementalCrontabWeekdays) == 0 {
+			return oberr.NewBadRequest("At least one incremental backup day is required")
 		}
+		policy.Spec.DataBackup.FullCrontab = crontabParts + " " + strings.Join(fullCrontabWeekdays, ",")
+		policy.Spec.DataBackup.IncrementalCrontab = crontabParts + " " + strings.Join(incrementalCrontabWeekdays, ",")
 	} else if p.ScheduleType == "Monthly" {
 		fullCrontabMonthdays := make([]string, 0)
 		incrementalCrontabMonthdays := make([]string, 0)
@@ -88,12 +87,11 @@ func setScheduleDatesToPolicy(policy *v1alpha1.OBTenantBackupPolicy, p *param.Sc
 		if len(fullCrontabMonthdays) == 0 {
 			return oberr.NewBadRequest("At least one full backup day is required")
 		}
-		policy.Spec.DataBackup.FullCrontab = strings.Join([]string{crontabParts, strings.Join(fullCrontabMonthdays, ","), "* *"}, " ")
-		if len(incrementalCrontabMonthdays) > 0 {
-			policy.Spec.DataBackup.IncrementalCrontab = strings.Join([]string{crontabParts, strings.Join(incrementalCrontabMonthdays, ","), "* *"}, " ")
-		} else {
-			policy.Spec.DataBackup.IncrementalCrontab = strings.Join([]string{crontabParts, "*", "* *"}, " ")
+		if len(incrementalCrontabMonthdays) == 0 {
+			return oberr.NewBadRequest("At least one incremental backup day is required")
 		}
+		policy.Spec.DataBackup.FullCrontab = strings.Join([]string{crontabParts, strings.Join(fullCrontabMonthdays, ","), "* *"}, " ")
+		policy.Spec.DataBackup.IncrementalCrontab = strings.Join([]string{crontabParts, strings.Join(incrementalCrontabMonthdays, ","), "* *"}, " ")
 	}
 	return nil
 }

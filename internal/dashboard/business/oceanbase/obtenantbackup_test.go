@@ -21,6 +21,42 @@ import (
 )
 
 var _ = Describe("OBTenantBackup", func() {
+	It("Rejects a weekly schedule without an incremental backup day", func() {
+		p := param.CreateBackupPolicy{
+			BackupPolicyBase: param.BackupPolicyBase{
+				ScheduleBase: param.ScheduleBase{
+					ScheduleType: "Weekly",
+					ScheduleDates: []param.ScheduleDate{{
+						Day:        1,
+						BackupType: "Full",
+					}},
+					ScheduleTime: "00:00",
+				},
+			},
+		}
+
+		_, err := buildBackupPolicyApiType(types.NamespacedName{Name: "t1", Namespace: "default"}, "fake-cluster", &p)
+		Expect(err).To(MatchError(ContainSubstring("At least one incremental backup day is required")))
+	})
+
+	It("Rejects a monthly schedule without an incremental backup day", func() {
+		p := param.CreateBackupPolicy{
+			BackupPolicyBase: param.BackupPolicyBase{
+				ScheduleBase: param.ScheduleBase{
+					ScheduleType: "Monthly",
+					ScheduleDates: []param.ScheduleDate{{
+						Day:        1,
+						BackupType: "Full",
+					}},
+					ScheduleTime: "00:00",
+				},
+			},
+		}
+
+		_, err := buildBackupPolicyApiType(types.NamespacedName{Name: "t1", Namespace: "default"}, "fake-cluster", &p)
+		Expect(err).To(MatchError(ContainSubstring("At least one incremental backup day is required")))
+	})
+
 	It("Test CreateOBTenantBackupPolicyWeekly", func() {
 		scheduleDates := []param.ScheduleDate{{
 			Day:        1,

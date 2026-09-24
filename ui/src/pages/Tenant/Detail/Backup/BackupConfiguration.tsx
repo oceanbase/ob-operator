@@ -19,6 +19,7 @@ import { useRef } from 'react';
 import {
   checkIsSame,
   checkScheduleDatesHaveFull,
+  checkScheduleDatesHaveIncremental,
   formatBackupForm,
   formatBackupPolicyData,
 } from '../../helper';
@@ -176,6 +177,15 @@ export default function BackupConfiguration({
         intl.formatMessage({
           id: 'Dashboard.Detail.Backup.BackupConfiguration.ConfigureAtLeastOneFull',
           defaultMessage: '请至少配置 1 个全量备份',
+        }),
+      );
+      return;
+    }
+    if (!checkScheduleDatesHaveIncremental(values.scheduleDates)) {
+      message.warning(
+        intl.formatMessage({
+          id: 'Dashboard.Detail.Backup.BackupConfiguration.ConfigureAtLeastOneIncremental',
+          defaultMessage: '请至少配置 1 个增量备份',
         }),
       );
       return;

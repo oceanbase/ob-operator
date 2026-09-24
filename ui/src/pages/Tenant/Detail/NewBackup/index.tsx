@@ -11,6 +11,7 @@ import { Button, Card, Col, Form, Input, Row, Select, message } from 'antd';
 import { useEffect, useState } from 'react';
 import {
   checkScheduleDatesHaveFull,
+  checkScheduleDatesHaveIncremental,
   formatBackupForm,
   formatNewTenantForm,
 } from '../../helper';
@@ -63,6 +64,16 @@ export default function NewBackup() {
           intl.formatMessage({
             id: 'Dashboard.Detail.NewBackup.ConfigureAtLeastOneFull',
             defaultMessage: '请至少配置 1 个全量备份',
+          }),
+        );
+        return;
+      }
+
+      if (!checkScheduleDatesHaveIncremental(values?.scheduleDates)) {
+        message.warning(
+          intl.formatMessage({
+            id: 'Dashboard.Detail.NewBackup.ConfigureAtLeastOneIncremental',
+            defaultMessage: '请至少配置 1 个增量备份',
           }),
         );
         return;
