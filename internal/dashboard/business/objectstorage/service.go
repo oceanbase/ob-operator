@@ -56,6 +56,20 @@ var locationOptions = map[string]*regexp.Regexp{
 	"max_bandwidth": regexp.MustCompile(`(?i)^[0-9]+(?:\.[0-9]+)?(?:[KMGTPE]?B)?$`),
 }
 
+// These S3-compatible providers require or recommend virtual-hosted bucket
+// requests. Custom endpoints keep the existing path-style behavior so private
+// MinIO deployments do not suddenly require wildcard DNS certificates. AWS
+// buckets containing dots remain path-style because their virtual-hosted name
+// does not match AWS's single-label wildcard TLS certificate.
+var virtualHostedProviderSuffixes = []string{
+	".aliyuncs.com",
+	".myhuaweicloud.com",
+	".myhuaweicloud.eu",
+	".myqcloud.com",
+	".amazonaws.com",
+	".bcebos.com",
+}
+
 // Keep OceanBase's raw host=http://... grammar. This deliberately accepts only
 // the S3 subset surfaced by the form; providers/STS are not inferred from names.
 func ParseLocation(raw string) (*Location, error) {
@@ -216,7 +230,11 @@ func (s *Service) Check(ctx context.Context, ns string, p CheckRequest) (*CheckR
 
 func checkBucket(ctx context.Context, loc *Location, id, key string, client *http.Client) (*CheckResult, error) {
 	r := &CheckResult{CheckedAt: time.Now().UTC(), Scope: "HeadBucket only; no object read/write/delete or prefix permission validation"}
-	req, err := http.NewRequestWithContext(ctx, http.MethodHead, loc.Endpoint+"/"+loc.Bucket, nil)
+	requestURL, err := bucketCheckURL(loc)
+	if err != nil {
+		return nil, oberr.NewBadRequest(err.Error())
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, requestURL, nil)
 	if err != nil {
 		return nil, oberr.NewBadRequest("Invalid endpoint")
 	}
@@ -245,4 +263,43 @@ func checkBucket(ctx context.Context, loc *Location, id, key string, client *htt
 		r.Code = "endpoint_error"
 	}
 	return r, nil
+}
+
+func bucketCheckURL(loc *Location) (string, error) {
+	endpoint, err := url.Parse(loc.Endpoint)
+	if err != nil || endpoint.Hostname() == "" {
+		return "", fmt.Errorf("invalid endpoint")
+	}
+	hostname := strings.ToLower(strings.TrimSuffix(endpoint.Hostname(), "."))
+	bucket := strings.ToLower(loc.Bucket)
+	if endpoint.Scheme == "https" && strings.Contains(bucket, ".") && (strings.HasSuffix(hostname, ".myhuaweicloud.com") || strings.HasSuffix(hostname, ".myhuaweicloud.eu")) {
+		return "", fmt.Errorf("Huawei OBS HTTPS checks do not support bucket names containing periods")
+	}
+	alreadyVirtualHosted := strings.HasPrefix(hostname, bucket+".")
+	virtualHosted := alreadyVirtualHosted
+	if !virtualHosted {
+		for _, suffix := range virtualHostedProviderSuffixes {
+			if strings.HasSuffix(hostname, suffix) {
+				if suffix == ".amazonaws.com" && strings.Contains(bucket, ".") {
+					break
+				}
+				virtualHosted = true
+				break
+			}
+		}
+	}
+	if virtualHosted {
+		if !alreadyVirtualHosted {
+			hostname = bucket + "." + hostname
+		}
+		if port := endpoint.Port(); port != "" {
+			endpoint.Host = net.JoinHostPort(hostname, port)
+		} else {
+			endpoint.Host = hostname
+		}
+		endpoint.Path = "/"
+	} else {
+		endpoint.Path = "/" + loc.Bucket
+	}
+	return endpoint.String(), nil
 }

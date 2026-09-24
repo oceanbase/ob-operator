@@ -99,6 +99,66 @@ func TestBucketCheckReadOnlySignedAndSanitized(t *testing.T) {
 	}
 }
 
+func TestBucketCheckUsesProviderAddressingStyle(t *testing.T) {
+	tests := []struct {
+		name     string
+		endpoint string
+		bucket   string
+		wantURL  string
+	}{
+		{name: "aliyun oss", endpoint: "https://oss-cn-wulanchabu.aliyuncs.com", bucket: "data-bucket", wantURL: "https://data-bucket.oss-cn-wulanchabu.aliyuncs.com/"},
+		{name: "huawei obs", endpoint: "https://obs.cn-north-4.myhuaweicloud.com", bucket: "data-bucket", wantURL: "https://data-bucket.obs.cn-north-4.myhuaweicloud.com/"},
+		{name: "huawei obs eu", endpoint: "https://obs.eu-west-101.myhuaweicloud.eu", bucket: "data-bucket", wantURL: "https://data-bucket.obs.eu-west-101.myhuaweicloud.eu/"},
+		{name: "huawei dotted bucket over http", endpoint: "http://obs.cn-north-4.myhuaweicloud.com", bucket: "logs.prod", wantURL: "http://logs.prod.obs.cn-north-4.myhuaweicloud.com/"},
+		{name: "tencent cos", endpoint: "https://cos.ap-shanghai.myqcloud.com", bucket: "data-bucket-123456", wantURL: "https://data-bucket-123456.cos.ap-shanghai.myqcloud.com/"},
+		{name: "aws s3", endpoint: "https://s3.us-east-1.amazonaws.com", bucket: "data-bucket", wantURL: "https://data-bucket.s3.us-east-1.amazonaws.com/"},
+		{name: "aws dotted bucket keeps path style", endpoint: "https://s3.us-east-1.amazonaws.com", bucket: "logs.prod", wantURL: "https://s3.us-east-1.amazonaws.com/logs.prod"},
+		{name: "baidu bos", endpoint: "https://s3.bj.bcebos.com", bucket: "data-bucket", wantURL: "https://data-bucket.s3.bj.bcebos.com/"},
+		{name: "gcp path style remains compatible", endpoint: "https://storage.googleapis.com", bucket: "data-bucket", wantURL: "https://storage.googleapis.com/data-bucket"},
+		{name: "custom s3 path style remains compatible", endpoint: "https://s3.example.com", bucket: "data-bucket", wantURL: "https://s3.example.com/data-bucket"},
+		{name: "already virtual hosted", endpoint: "https://data-bucket.oss-cn-wulanchabu.aliyuncs.com", bucket: "data-bucket", wantURL: "https://data-bucket.oss-cn-wulanchabu.aliyuncs.com/"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			loc := &Location{Endpoint: tt.endpoint, Bucket: tt.bucket, Region: "test-region"}
+			calls := 0
+			client := &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				calls++
+				if req.Method != http.MethodHead || req.URL.String() != tt.wantURL {
+					t.Fatalf("unexpected bucket check request: %s %s, want HEAD %s", req.Method, req.URL, tt.wantURL)
+				}
+				if !strings.HasPrefix(req.Header.Get("Authorization"), "AWS4-HMAC-SHA256 Credential=TEST_ID/") {
+					t.Fatal("bucket check must remain signed")
+				}
+				return &http.Response{StatusCode: http.StatusOK, Header: http.Header{}, Body: io.NopCloser(strings.NewReader("")), Request: req}, nil
+			})}
+			result, err := checkBucket(context.Background(), loc, "TEST_ID", "TEST_KEY", client)
+			if err != nil || result == nil || !result.OK || calls != 1 {
+				t.Fatalf("result=%+v err=%v calls=%d", result, err, calls)
+			}
+		})
+	}
+}
+
+func TestBucketCheckRejectsHuaweiDottedBucketOverHTTPS(t *testing.T) {
+	for _, endpoint := range []string{
+		"https://obs.cn-north-4.myhuaweicloud.com",
+		"https://logs.prod.obs.cn-north-4.myhuaweicloud.com",
+	} {
+		t.Run(endpoint, func(t *testing.T) {
+			called := false
+			client := &http.Client{Transport: roundTripFunc(func(req *http.Request) (*http.Response, error) {
+				called = true
+				return &http.Response{StatusCode: http.StatusOK, Header: http.Header{}, Body: io.NopCloser(strings.NewReader("")), Request: req}, nil
+			})}
+			_, err := checkBucket(context.Background(), &Location{Endpoint: endpoint, Bucket: "logs.prod", Region: "cn-north-4"}, "TEST_ID", "TEST_KEY", client)
+			if err == nil || called {
+				t.Fatalf("Huawei dotted bucket over HTTPS must be rejected before sending a request: err=%v called=%v", err, called)
+			}
+		})
+	}
+}
+
 func TestEndpointAddressRestrictions(t *testing.T) {
 	for _, address := range []string{"127.0.0.1", "::1", "::ffff:127.0.0.1", "169.254.169.254", "100.100.100.200", "0.0.0.0", "0.0.0.1", "224.0.0.1", "fe80::1", "::"} {
 		if allowedIP(net.ParseIP(address)) {
