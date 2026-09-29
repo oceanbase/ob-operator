@@ -29,6 +29,11 @@ import {
   parseBucketURL,
 } from './storageConfig';
 
+const isGloballyHandledRequestError = (error: unknown) =>
+  typeof error === 'object' &&
+  error !== null &&
+  ('request' in error || 'response' in error || 'config' in error);
+
 export function BucketInput({
   value = '',
   onChange,
@@ -214,7 +219,8 @@ export function CredentialPicker({
         ),
       );
     } catch (e) {
-      message.error(errorText(e));
+      // Request failures are already presented by the global request handler.
+      if (!isGloballyHandledRequestError(e)) message.error(errorText(e));
     } finally {
       setSaving(false);
     }
