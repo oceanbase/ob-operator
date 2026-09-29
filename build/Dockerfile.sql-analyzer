@@ -27,6 +27,7 @@ RUN ASAN_ENABLED=$ASAN_ENABLED make sql-analyzer
 FROM ubuntu:24.04
 
 ARG ASAN_ENABLED
+ENV TZ=Asia/Shanghai
 # Install libasan runtime if ASAN_ENABLED is set
 RUN if [ -n "$ASAN_ENABLED" ]; then \
     apt-get update && \

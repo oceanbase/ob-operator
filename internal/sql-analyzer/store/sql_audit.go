@@ -44,6 +44,16 @@ type SqlAuditStore struct {
 	Logger *logger.Logger
 }
 
+const planGeneratedTimeLayout = "2006-01-02 15:04:05"
+
+func parsePlanGeneratedTime(value string, location *time.Location) (time.Time, error) {
+	return time.ParseInLocation(planGeneratedTimeLayout, value, location)
+}
+
+func formatTimeForFileName(value time.Time) string {
+	return value.UTC().Format(parquet.FileTimeFormat)
+}
+
 func NewSqlAuditStore(c context.Context, path string, maxOpenConns int, threads int, l *logger.Logger) (*SqlAuditStore, error) {
 	// Ensure the data directory exists
 	if err := os.MkdirAll(path, 0755); err != nil {
@@ -207,7 +217,7 @@ func (s *SqlAuditStore) InsertBatch(resultsSlices [][]model.SqlAudit) error {
 	}
 
 	// Determine the target Parquet file based on the current timestamp.
-	currentTime := time.Now().Format(parquet.FileTimeFormat)
+	currentTime := formatTimeForFileName(time.Now())
 	targetParquetFile := filepath.Join(s.path, fmt.Sprintf("%s-%s.parquet", currentTime, uuid.New().String()[:8]))
 
 	// Now, copy the data from the temp table to the new parquet file.
@@ -702,14 +712,17 @@ func (s *SqlAuditStore) QuerySqlDetailInfo(planStore *PlanStore, req apimodel.Sq
 	}
 
 	for _, ps := range planStats {
-		gmt, _ := time.Parse("2006-01-02 15:04:05", ps.GeneratedTime)
+		generatedTime, err := parsePlanGeneratedTime(ps.GeneratedTime, time.Local)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse plan generated time %q: %w", ps.GeneratedTime, err)
+		}
 		resp.Plans = append(resp.Plans, apimodel.PlanStats{
 			TenantID:      ps.TenantID,
 			SvrIP:         ps.SvrIP,
 			SvrPort:       ps.SvrPort,
 			PlanID:        ps.PlanID,
 			PlanHash:      ps.PlanHash,
-			GeneratedTime: gmt.Unix(),
+			GeneratedTime: generatedTime.Unix(),
 			IoCost:        ps.IoCost,
 			CpuCost:       ps.CpuCost,
 			Cost:          ps.Cost,
