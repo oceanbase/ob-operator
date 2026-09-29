@@ -13,6 +13,27 @@ import (
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/external"
 )
 
+func TestReplaceQueryVariablesUsesOverlappingRateWindow(t *testing.T) {
+	tests := []struct {
+		name string
+		step int64
+		want string
+	}{
+		{name: "reported 28 second step", step: 28, want: "rate(metric[33s])"},
+		{name: "short step keeps four scrapes", step: 10, want: "rate(metric[20s])"},
+		{name: "long step overlaps one scrape", step: 60, want: "rate(metric[65s])"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := replaceQueryVariables("rate(metric[@INTERVAL])", nil, nil, tt.step)
+			if got != tt.want {
+				t.Fatalf("replaceQueryVariables() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestSqlOtherResponseTimeUsesOtherSqlCount(t *testing.T) {
 	expr := metricExprConfig["sql_other_rt"]
 	if !strings.Contains(expr, `stat_id="40018"`) {

@@ -38,6 +38,12 @@ import (
 
 var metricExprConfig map[string]string
 
+const (
+	// Keep this aligned with the dashboard Prometheus global scrape interval.
+	prometheusScrapeIntervalSeconds int64 = 5
+	minimumRateSamples                    = 4
+)
+
 func init() {
 	metricExprConfig = make(map[string]string)
 	metricExprConfigContent, err := bindata.Asset(metricconst.MetricExprConfigFile)
@@ -87,7 +93,8 @@ func replaceQueryVariables(exprTemplate string, labels []common.KVPair, groupLab
 	}
 	labelStr := strings.Join(labelStrParts, ",")
 	groupLabelStr := strings.Join(groupLabels, ",")
-	replacer := strings.NewReplacer(metricconst.KeyInterval, fmt.Sprintf("%ss", strconv.FormatInt(step, 10)), metricconst.KeyLabels, labelStr, metricconst.KeyGroupLabels, groupLabelStr)
+	rateInterval := max(step+prometheusScrapeIntervalSeconds, prometheusScrapeIntervalSeconds*minimumRateSamples)
+	replacer := strings.NewReplacer(metricconst.KeyInterval, fmt.Sprintf("%ss", strconv.FormatInt(rateInterval, 10)), metricconst.KeyLabels, labelStr, metricconst.KeyGroupLabels, groupLabelStr)
 	return replacer.Replace(exprTemplate)
 }
 
