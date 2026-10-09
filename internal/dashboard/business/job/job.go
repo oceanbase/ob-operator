@@ -19,35 +19,47 @@ import (
 	"io"
 
 	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
-	"github.com/oceanbase/ob-operator/internal/dashboard/model/job"
+	jobmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/job"
 	k8sclient "github.com/oceanbase/ob-operator/pkg/k8s/client"
 	"github.com/pkg/errors"
+	logger "github.com/sirupsen/logrus"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 )
 
-func GetJob(ctx context.Context, namespace, name string) (*job.Job, error) {
+func GetJob(ctx context.Context, namespace, name string) (*jobmodel.Job, error) {
 	client := k8sclient.GetClient()
 	k8sJob, err := client.ClientSet.BatchV1().Jobs(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}
 
-	jobStatus := job.JobStatusPending
-	if k8sJob.Status.Succeeded > 0 {
-		jobStatus = job.JobStatusSuccessful
-	} else if k8sJob.Status.Failed > 0 {
-		jobStatus = job.JobStatusFailed
-	} else if k8sJob.Status.Active > 0 {
-		jobStatus = job.JobStatusRunning
+	var warningEvents []corev1.Event
+	if initialJobStatus(k8sJob) == jobmodel.JobStatusPending {
+		eventList, err := client.ClientSet.CoreV1().Events(namespace).List(ctx, metav1.ListOptions{
+			FieldSelector: fields.AndSelectors(
+				fields.OneTermEqualSelector("involvedObject.uid", string(k8sJob.UID)),
+				fields.OneTermEqualSelector("type", corev1.EventTypeWarning),
+			).String(),
+		})
+		if err != nil {
+			logger.Warnf("Failed to list warning events for job %s/%s: %v", namespace, name, err)
+		} else {
+			warningEvents = eventList.Items
+		}
 	}
+	jobStatus, failureMessage := resolveJobStatus(k8sJob, warningEvents)
 
-	resp := &job.Job{
+	resp := &jobmodel.Job{
 		Name:      k8sJob.Name,
 		Namespace: k8sJob.Namespace,
 		Status:    jobStatus,
-		Result:    &job.JobResult{},
+		Result: &jobmodel.JobResult{
+			Output: failureMessage,
+		},
 	}
 
 	if k8sJob.Status.StartTime != nil {
@@ -57,7 +69,7 @@ func GetJob(ctx context.Context, namespace, name string) (*job.Job, error) {
 		resp.FinishTime = k8sJob.Status.CompletionTime.Unix()
 	}
 
-	if jobStatus == job.JobStatusSuccessful || jobStatus == job.JobStatusFailed {
+	if jobStatus == jobmodel.JobStatusSuccessful || jobStatus == jobmodel.JobStatusFailed {
 		attachmentID, ok := k8sJob.Labels[bizconst.LABEL_ATTACHMENT_ID]
 		if ok {
 			resp.Result.AttachmentId = attachmentID
@@ -85,15 +97,61 @@ func GetJob(ctx context.Context, namespace, name string) (*job.Job, error) {
 			if err != nil {
 				return nil, errors.Wrap(err, "error in copy logs")
 			}
-			resp.Result.Output = buf.String()
+			podOutput := buf.String()
+			if resp.Result.Output != "" && podOutput != "" {
+				resp.Result.Output += "\n\nPod logs:\n" + podOutput
+			} else if podOutput != "" {
+				resp.Result.Output = podOutput
+			}
 
-			if pod.Status.ContainerStatuses[0].State.Terminated != nil {
+			if len(pod.Status.ContainerStatuses) > 0 && pod.Status.ContainerStatuses[0].State.Terminated != nil {
 				resp.Result.ExitCode = pod.Status.ContainerStatuses[0].State.Terminated.ExitCode
 			}
 		}
 	}
 
 	return resp, nil
+}
+
+func initialJobStatus(k8sJob *batchv1.Job) jobmodel.JobStatus {
+	if k8sJob.Status.Succeeded > 0 {
+		return jobmodel.JobStatusSuccessful
+	}
+	if k8sJob.Status.Failed > 0 {
+		return jobmodel.JobStatusFailed
+	}
+	if k8sJob.Status.Active > 0 {
+		return jobmodel.JobStatusRunning
+	}
+	return jobmodel.JobStatusPending
+}
+
+func resolveJobStatus(k8sJob *batchv1.Job, warningEvents []corev1.Event) (jobmodel.JobStatus, string) {
+	status := initialJobStatus(k8sJob)
+	for _, condition := range k8sJob.Status.Conditions {
+		if condition.Type == batchv1.JobFailed && condition.Status == corev1.ConditionTrue {
+			return jobmodel.JobStatusFailed, formatFailureMessage(condition.Reason, condition.Message)
+		}
+	}
+	if status != jobmodel.JobStatusPending {
+		return status, ""
+	}
+	for _, event := range warningEvents {
+		if event.Type == corev1.EventTypeWarning && event.Reason == "FailedCreate" {
+			return jobmodel.JobStatusFailed, formatFailureMessage(event.Reason, event.Message)
+		}
+	}
+	return status, ""
+}
+
+func formatFailureMessage(reason, message string) string {
+	if reason == "" {
+		return message
+	}
+	if message == "" {
+		return reason
+	}
+	return fmt.Sprintf("%s: %s", reason, message)
 }
 
 func DeleteJob(ctx context.Context, namespace, name string) error {
