@@ -49,6 +49,17 @@ func TestResolveJobStatusKeepsPendingWithoutTerminalEvidence(t *testing.T) {
 	}
 }
 
+func TestResolveJobStatusKeepsPendingAfterTransientFailedCreate(t *testing.T) {
+	status, output := resolveJobStatus(&batchv1.Job{}, []corev1.Event{{
+		Type:    corev1.EventTypeWarning,
+		Reason:  "FailedCreate",
+		Message: "Internal error occurred: transient API timeout",
+	}})
+	if status != jobmodel.JobStatusPending || output != "" {
+		t.Fatalf("resolveJobStatus() = (%q, %q), want retryable FailedCreate to remain pending", status, output)
+	}
+}
+
 func TestResolveJobStatusUsesFailedCondition(t *testing.T) {
 	k8sJob := &batchv1.Job{Status: batchv1.JobStatus{Conditions: []batchv1.JobCondition{{
 		Type:    batchv1.JobFailed,

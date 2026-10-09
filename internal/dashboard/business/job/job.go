@@ -17,6 +17,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strings"
 
 	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
 	jobmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/job"
@@ -137,11 +138,19 @@ func resolveJobStatus(k8sJob *batchv1.Job, warningEvents []corev1.Event) (jobmod
 		return status, ""
 	}
 	for _, event := range warningEvents {
-		if event.Type == corev1.EventTypeWarning && event.Reason == "FailedCreate" {
+		if isMissingServiceAccountEvent(event) {
 			return jobmodel.JobStatusFailed, formatFailureMessage(event.Reason, event.Message)
 		}
 	}
 	return status, ""
+}
+
+func isMissingServiceAccountEvent(event corev1.Event) bool {
+	if event.Type != corev1.EventTypeWarning || event.Reason != "FailedCreate" {
+		return false
+	}
+	message := strings.ToLower(event.Message)
+	return strings.Contains(message, "serviceaccount") && strings.Contains(message, "not found")
 }
 
 func formatFailureMessage(reason, message string) string {
