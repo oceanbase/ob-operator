@@ -39,6 +39,13 @@ rules:
   - apiGroups:
       - "rbac.authorization.k8s.io"
     resources:
+      - clusterroles
+    resourceNames:
+      - {{ .Release.Name }}-cluster-role
+    verbs: ["get"]
+  - apiGroups:
+      - "rbac.authorization.k8s.io"
+    resources:
       - clusterrolebindings
       - roles
       - rolebindings

@@ -25,8 +25,9 @@ type ToolConfig struct {
 }
 
 type InspectionConfig struct {
-	OBDiag   ToolConfig `yaml:"obdiag"`
-	OBHelper ToolConfig `yaml:"oceanbase-helper"`
+	ClusterRoleName string     `yaml:"clusterRoleName"`
+	OBDiag          ToolConfig `yaml:"obdiag"`
+	OBHelper        ToolConfig `yaml:"oceanbase-helper"`
 }
 
 type JobTypeConfig struct {
