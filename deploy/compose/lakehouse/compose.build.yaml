@@ -1,0 +1,5 @@
+services:
+  observer-bootstrap:
+    build:
+      context: ../../..
+      dockerfile: deploy/compose/lakehouse/Dockerfile.bootstrap

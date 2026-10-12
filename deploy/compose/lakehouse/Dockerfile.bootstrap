@@ -5,6 +5,6 @@ COPY go.mod go.sum ./
 COPY cmd/lakehouse-bootstrap ./cmd/lakehouse-bootstrap
 RUN --mount=type=cache,target=/go/pkg/mod CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/lakehouse-bootstrap ./cmd/lakehouse-bootstrap
 
-FROM busybox:latest
+FROM busybox:1.36.1
 COPY --from=builder /out/lakehouse-bootstrap /usr/local/bin/lakehouse-bootstrap
 ENTRYPOINT ["/usr/local/bin/lakehouse-bootstrap"]

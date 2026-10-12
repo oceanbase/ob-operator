@@ -16,6 +16,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"net"
@@ -24,7 +25,7 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql"
 )
 
 const (
@@ -42,68 +43,152 @@ type config struct {
 	LogServiceClusterID    uint64
 	AccessIDFile           string
 	AccessKeyFile          string
+	RootPasswordFile       string
+	AllowLegacyEmptyRoot   bool
 	Timeout                time.Duration
 	RetryInterval          time.Duration
 }
 
 func main() {
+	mode := flag.String("mode", "bootstrap", "bootstrap, check, smoke-write or smoke-read")
+	flag.Parse()
 	cfg, err := loadConfig(os.Getenv)
 	if err != nil {
 		log.Fatal(err)
 	}
+	password, err := readCredential(cfg.RootPasswordFile)
+	if err != nil {
+		log.Fatalf("read root password: %v", err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout)
+	defer cancel()
+	if err := run(ctx, cfg, *mode, password, func(pass string) (*sql.DB, error) {
+		return openDatabase(cfg, pass)
+	}); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func openDatabase(cfg config, password string) (*sql.DB, error) {
+	driverConfig := databaseConfig(cfg, password)
+	db, err := sql.Open("mysql", driverConfig.FormatDSN())
+	if err == nil {
+		db.SetMaxOpenConns(1)
+		db.SetMaxIdleConns(1)
+	}
+	return db, err
+}
+
+func databaseConfig(cfg config, password string) *mysql.Config {
+	driverConfig := mysql.NewConfig()
+	driverConfig.User = "root"
+	driverConfig.Passwd = password
+	driverConfig.Net = "tcp"
+	driverConfig.Addr = net.JoinHostPort(cfg.ObserverHost, strconv.Itoa(cfg.SQLPort))
+	driverConfig.Timeout = 5 * time.Second
+	// Initial cluster bootstrap can take minutes. Individual probes have short
+	// contexts; the bootstrap statement is bounded by the overall deadline.
+	driverConfig.ReadTimeout = cfg.Timeout
+	driverConfig.WriteTimeout = 30 * time.Second
+	driverConfig.InterpolateParams = true
+	return driverConfig
+}
+
+func run(ctx context.Context, cfg config, mode, password string, open func(string) (*sql.DB, error)) error {
+	if mode != "bootstrap" && mode != "check" && mode != "smoke-write" && mode != "smoke-read" {
+		return errors.New("invalid operation mode")
+	}
+	if password == "" {
+		return errors.New("root password must not be empty")
+	}
+	db, err := open(password)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+	err = waitForConnection(ctx, db, cfg.RetryInterval)
+	if err != nil {
+		if mode != "bootstrap" || !authenticationDenied(err) {
+			return err
+		}
+		initialDB, err := open("")
+		if err != nil {
+			return err
+		}
+		defer initialDB.Close()
+		if err := waitForConnection(ctx, initialDB, cfg.RetryInterval); err != nil {
+			return fmt.Errorf("initial database access failed: %w", err)
+		}
+		if clusterReady(ctx, initialDB) {
+			if !cfg.AllowLegacyEmptyRoot {
+				return errors.New("existing database has an empty root password; set ALLOW_LEGACY_EMPTY_ROOT=true to migrate it explicitly")
+			}
+		} else {
+			if err := bootstrapCluster(ctx, cfg, initialDB); err != nil {
+				return err
+			}
+		}
+		if _, err := initialDB.ExecContext(ctx, "ALTER USER root IDENTIFIED BY ?", password); err != nil {
+			return errors.New("failed to initialize root password")
+		}
+		if err := waitForConnection(ctx, db, cfg.RetryInterval); err != nil {
+			return err
+		}
+	} else if mode == "bootstrap" && !clusterReady(ctx, db) {
+		// Some images accept an initial connection before the cluster is bootstrapped.
+		if err := bootstrapCluster(ctx, cfg, db); err != nil {
+			return err
+		}
+		if _, err := db.ExecContext(ctx, "ALTER USER root IDENTIFIED BY ?", password); err != nil {
+			return errors.New("failed to initialize root password")
+		}
+	}
+	if err := waitForCluster(ctx, db, cfg.RetryInterval); err != nil {
+		return err
+	}
+	switch mode {
+	case "smoke-write":
+		for _, statement := range []string{"CREATE DATABASE IF NOT EXISTS compose_smoke", "CREATE TABLE IF NOT EXISTS compose_smoke.t (id BIGINT PRIMARY KEY, value VARCHAR(64))", "REPLACE INTO compose_smoke.t VALUES (1, 'lakehouse-compose')"} {
+			if _, err := db.ExecContext(ctx, statement); err != nil {
+				return fmt.Errorf("smoke write: %w", err)
+			}
+		}
+		fallthrough
+	case "smoke-read":
+		var value string
+		if err := db.QueryRowContext(ctx, "SELECT value FROM compose_smoke.t WHERE id=1").Scan(&value); err != nil {
+			return fmt.Errorf("smoke read: %w", err)
+		}
+		if value != "lakehouse-compose" {
+			return errors.New("smoke persistence value mismatch")
+		}
+	}
+	log.Printf("OceanBase %s completed with authenticated SQL access", mode)
+	return nil
+}
+
+func bootstrapCluster(ctx context.Context, cfg config, db *sql.DB) error {
 	accessID, err := readCredential(cfg.AccessIDFile)
 	if err != nil {
-		log.Fatalf("read access ID: %v", err)
+		return fmt.Errorf("read access ID: %w", err)
 	}
 	accessKey, err := readCredential(cfg.AccessKeyFile)
 	if err != nil {
-		log.Fatalf("read access key: %v", err)
+		return fmt.Errorf("read access key: %w", err)
 	}
-
-	bootstrapSQL, err := buildBootstrapSQL(cfg, accessID, accessKey)
+	statement, err := buildBootstrapSQL(cfg, accessID, accessKey)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
+	if _, err := db.ExecContext(ctx, statement); err != nil && !bootstrapInProgress(err) && !clusterReady(ctx, db) {
+		return errors.New("OceanBase bootstrap failed; inspect database logs without sharing credentials")
+	}
+	return waitForCluster(ctx, db, cfg.RetryInterval)
+}
 
-	dsn := fmt.Sprintf("root@tcp(%s)/?timeout=5s&writeTimeout=30s&interpolateParams=true", net.JoinHostPort(cfg.ObserverHost, strconv.Itoa(cfg.SQLPort)))
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		log.Fatalf("open OceanBase connection: %v", err)
-	}
-	defer db.Close()
-	db.SetMaxOpenConns(1)
-	db.SetMaxIdleConns(1)
-
-	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout)
-	defer cancel()
-	if err := waitForConnection(ctx, db, cfg.RetryInterval); err != nil {
-		log.Fatal(err)
-	}
-	if clusterReady(ctx, db) {
-		log.Println("OceanBase is already bootstrapped")
-		return
-	}
-
-	log.Printf("bootstrapping OceanBase at %s:%d", cfg.ObserverHost, cfg.SQLPort)
-	if _, err := db.ExecContext(ctx, bootstrapSQL); err != nil {
-		if clusterReady(ctx, db) {
-			log.Println("OceanBase became ready while bootstrap was running")
-			return
-		}
-		if bootstrapInProgress(err) {
-			log.Println("another OceanBase bootstrap is already running; waiting for it to finish")
-			if err := waitForCluster(ctx, db, cfg.RetryInterval); err != nil {
-				log.Fatal(err)
-			}
-			log.Println("OceanBase bootstrap completed")
-			return
-		}
-		log.Fatalf("bootstrap OceanBase: %v", err)
-	}
-	if err := waitForCluster(ctx, db, cfg.RetryInterval); err != nil {
-		log.Fatal(err)
-	}
-	log.Println("OceanBase bootstrap completed")
+func authenticationDenied(err error) bool {
+	var mysqlErr *mysql.MySQLError
+	return errors.As(err, &mysqlErr) && mysqlErr.Number == 1045
 }
 
 func bootstrapInProgress(err error) bool {
@@ -119,10 +204,17 @@ func loadConfig(getenv func(string) string) (config, error) {
 		SharedStorageBucketURL: getenv("SHARED_STORAGE_BUCKET_URL"),
 		AccessIDFile:           envOrDefault(getenv, "ACCESS_ID_FILE", "/run/secrets/minio_access_id"),
 		AccessKeyFile:          envOrDefault(getenv, "ACCESS_KEY_FILE", "/run/secrets/minio_access_key"),
+		RootPasswordFile:       envOrDefault(getenv, "ROOT_PASSWORD_FILE", "/run/secrets/ob_root_password"),
 		Timeout:                defaultTimeout,
 		RetryInterval:          defaultRetryInterval,
 	}
 	var err error
+	if raw := getenv("ALLOW_LEGACY_EMPTY_ROOT"); raw != "" {
+		cfg.AllowLegacyEmptyRoot, err = strconv.ParseBool(raw)
+		if err != nil {
+			return config{}, errors.New("invalid ALLOW_LEGACY_EMPTY_ROOT")
+		}
+	}
 	if cfg.SQLPort, err = positiveInt(getenv, "OBSERVER_SQL_PORT", 2881); err != nil {
 		return config{}, err
 	}
@@ -191,6 +283,9 @@ func waitForConnection(ctx context.Context, db *sql.DB, interval time.Duration) 
 		cancel()
 		if err == nil {
 			return nil
+		}
+		if authenticationDenied(err) {
+			return fmt.Errorf("database authentication rejected: %w", err)
 		}
 		if err := wait(ctx, interval); err != nil {
 			return fmt.Errorf("wait for OceanBase SQL endpoint: %w", err)

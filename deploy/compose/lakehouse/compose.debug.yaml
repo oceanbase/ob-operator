@@ -1,0 +1,9 @@
+# Optional management ports. They remain loopback-only unless explicitly changed.
+services:
+  observer:
+    ports:
+      - "${HOST_BIND_ADDRESS:-127.0.0.1}:${OBSERVER_RPC_HOST_PORT}:2882"
+  logservice-1:
+    ports:
+      - "${HOST_BIND_ADDRESS:-127.0.0.1}:${LOGSERVICE_RPC_HOST_PORT}:50051"
+      - "${HOST_BIND_ADDRESS:-127.0.0.1}:${LOGSERVICE_HTTP_HOST_PORT}:50052"

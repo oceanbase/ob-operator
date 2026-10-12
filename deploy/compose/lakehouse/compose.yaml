@@ -1,4 +1,4 @@
-name: ob-lakehouse
+name: ${COMPOSE_PROJECT_NAME:-ob-lakehouse}
 
 x-secrets: &lakehouse-secrets
   - minio_access_id
@@ -24,8 +24,8 @@ services:
       - ./scripts:/opt/lakehouse:ro
     secrets: *lakehouse-secrets
     ports:
-      - "${MINIO_API_HOST_PORT}:9000"
-      - "${MINIO_CONSOLE_HOST_PORT}:9001"
+      - "${HOST_BIND_ADDRESS:-127.0.0.1}:${MINIO_API_HOST_PORT}:9000"
+      - "${HOST_BIND_ADDRESS:-127.0.0.1}:${MINIO_CONSOLE_HOST_PORT}:9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
       interval: 5s
@@ -61,9 +61,6 @@ services:
       - logservice-1-store:/home/admin/oblogservice/store
       - logservice-1-log:/home/admin/oblogservice/log
       - ./scripts:/opt/lakehouse:ro
-    ports:
-      - "${LOGSERVICE_RPC_HOST_PORT}:50051"
-      - "${LOGSERVICE_HTTP_HOST_PORT}:50052"
     networks:
       lakehouse:
         ipv4_address: ${LOGSERVICE_IP_1}
@@ -142,8 +139,7 @@ services:
       - observer-log:/home/admin/log
       - ./scripts:/opt/lakehouse:ro
     ports:
-      - "${OBSERVER_SQL_HOST_PORT}:2881"
-      - "${OBSERVER_RPC_HOST_PORT}:2882"
+      - "${HOST_BIND_ADDRESS:-127.0.0.1}:${OBSERVER_SQL_HOST_PORT}:2881"
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/2881"]
       interval: 5s
@@ -157,10 +153,7 @@ services:
         ipv4_address: ${OBSERVER_IP}
 
   observer-bootstrap:
-    build:
-      context: ../../..
-      dockerfile: deploy/compose/lakehouse/Dockerfile.bootstrap
-    image: ob-operator/lakehouse-bootstrap:local
+    image: ${BOOTSTRAP_IMAGE:-ob-operator/lakehouse-bootstrap:local}
     restart: "no"
     environment:
       OBSERVER_HOST: ${OBSERVER_IP}
@@ -170,7 +163,12 @@ services:
       LOGSERVICE_CLUSTER_ID: ${LOGSERVICE_CLUSTER_ID}
       LOGSERVICE_BUCKET_URL: s3://${LOGSERVICE_BUCKET}?host=http://${MINIO_IP}:9000&s3_region=${S3_REGION}
       SHARED_STORAGE_BUCKET_URL: s3://${SHARED_STORAGE_BUCKET}?host=http://${MINIO_IP}:9000&s3_region=${S3_REGION}
-    secrets: *lakehouse-secrets
+      BOOTSTRAP_TIMEOUT: ${BOOTSTRAP_TIMEOUT:-30m}
+      ALLOW_LEGACY_EMPTY_ROOT: ${ALLOW_LEGACY_EMPTY_ROOT:-false}
+    secrets:
+      - minio_access_id
+      - minio_access_key
+      - ob_root_password
     depends_on:
       observer:
         condition: service_healthy
@@ -182,6 +180,8 @@ secrets:
     file: ./secrets/minio_access_id
   minio_access_key:
     file: ./secrets/minio_access_key
+  ob_root_password:
+    file: ./secrets/ob_root_password
 
 volumes:
   minio-data:
