@@ -18580,7 +18580,7 @@ export const TerminalApiAxiosParamCreator = function (configuration?: Configurat
         connectDatabase: async (terminalId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'terminalId' is not null or undefined
             assertParamExists('connectDatabase', 'terminalId', terminalId)
-            const localVarPath = `/api/v1/conn/{terminalId}`
+            const localVarPath = `/api/v1/terminal/{terminalId}`
                 .replace(`{${"terminalId"}}`, encodeURIComponent(String(terminalId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);

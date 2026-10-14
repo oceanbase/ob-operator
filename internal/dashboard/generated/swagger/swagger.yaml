@@ -5500,47 +5500,6 @@ paths:
       summary: Set configurable infos
       tags:
       - Info
-  /api/v1/conn/{terminalId}:
-    get:
-      consumes:
-      - application/json
-      description: Connect to oceanbase database in websocket
-      operationId: ConnectDatabase
-      parameters:
-      - description: terminalId
-        in: path
-        name: terminalId
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.APIResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/response.OBConnection'
-              type: object
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.APIResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Connect to oceanbase database
-      tags:
-      - Terminal
   /api/v1/info:
     get:
       consumes:
@@ -9373,6 +9332,47 @@ paths:
       summary: Get file
       tags:
       - Storage
+  /api/v1/terminal/{terminalId}:
+    get:
+      consumes:
+      - application/json
+      description: Connect to oceanbase database in websocket
+      operationId: ConnectDatabase
+      parameters:
+      - description: terminalId
+        in: path
+        name: terminalId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.APIResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/response.OBConnection'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.APIResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Connect to oceanbase database
+      tags:
+      - Terminal
   /api/v1/webhook/alert/log:
     post:
       consumes:

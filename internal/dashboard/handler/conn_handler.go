@@ -14,7 +14,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"math"
 	"net/http"
@@ -293,7 +292,7 @@ func CreateOBTenantConnTerminal(c *gin.Context) (*response.OBConnection, error) 
 // @Failure 400 object response.APIResponse
 // @Failure 401 object response.APIResponse
 // @Failure 500 object response.APIResponse
-// @Router /api/v1/conn/{terminalId} [GET]
+// @Router /api/v1/terminal/{terminalId} [GET]
 // @Param terminalId path string true "terminalId"
 // @Security ApiKeyAuth
 func ConnectDatabase(c *gin.Context) (*response.OBConnection, error) {
@@ -336,10 +335,7 @@ func ConnectDatabase(c *gin.Context) (*response.OBConnection, error) {
 	wsOut := newWsWrapper(conn, cancel)
 	wsIn := newWsWrapper(conn, cancel)
 
-	cmdArgs := []string{"/bin/bash", "-c", fmt.Sprintf("mysql -u%s -h%s -P2881 -A", term.User, term.Host)}
-	if term.Password != "" {
-		cmdArgs[2] += fmt.Sprintf(" -p'%s'", term.Password)
-	}
+	cmdArgs := databaseTerminalCommand(term)
 	sizeQueue := k8s.NewResizeQueue()
 	sizeQueue.SetSize(colsNum, rowsNum)
 
