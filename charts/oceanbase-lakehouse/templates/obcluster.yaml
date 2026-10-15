@@ -27,6 +27,11 @@ spec:
     storage:
       dataStorage: {storageClass: {{ .Values.storageClass | quote }}, size: {{ .Values.observer.dataSize | quote }}}
       logStorage: {storageClass: {{ .Values.storageClass | quote }}, size: {{ .Values.observer.logSize | quote }}}
-  topology: {{ toYaml .Values.observer.topology | nindent 4 }}
+  topology:
+    {{- range .Values.observer.topology }}
+    - zone: {{ .zone | quote }}
+      replica: {{ .replica }}
+      {{- include "lakehouse.scheduling" $ | nindent 6 }}
+    {{- end }}
   parameters: {{ toYaml .Values.observer.parameters | nindent 4 }}
 {{- end }}

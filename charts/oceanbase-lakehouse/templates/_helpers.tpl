@@ -7,6 +7,15 @@ app.kubernetes.io/instance: {{ .Release.Name | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service | quote }}
 helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | quote }}
 {{- end -}}
+{{- define "lakehouse.scheduling" -}}
+{{- with .Values.scheduling.nodeSelector }}
+nodeSelector: {{ toYaml . | nindent 2 }}
+{{- end }}
+{{- with .Values.scheduling.tolerations }}
+tolerations: {{ toYaml . | nindent 2 }}
+{{- end }}
+{{- end -}}
+
 {{- define "lakehouse.endpoint" -}}
 {{- if eq .Values.objectStorage.mode "bundled" -}}
 {{- printf "http://%s-minio.%s.svc:9000" .Release.Name .Release.Namespace -}}

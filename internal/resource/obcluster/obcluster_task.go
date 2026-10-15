@@ -794,6 +794,7 @@ func CheckImageReady(m *OBClusterManager) tasktypes.TaskError {
 			BackoffLimit:            &backoffLimit,
 		},
 	}
+	resourceutils.ApplyJobScheduling(&checkImagePullJob.Spec.Template.Spec, resourceutils.BootstrapJobScheduling(m.OBCluster))
 	err := m.Client.Create(m.Ctx, checkImagePullJob)
 	if err != nil {
 		return errors.Wrap(err, "Create check image pull job")
@@ -859,10 +860,11 @@ outerLoop:
 func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist {
-		versionOutput, _, err := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+		versionOutput, _, err := resourceutils.RunJobWithScheduling(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
 			m.OBCluster.Name+"-get-version",
 			m.OBCluster.Spec.OBServerTemplate.Image,
 			m.OBCluster.Spec.OBServerTemplate.PodFields,
+			resourceutils.BootstrapJobScheduling(m.OBCluster),
 			"/home/admin/oceanbase/bin/oceanbase-helper version",
 		)
 		if err != nil {
@@ -870,17 +872,19 @@ func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 			var code int32
 			switch modeAnnoVal {
 			case oceanbaseconst.ModeStandalone:
-				_, code, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+				_, code, err = resourceutils.RunJobWithScheduling(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
 					m.OBCluster.Name+"-standalone-validate",
 					m.OBCluster.Spec.OBServerTemplate.Image,
 					m.OBCluster.Spec.OBServerTemplate.PodFields,
+					resourceutils.BootstrapJobScheduling(m.OBCluster),
 					"/home/admin/oceanbase/bin/oceanbase-helper standalone validate",
 				)
 			case oceanbaseconst.ModeService:
-				_, code, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+				_, code, err = resourceutils.RunJobWithScheduling(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
 					m.OBCluster.Name+"-service-validate",
 					m.OBCluster.Spec.OBServerTemplate.Image,
 					m.OBCluster.Spec.OBServerTemplate.PodFields,
+					resourceutils.BootstrapJobScheduling(m.OBCluster),
 					"/home/admin/oceanbase/bin/oceanbase-helper service validate",
 				)
 			}
@@ -1088,11 +1092,12 @@ func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
 			MountPath: oceanbaseconst.ClogPath,
 		}},
 	}
-	_, exitCode, err := resourceutils.RunJob(
+	_, exitCode, err := resourceutils.RunJobWithScheduling(
 		m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
 		jobName,
 		m.OBCluster.Spec.OBServerTemplate.Image,
 		m.OBCluster.Spec.OBServerTemplate.PodFields,
+		resourceutils.BootstrapJobScheduling(m.OBCluster),
 		"/home/admin/oceanbase/bin/oceanbase-helper env-check storage "+oceanbaseconst.ClogPath,
 		volumeConfigs,
 	)
@@ -1161,11 +1166,12 @@ func OptimizeClusterByScenario(m *OBClusterManager) tasktypes.TaskError {
 	// start a job to read optimize parameters, ignore errors, only proceed with valid outputs and ignore the errors
 	m.Logger.Info("Start to optimize obcluster parameters")
 	jobName := fmt.Sprintf("optimize-cluster-%s-%s", m.OBCluster.Name, rand.String(6))
-	output, code, _ := resourceutils.RunJob(
+	output, code, _ := resourceutils.RunJobWithScheduling(
 		m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
 		jobName,
 		m.OBCluster.Spec.OBServerTemplate.Image,
 		m.OBCluster.Spec.OBServerTemplate.PodFields,
+		resourceutils.BootstrapJobScheduling(m.OBCluster),
 		fmt.Sprintf("bin/oceanbase-helper optimize cluster %s", m.OBCluster.Spec.Scenario))
 	if code == int32(cmdconst.ExitCodeOK) || code == int32(cmdconst.ExitCodeIgnorableErr) {
 		optimizeConfig := &helpermodel.OptimizationResponse{}

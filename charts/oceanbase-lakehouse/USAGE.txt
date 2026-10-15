@@ -12,6 +12,13 @@ available in your registry. oblogservice:1.3.0 is a development image name, not 
 promise that this pre-release image is publicly downloadable. No images are
 included in the chart archive. imagePullSecrets must exist in the target namespace.
 
+Optional scheduling.nodeSelector and scheduling.tolerations apply to storage Pods
+and every LogService/Observer zone. The Operator must also support inheriting zone
+placement and workload ServiceAccount for its bootstrap/check Jobs. Upgrade an
+older Operator first if those Jobs cannot schedule onto tainted worker pools.
+Use precise pool selectors/tolerations, never broad tolerations to bypass isolation.
+Changing placement does not migrate existing local-path PVC data between nodes.
+
 Online bundled MinIO
 -------------------
 Create a values file selecting storageClass, resources, image versions, and IDs.

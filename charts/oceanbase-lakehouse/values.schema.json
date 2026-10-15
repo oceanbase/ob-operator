@@ -7,6 +7,14 @@
     "stage": {"enum": ["storage", "logservice", "cluster"]},
     "storageClass": {"$ref": "#/definitions/name"},
     "imagePullSecrets": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["name"], "properties": {"name": {"$ref": "#/definitions/name"}}}},
+    "scheduling": {
+      "type": "object", "additionalProperties": false,
+      "required": ["nodeSelector", "tolerations"],
+      "properties": {
+        "nodeSelector": {"type": "object", "additionalProperties": {"type": "string"}},
+        "tolerations": {"type": "array", "items": {"$ref": "#/definitions/toleration"}}
+      }
+    },
     "objectStorage": {
       "type": "object", "additionalProperties": false,
       "required": ["mode", "endpoint", "region", "logBucket", "dataBucket", "existingSecret", "createBuckets"],
@@ -71,6 +79,21 @@
     }
   },
   "definitions": {
+    "toleration": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "key": {"type": "string"},
+        "operator": {"enum": ["Equal", "Exists"]},
+        "value": {"type": "string"},
+        "effect": {"enum": ["", "NoSchedule", "PreferNoSchedule", "NoExecute"]},
+        "tolerationSeconds": {"type": "integer", "minimum": 0}
+      },
+      "allOf": [
+        {"if": {"required": ["operator"], "properties": {"operator": {"const": "Exists"}}}, "then": {"properties": {"value": {"const": ""}}}},
+        {"if": {"not": {"required": ["key"], "properties": {"key": {"minLength": 1}}}}, "then": {"required": ["operator"], "properties": {"operator": {"const": "Exists"}}}},
+        {"if": {"required": ["tolerationSeconds"]}, "then": {"required": ["effect"], "properties": {"effect": {"const": "NoExecute"}}}}
+      ]
+    },
     "name": {"type": "string", "minLength": 1, "maxLength": 63, "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"},
     "optionalName": {"type": "string", "maxLength": 63, "pattern": "^([a-z0-9]([a-z0-9-]*[a-z0-9])?)?$"},
     "bucket": {"type": "string", "maxLength": 63, "pattern": "^(|[a-z0-9][a-z0-9-]{1,61}[a-z0-9])$"},

@@ -21,6 +21,11 @@ spec:
     storage:
       storeStorage: {storageClass: {{ .Values.storageClass | quote }}, size: {{ .Values.logService.storeSize | quote }}}
       logStorage: {storageClass: {{ .Values.storageClass | quote }}, size: {{ .Values.logService.logSize | quote }}}
-  topology: {{ toYaml .Values.logService.topology | nindent 4 }}
+  topology:
+    {{- range .Values.logService.topology }}
+    - zone: {{ .zone | quote }}
+      replica: {{ .replica }}
+      {{- include "lakehouse.scheduling" $ | nindent 6 }}
+    {{- end }}
   parameters: {{ toYaml .Values.logService.parameters | nindent 4 }}
 {{- end }}

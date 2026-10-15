@@ -5,6 +5,11 @@ stage: storage
 storageClass: local-path
 imagePullSecrets: []
 
+# Applied to storage Pods and every LogService/Observer zone.
+scheduling:
+  nodeSelector: {}
+  tolerations: []
+
 objectStorage:
   # bundled: deploy MinIO; external: NEVER deploy or administer a storage server.
   mode: bundled
