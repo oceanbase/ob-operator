@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # One command, three resumable stages; never rolls back or deletes persistent data.
-set -euo pipefail
+set -Eeuo pipefail
 if (( $# < 2 )); then
   echo "Usage: bash install.sh RELEASE NAMESPACE [-f values.yaml] [--set key=value]" >&2
   exit 2

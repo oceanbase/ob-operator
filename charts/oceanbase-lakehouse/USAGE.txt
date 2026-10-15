@@ -55,7 +55,7 @@ through your secret-management process; do not put credentials in values files,
 the necessary bucket/object permissions for them.
   objectStorage:
     mode: external
-    endpoint: https://minio.example.com:9000
+    endpoint: http://192.0.2.10:9000
     region: us-east-1
     logBucket: lakehouse-logs
     dataBucket: lakehouse-data
@@ -70,6 +70,12 @@ Supply endpoint only (no query, credentials or path). Credentials need not grant
 ListAllMyBuckets or administration permissions. Custom CA and HTTP path prefixes
 are not supported. The supplied credentials must allow the database's list/read/
 write/delete/multipart operations on the two selected buckets.
+LogService 1.3.0 chooses virtual-host addressing for hostname endpoints. Use an
+HTTP IP endpoint for path-style MinIO, or provide working wildcard bucket DNS and
+matching TLS certificates for a hostname endpoint. A successful mc readiness check
+alone does NOT prove the database's addressing compatibility. Bundled MinIO avoids
+this issue by using its retained Service ClusterIP for database access; the init
+Job continues to use Kubernetes DNS. Keep that Service intact during recovery.
 
 Data protection and recovery
 ----------------------------

@@ -12,6 +12,18 @@ helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | quote }}
 {{- printf "http://%s-minio.%s.svc:9000" .Release.Name .Release.Namespace -}}
 {{- else -}}{{ .Values.objectStorage.endpoint }}{{- end -}}
 {{- end -}}
+{{- define "lakehouse.databaseEndpoint" -}}
+{{- if eq .Values.objectStorage.mode "bundled" -}}
+{{- $service := lookup "v1" "Service" .Release.Namespace (printf "%s-minio" .Release.Name) -}}
+{{- if and $service $service.spec.clusterIP -}}
+{{- if contains ":" $service.spec.clusterIP -}}
+{{- printf "http://[%s]:9000" $service.spec.clusterIP -}}
+{{- else -}}
+{{- printf "http://%s:9000" $service.spec.clusterIP -}}
+{{- end -}}
+{{- else -}}{{ include "lakehouse.endpoint" . }}{{- end -}}
+{{- else -}}{{ include "lakehouse.endpoint" . }}{{- end -}}
+{{- end -}}
 {{- define "lakehouse.logBucket" -}}
 {{- default (printf "%s-logs" .Release.Name) .Values.objectStorage.logBucket -}}
 {{- end -}}

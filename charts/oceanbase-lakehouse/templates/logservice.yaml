@@ -13,7 +13,7 @@ spec:
   clusterId: {{ .Values.logService.clusterId }}
   serviceAccount: {{ .Release.Name }}-workload
   objectStoreUrl:
-    bucketURL: {{ printf "s3://%s?host=%s&s3_region=%s" (include "lakehouse.logBucket" .) (include "lakehouse.endpoint" .) .Values.objectStorage.region | quote }}
+    bucketURL: {{ printf "s3://%s?host=%s&s3_region=%s" (include "lakehouse.logBucket" .) (include "lakehouse.databaseEndpoint" .) .Values.objectStorage.region | quote }}
     secretRef: {name: {{ include "lakehouse.storageSecret" . }}}
   logService:
     image: {{ .Values.logService.image | quote }}
