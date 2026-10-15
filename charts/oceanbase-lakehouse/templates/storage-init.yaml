@@ -10,6 +10,10 @@ data:
     #!/bin/sh
     set -eu
     umask 077
+    if [ ! -d /work ] || [ ! -w /work ] || [ ! -d /tmp ] || [ ! -w /tmp ]; then
+      echo 'initialization identity cannot write private working directories; configure initialization.runAsUser/runAsGroup/fsGroup for the volume ACL.' >&2
+      exit 1
+    fi
     export MC_CONFIG_DIR=/work/mc
     export HOME=/work
     # All user input is passed as quoted environment values, never evaluated.
@@ -78,7 +82,12 @@ spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets: {{ toYaml . | nindent 8 }}
       {{- end }}
-      securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, fsGroup: 1000, seccompProfile: {type: RuntimeDefault}}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: {{ .Values.initialization.runAsUser }}
+        runAsGroup: {{ .Values.initialization.runAsGroup }}
+        fsGroup: {{ .Values.initialization.fsGroup }}
+        seccompProfile: {type: RuntimeDefault}
       containers:
         - name: initialize
           image: {{ .Values.initialization.image | quote }}

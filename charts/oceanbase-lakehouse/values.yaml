@@ -42,6 +42,10 @@ minio:
 initialization:
   image: minio/mc:RELEASE.2025-08-13T08-35-41Z
   imagePullPolicy: IfNotPresent
+  # Independent from minio.*; private emptyDirs can also inherit host ACLs.
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
   deadlineSeconds: 600
   resources:
     requests: {cpu: 50m, memory: 64Mi}

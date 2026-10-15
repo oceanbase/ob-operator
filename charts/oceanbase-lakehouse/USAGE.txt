@@ -68,6 +68,10 @@ such as 10001 can avoid that identity collision when the administrator approves:
     runAsUser: 10001
     runAsGroup: 10001
     fsGroup: 10001
+  initialization:
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
 
 The chart does not run a root init container or chown command, edit host
 ACLs, or disable SELinux. runAsNonRoot, RuntimeDefault seccomp and dropped Linux
@@ -77,9 +81,19 @@ adjust volume group ownership according to the driver's fsGroup behavior. An exi
 PVC must already permit the selected identity to access its stored data.
 Changing these IDs does not migrate data or rewrite existing object ownership.
 MinIO uses OnDelete updates, so identity changes require a planned Pod restart
-after validating access and taking backups. The independent storage-init Job
-keeps its own non-root UID/GID 1000 and private emptyDir; these settings do not
-change that Job's identity or take over permissions on an external MinIO server.
+after validating access and taking backups.
+
+The storage-init Job has independent initialization.runAsUser/runAsGroup/fsGroup
+settings, each defaulting to 1000 with the same 1..2147483647 range. Changing only
+minio.* never changes the Job's identity, and changing initialization.* never
+changes MinIO's identity or permissions on an external storage server. Explicitly
+configure both sets when the administrator-assigned identities require it.
+Private emptyDirs can inherit host named ACLs too; the Job's /work and /tmp must
+be writable by its selected identity. The initialization script checks both
+directories before contacting storage and reports a local identity/volume ACL
+failure immediately, rather than misreporting it as rejected S3 credentials.
+The Job retains runAsNonRoot, RuntimeDefault, read-only root filesystem and
+dropped capabilities. No root permission-repair container or ACL rewrite is added.
 
 Existing MinIO (default: no storage-side mutation)
 ------------------------------------------------

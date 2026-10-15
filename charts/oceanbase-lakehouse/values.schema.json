@@ -45,10 +45,13 @@
     },
     "initialization": {
       "type": "object", "additionalProperties": false,
-      "required": ["image", "imagePullPolicy", "deadlineSeconds", "resources"],
+      "required": ["image", "imagePullPolicy", "runAsUser", "runAsGroup", "fsGroup", "deadlineSeconds", "resources"],
       "properties": {
         "image": {"$ref": "#/definitions/image"},
         "imagePullPolicy": {"$ref": "#/definitions/pullPolicy"},
+        "runAsUser": {"type": "integer", "minimum": 1, "maximum": 2147483647},
+        "runAsGroup": {"type": "integer", "minimum": 1, "maximum": 2147483647},
+        "fsGroup": {"type": "integer", "minimum": 1, "maximum": 2147483647},
         "deadlineSeconds": {"type": "integer", "minimum": 60, "maximum": 3600},
         "resources": {"$ref": "#/definitions/resources"}
       }
