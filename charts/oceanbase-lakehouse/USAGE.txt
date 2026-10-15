@@ -56,6 +56,31 @@ inside the cluster; use network isolation or an externally managed TLS service
 when required. Public/trusted-CA HTTPS endpoints are supported; custom/self-signed
 CA propagation to Observer/LogService is not implemented by this chart.
 
+MinIO storage identities
+------------------------
+minio.runAsUser, minio.runAsGroup and minio.fsGroup default to 1000 and must be
+integer IDs between 1 and 2147483647. Match these IDs to volume permissions and
+identities assigned by your storage administrator. For example, a host-backed
+volume may inherit a named ACL for host UID 1000 that denies writes even though
+the directory mode appears writable. A separately assigned non-root identity
+such as 10001 can avoid that identity collision when the administrator approves:
+  minio:
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
+
+The chart does not run a root init container or chown command, edit host
+ACLs, or disable SELinux. runAsNonRoot, RuntimeDefault seccomp and dropped Linux
+capabilities remain enforced. fsGroup behavior depends on the volume driver;
+do not assume it repairs hostPath/local-path permissions or ACLs. Kubernetes may
+adjust volume group ownership according to the driver's fsGroup behavior. An existing
+PVC must already permit the selected identity to access its stored data.
+Changing these IDs does not migrate data or rewrite existing object ownership.
+MinIO uses OnDelete updates, so identity changes require a planned Pod restart
+after validating access and taking backups. The independent storage-init Job
+keeps its own non-root UID/GID 1000 and private emptyDir; these settings do not
+change that Job's identity or take over permissions on an external MinIO server.
+
 Existing MinIO (default: no storage-side mutation)
 ------------------------------------------------
 Provide a Secret in the SAME namespace, keys access_id and access_key. Create it

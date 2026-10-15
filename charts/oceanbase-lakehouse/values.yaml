@@ -29,6 +29,11 @@ minio:
   imagePullPolicy: IfNotPresent
   rootExistingSecret: "" # optional keys rootUser/rootPassword; otherwise generated
   existingClaim: "" # optional independently managed RWO claim
+  # Match identities assigned by the storage administrator (including PVC ACLs).
+  # No root init/chown is performed; changing IDs does not migrate existing data.
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000
   size: 100Gi
   resources:
     requests: {cpu: 100m, memory: 512Mi}
