@@ -51,6 +51,12 @@ helm.sh/chart: {{ printf "%s-%s" .Chart.Name .Chart.Version | quote }}
 {{- $_ := set $zones $zone.zone true -}}
 {{- end -}}
 {{- end -}}
+{{- $existingLS := lookup "oceanbase.oceanbase.com/v1alpha1" "OBLogServiceCluster" .Release.Namespace (printf "%s-ls" .Release.Name) -}}
+{{- if not $existingLS -}}
+{{- $nodes := 0 -}}
+{{- range .Values.logService.topology }}{{ $nodes = add $nodes (int .replica) }}{{ end -}}
+{{- if ne (int $nodes) 3 }}{{ fail "LogService 1.3.0 bootstrap requires exactly 3 nodes; configure topology replicas totaling 3 for a new installation" }}{{ end -}}
+{{- end -}}
 {{- if eq (include "lakehouse.logBucket" .) (include "lakehouse.dataBucket" .) }}{{ fail "logBucket and dataBucket must differ" }}{{ end -}}
 {{- if eq .Values.objectStorage.mode "external" -}}
 {{- if not .Values.objectStorage.endpoint }}{{ fail "external storage requires objectStorage.endpoint" }}{{ end -}}

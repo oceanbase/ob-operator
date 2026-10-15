@@ -227,6 +227,19 @@ func TestStorageInitializationScript(t *testing.T) {
 	}
 }
 
+func TestLogServiceBootstrapRequiresThreeNodes(t *testing.T) {
+	for _, replicas := range []int{1, 2, 3, 4} {
+		values := map[string]interface{}{"logService": map[string]interface{}{"topology": []interface{}{map[string]interface{}{"zone": "zone1", "replica": replicas}}}}
+		_, output, err := render(t, values)
+		if replicas == 3 && err != nil {
+			t.Fatalf("three-node bootstrap rejected: %v %s", err, output)
+		}
+		if replicas != 3 && (err == nil || !strings.Contains(output, "bootstrap requires exactly 3 nodes")) {
+			t.Fatalf("invalid initial node count %d accepted: %v %s", replicas, err, output)
+		}
+	}
+}
+
 func TestInstallScriptArgumentSafety(t *testing.T) {
 	for _, args := range [][]string{
 		{}, {"UPPER", "qa"}, {"qa", "bad/namespace"}, {"qa", "qa", "--atomic"}, {"qa", "qa", "--force"}, {"qa", "qa", "--cleanup-on-fail"}, {"qa", "qa", "-f"},
