@@ -19,6 +19,37 @@ older Operator first if those Jobs cannot schedule onto tainted worker pools.
 Use precise pool selectors/tolerations, never broad tolerations to bypass isolation.
 Changing placement does not migrate existing local-path PVC data between nodes.
 
+Multi-worker placement
+----------------------
+Each logService.topology[] and observer.topology[] entry can set nodeSelector.
+Its keys override matching scheduling.nodeSelector defaults; unspecified keys
+(for example a project/pool label) and global tolerations are inherited. These
+defaults are not an authorization boundary: use only administrator-approved
+nodes and enforce project isolation through Kubernetes policy. Storage/init Pods
+keep the global selector. Zone overrides do not affect each other or storage.
+For a NEW three-worker database, configure the full topology before creation:
+  scheduling:
+    nodeSelector:
+      example.com/pool: lakehouse
+      kubernetes.io/hostname: worker-3
+  logService:
+    topology:
+      - {zone: zone1, replica: 1, nodeSelector: {kubernetes.io/hostname: worker-1}}
+      - {zone: zone2, replica: 1, nodeSelector: {kubernetes.io/hostname: worker-2}}
+      - {zone: zone3, replica: 1, nodeSelector: {kubernetes.io/hostname: worker-3}}
+  observer:
+    topology:
+      - {zone: zone1, replica: 1, nodeSelector: {kubernetes.io/hostname: worker-1}}
+      - {zone: zone2, replica: 1, nodeSelector: {kubernetes.io/hostname: worker-2}}
+      - {zone: zone3, replica: 1, nodeSelector: {kubernetes.io/hostname: worker-3}}
+
+Add the pool's exact toleration under scheduling.tolerations if required. A
+replica count alone does not guarantee different physical nodes. Multiple
+replicas pinned to the same hostname still share a failure domain. This example
+does NOT make bundled MinIO distributed or provide a node-failure HA guarantee.
+Do not change selectors to move existing local-path data, or assume online Zone
+addition is supported by the selected SS database version.
+
 Online bundled MinIO
 -------------------
 Create a values file selecting storageClass, resources, image versions, and IDs.

@@ -5,7 +5,8 @@ stage: storage
 storageClass: local-path
 imagePullSecrets: []
 
-# Applied to storage Pods and every LogService/Observer zone.
+# Defaults for storage Pods and every LogService/Observer zone. A topology entry
+# may override nodeSelector keys to place that zone on a different worker.
 scheduling:
   nodeSelector: {}
   tolerations: []

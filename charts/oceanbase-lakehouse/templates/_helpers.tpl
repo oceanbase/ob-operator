@@ -16,6 +16,17 @@ tolerations: {{ toYaml . | nindent 2 }}
 {{- end }}
 {{- end -}}
 
+{{/* Zone selectors override defaults without mutating other zones or storage. */}}
+{{- define "lakehouse.zoneScheduling" -}}
+{{- $selector := mergeOverwrite (deepCopy .root.Values.scheduling.nodeSelector) (.zone.nodeSelector | default dict) -}}
+{{- with $selector }}
+nodeSelector: {{ toYaml . | nindent 2 }}
+{{- end }}
+{{- with .root.Values.scheduling.tolerations }}
+tolerations: {{ toYaml . | nindent 2 }}
+{{- end }}
+{{- end -}}
+
 {{- define "lakehouse.endpoint" -}}
 {{- if eq .Values.objectStorage.mode "bundled" -}}
 {{- printf "http://%s-minio.%s.svc:9000" .Release.Name .Release.Namespace -}}

@@ -165,3 +165,63 @@ func TestSchedulingRequiresStringSelectorValues(t *testing.T) {
 		t.Fatal("boolean selector value must not become an invalid Kubernetes label")
 	}
 }
+
+func TestZoneNodeSelectorsDistributeWithoutLeakingToOtherZones(t *testing.T) {
+	for _, mode := range []string{"bundled", "external"} {
+		t.Run(mode, func(t *testing.T) {
+			storage := map[string]interface{}{"mode": mode}
+			if mode == "external" {
+				storage["endpoint"] = "http://192.0.2.10:9000"
+				storage["existingSecret"] = "external-storage"
+			}
+			tolerations := []corev1.Toleration{{Key: "example.com/pool", Operator: corev1.TolerationOpEqual, Value: "qa", Effect: corev1.TaintEffectNoSchedule}}
+			topology := []interface{}{
+				map[string]interface{}{"zone": "zone1", "replica": 1, "nodeSelector": map[string]string{"kubernetes.io/hostname": "worker-1", "example.com/zone": "01"}},
+				map[string]interface{}{"zone": "zone2", "replica": 1, "nodeSelector": map[string]string{"kubernetes.io/hostname": "worker-2"}},
+				map[string]interface{}{"zone": "zone3", "replica": 1},
+			}
+			docs, output, err := render(t, map[string]interface{}{
+				"stage": "cluster", "objectStorage": storage,
+				"scheduling": map[string]interface{}{"nodeSelector": map[string]string{"example.com/pool": "qa", "kubernetes.io/hostname": "worker-3"}, "tolerations": tolerations},
+				"logService": map[string]interface{}{"topology": topology},
+				"observer":   map[string]interface{}{"topology": topology},
+			})
+			if err != nil {
+				t.Fatalf("render: %v\n%s", err, output)
+			}
+			locations := schedulingLocations(t, docs)
+			wantCount := 8
+			if mode == "external" {
+				wantCount--
+			}
+			if len(locations) != wantCount {
+				t.Fatalf("got %d locations, want %d", len(locations), wantCount)
+			}
+			for _, location := range locations {
+				want := map[string]string{"example.com/pool": "qa", "kubernetes.io/hostname": "worker-3"}
+				switch location.name {
+				case "ls/zone1", "ob/zone1":
+					want["kubernetes.io/hostname"] = "worker-1"
+					want["example.com/zone"] = "01"
+				case "ls/zone2", "ob/zone2":
+					want["kubernetes.io/hostname"] = "worker-2"
+				}
+				if !reflect.DeepEqual(location.nodeSelector, want) || !reflect.DeepEqual(location.tolerations, tolerations) {
+					t.Fatalf("wrong placement at %s: %+v, want selector %v", location.name, location, want)
+				}
+			}
+		})
+	}
+}
+
+func TestZoneNodeSelectorRequiresStringValues(t *testing.T) {
+	for _, component := range []string{"logService", "observer"} {
+		for _, value := range []interface{}{true, 123, []string{"node1"}} {
+			if _, _, err := render(t, map[string]interface{}{component: map[string]interface{}{"topology": []interface{}{
+				map[string]interface{}{"zone": "zone1", "replica": 3, "nodeSelector": map[string]interface{}{"kubernetes.io/hostname": value}},
+			}}}); err == nil {
+				t.Fatalf("%s accepted invalid selector value %v", component, value)
+			}
+		}
+	}
+}

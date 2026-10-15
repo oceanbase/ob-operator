@@ -31,7 +31,7 @@ spec:
     {{- range .Values.observer.topology }}
     - zone: {{ .zone | quote }}
       replica: {{ .replica }}
-      {{- include "lakehouse.scheduling" $ | nindent 6 }}
+      {{- include "lakehouse.zoneScheduling" (dict "root" $ "zone" .) | nindent 6 }}
     {{- end }}
   parameters: {{ toYaml .Values.observer.parameters | nindent 4 }}
 {{- end }}
