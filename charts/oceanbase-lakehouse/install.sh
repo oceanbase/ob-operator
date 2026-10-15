@@ -59,6 +59,7 @@ wait_running() {
   local deadline=$((SECONDS + timeout)) remaining status delay
   while (( SECONDS < deadline )); do
     remaining=$((deadline - SECONDS))
+    (( remaining > 0 )) || break
     status=$(kubectl -n "$namespace" get "$1" -o jsonpath='{.status.status}' --request-timeout="${remaining}s")
     case "$status" in
       running) echo "$1 is running"; return 0 ;;
