@@ -1,0 +1,107 @@
+OceanBase lakehouse online Helm installation (experimental 0.1.0)
+
+Prerequisites
+-------------
+Kubernetes >=1.27, Helm >=3.12, kubectl, jq, a working StorageClass, and an
+already installed/running SS-capable ob-operator with its webhooks/CRDs.
+The chart does NOT install, upgrade or uninstall the shared Operator or Dashboard.
+Run the installer with the intended kubeconfig/context. Kubernetes worker nodes
+(not just the workstation running Helm) need access to the selected registries.
+Set logService.image and observer.image to the compatible release images actually
+available in your registry. oblogservice:1.3.0 is a development image name, not a
+promise that this pre-release image is publicly downloadable. No images are
+included in the chart archive. imagePullSecrets must exist in the target namespace.
+
+Online bundled MinIO
+-------------------
+Create a values file selecting storageClass, resources, image versions, and IDs.
+Example:
+  storageClass: local-path
+  objectStorage:
+    mode: bundled
+  logService:
+    clusterId: 1001
+    image: registry.example.com/oceanbase/oblogservice:1.3.0
+  observer:
+    clusterId: 1002
+    image: registry.example.com/oceanbase/oceanbase-ai-cloud-native:4.6.2.0
+
+  bash charts/oceanbase-lakehouse/install.sh lakehouse lakehouse -f my-values.yaml
+
+For a downloaded archive, untar it and run install.sh inside oceanbase-lakehouse/.
+This ONE command performs storage -> LogService -> Observer stages, each bounded
+by LAKEHOUSE_TIMEOUT (seconds, default 1800). It waits for the initialization Job
+and CR running status plus Observer Pod readiness, not merely Helm deployed status.
+Run the same command with the SAME complete values file to resume or upgrade.
+Plain helm install defaults to the storage stage ONLY and is not a full install.
+Do not use helm --atomic, --force or --cleanup-on-fail for this stateful stack.
+The installer intentionally does not perform automatic rollback or data cleanup.
+
+The included MinIO deployment is single-node with persistent storage: an evaluation
+profile, NOT production HA. Three LogService zones on one worker are NOT HA either.
+For production, use a separately operated, supported object-storage service.
+Replace image tags with tested immutable digests for reproducible deployments.
+MinIO uses OnDelete updates: image changes require a planned manual Pod restart.
+The S3 service is ClusterIP only; the console is not exposed. Bundled S3 uses HTTP
+inside the cluster; use network isolation or an externally managed TLS service
+when required. Public/trusted-CA HTTPS endpoints are supported; custom/self-signed
+CA propagation to Observer/LogService is not implemented by this chart.
+
+Existing MinIO (default: no storage-side mutation)
+------------------------------------------------
+Provide a Secret in the SAME namespace, keys access_id and access_key. Create it
+through your secret-management process; do not put credentials in values files,
+--set flags, Git, or command output. Pre-create distinct buckets and grant only
+the necessary bucket/object permissions for them.
+  objectStorage:
+    mode: external
+    endpoint: https://minio.example.com:9000
+    region: us-east-1
+    logBucket: lakehouse-logs
+    dataBucket: lakehouse-data
+    existingSecret: lakehouse-object-storage
+    createBuckets: false
+
+Run the SAME install.sh command. No MinIO StatefulSet/PVC/Service/root Secret is
+created. The initialization Job only checks readiness and bucket access. Setting
+createBuckets: true explicitly authorizes creation of MISSING buckets using the
+provided credentials; it does not manage users, policies or existing objects.
+Supply endpoint only (no query, credentials or path). Credentials need not grant
+ListAllMyBuckets or administration permissions. Custom CA and HTTP path prefixes
+are not supported. The supplied credentials must allow the database's list/read/
+write/delete/multipart operations on the two selected buckets.
+
+Data protection and recovery
+----------------------------
+helm uninstall deliberately RETAINS OBCluster, OBLogServiceCluster, workload
+ServiceAccount, all generated Secrets, the storage-identity ConfigMap, and bundled
+MinIO StatefulSet, Service and PVC. Keeping CRs also prevents their Operator-owned
+Pods/Services/PVCs from being garbage-collected through CR deletion. The chart
+never deletes buckets or object contents, and never owns external Secrets/PVCs.
+Uninstall therefore does NOT stop the retained database or reclaim disk space.
+Reinstall using the same release, namespace and values to adopt retained resources.
+Credentials are reused; if a retained generated Secret is missing, installation
+fails rather than silently rotating it. Restore the original Secret from backup.
+Changing the storage mode/endpoint/buckets/region/credential names/MinIO claim,
+capacity/storage class/cluster IDs is rejected by a retained identity guard.
+Move data by an explicit supported migration, not by changing these values.
+
+This is an accidental-Helm-deletion safeguard, NOT a backup or an absolute delete
+lock. Deleting the namespace, explicitly deleting CRs/PVCs, administrative edits,
+manual helm rollback, storage failure or removing the guard can still destroy data.
+Keep independent database/object-storage backups and exported recovery credentials.
+Final decommission is an explicit administrator operation after backup, with OB
+stopped before its LogService/object storage. There is no automatic purge option.
+
+Licensing and distribution
+--------------------------
+The repository LICENSE governs our original chart/installer code. MinIO server
+and mc are separately licensed third-party software (AGPL-3.0); their licenses are
+not replaced by this chart's license. This package contains no MinIO/mc source,
+binary, third-party chart or image. The worker pulls the configured images online.
+https://github.com/minio/minio/blob/master/LICENSE
+https://github.com/minio/mc/blob/master/LICENSE
+https://github.com/minio/minio
+Upstream community MinIO is archived/unmaintained; pin and independently assess
+the chosen images. Online retrieval is NOT automatic legal clearance. Review the
+actual releases and distribution model with your open-source compliance team.

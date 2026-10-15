@@ -1,0 +1,134 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-storage-init
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+data:
+  initialize.sh: |
+    #!/bin/sh
+    set -eu
+    umask 077
+    export MC_CONFIG_DIR=/work/mc
+    export HOME=/work
+    # All user input is passed as quoted environment values, never evaluated.
+    # Suppress client diagnostics, which can contain credential-bearing URLs.
+    ready=false
+    for attempt in $(seq 1 90); do
+      if mc alias set storage "$ENDPOINT" "$ACCESS_ID" "$ACCESS_KEY" --api S3v4 --path on >/dev/null 2>&1 &&
+         mc ready storage >/dev/null 2>&1; then
+        ready=true
+        break
+      fi
+      sleep 5
+    done
+    if [ "$ready" != true ]; then
+      echo 'Object storage is not reachable or credentials were rejected.' >&2
+      exit 1
+    fi
+    for bucket in "$LOG_BUCKET" "$DATA_BUCKET"; do
+      if [ "$MODE" = bundled ] || [ "$CREATE_BUCKETS" = true ]; then
+        if ! mc mb --ignore-existing --region "$REGION" "storage/$bucket" >/dev/null 2>&1; then
+          echo 'Could not initialize a required bucket.' >&2
+          exit 1
+        fi
+      fi
+      if ! mc stat "storage/$bucket" >/dev/null 2>&1; then
+        echo 'A required bucket is missing or inaccessible; no external buckets are created by default.' >&2
+        exit 1
+      fi
+    done
+    if [ "$MODE" = bundled ]; then
+      # An independent business user, scoped ONLY to these two buckets. Root
+      # credentials are never passed to LogService or Observer.
+      cat > /work/policy.json <<EOF
+      {"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetBucketLocation","s3:ListBucket","s3:ListBucketMultipartUploads"],"Resource":["arn:aws:s3:::$LOG_BUCKET","arn:aws:s3:::$DATA_BUCKET"]},{"Effect":"Allow","Action":["s3:GetObject","s3:PutObject","s3:DeleteObject","s3:AbortMultipartUpload","s3:ListMultipartUploadParts"],"Resource":["arn:aws:s3:::$LOG_BUCKET/*","arn:aws:s3:::$DATA_BUCKET/*"]}]}
+    EOF
+      if ! mc admin user add storage "$BUSINESS_ID" "$BUSINESS_KEY" >/dev/null 2>&1 ||
+         ! mc admin policy create storage "$POLICY_NAME" /work/policy.json >/dev/null 2>&1 ||
+         ! mc admin policy attach storage "$POLICY_NAME" --user "$BUSINESS_ID" >/dev/null 2>&1; then
+        echo 'Could not initialize the restricted object-storage identity.' >&2
+        exit 1
+      fi
+    fi
+    echo 'Object storage initialization succeeded; existing objects were preserved.'
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-storage-init-{{ .Release.Revision }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+    app.kubernetes.io/component: storage-init
+spec:
+  activeDeadlineSeconds: {{ .Values.initialization.deadlineSeconds }}
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: storage-init
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000, fsGroup: 1000, seccompProfile: {type: RuntimeDefault}}
+      containers:
+        - name: initialize
+          image: {{ .Values.initialization.image | quote }}
+          imagePullPolicy: {{ .Values.initialization.imagePullPolicy }}
+          command: [/bin/sh, /scripts/initialize.sh]
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
+          resources: {{ toYaml .Values.initialization.resources | nindent 12 }}
+          env:
+            - {name: ENDPOINT, value: {{ include "lakehouse.endpoint" . | quote }}}
+            - {name: REGION, value: {{ .Values.objectStorage.region | quote }}}
+            - {name: LOG_BUCKET, value: {{ include "lakehouse.logBucket" . | quote }}}
+            - {name: DATA_BUCKET, value: {{ include "lakehouse.dataBucket" . | quote }}}
+            - {name: MODE, value: {{ .Values.objectStorage.mode | quote }}}
+            - {name: CREATE_BUCKETS, value: {{ .Values.objectStorage.createBuckets | quote }}}
+            - {name: POLICY_NAME, value: {{ printf "%s-buckets" .Release.Name | quote }}}
+            - name: ACCESS_ID
+              valueFrom:
+                secretKeyRef:
+                  {{- if eq .Values.objectStorage.mode "bundled" }}
+                  name: {{ include "lakehouse.minioSecret" . }}
+                  key: rootUser
+                  {{- else }}
+                  name: {{ include "lakehouse.storageSecret" . }}
+                  key: access_id
+                  {{- end }}
+            - name: ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  {{- if eq .Values.objectStorage.mode "bundled" }}
+                  name: {{ include "lakehouse.minioSecret" . }}
+                  key: rootPassword
+                  {{- else }}
+                  name: {{ include "lakehouse.storageSecret" . }}
+                  key: access_key
+                  {{- end }}
+            {{- if eq .Values.objectStorage.mode "bundled" }}
+            - name: BUSINESS_ID
+              valueFrom:
+                secretKeyRef: {name: {{ include "lakehouse.storageSecret" . }}, key: access_id}
+            - name: BUSINESS_KEY
+              valueFrom:
+                secretKeyRef: {name: {{ include "lakehouse.storageSecret" . }}, key: access_key}
+            {{- end }}
+          volumeMounts:
+            - {name: scripts, mountPath: /scripts, readOnly: true}
+            - {name: work, mountPath: /work}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - name: scripts
+          configMap: {name: {{ .Release.Name }}-storage-init, defaultMode: 0444}
+        - name: work
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

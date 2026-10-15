@@ -1,0 +1,111 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["stage", "storageClass", "objectStorage", "minio", "initialization", "logService", "observer", "imagePullSecrets"],
+  "properties": {
+    "stage": {"enum": ["storage", "logservice", "cluster"]},
+    "storageClass": {"$ref": "#/definitions/name"},
+    "imagePullSecrets": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["name"], "properties": {"name": {"$ref": "#/definitions/name"}}}},
+    "objectStorage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["mode", "endpoint", "region", "logBucket", "dataBucket", "existingSecret", "createBuckets"],
+      "properties": {
+        "mode": {"enum": ["bundled", "external"]},
+        "endpoint": {"type": "string", "pattern": "^(|https?://[A-Za-z0-9][A-Za-z0-9.-]*(:[0-9]{1,5})?)$"},
+        "region": {"type": "string", "pattern": "^[a-zA-Z0-9-]{1,64}$"},
+        "logBucket": {"$ref": "#/definitions/bucket"},
+        "dataBucket": {"$ref": "#/definitions/bucket"},
+        "existingSecret": {"$ref": "#/definitions/optionalName"},
+        "createBuckets": {"type": "boolean"}
+      }
+    },
+    "minio": {
+      "type": "object", "additionalProperties": false,
+      "required": ["image", "imagePullPolicy", "rootExistingSecret", "existingClaim", "size", "resources"],
+      "properties": {
+        "image": {"$ref": "#/definitions/image"},
+        "imagePullPolicy": {"$ref": "#/definitions/pullPolicy"},
+        "rootExistingSecret": {"$ref": "#/definitions/optionalName"},
+        "existingClaim": {"$ref": "#/definitions/optionalName"},
+        "size": {"$ref": "#/definitions/size"},
+        "resources": {"$ref": "#/definitions/resources"}
+      }
+    },
+    "initialization": {
+      "type": "object", "additionalProperties": false,
+      "required": ["image", "imagePullPolicy", "deadlineSeconds", "resources"],
+      "properties": {
+        "image": {"$ref": "#/definitions/image"},
+        "imagePullPolicy": {"$ref": "#/definitions/pullPolicy"},
+        "deadlineSeconds": {"type": "integer", "minimum": 60, "maximum": 3600},
+        "resources": {"$ref": "#/definitions/resources"}
+      }
+    },
+    "logService": {
+      "type": "object", "additionalProperties": false,
+      "required": ["clusterId", "image", "resource", "storeSize", "logSize", "topology", "parameters"],
+      "properties": {
+        "clusterId": {"type": "integer", "minimum": 1, "maximum": 2147483647},
+        "image": {"$ref": "#/definitions/image"},
+        "resource": {"$ref": "#/definitions/resource"},
+        "storeSize": {"$ref": "#/definitions/size"},
+        "logSize": {"$ref": "#/definitions/size"},
+        "topology": {"$ref": "#/definitions/topology"},
+        "parameters": {"$ref": "#/definitions/parameters"}
+      }
+    },
+    "observer": {
+      "type": "object", "additionalProperties": false,
+      "required": ["clusterId", "image", "resource", "dataSize", "logSize", "rootExistingSecret", "topology", "parameters"],
+      "properties": {
+        "clusterId": {"type": "integer", "minimum": 1, "maximum": 2147483647},
+        "image": {"$ref": "#/definitions/image"},
+        "resource": {"$ref": "#/definitions/resource"},
+        "dataSize": {"$ref": "#/definitions/size"},
+        "logSize": {"$ref": "#/definitions/size"},
+        "rootExistingSecret": {"$ref": "#/definitions/optionalName"},
+        "topology": {"$ref": "#/definitions/topology"},
+        "parameters": {"$ref": "#/definitions/parameters"}
+      }
+    }
+  },
+  "definitions": {
+    "name": {"type": "string", "minLength": 1, "maxLength": 63, "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"},
+    "optionalName": {"type": "string", "maxLength": 63, "pattern": "^([a-z0-9]([a-z0-9-]*[a-z0-9])?)?$"},
+    "bucket": {"type": "string", "maxLength": 63, "pattern": "^(|[a-z0-9][a-z0-9-]{1,61}[a-z0-9])$"},
+    "size": {"type": "string", "pattern": "^[1-9][0-9]*(Mi|Gi|Ti)$"},
+    "image": {"type": "string", "pattern": "^[^\\s]+(:[^/\\s]+|@sha256:[a-f0-9]{64})$", "not": {"pattern": ":latest$"}},
+    "pullPolicy": {"enum": ["IfNotPresent", "Always"]},
+    "resource": {
+      "type": "object", "additionalProperties": false, "required": ["cpu", "memory"],
+      "properties": {
+        "cpu": {"type": "string", "pattern": "^([1-9][0-9]*m?|0\\.[0-9]*[1-9][0-9]*)$"},
+        "memory": {"$ref": "#/definitions/size"}
+      }
+    },
+    "resources": {
+      "type": "object", "additionalProperties": false, "required": ["requests", "limits"],
+      "properties": {"requests": {"$ref": "#/definitions/resource"}, "limits": {"$ref": "#/definitions/resource"}}
+    },
+    "topology": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["zone", "replica"],
+        "properties": {
+          "zone": {"$ref": "#/definitions/name"},
+          "replica": {"type": "integer", "minimum": 1, "maximum": 100}
+        }
+      }
+    },
+    "parameters": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false, "required": ["name", "value"],
+        "properties": {
+          "name": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"},
+          "value": {"type": "string"}
+        }
+      }
+    }
+  }
+}

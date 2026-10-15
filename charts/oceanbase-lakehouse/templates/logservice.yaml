@@ -1,0 +1,26 @@
+{{- if ne .Values.stage "storage" }}
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBLogServiceCluster
+metadata:
+  name: {{ .Release.Name }}-ls
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+    oceanbase.oceanbase.com/mode: service
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+spec:
+  clusterId: {{ .Values.logService.clusterId }}
+  serviceAccount: {{ .Release.Name }}-workload
+  objectStoreUrl:
+    bucketURL: {{ printf "s3://%s?host=%s&s3_region=%s" (include "lakehouse.logBucket" .) (include "lakehouse.endpoint" .) .Values.objectStorage.region | quote }}
+    secretRef: {name: {{ include "lakehouse.storageSecret" . }}}
+  logService:
+    image: {{ .Values.logService.image | quote }}
+    resource: {{ toYaml .Values.logService.resource | nindent 6 }}
+    storage:
+      storeStorage: {storageClass: {{ .Values.storageClass | quote }}, size: {{ .Values.logService.storeSize | quote }}}
+      logStorage: {storageClass: {{ .Values.storageClass | quote }}, size: {{ .Values.logService.logSize | quote }}}
+  topology: {{ toYaml .Values.logService.topology | nindent 4 }}
+  parameters: {{ toYaml .Values.logService.parameters | nindent 4 }}
+{{- end }}

@@ -1,0 +1,4 @@
+.git
+*.tgz
+*_test.go
+tests/

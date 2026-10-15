@@ -1,0 +1,32 @@
+{{- if eq .Values.stage "cluster" }}
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBCluster
+metadata:
+  name: {{ .Release.Name }}-ob
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+    oceanbase.oceanbase.com/mode: service
+    oceanbase.oceanbase.com/independent-pvc-lifecycle: "true"
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+spec:
+  clusterName: {{ .Release.Name }}-ob
+  clusterId: {{ .Values.observer.clusterId }}
+  serviceAccount: {{ .Release.Name }}-workload
+  deploymentMode: shared_storage
+  logServiceRef: {name: {{ .Release.Name }}-ls}
+  sharedStorageInfo:
+    bucketURL: {{ printf "s3://%s?host=%s&s3_region=%s" (include "lakehouse.dataBucket" .) (include "lakehouse.endpoint" .) .Values.objectStorage.region | quote }}
+    secretRef: {name: {{ include "lakehouse.storageSecret" . }}}
+  userSecrets:
+    root: {{ include "lakehouse.dbSecret" . }}
+  observer:
+    image: {{ .Values.observer.image | quote }}
+    resource: {{ toYaml .Values.observer.resource | nindent 6 }}
+    storage:
+      dataStorage: {storageClass: {{ .Values.storageClass | quote }}, size: {{ .Values.observer.dataSize | quote }}}
+      logStorage: {storageClass: {{ .Values.storageClass | quote }}, size: {{ .Values.observer.logSize | quote }}}
+  topology: {{ toYaml .Values.observer.topology | nindent 4 }}
+  parameters: {{ toYaml .Values.observer.parameters | nindent 4 }}
+{{- end }}

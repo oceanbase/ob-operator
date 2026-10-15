@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-storage-identity
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+data:
+  identity: {{ include "lakehouse.identity" . | quote }}
+  endpoint: {{ include "lakehouse.endpoint" . | quote }}
+  logBucket: {{ include "lakehouse.logBucket" . | quote }}
+  dataBucket: {{ include "lakehouse.dataBucket" . | quote }}
