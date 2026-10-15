@@ -56,7 +56,24 @@ upgrade() {
     "${helm_args[@]}" --set-string "stage=$1" --wait --wait-for-jobs --timeout "${timeout}s"
 }
 wait_running() {
-  kubectl -n "$namespace" wait "$1" --for=jsonpath='{.status.status}'=running --timeout="${timeout}s"
+  local deadline=$((SECONDS + timeout)) remaining status delay
+  while (( SECONDS < deadline )); do
+    remaining=$((deadline - SECONDS))
+    status=$(kubectl -n "$namespace" get "$1" -o jsonpath='{.status.status}' --request-timeout="${remaining}s")
+    case "$status" in
+      running) echo "$1 is running"; return 0 ;;
+      failed)
+        echo "$1 entered failed status. Inspect the Operator events and resolve the cause before retrying; no data is deleted or bootstrap forced." >&2
+        return 1 ;;
+    esac
+    remaining=$((deadline - SECONDS))
+    (( remaining > 0 )) || break
+    delay=5
+    (( remaining >= delay )) || delay=$remaining
+    sleep "$delay"
+  done
+  echo "Timed out waiting for $1 to become running." >&2
+  return 1
 }
 if [[ $stage == storage ]]; then
   upgrade storage

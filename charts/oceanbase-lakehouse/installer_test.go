@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -35,8 +36,12 @@ func TestInstallerSequencingResumeAndFailures(t *testing.T) {
 	}{
 		{"fresh", "storage,logservice,cluster", 0, []string{"MOCK_NAMESPACE=absent"}},
 		{"storage-failure", "storage", 21, []string{"MOCK_FAIL_UPGRADE=storage"}},
-		{"logservice-readiness-failure", "storage,logservice", 32, []string{"MOCK_FAIL_WAIT=logservice"}},
-		{"observer-readiness-failure", "storage,logservice,cluster", 33, []string{"MOCK_FAIL_WAIT=cluster"}},
+		{"logservice-api-failure", "storage,logservice", 32, []string{"MOCK_FAIL_GET=logservice"}},
+		{"observer-api-failure", "storage,logservice,cluster", 33, []string{"MOCK_FAIL_GET=cluster"}},
+		{"logservice-failed-status", "storage,logservice", 1, []string{"MOCK_FAILED_STATUS=logservice"}},
+		{"observer-failed-status", "storage,logservice,cluster", 1, []string{"MOCK_FAILED_STATUS=cluster"}},
+		{"logservice-timeout", "storage,logservice", 1, []string{"MOCK_PENDING_STATUS=logservice"}},
+		{"transient-new-to-running", "storage,logservice,cluster", 0, []string{"MOCK_TRANSIENT_STATUS=logservice"}},
 		{"resume-logservice", "logservice,cluster", 0, []string{"MOCK_RELEASE_STAGE=logservice"}},
 		{"resume-cluster", "cluster", 0, []string{"MOCK_RELEASE_STAGE=cluster"}},
 		{"retained-cluster", "cluster", 0, []string{"MOCK_RETAINED=cluster"}},
@@ -71,15 +76,37 @@ case "$*" in
   'create namespace qa-ns') ;;
   '-n qa-ns get obcluster/qa-ob') [[ ${MOCK_RETAINED:-none} == cluster ]] ;;
   '-n qa-ns get oblogservicecluster/qa-ls') [[ ${MOCK_RETAINED:-none} == logservice ]] ;;
-  '-n qa-ns wait oblogservicecluster/qa-ls '*) [[ ${MOCK_FAIL_WAIT:-} != logservice ]] || exit 32 ;;
-  '-n qa-ns wait obcluster/qa-ob '*) [[ ${MOCK_FAIL_WAIT:-} != cluster ]] || exit 33 ;;
+  '-n qa-ns get oblogservicecluster/qa-ls -o jsonpath='*|'-n qa-ns get obcluster/qa-ob -o jsonpath='*)
+    kind=logservice
+    code=32
+    if [[ $4 == obcluster/* ]]; then kind=cluster; code=33; fi
+    [[ ${MOCK_FAIL_GET:-} != "$kind" ]] || exit "$code"
+    if [[ ${MOCK_FAILED_STATUS:-} == "$kind" ]]; then
+      echo failed
+    elif [[ ${MOCK_PENDING_STATUS:-} == "$kind" ]]; then
+      echo new
+    elif [[ ${MOCK_TRANSIENT_STATUS:-} == "$kind" && ! -f $CASE_LOG.$kind.seen ]]; then
+      touch "$CASE_LOG.$kind.seen"
+      echo new
+    else
+      echo running
+    fi ;;
   '-n qa-ns wait pods '*) ;;
   '-n qa-ns get pods,jobs,obclusters,oblogserviceclusters') ;;
   *) exit 35 ;;
 esac
 `)
+			// Transient status tests need no real five-second delay. The timeout
+			// case retains the actual sleep so Bash's deadline expires naturally.
+			if tc.name == "transient-new-to-running" || strings.HasSuffix(tc.name, "failed-status") {
+				executable(t, dir, "sleep", "#!/bin/sh\nprintf 'sleep %s\\n' \"$*\" >> \"$CASE_LOG\"\n")
+			}
+			timeout := "9"
+			if tc.name == "logservice-timeout" {
+				timeout = "1"
+			}
 			cmd := exec.Command("bash", "install.sh", "qa", "qa-ns", "-f", "/tmp/values with spaces.yaml", "--set-string", "objectStorage.region=us-east-1")
-			cmd.Env = append(os.Environ(), "PATH="+dir+string(os.PathListSeparator)+os.Getenv("PATH"), "CASE_LOG="+log, "LAKEHOUSE_TIMEOUT=9")
+			cmd.Env = append(os.Environ(), "PATH="+dir+string(os.PathListSeparator)+os.Getenv("PATH"), "CASE_LOG="+log, "LAKEHOUSE_TIMEOUT="+timeout)
 			cmd.Env = append(cmd.Env, tc.env...)
 			output, err := cmd.CombinedOutput()
 			if got := exitCode(err); got != tc.code {
@@ -93,10 +120,21 @@ esac
 			for _, line := range strings.Split(string(calls), "\n") {
 				if strings.HasPrefix(line, "helm upgrade ") {
 					parts := strings.SplitN(line, "--set-string stage=", 2)
-					if len(parts) != 2 || !strings.Contains(line, "--wait --wait-for-jobs --timeout 9s") {
+					if len(parts) != 2 || !strings.Contains(line, "--wait --wait-for-jobs --timeout "+timeout+"s") {
 						t.Fatalf("missing bounded readiness gate: %s", line)
 					}
 					stages = append(stages, strings.Fields(parts[1])[0])
+				}
+				if strings.Contains(line, " -o jsonpath=") {
+					parts := strings.Split(line, "--request-timeout=")
+					if len(parts) != 2 {
+						t.Fatalf("status request is not bounded: %s", line)
+					}
+					seconds, err := strconv.Atoi(strings.TrimSuffix(parts[1], "s"))
+					maximum, _ := strconv.Atoi(timeout)
+					if err != nil || seconds < 1 || seconds > maximum {
+						t.Fatalf("status request exceeds remaining installation timeout: %s", line)
+					}
 				}
 			}
 			if got := strings.Join(stages, ","); got != tc.stages {
@@ -110,6 +148,18 @@ esac
 			}
 			if tc.code == 0 && (!strings.Contains(string(output), "Lakehouse ready:") || !strings.Contains(string(calls), "wait pods -l ref-obcluster=qa-ob --for=condition=Ready --timeout=9s")) {
 				t.Fatalf("success reported before Observer Pod readiness: %s\n%s", output, calls)
+			}
+			if strings.HasSuffix(tc.name, "failed-status") && (!strings.Contains(string(output), "entered failed status") || strings.Contains(string(calls), "sleep ")) {
+				t.Fatalf("failed CR status must stop immediately with diagnostics: %s\n%s", output, calls)
+			}
+			if tc.name == "logservice-timeout" && !strings.Contains(string(output), "Timed out waiting for oblogservicecluster/qa-ls") {
+				t.Fatalf("pending CR must fail with a bounded timeout: %s", output)
+			}
+			if tc.name == "transient-new-to-running" && !strings.Contains(string(calls), "sleep ") {
+				t.Fatalf("transient pending status must be polled before success: %s", calls)
+			}
+			if tc.code != 0 && strings.Contains(string(calls), "wait pods -l ref-obcluster=") {
+				t.Fatalf("installer waited for Pods after a failed prerequisite: %s", calls)
 			}
 		})
 	}
