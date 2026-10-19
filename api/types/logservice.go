@@ -21,7 +21,9 @@ type LogServiceTemplate struct {
 }
 
 type LogServiceZoneTopology struct {
-	Zone         string              `json:"zone"`
+	// +kubebuilder:validation:MinLength=1
+	Zone string `json:"zone"`
+	// +kubebuilder:validation:Minimum=1
 	Replica      int                 `json:"replica"`
 	Resource     *ResourceSpec       `json:"resource,omitempty"`
 	NodeSelector map[string]string   `json:"nodeSelector,omitempty"`

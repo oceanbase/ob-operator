@@ -1060,6 +1060,7 @@ spec:
                         type: string
                       type: object
                     replica:
+                      minimum: 1
                       type: integer
                     resource:
                       properties:
@@ -1120,11 +1121,13 @@ spec:
                         type: object
                       type: array
                     zone:
+                      minLength: 1
                       type: string
                   required:
                   - replica
                   - zone
                   type: object
+                minItems: 1
                 type: array
             required:
             - clusterId

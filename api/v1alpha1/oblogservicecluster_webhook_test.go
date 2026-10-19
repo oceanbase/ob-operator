@@ -46,6 +46,24 @@ var _ = Describe("Test OBLogServiceCluster Webhook", Label("webhook"), func() {
 
 		cluster := newOBLogServiceCluster("logservice-valid-secret", secretName)
 		Expect(k8sClient.Create(ctx, cluster)).Should(Succeed())
+		By("rejecting invalid topology through the API server on update")
+		for _, change := range []func(*OBLogServiceCluster){
+			func(c *OBLogServiceCluster) { c.Spec.Topology[0].Replica = 0 },
+			func(c *OBLogServiceCluster) { c.Spec.Topology[0].Replica = -1 },
+			func(c *OBLogServiceCluster) { c.Spec.Topology = append(c.Spec.Topology, c.Spec.Topology[0]) },
+			func(c *OBLogServiceCluster) { c.Spec.Topology[0].Zone = "" },
+			func(c *OBLogServiceCluster) { c.Spec.Topology = nil },
+		} {
+			invalid := cluster.DeepCopy()
+			change(invalid)
+			Expect(k8sClient.Update(ctx, invalid)).ShouldNot(Succeed())
+		}
+		By("allowing scale out, scale in, and status updates")
+		cluster.Spec.Topology[0].Replica = 2
+		Expect(k8sClient.Update(ctx, cluster)).Should(Succeed())
+		cluster.Spec.Topology[0].Replica = 1
+		Expect(k8sClient.Update(ctx, cluster)).Should(Succeed())
+		Expect(k8sClient.Status().Update(ctx, cluster)).Should(Succeed())
 		Expect(k8sClient.Delete(ctx, cluster)).Should(Succeed())
 		Expect(k8sClient.Delete(ctx, secret)).Should(Succeed())
 	})

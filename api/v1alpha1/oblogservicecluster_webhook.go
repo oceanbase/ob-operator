@@ -82,21 +82,8 @@ func (r *OBLogServiceCluster) Default() {
 var _ webhook.Validator = &OBLogServiceCluster{}
 
 func (r *OBLogServiceCluster) ValidateCreate() (admission.Warnings, error) {
-	if len(r.Spec.Topology) < 1 {
-		return nil, errors.New("topology must have at least 1 zone")
-	}
-	seenZones := make(map[string]bool)
-	for i, topo := range r.Spec.Topology {
-		if topo.Zone == "" {
-			return nil, fmt.Errorf("topology[%d].zone is required", i)
-		}
-		if seenZones[topo.Zone] {
-			return nil, fmt.Errorf("topology[%d].zone %q is duplicated", i, topo.Zone)
-		}
-		seenZones[topo.Zone] = true
-		if topo.Replica < 1 {
-			return nil, fmt.Errorf("topology[%d].replica must be at least 1", i)
-		}
+	if err := validateLogServiceTopology(r.Spec.Topology); err != nil {
+		return nil, err
 	}
 	if r.Spec.ClusterId <= 0 {
 		return nil, errors.New("clusterId must be a positive integer")
@@ -162,6 +149,13 @@ func (r *OBLogServiceCluster) ValidateUpdate(old runtime.Object) (admission.Warn
 	if !ok {
 		return nil, errors.New("failed to convert old object to OBLogServiceCluster")
 	}
+	// Validate the new topology before comparing zone sets. A set comparison
+	// alone loses duplicate zones and does not constrain replica counts. Do not
+	// re-run create-only dependency checks: unrelated updates must not require
+	// object-store credentials to be available, and valid repairs must work.
+	if err := validateLogServiceTopology(r.Spec.Topology); err != nil {
+		return nil, err
+	}
 	if err := validateLogServiceManagedParameters(r.Spec.Parameters); err != nil {
 		return nil, err
 	}
@@ -197,6 +191,26 @@ func (r *OBLogServiceCluster) ValidateUpdate(old runtime.Object) (admission.Warn
 		}
 	}
 	return nil, nil
+}
+
+func validateLogServiceTopology(topology []apitypes.LogServiceZoneTopology) error {
+	if len(topology) == 0 {
+		return errors.New("topology must have at least 1 zone")
+	}
+	seenZones := make(map[string]bool, len(topology))
+	for i, zone := range topology {
+		if zone.Zone == "" {
+			return fmt.Errorf("topology[%d].zone is required", i)
+		}
+		if seenZones[zone.Zone] {
+			return fmt.Errorf("topology[%d].zone %q is duplicated", i, zone.Zone)
+		}
+		seenZones[zone.Zone] = true
+		if zone.Replica < 1 {
+			return fmt.Errorf("topology[%d].replica must be at least 1", i)
+		}
+	}
+	return nil
 }
 
 func validateLogServiceManagedParameters(parameters []apitypes.Parameter) error {
