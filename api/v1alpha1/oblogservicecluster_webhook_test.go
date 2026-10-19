@@ -45,6 +45,7 @@ var _ = Describe("Test OBLogServiceCluster Webhook", Label("webhook"), func() {
 		Expect(k8sClient.Create(ctx, secret)).Should(Succeed())
 
 		cluster := newOBLogServiceCluster("logservice-valid-secret", secretName)
+		cluster.Spec.Parameters = []apitypes.Parameter{{Name: "syslog_level", Value: "WARN"}}
 		Expect(k8sClient.Create(ctx, cluster)).Should(Succeed())
 		By("rejecting invalid topology through the API server on update")
 		for _, change := range []func(*OBLogServiceCluster){
@@ -53,12 +54,29 @@ var _ = Describe("Test OBLogServiceCluster Webhook", Label("webhook"), func() {
 			func(c *OBLogServiceCluster) { c.Spec.Topology = append(c.Spec.Topology, c.Spec.Topology[0]) },
 			func(c *OBLogServiceCluster) { c.Spec.Topology[0].Zone = "" },
 			func(c *OBLogServiceCluster) { c.Spec.Topology = nil },
+			func(c *OBLogServiceCluster) {
+				c.Spec.Topology[0].Resource = &apitypes.ResourceSpec{Memory: resource.MustParse("8Gi")}
+			},
+			func(c *OBLogServiceCluster) { c.Spec.Topology[0].NodeSelector = map[string]string{"pool": "other"} },
+			func(c *OBLogServiceCluster) {
+				c.Spec.Topology[0].Affinity = &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{}}
+			},
+			func(c *OBLogServiceCluster) {
+				c.Spec.Topology[0].Tolerations = []corev1.Toleration{{Key: "pool", Operator: corev1.TolerationOpExists}}
+			},
+			func(c *OBLogServiceCluster) { c.Spec.Topology[0].RpcPort = 51000 },
+			func(c *OBLogServiceCluster) { c.Spec.Topology[0].HttpPort = 51001 },
+			func(c *OBLogServiceCluster) { c.Spec.ServiceAccount = "other-workload" },
+			func(c *OBLogServiceCluster) {
+				c.Spec.Parameters = append(c.Spec.Parameters, apitypes.Parameter{Name: "new_parameter", Value: "new_value"})
+			},
 		} {
 			invalid := cluster.DeepCopy()
 			change(invalid)
 			Expect(k8sClient.Update(ctx, invalid)).ShouldNot(Succeed())
 		}
 		By("allowing scale out, scale in, and status updates")
+		cluster.Spec.Parameters[0], cluster.Spec.Parameters[1] = cluster.Spec.Parameters[1], cluster.Spec.Parameters[0]
 		cluster.Spec.Topology[0].Replica = 2
 		Expect(k8sClient.Update(ctx, cluster)).Should(Succeed())
 		cluster.Spec.Topology[0].Replica = 1

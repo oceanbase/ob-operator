@@ -19,6 +19,7 @@ import (
 	"reflect"
 
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -172,16 +173,25 @@ func (r *OBLogServiceCluster) ValidateUpdate(old runtime.Object) (admission.Warn
 	if !reflect.DeepEqual(oldLS.Spec.LogService, r.Spec.LogService) {
 		return nil, errors.New("logService template cannot be changed after creation")
 	}
-	oldZones := make(map[string]bool, len(oldLS.Spec.Topology))
+	if oldLS.Spec.ServiceAccount != r.Spec.ServiceAccount {
+		return nil, errors.New("serviceAccount cannot be changed after creation")
+	}
+	// Startup parameters are copied when zones are created, not reconciled on
+	// update. Compare effective values because defaulting may add memory_limit
+	// or change slice order without changing the running configuration.
+	if !reflect.DeepEqual(effectiveLogServiceParameters(oldLS), effectiveLogServiceParameters(r)) {
+		return nil, errors.New("startup parameters cannot be changed after creation")
+	}
+	oldZones := make(map[string]apitypes.LogServiceZoneTopology, len(oldLS.Spec.Topology))
 	for _, t := range oldLS.Spec.Topology {
-		oldZones[t.Zone] = true
+		oldZones[t.Zone] = t
 	}
 	newZones := make(map[string]bool, len(r.Spec.Topology))
 	for _, t := range r.Spec.Topology {
 		newZones[t.Zone] = true
 	}
 	for z := range newZones {
-		if !oldZones[z] {
+		if _, exists := oldZones[z]; !exists {
 			return nil, errors.New("adding zones is not supported for OBLogServiceCluster")
 		}
 	}
@@ -190,7 +200,27 @@ func (r *OBLogServiceCluster) ValidateUpdate(old runtime.Object) (admission.Warn
 			return nil, errors.New("removing zones is not supported for OBLogServiceCluster")
 		}
 	}
+	// Match by zone name so reordering remains harmless. The controller only
+	// propagates replica changes; accepting other per-zone settings would leave
+	// the persisted cluster spec different from its running zones and nodes.
+	for i, topo := range r.Spec.Topology {
+		previous := oldZones[topo.Zone]
+		topo.Replica = previous.Replica
+		if !equality.Semantic.DeepEqual(previous, topo) {
+			return nil, fmt.Errorf("topology[%d] configuration cannot be changed after creation; only replica may be updated", i)
+		}
+	}
 	return nil, nil
+}
+
+func effectiveLogServiceParameters(cluster *OBLogServiceCluster) map[string]string {
+	normalized := cluster.DeepCopy()
+	normalized.Default()
+	parameters := make(map[string]string, len(normalized.Spec.Parameters))
+	for _, parameter := range normalized.Spec.Parameters {
+		parameters[parameter.Name] = parameter.Value
+	}
+	return parameters
 }
 
 func validateLogServiceTopology(topology []apitypes.LogServiceZoneTopology) error {
