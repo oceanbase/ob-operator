@@ -1,0 +1,27 @@
+QA image closure gate (build-time only)
+=====================================
+Requires Python >= 3.8 and PyYAML in an isolated build environment.
+
+Render all enabled components with the actual QA image overrides:
+  helm template operator PACKAGE/charts/ob-operator > operator.yaml
+  helm template lakehouse PACKAGE/charts/oceanbase-lakehouse \
+    -f PACKAGE/values/single-worker.yaml --set stage=cluster > lakehouse.yaml
+  helm template dashboard PACKAGE/charts/oceanbase-dashboard \
+    --set-string adminPassword=render-only-not-an-account > dashboard.yaml
+
+Then verify both the lock and the REAL Docker-save archives:
+  python3 scripts/qa/verify-image-closure.py PACKAGE/image-lock.json \
+    operator.yaml lakehouse.yaml dashboard.yaml cert-manager.yaml \
+    --archive PACKAGE/images/core-images.tar.gz \
+    --archive PACKAGE/images/support-images.tar.gz
+
+Missing sidecars (including oceanbase/kube-rbac-proxy:v0.13.1), missing archive
+entries, wrong image IDs, duplicate refs and untracked images fail the build.
+MinIO and mc must be recorded as online-or-matching-existing-cache and must NOT
+be in the image archives. Registry accessibility is a separate preflight check.
+Run tests with: python3 -m unittest discover -s scripts/qa -p 'test_*.py'
+
+Rendered YAML can contain generated or supplied credentials. Keep rendering
+files private in the build workspace; do not include real Secret manifests in
+the QA bundle or logs. This gate does not install software or modify a cluster.
+It validates only supplied manifests: render every component you intend to ship.

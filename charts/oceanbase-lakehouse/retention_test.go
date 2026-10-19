@@ -21,10 +21,13 @@ import (
 // retentionAPI supplies only the discovery and read-only lookup responses Helm
 // needs. These tests never connect to the developer's current Kubernetes context.
 type retentionAPI struct {
-	mu        sync.RWMutex
-	identity  string
-	secrets   map[string]map[string]string
-	serviceIP string
+	mu               sync.RWMutex
+	identity         string
+	secrets          map[string]map[string]string
+	serviceIP        string
+	noGuard          bool
+	externalService  map[string]interface{}
+	externalEndpoint string
 }
 
 func (api *retentionAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -47,12 +50,25 @@ func (api *retentionAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/apis/oceanbase.oceanbase.com/v1alpha1":
 		fmt.Fprint(w, `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"oceanbase.oceanbase.com/v1alpha1","resources":[{"name":"obclusters","kind":"OBCluster","namespaced":true,"verbs":["get","list"]},{"name":"oblogserviceclusters","kind":"OBLogServiceCluster","namespaced":true,"verbs":["get","list"]}]}`)
 	case "/api/v1/namespaces/qa-ns/configmaps/qa-storage-identity":
+		if api.noGuard {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, `{"kind":"Status","apiVersion":"v1","status":"Failure","reason":"NotFound","code":404}`)
+			return
+		}
+		data := map[string]string{"identity": api.identity}
+		if api.externalEndpoint != "" {
+			data["externalDatabaseEndpoint"] = api.externalEndpoint
+		}
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{
 			"apiVersion": "v1", "kind": "ConfigMap",
 			"metadata": map[string]string{"name": "qa-storage-identity", "namespace": "qa-ns"},
-			"data":     map[string]string{"identity": api.identity},
+			"data":     data,
 		})
 	default:
+		if r.URL.Path == "/api/v1/namespaces/storage/services/minio" && api.externalService != nil {
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{"apiVersion": "v1", "kind": "Service", "metadata": map[string]string{"name": "minio", "namespace": "storage"}, "spec": api.externalService})
+			return
+		}
 		if r.URL.Path == "/api/v1/namespaces/qa-ns/services/qa-minio" && api.serviceIP != "" {
 			_ = json.NewEncoder(w).Encode(map[string]interface{}{
 				"apiVersion": "v1", "kind": "Service",

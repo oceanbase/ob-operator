@@ -14,6 +14,8 @@ scheduling:
 objectStorage:
   # bundled: deploy MinIO; external: NEVER deploy or administer a storage server.
   mode: bundled
+  # External HTTP service.namespace.svc[.cluster.local] endpoints are resolved to
+  # a retained ClusterIP on NEW installs. Other DNS requires bucket.endpoint DNS.
   endpoint: "" # required in external mode; http(s)://hostname[:port]
   region: us-east-1
   logBucket: "" # defaults to RELEASE-logs

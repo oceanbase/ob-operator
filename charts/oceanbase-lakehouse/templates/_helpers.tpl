@@ -42,7 +42,46 @@ tolerations: {{ toYaml . | nindent 2 }}
 {{- printf "http://%s:9000" $service.spec.clusterIP -}}
 {{- end -}}
 {{- else -}}{{ include "lakehouse.endpoint" . }}{{- end -}}
-{{- else -}}{{ include "lakehouse.endpoint" . }}{{- end -}}
+{{- else -}}{{ include "lakehouse.externalDatabaseEndpoint" . }}{{- end -}}
+{{- end -}}
+{{/* LS 1.3.0 ignores path_style for DNS hosts. Resolve only a same-cluster
+HTTP Service, never public DNS or HTTPS (which would change TLS identity).
+Old releases keep their exact URL; new ones pin the resolved address. */}}
+{{- define "lakehouse.externalDatabaseEndpoint" -}}
+{{- $endpoint := .Values.objectStorage.endpoint -}}
+{{- $guard := lookup "v1" "ConfigMap" .Release.Namespace (printf "%s-storage-identity" .Release.Name) -}}
+{{- if and $guard (not (hasKey $guard.data "externalDatabaseEndpoint")) -}}
+{{- $endpoint -}}
+{{- else -}}
+{{- $url := urlParse $endpoint -}}
+{{- $host := regexReplaceAll ":[0-9]+$" $url.host "" -}}
+{{- if regexMatch "^[a-z0-9-]+\\.[a-z0-9-]+\\.svc(\\.cluster\\.local)?$" $host -}}
+{{- if ne $url.scheme "http" }}{{ fail "LogService 1.3.0 cannot use this HTTPS Kubernetes Service DNS endpoint without bucket DNS; refusing to replace TLS hostname with an IP" }}{{ end -}}
+{{- $parts := splitList "." $host -}}
+{{- $service := lookup "v1" "Service" (index $parts 1) (index $parts 0) -}}
+{{- if not $service }}{{ fail "external Kubernetes Service not found; verify endpoint and Helm Service read permissions" }}{{ end -}}
+{{- $ip := $service.spec.clusterIP | default "" -}}
+{{- if or (eq $ip "") (eq $ip "None") }}{{ fail "external storage requires a stable ClusterIP Service; headless and ExternalName Services are unsupported" }}{{ end -}}
+{{- $port := 80 -}}
+{{- if contains ":" $url.host }}{{ $port = int (last (splitList ":" $url.host)) }}{{ end -}}
+{{- $found := false -}}
+{{- range $service.spec.ports -}}
+{{- if and (eq (int .port) $port) (eq (.protocol | default "TCP") "TCP") }}{{ $found = true }}{{ end -}}
+{{- end -}}
+{{- if not $found }}{{ fail "external storage endpoint port is not exposed by the Kubernetes Service" }}{{ end -}}
+{{- if contains ":" $ip }}{{ $ip = printf "[%s]" $ip }}{{ end -}}
+{{- $endpoint = printf "http://%s:%d" $ip $port -}}
+{{- end -}}
+{{- if and $guard (ne (index $guard.data "externalDatabaseEndpoint") $endpoint) }}{{ fail "external storage Service address changed; refusing to redirect retained database data; restore the original Service or perform an explicit migration" }}{{ end -}}
+{{- $endpoint -}}
+{{- end -}}
+{{- end -}}
+{{- define "lakehouse.preflightEndpoint" -}}
+{{- if eq .Values.objectStorage.mode "external" }}{{ include "lakehouse.databaseEndpoint" . }}{{ else }}{{ include "lakehouse.endpoint" . }}{{ end -}}
+{{- end -}}
+{{- define "lakehouse.preflightPath" -}}
+{{- $host := (urlParse (include "lakehouse.preflightEndpoint" .)).host -}}
+{{- if or (eq .Values.objectStorage.mode "bundled") (regexMatch "^([0-9]+\\.){3}[0-9]+(:[0-9]+)?$" $host) (hasPrefix "[" $host) -}}on{{- else -}}off{{- end -}}
 {{- end -}}
 {{- define "lakehouse.logBucket" -}}
 {{- default (printf "%s-logs" .Release.Name) .Values.objectStorage.logBucket -}}
@@ -60,7 +99,12 @@ tolerations: {{ toYaml . | nindent 2 }}
 {{- default (printf "%s-db-root" .Release.Name) .Values.observer.rootExistingSecret -}}
 {{- end -}}
 {{- define "lakehouse.identity" -}}
-{{- dict "mode" .Values.objectStorage.mode "endpoint" (include "lakehouse.endpoint" .) "region" .Values.objectStorage.region "logs" (include "lakehouse.logBucket" .) "data" (include "lakehouse.dataBucket" .) "secret" (include "lakehouse.storageSecret" .) "minioSecret" (include "lakehouse.minioSecret" .) "claim" .Values.minio.existingClaim "size" .Values.minio.size "storageClass" .Values.storageClass "dbSecret" (include "lakehouse.dbSecret" .) "lsId" .Values.logService.clusterId "obId" .Values.observer.clusterId | toJson | sha256sum -}}
+{{- $identity := dict "mode" .Values.objectStorage.mode "endpoint" (include "lakehouse.endpoint" .) "region" .Values.objectStorage.region "logs" (include "lakehouse.logBucket" .) "data" (include "lakehouse.dataBucket" .) "secret" (include "lakehouse.storageSecret" .) "minioSecret" (include "lakehouse.minioSecret" .) "claim" .Values.minio.existingClaim "size" .Values.minio.size "storageClass" .Values.storageClass "dbSecret" (include "lakehouse.dbSecret" .) "lsId" .Values.logService.clusterId "obId" .Values.observer.clusterId -}}
+{{- $guard := lookup "v1" "ConfigMap" .Release.Namespace (printf "%s-storage-identity" .Release.Name) -}}
+{{- if and (eq .Values.objectStorage.mode "external") (or (not $guard) (hasKey $guard.data "externalDatabaseEndpoint")) -}}
+{{- $_ := set $identity "externalDatabaseEndpoint" (include "lakehouse.databaseEndpoint" .) -}}
+{{- end -}}
+{{- $identity | toJson | sha256sum -}}
 {{- end -}}
 {{- define "lakehouse.validate" -}}
 {{- if gt (len .Release.Name) 40 }}{{ fail "release name must be at most 40 characters" }}{{ end -}}

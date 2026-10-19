@@ -149,12 +149,27 @@ Supply endpoint only (no query, credentials or path). Credentials need not grant
 ListAllMyBuckets or administration permissions. Custom CA and HTTP path prefixes
 are not supported. The supplied credentials must allow the database's list/read/
 write/delete/multipart operations on the two selected buckets.
-LogService 1.3.0 chooses virtual-host addressing for hostname endpoints. Use an
-HTTP IP endpoint for path-style MinIO, or provide working wildcard bucket DNS and
-matching TLS certificates for a hostname endpoint. A successful mc readiness check
-alone does NOT prove the database's addressing compatibility. Bundled MinIO avoids
-this issue by using its retained Service ClusterIP for database access; the init
-Job continues to use Kubernetes DNS. Keep that Service intact during recovery.
+LogService 1.3.0 chooses virtual-host addressing for hostname endpoints; adding
+addressing_model=path_style did not override it in acceptance testing of this image.
+For NEW releases, an HTTP endpoint of the form service.namespace.svc[:port] or
+service.namespace.svc.cluster.local[:port] is resolved through the Kubernetes API
+to the Service's stable ClusterIP. Helm must be allowed to read that Service.
+Both database CRs AND the external-storage preflight use the resolved endpoint.
+Headless/ExternalName Services, a missing Service or a wrong port are rejected.
+HTTPS Service DNS is rejected rather than weakening TLS hostname verification.
+Public DNS and custom cluster-domain endpoints are never rewritten: supply a
+reachable HTTP IP endpoint for path-style MinIO, or configure bucket.endpoint DNS
+and matching TLS certificates for virtual-hosted access. External preflight now
+checks that same addressing mode, so incompatible DNS fails before database CRs
+are created. Readiness alone still does not prove database read/write permissions.
+
+The resolved external address is retained in the storage-identity ConfigMap. A
+Service IP change is rejected rather than silently redirecting a database. Keep
+that Service intact. Legacy releases retain their exact database URLs and hashes;
+they are NOT automatically migrated. A failed legacy install using incompatible
+DNS requires a new release/namespace/cluster IDs and buckets after preserving its
+evidence; do not remove the identity guard or change immutable CR storage fields.
+Bundled MinIO retains the existing Service-IP database access behavior.
 
 Data protection and recovery
 ----------------------------

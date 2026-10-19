@@ -9,6 +9,10 @@ metadata:
     {{- include "lakehouse.labels" . | nindent 4 }}
 data:
   identity: {{ include "lakehouse.identity" . | quote }}
+  {{- $guard := lookup "v1" "ConfigMap" .Release.Namespace (printf "%s-storage-identity" .Release.Name) }}
+  {{- if and (eq .Values.objectStorage.mode "external") (or (not $guard) (hasKey $guard.data "externalDatabaseEndpoint")) }}
+  externalDatabaseEndpoint: {{ include "lakehouse.databaseEndpoint" . | quote }}
+  {{- end }}
   endpoint: {{ include "lakehouse.endpoint" . | quote }}
   logBucket: {{ include "lakehouse.logBucket" . | quote }}
   dataBucket: {{ include "lakehouse.dataBucket" . | quote }}

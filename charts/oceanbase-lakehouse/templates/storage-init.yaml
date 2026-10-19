@@ -16,11 +16,13 @@ data:
     fi
     export MC_CONFIG_DIR=/work/mc
     export HOME=/work
+    MC_PATH=${MC_PATH:-on}
+    case "$MC_PATH" in on|off) ;; *) echo 'Invalid preflight addressing mode.' >&2; exit 1 ;; esac
     # All user input is passed as quoted environment values, never evaluated.
     # Suppress client diagnostics, which can contain credential-bearing URLs.
     ready=false
     for attempt in $(seq 1 90); do
-      if mc alias set storage "$ENDPOINT" "$ACCESS_ID" "$ACCESS_KEY" --api S3v4 --path on >/dev/null 2>&1 &&
+      if mc alias set storage "$ENDPOINT" "$ACCESS_ID" "$ACCESS_KEY" --api S3v4 --path "$MC_PATH" >/dev/null 2>&1 &&
          mc ready storage >/dev/null 2>&1; then
         ready=true
         break
@@ -39,7 +41,7 @@ data:
         fi
       fi
       if ! mc stat "storage/$bucket" >/dev/null 2>&1; then
-        echo 'A required bucket is missing or inaccessible; no external buckets are created by default.' >&2
+        echo 'A required bucket is inaccessible using the database addressing mode. DNS endpoints require bucket.endpoint resolution and matching TLS certificates. No external buckets are created by default.' >&2
         exit 1
       fi
     done
@@ -96,7 +98,8 @@ spec:
           securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
           resources: {{ toYaml .Values.initialization.resources | nindent 12 }}
           env:
-            - {name: ENDPOINT, value: {{ include "lakehouse.endpoint" . | quote }}}
+            - {name: ENDPOINT, value: {{ include "lakehouse.preflightEndpoint" . | quote }}}
+            - {name: MC_PATH, value: {{ include "lakehouse.preflightPath" . | quote }}}
             - {name: REGION, value: {{ .Values.objectStorage.region | quote }}}
             - {name: LOG_BUCKET, value: {{ include "lakehouse.logBucket" . | quote }}}
             - {name: DATA_BUCKET, value: {{ include "lakehouse.dataBucket" . | quote }}}
