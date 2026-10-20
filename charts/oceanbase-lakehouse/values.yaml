@@ -5,6 +5,45 @@ stage: storage
 storageClass: local-path
 imagePullSecrets: []
 
+# Dashboard, Prometheus and Alertmanager are installed in the SAME release.
+# Set enabled=false if an existing shared Dashboard already manages this cluster.
+dashboard:
+  enabled: true
+  # Select an SS-capable image available to the worker (QA bundles override this).
+  image: quay.io/oceanbase/oceanbase-dashboard:0.6.1
+  # Empty generates a random initial password. Login as admin; change it in UI.
+  # For a supplied initial password use --set-file dashboard.adminPassword=FILE.
+  adminPassword: ""
+  # The parent owns credentials/PVCs; keep these integration settings unchanged.
+  initCredentials: false
+  retainData: true
+  userCredentials: ""
+  userNamespace: ""
+  configNamespace: ""
+  rbac:
+    includeNamespace: true
+  serviceAccount:
+    create: false # parent passes imagePullSecrets to this account
+  service:
+    type: ClusterIP
+    port: 80
+  prometheus:
+    persistence:
+      enabled: true
+      create: false
+      existingClaim: ""
+      storageClassName: "" # inherits the top-level storageClass
+      accessMode: ReadWriteOnce
+      storage: 8Gi
+  sharedVolume:
+    persistence:
+      enabled: true
+      create: false
+      existingClaim: ""
+      storageClassName: "" # inherits the top-level storageClass
+      accessMode: ReadWriteOnce
+      storage: 10Gi
+
 # Defaults for storage Pods and every LogService/Observer zone. A topology entry
 # may override nodeSelector keys to place that zone on a different worker.
 scheduling:

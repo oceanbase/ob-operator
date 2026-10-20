@@ -78,7 +78,7 @@ func find(t *testing.T, docs []manifest, kind, name string) manifest {
 func TestStagesAndRetention(t *testing.T) {
 	for _, stage := range []string{"storage", "logservice", "cluster"} {
 		t.Run(stage, func(t *testing.T) {
-			docs, output, err := render(t, map[string]interface{}{"stage": stage})
+			docs, output, err := render(t, map[string]interface{}{"stage": stage, "dashboard": map[string]interface{}{"enabled": false}})
 			if err != nil {
 				t.Fatalf("render: %v\n%s", err, output)
 			}
@@ -136,6 +136,7 @@ func TestStagesAndRetention(t *testing.T) {
 func TestExternalMinIOAndUserOwnedResources(t *testing.T) {
 	values := map[string]interface{}{
 		"stage":         "cluster",
+		"dashboard":     map[string]interface{}{"enabled": false},
 		"objectStorage": map[string]interface{}{"mode": "external", "endpoint": "https://minio.example.com:9000", "existingSecret": "external-s3"},
 		"observer":      map[string]interface{}{"rootExistingSecret": "db-root"},
 	}
@@ -162,7 +163,7 @@ func TestExternalMinIOAndUserOwnedResources(t *testing.T) {
 }
 
 func TestExistingClaimAndRootSecretAreNotOwned(t *testing.T) {
-	docs, output, err := render(t, map[string]interface{}{"minio": map[string]interface{}{"existingClaim": "storage-pvc", "rootExistingSecret": "storage-root"}})
+	docs, output, err := render(t, map[string]interface{}{"dashboard": map[string]interface{}{"enabled": false}, "minio": map[string]interface{}{"existingClaim": "storage-pvc", "rootExistingSecret": "storage-root"}})
 	if err != nil {
 		t.Fatalf("render: %v\n%s", err, output)
 	}

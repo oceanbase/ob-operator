@@ -3,6 +3,16 @@ For a complete, ordered installation run:
   bash charts/oceanbase-lakehouse/install.sh {{ .Release.Name }} {{ .Release.Namespace }} -f your-values.yaml
 
 Storage mode: {{ .Values.objectStorage.mode }}
+{{ if .Values.dashboard.enabled }}
+Dashboard is included in this release. Once its Deployment is ready:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/oceanbase-dashboard-{{ .Release.Name }} 8080:{{ .Values.dashboard.service.port }}
+Open http://127.0.0.1:8080 on the computer running port-forward.
+Login: admin. Retrieve the INITIAL password:
+  kubectl -n {{ .Release.Namespace }} get secret {{ .Release.Name }}-dashboard-bootstrap -o jsonpath='{.data.password}' | base64 --decode; echo
+After changing the password in Dashboard, use that new password.
+{{ else }}
+Dashboard is disabled (dashboard.enabled=false).
+{{ end }}
 MinIO and mc are optional third-party AGPL-3.0 software, not relicensed by this chart.
 No container image or MinIO binary is included in this package.
 
@@ -11,3 +21,4 @@ bundled MinIO StatefulSet/Service/PVC. Namespace deletion or explicit Kubernetes
 deletion is NOT protected. Keep backups and do not delete a namespace to uninstall.
 Reinstall with the SAME release, namespace and values to reconnect retained data.
 External storage and user-provided Secrets/PVCs are never owned by this chart.
+Dashboard accounts, permissions, bootstrap password and owned PVCs are retained.

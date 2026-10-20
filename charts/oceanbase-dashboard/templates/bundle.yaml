@@ -29,7 +29,7 @@ spec:
               mountPath: /prometheus/
       containers:
         - name: dashboard
-          image: quay.io/oceanbase/oceanbase-dashboard:{{ .Chart.AppVersion }}
+          image: {{ .Values.image | default (printf "quay.io/oceanbase/oceanbase-dashboard:%s" .Chart.AppVersion) | quote }}
           resources:
             requests:
               cpu: 100m
@@ -39,6 +39,20 @@ spec:
               memory: 4Gi
           ports:
             - containerPort: 8080
+          startupProbe:
+            httpGet:
+              path: /api/v1/info
+              port: 8080
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /api/v1/info
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
           volumeMounts:
             - name: alertmanager-config-volume
               mountPath: /etc/alertmanager
@@ -53,7 +67,7 @@ spec:
               subPath: config.yaml
           env:
             - name: SHARED_VOLUME_PVC_NAME
-              value: {{ .Release.Name }}-shared-volume-pvc
+              value: {{ include "oceanbase-dashboard.sharedClaim" . | quote }}
             - name: SHARED_VOLUME_MOUNT_PATH
               value: /shared-data
             - name: USER_CREDENTIALS_SECRET
@@ -125,7 +139,7 @@ spec:
         - name: prometheus-storage-volume
           {{- if .Values.prometheus.persistence.enabled }}
           persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-prometheus-pvc
+            claimName: {{ include "oceanbase-dashboard.prometheusClaim" . }}
           {{- else }}
           emptyDir: {}
           {{- end }}
@@ -144,20 +158,24 @@ spec:
         - name: shared-volume
           {{- if .Values.sharedVolume.persistence.enabled }}
           persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-shared-volume-pvc
+            claimName: {{ include "oceanbase-dashboard.sharedClaim" . }}
           {{- else }}
           emptyDir: {}
           {{- end }}
         - name: config-volume
           configMap:
             name: {{ .Release.Name }}-dashboard-config
-{{- if .Values.prometheus.persistence.enabled }}
+{{- if and .Values.prometheus.persistence.enabled .Values.prometheus.persistence.create (not .Values.prometheus.persistence.existingClaim) }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ .Release.Name }}-prometheus-pvc
   namespace: {{ .Release.Namespace }}
+  {{- if .Values.retainData }}
+  annotations:
+    helm.sh/resource-policy: keep
+  {{- end }}
 spec:
   accessModes:
     - {{ .Values.prometheus.persistence.accessMode }}
@@ -168,13 +186,17 @@ spec:
   storageClassName: {{ .Values.prometheus.persistence.storageClassName }}
   {{- end }}
 {{- end }}
-{{- if .Values.sharedVolume.persistence.enabled }}
+{{- if and .Values.sharedVolume.persistence.enabled .Values.sharedVolume.persistence.create (not .Values.sharedVolume.persistence.existingClaim) }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ .Release.Name }}-shared-volume-pvc
   namespace: {{ .Release.Namespace }}
+  {{- if .Values.retainData }}
+  annotations:
+    helm.sh/resource-policy: keep
+  {{- end }}
 spec:
   accessModes:
     - {{ .Values.sharedVolume.persistence.accessMode }}

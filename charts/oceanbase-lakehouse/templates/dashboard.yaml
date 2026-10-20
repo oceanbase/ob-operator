@@ -1,0 +1,99 @@
+{{- if .Values.dashboard.enabled -}}
+{{- $usersName := printf "%s-user-credentials" .Release.Name -}}
+{{- $bootstrapName := printf "%s-dashboard-bootstrap" .Release.Name -}}
+{{- $identityName := printf "%s-dashboard-identity" .Release.Name -}}
+{{- $policyName := printf "%s-rbac-policy" .Release.Name -}}
+{{- $users := lookup "v1" "Secret" .Release.Namespace $usersName -}}
+{{- $bootstrap := lookup "v1" "Secret" .Release.Namespace $bootstrapName -}}
+{{- $identity := lookup "v1" "ConfigMap" .Release.Namespace $identityName -}}
+{{- $policy := lookup "v1" "ConfigMap" .Release.Namespace $policyName -}}
+{{/* The Dashboard marker is separate from storage identity: old lakehouses can
+enable Dashboard for the first time without changing their database identity. */}}
+{{- if or $identity $users $bootstrap $policy -}}
+  {{- if or (not $users) (not $users.data) (not $bootstrap) (not $bootstrap.data.password) (not $policy) -}}
+    {{- fail "retained Dashboard authentication is incomplete; restore the user-credentials and dashboard-bootstrap Secrets and rbac-policy ConfigMap instead of resetting accounts" -}}
+  {{- end -}}
+  {{- if not (hasKey $policy.data "rbac_policy.csv") -}}
+    {{- fail "retained Dashboard rbac-policy ConfigMap is missing rbac_policy.csv; restore it instead of resetting permissions" -}}
+  {{- end -}}
+{{- end -}}
+{{- $password := .Values.dashboard.adminPassword | default (randAlphaNum 32) -}}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $usersName }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+type: Opaque
+data:
+  {{- if $users }}
+  {{- toYaml $users.data | nindent 2 }}
+  {{- else }}
+  admin: {{ cat (sha256sum $password) "<|:SEP:|> admin <|:SEP:|> 0 <|:SEP:|> super admin" | b64enc | quote }}
+  {{- end }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $bootstrapName }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+type: Opaque
+data:
+  {{- if $bootstrap }}
+  {{- toYaml $bootstrap.data | nindent 2 }}
+  {{- else }}
+  password: {{ $password | b64enc | quote }}
+  {{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $identityName }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+data:
+  version: "1"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Release.Name }}-sa
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+{{- with .Values.imagePullSecrets }}
+imagePullSecrets:
+  {{- toYaml . | nindent 2 }}
+{{- end }}
+{{- range $entry := list (dict "suffix" "prometheus-pvc" "persistence" .Values.dashboard.prometheus.persistence) (dict "suffix" "shared-volume-pvc" "persistence" .Values.dashboard.sharedVolume.persistence) }}
+{{- if not $entry.persistence.existingClaim }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $.Release.Name }}-{{ $entry.suffix }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+  labels:
+    {{- include "lakehouse.labels" $ | nindent 4 }}
+spec:
+  accessModes:
+    - {{ $entry.persistence.accessMode }}
+  storageClassName: {{ $entry.persistence.storageClassName | default $.Values.storageClass | quote }}
+  resources:
+    requests:
+      storage: {{ $entry.persistence.storage | quote }}
+{{- end }}
+{{- end }}
+{{- end }}

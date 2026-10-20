@@ -24,6 +24,7 @@ type retentionAPI struct {
 	mu               sync.RWMutex
 	identity         string
 	secrets          map[string]map[string]string
+	configmaps       map[string]map[string]string
 	serviceIP        string
 	noGuard          bool
 	externalService  map[string]interface{}
@@ -65,6 +66,18 @@ func (api *retentionAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			"data":     data,
 		})
 	default:
+		const configmapPrefix = "/api/v1/namespaces/qa-ns/configmaps/"
+		if strings.HasPrefix(r.URL.Path, configmapPrefix) {
+			name := strings.TrimPrefix(r.URL.Path, configmapPrefix)
+			if data, ok := api.configmaps[name]; ok {
+				_ = json.NewEncoder(w).Encode(map[string]interface{}{
+					"apiVersion": "v1", "kind": "ConfigMap",
+					"metadata": map[string]string{"name": name, "namespace": "qa-ns"},
+					"data":     data,
+				})
+				return
+			}
+		}
 		if r.URL.Path == "/api/v1/namespaces/storage/services/minio" && api.externalService != nil {
 			_ = json.NewEncoder(w).Encode(map[string]interface{}{"apiVersion": "v1", "kind": "Service", "metadata": map[string]string{"name": "minio", "namespace": "storage"}, "spec": api.externalService})
 			return
@@ -169,7 +182,7 @@ func renderRetained(t *testing.T, kubeconfig string, values map[string]interface
 func TestRetainedGeneratedCredentialsRemainStable(t *testing.T) {
 	api, kubeconfig := retainedCredentials(t)
 	for attempt := 0; attempt < 2; attempt++ {
-		output, err := renderRetained(t, kubeconfig, map[string]interface{}{})
+		output, err := renderRetained(t, kubeconfig, map[string]interface{}{"dashboard": map[string]interface{}{"enabled": false}})
 		if err != nil {
 			t.Fatalf("render retained resources: %v\n%s", err, output)
 		}

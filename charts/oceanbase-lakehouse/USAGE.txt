@@ -1,13 +1,15 @@
-OceanBase lakehouse online Helm installation (experimental 0.1.0)
+OceanBase lakehouse online Helm installation (experimental 0.2.0)
 
 Prerequisites
 -------------
 Kubernetes >=1.27, Helm >=3.12, kubectl, jq, a working StorageClass, and an
 already installed/running SS-capable ob-operator with its webhooks/CRDs.
-The chart does NOT install, upgrade or uninstall the shared Operator or Dashboard.
+The chart does NOT install, upgrade or uninstall the shared Operator.
+Dashboard (with Prometheus and Alertmanager) is included by default in the same
+Helm release; set dashboard.enabled=false to use an existing shared Dashboard.
 Run the installer with the intended kubeconfig/context. Kubernetes worker nodes
 (not just the workstation running Helm) need access to the selected registries.
-Set logService.image and observer.image to the compatible release images actually
+Set logService.image, observer.image and dashboard.image to compatible SS release images actually
 available in your registry. oblogservice:1.3.0 is a development image name, not a
 promise that this pre-release image is publicly downloadable. No images are
 included in the chart archive. imagePullSecrets must exist in the target namespace.
@@ -69,11 +71,67 @@ Example:
 For a downloaded archive, untar it and run install.sh inside oceanbase-lakehouse/.
 This ONE command performs storage -> LogService -> Observer stages, each bounded
 by LAKEHOUSE_TIMEOUT (seconds, default 1800). It waits for the initialization Job
-and CR running status plus Observer Pod readiness, not merely Helm deployed status.
+and CR running status, Observer Pod readiness and Dashboard HTTP readiness, not
+merely Helm deployed status. Dashboard is present from the first storage stage.
 Run the same command with the SAME complete values file to resume or upgrade.
 Plain helm install defaults to the storage stage ONLY and is not a full install.
 Do not use helm --atomic, --force or --cleanup-on-fail for this stateful stack.
 The installer intentionally does not perform automatic rollback or data cleanup.
+
+Dashboard access
+----------------
+No separate Dashboard installation is needed. The Dashboard lists the clusters
+visible to its account, including this release's shared-storage cluster. Its
+administrative Kubernetes permissions are cluster-wide, not limited to this
+release; this bundle is intended for a trusted cluster administrator.
+
+The default Service is ClusterIP. After the installer reports Dashboard ready:
+  kubectl -n lakehouse port-forward svc/oceanbase-dashboard-lakehouse 8080:80
+Open http://127.0.0.1:8080 on the computer running that command. If kubectl runs
+on a remote server, keep port-forward running there and use an SSH tunnel from
+your computer (replace USER and SERVER):
+  ssh -N -L 18080:127.0.0.1:8080 USER@SERVER
+Then open http://127.0.0.1:18080 locally. No public firewall rule is required.
+
+Username: admin. The initial password is randomly generated and stored in a
+Secret. To display it locally in your terminal:
+  kubectl -n lakehouse get secret lakehouse-dashboard-bootstrap -o jsonpath='{.data.password}' | base64 --decode; echo
+The first login prompts a password change. The bootstrap Secret is only the
+INITIAL password; subsequent logins use the password you set in the UI.
+An initial password can instead be supplied with
+  --set-file dashboard.adminPassword=/secure/path/password
+Use at least 12 characters and a file with no trailing newline. Never put the
+password directly in a command line or commit it to source control.
+
+Dashboard adds 700m CPU and about 1.5Gi memory requests plus two PVCs (8Gi
+Prometheus data, 10Gi shared files). Both inherit the top-level storageClass.
+Optional dashboard.prometheus.persistence.storageClassName and
+dashboard.sharedVolume.persistence.storageClassName override it. An existingClaim
+under either persistence block references a user-managed PVC without adopting it.
+Dashboard placement is currently governed by the Kubernetes scheduler; the
+database/storage scheduling.* settings do not apply to Dashboard.
+
+Accounts, user-created roles and permissions, the initial-password Secret and
+owned Dashboard PVCs are retained across upgrades, disable/re-enable and uninstall.
+The Dashboard Deployment itself is removed when disabled or uninstalled.
+If retained authentication is incomplete, restore the missing resources before
+retrying; upgrades do not reset accounts. Keep the same release and namespace.
+This protects existing UI password changes during each installation stage.
+The integration requires initCredentials=false, retainData=true,
+rbac.includeNamespace=true, serviceAccount.create=false and persistence.create=false; the parent owns these
+resources. userCredentials/userNamespace/configNamespace must stay empty.
+The Dashboard ServiceAccount inherits top-level imagePullSecrets for private
+registries; the referenced Secrets must already exist in the release namespace.
+
+Existing 0.1.x lakehouses
+-----------------------
+Run this version's installer with the SAME release, namespace and complete values
+used previously. It detects the retained cluster, resumes at the cluster stage
+and adds Dashboard. Do not change cluster IDs, object storage or data locations.
+The three database stages share a single Dashboard; there is no separate release.
+For QA/offline packages, also select the supplied SS-capable dashboard.image and
+load its Prometheus/Alertmanager/busybox dependencies on eligible workers.
+Optional inspection and SQL analyzer jobs require their own images separately.
 
 The included MinIO deployment is single-node with persistent storage: an evaluation
 profile, NOT production HA. LogService 1.3.0 requires exactly THREE nodes for its
@@ -104,7 +162,7 @@ such as 10001 can avoid that identity collision when the administrator approves:
     runAsGroup: 10001
     fsGroup: 10001
 
-The chart does not run a root init container or chown command, edit host
+The MinIO workload does not run a root init container or chown command, edit host
 ACLs, or disable SELinux. runAsNonRoot, RuntimeDefault seccomp and dropped Linux
 capabilities remain enforced. fsGroup behavior depends on the volume driver;
 do not assume it repairs hostPath/local-path permissions or ACLs. Kubernetes may

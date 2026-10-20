@@ -1,4 +1,4 @@
 .git
-*.tgz
+oceanbase-lakehouse-*.tgz
 *_test.go
 tests/

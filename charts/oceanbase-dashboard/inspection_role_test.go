@@ -41,7 +41,16 @@ func TestInspectionRoleConfiguration(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			tmpl, err := template.New("configmap").Parse(string(source))
+			// This smoke test checks the configuration wiring without Helm. The
+			// rendered-chart tests below verify the actual naming helper.
+			tmpl, err := template.New("configmap").Funcs(template.FuncMap{
+				"include": func(name string, _ interface{}) string {
+					if name != "oceanbase-dashboard.clusterRoleName" {
+						t.Fatalf("unexpected helper %q", name)
+					}
+					return release + "-cluster-role"
+				},
+			}).Parse(string(source))
 			if err != nil {
 				t.Fatal(err)
 			}

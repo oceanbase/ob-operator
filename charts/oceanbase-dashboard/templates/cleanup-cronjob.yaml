@@ -29,5 +29,5 @@ spec:
           volumes:
           - name: shared-volume
             persistentVolumeClaim:
-              claimName: {{ .Release.Name }}-shared-volume-pvc
+              claimName: {{ include "oceanbase-dashboard.sharedClaim" . }}
 {{- end }}

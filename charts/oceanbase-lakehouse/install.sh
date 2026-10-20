@@ -88,6 +88,27 @@ upgrade cluster
 wait_running "oblogservicecluster/$release-ls"
 wait_running "obcluster/$release-ob"
 kubectl -n "$namespace" wait pods -l "ref-obcluster=$release-ob" --for=condition=Ready --timeout="${timeout}s"
+# Read resolved values without printing credentials from Helm's stored values.
+dashboard_config=$(helm get values "$release" -n "$namespace" --all -o json |
+  jq -c '.dashboard | {enabled, port: .service.port}')
+dashboard_enabled=$(jq -r '.enabled' <<<"$dashboard_config")
+case "$dashboard_enabled" in
+  true)
+    kubectl -n "$namespace" rollout status "deployment/oceanbase-dashboard-$release" --timeout="${timeout}s"
+    ;;
+  false) ;;
+  *) echo 'Cannot determine Dashboard readiness: resolved dashboard.enabled is missing.' >&2; diagnostics; exit 1 ;;
+esac
 echo "Lakehouse ready: namespace=$namespace LogService=$release-ls OBCluster=$release-ob"
 echo 'Database root password is in the configured Secret (default: RELEASE-db-root, key: password).'
 echo 'Use kubectl get observers and the per-observer Services for SQL connectivity; no public ports are opened automatically.'
+if [[ $dashboard_enabled == true ]]; then
+  dashboard_port=$(jq -er '.port' <<<"$dashboard_config")
+  echo "Dashboard ready: oceanbase-dashboard-$release"
+  echo "  kubectl -n $namespace port-forward svc/oceanbase-dashboard-$release 8080:$dashboard_port"
+  echo 'Then open http://127.0.0.1:8080 on the computer running port-forward.'
+  echo 'Login: admin. Retrieve the INITIAL password (use your new password after changing it):'
+  echo "  kubectl -n $namespace get secret $release-dashboard-bootstrap -o jsonpath='{.data.password}' | base64 --decode; echo"
+else
+  echo 'Dashboard is disabled (dashboard.enabled=false).'
+fi

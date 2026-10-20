@@ -31,7 +31,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/manager ./cmd/operator
 
 需要构建镜像时使用已有的 `build/Dockerfile.dashboard` 和 `build/Dockerfile.operator`，分别打自己的测试标签，不覆盖正式镜像。以上快速二进制编译不注入发布版本元数据；正式构建流程见 `make/dashboard.mk` / `make/build.mk`。
 
-部署时同时使用本分支 `charts/oceanbase-dashboard` 的 Prometheus 采集配置与告警规则，不能只更换 UI。现有 chart 的 Dashboard 镜像写在 `templates/bundle.yaml`，默认仍指向官方版本；测试部署必须在自己的部署清单/渲染流程里替换为新构建的镜像。不要误以为 checkout 分支或只改 values 就已部署新代码。使用独立登录凭据，不使用 chart 示例密码；本文不提供对现有环境直接执行的升级/删除命令。
+部署时同时使用本分支 `charts/oceanbase-dashboard` 的 Prometheus 采集配置与告警规则，不能只更换 UI。独立 Dashboard Chart 可通过 `image` 指定已验证的湖库镜像；湖库 Chart 0.2.0 默认集成 Dashboard，对应字段为 `dashboard.image`，可用 `dashboard.enabled=false` 关闭。测试包应按 `image-lock.json` 指定实际交付镜像，不能只 checkout 分支就认为已部署新代码。使用独立登录凭据：湖库 Chart 自动生成初始密码并保留升级后的账号与角色；独立 Chart 应显式传入密码。本文不提供对现有环境直接执行的升级/删除命令。
 
 ## 可重复的定向测试
 

@@ -16,7 +16,7 @@ func TestMinIONonRootIdentityConfiguration(t *testing.T) {
 	}{
 		{"default", 1000, 1000, 1000, nil},
 		{"platform-assigned", 10001, 10002, 10003, map[string]interface{}{"minio": map[string]interface{}{"runAsUser": 10001, "runAsGroup": 10002, "fsGroup": 10003}}},
-		{"existing-pvc", 10001, 10001, 10001, map[string]interface{}{"minio": map[string]interface{}{"runAsUser": 10001, "runAsGroup": 10001, "fsGroup": 10001, "existingClaim": "user-owned-pvc"}}},
+		{"existing-pvc", 10001, 10001, 10001, map[string]interface{}{"dashboard": map[string]interface{}{"enabled": false}, "minio": map[string]interface{}{"runAsUser": 10001, "runAsGroup": 10001, "fsGroup": 10001, "existingClaim": "user-owned-pvc"}}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			docs, output, err := render(t, tc.values)

@@ -7,6 +7,43 @@
     "stage": {"enum": ["storage", "logservice", "cluster"]},
     "storageClass": {"$ref": "#/definitions/name"},
     "imagePullSecrets": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["name"], "properties": {"name": {"$ref": "#/definitions/name"}}}},
+    "dashboard": {
+      "type": "object",
+      "required": ["enabled", "initCredentials", "retainData", "rbac", "prometheus", "sharedVolume"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "image": {"$ref": "#/definitions/image"},
+        "adminPassword": {"type": "string", "anyOf": [{"maxLength": 0}, {"minLength": 12}]},
+        "initCredentials": {"const": false},
+        "retainData": {"const": true},
+        "userCredentials": {"const": ""},
+        "userNamespace": {"const": ""},
+        "configNamespace": {"const": ""},
+        "rbac": {
+          "type": "object", "required": ["includeNamespace"],
+          "properties": {"includeNamespace": {"const": true}}
+        },
+        "serviceAccount": {
+          "type": "object", "required": ["create"],
+          "properties": {"create": {"const": false}}
+        },
+        "service": {
+          "type": "object", "required": ["type", "port"],
+          "properties": {
+            "type": {"enum": ["ClusterIP", "NodePort", "LoadBalancer"]},
+            "port": {"type": "integer", "minimum": 1, "maximum": 65535}
+          }
+        },
+        "prometheus": {
+          "type": "object", "required": ["persistence"],
+          "properties": {"persistence": {"$ref": "#/definitions/dashboardPersistence"}}
+        },
+        "sharedVolume": {
+          "type": "object", "required": ["persistence"],
+          "properties": {"persistence": {"$ref": "#/definitions/dashboardPersistence"}}
+        }
+      }
+    },
     "scheduling": {
       "type": "object", "additionalProperties": false,
       "required": ["nodeSelector", "tolerations"],
@@ -85,6 +122,18 @@
     }
   },
   "definitions": {
+    "dashboardPersistence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["enabled", "create", "existingClaim", "storageClassName", "accessMode", "storage"],
+      "properties": {
+        "enabled": {"const": true},
+        "create": {"const": false},
+        "existingClaim": {"$ref": "#/definitions/optionalName"},
+        "storageClassName": {"$ref": "#/definitions/optionalName"},
+        "accessMode": {"enum": ["ReadWriteOnce", "ReadWriteMany"]},
+        "storage": {"$ref": "#/definitions/size"}
+      }
+    },
     "toleration": {
       "type": "object", "additionalProperties": false,
       "properties": {

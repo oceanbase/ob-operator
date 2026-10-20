@@ -9,7 +9,7 @@ metadata:
 data:
   config.yaml: |
     inspection:
-      clusterRoleName: {{ .Release.Name }}-cluster-role
+      clusterRoleName: {{ include "oceanbase-dashboard.clusterRoleName" . }}
       obdiag:
         image: {{ .Values.inspection.obdiag.image }}
       oceanbase-helper:

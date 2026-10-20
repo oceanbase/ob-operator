@@ -35,6 +35,10 @@ func TestInstallerSequencingResumeAndFailures(t *testing.T) {
 		env          []string
 	}{
 		{"fresh", "storage,logservice,cluster", 0, []string{"MOCK_NAMESPACE=absent"}},
+		{"dashboard-disabled", "storage,logservice,cluster", 0, []string{"MOCK_DASHBOARD=false"}},
+		{"dashboard-failure", "storage,logservice,cluster", 36, []string{"MOCK_FAIL_DASHBOARD=true"}},
+		{"dashboard-missing-values", "storage,logservice,cluster", 1, []string{"MOCK_DASHBOARD=null"}},
+		{"dashboard-custom-port", "storage,logservice,cluster", 0, []string{"MOCK_DASHBOARD_PORT=8888"}},
 		{"storage-failure", "storage", 21, []string{"MOCK_FAIL_UPGRADE=storage"}},
 		{"logservice-api-failure", "storage,logservice", 32, []string{"MOCK_FAIL_GET=logservice"}},
 		{"observer-api-failure", "storage,logservice,cluster", 33, []string{"MOCK_FAIL_GET=cluster"}},
@@ -58,7 +62,7 @@ printf 'helm %s\n' "$*" >> "$CASE_LOG"
 case "$1 $2" in
   'list -n')
     if [[ -n ${MOCK_RELEASE_STAGE:-} ]]; then echo '[{"name":"qa"}]'; else echo '[]'; fi ;;
-  'get values') printf '{"stage":"%s"}\n' "$MOCK_RELEASE_STAGE" ;;
+  'get values') printf '{"stage":"%s","dashboard":{"enabled":%s,"service":{"port":%s}}}\n' "${MOCK_RELEASE_STAGE:-cluster}" "${MOCK_DASHBOARD:-true}" "${MOCK_DASHBOARD_PORT:-80}" ;;
   'upgrade --install')
     stage=''
     for arg in "$@"; do [[ $arg != stage=* ]] || stage=${arg#stage=}; done
@@ -92,6 +96,7 @@ case "$*" in
       echo running
     fi ;;
   '-n qa-ns wait pods '*) ;;
+  '-n qa-ns rollout status deployment/oceanbase-dashboard-qa --timeout='*) [[ ${MOCK_FAIL_DASHBOARD:-false} != true ]] || exit 36 ;;
   '-n qa-ns get pods,jobs,obclusters,oblogserviceclusters') ;;
   *) exit 35 ;;
 esac
@@ -149,6 +154,28 @@ esac
 			if tc.code == 0 && (!strings.Contains(string(output), "Lakehouse ready:") || !strings.Contains(string(calls), "wait pods -l ref-obcluster=qa-ob --for=condition=Ready --timeout=9s")) {
 				t.Fatalf("success reported before Observer Pod readiness: %s\n%s", output, calls)
 			}
+			dashboardWait := "rollout status deployment/oceanbase-dashboard-qa --timeout=9s"
+			if tc.code == 0 && tc.name != "dashboard-disabled" {
+				if !strings.Contains(string(calls), dashboardWait) || !strings.Contains(string(output), "Dashboard ready:") ||
+					!strings.Contains(string(output), "get secret qa-dashboard-bootstrap") {
+					t.Fatalf("success requires Dashboard readiness and access instructions: %s\n%s", output, calls)
+				}
+				port := "80"
+				if tc.name == "dashboard-custom-port" {
+					port = "8888"
+				}
+				if !strings.Contains(string(output), "port-forward svc/oceanbase-dashboard-qa 8080:"+port) {
+					t.Fatalf("incorrect access command: %s", output)
+				}
+			}
+			if tc.name == "dashboard-disabled" && (strings.Contains(string(calls), dashboardWait) ||
+				strings.Contains(string(output), "Dashboard ready:") ||
+				!strings.Contains(string(output), "Dashboard is disabled")) {
+				t.Fatalf("disabled Dashboard must not be awaited or advertised: %s\n%s", output, calls)
+			}
+			if tc.code != 0 && strings.Contains(string(output), "Lakehouse ready:") {
+				t.Fatalf("failed installation must not claim readiness: %s", output)
+			}
 			if strings.HasSuffix(tc.name, "failed-status") && (!strings.Contains(string(output), "entered failed status") || strings.Contains(string(calls), "sleep ")) {
 				t.Fatalf("failed CR status must stop immediately with diagnostics: %s\n%s", output, calls)
 			}
@@ -158,7 +185,7 @@ esac
 			if tc.name == "transient-new-to-running" && !strings.Contains(string(calls), "sleep ") {
 				t.Fatalf("transient pending status must be polled before success: %s", calls)
 			}
-			if tc.code != 0 && strings.Contains(string(calls), "wait pods -l ref-obcluster=") {
+			if tc.code != 0 && !strings.HasPrefix(tc.name, "dashboard-") && strings.Contains(string(calls), "wait pods -l ref-obcluster=") {
 				t.Fatalf("installer waited for Pods after a failed prerequisite: %s", calls)
 			}
 		})
