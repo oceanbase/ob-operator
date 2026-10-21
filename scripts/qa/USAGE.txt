@@ -5,7 +5,7 @@ Requires Python >= 3.8 and PyYAML in an isolated build environment.
 Render all enabled components with the actual QA image overrides:
   helm template operator PACKAGE/charts/ob-operator > operator.yaml
   helm template lakehouse PACKAGE/charts/oceanbase-lakehouse \
-    -f PACKAGE/values/single-worker.yaml --set stage=cluster > lakehouse.yaml
+    -f PACKAGE/values/quickstart.yaml --set stage=cluster > lakehouse.yaml
   helm template dashboard PACKAGE/charts/oceanbase-dashboard \
     --set-string adminPassword=render-only-not-an-account > dashboard.yaml
 
@@ -13,12 +13,22 @@ Then verify both the lock and the REAL Docker-save archives:
   python3 scripts/qa/verify-image-closure.py PACKAGE/image-lock.json \
     operator.yaml lakehouse.yaml dashboard.yaml cert-manager.yaml \
     --archive PACKAGE/images/core-images.tar.gz \
-    --archive PACKAGE/images/support-images.tar.gz
+    --archive PACKAGE/images/support-images.tar.gz \
+    --archive PACKAGE/images/diagnostics-images.tar.gz \
+    --sidecar-archive DELIVERY/minio-cache-VERSION-linux-amd64.tar.gz
 
 Missing sidecars (including oceanbase/kube-rbac-proxy:v0.13.1), missing archive
-entries, wrong image IDs, duplicate refs and untracked images fail the build.
-MinIO and mc must be recorded as online-or-matching-existing-cache and must NOT
-be in the image archives. Registry accessibility is a separate preflight check.
+entries, wrong config image IDs, duplicate refs and untracked images fail the
+build. IDs are computed from the actual Docker-save config bytes (both legacy
+and OCI blob paths), not trusted from config filenames or manifest digests.
+The Dashboard ConfigMap's inspection tool images are included in closure checks
+because they run in dynamically created diagnostic jobs. The optional SQL
+analyzer remains outside this delivery scope.
+
+MinIO and mc use delivery-sidecar and must appear only in the separately passed
+--sidecar-archive. Legacy online-or-matching-existing-cache entries are still
+accepted but cannot silently appear in any archive. The new package builder
+supplies a matching cache instead of requiring registry access at installation.
 Run tests with: python3 -m unittest discover -s scripts/qa -p 'test_*.py'
 
 Rendered YAML can contain generated or supplied credentials. Keep rendering

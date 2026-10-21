@@ -28,6 +28,7 @@ except ImportError:
 
 CORE_ROLES = {"operator", "dashboard", "observer", "logservice"}
 MINIO_ROLES = {"minio", "mc"}
+DIAGNOSTIC_ROLES = {"obdiag", "oceanbase-helper", "observer", "dashboard"}
 SHA = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -154,7 +155,7 @@ def archive_image_ids(path):
     return images
 
 
-def verify_archive(path, expected, expected_sha=None):
+def verify_archive(path, expected, expected_sha=None, exact=False):
     actual = archive_image_ids(path)
     problems = []
     for image in expected:
@@ -164,10 +165,65 @@ def verify_archive(path, expected, expected_sha=None):
                             (image["reference"], image["image_id"], observed))
     if problems:
         raise ValueError("Archive image ID mismatch in %s:\n%s" % (path, "\n".join(problems)))
+    if exact:
+        extra = actual.keys() - {normalize_ref(image["reference"]) for image in expected}
+        if extra:
+            raise ValueError("Untracked diagnostic archive images: " + ", ".join(sorted(extra)))
     archive_sha = digest(path)
     if expected_sha and archive_sha != expected_sha:
         raise ValueError("Baseline archive SHA256 mismatch: " + str(path))
     return archive_sha
+
+
+def apply_diagnostic_profile(lock, profile_path):
+    """Merge explicitly supplied, immutable diagnostic images into the lock.
+
+    Base images remain covered because their bytes still occur in the unchanged
+    core archive. Updated runtime roles must use distinct references; reusing a
+    tag for a different ID would make import order determine the running image.
+    """
+    profile = json.loads(Path(profile_path).read_text())
+    if profile.get("schemaVersion") != 1 or not SHA.fullmatch(profile.get("archive_sha256", "")):
+        raise ValueError("Diagnostics lock requires schemaVersion 1 and archive_sha256")
+    additions = profile.get("images", [])
+    if not isinstance(additions, list) or any(not isinstance(entry, dict) for entry in additions):
+        raise ValueError("Diagnostics images must be a list of image records")
+    roles, refs = set(), {normalize_ref(entry["reference"]) for entry in lock["images"]}
+    original = {entry["role"]: entry for entry in lock["images"]}
+    for entry in additions:
+        role, reference, image_id = entry.get("role"), entry.get("reference", ""), entry.get("image_id", "")
+        if role not in DIAGNOSTIC_ROLES or role in roles:
+            raise ValueError("Unexpected or duplicate diagnostics role: " + str(role))
+        if not reference or normalize_ref(reference) in refs or any(ch.isspace() for ch in reference) or reference.startswith("-"):
+            raise ValueError("Diagnostics images require distinct, valid references: " + reference)
+        if reference.endswith(":latest") or (":" not in reference.rsplit("/", 1)[-1] and "@sha256:" not in reference):
+            raise ValueError("Diagnostics images require an explicit non-latest version or digest: " + reference)
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}", image_id):
+            raise ValueError("Missing immutable diagnostics config image ID: " + reference)
+        if role == "observer" and entry.get("base_image_id") != original.get("observer", {}).get("image_id"):
+            raise ValueError("Observer derivative base_image_id does not match the baseline Observer")
+        if role in original and role + "-base" in original:
+            raise ValueError("Use the original baseline, not a recursively updated diagnostics bundle")
+        roles.add(role)
+        refs.add(normalize_ref(reference))
+    if not {"obdiag", "oceanbase-helper", "observer"} <= roles:
+        raise ValueError("Diagnostics lock must include obdiag, oceanbase-helper and observer")
+    for entry in additions:
+        role = entry["role"]
+        if role in original:
+            original[role]["role"] = role + "-base"
+        merged = dict(entry)
+        merged["delivery"] = "archive"
+        lock["images"].append(merged)
+    return profile
+
+
+def configure_diagnostics(values, images):
+    if "obdiag" not in images:
+        return
+    inspection = values.setdefault("inspection", {})
+    for section, role in (("obdiag", "obdiag"), ("oceanbaseHelper", "oceanbase-helper")):
+        inspection.setdefault(section, {})["image"] = images[role]["reference"]
 
 
 def tar_tree(root, target, prefix, timestamp, compressed=False):
@@ -213,6 +269,7 @@ def patch_charts(source, package, images, timestamp):
     values = yaml.safe_load((dashboard / "values.yaml").read_text())
     values["image"] = images["dashboard"]["reference"]
     values["adminPassword"] = ""
+    configure_diagnostics(values, images)
     write_yaml(dashboard / "values.yaml", values)
     credentials = dashboard / "templates/user-credentials.yaml"
     original = credentials.read_text()
@@ -227,6 +284,7 @@ def patch_charts(source, package, images, timestamp):
     for section, role in (("dashboard", "dashboard"), ("logService", "logservice"),
                           ("observer", "observer"), ("minio", "minio"), ("initialization", "mc")):
         values[section]["image"] = images[role]["reference"]
+    configure_diagnostics(values["dashboard"], images)
     write_yaml(parent / "values.yaml", values)
     operator = charts / "ob-operator/templates/operator.yaml"
     content, count = re.subn(r"(?m)^(\s*image:\s*)quay\.io/oceanbase/ob-operator:[^\s]+\s*$",
@@ -271,6 +329,7 @@ def quickstart_profile(baseline, package, images):
                           ("observer", "observer"), ("minio", "minio"), ("initialization", "mc")):
         values.setdefault(section, {})["image"] = images[role]["reference"]
     values["dashboard"]["enabled"] = True
+    configure_diagnostics(values["dashboard"], images)
     # Old bundles used ClusterIP; the new single-worker entry advertises a
     # browser-ready NodePort. Let Kubernetes allocate it for each fresh release.
     service = values["dashboard"].setdefault("service", {})
@@ -278,12 +337,26 @@ def quickstart_profile(baseline, package, images):
     service.pop("nodePort", None)
     (package / "values").mkdir()
     write_yaml(package / "values/quickstart.yaml", values)
+    if "obdiag" in images:
+        upgrade = {"observer": {"image": images["observer"]["reference"]},
+                   "dashboard": {"image": images["dashboard"]["reference"]}}
+        configure_diagnostics(upgrade["dashboard"], images)
+        write_yaml(package / "values/diagnostics-upgrade.yaml", upgrade)
 
 
 def rendered_images(text):
     images = set()
     def visit(value):
         if isinstance(value, dict):
+            # These images are launched by Dashboard jobs, so Helm renders them
+            # inside config.yaml rather than as Pod container specifications.
+            # SQL analyzer remains an explicitly excluded optional component.
+            if value.get("kind") == "ConfigMap":
+                configured = value.get("data", {}).get("config.yaml")
+                if isinstance(configured, str):
+                    config = yaml.safe_load(configured)
+                    if isinstance(config, dict):
+                        visit(config.get("inspection", {}))
             for key, item in value.items():
                 if key == "image" and isinstance(item, str):
                     images.add(item)
@@ -349,6 +422,14 @@ def build(args):
         raise ValueError("Installer must be a compiled Linux/amd64 ELF binary; cross-compile cmd/lakehouse-installer first")
     lock = json.loads((baseline / "image-lock.json").read_text())
     baseline_sha = lock["source_sha"]
+    diagnostics_archive = getattr(args, "diagnostics_archive", None)
+    diagnostics_lock = getattr(args, "diagnostics_lock", None)
+    if bool(diagnostics_archive) != bool(diagnostics_lock):
+        raise ValueError("Pass both --diagnostics-archive and --diagnostics-lock")
+    diagnostic_profile = None
+    if diagnostics_lock:
+        diagnostics_archive = diagnostics_archive.resolve()
+        diagnostic_profile = apply_diagnostic_profile(lock, diagnostics_lock.resolve())
     baseline_checksums = {}
     for line in (baseline / "SHA256SUMS").read_text().splitlines():
         fields = line.split(None, 1)
@@ -363,11 +444,16 @@ def build(args):
         by_role[image["role"]] = image
     if not (CORE_ROLES | MINIO_ROLES) <= by_role.keys():
         raise ValueError("Baseline is missing required Operator/Dashboard/DB/MinIO images")
+    updated_roles = {entry["role"] for entry in diagnostic_profile["images"]} if diagnostic_profile else set()
+    core_roles = (CORE_ROLES - updated_roles) | {role + "-base" for role in updated_roles & CORE_ROLES}
     input_archives = [
-        ("core", baseline / "images/core-images.tar.gz", [i for i in lock["images"] if i["role"] in CORE_ROLES]),
-        ("support", baseline / "images/support-images.tar.gz", [i for i in lock["images"] if i["role"] not in CORE_ROLES | MINIO_ROLES]),
+        ("core", baseline / "images/core-images.tar.gz", [i for i in lock["images"] if i["role"] in core_roles]),
+        ("support", baseline / "images/support-images.tar.gz", [i for i in lock["images"] if i["role"] not in core_roles | MINIO_ROLES | updated_roles]),
         ("minio", minio_cache, [i for i in lock["images"] if i["role"] in MINIO_ROLES]),
     ]
+    if diagnostic_profile:
+        input_archives.append(("diagnostics", diagnostics_archive,
+                               [i for i in lock["images"] if i["role"] in updated_roles]))
     for _, path, _ in input_archives:
         if not path.is_file():
             raise ValueError("Required delivery archive is missing: " + str(path))
@@ -383,22 +469,27 @@ def build(args):
     archive_entries, validation = [], []
     for role, path, expected in input_archives:
         print("Validate and reuse %s archive: %s" % (role, path), flush=True)
-        expected_sha = baseline_checksums.get("images/" + path.name) if role != "minio" else None
+        expected_sha = baseline_checksums.get("images/" + path.name) if role in ("core", "support") else None
+        if role == "diagnostics":
+            expected_sha = diagnostic_profile["archive_sha256"]
         if role == "minio" and Path(str(path) + ".sha256").is_file():
             expected_sha = Path(str(path) + ".sha256").read_text().split()[0]
             if not SHA.fullmatch(expected_sha):
                 raise ValueError("Invalid MinIO cache checksum sidecar")
-        archive_sha = verify_archive(path, expected, expected_sha)
-        destination = output / minio_name if role == "minio" else package / "images" / path.name
+        archive_sha = verify_archive(path, expected, expected_sha, exact=role == "diagnostics")
+        filename = "diagnostics-images.tar.gz" if role == "diagnostics" else path.name
+        destination = output / minio_name if role == "minio" else package / "images" / filename
         shutil.copyfile(path, destination)
         destination.chmod(0o644)
         if digest(destination) != archive_sha:
             raise ValueError("Archive copy checksum mismatch: " + str(destination))
         archive_entries.append({"name": role, "base": "delivery" if role == "minio" else "bundle",
-                                "path": minio_name if role == "minio" else "images/" + path.name,
+                                "path": minio_name if role == "minio" else "images/" + filename,
                                 "sha256": archive_sha, "references": [i["reference"] for i in expected]})
         validation.append("PASS %s real archive config IDs and copied SHA256" % role)
     write_json(package / "images/archives.json", {"schemaVersion": 1, "archives": archive_entries})
+    if diagnostic_profile:
+        write_json(package / "provenance/diagnostics-lock.json", diagnostic_profile)
     # Preserve reviewed history away from runnable user entrypoints.
     if (baseline / "source").is_dir():
         shutil.copytree(baseline / "source", package / "provenance/baseline", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
@@ -432,12 +523,16 @@ def build(args):
         lock.setdefault("binary_build_host", lock.pop("build_host"))
     lock.update(source_sha=source_sha, chart_source_sha=source_sha, chart_versions=versions,
                 build_date=datetime.now().astimezone().strftime("%Y-%m-%d"), build_host=socket.gethostname(),
-                scope="internal single-worker QA; Go installer and bundled Dashboard; all runtime images reused unchanged")
+                scope="internal single-worker QA; base images retained; runtime image identities and diagnostic overrides recorded per role")
     lock.setdefault("packaging", {}).update({"version": args.version, "installer_source_sha": source_sha,
         "installer_sha256": digest(installer), "binary_rebuild": False, "baseline_source_sha": baseline_sha,
         "source_archive": "provenance/current-source.tar.gz",
         "source_archive_sha256": digest(package / "provenance/current-source.tar.gz"),
         "archive_manifest": "images/archives.json", "minio_mc": "required matching sidecar cache included in this delivery"})
+    if diagnostic_profile:
+        lock["packaging"].update({"diagnostics_lock": "provenance/diagnostics-lock.json",
+                                  "updated_image_roles": sorted(updated_roles),
+                                  "binary_rebuild": bool(diagnostic_profile.get("binary_rebuild", False))})
     for image in lock["images"]:
         if image["role"] in MINIO_ROLES:
             image["delivery"] = "delivery-sidecar"
@@ -464,7 +559,7 @@ def build(args):
     tar_tree(package, full_tar, name, timestamp)
     full_sha = digest(full_tar)
     (output / (full_tar.name + ".sha256")).write_text(full_sha + "  " + full_tar.name + "\n")
-    minio_sha = archive_entries[-1]["sha256"]
+    minio_sha = next(entry["sha256"] for entry in archive_entries if entry["name"] == "minio")
     (output / (minio_name + ".sha256")).write_text(minio_sha + "  " + minio_name + "\n")
     (output / "README.txt").write_text("标准交付包括下面四个文件，请一起提供：\n" + "\n".join([
         full_tar.name, full_tar.name + ".sha256", minio_name, minio_name + ".sha256"]) +
@@ -484,6 +579,8 @@ def main():
     parser.add_argument("--baseline", type=Path, required=True, help="Extracted previous QA bundle (contains images and image-lock.json)")
     parser.add_argument("--output", type=Path, required=True, help="New delivery directory; must not already exist")
     parser.add_argument("--minio-cache", type=Path, required=True, help="Docker-save gzip archive containing locked MinIO/mc images")
+    parser.add_argument("--diagnostics-archive", type=Path, help="Docker-save gzip archive with the exact diagnostics-lock images")
+    parser.add_argument("--diagnostics-lock", type=Path, help="Fixed identities for obdiag/helper/Observer derivative and optional updated Dashboard")
     parser.add_argument("--version", required=True, help="Unique delivery version, e.g. 20261021-COMMITSHA")
     parser.add_argument("--installer-binary", type=Path, help="Linux/amd64 binary; default SOURCE/bin/lakehouse-installer")
     parser.add_argument("--source-archive", type=Path, help="Original git archive for an extracted source tree; verifies its commit and every exported file without requiring .git")

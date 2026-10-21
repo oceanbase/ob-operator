@@ -71,6 +71,27 @@ func dashboardObject(t *testing.T, docs []dashboardManifest, kind, name string) 
 	return nil
 }
 
+func TestDiagnosticImageConfigTriggersDashboardRollout(t *testing.T) {
+	checksum := func(args ...string) string {
+		docs := renderDashboard(t, "qa-ns", args...)
+		deployment := dashboardObject(t, docs, "Deployment", "oceanbase-dashboard-qa")
+		value, _ := dashboardField(deployment, "spec", "template", "metadata", "annotations", "checksum/dashboard-config").(string)
+		if len(value) != 64 {
+			t.Fatal("subPath config changes must trigger a Pod rollout")
+		}
+		return value
+	}
+	base := checksum()
+	if base != checksum() {
+		t.Fatal("unchanged config must not trigger repeated rollouts")
+	}
+	for _, key := range []string{"inspection.obdiag.image", "inspection.oceanbaseHelper.image"} {
+		if checksum("--set-string", key+"=registry.example/diagnostics:fixed") == base {
+			t.Fatalf("%s change did not roll out stale subPath config", key)
+		}
+	}
+}
+
 func TestPersistenceOwnershipAndClaimReferences(t *testing.T) {
 	for _, tc := range []struct {
 		name, prometheusClaim, sharedClaim string

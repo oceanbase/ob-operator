@@ -140,7 +140,13 @@ and adds Dashboard. Do not change cluster IDs, object storage or data locations.
 The three database stages share a single Dashboard; there is no separate release.
 For QA/offline packages, also select the supplied SS-capable dashboard.image and
 load its Prometheus/Alertmanager/busybox dependencies on eligible workers.
-Optional inspection and SQL analyzer jobs require their own images separately.
+Log download requires the configured obdiag and oceanbase-helper images on every
+eligible worker, plus tar/gzip in the Observer and obdiag containers. The current
+QA offline package includes these diagnostic images and an Observer image with
+the required tools; use its locked values. SQL analyzer images are separate.
+Changing inspection image settings rolls out Dashboard so its mounted config is
+refreshed. A completed job or HTTP 200 alone does not prove logs were collected;
+verify the downloaded archive contains real Observer logs for the selected range.
 
 The included MinIO deployment is single-node with persistent storage: an evaluation
 profile, NOT production HA. LogService 1.3.0 requires exactly THREE nodes for its

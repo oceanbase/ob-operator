@@ -320,7 +320,13 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 		progress("安装完成；已按显式配置关闭内置 Dashboard。")
 		return nil
 	}
-	progress("[5/5] 验证 Dashboard 并生成访问说明")
+	progress("[5/5] 验证日志采集依赖、Dashboard 并生成访问说明")
+	diagnosticCtx, diagnosticCancel := context.WithTimeout(ctx, 15*time.Minute)
+	defer diagnosticCancel()
+	if err = verifyObserverDiagnostics(diagnosticCtx, execute, o.namespace, o.release, complete, 3*time.Second); err != nil {
+		return err
+	}
+	progress("Observer 日志采集所需的 tar/gzip 已验证；诊断镜像身份已校验。")
 	return showAccess(ctx, execute, o, result, stateDir, out)
 }
 

@@ -145,6 +145,8 @@ func validateConfiguredImages(bundle string, values map[string]interface{}) erro
 	paths := map[string][]string{"observer": {"observer", "image"}, "logservice": {"logService", "image"}}
 	if enabled, _ := pfGet(values, "dashboard", "enabled").(bool); enabled {
 		paths["dashboard"] = []string{"dashboard", "image"}
+		paths["obdiag"] = []string{"dashboard", "inspection", "obdiag", "image"}
+		paths["oceanbase-helper"] = []string{"dashboard", "inspection", "oceanbaseHelper", "image"}
 	}
 	if pfGet(values, "objectStorage", "mode") == "bundled" {
 		paths["minio"] = []string{"minio", "image"}

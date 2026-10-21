@@ -1,0 +1,51 @@
+Lakehouse QA packaging (build host only)
+=======================================
+
+build-package.py accepts a clean Git checkout, or an extracted original git
+archive supplied using --source-archive. Installation hosts use the packaged
+Go executable and do not require Python. Do not modify the baseline package.
+
+Diagnostic/log-download builds additionally supply both:
+  --diagnostics-archive /path/diagnostics-images.tar.gz
+  --diagnostics-lock /path/diagnostics-lock.json
+
+The lock is produced from real image builds/saves, never guessed versions:
+  {
+    "schemaVersion": 1,
+    "archive_sha256": "<SHA256 of the supplied gzip Docker-save archive>",
+    "binary_rebuild": true,
+    "images": [
+      {
+        "role": "observer",
+        "reference": "<distinct fixed tag or digest>",
+        "image_id": "sha256:<actual config SHA256>",
+        "base_image_id": "sha256:<baseline Observer config SHA256>",
+        "source": {"description": "<record the actual build provenance>"}
+      }
+    ]
+  }
+Include observer, obdiag and oceanbase-helper records. A dashboard record is
+also supported when its binary/image has changed. Set binary_rebuild according
+to the actual build; per-image source metadata is preserved. References must be
+distinct from the baseline and use explicit non-latest tags or digests.
+
+The builder checks the archive checksum, actual Linux/amd64 config IDs, and
+exact image membership before copying it to images/diagnostics-images.tar.gz.
+The existing Go installer consumes images/archives.json and imports any missing
+diagnostic image automatically. No additional user command is required.
+
+The unchanged core archive remains covered by the final lock; replaced images
+are recorded as observer-base/dashboard-base while active roles point to the
+new identities. Use the original baseline for each build, not a previous
+diagnostics bundle. This preserves provenance without recursively accumulating
+old overridden images.
+
+Both bundled and standalone Dashboard configuration receive the locked obdiag
+and oceanbaseHelper image references. values/quickstart.yaml receives the full
+fresh-install profile. values/diagnostics-upgrade.yaml contains only the new
+Observer, Dashboard, and diagnostic-tool image references, so an explicit -f
+upgrade does not reset existing cluster IDs, resources, storage or credentials.
+
+Run regression fixtures on the build host:
+  python3 -m unittest discover -s scripts/lakehouse -p 'test_*.py'
+  python3 -m unittest discover -s scripts/qa -p 'test_*.py'

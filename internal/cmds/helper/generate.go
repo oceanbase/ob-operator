@@ -14,7 +14,9 @@ package helper
 
 import (
 	"context"
+	"encoding/json"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -80,7 +82,7 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 	var dbPort int
 
 	k8sConfigDir := output + "/k8s"
-	if err := os.MkdirAll(k8sConfigDir, 0755); err != nil {
+	if err := os.MkdirAll(k8sConfigDir, 0700); err != nil {
 		return err
 	}
 
@@ -121,7 +123,7 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 				return err
 			}
 			configPath := k8sConfigDir + "/" + obzone.K8sCluster + ".yaml"
-			if err := os.WriteFile(configPath, config, 0644); err != nil {
+			if err := os.WriteFile(configPath, config, 0600); err != nil {
 				return err
 			}
 			nodeConfig.KubernetesConfigFile = configPath
@@ -157,7 +159,28 @@ func generateOBDiagConfig(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return os.WriteFile(output+"/config.yaml", yamlData, 0644)
+	if err := os.WriteFile(filepath.Join(output, "config.yaml"), yamlData, 0600); err != nil {
+		return err
+	}
+	return writeOBDiagTargets(output, namespace, nodes)
+}
+
+// The collector uses this non-sensitive manifest to detect missing node results.
+// Keep the existing YAML configuration compatible with all other obdiag callers.
+func writeOBDiagTargets(directory, namespace string, nodes []NodeConfig) error {
+	type target struct {
+		Namespace string `json:"namespace"`
+		PodName   string `json:"pod_name"`
+	}
+	targets := make([]target, 0, len(nodes))
+	for _, node := range nodes {
+		targets = append(targets, target{Namespace: namespace, PodName: node.PodName})
+	}
+	data, err := json.Marshal(targets)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filepath.Join(directory, "nodes.json"), data, 0600)
 }
 
 func init() {

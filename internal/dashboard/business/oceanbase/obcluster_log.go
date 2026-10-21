@@ -14,6 +14,7 @@ package oceanbase
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -29,6 +30,22 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
+//go:embed obcluster_log_collect.py
+var collectOBClusterLogScript string
+
+func obClusterLogInitCommand(directory, namespace, cluster string) []string {
+	return []string{"/bin/sh", "-c", `set -eu
+umask 077
+mkdir -p "$1"
+trap 'rm -f "$1/config.yaml"; rm -rf "$1/k8s"' EXIT
+/home/admin/oceanbase/bin/oceanbase-helper generate obdiag-config -n "$2" -c "$3" -o "$1"
+trap - EXIT`, "generate-config", directory, namespace, cluster}
+}
+
+func obClusterLogCommand(start, end, directory, attachment string) []string {
+	return []string{"python3", "-c", collectOBClusterLogScript, start, end, directory, attachment}
+}
+
 func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, startTime, endTime string) (*jobmodel.Job, error) {
 	jobNamespace := os.Getenv("NAMESPACE")
 	sharedPvcName := os.Getenv("SHARED_VOLUME_PVC_NAME")
@@ -36,9 +53,6 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 	jobName := fmt.Sprintf("log-%s-%s-%s", nn.Namespace, nn.Name, rand.String(6))
 	attachmentID := jobName + ".tar.gz"
 	jobOutputDir := filepath.Join(sharedMountPath, jobName)
-	configFileName := "config.yaml"
-	configFilePath := filepath.Join(jobOutputDir, configFileName)
-	k8sConfigPath := filepath.Join(jobOutputDir, "k8s")
 	ttlSecondsAfterFinished := config.GetConfig().Job.Normal.TTLSecondsAfterFinished
 
 	labels := map[string]string{
@@ -49,8 +63,10 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 	}
 
 	var backoffLimit int32 = 0
+	var activeDeadlineSeconds int64 = 1800
 	jobSpec := &batchv1.JobSpec{
 		BackoffLimit:            &backoffLimit,
+		ActiveDeadlineSeconds:   &activeDeadlineSeconds,
 		TTLSecondsAfterFinished: &ttlSecondsAfterFinished,
 		Template: corev1.PodTemplateSpec{
 			ObjectMeta: metav1.ObjectMeta{
@@ -64,7 +80,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 						Name:            "generate-config",
 						Image:           config.GetConfig().Inspection.OBHelper.Image,
 						ImagePullPolicy: corev1.PullIfNotPresent,
-						Command:         []string{"bash", "-c", fmt.Sprintf("mkdir -p %s && /home/admin/oceanbase/bin/oceanbase-helper generate obdiag-config -n %s -c %s -o %s", jobOutputDir, nn.Namespace, nn.Name, jobOutputDir)},
+						Command:         obClusterLogInitCommand(jobOutputDir, nn.Namespace, nn.Name),
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      sharedPvcName,
@@ -78,10 +94,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 						Name:            "log",
 						Image:           config.GetConfig().Inspection.OBDiag.Image,
 						ImagePullPolicy: corev1.PullIfNotPresent,
-						Command:         []string{"/bin/sh", "-c"},
-						Args: []string{
-							fmt.Sprintf("obdiag gather log --from %s --to %s --store_dir %s -c %s && rm -f %s && rm -rf %s && tar -czf %s/%s -C %s . && rm -rf %s", startTime, endTime, jobOutputDir, configFilePath, configFilePath, k8sConfigPath, sharedMountPath, attachmentID, jobOutputDir, jobOutputDir),
-						},
+						Command:         obClusterLogCommand(startTime, endTime, jobOutputDir, filepath.Join(sharedMountPath, attachmentID)),
 						VolumeMounts: []corev1.VolumeMount{
 							{
 								Name:      sharedPvcName,

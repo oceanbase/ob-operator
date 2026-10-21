@@ -134,6 +134,63 @@ class BuildPackageTest(unittest.TestCase):
                      "-c", "commit.gpgsign=false", "commit", "-qm", "fixture source"], cwd=source)
         return source
 
+    def make_diagnostics(self):
+        images, configs = [], {}
+        baseline = {entry["role"]: entry for entry in self.images}
+        for role in ("observer", "dashboard", "obdiag", "oceanbase-helper"):
+            reference = "fixture/" + role + ":diagnostics-v1"
+            data = json.dumps({"os": "linux", "architecture": "amd64", "config": {"fixture": reference}}, sort_keys=True).encode()
+            entry = {"role": role, "reference": reference,
+                     "image_id": "sha256:" + hashlib.sha256(data).hexdigest(),
+                     "source": {"description": "local fixture; not a published image"}}
+            if role == "observer":
+                entry["base_image_id"] = baseline[role]["image_id"]
+            images.append(entry)
+            configs[reference] = data
+        archive = self.root / "diagnostics.tar.gz"
+        docker_save(archive, images, configs)
+        profile = {"schemaVersion": 1, "archive_sha256": BUILDER.digest(archive), "images": images,
+                   "binary_rebuild": True}
+        path = self.root / "diagnostics-lock.json"
+        BUILDER.write_json(path, profile)
+        return archive, path, profile
+
+    def test_diagnostics_contract_and_embedded_runtime_images(self):
+        archive, profile_path, profile = self.make_diagnostics()
+        original = {"images": copy.deepcopy(self.images)}
+        applied = copy.deepcopy(original)
+        BUILDER.apply_diagnostic_profile(applied, profile_path)
+        roles = {entry["role"]: entry for entry in applied["images"]}
+        self.assertEqual(roles["observer-base"]["image_id"], self.images[2]["image_id"])
+        self.assertEqual(roles["dashboard-base"]["image_id"], self.images[1]["image_id"])
+        self.assertEqual(roles["observer"]["reference"], "fixture/observer:diagnostics-v1")
+        BUILDER.verify_archive(archive, profile["images"], profile["archive_sha256"], exact=True)
+        with self.assertRaisesRegex(ValueError, "Untracked diagnostic"):
+            BUILDER.verify_archive(archive, profile["images"][:-1], exact=True)
+        invalid_profiles = []
+        invalid = copy.deepcopy(profile)
+        invalid["images"][0]["base_image_id"] = "sha256:" + "0" * 64
+        invalid_profiles.append((invalid, "base_image_id"))
+        invalid = copy.deepcopy(profile)
+        invalid["images"][0]["reference"] = self.images[2]["reference"]
+        invalid_profiles.append((invalid, "distinct"))
+        invalid = copy.deepcopy(profile)
+        invalid["images"][2]["reference"] = "fixture/obdiag:latest"
+        invalid_profiles.append((invalid, "non-latest"))
+        invalid = copy.deepcopy(profile)
+        invalid["images"] = invalid["images"][:-1]
+        invalid_profiles.append((invalid, "must include"))
+        for invalid, message in invalid_profiles:
+            with self.subTest(message=message):
+                BUILDER.write_json(profile_path, invalid)
+                unchanged = copy.deepcopy(original)
+                with self.assertRaisesRegex(ValueError, message):
+                    BUILDER.apply_diagnostic_profile(unchanged, profile_path)
+                self.assertEqual(unchanged, original)
+        rendered = "kind: ConfigMap\ndata:\n  config.yaml: |\n    inspection:\n      obdiag: {image: 'fixture/obdiag:diagnostics-v1'}\n      oceanbase-helper: {image: 'fixture/oceanbase-helper:diagnostics-v1'}\n    sqlAnalyzer: {image: 'optional/not-shipped:1'}\n"
+        self.assertEqual(BUILDER.rendered_images(rendered),
+                         {"fixture/obdiag:diagnostics-v1", "fixture/oceanbase-helper:diagnostics-v1"})
+
     @unittest.skipUnless(shutil.which("git") and shutil.which("helm"), "Full build requires Helm and Git")
     def test_complete_delivery_export_and_reproducibility(self):
         source = self.make_source()
@@ -161,8 +218,10 @@ class BuildPackageTest(unittest.TestCase):
         docker_save(minio_cache, [image for image in self.images if image["role"] in BUILDER.MINIO_ROLES], self.configs)
         binary = self.root / "fixture-installer"
         binary.write_bytes(b"\x7fELF\x02\x01" + b"\0" * 12 + b"\x3e\0")  # fixture architecture header only
+        diagnostics_archive, diagnostics_lock, profile = self.make_diagnostics()
         args = argparse.Namespace(source=source, baseline=baseline, output=self.root / "delivery-a",
-                                  minio_cache=minio_cache, version="fixture", installer_binary=binary, source_archive=None)
+                                  minio_cache=minio_cache, version="fixture", installer_binary=binary, source_archive=None,
+                                  diagnostics_archive=diagnostics_archive, diagnostics_lock=diagnostics_lock)
         with contextlib.redirect_stdout(io.StringIO()):
             first = BUILDER.build(args)
         # The remote builder receives an exported source tree, not a Git checkout.
@@ -180,12 +239,24 @@ class BuildPackageTest(unittest.TestCase):
         self.assertEqual(sidecar["base"], "delivery")
         self.assertEqual(sidecar["path"], "minio-cache-fixture-linux-amd64.tar.gz")
         self.assertEqual(BUILDER.digest(bundle.parent / sidecar["path"]), sidecar["sha256"])
+        diagnostic_entry = next(entry for entry in manifest["archives"] if entry["name"] == "diagnostics")
+        self.assertEqual(diagnostic_entry["base"], "bundle")
+        self.assertEqual(diagnostic_entry["path"], "images/diagnostics-images.tar.gz")
+        self.assertEqual(BUILDER.digest(bundle / diagnostic_entry["path"]), profile["archive_sha256"])
+        self.assertEqual(set(diagnostic_entry["references"]), {entry["reference"] for entry in profile["images"]})
         quickstart = yaml.safe_load((bundle / "values/quickstart.yaml").read_text())
         self.assertEqual(quickstart["storageClass"], "")
         self.assertEqual(quickstart["logService"]["resource"]["cpu"], "1")
         self.assertEqual(quickstart["observer"]["resource"]["cpu"], "2")
         self.assertEqual(quickstart["dashboard"]["service"]["type"], "NodePort")
         self.assertNotIn("nodePort", quickstart["dashboard"]["service"])
+        self.assertEqual(quickstart["dashboard"]["inspection"]["oceanbaseHelper"]["image"],
+                         "fixture/oceanbase-helper:diagnostics-v1")
+        upgrade = yaml.safe_load((bundle / "values/diagnostics-upgrade.yaml").read_text())
+        self.assertEqual(upgrade, {"observer": {"image": "fixture/observer:diagnostics-v1"},
+                                  "dashboard": {"image": "fixture/dashboard:diagnostics-v1", "inspection": {
+                                      "obdiag": {"image": "fixture/obdiag:diagnostics-v1"},
+                                      "oceanbaseHelper": {"image": "fixture/oceanbase-helper:diagnostics-v1"}}}})
         for section in ("observer", "logService"):
             self.assertNotIn("clusterId", quickstart[section])
         final_lock = json.loads((bundle / "image-lock.json").read_text())
@@ -193,7 +264,8 @@ class BuildPackageTest(unittest.TestCase):
             self.assertEqual(final_lock[field], lock[field])
         self.assertEqual(final_lock["binary_build_host"], "original-binary-host")
         self.assertEqual([image["image_id"] for image in final_lock["images"]],
-                         [image["image_id"] for image in self.images])
+                         [image["image_id"] for image in self.images + profile["images"]])
+        self.assertTrue(final_lock["packaging"]["binary_rebuild"])
         self.assertEqual(final_lock["source_sha"], first["source_sha"])
         self.assertEqual(final_lock["packaging"]["source_archive"], "provenance/current-source.tar.gz")
         self.assertEqual(BUILDER.digest(bundle / final_lock["packaging"]["source_archive"]),
