@@ -25,6 +25,13 @@ The Dashboard ConfigMap's inspection tool images are included in closure checks
 because they run in dynamically created diagnostic jobs. The optional SQL
 analyzer remains outside this delivery scope.
 
+The diagnostics archive normally contains obdiag, oceanbase-helper and the
+updated Dashboard. Observer remains in the original core archive with its
+original image ID; it is not required to appear in the diagnostics archive.
+Check the rendered upgrade with the existing release values followed by
+values/diagnostics-upgrade.yaml: the OBCluster Observer image must stay unchanged.
+The fixture suite covers both archive closure and this Helm overlay behavior.
+
 MinIO and mc use delivery-sidecar and must appear only in the separately passed
 --sidecar-archive. Legacy online-or-matching-existing-cache entries are still
 accepted but cannot silently appear in any archive. The new package builder

@@ -24,8 +24,9 @@ kubectl、jq、可用的默认 StorageClass，以及管理员 kubeconfig。推�
 只导入缺少或不匹配的镜像。在没有 Operator 的单节点集群上，安装配套 cert-manager
 与支持湖库的 Operator。已有但不完整/不兼容的组件会给出明确错误，要求先修复。
 随后依次安装存储、LogService、Observer，等待 Dashboard 三个容器就绪，并验证
-节点内 HTTP。诊断镜像默认随主包导入，并检查 Observer 容器的 tar/gzip；日志收集
-时才按需启动诊断 Job。整个过程输出阶段、等待时间及失败诊断，失败不自动删除数据库。
+节点内 HTTP。诊断镜像默认随主包导入，并检查 Observer 中可调用的 Python 3
+及 tarfile/gzip 模块（支持发行版自带的 platform-python）；无需在 Observer 中安装 tar。
+日志收集时才按需启动诊断 Job。整个过程输出阶段、等待时间及失败诊断，失败不自动删除数据库。
 
 默认 release=ob-demo、namespace=ob-helm-demo；LogService 3×1CPU/4GiB，Observer
 2CPU/10GiB，MinIO及Dashboard另外占用资源。首次随机生成并保存两个数据库集群ID。
@@ -72,8 +73,9 @@ K3s/containerd、Docker 自动识别；非 K3s 的 containerd 需明确 --contai
 
 4. 范围和数据保留
 -----------------
-这是一套 Linux amd64 内部 QA 体验包。本版更新日志下载后端、helper 和诊断镜像，Observer 镜像
-仅增加打包工具、保留原数据库二进制。真实源码版本和镜像 ID 见 image-lock.json。
+这是一套 Linux amd64 内部 QA 体验包。本版更新日志下载后端、helper 和诊断镜像，
+保留原 Observer 镜像。诊断工具通过容器已有的 Python 完成日志打包和传输。
+真实源码版本和镜像 ID 见 image-lock.json。
 MinIO/mc 是独立第三方
 AGPL-3.0 软件，主包和配套缓存的范围见交付清单。
 
@@ -85,9 +87,9 @@ SQL分析器镜像仍需另行准备。
 
 从旧QA包升级诊断功能：保留相同release/namespace，显式使用包内镜像升级配置：
   bash install.sh -f values/diagnostics-upgrade.yaml --dashboard-host 服务器公网IP
-该文件仅更新Observer、Dashboard和诊断镜像，不改变集群ID、规格、存储或账号。
-Observer容器会因镜像升级重启；单Observer体验环境存在短暂SQL中断。升级前确认
-当前没有需要持续运行的测试。脚本等待新镜像实际就绪再检查日志采集工具。
+该文件仅更新Dashboard和诊断镜像，不修改Observer镜像、集群ID、规格、存储或账号。
+诊断升级不要求重启Observer。Dashboard更新期间页面可能短暂不可用；安装入口仍会
+检查现有Observer是否具备日志采集所需能力，缺少时明确报错。
 
 不要通过删 namespace、PVC、CR 或 helm --force/--atomic 处理安装失败。卸载默认
 保留数据库CR、凭据和存储，并不回收磁盘，也不代替备份。已有镜像/身份不兼容时

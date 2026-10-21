@@ -326,7 +326,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 	if err = verifyObserverDiagnostics(diagnosticCtx, execute, o.namespace, o.release, complete, 3*time.Second); err != nil {
 		return err
 	}
-	progress("Observer 日志采集所需的 tar/gzip 已验证；诊断镜像身份已校验。")
+	progress("Observer 的 Python 日志归档和传输能力已验证；诊断镜像身份已校验。")
 	return showAccess(ctx, execute, o, result, stateDir, out)
 }
 

@@ -87,6 +87,38 @@ func pfTestFixture() map[string]interface{} {
 		"kubectl get mutatingwebhookconfigurations -o json":   admissionv1.MutatingWebhookConfigurationList{Items: mutating},
 		"kubectl get validatingwebhookconfigurations -o json": admissionv1.ValidatingWebhookConfigurationList{Items: validating},
 		"kubectl get endpoints --all-namespaces -o json":      corev1.EndpointsList{Items: endpoints},
+		"kubectl get obclusters -n demo-ns -o json":           map[string]interface{}{"items": []interface{}{}},
+	}
+}
+
+func TestCheckClusterRejectsSharedStorageObserverImageChangeBeforeMutation(t *testing.T) {
+	for _, changed := range []string{"qa/observer:new", "docker.io/qa/observer:original"} {
+		t.Run(changed, func(t *testing.T) {
+			fixture := pfTestFixture()
+			fixture["kubectl get obclusters -n demo-ns -o json"] = map[string]interface{}{"items": []interface{}{map[string]interface{}{
+				"metadata": map[string]interface{}{"name": "demo-ob", "namespace": "demo-ns"},
+				"spec":     map[string]interface{}{"deploymentMode": "shared_storage", "observer": map[string]interface{}{"image": "qa/observer:original"}},
+			}}}
+			opts := pfTestOpts()
+			opts.Existing = true
+			setValue(opts.Values, changed, "observer", "image")
+			_, err := CheckCluster(context.Background(), pfTestRunner(t, fixture), opts)
+			if err == nil || !strings.Contains(err.Error(), "shared_storage") || !strings.Contains(err.Error(), "observer.image") {
+				t.Fatalf("shared-storage image change was not rejected read-only: %v", err)
+			}
+			setValue(opts.Values, "qa/observer:original", "observer", "image")
+			if _, err := CheckCluster(context.Background(), pfTestRunner(t, fixture), opts); err != nil {
+				t.Fatalf("unchanged Observer image rejected: %v", err)
+			}
+		})
+	}
+}
+
+func TestCheckClusterDoesNotTreatObserverReadDeniedAsAbsent(t *testing.T) {
+	fixture := pfTestFixture()
+	fixture["kubectl get obclusters -n demo-ns -o json"] = errors.New("Forbidden")
+	if _, err := CheckCluster(context.Background(), pfTestRunner(t, fixture), pfTestOpts()); err == nil || !strings.Contains(err.Error(), "cannot read") {
+		t.Fatalf("failed Observer read was ignored: %v", err)
 	}
 }
 

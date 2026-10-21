@@ -134,10 +134,12 @@ class BuildPackageTest(unittest.TestCase):
                      "-c", "commit.gpgsign=false", "commit", "-qm", "fixture source"], cwd=source)
         return source
 
-    def make_diagnostics(self):
+    def make_diagnostics(self, include_observer=False):
         images, configs = [], {}
         baseline = {entry["role"]: entry for entry in self.images}
         for role in ("observer", "dashboard", "obdiag", "oceanbase-helper"):
+            if role == "observer" and not include_observer:
+                continue
             reference = "fixture/" + role + ":diagnostics-v1"
             data = json.dumps({"os": "linux", "architecture": "amd64", "config": {"fixture": reference}}, sort_keys=True).encode()
             entry = {"role": role, "reference": reference,
@@ -156,7 +158,7 @@ class BuildPackageTest(unittest.TestCase):
         return archive, path, profile
 
     def test_diagnostics_contract_and_embedded_runtime_images(self):
-        archive, profile_path, profile = self.make_diagnostics()
+        archive, profile_path, profile = self.make_diagnostics(include_observer=True)
         original = {"images": copy.deepcopy(self.images)}
         applied = copy.deepcopy(original)
         BUILDER.apply_diagnostic_profile(applied, profile_path)
@@ -190,6 +192,18 @@ class BuildPackageTest(unittest.TestCase):
         rendered = "kind: ConfigMap\ndata:\n  config.yaml: |\n    inspection:\n      obdiag: {image: 'fixture/obdiag:diagnostics-v1'}\n      oceanbase-helper: {image: 'fixture/oceanbase-helper:diagnostics-v1'}\n    sqlAnalyzer: {image: 'optional/not-shipped:1'}\n"
         self.assertEqual(BUILDER.rendered_images(rendered),
                          {"fixture/obdiag:diagnostics-v1", "fixture/oceanbase-helper:diagnostics-v1"})
+
+    def test_three_image_diagnostics_preserve_baseline_observer(self):
+        archive, profile_path, profile = self.make_diagnostics()
+        lock = {"images": copy.deepcopy(self.images)}
+        original_observer = copy.deepcopy(next(image for image in lock["images"] if image["role"] == "observer"))
+        BUILDER.apply_diagnostic_profile(lock, profile_path)
+        roles = {image["role"]: image for image in lock["images"]}
+        self.assertEqual(roles["observer"], original_observer)
+        self.assertNotIn("observer-base", roles)
+        self.assertEqual({image["role"] for image in profile["images"]},
+                         {"dashboard", "obdiag", "oceanbase-helper"})
+        BUILDER.verify_archive(archive, profile["images"], profile["archive_sha256"], exact=True)
 
     def test_empty_configmap_data_does_not_hide_other_images(self):
         baseline = (HERE.parent / "qa/fixtures/cert-manager-v1.12.4-empty-configmap.yaml").read_text()
@@ -258,18 +272,32 @@ class BuildPackageTest(unittest.TestCase):
         self.assertEqual(quickstart["storageClass"], "")
         self.assertEqual(quickstart["logService"]["resource"]["cpu"], "1")
         self.assertEqual(quickstart["observer"]["resource"]["cpu"], "2")
+        self.assertEqual(quickstart["observer"]["image"], REFERENCES["observer"])
         self.assertEqual(quickstart["dashboard"]["service"]["type"], "NodePort")
         self.assertNotIn("nodePort", quickstart["dashboard"]["service"])
         self.assertEqual(quickstart["dashboard"]["inspection"]["oceanbaseHelper"]["image"],
                          "fixture/oceanbase-helper:diagnostics-v1")
         upgrade = yaml.safe_load((bundle / "values/diagnostics-upgrade.yaml").read_text())
-        self.assertEqual(upgrade, {"observer": {"image": "fixture/observer:diagnostics-v1"},
-                                  "dashboard": {"image": "fixture/dashboard:diagnostics-v1", "inspection": {
+        self.assertEqual(upgrade, {"dashboard": {"image": "fixture/dashboard:diagnostics-v1", "inspection": {
                                       "obdiag": {"image": "fixture/obdiag:diagnostics-v1"},
                                       "oceanbaseHelper": {"image": "fixture/oceanbase-helper:diagnostics-v1"}}}})
+        # Prove Helm's actual overlay preserves an old/custom Observer image,
+        # not just that the generated upgrade YAML happens to omit its key.
+        previous = self.root / "previous-values.yaml"
+        BUILDER.write_yaml(previous, {"observer": {"image": "customer/observer:existing-v1"}})
+        rendered = BUILDER.run(["helm", "template", "qa", str(bundle / "charts/oceanbase-lakehouse"),
+                               "-f", str(bundle / "values/quickstart.yaml"), "-f", str(previous),
+                               "-f", str(bundle / "values/diagnostics-upgrade.yaml"),
+                               "--set", "stage=cluster", "--set-string", "storageClass=local-path"])
+        observer = next(document for document in yaml.safe_load_all(rendered)
+                        if document and document.get("kind") == "OBCluster")
+        self.assertEqual(observer["spec"]["observer"]["image"], "customer/observer:existing-v1")
         for section in ("observer", "logService"):
             self.assertNotIn("clusterId", quickstart[section])
         final_lock = json.loads((bundle / "image-lock.json").read_text())
+        final_roles = {image["role"]: image for image in final_lock["images"]}
+        self.assertEqual(final_roles["observer"], next(image for image in self.images if image["role"] == "observer"))
+        self.assertNotIn("observer-base", final_roles)
         for field in ("binary_source_sha", "operator_source_sha"):
             self.assertEqual(final_lock[field], lock[field])
         self.assertEqual(final_lock["binary_build_host"], "original-binary-host")

@@ -116,6 +116,35 @@ func CheckCluster(ctx context.Context, run RunCommand, opts PreflightOptions) (P
 	var validating admissionv1.ValidatingWebhookConfigurationList
 	var endpoints corev1.EndpointsList
 	crdsOK := read("kubectl", &crds, "get", "crds", "-o", "json")
+	if crdsOK {
+		for _, crd := range crds.Items {
+			if crd.Spec.Group != "oceanbase.oceanbase.com" || crd.Spec.Names.Plural != "obclusters" {
+				continue
+			}
+			var clusters struct {
+				Items []struct {
+					Metadata struct{ Name string } `json:"metadata"`
+					Spec     struct {
+						DeploymentMode string                 `json:"deploymentMode"`
+						Observer       struct{ Image string } `json:"observer"`
+					} `json:"spec"`
+				} `json:"items"`
+			}
+			if read("kubectl", &clusters, "get", "obclusters", "-n", opts.Namespace, "-o", "json") {
+				for _, cluster := range clusters.Items {
+					if cluster.Metadata.Name != opts.Release+"-ob" || cluster.Spec.DeploymentMode != "shared_storage" {
+						continue
+					}
+					// The webhook compares the literal image string. Even a
+					// docker.io prefix change is an unsupported version update.
+					if cluster.Spec.Observer.Image == "" || cluster.Spec.Observer.Image != pfString(pfGet(opts.Values, "observer", "image")) {
+						problems = append(problems, fmt.Errorf("existing shared_storage OBCluster %s/%s does not support changes to observer.image; retain its exact installed image and update only the Dashboard diagnostic images", opts.Namespace, cluster.Metadata.Name))
+					}
+				}
+			}
+			break
+		}
+	}
 	deploymentsOK := read("kubectl", &deployments, "get", "deployments", "--all-namespaces", "-o", "json")
 	mutatingOK := read("kubectl", &mutating, "get", "mutatingwebhookconfigurations", "-o", "json")
 	validatingOK := read("kubectl", &validating, "get", "validatingwebhookconfigurations", "-o", "json")

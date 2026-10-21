@@ -11,9 +11,31 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-// verifyObserverDiagnostics waits for the configured image, not just an older
-// Ready Pod. obdiag's Kubernetes transport executes tar inside each Observer.
-// It does not collect logs, create jobs, or modify files in the database Pod.
+// Keep this identical to PROBE_CODE in the pinned obdiag Kubernetes transport.
+// Log download always requires Python, even when native tar/gzip can pack logs.
+// The archive and transport roundtrip stay in memory and do not write Pod files.
+const observerDiagnosticPythonProbe = `import base64,gzip,hashlib,io,json,os,stat,sys,tarfile
+assert sys.version_info >= (3,6)
+payload=b"lakehouse-diagnostic-probe"
+buffer=io.BytesIO()
+with tarfile.open(fileobj=buffer,mode="w:gz") as archive:
+    member=tarfile.TarInfo("probe")
+    member.size=len(payload)
+    archive.addfile(member,io.BytesIO(payload))
+raw=buffer.getvalue()
+assert gzip.decompress(raw)
+with tarfile.open(fileobj=io.BytesIO(base64.b64decode(base64.b64encode(raw))),mode="r:gz") as archive:
+    actual=archive.extractfile("probe").read()
+assert hashlib.sha256(actual).digest()==hashlib.sha256(payload).digest()
+`
+
+const observerDiagnosticProbeShell = `export PYTHONDONTWRITEBYTECODE=1
+probe=$1; shift; for py do
+if command -v "$py" >/dev/null 2>&1 && "$py" -c "$probe" >/dev/null 2>&1; then exit 0; fi
+done; exit 1`
+
+// verifyObserverDiagnostics checks every Ready Observer running the configured
+// image. It does not collect logs, create jobs, or modify database Pod files.
 func verifyObserverDiagnostics(ctx context.Context, run RunCommand, namespace, release string, values map[string]interface{}, interval time.Duration) error {
 	image := pfString(pfGet(values, "observer", "image"))
 	expected := 0
@@ -50,9 +72,9 @@ func verifyObserverDiagnostics(ctx context.Context, run RunCommand, namespace, r
 		}
 		if ready {
 			for _, pod := range pods.Items {
-				_, err := bounded(ctx, run, "kubectl", "--request-timeout=20s", "-n", namespace, "exec", pod.Name, "-c", "observer", "--", "/bin/sh", "-c", "command -v tar >/dev/null && command -v gzip >/dev/null && tar --version >/dev/null && gzip --version >/dev/null")
+				_, err := bounded(ctx, run, "kubectl", "--request-timeout=20s", "-n", namespace, "exec", pod.Name, "-c", "observer", "--", "/bin/sh", "-c", observerDiagnosticProbeShell, "observer-diagnostic-probe", observerDiagnosticPythonProbe, "/usr/libexec/platform-python", "python3")
 				if err != nil {
-					return fmt.Errorf("Observer %s cannot execute tar/gzip required by log download; use a verified diagnostics-capable Observer image: %w", pod.Name, err)
+					return fmt.Errorf("Observer %s cannot execute the Python >=3.6 in-memory archive/transfer probe required by log download (/usr/libexec/platform-python or python3); retain the installed Observer image and check diagnostic compatibility: %w", pod.Name, err)
 				}
 			}
 			return nil
@@ -61,7 +83,7 @@ func verifyObserverDiagnostics(ctx context.Context, run RunCommand, namespace, r
 		select {
 		case <-ctx.Done():
 			timer.Stop()
-			return fmt.Errorf("waiting for %d Observer Pods running the configured diagnostics-capable image: %w", expected, ctx.Err())
+			return fmt.Errorf("waiting for %d Ready Observer Pods running the configured image: %w", expected, ctx.Err())
 		case <-timer.C:
 		}
 	}

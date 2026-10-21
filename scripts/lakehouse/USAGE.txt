@@ -16,16 +16,19 @@ The lock is produced from real image builds/saves, never guessed versions:
     "binary_rebuild": true,
     "images": [
       {
-        "role": "observer",
+        "role": "obdiag",
         "reference": "<distinct fixed tag or digest>",
         "image_id": "sha256:<actual config SHA256>",
-        "base_image_id": "sha256:<baseline Observer config SHA256>",
         "source": {"description": "<record the actual build provenance>"}
       }
     ]
   }
-Include observer, obdiag and oceanbase-helper records. A dashboard record is
-also supported when its binary/image has changed. Set binary_rebuild according
+Include obdiag and oceanbase-helper records. A dashboard record is also
+supported when its binary/image has changed. The current diagnostics profile
+contains these three images and deliberately omits observer: its Kubernetes
+transport uses the existing container's Python tarfile/gzip support, including
+platform-python, without adding tar or changing the database image.
+Set binary_rebuild according
 to the actual build; per-image source metadata is preserved. References must be
 distinct from the baseline and use explicit non-latest tags or digests.
 
@@ -35,16 +38,24 @@ The existing Go installer consumes images/archives.json and imports any missing
 diagnostic image automatically. No additional user command is required.
 
 The unchanged core archive remains covered by the final lock; replaced images
-are recorded as observer-base/dashboard-base while active roles point to the
-new identities. Use the original baseline for each build, not a previous
+are recorded with a -base suffix while active roles point to the new identities.
+When observer is omitted, its original role, reference and config ID remain
+unchanged. Use the original baseline for each build, not a previous
 diagnostics bundle. This preserves provenance without recursively accumulating
 old overridden images.
 
 Both bundled and standalone Dashboard configuration receive the locked obdiag
 and oceanbaseHelper image references. values/quickstart.yaml receives the full
-fresh-install profile. values/diagnostics-upgrade.yaml contains only the new
-Observer, Dashboard, and diagnostic-tool image references, so an explicit -f
-upgrade does not reset existing cluster IDs, resources, storage or credentials.
+fresh-install profile. values/diagnostics-upgrade.yaml contains only Dashboard
+and diagnostic-tool image references. It never includes observer, so an explicit
+-f upgrade preserves the existing Observer image as well as cluster IDs,
+resources, storage and credentials. shared_storage does not support Observer
+image upgrades; do not use quickstart.yaml to upgrade an existing release.
+
+For a separately validated fresh-install image build, an optional observer
+record is accepted with base_image_id matching the original baseline Observer.
+It changes fresh-install values only; it does not authorize upgrading an
+existing shared_storage cluster or add observer to diagnostics-upgrade.yaml.
 
 Run regression fixtures on the build host:
   python3 -m unittest discover -s scripts/lakehouse -p 'test_*.py'

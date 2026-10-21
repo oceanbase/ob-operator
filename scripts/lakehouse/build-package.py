@@ -206,8 +206,8 @@ def apply_diagnostic_profile(lock, profile_path):
             raise ValueError("Use the original baseline, not a recursively updated diagnostics bundle")
         roles.add(role)
         refs.add(normalize_ref(reference))
-    if not {"obdiag", "oceanbase-helper", "observer"} <= roles:
-        raise ValueError("Diagnostics lock must include obdiag, oceanbase-helper and observer")
+    if not {"obdiag", "oceanbase-helper"} <= roles:
+        raise ValueError("Diagnostics lock must include obdiag and oceanbase-helper")
     for entry in additions:
         role = entry["role"]
         if role in original:
@@ -338,8 +338,9 @@ def quickstart_profile(baseline, package, images):
     (package / "values").mkdir()
     write_yaml(package / "values/quickstart.yaml", values)
     if "obdiag" in images:
-        upgrade = {"observer": {"image": images["observer"]["reference"]},
-                   "dashboard": {"image": images["dashboard"]["reference"]}}
+        # shared_storage keeps the Observer image immutable. A diagnostics
+        # upgrade must work for existing clusters without changing that image.
+        upgrade = {"dashboard": {"image": images["dashboard"]["reference"]}}
         configure_diagnostics(upgrade["dashboard"], images)
         write_yaml(package / "values/diagnostics-upgrade.yaml", upgrade)
 
@@ -580,7 +581,7 @@ def main():
     parser.add_argument("--output", type=Path, required=True, help="New delivery directory; must not already exist")
     parser.add_argument("--minio-cache", type=Path, required=True, help="Docker-save gzip archive containing locked MinIO/mc images")
     parser.add_argument("--diagnostics-archive", type=Path, help="Docker-save gzip archive with the exact diagnostics-lock images")
-    parser.add_argument("--diagnostics-lock", type=Path, help="Fixed identities for obdiag/helper/Observer derivative and optional updated Dashboard")
+    parser.add_argument("--diagnostics-lock", type=Path, help="Fixed identities for obdiag/helper and optional updated Dashboard or fresh-install Observer")
     parser.add_argument("--version", required=True, help="Unique delivery version, e.g. 20261021-COMMITSHA")
     parser.add_argument("--installer-binary", type=Path, help="Linux/amd64 binary; default SOURCE/bin/lakehouse-installer")
     parser.add_argument("--source-archive", type=Path, help="Original git archive for an extracted source tree; verifies its commit and every exported file without requiring .git")
