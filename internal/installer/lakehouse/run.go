@@ -310,6 +310,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 	installCtx, cancel := context.WithTimeout(ctx, 2*time.Hour)
 	defer cancel()
 	cmd := command(installCtx, "bash", filepath.Join(o.bundle, "charts/oceanbase-lakehouse/install.sh"), o.release, o.namespace, "-f", filepath.Join(stateDir, "values.yaml"))
+	cmd.Env = append(os.Environ(), "LAKEHOUSE_MANAGED_ACCESS=1")
 	cmd.Stdout = out
 	cmd.Stderr = stderr
 	if err = cmd.Run(); err != nil {

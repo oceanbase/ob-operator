@@ -214,8 +214,13 @@ case "$dashboard_enabled" in
   *) echo 'Cannot determine Dashboard readiness: resolved dashboard.enabled is missing.' >&2; exit 1 ;;
 esac
 echo "Lakehouse ready: namespace=$namespace LogService=$release-ls OBCluster=$release-ob ($((SECONDS - started))s)"
+# The package entry point verifies HTTP access and prints one combined summary.
+# Only suppress expert access instructions after every readiness gate has passed.
+if [[ ${LAKEHOUSE_MANAGED_ACCESS:-0} == 1 ]]; then
+  exit 0
+fi
 echo 'Database root password is in the configured Secret (default: RELEASE-db-root, key: password).'
-echo 'Use kubectl get observers and the per-observer Services for SQL connectivity; no public ports are opened automatically.'
+echo 'Use kubectl get observers and the per-observer Services for SQL connectivity; no public database ports are opened automatically.'
 if [[ $dashboard_enabled == true ]]; then
   dashboard_port=$(jq -er '.port' <<<"$dashboard_config")
   echo "Dashboard ready: oceanbase-dashboard-$release"

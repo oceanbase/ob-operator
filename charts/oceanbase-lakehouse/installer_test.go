@@ -38,6 +38,8 @@ func TestInstallerSequencingResumeAndFailures(t *testing.T) {
 		env          []string
 	}{
 		{"fresh", "storage,logservice,cluster", 0, []string{"MOCK_NAMESPACE=absent"}},
+		{"packaged-entry", "storage,logservice,cluster", 0, []string{"LAKEHOUSE_MANAGED_ACCESS=1"}},
+		{"dashboard-packaged-entry-failure", "storage,logservice,cluster", 36, []string{"LAKEHOUSE_MANAGED_ACCESS=1", "MOCK_FAIL_DASHBOARD=true"}},
 		{"dashboard-disabled", "storage,logservice,cluster", 0, []string{"MOCK_DASHBOARD=false"}},
 		{"dashboard-failure", "storage,logservice,cluster", 36, []string{"MOCK_FAIL_DASHBOARD=true"}},
 		{"dashboard-missing-values", "storage,logservice,cluster", 1, []string{"MOCK_DASHBOARD=null"}},
@@ -238,7 +240,19 @@ esac
 				t.Fatalf("success reported before Observer Pod readiness: %s\n%s", output, calls)
 			}
 			dashboardWait := "rollout status deployment/oceanbase-dashboard-qa --timeout=9s"
-			if tc.code == 0 && tc.name != "dashboard-disabled" {
+			if tc.name == "packaged-entry" {
+				for _, fragment := range []string{"port-forward", "get secret", "Database root password", "no public", "Dashboard ready:"} {
+					if strings.Contains(string(output), fragment) {
+						t.Fatalf("managed entry must leave access instructions to the parent: %s", output)
+					}
+				}
+				for _, gate := range []string{dashboardWait, "get oblogservicecluster/qa-ls -o jsonpath=", "get obcluster/qa-ob -o jsonpath=", "wait pods -l ref-obcluster=qa-ob"} {
+					if !strings.Contains(string(calls), gate) {
+						t.Fatalf("managed entry skipped readiness gate %q: %s", gate, calls)
+					}
+				}
+			}
+			if tc.code == 0 && tc.name != "dashboard-disabled" && tc.name != "packaged-entry" {
 				if !strings.Contains(string(calls), dashboardWait) || !strings.Contains(string(output), "Dashboard ready:") ||
 					!strings.Contains(string(output), "get secret qa-dashboard-bootstrap") {
 					t.Fatalf("success requires Dashboard readiness and access instructions: %s\n%s", output, calls)
