@@ -1,0 +1,18 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+COPY tar-1.30-13.0.1.al8.x86_64.rpm /tmp/lakehouse-tar.rpm
+COPY oceanbase-diagnostic-tool-5.0.1-32026101919.el8.x86_64.rpm /tmp/lakehouse-obdiag.rpm
+COPY RPM-GPG-KEY-OceanBase-old /tmp/RPM-GPG-KEY-OceanBase
+RUN echo '647a01d937eeaefe36857bc26c429d16bbaa651d953b1ac262a9fc43becf0c90  /tmp/lakehouse-tar.rpm' | sha256sum -c - \
+    && echo '19a4d249d439afa82ec7ce034e272bb57eadc49d3ecc6a057c74a6ed8528b6bd  /tmp/lakehouse-obdiag.rpm' | sha256sum -c - \
+    && echo 'dff33e8dcee747a23c285eaaea1d7dea14175000b726e9452bd90c431c21aafe  /tmp/RPM-GPG-KEY-OceanBase' | sha256sum -c - \
+    && rpm --import /tmp/RPM-GPG-KEY-OceanBase \
+    && rpm -K /tmp/lakehouse-tar.rpm \
+    && rpm -K /tmp/lakehouse-obdiag.rpm \
+    && rpm -ivh /tmp/lakehouse-tar.rpm /tmp/lakehouse-obdiag.rpm \
+    && rm /tmp/lakehouse-tar.rpm /tmp/lakehouse-obdiag.rpm /tmp/RPM-GPG-KEY-OceanBase \
+    && /usr/libexec/platform-python -c 'import sys, json, tarfile, gzip, pathlib, subprocess, tempfile; assert sys.version_info >= (3, 6)' \
+    && ln -s /usr/libexec/platform-python /usr/bin/python3
+ENV PATH="/opt/oceanbase-diagnostic-tool:${PATH}"
+LABEL org.opencontainers.image.source="https://github.com/oceanbase/obdiag" \
+      org.opencontainers.image.version="5.0.1-32026101919.el8"

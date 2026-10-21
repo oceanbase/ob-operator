@@ -1,0 +1,8 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+COPY tar-1.30-13.0.1.al8.x86_64.rpm /tmp/lakehouse-tar.rpm
+RUN echo '647a01d937eeaefe36857bc26c429d16bbaa651d953b1ac262a9fc43becf0c90  /tmp/lakehouse-tar.rpm' | sha256sum -c - \
+    && rpm -K /tmp/lakehouse-tar.rpm \
+    && rpm -ivh /tmp/lakehouse-tar.rpm \
+    && rm /tmp/lakehouse-tar.rpm \
+    && tar --version
