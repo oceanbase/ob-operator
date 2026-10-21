@@ -24,9 +24,12 @@ dashboard:
     includeNamespace: true
   serviceAccount:
     create: false # parent passes imagePullSecrets to this account
+  nodeSelector: {}
+  tolerations: []
   service:
     type: ClusterIP
     port: 80
+    nodePort: null
   prometheus:
     persistence:
       enabled: true

@@ -17,7 +17,12 @@ userCredentials:
 userNamespace: 
 configNamespace: 
 
+nodeSelector: {}
+tolerations: []
+
 service:
+  # Empty lets Kubernetes allocate an available port.
+  nodePort: null
   type: NodePort
   port: 80
 

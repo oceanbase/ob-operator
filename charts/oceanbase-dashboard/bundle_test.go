@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"strings"
 	"testing"
 
 	"gopkg.in/yaml.v3"
@@ -246,5 +247,110 @@ func TestRetainedAccountsAndRBACSurviveUpgrade(t *testing.T) {
 	}
 	if dashboardField(cm, "metadata", "annotations", "helm.sh/resource-policy") != "keep" {
 		t.Fatal("authorization state is not retained")
+	}
+}
+
+func TestMonitoringSidecarsGateReadiness(t *testing.T) {
+	deployment := dashboardObject(t, renderDashboard(t, "qa-ns"), "Deployment", "oceanbase-dashboard-qa")
+	containers := dashboardField(deployment, "spec", "template", "spec", "containers").([]interface{})
+	for _, item := range containers {
+		container := item.(map[string]interface{})
+		port := 0
+		switch container["name"] {
+		case "prometheus":
+			port = 9090
+		case "alertmanager":
+			port = 9093
+		default:
+			continue
+		}
+		if dashboardField(container, "readinessProbe", "httpGet", "path") != "/-/ready" || dashboardField(container, "readinessProbe", "httpGet", "port") != port {
+			t.Fatalf("%s must gate Pod readiness with its actual HTTP health endpoint", container["name"])
+		}
+		if dashboardField(container, "readinessProbe", "timeoutSeconds") != 3 {
+			t.Fatal("sidecar probe must be bounded")
+		}
+	}
+}
+
+func TestDashboardSchedulingAndNodePort(t *testing.T) {
+	docs := renderDashboard(t, "qa-ns", "--set-string", "nodeSelector.kubernetes\\.io/hostname=worker-a",
+		"--set-string", "tolerations[0].key=dedicated,tolerations[0].operator=Equal,tolerations[0].value=lakehouse,tolerations[0].effect=NoSchedule",
+		"--set", "service.type=NodePort,service.nodePort=32101")
+	deployment := dashboardObject(t, docs, "Deployment", "oceanbase-dashboard-qa")
+	if dashboardField(deployment, "spec", "template", "spec", "nodeSelector", "kubernetes.io/hostname") != "worker-a" {
+		t.Fatal("Dashboard must follow the selected worker")
+	}
+	tolerations := dashboardField(deployment, "spec", "template", "spec", "tolerations").([]interface{})
+	want := map[string]interface{}{"key": "dedicated", "operator": "Equal", "value": "lakehouse", "effect": "NoSchedule"}
+	if len(tolerations) != 1 || !reflect.DeepEqual(tolerations[0], want) {
+		t.Fatalf("unexpected tolerations: %v", tolerations)
+	}
+	service := dashboardObject(t, docs, "Service", "oceanbase-dashboard-qa")
+	ports := dashboardField(service, "spec", "ports").([]interface{})
+	if dashboardField(ports[0].(map[string]interface{}), "nodePort") != 32101 {
+		t.Fatal("explicit NodePort was ignored")
+	}
+	for _, args := range [][]string{nil, {"--set", "service.type=ClusterIP,service.nodePort=32101"}} {
+		docs := renderDashboard(t, "qa-ns", args...)
+		service := dashboardObject(t, docs, "Service", "oceanbase-dashboard-qa")
+		ports := dashboardField(service, "spec", "ports").([]interface{})
+		if dashboardField(ports[0].(map[string]interface{}), "nodePort") != nil {
+			t.Fatal("must omit nodePort when unset or not applicable")
+		}
+	}
+}
+
+func TestNotesDescribeActualCredentialOwnership(t *testing.T) {
+	// Render the actual NOTES template inside an isolated ConfigMap so this test
+	// remains offline (helm template normally suppresses NOTES from its output).
+	dir := t.TempDir()
+	if err := os.Mkdir(filepath.Join(dir, "templates"), 0700); err != nil {
+		t.Fatal(err)
+	}
+	notes, err := os.ReadFile("templates/NOTES.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	values, err := os.ReadFile("values.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for name, body := range map[string][]byte{
+		"Chart.yaml":           []byte("apiVersion: v2\nname: notes-test\nversion: 0.1.0\n"),
+		"values.yaml":          values,
+		"notes.tpl":            notes,
+		"templates/notes.yaml": []byte("apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: notes\ndata:\n  notes: {{ tpl (.Files.Get \"notes.tpl\") . | quote }}\n"),
+	} {
+		if err := os.WriteFile(filepath.Join(dir, name), body, 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, initialize := range []string{"true", "false"} {
+		out, err := exec.Command("helm", "template", "qa", dir, "-n", "qa-ns", "--set", "initCredentials="+initialize+",service.port=8888",
+			"--set-string", "adminPassword=NOTES_PASSWORD_SENTINEL,userCredentials=provided-users,userNamespace=identity-ns").CombinedOutput()
+		if err != nil {
+			t.Fatalf("notes render: %v %s", err, out)
+		}
+		var document map[string]interface{}
+		if err := yaml.Unmarshal(out, &document); err != nil {
+			t.Fatal(err)
+		}
+		text := dashboardField(document, "data", "notes").(string)
+		if strings.Contains(text, "NOTES_PASSWORD_SENTINEL") || strings.Contains(text, "--address 0.0.0.0") {
+			t.Fatal("notes exposed credentials or public forwarding")
+		}
+		if !strings.Contains(text, "18081:8888") {
+			t.Fatal("access command ignored configured service port")
+		}
+		if initialize == "true" {
+			if !strings.Contains(text, "standalone chart default") || !strings.Contains(text, "use the current password") {
+				t.Fatal("standalone password guidance incomplete")
+			}
+		} else {
+			if strings.Contains(text, "standalone chart default") || !strings.Contains(text, "provided-users") || !strings.Contains(text, "identity-ns") || !strings.Contains(text, "qa-dashboard-bootstrap") {
+				t.Fatal("parent/external credential guidance incorrect")
+			}
+		}
 	}
 }

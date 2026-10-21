@@ -19,6 +19,14 @@ spec:
         app: oceanbase-dashboard-{{ .Release.Name }}
     spec:
       serviceAccountName: {{ .Release.Name }}-sa
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       initContainers:
         - name: prometheus-storage-owner-init
           image: busybox:latest
@@ -100,6 +108,13 @@ spec:
           command: ["sh", "-c", "cp /etc/cfg/prometheus/rules/prometheus.rules /etc/prometheus/rules/prometheus.rules && /bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus --web.enable-lifecycle"]
           ports:
             - containerPort: 9090
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
           volumeMounts:
             - name: prometheus-rules-readonly-volume
               mountPath: /etc/cfg/prometheus/rules
@@ -115,6 +130,13 @@ spec:
           ports:
             - name: alertmanager
               containerPort: 9093
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9093
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
           resources:
             requests:
               cpu: 500m

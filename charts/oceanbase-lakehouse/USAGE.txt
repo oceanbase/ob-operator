@@ -1,4 +1,12 @@
-OceanBase lakehouse online Helm installation (experimental 0.2.0)
+Packaged single-worker quick start
+----------------------------------
+For the complete Linux amd64 bundle, run bash install.sh at its root. It checks
+capacity, reuses matching image IDs, imports missing archives, prepares an absent
+Operator, installs lakehouse plus Dashboard, and prints a verified node-local
+Dashboard URL. No separate Dashboard command is needed. See INSTALL.txt.
+The advanced chart-only workflow below retains its existing prerequisites.
+
+OceanBase lakehouse online Helm installation (experimental 0.3.0)
 
 Prerequisites
 -------------
@@ -73,7 +81,8 @@ This ONE command performs storage -> LogService -> Observer stages, each bounded
 by LAKEHOUSE_TIMEOUT (seconds, default 1800). It waits for the initialization Job
 and CR running status, Observer Pod readiness and Dashboard HTTP readiness, not
 merely Helm deployed status. Dashboard is present from the first storage stage.
-Run the same command with the SAME complete values file to resume or upgrade.
+Run the same command to resume or upgrade. Existing Helm user values are reused;
+new values flags override them. New installs still need their image/storage configuration.
 Plain helm install defaults to the storage stage ONLY and is not a full install.
 Do not use helm --atomic, --force or --cleanup-on-fail for this stateful stack.
 The installer intentionally does not perform automatic rollback or data cleanup.

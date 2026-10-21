@@ -1,0 +1,87 @@
+OceanBase 湖库：单节点体验包
+============================
+
+用户只需要「解压 → 执行一个安装命令 → 打开 Dashboard」。Dashboard、Prometheus、
+Alertmanager 默认随湖库安装在同一个 Helm release 中，不需要单独运行安装脚本。
+
+1. 准备
+-------
+在目标 Kubernetes Worker 上执行。需要 Linux amd64、Kubernetes >=1.27、Helm >=3.12、
+kubectl、jq、可用的默认 StorageClass，以及管理员 kubeconfig。推荐独立 8 核、32GiB
+以上内存的体验机；脚本根据已占用资源计算能否安装，磁盘还需容纳镜像和PVC。
+本包不安装操作系统或 Kubernetes，不会修改已有共享 Operator。
+
+交付目录保留主 tar、sha256 文件及 MinIO/mc 配套缓存 tar.gz（如交付）。MinIO 缓存
+放在主包解压目录的旁边，名称/摘要在 images/archives.json 中固定。已缓存且 ID
+完全匹配时会自动跳过；不依赖执行命令时的当前目录，不需要手工导入镜像。
+
+  sha256sum -c oceanbase-lakehouse-*.tar.sha256
+  tar -xf oceanbase-lakehouse-具体版本.tar
+  cd oceanbase-lakehouse-具体版本
+  bash install.sh
+
+安装入口自动检查版本、存储、节点状态、剩余资源、Operator/Webhook 和镜像 ID；
+只导入缺少或不匹配的镜像。在没有 Operator 的单节点集群上，安装配套 cert-manager
+与支持湖库的 Operator。已有但不完整/不兼容的组件会给出明确错误，要求先修复。
+随后依次安装存储、LogService、Observer，等待 Dashboard 三个容器就绪，并验证
+节点内 HTTP。整个过程输出阶段、等待时间及失败诊断，失败不自动删除数据库。
+
+默认 release=ob-demo、namespace=ob-helm-demo；LogService 3×1CPU/4GiB，Observer
+2CPU/10GiB，MinIO及Dashboard另外占用资源。首次随机生成并保存两个数据库集群ID。
+本入口为单 Worker 体验，不提供跨节点HA承诺；高级多节点使用 charts/ 下原流程。
+
+2. 打开 Dashboard
+-----------------
+安装成功直接打印 Dashboard 地址、用户名 admin、初始密码文件位置（0600）。
+在浏览器可达节点的网络内打开地址，读取密码文件，首次登录按页面提示修改密码。
+密码不打印在安装日志中；已修改密码的账号继续使用当前密码，不会被升级重置。
+数据库会出现在 Dashboard 中，无需额外安装或注册。
+
+如果服务器使用公网地址映射，在同一次安装时指定：
+  bash install.sh --dashboard-host 服务器公网IP
+
+默认新装使用 Kubernetes 自动分配的 NodePort。网络安全组/防火墙需要允许浏览器
+访问该端口；安装器验证节点内访问，不声称外网防火墙已经连通。不会自动修改云
+安全组。已有 release 的 Service 类型和自定义 values 保留；若需要改为直接节点
+访问，可在同一安装命令中显式添加 --access nodeport。也支持 --access clusterip。
+
+重新查看访问说明（不会重建数据库）：
+  bash install.sh --show-access --dashboard-host 服务器公网IP
+
+3. 预检查、续跑、自定义
+-----------------------
+只读检查（无镜像导入、无 Kubernetes 修改、无密码文件导出）：
+  bash install.sh --check
+
+湖库安装阶段失败后，处理提示原因，再执行同一条命令。如果首次安装配套
+Operator/cert-manager 中断并留下不完整组件，需要先修复该前置组件，安装器不会
+自动覆盖或删除它。已存在的 Helm release 配置自动保留，
+首次安装中断前保存的配置也会复用。已有集群ID、资源规格、存储、账号不恢复为
+新建示例。显式传入的新 values 覆盖保留配置；不要随意修改存储身份或集群ID。
+
+  bash install.sh --release my-ob --namespace my-ob -f my-values.yaml
+
+选择节点：--node 节点名。入口必须在该 Worker 上执行，避免把镜像导入错误主机。
+K3s/containerd、Docker 自动识别；非 K3s 的 containerd 需明确 --containerd-address
+和 --cri-endpoint，两个参数指向同一本机 Unix socket，不推测运行时。
+
+受保护的续跑 values、ACCESS.txt 和初始密码保存在包内 .lakehouse-install/ 下。
+不同 Kubernetes 集群、namespace、release 分开保存；不要把此目录提交到 Git
+或共享给无关人员。Helm 的详细日志位于安装输出显示的私有临时目录。
+
+4. 范围和数据保留
+-----------------
+这是一套 Linux amd64 内部 QA 体验包；数据库/Operator/Dashboard 镜像未因安装体验
+优化而重编译，真实源码版本和镜像 ID 见 image-lock.json。MinIO/mc 是独立第三方
+AGPL-3.0 软件，主包和配套缓存的范围见交付清单。
+
+功能范围：本包覆盖湖库运行、Dashboard 基础管理与监控。日志下载、告警诊断和
+巡检另外依赖 oceanbase-helper 与 obdiag 镜像，当前主包未包含这两个镜像，离线
+环境不能直接使用这些功能。日志任务在 obdiag 容器中执行 tar -czf，镜像需要包含
+tar/gzip；obdiag 的 Kubernetes 收集/下载实现还会在 Observer 容器执行 tar，
+当前 QA Observer 镜像缺少 tar，也需要修复后再验证日志下载。仅给宿主机安装 tar
+不能补齐容器依赖。SQL分析器镜像也需另行准备。
+
+不要通过删 namespace、PVC、CR 或 helm --force/--atomic 处理安装失败。卸载默认
+保留数据库CR、凭据和存储，并不回收磁盘，也不代替备份。已有镜像/身份不兼容时
+应明确迁移，不会在后台重建数据库。更多配置见 charts/oceanbase-lakehouse/USAGE.txt。

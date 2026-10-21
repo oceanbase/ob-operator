@@ -49,3 +49,7 @@ log/*
 node_modules/
 ui/dist/
 rbac_policy*.csv
+
+# Local lakehouse installer credentials, state and compiled delivery binary
+.lakehouse-install/
+/bin/lakehouse-installer

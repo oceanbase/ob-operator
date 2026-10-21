@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# One command, three resumable stages; never rolls back or deletes persistent data.
+# One command, resumable stages; never rolls back or deletes persistent data.
 set -Eeuo pipefail
 if (( $# < 2 )); then
   echo "Usage: bash install.sh RELEASE NAMESPACE [-f values.yaml] [--set key=value]" >&2
@@ -12,61 +12,176 @@ shift 2
 [[ $namespace =~ ^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$ ]] || { echo 'Invalid namespace.' >&2; exit 2; }
 for tool in helm kubectl jq; do command -v "$tool" >/dev/null || { echo "Missing tool: $tool" >&2; exit 2; }; done
 chart_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-helm_args=(--history-max 10)
+user_args=()
 while (( $# )); do
   case "$1" in
     -f|--values|--set|--set-string|--set-file)
       (( $# >= 2 )) || { echo 'Missing Helm option value.' >&2; exit 2; }
-      helm_args+=("$1" "$2"); shift 2 ;;
+      user_args+=("$1" "$2"); shift 2 ;;
     *) echo "Unsupported option: $1. Only values flags are accepted; atomic/force/cleanup are intentionally disallowed." >&2; exit 2 ;;
   esac
 done
 timeout=${LAKEHOUSE_TIMEOUT:-1800}
-[[ $timeout =~ ^[1-9][0-9]{0,4}$ ]] || { echo 'LAKEHOUSE_TIMEOUT must be 1-99999 seconds.' >&2; exit 2; }
-# Fail before creating resources if this is not an SS-enabled Operator cluster.
-for crd in obclusters oblogserviceclusters oblogservicezones oblogservicenodes; do
-  kubectl get "crd/$crd.oceanbase.oceanbase.com" >/dev/null
-  kubectl wait "crd/$crd.oceanbase.oceanbase.com" --for=condition=Established --timeout=30s >/dev/null
+request_timeout=${LAKEHOUSE_REQUEST_TIMEOUT:-30}
+diagnostic_timeout=${LAKEHOUSE_DIAGNOSTIC_TIMEOUT:-10}
+progress_interval=${LAKEHOUSE_PROGRESS_INTERVAL:-15}
+for setting in timeout request_timeout diagnostic_timeout progress_interval; do
+  [[ ${!setting} =~ ^[1-9][0-9]{0,4}$ ]] || { echo "$setting must be 1-99999 seconds." >&2; exit 2; }
 done
-if ! kubectl get namespace "$namespace" >/dev/null 2>&1; then
-  kubectl create namespace "$namespace" >/dev/null
-fi
-diagnostics() {
-  echo "Installation stopped; data has NOT been automatically removed. Resume with the same command after resolving the failure." >&2
-  kubectl -n "$namespace" get pods,jobs,obclusters,oblogserviceclusters >&2 || true
-  # Do not print rendered manifests, Secret data, or raw Operator logs.
+umask 077
+work_dir=$(mktemp -d "${TMPDIR:-/tmp}/oceanbase-lakehouse-${release}.XXXXXX")
+log_file=$work_dir/install.log
+: > "$log_file"
+base_values=$work_dir/previous-values.json
+started=$SECONDS
+current_action=preflight
+active_pid=''
+monitor_pid=''
+echo "Installation log (private, may contain sensitive Helm output): $log_file"
+
+# Helm's read commands have no --timeout flag. Bound the executable itself as
+# well as kubectl requests. The monitor also provides progress for quiet Helm
+# waits. It never prints command arguments (which can contain credentials).
+run_bounded() {
+  local budget=$1 label=$2 command_pid watcher_pid marker result
+  shift 2
+  marker=$(mktemp "$work_dir/deadline.XXXXXX")
+  rm -f "$marker"
+  "$@" 2>>"$log_file" &
+  command_pid=$!
+  active_pid=$command_pid
+  (
+    ticker_pid=''
+    trap '[[ -z $ticker_pid ]] || kill "$ticker_pid" 2>/dev/null || true; exit 0' TERM INT
+    local_begin=$SECONDS
+    next_progress=$progress_interval
+    while kill -0 "$command_pid" 2>/dev/null; do
+      elapsed=$((SECONDS - local_begin))
+      if (( elapsed >= budget )); then
+        : > "$marker"
+        echo "Timed out after ${budget}s: $label" >&2
+        kill -TERM "$command_pid" 2>/dev/null || true
+        /bin/sleep 1 & ticker_pid=$!; wait "$ticker_pid" || true
+        kill -KILL "$command_pid" 2>/dev/null || true
+        exit 0
+      fi
+      if (( elapsed >= next_progress )); then
+        echo "[wait] $label: ${elapsed}s elapsed (limit ${budget}s)" >&2
+        next_progress=$((elapsed + progress_interval))
+      fi
+      /bin/sleep 1 & ticker_pid=$!; wait "$ticker_pid" || true
+    done
+  ) &
+  watcher_pid=$!
+  monitor_pid=$watcher_pid
+  if wait "$command_pid"; then result=0; else result=$?; fi
+  kill "$watcher_pid" 2>/dev/null || true
+  wait "$watcher_pid" 2>/dev/null || true
+  active_pid=''
+  monitor_pid=''
+  if [[ -f $marker ]]; then result=124; fi
+  rm -f "$marker"
+  return "$result"
 }
-trap diagnostics ERR
-releases=$(helm list -n "$namespace" --all -o json)
-stage=storage
-if jq -e --arg name "$release" '.[] | select(.name == $name)' <<<"$releases" >/dev/null; then
-  # No --reuse-values: the caller supplies the same complete values file on every
-  # invocation. Lookup-based identity protection rejects accidental drift.
-  stage=$(helm get values "$release" -n "$namespace" --all -o json | jq -er '.stage')
+
+# Summarize only structured status/reason fields. Raw Events messages, Pod specs,
+# rendered manifests, Secret data and Operator logs never reach the terminal.
+diagnostics() {
+  local resources events
+  echo "Installation stopped during $current_action; data has NOT been automatically removed." >&2
+  echo "Resume with the same release and namespace after resolving the failure; saved Helm user values will be reused, and new values flags override them." >&2
+  echo "Private installation log: $log_file" >&2
+  if resources=$(run_bounded "$diagnostic_timeout" 'resource diagnostics' kubectl -n "$namespace" get pods,jobs,obclusters,oblogserviceclusters,pvc -o json --request-timeout="${diagnostic_timeout}s"); then
+    jq -r '.items[] | [.kind, .metadata.name, (.status.phase // .status.status // ""), ([.status.containerStatuses[]?.state.waiting.reason] | join(","))] | @tsv' <<<"$resources" >&2 || true
+  fi
+  if events=$(run_bounded "$diagnostic_timeout" 'warning event diagnostics' kubectl -n "$namespace" get events --field-selector=type=Warning -o json --request-timeout="${diagnostic_timeout}s"); then
+    jq -r '.items | sort_by(.lastTimestamp // .metadata.creationTimestamp) | .[-10:][] | ["Warning", .reason, .involvedObject.kind, .involvedObject.name] | @tsv' <<<"$events" >&2 || true
+    if jq -e '.items[] | select(.reason == "FailedScheduling")' <<<"$events" >/dev/null; then
+      echo 'Check node capacity, resource requests, taints and volume binding for FailedScheduling.' >&2
+    fi
+    if jq -e '.items[] | select(.reason == "FailedMount" or .reason == "FailedBinding" or .reason == "ProvisioningFailed")' <<<"$events" >/dev/null; then
+      echo 'Check StorageClass, PVC status and storage provisioner availability.' >&2
+    fi
+  fi
+}
+finish() {
+  local result=$?
+  trap - EXIT INT TERM
+  set +e
+  [[ -z $active_pid ]] || kill "$active_pid" 2>/dev/null
+  [[ -z $monitor_pid ]] || kill "$monitor_pid" 2>/dev/null
+  if (( result != 0 )); then diagnostics; fi
+  rm -f "$base_values" "$base_values.raw"
+  exit "$result"
+}
+trap finish EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+announce() {
+  current_action=$1
+  echo "[stage] $current_action ($((SECONDS - started))s elapsed)"
+}
+announce 'Preflight: checking SS-enabled CRDs and existing release'
+for crd in obclusters oblogserviceclusters oblogservicezones oblogservicenodes; do
+  run_bounded "$request_timeout" "read CRD $crd" kubectl get "crd/$crd.oceanbase.oceanbase.com" --request-timeout="${request_timeout}s" >>"$log_file"
+  run_bounded "$request_timeout" "wait for CRD $crd" kubectl wait "crd/$crd.oceanbase.oceanbase.com" --for=condition=Established --timeout="${request_timeout}s" --request-timeout="${request_timeout}s" >>"$log_file"
+done
+# NotFound is different from Forbidden/network failure. Never create or advance
+# an installation after an unsuccessful read of existing state.
+namespace_resource=$(run_bounded "$request_timeout" 'read namespace' kubectl get namespace "$namespace" --ignore-not-found -o name --request-timeout="${request_timeout}s")
+if [[ -z $namespace_resource ]]; then
+  run_bounded "$request_timeout" 'create namespace' kubectl create namespace "$namespace" --request-timeout="${request_timeout}s" >>"$log_file"
 fi
+releases=$(run_bounded "$request_timeout" 'read Helm releases' helm list -n "$namespace" --all --filter "^${release}$" -o json)
+stage=storage
+helm_args=(--history-max 10)
+if jq -e --arg name "$release" '.[] | select(.name == $name)' <<<"$releases" >/dev/null; then
+  # Only explicit values from the installed release are the base: new chart
+  # defaults still apply. JSON is valid YAML. Never print these secret-bearing
+  # values or retain them after exit; caller flags always take precedence.
+  run_bounded "$request_timeout" 'read installed user values' helm get values "$release" -n "$namespace" -o json > "$base_values.raw"
+  jq 'if . == null then {} elif type == "object" then . else error("invalid installed user values") end' "$base_values.raw" > "$base_values"
+  stage=$(jq -er '.stage // "storage"' "$base_values")
+  helm_args+=(-f "$base_values")
+  echo 'Reusing installed user values; explicit values flags take precedence.'
+fi
+helm_args+=("${user_args[@]}")
 # Helm uninstall retains CRs. Reinstall must not temporarily drop to storage stage.
-if kubectl -n "$namespace" get "obcluster/$release-ob" >/dev/null 2>&1; then
-  stage=cluster
-elif kubectl -n "$namespace" get "oblogservicecluster/$release-ls" >/dev/null 2>&1; then
-  stage=logservice
+retained_cluster=$(run_bounded "$request_timeout" 'read retained OBCluster' kubectl -n "$namespace" get "obcluster/$release-ob" --ignore-not-found -o name --request-timeout="${request_timeout}s")
+retained_logservice=$(run_bounded "$request_timeout" 'read retained LogService' kubectl -n "$namespace" get "oblogservicecluster/$release-ls" --ignore-not-found -o name --request-timeout="${request_timeout}s")
+if [[ -n $retained_cluster ]]; then stage=cluster
+elif [[ -n $retained_logservice ]]; then stage=logservice
 fi
 case "$stage" in storage|logservice|cluster) ;; *) echo 'Unknown retained installation stage.' >&2; exit 1 ;; esac
 upgrade() {
-  helm upgrade --install "$release" "$chart_dir" -n "$namespace" \
-    "${helm_args[@]}" --set-string "stage=$1" --wait --wait-for-jobs --timeout "${timeout}s"
+  announce "Apply $1 configuration and wait for Helm resources"
+  run_bounded "$timeout" "Helm $1 stage" helm upgrade --install "$release" "$chart_dir" -n "$namespace" \
+    "${helm_args[@]}" --set-string "stage=$1" --wait --wait-for-jobs --timeout "${timeout}s" >>"$log_file"
 }
 wait_running() {
-  local deadline=$((SECONDS + timeout)) remaining status delay
+  local deadline=$((SECONDS + timeout)) began=$SECONDS remaining status previous='' delay budget next_progress=$SECONDS
+  announce "Wait for $1 to become running"
   while (( SECONDS < deadline )); do
     remaining=$((deadline - SECONDS))
     (( remaining > 0 )) || break
-    status=$(kubectl -n "$namespace" get "$1" -o jsonpath='{.status.status}' --request-timeout="${remaining}s")
+    budget=$request_timeout
+    (( remaining >= budget )) || budget=$remaining
+    status=$(run_bounded "$budget" "read $1 status" kubectl -n "$namespace" get "$1" -o jsonpath='{.status.status}' --request-timeout="${budget}s")
     case "$status" in
-      running) echo "$1 is running"; return 0 ;;
+      running) echo "$1 is running ($((SECONDS - began))s)"; return 0 ;;
       failed)
         echo "$1 entered failed status. Inspect the Operator events and resolve the cause before retrying; no data is deleted or bootstrap forced." >&2
         return 1 ;;
     esac
+    if [[ $status != "$previous" ]] || (( SECONDS >= next_progress )); then
+      # Do not echo arbitrary API text. Known status values aid progress; unknown
+      # values stay in the API and are summarized without exposing their content.
+      case "$status" in new|pending|creating|initializing|upgrading|running|failed) ;; *) status=pending ;; esac
+      echo "[wait] $1: $status; $((SECONDS - began))s elapsed"
+      previous=$status
+      next_progress=$((SECONDS + progress_interval))
+    fi
     remaining=$((deadline - SECONDS))
     (( remaining > 0 )) || break
     delay=5
@@ -76,10 +191,7 @@ wait_running() {
   echo "Timed out waiting for $1 to become running." >&2
   return 1
 }
-if [[ $stage == storage ]]; then
-  upgrade storage
-  stage=logservice
-fi
+if [[ $stage == storage ]]; then upgrade storage; stage=logservice; fi
 if [[ $stage == logservice ]]; then
   upgrade logservice
   wait_running "oblogservicecluster/$release-ls"
@@ -87,19 +199,21 @@ fi
 upgrade cluster
 wait_running "oblogservicecluster/$release-ls"
 wait_running "obcluster/$release-ob"
-kubectl -n "$namespace" wait pods -l "ref-obcluster=$release-ob" --for=condition=Ready --timeout="${timeout}s"
+announce 'Wait for Observer Pods to become Ready'
+run_bounded "$timeout" 'Observer Pod readiness' kubectl -n "$namespace" wait pods -l "ref-obcluster=$release-ob" --for=condition=Ready --timeout="${timeout}s" --request-timeout="${timeout}s" >>"$log_file"
 # Read resolved values without printing credentials from Helm's stored values.
-dashboard_config=$(helm get values "$release" -n "$namespace" --all -o json |
+dashboard_config=$(run_bounded "$request_timeout" 'read Dashboard configuration' helm get values "$release" -n "$namespace" --all -o json |
   jq -c '.dashboard | {enabled, port: .service.port}')
 dashboard_enabled=$(jq -r '.enabled' <<<"$dashboard_config")
 case "$dashboard_enabled" in
   true)
-    kubectl -n "$namespace" rollout status "deployment/oceanbase-dashboard-$release" --timeout="${timeout}s"
+    announce 'Wait for Dashboard, Prometheus and Alertmanager HTTP readiness'
+    run_bounded "$timeout" 'Dashboard rollout' kubectl -n "$namespace" rollout status "deployment/oceanbase-dashboard-$release" --timeout="${timeout}s" --request-timeout="${timeout}s" >>"$log_file"
     ;;
   false) ;;
-  *) echo 'Cannot determine Dashboard readiness: resolved dashboard.enabled is missing.' >&2; diagnostics; exit 1 ;;
+  *) echo 'Cannot determine Dashboard readiness: resolved dashboard.enabled is missing.' >&2; exit 1 ;;
 esac
-echo "Lakehouse ready: namespace=$namespace LogService=$release-ls OBCluster=$release-ob"
+echo "Lakehouse ready: namespace=$namespace LogService=$release-ls OBCluster=$release-ob ($((SECONDS - started))s)"
 echo 'Database root password is in the configured Secret (default: RELEASE-db-root, key: password).'
 echo 'Use kubectl get observers and the per-observer Services for SQL connectivity; no public ports are opened automatically.'
 if [[ $dashboard_enabled == true ]]; then

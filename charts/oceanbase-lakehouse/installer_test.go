@@ -1,12 +1,15 @@
 package lakehouse_test
 
 import (
+	"context"
+	"encoding/json"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 )
 
 func executable(t *testing.T, directory, name, script string) {
@@ -52,6 +55,8 @@ func TestInstallerSequencingResumeAndFailures(t *testing.T) {
 		{"retained-logservice", "logservice,cluster", 0, []string{"MOCK_RETAINED=logservice"}},
 		{"retained-cluster-overrides-old-stage", "cluster", 0, []string{"MOCK_RELEASE_STAGE=storage", "MOCK_RETAINED=cluster"}},
 		{"missing-crd", "", 31, []string{"MOCK_MISSING_CRD=true"}},
+		{"namespace-forbidden", "", 39, []string{"MOCK_NAMESPACE=forbidden"}},
+		{"retained-read-failure", "", 40, []string{"MOCK_RETAINED=unavailable"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			dir := t.TempDir()
@@ -62,10 +67,26 @@ printf 'helm %s\n' "$*" >> "$CASE_LOG"
 case "$1 $2" in
   'list -n')
     if [[ -n ${MOCK_RELEASE_STAGE:-} ]]; then echo '[{"name":"qa"}]'; else echo '[]'; fi ;;
-  'get values') printf '{"stage":"%s","dashboard":{"enabled":%s,"service":{"port":%s}}}\n' "${MOCK_RELEASE_STAGE:-cluster}" "${MOCK_DASHBOARD:-true}" "${MOCK_DASHBOARD_PORT:-80}" ;;
+  'get values')
+    values=$(printf '{"stage":"%s","dashboard":{"enabled":%s,"service":{"port":%s}},"logService":{"resource":{"cpu":"1"}},"objectStorage":{"accessKey":"SAVED_CREDENTIAL_SENTINEL"}}\n' "${MOCK_RELEASE_STAGE:-cluster}" "${MOCK_DASHBOARD:-true}" "${MOCK_DASHBOARD_PORT:-80}")
+    if [[ " $* " == *' --all '* ]]; then jq '.computedDefault="must-not-freeze"' <<< "$values"; else echo "$values"; fi ;;
+
   'upgrade --install')
     stage=''
     for arg in "$@"; do [[ $arg != stage=* ]] || stage=${arg#stage=}; done
+    if [[ -n ${MOCK_RELEASE_STAGE:-} ]]; then
+      for ((i=1; i<=$#; i++)); do
+        if [[ ${!i} == -f ]]; then
+          j=$((i+1)); first_values=${!j}
+          [[ -f $first_values ]] || exit 41
+          [[ -n $(find "$first_values" -perm 600) ]] || exit 42
+          cp "$first_values" "$CASE_LOG.base-values"
+          printf '%s\n' "$first_values" > "$CASE_LOG.base-path"
+          break
+        fi
+      done
+    fi
+    echo 'HELM_NOTES_PRIVATE_SENTINEL'
     [[ ${MOCK_FAIL_UPGRADE:-} != "$stage" ]] || exit 21 ;;
   *) exit 22 ;;
 esac
@@ -73,13 +94,21 @@ esac
 			executable(t, dir, "kubectl", `#!/usr/bin/env bash
 set -eu
 printf 'kubectl %s\n' "$*" >> "$CASE_LOG"
+args=()
+for arg in "$@"; do case "$arg" in --request-timeout=*) ;; *) args+=("$arg");; esac; done
+set -- "${args[@]}"
 case "$*" in
   'get crd/'*) [[ ${MOCK_MISSING_CRD:-false} != true ]] || exit 31 ;;
   'wait crd/'*) ;;
-  'get namespace qa-ns') [[ ${MOCK_NAMESPACE:-exists} == exists ]] ;;
+  'get namespace qa-ns --ignore-not-found -o name')
+    [[ ${MOCK_NAMESPACE:-exists} != forbidden ]] || exit 39
+    if [[ ${MOCK_NAMESPACE:-exists} == exists ]]; then echo namespace/qa-ns; fi ;;
   'create namespace qa-ns') ;;
-  '-n qa-ns get obcluster/qa-ob') [[ ${MOCK_RETAINED:-none} == cluster ]] ;;
-  '-n qa-ns get oblogservicecluster/qa-ls') [[ ${MOCK_RETAINED:-none} == logservice ]] ;;
+  '-n qa-ns get obcluster/qa-ob --ignore-not-found -o name')
+    [[ ${MOCK_RETAINED:-none} != unavailable ]] || exit 40
+    if [[ ${MOCK_RETAINED:-none} == cluster ]]; then echo obcluster/qa-ob; fi ;;
+  '-n qa-ns get oblogservicecluster/qa-ls --ignore-not-found -o name')
+    if [[ ${MOCK_RETAINED:-none} == logservice ]]; then echo oblogservicecluster/qa-ls; fi ;;
   '-n qa-ns get oblogservicecluster/qa-ls -o jsonpath='*|'-n qa-ns get obcluster/qa-ob -o jsonpath='*)
     kind=logservice
     code=32
@@ -97,7 +126,10 @@ case "$*" in
     fi ;;
   '-n qa-ns wait pods '*) ;;
   '-n qa-ns rollout status deployment/oceanbase-dashboard-qa --timeout='*) [[ ${MOCK_FAIL_DASHBOARD:-false} != true ]] || exit 36 ;;
-  '-n qa-ns get pods,jobs,obclusters,oblogserviceclusters') ;;
+  '-n qa-ns get pods,jobs,obclusters,oblogserviceclusters,pvc -o json')
+    echo '{"items":[{"kind":"PersistentVolumeClaim","metadata":{"name":"qa-data"},"status":{"phase":"Pending"},"spec":{"private":"DIAGNOSTIC_PRIVATE_SENTINEL"}}]}' ;;
+  '-n qa-ns get events --field-selector=type=Warning -o json')
+    echo '{"items":[{"type":"Warning","reason":"FailedScheduling","involvedObject":{"kind":"Pod","name":"qa-pod"},"message":"DIAGNOSTIC_PRIVATE_SENTINEL"}]}' ;;
   *) exit 35 ;;
 esac
 `)
@@ -111,7 +143,7 @@ esac
 				timeout = "1"
 			}
 			cmd := exec.Command("bash", "install.sh", "qa", "qa-ns", "-f", "/tmp/values with spaces.yaml", "--set-string", "objectStorage.region=us-east-1")
-			cmd.Env = append(os.Environ(), "PATH="+dir+string(os.PathListSeparator)+os.Getenv("PATH"), "CASE_LOG="+log, "LAKEHOUSE_TIMEOUT="+timeout)
+			cmd.Env = append(os.Environ(), "PATH="+dir+string(os.PathListSeparator)+os.Getenv("PATH"), "CASE_LOG="+log, "LAKEHOUSE_TIMEOUT="+timeout, "TMPDIR="+dir)
 			cmd.Env = append(cmd.Env, tc.env...)
 			output, err := cmd.CombinedOutput()
 			if got := exitCode(err); got != tc.code {
@@ -121,6 +153,54 @@ esac
 			if err != nil {
 				t.Fatal(err)
 			}
+			if strings.Contains(string(output), "HELM_NOTES_PRIVATE_SENTINEL") || strings.Contains(string(output), "DIAGNOSTIC_PRIVATE_SENTINEL") || strings.Contains(string(output), "SAVED_CREDENTIAL_SENTINEL") {
+				t.Fatalf("installer leaked private raw output: %s", output)
+			}
+			logs, logErr := filepath.Glob(filepath.Join(dir, "oceanbase-lakehouse-qa.*", "install.log"))
+			if logErr != nil || len(logs) != 1 {
+				t.Fatalf("expected one private installation log: %v %v", logs, logErr)
+			}
+			if info, err := os.Stat(logs[0]); err != nil || info.Mode().Perm() != 0600 {
+				t.Fatal("installation log must be mode0600", err)
+			}
+			if info, err := os.Stat(filepath.Dir(logs[0])); err != nil || info.Mode().Perm() != 0700 {
+				t.Fatal("log directory must be mode0700", err)
+			}
+			if tc.code == 0 && !strings.Contains(string(output), "[stage]") {
+				t.Fatalf("installer must announce stages: %s", output)
+			}
+			if strings.HasPrefix(tc.name, "resume-") || tc.name == "retained-cluster-overrides-old-stage" {
+				basePath, readErr := os.ReadFile(log + ".base-path")
+				if readErr != nil {
+					t.Fatal("upgrade did not load existing user values:", readErr)
+				}
+				baseData, err := os.ReadFile(log + ".base-values")
+				if err != nil {
+					t.Fatal(err)
+				}
+				var base map[string]interface{}
+				if err := json.Unmarshal(baseData, &base); err != nil {
+					t.Fatal(err)
+				}
+				if field(base, "logService", "resource", "cpu") != "1" || field(base, "objectStorage", "accessKey") != "SAVED_CREDENTIAL_SENTINEL" || base["computedDefault"] != nil {
+					t.Fatal("must preserve all user-supplied values and omit computed defaults")
+				}
+				if _, statErr := os.Stat(strings.TrimSpace(string(basePath))); !os.IsNotExist(statErr) {
+					t.Fatal("temporary credentials-containing values file must be cleaned")
+				}
+				for _, line := range strings.Split(string(calls), "\n") {
+					if strings.HasPrefix(line, "helm upgrade ") && strings.Index(line, strings.TrimSpace(string(basePath))) > strings.Index(line, "/tmp/values with spaces.yaml") {
+						t.Fatal("user values must override saved values")
+					}
+				}
+				if strings.Contains(string(calls), "--reuse-values") {
+					t.Fatal("do not freeze old defaults")
+				}
+				if !strings.Contains(string(calls), "helm get values qa -n qa-ns -o json") {
+					t.Fatal("saved base must use user-supplied values, not --all")
+				}
+			}
+
 			var stages []string
 			for _, line := range strings.Split(string(calls), "\n") {
 				if strings.HasPrefix(line, "helm upgrade ") {
@@ -144,6 +224,9 @@ esac
 			}
 			if got := strings.Join(stages, ","); got != tc.stages {
 				t.Fatalf("stages %q, want %q\n%s", got, tc.stages, calls)
+			}
+			if tc.name == "namespace-forbidden" && strings.Contains(string(calls), "create namespace") {
+				t.Fatal("API failure must not be treated as NotFound")
 			}
 			if strings.Contains(string(calls), "helm rollback") || strings.Contains(string(calls), "helm uninstall") || strings.Contains(string(calls), " delete ") {
 				t.Fatalf("installer issued destructive recovery: %s", calls)
@@ -172,6 +255,9 @@ esac
 				strings.Contains(string(output), "Dashboard ready:") ||
 				!strings.Contains(string(output), "Dashboard is disabled")) {
 				t.Fatalf("disabled Dashboard must not be awaited or advertised: %s\n%s", output, calls)
+			}
+			if tc.code != 0 && (!strings.Contains(string(output), "qa-data") || !strings.Contains(string(output), "FailedScheduling")) {
+				t.Fatalf("failure must summarize PVC state and warning reasons: %s", output)
 			}
 			if tc.code != 0 && strings.Contains(string(output), "Lakehouse ready:") {
 				t.Fatalf("failed installation must not claim readiness: %s", output)
@@ -252,6 +338,57 @@ esac
 				if strings.Contains(string(calls), destructive) {
 					t.Fatalf("unexpected data deletion: %s", calls)
 				}
+			}
+		})
+	}
+}
+
+// Hanging client commands must be bounded even when the executable ignores
+// client-side timeout flags. These fake tools never reach a cluster.
+func TestInstallerBoundsReadsAndDiagnostics(t *testing.T) {
+	for _, scenario := range []string{"crd", "helm-list", "diagnostics"} {
+		t.Run(scenario, func(t *testing.T) {
+			dir := t.TempDir()
+			executable(t, dir, "kubectl", `#!/usr/bin/env bash
+set -eu
+case "$*" in
+  'get crd/'*) [[ $SCENARIO != crd ]] || exec sleep 20 ;;
+  'wait crd/'*) ;;
+  'get namespace '*) echo namespace/qa-ns ;;
+  '-n qa-ns get obcluster/'*|'-n qa-ns get oblogservicecluster/'*) ;;
+  '-n qa-ns get pods,'*|'-n qa-ns get events '*) exec sleep 20 ;;
+  *) exit 44 ;;
+esac
+`)
+			executable(t, dir, "helm", `#!/usr/bin/env bash
+set -eu
+case "$1" in
+ list) [[ $SCENARIO != helm-list ]] || exec sleep 20; echo '[]' ;;
+ upgrade) echo 'PRIVATE_FAILURE_SENTINEL'; exit 47 ;;
+ *) exit 48 ;;
+esac
+`)
+			ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
+			defer cancel()
+			cmd := exec.CommandContext(ctx, "bash", "install.sh", "qa", "qa-ns")
+			cmd.Env = append(os.Environ(), "PATH="+dir+string(os.PathListSeparator)+os.Getenv("PATH"), "TMPDIR="+dir,
+				"SCENARIO="+scenario, "LAKEHOUSE_TIMEOUT=2", "LAKEHOUSE_REQUEST_TIMEOUT=1", "LAKEHOUSE_DIAGNOSTIC_TIMEOUT=1", "LAKEHOUSE_PROGRESS_INTERVAL=1")
+			out, err := cmd.CombinedOutput()
+			if ctx.Err() != nil {
+				t.Fatal("unbounded command or diagnostic", string(out))
+			}
+			want := 124
+			if scenario == "diagnostics" {
+				want = 47
+			}
+			if exitCode(err) != want {
+				t.Fatalf("exit=%d want=%d: %s", exitCode(err), want, out)
+			}
+			if strings.Contains(string(out), "PRIVATE_FAILURE_SENTINEL") {
+				t.Fatal("leaked Helm error")
+			}
+			if !strings.Contains(string(out), "data has NOT been automatically removed") {
+				t.Fatal("missing recovery advice")
 			}
 		})
 	}
