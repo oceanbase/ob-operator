@@ -5,19 +5,25 @@ Requires Python >= 3.8 and PyYAML in an isolated build environment.
 Render all enabled components with the actual QA image overrides:
   helm template operator PACKAGE/charts/ob-operator > operator.yaml
   helm template lakehouse PACKAGE/charts/oceanbase-lakehouse \
-    -f PACKAGE/values/quickstart.yaml --set stage=cluster > lakehouse.yaml
+    -f PACKAGE/values/quickstart.yaml --set stage=cluster \
+    --set-string storageClass=local-path > lakehouse.yaml
   helm template dashboard PACKAGE/charts/oceanbase-dashboard \
     --set-string adminPassword=render-only-not-an-account > dashboard.yaml
 
-Then verify both the lock and the REAL Docker-save archives:
+Then verify the actual fresh extraction of the single-tar delivery:
   python3 scripts/qa/verify-image-closure.py PACKAGE/image-lock.json \
-    operator.yaml lakehouse.yaml dashboard.yaml cert-manager.yaml \
-    --archive PACKAGE/images/core-images.tar.gz \
-    --archive PACKAGE/images/support-images.tar.gz \
-    --archive PACKAGE/images/diagnostics-images.tar.gz \
-    --sidecar-archive DELIVERY/minio-cache-VERSION-linux-amd64.tar.gz
+    operator.yaml lakehouse.yaml dashboard.yaml \
+    PACKAGE/prerequisites/cert-manager-v1.12.4.yaml --bundle PACKAGE
 
-Missing sidecars (including oceanbase/kube-rbac-proxy:v0.13.1), missing archive
+--bundle verifies the internal SHA256SUMS and images/archives.json, requires
+every image to use delivery=archive and every archive to use base=bundle, and
+rejects missing files, checksum mismatches, symlinks and escaping paths. Each
+archive's actual image references must match its declared references, and all
+config IDs must match image-lock.json. MinIO/mc is validated inside
+PACKAGE/images/minio-images.tar.gz along with the other bundled archives.
+No external checksum or image sidecar is required.
+
+Missing container images (including oceanbase/kube-rbac-proxy:v0.13.1), missing archive
 entries, wrong config image IDs, duplicate refs and untracked images fail the
 build. IDs are computed from the actual Docker-save config bytes (both legacy
 and OCI blob paths), not trusted from config filenames or manifest digests.
@@ -32,10 +38,13 @@ Check the rendered upgrade with the existing release values followed by
 values/diagnostics-upgrade.yaml: the OBCluster Observer image must stay unchanged.
 The fixture suite covers both archive closure and this Helm overlay behavior.
 
-MinIO and mc use delivery-sidecar and must appear only in the separately passed
---sidecar-archive. Legacy online-or-matching-existing-cache entries are still
-accepted but cannot silently appear in any archive. The new package builder
-supplies a matching cache instead of requiring registry access at installation.
+For older packages, omit --bundle and pass their archives explicitly with
+--archive and --sidecar-archive. Legacy delivery-sidecar entries (including
+MinIO/mc) must appear only in the separately supplied --sidecar-archive;
+online-or-matching-existing-cache entries cannot silently appear in an archive.
+The single-tar gate does not accept either legacy delivery mode or external
+archive arguments. The fixtures retain old-format compatibility coverage and
+also copy just one complete tar to an empty directory before validating it.
 Run tests with: python3 -m unittest discover -s scripts/qa -p 'test_*.py'
 
 Rendered YAML can contain generated or supplied credentials. Keep rendering

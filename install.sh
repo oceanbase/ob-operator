@@ -3,8 +3,21 @@
 set -euo pipefail
 bundle_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 installer="$bundle_dir/bin/lakehouse-installer"
+if [[ ! -f "$bundle_dir/SHA256SUMS" ]]; then
+  echo 'Package checksum manifest is missing. Extract the complete lakehouse tar again.' >&2
+  exit 2
+fi
+if ! command -v sha256sum >/dev/null 2>&1; then
+  echo 'Package verification requires sha256sum (Linux coreutils).' >&2
+  exit 2
+fi
+echo 'Verifying package contents (including all bundled images)...'
+if ! (cd -- "$bundle_dir" && sha256sum --check --quiet SHA256SUMS); then
+  echo 'Package verification failed. Extract the complete tar again; put custom values in a separate file and pass -f.' >&2
+  exit 2
+fi
 if [[ ! -x "$installer" ]]; then
-  echo 'This source checkout has no installer binary. Use the packaged Linux amd64 bundle, or build cmd/lakehouse-installer first.' >&2
+  echo 'Package installer is missing or not executable. Extract the complete Linux amd64 lakehouse tar again.' >&2
   exit 2
 fi
 exec "$installer" --bundle "$bundle_dir" "$@"

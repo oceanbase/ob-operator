@@ -5,6 +5,20 @@ build-package.py accepts a clean Git checkout, or an extracted original git
 archive supplied using --source-archive. Installation hosts use the packaged
 Go executable and do not require Python. Do not modify the baseline package.
 
+The user receives exactly one .tar. All image archives, including the MinIO/mc
+build input supplied with --minio-cache, are copied into its images/ directory.
+MinIO/mc uses images/minio-images.tar.gz. Every images/archives.json entry has
+base=bundle and is covered by the internal SHA256SUMS; no archive resolves
+beside the package or relative to the user's current directory.
+
+Hand off only the final oceanbase-lakehouse-qa-*.tar. The user extracts it with
+tar -xf, enters the extracted directory, and runs ./install.sh as described
+by the included README.txt. There is no separate MinIO archive or external
+checksum file to locate. build-result.json and the extracted build tree remain
+internal build evidence; their presence is not required on the installation
+machine. The builder records the final tar SHA256 in build-result.json for
+internal transfer verification.
+
 Diagnostic/log-download builds additionally supply both:
   --diagnostics-archive /path/diagnostics-images.tar.gz
   --diagnostics-lock /path/diagnostics-lock.json
@@ -60,3 +74,8 @@ existing shared_storage cluster or add observer to diagnostics-upgrade.yaml.
 Run regression fixtures on the build host:
   python3 -m unittest discover -s scripts/lakehouse -p 'test_*.py'
   python3 -m unittest discover -s scripts/qa -p 'test_*.py'
+
+The full-build fixture builds twice from the same source, compares complete tar
+hashes, copies only the resulting tar into an empty recipient directory, and
+checks the extracted checksums, archive paths, actual image config IDs, image
+closure, and executable entrypoint modes. It does not install into Kubernetes.

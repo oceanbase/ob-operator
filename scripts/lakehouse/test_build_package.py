@@ -14,6 +14,7 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tarfile
 import tempfile
 import unittest
@@ -58,7 +59,7 @@ def make_images():
                               "config": {"Labels": {"fixture": role}},
                               "rootfs": {"type": "layers", "diff_ids": []}}, sort_keys=True).encode()
         images.append({"role": role, "reference": reference,
-                       "image_id": "sha256:" + hashlib.sha256(payload).hexdigest()})
+                       "image_id": "sha256:" + hashlib.sha256(payload).hexdigest(), "delivery": "archive"})
         configs[reference] = payload
     return images, configs
 
@@ -214,7 +215,7 @@ class BuildPackageTest(unittest.TestCase):
                 self.assertEqual(BUILDER.rendered_images(manifest), {"fixture/observer:v1"})
 
     @unittest.skipUnless(shutil.which("git") and shutil.which("helm"), "Full build requires Helm and Git")
-    def test_complete_delivery_export_and_reproducibility(self):
+    def test_complete_single_tar_delivery_export_and_reproducibility(self):
         source = self.make_source()
         baseline = self.root / "baseline"
         for directory in ("images", "values", "prerequisites"):
@@ -259,10 +260,10 @@ class BuildPackageTest(unittest.TestCase):
         self.assertEqual(first["sha256"], second["sha256"])
         bundle = args.output / "oceanbase-lakehouse-qa-fixture-linux-amd64"
         manifest = json.loads((bundle / "images/archives.json").read_text())
-        sidecar = next(entry for entry in manifest["archives"] if entry["name"] == "minio")
-        self.assertEqual(sidecar["base"], "delivery")
-        self.assertEqual(sidecar["path"], "minio-cache-fixture-linux-amd64.tar.gz")
-        self.assertEqual(BUILDER.digest(bundle.parent / sidecar["path"]), sidecar["sha256"])
+        minio_entry = next(entry for entry in manifest["archives"] if entry["name"] == "minio")
+        self.assertEqual(minio_entry["base"], "bundle")
+        self.assertEqual(minio_entry["path"], "images/minio-images.tar.gz")
+        self.assertEqual(BUILDER.digest(bundle / minio_entry["path"]), minio_entry["sha256"])
         diagnostic_entry = next(entry for entry in manifest["archives"] if entry["name"] == "diagnostics")
         self.assertEqual(diagnostic_entry["base"], "bundle")
         self.assertEqual(diagnostic_entry["path"], "images/diagnostics-images.tar.gz")
@@ -315,10 +316,84 @@ class BuildPackageTest(unittest.TestCase):
         for line in (bundle / "SHA256SUMS").read_text().splitlines():
             expected, name = line.split("  ", 1)
             self.assertEqual(BUILDER.digest(bundle / name), expected, name)
+        self.assert_single_tar_delivery(second)
         # Extra chart files must not silently enter a build attributed to a commit.
         (exported / "charts/oceanbase-lakehouse/untracked.txt").write_text("unexpected input")
         with self.assertRaisesRegex(ValueError, "Untracked input"):
             BUILDER.source_identity(exported, source_archive)
+
+    def assert_single_tar_delivery(self, result):
+        # Model the user's handoff: copy exactly one tar to a previously empty
+        # directory. No build directory, image sidecar or external checksum is
+        # available through the delivered archive manifest.
+        original = Path(result["package"])
+        self.assertEqual(list(original.parent.glob("*.sha256")), [])
+        self.assertEqual(list(original.parent.glob("*.tar.gz")), [])
+        recipient = self.root / "recipient"
+        recipient.mkdir()
+        delivered = recipient / original.name
+        shutil.copyfile(original, delivered)
+        self.assertEqual(list(recipient.iterdir()), [delivered])
+        self.assertEqual(BUILDER.digest(delivered), result["sha256"])
+        with tarfile.open(delivered, "r:") as archive:
+            for member in archive:
+                path = Path(member.name)
+                self.assertFalse(path.is_absolute())
+                self.assertNotIn("..", path.parts)
+                self.assertEqual(path.parts[0], original.stem)
+                self.assertTrue(member.isfile() or member.isdir())
+            archive.extractall(recipient)
+        bundle = recipient / original.stem
+        self.assertEqual({path.name for path in recipient.iterdir()}, {original.name, original.stem})
+        covered = set()
+        for line in (bundle / "SHA256SUMS").read_text().splitlines():
+            expected, name = line.split("  ", 1)
+            self.assertEqual(BUILDER.digest(bundle / name), expected, name)
+            covered.add(name)
+        self.assertEqual(covered, {path.relative_to(bundle).as_posix() for path in bundle.rglob("*")
+                                   if path.is_file() and path != bundle / "SHA256SUMS"})
+        lock = json.loads((bundle / "image-lock.json").read_text())
+        expected_ids = {entry["reference"]: entry["image_id"] for entry in lock["images"]}
+        found_ids = {}
+        manifest = json.loads((bundle / "images/archives.json").read_text())
+        for entry in manifest["archives"]:
+            self.assertEqual(entry["base"], "bundle")
+            relative = Path(entry["path"])
+            self.assertFalse(relative.is_absolute())
+            self.assertNotIn("..", relative.parts)
+            archive_path = bundle / relative
+            archive_path.resolve().relative_to(bundle.resolve())
+            self.assertIn(entry["path"], covered)
+            self.assertEqual(BUILDER.digest(archive_path), entry["sha256"])
+            images = [image for image in lock["images"] if image["reference"] in entry["references"]]
+            BUILDER.verify_archive(archive_path, images, entry["sha256"], exact=True)
+            actual = BUILDER.archive_image_ids(archive_path)
+            self.assertEqual(set(actual), set(entry["references"]))
+            self.assertFalse(set(actual) & set(found_ids))
+            found_ids.update(actual)
+        self.assertEqual(found_ids, expected_ids)
+        for role in BUILDER.MINIO_ROLES:
+            self.assertEqual(next(image["delivery"] for image in lock["images"] if image["role"] == role), "archive")
+        for name in ("install.sh", "bin/lakehouse-installer"):
+            self.assertTrue((bundle / name).stat().st_mode & 0o111, name)
+            self.assertIn(name, covered)
+        BUILDER.run(["bash", "-n", str(bundle / "install.sh")], cwd=recipient)
+        self.assertEqual((bundle / "bin/lakehouse-installer").read_bytes()[:6], b"\x7fELF\x02\x01")
+        self.assertEqual((bundle / "README.txt").read_text().count(".tar.sha256"), 0)
+        # Exercise the independent QA CLI on the actual one-tar handoff, using
+        # manifests rendered only from that freshly extracted bundle.
+        rendered = []
+        for chart, options in (("ob-operator", []),
+                               ("oceanbase-lakehouse", ["-f", str(bundle / "values/quickstart.yaml"),
+                                  "--set", "stage=cluster", "--set-string", "storageClass=local-path"]),
+                               ("oceanbase-dashboard", ["--set-string", "adminPassword=render-only-not-an-account"])):
+            rendered.append(BUILDER.run(["helm", "template", "qa", str(bundle / "charts" / chart)] + options))
+        rendered.append((bundle / "prerequisites/cert-manager-v1.12.4.yaml").read_text())
+        manifests = self.root / "single-tar-qa-rendered.yaml"
+        manifests.write_text("\n---\n".join(rendered))
+        report = BUILDER.run([sys.executable, str(HERE.parent / "qa/verify-image-closure.py"),
+                              str(bundle / "image-lock.json"), str(manifests), "--bundle", str(bundle)])
+        self.assertIn("PASS image closure", report)
 
 
 if __name__ == "__main__":

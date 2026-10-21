@@ -4,6 +4,7 @@ import importlib.util
 import io
 import json
 from pathlib import Path
+import shutil
 import tarfile
 import tempfile
 import unittest
@@ -42,8 +43,7 @@ class ImageClosureTest(unittest.TestCase):
         self.assertEqual(closure.verify({"images": [entry("operator:qa")]}, ["spec: {template: {spec: {initContainers: [{image: 'docker.io/library/operator:qa'}]}}}\n---\nspec: {logService: {image: 'operator:qa'}}"]), 1)
 
     def test_minio_delivery_policy_and_empty_inputs(self):
-        with self.assertRaisesRegex(ValueError, "outside the main archive"):
-            closure.verify({"images": [entry("minio:qa", "minio")]}, ["image: minio:qa"])
+        self.assertEqual(closure.verify({"images": [entry("minio:qa", "minio")]}, ["image: minio:qa"]), 1)
         with self.assertRaisesRegex(ValueError, "No rendered"):
             closure.verify({"images": []}, ["kind: ConfigMap"])
 
@@ -110,6 +110,74 @@ class ImageClosureTest(unittest.TestCase):
                 plain.write_bytes(stream.read())
             self.assertEqual(closure.verify({"images": [entry("operator:qa", image_id=image_id)]},
                                             ["image: operator:qa"], [plain]), 1)
+
+    def test_single_tar_bundle_checks_hashes_ids_and_contained_paths(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "built" / "bundle"
+            (source / "images").mkdir(parents=True)
+            images, archives = [], []
+            for role in ("operator", "minio", "mc"):
+                path = source / "images" / (role + ".tar.gz")
+                ref = role + ":qa"
+                images.append(entry(ref, role, image_id=saved_image(path, ref)))
+                archives.append({"name": role, "base": "bundle", "path": "images/" + path.name,
+                                 "sha256": hashlib.sha256(path.read_bytes()).hexdigest(), "references": [ref]})
+            (source / "image-lock.json").write_text(json.dumps({"images": images}))
+            (source / "images/archives.json").write_text(json.dumps({"schemaVersion": 1, "archives": archives}))
+            def checksums(bundle):
+                (bundle / "SHA256SUMS").write_text("".join(hashlib.sha256(path.read_bytes()).hexdigest() + "  " +
+                    path.relative_to(bundle).as_posix() + "\n" for path in sorted(bundle.rglob("*"))
+                    if path.is_file() and path != bundle / "SHA256SUMS"))
+            checksums(source)
+            package = root / "bundle.tar"
+            with tarfile.open(package, "w") as archive:
+                archive.add(source, arcname="bundle")
+            recipient = root / "recipient"
+            recipient.mkdir()
+            shutil.copyfile(package, recipient / package.name)
+            self.assertEqual([path.name for path in recipient.iterdir()], ["bundle.tar"])
+            with tarfile.open(recipient / package.name) as archive:
+                archive.extractall(recipient)
+            delivered = recipient / "bundle"
+            manifest = "image: operator:qa\n---\nimage: minio:qa\n---\nimage: mc:qa"
+            self.assertEqual(closure.verify_bundle(delivered, [manifest]), 3)
+            # Mutations below are applied independently to the real extracted
+            # artifact. Metadata checksums are updated when testing deeper
+            # identity/path contracts rather than just corruption detection.
+            for case in ("missing", "corrupt", "wrong-id", "wrong-sha", "escape", "sidecar", "refs", "symlink"):
+                with self.subTest(case=case):
+                    changed = root / case
+                    shutil.copytree(delivered, changed)
+                    minio = changed / "images/minio.tar.gz"
+                    metadata = json.loads((changed / "images/archives.json").read_text())
+                    if case == "missing":
+                        minio.unlink()
+                    elif case == "corrupt":
+                        minio.write_bytes(minio.read_bytes() + b"corrupt")
+                    elif case == "wrong-id":
+                        locked = json.loads((changed / "image-lock.json").read_text())
+                        locked["images"][1]["image_id"] = "sha256:" + "0" * 64
+                        (changed / "image-lock.json").write_text(json.dumps(locked))
+                    elif case == "wrong-sha":
+                        metadata["archives"][1]["sha256"] = "0" * 64
+                    elif case == "escape":
+                        metadata["archives"][1]["path"] = "../outside.tar.gz"
+                        shutil.copyfile(minio, root / "outside.tar.gz")
+                    elif case == "sidecar":
+                        metadata["archives"][1]["base"] = "delivery"
+                    elif case == "refs":
+                        metadata["archives"][1]["references"] = ["mc:qa"]
+                    elif case == "symlink":
+                        outside = root / "linked-image.tar.gz"
+                        shutil.copyfile(minio, outside)
+                        minio.unlink()
+                        minio.symlink_to(outside)
+                    if case not in ("missing", "corrupt"):
+                        (changed / "images/archives.json").write_text(json.dumps(metadata))
+                        checksums(changed)
+                    with self.assertRaises((ValueError, OSError)):
+                        closure.verify_bundle(changed, [manifest])
 
 
 if __name__ == "__main__":

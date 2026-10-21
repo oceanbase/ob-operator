@@ -11,16 +11,16 @@ kubectl、jq、可用的默认 StorageClass，以及管理员 kubeconfig。推�
 以上内存的体验机；脚本根据已占用资源计算能否安装，磁盘还需容纳镜像和PVC。
 本包不安装操作系统或 Kubernetes，不会修改已有共享 Operator。
 
-交付目录保留主 tar、sha256 文件及 MinIO/mc 配套缓存 tar.gz（如交付）。MinIO 缓存
-放在主包解压目录的旁边，名称/摘要在 images/archives.json 中固定。已缓存且 ID
-完全匹配时会自动跳过；不依赖执行命令时的当前目录，不需要手工导入镜像。
+交付只有一个 tar：湖库、Dashboard、诊断、MinIO/mc 镜像和校验清单都在包内。
+把这一个 tar 复制到目标机器即可，不需要旁边的缓存包或校验文件，不需要手工导入镜像。
 
-  sha256sum -c oceanbase-lakehouse-*.tar.sha256
   tar -xf oceanbase-lakehouse-具体版本.tar
   cd oceanbase-lakehouse-具体版本
-  bash install.sh
+  ./install.sh
 
-安装入口自动检查版本、存储、节点状态、剩余资源、Operator/Webhook 和镜像 ID；
+安装入口先自动核对包内 SHA256SUMS，文件缺失或损坏时在执行安装器前停止。
+请保留包内原文件；自定义配置另存为 my-values.yaml，通过 -f 传入。
+然后检查版本、存储、节点状态、剩余资源、Operator/Webhook 和镜像 ID；
 只导入缺少或不匹配的镜像。在没有 Operator 的单节点集群上，安装配套 cert-manager
 与支持湖库的 Operator。已有但不完整/不兼容的组件会给出明确错误，要求先修复。
 随后依次安装存储、LogService、Observer，等待 Dashboard 三个容器就绪，并验证
@@ -40,7 +40,7 @@ kubectl、jq、可用的默认 StorageClass，以及管理员 kubeconfig。推�
 数据库会出现在 Dashboard 中，无需额外安装或注册。
 
 如果服务器使用公网地址映射，在同一次安装时指定：
-  bash install.sh --dashboard-host 服务器公网IP
+  ./install.sh --dashboard-host 服务器公网IP
 
 默认新装使用 Kubernetes 自动分配的 NodePort。网络安全组/防火墙需要允许浏览器
 访问该端口；安装器验证节点内访问，不声称外网防火墙已经连通。不会自动修改云
@@ -48,12 +48,12 @@ kubectl、jq、可用的默认 StorageClass，以及管理员 kubeconfig。推�
 访问，可在同一安装命令中显式添加 --access nodeport。也支持 --access clusterip。
 
 重新查看访问说明（不会重建数据库）：
-  bash install.sh --show-access --dashboard-host 服务器公网IP
+  ./install.sh --show-access --dashboard-host 服务器公网IP
 
 3. 预检查、续跑、自定义
 -----------------------
 只读检查（无镜像导入、无 Kubernetes 修改、无密码文件导出）：
-  bash install.sh --check
+  ./install.sh --check
 
 湖库安装阶段失败后，处理提示原因，再执行同一条命令。如果首次安装配套
 Operator/cert-manager 中断并留下不完整组件，需要先修复该前置组件，安装器不会
@@ -61,7 +61,7 @@ Operator/cert-manager 中断并留下不完整组件，需要先修复该前置�
 首次安装中断前保存的配置也会复用。已有集群ID、资源规格、存储、账号不恢复为
 新建示例。显式传入的新 values 覆盖保留配置；不要随意修改存储身份或集群ID。
 
-  bash install.sh --release my-ob --namespace my-ob -f my-values.yaml
+  ./install.sh --release my-ob --namespace my-ob -f my-values.yaml
 
 选择节点：--node 节点名。入口必须在该 Worker 上执行，避免把镜像导入错误主机。
 K3s/containerd、Docker 自动识别；非 K3s 的 containerd 需明确 --containerd-address
@@ -76,8 +76,8 @@ K3s/containerd、Docker 自动识别；非 K3s 的 containerd 需明确 --contai
 这是一套 Linux amd64 内部 QA 体验包。本版更新日志下载后端、helper 和诊断镜像，
 保留原 Observer 镜像。诊断工具通过容器已有的 Python 完成日志打包和传输。
 真实源码版本和镜像 ID 见 image-lock.json。
-MinIO/mc 是独立第三方
-AGPL-3.0 软件，主包和配套缓存的范围见交付清单。
+MinIO/mc 是独立第三方 AGPL-3.0 软件，其镜像包含在本 tar 的 images/ 目录中，
+不改变其许可证。charts/ 中的 Helm Chart 本身不包含容器镜像。
 
 功能范围：本包覆盖湖库运行、Dashboard 基础管理、监控与日志下载。obdiag 和
 oceanbase-helper 使用固定版本/镜像ID，归档在主包内，无需用户手工拉取。日志
@@ -86,7 +86,7 @@ oceanbase-helper 使用固定版本/镜像ID，归档在主包内，无需用户
 SQL分析器镜像仍需另行准备。
 
 从旧QA包升级诊断功能：保留相同release/namespace，显式使用包内镜像升级配置：
-  bash install.sh -f values/diagnostics-upgrade.yaml --dashboard-host 服务器公网IP
+  ./install.sh -f values/diagnostics-upgrade.yaml --dashboard-host 服务器公网IP
 该文件仅更新Dashboard和诊断镜像，不修改Observer镜像、集群ID、规格、存储或账号。
 诊断升级不要求重启Observer。Dashboard更新期间页面可能短暂不可用；安装入口仍会
 检查现有Observer是否具备日志采集所需能力，缺少时明确报错。

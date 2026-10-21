@@ -41,9 +41,10 @@ type imageLock struct {
 	Images []lockedImage `json:"images"`
 }
 
-// Paths in the archive manifest are relative to the package (bundle) or the
-// directory containing it (delivery). This also locates separately distributed
-// MinIO archives without relying on the user's current working directory.
+// Self-contained packages keep every archive relative to the package (bundle),
+// so the extracted directory can move without retaining its original parent.
+// The delivery base remains supported for older packages with adjacent archives;
+// neither form depends on the user's current working directory.
 type imageArchive struct {
 	Name       string   `json:"name"`
 	Base       string   `json:"base"`

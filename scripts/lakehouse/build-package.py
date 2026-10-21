@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a reproducible Linux/amd64 QA delivery without rebuilding any image.
+"""Build a self-contained Linux/amd64 QA tar without rebuilding any image.
 
 Build-host dependencies: Python 3.8+, PyYAML, Git and Helm. None of the Python
 dependencies are required on installation machines. Use a clean source commit.
@@ -462,7 +462,7 @@ def build(args):
         if "images/" + filename not in baseline_checksums:
             raise ValueError("Baseline SHA256SUMS does not cover images/" + filename)
     name = "oceanbase-lakehouse-qa-%s-linux-amd64" % args.version
-    minio_name = "minio-cache-%s-linux-amd64.tar.gz" % args.version
+    minio_name = "minio-images.tar.gz"
     package = output / name
     package.mkdir(parents=True)
     (package / "provenance").mkdir()
@@ -478,14 +478,13 @@ def build(args):
             if not SHA.fullmatch(expected_sha):
                 raise ValueError("Invalid MinIO cache checksum sidecar")
         archive_sha = verify_archive(path, expected, expected_sha, exact=role == "diagnostics")
-        filename = "diagnostics-images.tar.gz" if role == "diagnostics" else path.name
-        destination = output / minio_name if role == "minio" else package / "images" / filename
+        filename = {"diagnostics": "diagnostics-images.tar.gz", "minio": minio_name}.get(role, path.name)
+        destination = package / "images" / filename
         shutil.copyfile(path, destination)
         destination.chmod(0o644)
         if digest(destination) != archive_sha:
             raise ValueError("Archive copy checksum mismatch: " + str(destination))
-        archive_entries.append({"name": role, "base": "delivery" if role == "minio" else "bundle",
-                                "path": minio_name if role == "minio" else "images/" + filename,
+        archive_entries.append({"name": role, "base": "bundle", "path": "images/" + filename,
                                 "sha256": archive_sha, "references": [i["reference"] for i in expected]})
         validation.append("PASS %s real archive config IDs and copied SHA256" % role)
     write_json(package / "images/archives.json", {"schemaVersion": 1, "archives": archive_entries})
@@ -529,22 +528,21 @@ def build(args):
         "installer_sha256": digest(installer), "binary_rebuild": False, "baseline_source_sha": baseline_sha,
         "source_archive": "provenance/current-source.tar.gz",
         "source_archive_sha256": digest(package / "provenance/current-source.tar.gz"),
-        "archive_manifest": "images/archives.json", "minio_mc": "required matching sidecar cache included in this delivery"})
+        "archive_manifest": "images/archives.json", "minio_mc": "included in bundle: images/" + minio_name})
     if diagnostic_profile:
         lock["packaging"].update({"diagnostics_lock": "provenance/diagnostics-lock.json",
                                   "updated_image_roles": sorted(updated_roles),
                                   "binary_rebuild": bool(diagnostic_profile.get("binary_rebuild", False))})
     for image in lock["images"]:
         if image["role"] in MINIO_ROLES:
-            image["delivery"] = "delivery-sidecar"
+            image["delivery"] = "archive"
     write_json(package / "image-lock.json", lock)
     instructions = (source / "INSTALL.txt").read_text()
     (package / "INSTALL.txt").write_text(instructions)
-    instructions = instructions.replace("oceanbase-lakehouse-*.tar.sha256", name + ".tar.sha256")
     instructions = instructions.replace("oceanbase-lakehouse-具体版本.tar", name + ".tar")
     instructions = instructions.replace("oceanbase-lakehouse-具体版本", name)
-    (package / "README.txt").write_text("交付版本：%s\n源码：%s\n配套缓存：%s\n\n" %
-        (args.version, source_sha, minio_name) + instructions)
+    (package / "README.txt").write_text("交付版本：%s\n源码：%s\n所有镜像和校验清单均已包含在本 tar 内。\n\n" %
+        (args.version, source_sha) + instructions)
     validation += validate_charts(package, lock)
     run(["bash", "-n", str(package / "install.sh")])
     validation.append("PASS root shell entry syntax (user runtime requires no Python)")
@@ -559,15 +557,12 @@ def build(args):
     full_tar = output / (name + ".tar")
     tar_tree(package, full_tar, name, timestamp)
     full_sha = digest(full_tar)
-    (output / (full_tar.name + ".sha256")).write_text(full_sha + "  " + full_tar.name + "\n")
     minio_sha = next(entry["sha256"] for entry in archive_entries if entry["name"] == "minio")
-    (output / (minio_name + ".sha256")).write_text(minio_sha + "  " + minio_name + "\n")
-    (output / "README.txt").write_text("标准交付包括下面四个文件，请一起提供：\n" + "\n".join([
-        full_tar.name, full_tar.name + ".sha256", minio_name, minio_name + ".sha256"]) +
-        "\n\n放在同一目录，校验主包、tar -xf 解压，进入目录执行 bash install.sh。\n"
-        "不需要用户选择历史脚本、重组增量或单独手动导入 MinIO。\n")
+    (output / "README.txt").write_text("用户交付只提供下面一个文件：\n" + full_tar.name +
+        "\n\ntar -xf 解压，进入目录执行 ./install.sh。所有镜像（包括 MinIO/mc）和 SHA256SUMS 均在包内。\n"
+        "本目录的构建记录仅供内部追溯，不是安装依赖；不需要外部校验文件或镜像侧包。\n")
     result = {"source_sha": source_sha, "package": str(full_tar), "sha256": full_sha,
-              "size_bytes": full_tar.stat().st_size, "minio_cache": str(output / minio_name),
+              "size_bytes": full_tar.stat().st_size, "minio_cache": str(package / "images" / minio_name),
               "minio_sha256": minio_sha, "validation": validation}
     write_json(output / "build-result.json", result)
     print(json.dumps(result, ensure_ascii=False, indent=2))
@@ -579,7 +574,7 @@ def main():
     parser.add_argument("--source", type=Path, required=True, help="Clean source checkout with reviewed charts and root install.sh")
     parser.add_argument("--baseline", type=Path, required=True, help="Extracted previous QA bundle (contains images and image-lock.json)")
     parser.add_argument("--output", type=Path, required=True, help="New delivery directory; must not already exist")
-    parser.add_argument("--minio-cache", type=Path, required=True, help="Docker-save gzip archive containing locked MinIO/mc images")
+    parser.add_argument("--minio-cache", type=Path, required=True, help="Build input: locked MinIO/mc Docker-save gzip archive, copied inside the final tar")
     parser.add_argument("--diagnostics-archive", type=Path, help="Docker-save gzip archive with the exact diagnostics-lock images")
     parser.add_argument("--diagnostics-lock", type=Path, help="Fixed identities for obdiag/helper and optional updated Dashboard or fresh-install Observer")
     parser.add_argument("--version", required=True, help="Unique delivery version, e.g. 20261021-COMMITSHA")

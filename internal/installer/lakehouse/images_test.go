@@ -144,6 +144,115 @@ func TestImagesAutoUsesSelectedNodeK3sRuntimeAndVerifiesIDs(t *testing.T) {
 	}
 }
 
+// These fixtures exercise archive resolution and runtime commands with a cold
+// mock runtime. Real container archive compatibility must be checked against an
+// isolated containerd content store, not inferred from these fixture payloads.
+func makeRelocatedSelfContainedImageBundle(t *testing.T) imageTestBundle {
+	t.Helper()
+	b := makeImageTestBundle(t)
+	original := b.dir
+	minio := &b.manifest.Archives[1]
+	minio.Base, minio.Path = "bundle", "images/minio-cache.tar.gz"
+	if err := os.Rename(b.paths[1], filepath.Join(b.dir, filepath.FromSlash(minio.Path))); err != nil {
+		t.Fatal(err)
+	}
+	for _, group := range []struct {
+		name   string
+		images []lockedImage
+	}{
+		{"prerequisites", []lockedImage{{Role: "cert-manager", Reference: "qa/cert-manager:1", ImageID: "sha256:" + strings.Repeat("d", 64)}}},
+		{"diagnostics", []lockedImage{
+			{Role: "obdiag", Reference: "qa/obdiag:1", ImageID: "sha256:" + strings.Repeat("e", 64)},
+			{Role: "oceanbase-helper", Reference: "qa/helper:1", ImageID: "sha256:" + strings.Repeat("f", 64)},
+		}},
+	} {
+		archive := imageArchive{Name: group.name, Base: "bundle", Path: "images/" + group.name + ".tar.gz"}
+		payload := []byte("test archive payload " + group.name)
+		hash := sha256.Sum256(payload)
+		archive.SHA256 = hex.EncodeToString(hash[:])
+		for _, image := range group.images {
+			archive.References = append(archive.References, image.Reference)
+			b.lock.Images = append(b.lock.Images, image)
+		}
+		if err := os.WriteFile(filepath.Join(b.dir, filepath.FromSlash(archive.Path)), payload, 0600); err != nil {
+			t.Fatal(err)
+		}
+		b.manifest.Archives = append(b.manifest.Archives, archive)
+	}
+	b.write(t)
+	// Move the entire extracted directory to an otherwise empty delivery location.
+	// No original files, adjacent MinIO archive, or current-directory fallback exist.
+	destinationParent := t.TempDir()
+	b.dir = filepath.Join(destinationParent, "moved bundle")
+	if err := os.Rename(original, b.dir); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(original); !os.IsNotExist(err) {
+		t.Fatalf("original bundle unexpectedly remains: %v", err)
+	}
+	for _, directory := range []string{filepath.Dir(original), destinationParent} {
+		entries, err := os.ReadDir(directory)
+		if err != nil || (directory == destinationParent && len(entries) != 1) || (directory != destinationParent && len(entries) != 0) {
+			t.Fatalf("unexpected adjacent files in %s: %v / %v", directory, entries, err)
+		}
+	}
+	b.paths = nil
+	for _, archive := range b.manifest.Archives {
+		b.paths = append(b.paths, filepath.Join(b.dir, filepath.FromSlash(archive.Path)))
+	}
+	return b
+}
+
+func TestImagesSelfContainedBundleMovesAndImportsEveryArchiveFromColdCache(t *testing.T) {
+	for _, runtime := range []string{"docker", "k3s", "containerd"} {
+		t.Run(runtime, func(t *testing.T) {
+			b := makeRelocatedSelfContainedImageBundle(t)
+			t.Chdir(t.TempDir())
+			fake := imageTestRuntime{t: t, bundle: b, ids: map[string]string{}}
+			opts := ImageOptions{BundleDir: b.dir, Runtime: runtime,
+				ContainerdAddress: "/run/isolated/containerd.sock", CRIEndpoint: "unix:///run/isolated/containerd.sock"}
+			if err := PrepareImages(context.Background(), fake.run, opts, nil); err != nil {
+				t.Fatal(err)
+			}
+			if len(fake.imports) != len(b.manifest.Archives) {
+				t.Fatalf("cold preparation omitted archives: %v", fake.imports)
+			}
+			for i, path := range fake.imports {
+				if path != b.paths[i] {
+					t.Fatalf("import %d used an original/adjacent path: %s", i, path)
+				}
+			}
+			for _, image := range b.lock.Images {
+				inspections := 0
+				for _, command := range fake.commands {
+					if (strings.Contains(command, "inspecti ") || strings.Contains(command, "image inspect ")) && strings.HasSuffix(command, " "+image.Reference) {
+						inspections++
+					}
+				}
+				if fake.ids[image.Reference] != image.ImageID || inspections != 2 {
+					t.Fatalf("image %s must be absent initially and ID-verified after import: ID=%s inspections=%d", image.Reference, fake.ids[image.Reference], inspections)
+				}
+			}
+		})
+	}
+}
+
+func TestImagesRelocatedColdImportRejectsIncorrectDiagnosticID(t *testing.T) {
+	b := makeRelocatedSelfContainedImageBundle(t)
+	fake := imageTestRuntime{t: t, bundle: b, ids: map[string]string{}}
+	run := func(ctx context.Context, name string, args ...string) ([]byte, error) {
+		out, err := fake.run(ctx, name, args...)
+		if len(fake.imports) == len(b.manifest.Archives) {
+			fake.ids["qa/obdiag:1"] = "sha256:" + strings.Repeat("0", 64)
+		}
+		return out, err
+	}
+	err := PrepareImages(context.Background(), run, ImageOptions{BundleDir: b.dir, Runtime: "k3s"}, nil)
+	if err == nil || !strings.Contains(err.Error(), "verification failed after import") || !strings.Contains(err.Error(), "qa/obdiag:1") {
+		t.Fatalf("cold import accepted a tag with the wrong diagnostic image ID: %v", err)
+	}
+}
+
 func TestImagesMatchingCacheSkipsMissingArchivesAndAllImports(t *testing.T) {
 	b := makeImageTestBundle(t)
 	fake := imageTestRuntime{t: t, bundle: b, ids: map[string]string{}}
