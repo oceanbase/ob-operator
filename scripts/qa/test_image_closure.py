@@ -63,6 +63,14 @@ class ImageClosureTest(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, "Online-only"):
                         closure.verify({"images": [locked]}, ["image: operator:qa"], [path])
 
+    def test_empty_configmap_data_does_not_hide_other_images(self):
+        baseline = Path(__file__).with_name("fixtures") / "cert-manager-v1.12.4-empty-configmap.yaml"
+        self.assertEqual(list(closure.image_refs(closure.yaml.safe_load(baseline.read_text()))), [])
+        for data in ("", "data: null", "data: {}"):
+            with self.subTest(data=data):
+                manifest = "kind: ConfigMap\n" + data + "\n---\nimage: operator:qa\n"
+                self.assertEqual(closure.verify({"images": [entry("operator:qa")]}, [manifest]), 1)
+
     def test_configmap_diagnostic_jobs_and_separate_minio_cache(self):
         manifest = "kind: ConfigMap\ndata:\n  config.yaml: |\n    inspection:\n      obdiag: {image: 'obdiag:fixed'}\n      oceanbase-helper: {image: 'helper:fixed'}\n    sqlAnalyzer: {image: 'optional/analyzer:1'}\n"
         with self.assertRaisesRegex(ValueError, "helper:fixed|obdiag:fixed"):

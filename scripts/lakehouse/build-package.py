@@ -352,7 +352,7 @@ def rendered_images(text):
             # inside config.yaml rather than as Pod container specifications.
             # SQL analyzer remains an explicitly excluded optional component.
             if value.get("kind") == "ConfigMap":
-                configured = value.get("data", {}).get("config.yaml")
+                configured = (value.get("data") or {}).get("config.yaml")
                 if isinstance(configured, str):
                     config = yaml.safe_load(configured)
                     if isinstance(config, dict):

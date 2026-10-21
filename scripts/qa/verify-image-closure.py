@@ -71,7 +71,7 @@ def archive_image_ids(path):
 def image_refs(value):
     if isinstance(value, dict):
         if value.get("kind") == "ConfigMap":
-            embedded = value.get("data", {}).get("config.yaml")
+            embedded = (value.get("data") or {}).get("config.yaml")
             if isinstance(embedded, str):
                 configuration = yaml.safe_load(embedded)
                 if isinstance(configuration, dict):

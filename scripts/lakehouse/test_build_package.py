@@ -191,6 +191,14 @@ class BuildPackageTest(unittest.TestCase):
         self.assertEqual(BUILDER.rendered_images(rendered),
                          {"fixture/obdiag:diagnostics-v1", "fixture/oceanbase-helper:diagnostics-v1"})
 
+    def test_empty_configmap_data_does_not_hide_other_images(self):
+        baseline = (HERE.parent / "qa/fixtures/cert-manager-v1.12.4-empty-configmap.yaml").read_text()
+        self.assertEqual(BUILDER.rendered_images(baseline), set())
+        for data in ("", "data: null", "data: {}"):
+            with self.subTest(data=data):
+                manifest = "kind: ConfigMap\n" + data + "\n---\nimage: fixture/observer:v1\n"
+                self.assertEqual(BUILDER.rendered_images(manifest), {"fixture/observer:v1"})
+
     @unittest.skipUnless(shutil.which("git") and shutil.which("helm"), "Full build requires Helm and Git")
     def test_complete_delivery_export_and_reproducibility(self):
         source = self.make_source()
@@ -208,6 +216,8 @@ class BuildPackageTest(unittest.TestCase):
                 "spec": {"containers": [{"name": role, "image": reference} for role, reference in REFERENCES.items()
                                          if role.startswith("cert-manager-")]}}
         BUILDER.write_yaml(baseline / "prerequisites/cert-manager-v1.12.4.yaml", cert)
+        with (baseline / "prerequisites/cert-manager-v1.12.4.yaml").open("a") as manifest:
+            manifest.write("---\n" + (HERE.parent / "qa/fixtures/cert-manager-v1.12.4-empty-configmap.yaml").read_text())
         for name, roles in (("core", BUILDER.CORE_ROLES),
                             ("support", REFERENCES.keys() - BUILDER.CORE_ROLES - BUILDER.MINIO_ROLES)):
             docker_save(baseline / "images" / (name + "-images.tar.gz"),
