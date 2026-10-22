@@ -92,6 +92,16 @@ Old releases keep their exact URL; new ones pin the resolved address. */}}
 {{- define "lakehouse.storageSecret" -}}
 {{- default (printf "%s-storage" .Release.Name) .Values.objectStorage.existingSecret -}}
 {{- end -}}
+{{- define "lakehouse.logStorageSecret" -}}
+{{- if eq .Values.objectStorage.mode "bundled" -}}
+{{- include "lakehouse.storageSecret" . -}}
+{{- else -}}{{ default .Values.objectStorage.existingSecret .Values.objectStorage.logExistingSecret }}{{- end -}}
+{{- end -}}
+{{- define "lakehouse.dataStorageSecret" -}}
+{{- if eq .Values.objectStorage.mode "bundled" -}}
+{{- include "lakehouse.storageSecret" . -}}
+{{- else -}}{{ default .Values.objectStorage.existingSecret .Values.objectStorage.dataExistingSecret }}{{- end -}}
+{{- end -}}
 {{- define "lakehouse.minioSecret" -}}
 {{- default (printf "%s-minio-root" .Release.Name) .Values.minio.rootExistingSecret -}}
 {{- end -}}
@@ -100,6 +110,12 @@ Old releases keep their exact URL; new ones pin the resolved address. */}}
 {{- end -}}
 {{- define "lakehouse.identity" -}}
 {{- $identity := dict "mode" .Values.objectStorage.mode "endpoint" (include "lakehouse.endpoint" .) "region" .Values.objectStorage.region "logs" (include "lakehouse.logBucket" .) "data" (include "lakehouse.dataBucket" .) "secret" (include "lakehouse.storageSecret" .) "minioSecret" (include "lakehouse.minioSecret" .) "claim" .Values.minio.existingClaim "size" .Values.minio.size "storageClass" .Values.storageClass "dbSecret" (include "lakehouse.dbSecret" .) "lsId" .Values.logService.clusterId "obId" .Values.observer.clusterId -}}
+{{/* Keep the exact legacy hash when both effective references are unchanged.
+Actual per-side overrides are immutable, including after uninstall/reinstall. */}}
+{{- if or (ne (include "lakehouse.logStorageSecret" .) (include "lakehouse.storageSecret" .)) (ne (include "lakehouse.dataStorageSecret" .) (include "lakehouse.storageSecret" .)) -}}
+{{- $_ := set $identity "logSecret" (include "lakehouse.logStorageSecret" .) -}}
+{{- $_ := set $identity "dataSecret" (include "lakehouse.dataStorageSecret" .) -}}
+{{- end -}}
 {{- $guard := lookup "v1" "ConfigMap" .Release.Namespace (printf "%s-storage-identity" .Release.Name) -}}
 {{- if and (eq .Values.objectStorage.mode "external") (or (not $guard) (hasKey $guard.data "externalDatabaseEndpoint")) -}}
 {{- $_ := set $identity "externalDatabaseEndpoint" (include "lakehouse.databaseEndpoint" .) -}}
@@ -121,11 +137,13 @@ Old releases keep their exact URL; new ones pin the resolved address. */}}
 {{- range .Values.logService.topology }}{{ $nodes = add $nodes (int .replica) }}{{ end -}}
 {{- if ne (int $nodes) 3 }}{{ fail "LogService 1.3.0 bootstrap requires exactly 3 nodes; configure topology replicas totaling 3 for a new installation" }}{{ end -}}
 {{- end -}}
-{{- if eq (include "lakehouse.logBucket" .) (include "lakehouse.dataBucket" .) }}{{ fail "logBucket and dataBucket must differ" }}{{ end -}}
+{{- if and (eq .Values.objectStorage.mode "bundled") (eq (include "lakehouse.logBucket" .) (include "lakehouse.dataBucket" .)) }}{{ fail "logBucket and dataBucket must differ in bundled mode" }}{{ end -}}
 {{- if eq .Values.objectStorage.mode "external" -}}
 {{- if not .Values.objectStorage.endpoint }}{{ fail "external storage requires objectStorage.endpoint" }}{{ end -}}
-{{- if not .Values.objectStorage.existingSecret }}{{ fail "external storage requires objectStorage.existingSecret" }}{{ end -}}
+{{- if not (include "lakehouse.logStorageSecret" .) }}{{ fail "external storage requires objectStorage.logExistingSecret or objectStorage.existingSecret" }}{{ end -}}
+{{- if not (include "lakehouse.dataStorageSecret" .) }}{{ fail "external storage requires objectStorage.dataExistingSecret or objectStorage.existingSecret" }}{{ end -}}
 {{- else -}}
+{{- if or .Values.objectStorage.logExistingSecret .Values.objectStorage.dataExistingSecret }}{{ fail "per-side credential references require external storage mode" }}{{ end -}}
 {{- if .Values.objectStorage.existingSecret }}{{ fail "bundled storage generates its own restricted business identity; do not set objectStorage.existingSecret" }}{{ end -}}
 {{- if .Values.objectStorage.endpoint }}{{ fail "bundled storage endpoint is generated; do not set objectStorage.endpoint" }}{{ end -}}
 {{- end -}}

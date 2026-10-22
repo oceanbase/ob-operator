@@ -61,8 +61,12 @@ objectStorage:
   endpoint: "" # required in external mode; http(s)://hostname[:port]
   region: us-east-1
   logBucket: "" # defaults to RELEASE-logs
-  dataBucket: "" # defaults to RELEASE-data; must differ from logBucket
-  existingSecret: "" # external: required; keys access_id and access_key
+  dataBucket: "" # defaults to RELEASE-data; bundled mode requires distinct buckets
+  existingSecret: "" # external: shared fallback; keys access_id and access_key
+  # External storage may use the same bucket and/or independent credentials.
+  # Empty per-side references inherit existingSecret, preserving old installs.
+  logExistingSecret: ""
+  dataExistingSecret: ""
   # External mode is read-only by default. true explicitly permits bucket creation
   # using the supplied credentials; never changes users/policies/existing objects.
   createBuckets: false

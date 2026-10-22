@@ -14,7 +14,7 @@ spec:
   serviceAccount: {{ .Release.Name }}-workload
   objectStoreUrl:
     bucketURL: {{ printf "s3://%s?host=%s&s3_region=%s" (include "lakehouse.logBucket" .) (include "lakehouse.databaseEndpoint" .) .Values.objectStorage.region | quote }}
-    secretRef: {name: {{ include "lakehouse.storageSecret" . }}}
+    secretRef: {name: {{ include "lakehouse.logStorageSecret" . }}}
   logService:
     image: {{ .Values.logService.image | quote }}
     resource: {{ toYaml .Values.logService.resource | nindent 6 }}

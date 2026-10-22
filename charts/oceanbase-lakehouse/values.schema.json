@@ -62,6 +62,8 @@
         "logBucket": {"$ref": "#/definitions/bucket"},
         "dataBucket": {"$ref": "#/definitions/bucket"},
         "existingSecret": {"$ref": "#/definitions/optionalName"},
+        "logExistingSecret": {"$ref": "#/definitions/optionalName"},
+        "dataExistingSecret": {"$ref": "#/definitions/optionalName"},
         "createBuckets": {"type": "boolean"}
       }
     },

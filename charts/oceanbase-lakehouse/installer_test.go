@@ -307,7 +307,7 @@ func TestInitializationExternalSafetyAndFailureRedaction(t *testing.T) {
 		{"bundled", "bundled", "false", "", true, true, true},
 		{"external-readonly", "external", "false", "", true, false, false},
 		{"external-create", "external", "true", "", true, true, false},
-		{"unreachable", "external", "false", "ready", false, false, false},
+		{"unreachable", "external", "false", "alias", false, false, false},
 		{"missing-bucket", "external", "false", "stat", false, false, false},
 		{"bucket-creation-failed", "external", "true", "mb", false, true, false},
 		{"admin-failed", "bundled", "false", "admin", false, true, true},
@@ -322,7 +322,7 @@ case "$1 $2" in
   *) printf 'mc %s\n' "$*" >> "$INIT_LOG" ;;
 esac
 case "$1" in
-  ready|mb|stat|admin)
+  alias|ready|mb|stat|admin)
     if [ "$MC_FAIL" = "$1" ]; then echo 'test-secret-value' >&2; exit 1; fi ;;
 esac
 `)
@@ -333,6 +333,7 @@ esac
 			cmd.Env = append(os.Environ(), "PATH="+dir+string(os.PathListSeparator)+os.Getenv("PATH"), "INIT_LOG="+log,
 				"MODE="+tc.mode, "CREATE_BUCKETS="+tc.create, "MC_FAIL="+tc.fail, "ENDPOINT=http://minio:9000",
 				"ACCESS_ID=root-user", "ACCESS_KEY=test-secret-value", "BUSINESS_ID=business-user", "BUSINESS_KEY=business-secret",
+				"DATA_ACCESS_ID=data-user", "DATA_ACCESS_KEY=data-secret",
 				"REGION=us-east-1", "LOG_BUCKET=qa-logs", "DATA_BUCKET=qa-data", "POLICY_NAME=qa-buckets")
 			result, err := cmd.CombinedOutput()
 			if (err == nil) != tc.success {

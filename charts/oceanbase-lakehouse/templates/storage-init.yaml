@@ -22,8 +22,11 @@ data:
     # Suppress client diagnostics, which can contain credential-bearing URLs.
     ready=false
     for attempt in $(seq 1 90); do
+      # External OSS/S3 services do not implement MinIO's readiness API.
+      # Alias configuration is local; the targeted bucket checks below validate
+      # each identity without requiring global-list or admin permissions.
       if mc alias set storage "$ENDPOINT" "$ACCESS_ID" "$ACCESS_KEY" --api S3v4 --path "$MC_PATH" >/dev/null 2>&1 &&
-         mc ready storage >/dev/null 2>&1; then
+         { [ "$MODE" = external ] || mc ready storage >/dev/null 2>&1; }; then
         ready=true
         break
       fi
@@ -33,7 +36,17 @@ data:
       echo 'Object storage is not reachable or credentials were rejected.' >&2
       exit 1
     fi
-    for bucket in "$LOG_BUCKET" "$DATA_BUCKET"; do
+    for side in log data; do
+      bucket=$LOG_BUCKET
+      if [ "$side" = data ]; then
+        bucket=$DATA_BUCKET
+        if [ "$MODE" = external ]; then
+          if ! mc alias set storage "$ENDPOINT" "$DATA_ACCESS_ID" "$DATA_ACCESS_KEY" --api S3v4 --path "$MC_PATH" >/dev/null 2>&1; then
+            echo 'Could not configure the data storage identity.' >&2
+            exit 1
+          fi
+        fi
+      fi
       if [ "$MODE" = bundled ] || [ "$CREATE_BUCKETS" = true ]; then
         if ! mc mb --ignore-existing --region "$REGION" "storage/$bucket" >/dev/null 2>&1; then
           echo 'Could not initialize a required bucket.' >&2
@@ -113,7 +126,7 @@ spec:
                   name: {{ include "lakehouse.minioSecret" . }}
                   key: rootUser
                   {{- else }}
-                  name: {{ include "lakehouse.storageSecret" . }}
+                  name: {{ include "lakehouse.logStorageSecret" . }}
                   key: access_id
                   {{- end }}
             - name: ACCESS_KEY
@@ -123,9 +136,17 @@ spec:
                   name: {{ include "lakehouse.minioSecret" . }}
                   key: rootPassword
                   {{- else }}
-                  name: {{ include "lakehouse.storageSecret" . }}
+                  name: {{ include "lakehouse.logStorageSecret" . }}
                   key: access_key
                   {{- end }}
+            {{- if eq .Values.objectStorage.mode "external" }}
+            - name: DATA_ACCESS_ID
+              valueFrom:
+                secretKeyRef: {name: {{ include "lakehouse.dataStorageSecret" . }}, key: access_id}
+            - name: DATA_ACCESS_KEY
+              valueFrom:
+                secretKeyRef: {name: {{ include "lakehouse.dataStorageSecret" . }}, key: access_key}
+            {{- end }}
             {{- if eq .Values.objectStorage.mode "bundled" }}
             - name: BUSINESS_ID
               valueFrom:

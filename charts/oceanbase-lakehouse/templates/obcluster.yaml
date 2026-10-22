@@ -18,7 +18,7 @@ spec:
   logServiceRef: {name: {{ .Release.Name }}-ls}
   sharedStorageInfo:
     bucketURL: {{ printf "s3://%s?host=%s&s3_region=%s" (include "lakehouse.dataBucket" .) (include "lakehouse.databaseEndpoint" .) .Values.objectStorage.region | quote }}
-    secretRef: {name: {{ include "lakehouse.storageSecret" . }}}
+    secretRef: {name: {{ include "lakehouse.dataStorageSecret" . }}}
   userSecrets:
     root: {{ include "lakehouse.dbSecret" . }}
   observer:

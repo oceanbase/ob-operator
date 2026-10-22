@@ -199,7 +199,7 @@ failure immediately, rather than misreporting it as rejected S3 credentials.
 The Job retains runAsNonRoot, RuntimeDefault, read-only root filesystem and
 dropped capabilities. No root permission-repair container or ACL rewrite is added.
 
-Existing MinIO (default: no storage-side mutation)
+External MinIO / OSS-compatible S3 storage (default: no storage-side mutation)
 ------------------------------------------------
 Provide a Secret in the SAME namespace, keys access_id and access_key. Create it
 through your secret-management process; do not put credentials in values files,
@@ -218,6 +218,39 @@ Run the SAME install.sh command. No MinIO StatefulSet/PVC/Service/root Secret is
 created. The initialization Job only checks readiness and bucket access. Setting
 createBuckets: true explicitly authorizes creation of MISSING buckets using the
 provided credentials; it does not manage users, policies or existing objects.
+External mode also accepts identical logBucket/dataBucket names. This removes a
+Helm-only restriction: it does not change the database engines' object layout,
+move existing data, or establish a new security boundary within a bucket.
+Use dedicated buckets for a new deployment unless your database/storage setup
+has already validated shared-bucket placement. Do not change an installed
+release's bucket names to consolidate existing data.
+
+Independent external credentials (both Secrets in the release namespace):
+  objectStorage:
+    mode: external
+    endpoint: https://oss-cn-hangzhou.aliyuncs.com
+    region: cn-hangzhou
+    logBucket: customer-log-bucket
+    dataBucket: customer-data-bucket
+    logExistingSecret: log-storage-credentials
+    dataExistingSecret: data-storage-credentials
+    createBuckets: false
+
+Both Secrets use access_id/access_key. Each per-side reference may be omitted
+to inherit existingSecret, so old values and effective credential references
+remain unchanged. Supplying both per-side references makes existingSecret
+optional. No supplied Secret is created, modified, adopted or deleted. The
+LogService reference and Observer data reference are independent; the Operator
+also uses LogService credentials when configuring Observer's log access point.
+Preflight checks each bucket with its own credentials, never mc ready or mc admin
+against an external server. It does not require MinIO-specific readiness or
+global-list APIs. Per-side overrides are rejected in bundled mode rather than
+silently ignored. Effective references are protected by the retained storage
+identity; an existing release cannot switch credentials by changing these names.
+
+This chart emits s3:// URLs, including for OSS's compatible interface; it does
+not add native oss:// support. OSS signature/API compatibility and the actual
+Observer/LogService versions must be validated in your target environment.
 Supply endpoint only (no query, credentials or path). Credentials need not grant
 ListAllMyBuckets or administration permissions. Custom CA and HTTP path prefixes
 are not supported. The supplied credentials must allow the database's list/read/
