@@ -22,7 +22,8 @@ After changing the password in Dashboard, use that new password.
 Dashboard is disabled (dashboard.enabled=false).
 {{ end }}
 MinIO and mc are optional third-party AGPL-3.0 software, not relicensed by this chart.
-No container image or MinIO binary is included in this package.
+This Helm chart contains no container images. A self-contained lakehouse
+archive supplies its container images separately in its images/ directory.
 
 DATA PROTECTION: uninstall intentionally retains database CRs, credentials and
 bundled MinIO StatefulSet/Service/PVC. Namespace deletion or explicit Kubernetes

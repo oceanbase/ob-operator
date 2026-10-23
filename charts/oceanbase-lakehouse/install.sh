@@ -138,7 +138,7 @@ completed() {
 skipped() {
   echo "[skip] $(phase_label "$1")"
 }
-announce '[1/6] Preflight: checking SS-enabled CRDs and existing release'
+announce '[1/6] Preflight: checking lakehouse support and existing installation'
 for crd in obclusters oblogserviceclusters oblogservicezones oblogservicenodes; do
   run_bounded "$request_timeout" "read CRD $crd" kubectl get "crd/$crd.oceanbase.oceanbase.com" --request-timeout="${request_timeout}s" >>"$log_file"
   run_bounded "$request_timeout" "wait for CRD $crd" kubectl wait "crd/$crd.oceanbase.oceanbase.com" --for=condition=Established --timeout="${request_timeout}s" --request-timeout="${request_timeout}s" >>"$log_file"

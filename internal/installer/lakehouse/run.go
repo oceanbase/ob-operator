@@ -320,7 +320,12 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 	} else {
 		progress("[skip] Compatible Operator and admission webhooks are already ready.")
 	}
-	progress("[4/5] Installing lakehouse resources and Dashboard")
+	dashboardEnabled, _ := pfGet(complete, "dashboard", "enabled").(bool)
+	if dashboardEnabled {
+		progress("[4/5] Installing lakehouse resources and Dashboard")
+	} else {
+		progress("[4/5] Installing lakehouse resources (Dashboard disabled by configuration)")
+	}
 	installCtx, cancel := context.WithTimeout(ctx, 2*time.Hour)
 	defer cancel()
 	cmd := command(installCtx, "bash", filepath.Join(o.bundle, "charts/oceanbase-lakehouse/install.sh"), o.release, o.namespace, "-f", filepath.Join(stateDir, "values.yaml"))
@@ -330,7 +335,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 	if err = cmd.Run(); err != nil {
 		return fmt.Errorf("installation did not complete; resolve the reported issue and rerun the same command to resume (data is retained): %w", err)
 	}
-	if enabled, _ := pfGet(complete, "dashboard", "enabled").(bool); !enabled {
+	if !dashboardEnabled {
 		progress("[5/5] Dashboard access checks skipped: Dashboard is disabled by configuration.")
 		progress("Installation complete. Dashboard is disabled by configuration.")
 		return nil

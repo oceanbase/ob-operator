@@ -111,7 +111,7 @@ func PrepareImages(ctx context.Context, run RunCommand, opts ImageOptions, progr
 		return nil
 	}
 	if opts.CheckOnly {
-		return fmt.Errorf("local %s images are not ready: %s; run image preparation on this worker", runtime.name, strings.Join(missing, "; "))
+		return fmt.Errorf("local %s images are not ready: %s; rerun install.sh without --check to import the bundled images on this worker", runtime.name, strings.Join(missing, "; "))
 	}
 	missingRefs := make(map[string]bool, len(missing))
 	for _, detail := range missing {
