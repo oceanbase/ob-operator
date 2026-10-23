@@ -38,6 +38,7 @@ func TestInstallerSequencingResumeAndFailures(t *testing.T) {
 		env          []string
 	}{
 		{"fresh", "storage,logservice,cluster", 0, []string{"MOCK_NAMESPACE=absent"}},
+		{"storage-slow", "storage,logservice,cluster", 0, []string{"MOCK_SLOW_UPGRADE=storage", "LAKEHOUSE_PROGRESS_INTERVAL=1"}},
 		{"packaged-entry", "storage,logservice,cluster", 0, []string{"LAKEHOUSE_MANAGED_ACCESS=1"}},
 		{"dashboard-packaged-entry-failure", "storage,logservice,cluster", 36, []string{"LAKEHOUSE_MANAGED_ACCESS=1", "MOCK_FAIL_DASHBOARD=true"}},
 		{"dashboard-disabled", "storage,logservice,cluster", 0, []string{"MOCK_DASHBOARD=false"}},
@@ -89,6 +90,7 @@ case "$1 $2" in
       done
     fi
     echo 'HELM_NOTES_PRIVATE_SENTINEL'
+    if [[ ${MOCK_SLOW_UPGRADE:-} == "$stage" ]]; then /bin/sleep 2; fi
     [[ ${MOCK_FAIL_UPGRADE:-} != "$stage" ]] || exit 21 ;;
   *) exit 22 ;;
 esac
@@ -155,6 +157,9 @@ esac
 			if err != nil {
 				t.Fatal(err)
 			}
+			if tc.name == "fresh" || tc.name == "resume-cluster" {
+				t.Logf("installer progress transcript:\n%s", output)
+			}
 			if strings.Contains(string(output), "HELM_NOTES_PRIVATE_SENTINEL") || strings.Contains(string(output), "DIAGNOSTIC_PRIVATE_SENTINEL") || strings.Contains(string(output), "SAVED_CREDENTIAL_SENTINEL") {
 				t.Fatalf("installer leaked private raw output: %s", output)
 			}
@@ -170,6 +175,39 @@ esac
 			}
 			if tc.code == 0 && !strings.Contains(string(output), "[stage]") {
 				t.Fatalf("installer must announce stages: %s", output)
+			}
+			// Executable progress contract: distinguish submitted Helm resources
+			// from completed runtime gates and do not repeat success on fresh runs.
+			if tc.code == 0 {
+				for _, step := range []string{"[1/6] Preflight", "[4/6] OceanBase", "[5/6] Observer Pods"} {
+					if strings.Count(string(output), "[done] "+step) != 1 {
+						t.Fatalf("missing or duplicate completion for %s: %s", step, output)
+					}
+				}
+				for _, kind := range []string{"oblogservicecluster/qa-ls", "obcluster/qa-ob"} {
+					if strings.Count(string(output), kind+" is running") != 1 {
+						t.Fatalf("runtime success must be reported once for %s: %s", kind, output)
+					}
+				}
+				if tc.name == "fresh" || tc.name == "packaged-entry" || tc.name == "storage-slow" {
+					for _, step := range []string{"[2/6] Storage", "[3/6] LogService", "[6/6] Dashboard"} {
+						if strings.Count(string(output), "[done] "+step) != 1 {
+							t.Fatalf("missing or duplicate completion for %s: %s", step, output)
+						}
+					}
+				}
+				if strings.Count(string(output), "Lakehouse ready:") != 1 || strings.Contains(string(output), "For a complete, ordered installation run:") {
+					t.Fatalf("installer repeated a final result or install instruction: %s", output)
+				}
+			}
+			if tc.name == "storage-failure" && strings.Contains(string(output), "[done] [2/6]") {
+				t.Fatal("failed storage must not be marked complete")
+			}
+			if tc.name == "storage-slow" && !strings.Contains(string(output), "[wait] Helm storage stage:") {
+				t.Fatalf("quiet Helm wait must retain a bounded progress heartbeat: %s", output)
+			}
+			if tc.name == "fresh" && strings.Count(string(calls), "get oblogservicecluster/qa-ls -o jsonpath=") != 2 {
+				t.Fatal("quiet final LogService verification must not be skipped")
 			}
 			if strings.HasPrefix(tc.name, "resume-") || tc.name == "retained-cluster-overrides-old-stage" {
 				basePath, readErr := os.ReadFile(log + ".base-path")

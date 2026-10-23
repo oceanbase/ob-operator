@@ -122,7 +122,10 @@ announce() {
   current_action=$1
   echo "[stage] $current_action ($((SECONDS - started))s elapsed)"
 }
-announce 'Preflight: checking SS-enabled CRDs and existing release'
+completed() {
+  echo "[done] $1 ($((SECONDS - started))s elapsed)"
+}
+announce '[1/6] Preflight: checking SS-enabled CRDs and existing release'
 for crd in obclusters oblogserviceclusters oblogservicezones oblogservicenodes; do
   run_bounded "$request_timeout" "read CRD $crd" kubectl get "crd/$crd.oceanbase.oceanbase.com" --request-timeout="${request_timeout}s" >>"$log_file"
   run_bounded "$request_timeout" "wait for CRD $crd" kubectl wait "crd/$crd.oceanbase.oceanbase.com" --for=condition=Established --timeout="${request_timeout}s" --request-timeout="${request_timeout}s" >>"$log_file"
@@ -154,14 +157,15 @@ if [[ -n $retained_cluster ]]; then stage=cluster
 elif [[ -n $retained_logservice ]]; then stage=logservice
 fi
 case "$stage" in storage|logservice|cluster) ;; *) echo 'Unknown retained installation stage.' >&2; exit 1 ;; esac
+completed '[1/6] Preflight: existing installation state checked'
 upgrade() {
-  announce "Apply $1 configuration and wait for Helm resources"
   run_bounded "$timeout" "Helm $1 stage" helm upgrade --install "$release" "$chart_dir" -n "$namespace" \
     "${helm_args[@]}" --set-string "stage=$1" --wait --wait-for-jobs --timeout "${timeout}s" >>"$log_file"
 }
 wait_running() {
-  local deadline=$((SECONDS + timeout)) began=$SECONDS remaining status previous='' delay budget next_progress=$SECONDS
-  announce "Wait for $1 to become running"
+  local deadline=$((SECONDS + timeout)) began=$SECONDS remaining status previous='' delay budget next_progress=$SECONDS quiet=${2:-false}
+  current_action="Wait for $1 to become running"
+  if [[ $quiet != true ]]; then echo "[wait] $current_action"; fi
   while (( SECONDS < deadline )); do
     remaining=$((deadline - SECONDS))
     (( remaining > 0 )) || break
@@ -169,15 +173,22 @@ wait_running() {
     (( remaining >= budget )) || budget=$remaining
     status=$(run_bounded "$budget" "read $1 status" kubectl -n "$namespace" get "$1" -o jsonpath='{.status.status}' --request-timeout="${budget}s")
     case "$status" in
-      running) echo "$1 is running ($((SECONDS - began))s)"; return 0 ;;
+      running)
+        if [[ $quiet != true ]]; then echo "[ready] $1 is running ($((SECONDS - began))s)"; fi
+        return 0 ;;
       failed)
         echo "$1 entered failed status. Inspect the Operator events and resolve the cause before retrying; no data is deleted or bootstrap forced." >&2
         return 1 ;;
     esac
+    # A previously ready LogService is still rechecked after the cluster apply.
+    # Stay quiet only if it remains ready; otherwise show recovery progress.
+    if [[ $quiet == true ]]; then echo "[wait] $current_action"; quiet=false; fi
+    # Normalize before comparing, so an unknown API value does not cause an
+    # identical 'pending' message on every poll (and never exposes raw API text).
+    case "$status" in new|pending|creating|initializing|upgrading|running|failed) ;; *) status=pending ;; esac
     if [[ $status != "$previous" ]] || (( SECONDS >= next_progress )); then
       # Do not echo arbitrary API text. Known status values aid progress; unknown
       # values stay in the API and are summarized without exposing their content.
-      case "$status" in new|pending|creating|initializing|upgrading|running|failed) ;; *) status=pending ;; esac
       echo "[wait] $1: $status; $((SECONDS - began))s elapsed"
       previous=$status
       next_progress=$((SECONDS + progress_interval))
@@ -191,26 +202,43 @@ wait_running() {
   echo "Timed out waiting for $1 to become running." >&2
   return 1
 }
-if [[ $stage == storage ]]; then upgrade storage; stage=logservice; fi
+logservice_reported=false
+if [[ $stage == storage ]]; then
+  announce '[2/6] Storage: apply resources and wait for initialization'
+  upgrade storage
+  completed '[2/6] Storage: initialization Job and Helm resources ready'
+  stage=logservice
+else
+  echo '[skip] [2/6] Storage: resume past this stage; Helm will still check retained resources'
+fi
 if [[ $stage == logservice ]]; then
+  announce '[3/6] LogService: apply configuration and wait for running status'
   upgrade logservice
   wait_running "oblogservicecluster/$release-ls"
+  logservice_reported=true
+  completed '[3/6] LogService: running status confirmed'
+else
+  echo '[skip] [3/6] LogService: resume at cluster stage; final status is verified below'
 fi
+announce '[4/6] OceanBase: apply cluster configuration and verify database status'
 upgrade cluster
-wait_running "oblogservicecluster/$release-ls"
+wait_running "oblogservicecluster/$release-ls" "$logservice_reported"
 wait_running "obcluster/$release-ob"
-announce 'Wait for Observer Pods to become Ready'
+completed '[4/6] OceanBase: LogService and OBCluster running status confirmed'
+announce '[5/6] Observer Pods: wait for Ready conditions'
 run_bounded "$timeout" 'Observer Pod readiness' kubectl -n "$namespace" wait pods -l "ref-obcluster=$release-ob" --for=condition=Ready --timeout="${timeout}s" --request-timeout="${timeout}s" >>"$log_file"
+completed '[5/6] Observer Pods: Ready conditions confirmed'
 # Read resolved values without printing credentials from Helm's stored values.
+announce '[6/6] Dashboard: check configuration and HTTP readiness probes'
 dashboard_config=$(run_bounded "$request_timeout" 'read Dashboard configuration' helm get values "$release" -n "$namespace" --all -o json |
   jq -c '.dashboard | {enabled, port: .service.port}')
 dashboard_enabled=$(jq -r '.enabled' <<<"$dashboard_config")
 case "$dashboard_enabled" in
   true)
-    announce 'Wait for Dashboard, Prometheus and Alertmanager HTTP readiness'
     run_bounded "$timeout" 'Dashboard rollout' kubectl -n "$namespace" rollout status "deployment/oceanbase-dashboard-$release" --timeout="${timeout}s" --request-timeout="${timeout}s" >>"$log_file"
+    completed '[6/6] Dashboard: Deployment and its HTTP readiness probes ready'
     ;;
-  false) ;;
+  false) echo '[skip] [6/6] Dashboard: disabled by configuration' ;;
   *) echo 'Cannot determine Dashboard readiness: resolved dashboard.enabled is missing.' >&2; exit 1 ;;
 esac
 echo "Lakehouse ready: namespace=$namespace LogService=$release-ls OBCluster=$release-ob ($((SECONDS - started))s)"

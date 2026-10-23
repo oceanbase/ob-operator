@@ -1,6 +1,14 @@
 Stage: {{ .Values.stage }}. This is not a readiness assertion.
-For a complete, ordered installation run:
+{{ if ne .Values.stage "cluster" }}
+For a partial manual Helm installation, continue with the ordered installer:
   bash charts/oceanbase-lakehouse/install.sh {{ .Release.Name }} {{ .Release.Namespace }} -f your-values.yaml
+If that installer is already running, do not start it again; follow its progress.
+{{ else }}
+Cluster resources have been applied. Verify runtime readiness before use:
+  kubectl -n {{ .Release.Namespace }} get oblogservicecluster/{{ .Release.Name }}-ls obcluster/{{ .Release.Name }}-ob
+  kubectl -n {{ .Release.Namespace }} get pods -l ref-obcluster={{ .Release.Name }}-ob
+The ordered installer performs these readiness checks; Helm deployed status alone is insufficient.
+{{ end }}
 
 Storage mode: {{ .Values.objectStorage.mode }}
 {{ if .Values.dashboard.enabled }}

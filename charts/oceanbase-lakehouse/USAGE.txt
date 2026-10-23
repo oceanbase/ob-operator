@@ -84,6 +84,18 @@ merely Helm deployed status. Dashboard is present from the first storage stage.
 Run the same command to resume or upgrade. Existing Helm user values are reused;
 new values flags override them. New installs still need their image/storage configuration.
 Plain helm install defaults to the storage stage ONLY and is not a full install.
+
+Installer output uses six numbered steps: preflight, storage initialization,
+LogService, OceanBase status, Observer Pod readiness and Dashboard readiness.
+[stage] announces work, [wait] reports bounded waits, [done] confirms a completed
+gate and [skip] explains a resumed stage or disabled Dashboard. Resume still
+checks the final LogService/OBCluster and Pod readiness; a previously reported
+LogService does not print the same success twice if it remains ready.
+Helm's full release/NOTES output stays in the private installation log whose
+path is printed once. Do not publish that log without reviewing sensitive data.
+The installer does not print another instruction to start itself. Direct manual
+Helm usage keeps stage-specific NOTES: partial stages explain continuation,
+whereas cluster stage explains runtime verification rather than starting over.
 Do not use helm --atomic, --force or --cleanup-on-fail for this stateful stack.
 The installer intentionally does not perform automatic rollback or data cleanup.
 
