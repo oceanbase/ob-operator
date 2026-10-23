@@ -147,7 +147,7 @@ esac
 				timeout = "1"
 			}
 			cmd := exec.Command("bash", "install.sh", "qa", "qa-ns", "-f", "/tmp/values with spaces.yaml", "--set-string", "objectStorage.region=us-east-1")
-			cmd.Env = append(os.Environ(), "PATH="+dir+string(os.PathListSeparator)+os.Getenv("PATH"), "CASE_LOG="+log, "LAKEHOUSE_TIMEOUT="+timeout, "TMPDIR="+dir)
+			cmd.Env = append(os.Environ(), "LC_ALL=C", "PATH="+dir+string(os.PathListSeparator)+os.Getenv("PATH"), "CASE_LOG="+log, "LAKEHOUSE_TIMEOUT="+timeout, "TMPDIR="+dir)
 			cmd.Env = append(cmd.Env, tc.env...)
 			output, err := cmd.CombinedOutput()
 			if got := exitCode(err); got != tc.code {
@@ -157,7 +157,7 @@ esac
 			if err != nil {
 				t.Fatal(err)
 			}
-			if tc.name == "fresh" || tc.name == "resume-cluster" {
+			if tc.name == "fresh" || tc.name == "resume-cluster" || tc.name == "packaged-entry" {
 				t.Logf("installer progress transcript:\n%s", output)
 			}
 			if strings.Contains(string(output), "HELM_NOTES_PRIVATE_SENTINEL") || strings.Contains(string(output), "DIAGNOSTIC_PRIVATE_SENTINEL") || strings.Contains(string(output), "SAVED_CREDENTIAL_SENTINEL") {
@@ -179,7 +179,16 @@ esac
 			// Executable progress contract: distinguish submitted Helm resources
 			// from completed runtime gates and do not repeat success on fresh runs.
 			if tc.code == 0 {
+				managed := tc.name == "packaged-entry"
+				if managed {
+					if strings.Contains(string(output), "/6]") {
+						t.Fatalf("managed entry must not start a second progress count: %s", output)
+					}
+				}
 				for _, step := range []string{"[1/6] Preflight", "[4/6] OceanBase", "[5/6] Observer Pods"} {
+					if managed {
+						step = strings.SplitN(step, "] ", 2)[1]
+					}
 					if strings.Count(string(output), "[done] "+step) != 1 {
 						t.Fatalf("missing or duplicate completion for %s: %s", step, output)
 					}
@@ -191,6 +200,9 @@ esac
 				}
 				if tc.name == "fresh" || tc.name == "packaged-entry" || tc.name == "storage-slow" {
 					for _, step := range []string{"[2/6] Storage", "[3/6] LogService", "[6/6] Dashboard"} {
+						if managed {
+							step = strings.SplitN(step, "] ", 2)[1]
+						}
 						if strings.Count(string(output), "[done] "+step) != 1 {
 							t.Fatalf("missing or duplicate completion for %s: %s", step, output)
 						}

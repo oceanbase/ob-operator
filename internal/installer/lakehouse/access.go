@@ -109,13 +109,20 @@ func showAccess(ctx context.Context, run RunCommand, o options, result Preflight
 	if err = writePrivate(passwordPath, password); err != nil {
 		return err
 	}
-	summary := fmt.Sprintf("安装完成：release=%s，namespace=%s\nDashboard: %s/#/login\n用户名：admin\n初始密码文件：%s（权限 0600；首次登录后按页面提示修改密码，已改密请使用当前密码）\n已验证节点内 HTTP：%s\n", o.release, o.namespace, url, passwordPath, verifiedURL)
-	if svc.Spec.Type == "ClusterIP" {
-		summary += "当前选择了 clusterip 访问，仅集群网络内可达。\n"
-	} else {
-		summary += "浏览器所在网络需能访问上述节点端口；公网 IP 请使用 --dashboard-host 指定，云防火墙/安全组需允许该端口。\n"
+	heading := "Installation complete."
+	if o.showAccess {
+		heading = "Dashboard access"
 	}
-	summary += "湖库和 Dashboard 属于同一 Helm release。重复执行相同命令可继续安装，已有数据库和账号保留。\n"
+	summary := fmt.Sprintf("\n%s\nRelease: %s\nNamespace: %s\nDashboard: %s/#/login\nUsername: admin\nInitial password file: %s (mode 0600)\nHTTP verified from this node: %s\n\nChange the initial password when prompted on first login. If already changed, use your current password.\n", heading, o.release, o.namespace, url, passwordPath, verifiedURL)
+	if svc.Spec.Type == "ClusterIP" {
+		summary += "Access: ClusterIP; reachable only within the cluster network.\n"
+	} else {
+		summary += fmt.Sprintf("Access: NodePort; allow TCP port %d from your browser's network in the firewall/security group.\n", port)
+		if o.host == "" && result.NodeExternalIP == "" {
+			summary += "Using the node's internal IP. For public access, rerun with --show-access --dashboard-host <public-IP-or-DNS>.\n"
+		}
+	}
+	summary += "Lakehouse and Dashboard share one Helm release. Rerun the same installation command to resume; existing data and accounts are retained.\n"
 	if err = writePrivate(filepath.Join(stateDir, "ACCESS.txt"), []byte(summary)); err != nil {
 		return err
 	}
@@ -164,7 +171,10 @@ func prepareOperator(ctx context.Context, run RunCommand, o options, result Pref
 		progress(label)
 		c, cancel := context.WithTimeout(ctx, 5*time.Minute)
 		defer cancel()
-		_, err := run(c, tool, args...)
+		err := withProgress(c, progressInterval, progress, label, func() error {
+			_, err := run(c, tool, args...)
+			return err
+		})
 		if err != nil {
 			return fmt.Errorf("%s failed: %w; repair the partially initialized prerequisite before retrying; existing shared components will not be overwritten", label, err)
 		}
@@ -184,16 +194,16 @@ func prepareOperator(ctx context.Context, run RunCommand, o options, result Pref
 		if _, err := os.Stat(manifest); err != nil {
 			return err
 		}
-		if err := action("安装配套 cert-manager", "kubectl", "--request-timeout=60s", "apply", "-f", manifest); err != nil {
+		if err := action("Installing bundled cert-manager", "kubectl", "--request-timeout=60s", "apply", "-f", manifest); err != nil {
 			return err
 		}
 	}
 	for _, name := range []string{"cert-manager", "cert-manager-cainjector", "cert-manager-webhook"} {
-		if err := action("等待 "+name, "kubectl", "--request-timeout=30s", "-n", "cert-manager", "rollout", "status", "deployment/"+name, "--timeout=240s"); err != nil {
+		if err := action("Waiting for "+name+" readiness", "kubectl", "--request-timeout=30s", "-n", "cert-manager", "rollout", "status", "deployment/"+name, "--timeout=240s"); err != nil {
 			return err
 		}
 	}
-	if err := action("安装配套 ob-operator", "helm", "install", "ob-operator", filepath.Join(o.bundle, "charts/ob-operator"), "--namespace", "oceanbase-system", "--create-namespace", "--wait", "--timeout", "240s"); err != nil {
+	if err := action("Installing bundled ob-operator", "helm", "install", "ob-operator", filepath.Join(o.bundle, "charts/ob-operator"), "--namespace", "oceanbase-system", "--create-namespace", "--wait", "--timeout", "240s"); err != nil {
 		return err
 	}
 	return nil

@@ -85,12 +85,19 @@ Run the same command to resume or upgrade. Existing Helm user values are reused;
 new values flags override them. New installs still need their image/storage configuration.
 Plain helm install defaults to the storage stage ONLY and is not a full install.
 
-Installer output uses six numbered steps: preflight, storage initialization,
-LogService, OceanBase status, Observer Pod readiness and Dashboard readiness.
+Installer console output is in English. The package entry point uses five
+overall steps (two for --check). Its detailed installation phases are named
+without a second progress count. The standalone chart script uses six numbered
+steps: preflight, storage initialization, LogService, OceanBase status, Observer
+Pod readiness and Dashboard readiness.
 [stage] announces work, [wait] reports bounded waits, [done] confirms a completed
 gate and [skip] explains a resumed stage or disabled Dashboard. Resume still
 checks the final LogService/OBCluster and Pod readiness; a previously reported
 LogService does not print the same success twice if it remains ready.
+Unchanged status is reported every 30 seconds; status changes are reported on
+the next poll. LAKEHOUSE_PROGRESS_INTERVAL overrides the chart script's interval.
+Image import, prerequisite setup and diagnostic verification also report quiet
+waits every 30 seconds. No percentage or completion time is estimated.
 Helm's full release/NOTES output stays in the private installation log whose
 path is printed once. Do not publish that log without reviewing sensitive data.
 The installer does not print another instruction to start itself. Direct manual

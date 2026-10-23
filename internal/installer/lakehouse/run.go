@@ -133,7 +133,13 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 		}
 	}
 	progress := func(s string) { fmt.Fprintln(out, s) }
-	progress("[1/5] 检查集群与已安装配置")
+	steps := 5
+	if o.check {
+		steps = 2
+	}
+	if !o.showAccess {
+		progress(fmt.Sprintf("[1/%d] Checking cluster and installation settings", steps))
+	}
 	var identity struct {
 		Metadata struct {
 			UID string `json:"uid"`
@@ -207,7 +213,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 			return errors.New("invalid effective installed values")
 		}
 		values = retainConfiguration(effective, values)
-		progress("已读取当前 release 的用户参数；新传入的 values 优先。")
+		progress("Reusing installed settings; explicitly supplied values take precedence.")
 	} else {
 		values, err = readValues(filepath.Join(stateDir, "values.yaml"))
 		if os.IsNotExist(err) {
@@ -255,19 +261,24 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 	if err = checkLocalWorker(result); err != nil {
 		return err
 	}
-	progress(fmt.Sprintf("目标节点 %s；CPU 需要 %.2f / 可用 %.2f 核，内存需要 %.1f / 可用 %.1f GiB", result.NodeName, float64(result.RequiredCPUMilli)/1000, float64(result.AvailableCPUMilli)/1000, float64(result.RequiredMemoryBytes)/(1<<30), float64(result.AvailableMemoryBytes)/(1<<30)))
+	progress(fmt.Sprintf("  Node: %s", result.NodeName))
+	progress(fmt.Sprintf("  CPU: %.2f cores required / %.2f available; memory: %.1f GiB required / %.1f available", float64(result.RequiredCPUMilli)/1000, float64(result.AvailableCPUMilli)/1000, float64(result.RequiredMemoryBytes)/(1<<30), float64(result.AvailableMemoryBytes)/(1<<30)))
 	for _, warning := range result.Warnings {
-		progress(warning)
+		progress("[warning] " + warning)
 	}
 	if err = validateConfiguredImages(o.bundle, complete); err != nil {
 		return err
 	}
-	progress("[2/5] 校验镜像及缓存（已匹配的镜像自动跳过）")
+	imageStep := "Checking local images and preparing missing images"
+	if o.check {
+		imageStep = "Checking local images"
+	}
+	progress(fmt.Sprintf("[2/%d] %s", steps, imageStep))
 	if err = PrepareImages(ctx, execute, ImageOptions{BundleDir: o.bundle, Runtime: o.runtime, NodeRuntimeVersion: result.NodeRuntimeVersion, ContainerdAddress: o.address, CRIEndpoint: o.endpoint, CheckOnly: o.check}, progress); err != nil {
 		return err
 	}
 	if o.check {
-		progress("预检查通过；没有导入镜像或修改 Kubernetes 资源。")
+		progress("Preflight passed. No images were imported or Kubernetes resources changed.")
 		return nil
 	}
 	// Use the node's actual hostname label, not its metadata.name.
@@ -296,7 +307,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 	if err = writePrivate(filepath.Join(stateDir, "values.yaml"), raw); err != nil {
 		return err
 	}
-	progress("[3/5] 检查并准备 Operator（已有组件保留）")
+	progress("[3/5] Checking Operator prerequisites")
 	if result.OperatorMissing {
 		if err = prepareOperator(ctx, execute, o, result, progress); err != nil {
 			return err
@@ -305,8 +316,11 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 		if err != nil {
 			return err
 		}
+		progress("[ready] Operator and admission webhooks are ready.")
+	} else {
+		progress("[skip] Compatible Operator and admission webhooks are already ready.")
 	}
-	progress("[4/5] 安装湖库和 Dashboard，按阶段等待就绪")
+	progress("[4/5] Installing lakehouse resources and Dashboard")
 	installCtx, cancel := context.WithTimeout(ctx, 2*time.Hour)
 	defer cancel()
 	cmd := command(installCtx, "bash", filepath.Join(o.bundle, "charts/oceanbase-lakehouse/install.sh"), o.release, o.namespace, "-f", filepath.Join(stateDir, "values.yaml"))
@@ -314,19 +328,22 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 	cmd.Stdout = out
 	cmd.Stderr = stderr
 	if err = cmd.Run(); err != nil {
-		return fmt.Errorf("安装未完成，处理提示后重跑同一命令（不自动删除数据）: %w", err)
+		return fmt.Errorf("installation did not complete; resolve the reported issue and rerun the same command to resume (data is retained): %w", err)
 	}
 	if enabled, _ := pfGet(complete, "dashboard", "enabled").(bool); !enabled {
-		progress("安装完成；已按显式配置关闭内置 Dashboard。")
+		progress("[5/5] Dashboard access checks skipped: Dashboard is disabled by configuration.")
+		progress("Installation complete. Dashboard is disabled by configuration.")
 		return nil
 	}
-	progress("[5/5] 验证日志采集依赖、Dashboard 并生成访问说明")
+	progress("[5/5] Verifying log download support and Dashboard access")
 	diagnosticCtx, diagnosticCancel := context.WithTimeout(ctx, 15*time.Minute)
 	defer diagnosticCancel()
-	if err = verifyObserverDiagnostics(diagnosticCtx, execute, o.namespace, o.release, complete, 3*time.Second); err != nil {
+	if err = withProgress(diagnosticCtx, progressInterval, progress, "Verifying Observer log download support", func() error {
+		return verifyObserverDiagnostics(diagnosticCtx, execute, o.namespace, o.release, complete, 3*time.Second)
+	}); err != nil {
 		return err
 	}
-	progress("Observer 的 Python 日志归档和传输能力已验证；诊断镜像身份已校验。")
+	progress("[ready] Log download prerequisites verified: Observer archive/transfer support and diagnostic image IDs.")
 	return showAccess(ctx, execute, o, result, stateDir, out)
 }
 

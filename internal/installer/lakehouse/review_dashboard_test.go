@@ -15,6 +15,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"unicode"
 )
 
 func TestReviewCheckCannotExportBootstrapCredential(t *testing.T) {
@@ -52,7 +53,7 @@ func TestReviewJSONReadsSeparateStderrWarnings(t *testing.T) {
 }
 
 func TestReviewAccessVerifiesActualServiceAndProtectsBootstrap(t *testing.T) {
-	for _, mode := range []string{"NodePort", "ClusterIP", "http-failure", "redirect"} {
+	for _, mode := range []string{"NodePort", "NodePort-internal", "show-access", "ClusterIP", "http-failure", "redirect"} {
 		t.Run(mode, func(t *testing.T) {
 			var requests []string
 			var requestMu sync.Mutex
@@ -106,7 +107,11 @@ func TestReviewAccessVerifiesActualServiceAndProtectsBootstrap(t *testing.T) {
 			}
 			state := filepath.Join(t.TempDir(), "private-state")
 			var out bytes.Buffer
-			err = showAccess(context.Background(), run, options{release: "demo", namespace: "demo-ns", host: "192.0.2.99"}, PreflightResult{NodeInternalIP: "127.0.0.1"}, state, &out)
+			opts := options{release: "demo", namespace: "demo-ns", host: "192.0.2.99", showAccess: mode == "show-access"}
+			if mode == "NodePort-internal" {
+				opts.host = ""
+			}
+			err = showAccess(context.Background(), run, opts, PreflightResult{NodeInternalIP: "127.0.0.1"}, state, &out)
 			if mode == "http-failure" || mode == "redirect" {
 				if err == nil || secretReads != 0 {
 					t.Fatal("failed HTTP readiness must not claim success or export credentials")
@@ -128,10 +133,19 @@ func TestReviewAccessVerifiesActualServiceAndProtectsBootstrap(t *testing.T) {
 			if strings.Contains(out.String(), "REVIEW_BOOTSTRAP_SENTINEL") {
 				t.Fatal("credential leaked to terminal")
 			}
+			if strings.ContainsFunc(out.String(), func(r rune) bool { return unicode.Is(unicode.Han, r) }) {
+				t.Fatal("access instructions must be in English", out.String())
+			}
+			if mode == "show-access" && (!strings.Contains(out.String(), "Dashboard access") || strings.Contains(out.String(), "Installation complete")) {
+				t.Fatal("show-access must not claim to have installed a release", out.String())
+			}
+			if mode == "NodePort-internal" && (!strings.Contains(out.String(), server.URL+"/#/login") || !strings.Contains(out.String(), "--show-access --dashboard-host")) {
+				t.Fatal("internal IP fallback needs a usable URL and public access guidance", out.String())
+			}
 			if mode == "NodePort" && !strings.Contains(out.String(), "http://192.0.2.99:"+portStr+"/#/login") {
 				t.Fatal("advertised host override was ignored")
 			}
-			if mode == "ClusterIP" && !strings.Contains(out.String(), "仅集群网络内可达") {
+			if mode == "ClusterIP" && !strings.Contains(out.String(), "reachable only within the cluster network") {
 				t.Fatal("ClusterIP reachability not explained")
 			}
 			password, err := os.ReadFile(filepath.Join(state, "dashboard-initial-password"))

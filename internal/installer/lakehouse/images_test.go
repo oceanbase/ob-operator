@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode"
 )
 
 type imageTestBundle struct {
@@ -139,8 +140,13 @@ func TestImagesAutoUsesSelectedNodeK3sRuntimeAndVerifiesIDs(t *testing.T) {
 			t.Fatalf("wrong runtime or gzip-incompatible import: %s", command)
 		}
 	}
-	if len(progress) < 5 || !strings.Contains(progress[len(progress)-1], "全部匹配") {
+	if len(progress) < 5 || !strings.Contains(progress[len(progress)-1], "All 3 local image IDs match") {
 		t.Fatalf("missing useful preparation progress: %v", progress)
+	}
+	for _, line := range progress {
+		if strings.ContainsFunc(line, func(r rune) bool { return unicode.Is(unicode.Han, r) }) {
+			t.Fatalf("image preparation output must be in English: %s", line)
+		}
 	}
 }
 

@@ -98,7 +98,7 @@ func PrepareImages(ctx context.Context, run RunCommand, opts ImageOptions, progr
 	if err != nil {
 		return err
 	}
-	progress(fmt.Sprintf("检查本机镜像：runtime=%s，目标 Node runtime=%s", runtime.name, opts.NodeRuntimeVersion))
+	progress(fmt.Sprintf("  Image runtime: %s (node: %s)", runtime.name, opts.NodeRuntimeVersion))
 	if err := runtime.check(ctx, run, opts.CommandTimeout); err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func PrepareImages(ctx context.Context, run RunCommand, opts ImageOptions, progr
 		return err
 	}
 	if len(missing) == 0 {
-		progress(fmt.Sprintf("本机 %d 个镜像 ID 全部匹配，跳过归档校验和导入", len(lock.Images)))
+		progress(fmt.Sprintf("[ready] All %d local image IDs match; reusing cached images.", len(lock.Images)))
 		return nil
 	}
 	if opts.CheckOnly {
@@ -126,7 +126,7 @@ func PrepareImages(ctx context.Context, run RunCommand, opts ImageOptions, progr
 			}
 		}
 	}
-	progress(fmt.Sprintf("需要准备 %d 个镜像归档；先完整校验，再开始导入", len(needed)))
+	progress(fmt.Sprintf("  Preparing %d image archives; all required archives are verified before import.", len(needed)))
 	paths := make([]string, len(needed))
 	var problems []error
 	for i, archive := range needed {
@@ -148,7 +148,7 @@ func PrepareImages(ctx context.Context, run RunCommand, opts ImageOptions, progr
 			problems = append(problems, fmt.Errorf("%s: archive is not a regular file: %s", archive.Name, path))
 			continue
 		}
-		progress(fmt.Sprintf("校验归档 %d/%d：%s（%.1f MiB）", i+1, len(needed), archive.Name, float64(info.Size())/(1024*1024)))
+		progress(fmt.Sprintf("  Verifying archive %d/%d: %s (%.1f MiB)", i+1, len(needed), archive.Name, float64(info.Size())/(1024*1024)))
 		actual, hashErr := hashImageArchive(ctx, path)
 		if hashErr != nil {
 			problems = append(problems, fmt.Errorf("%s: %w", archive.Name, hashErr))
@@ -160,12 +160,14 @@ func PrepareImages(ctx context.Context, run RunCommand, opts ImageOptions, progr
 		return fmt.Errorf("image archives are not ready; nothing was imported:\n%w", errors.Join(problems...))
 	}
 	for i, archive := range needed {
-		progress(fmt.Sprintf("导入归档 %d/%d：%s → %s", i+1, len(needed), archive.Name, runtime.name))
+		progress(fmt.Sprintf("  Importing archive %d/%d: %s into %s", i+1, len(needed), archive.Name, runtime.name))
 		start := time.Now()
-		if err := runtime.importArchive(ctx, run, opts.ImportTimeout, paths[i]); err != nil {
+		if err := withProgress(ctx, progressInterval, progress, "Importing "+archive.Name+" images", func() error {
+			return runtime.importArchive(ctx, run, opts.ImportTimeout, paths[i])
+		}); err != nil {
 			return fmt.Errorf("import %s failed; previous imports are safe to reuse on retry: %w", archive.Name, err)
 		}
-		progress(fmt.Sprintf("归档 %s 导入完成（%s）", archive.Name, time.Since(start).Round(time.Second)))
+		progress(fmt.Sprintf("[done] Imported %s (%s elapsed)", archive.Name, time.Since(start).Round(time.Second)))
 	}
 	missing, err = inspectLockedImages(ctx, run, runtime, opts.CommandTimeout, lock.Images)
 	if err != nil {
@@ -174,7 +176,7 @@ func PrepareImages(ctx context.Context, run RunCommand, opts ImageOptions, progr
 	if len(missing) > 0 {
 		return fmt.Errorf("image ID verification failed after import: %s", strings.Join(missing, "; "))
 	}
-	progress(fmt.Sprintf("本机 %d 个镜像 ID 全部匹配；其他目标 Worker 仍需分别准备", len(lock.Images)))
+	progress(fmt.Sprintf("[ready] All %d local image IDs match after import.", len(lock.Images)))
 	return nil
 }
 

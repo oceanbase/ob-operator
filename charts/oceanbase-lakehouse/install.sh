@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # One command, resumable stages; never rolls back or deletes persistent data.
 set -Eeuo pipefail
+export LC_ALL=C
 if (( $# < 2 )); then
   echo "Usage: bash install.sh RELEASE NAMESPACE [-f values.yaml] [--set key=value]" >&2
   exit 2
@@ -24,7 +25,7 @@ done
 timeout=${LAKEHOUSE_TIMEOUT:-1800}
 request_timeout=${LAKEHOUSE_REQUEST_TIMEOUT:-30}
 diagnostic_timeout=${LAKEHOUSE_DIAGNOSTIC_TIMEOUT:-10}
-progress_interval=${LAKEHOUSE_PROGRESS_INTERVAL:-15}
+progress_interval=${LAKEHOUSE_PROGRESS_INTERVAL:-30}
 for setting in timeout request_timeout diagnostic_timeout progress_interval; do
   [[ ${!setting} =~ ^[1-9][0-9]{0,4}$ ]] || { echo "$setting must be 1-99999 seconds." >&2; exit 2; }
 done
@@ -37,7 +38,7 @@ started=$SECONDS
 current_action=preflight
 active_pid=''
 monitor_pid=''
-echo "Installation log (private, may contain sensitive Helm output): $log_file"
+echo "Detailed log: $log_file (private, mode 0600)"
 
 # Helm's read commands have no --timeout flag. Bound the executable itself as
 # well as kubectl requests. The monitor also provides progress for quiet Helm
@@ -118,12 +119,24 @@ trap finish EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
+phase_label() {
+  # The package entry point already numbers its five overall steps. Keep the
+  # six detailed phases named, rather than starting a competing progress count.
+  if [[ ${LAKEHOUSE_MANAGED_ACCESS:-0} == 1 ]]; then
+    printf '%s' "${1#*] }"
+  else
+    printf '%s' "$1"
+  fi
+}
 announce() {
-  current_action=$1
+  current_action=$(phase_label "$1")
   echo "[stage] $current_action ($((SECONDS - started))s elapsed)"
 }
 completed() {
-  echo "[done] $1 ($((SECONDS - started))s elapsed)"
+  echo "[done] $(phase_label "$1") ($((SECONDS - started))s elapsed)"
+}
+skipped() {
+  echo "[skip] $(phase_label "$1")"
 }
 announce '[1/6] Preflight: checking SS-enabled CRDs and existing release'
 for crd in obclusters oblogserviceclusters oblogservicezones oblogservicenodes; do
@@ -165,7 +178,6 @@ upgrade() {
 wait_running() {
   local deadline=$((SECONDS + timeout)) began=$SECONDS remaining status previous='' delay budget next_progress=$SECONDS quiet=${2:-false}
   current_action="Wait for $1 to become running"
-  if [[ $quiet != true ]]; then echo "[wait] $current_action"; fi
   while (( SECONDS < deadline )); do
     remaining=$((deadline - SECONDS))
     (( remaining > 0 )) || break
@@ -182,14 +194,14 @@ wait_running() {
     esac
     # A previously ready LogService is still rechecked after the cluster apply.
     # Stay quiet only if it remains ready; otherwise show recovery progress.
-    if [[ $quiet == true ]]; then echo "[wait] $current_action"; quiet=false; fi
+    quiet=false
     # Normalize before comparing, so an unknown API value does not cause an
     # identical 'pending' message on every poll (and never exposes raw API text).
     case "$status" in new|pending|creating|initializing|upgrading|running|failed) ;; *) status=pending ;; esac
     if [[ $status != "$previous" ]] || (( SECONDS >= next_progress )); then
       # Do not echo arbitrary API text. Known status values aid progress; unknown
       # values stay in the API and are summarized without exposing their content.
-      echo "[wait] $1: $status; $((SECONDS - began))s elapsed"
+      echo "[wait] $1: status=$status; $((SECONDS - began))s elapsed (limit ${timeout}s)"
       previous=$status
       next_progress=$((SECONDS + progress_interval))
     fi
@@ -209,7 +221,7 @@ if [[ $stage == storage ]]; then
   completed '[2/6] Storage: initialization Job and Helm resources ready'
   stage=logservice
 else
-  echo '[skip] [2/6] Storage: resume past this stage; Helm will still check retained resources'
+  skipped '[2/6] Storage: resume past this stage; Helm will still check retained resources'
 fi
 if [[ $stage == logservice ]]; then
   announce '[3/6] LogService: apply configuration and wait for running status'
@@ -218,7 +230,7 @@ if [[ $stage == logservice ]]; then
   logservice_reported=true
   completed '[3/6] LogService: running status confirmed'
 else
-  echo '[skip] [3/6] LogService: resume at cluster stage; final status is verified below'
+  skipped '[3/6] LogService: resume at cluster stage; final status is verified below'
 fi
 announce '[4/6] OceanBase: apply cluster configuration and verify database status'
 upgrade cluster
@@ -238,7 +250,7 @@ case "$dashboard_enabled" in
     run_bounded "$timeout" 'Dashboard rollout' kubectl -n "$namespace" rollout status "deployment/oceanbase-dashboard-$release" --timeout="${timeout}s" --request-timeout="${timeout}s" >>"$log_file"
     completed '[6/6] Dashboard: Deployment and its HTTP readiness probes ready'
     ;;
-  false) echo '[skip] [6/6] Dashboard: disabled by configuration' ;;
+  false) skipped '[6/6] Dashboard: disabled by configuration' ;;
   *) echo 'Cannot determine Dashboard readiness: resolved dashboard.enabled is missing.' >&2; exit 1 ;;
 esac
 echo "Lakehouse ready: namespace=$namespace LogService=$release-ls OBCluster=$release-ob ($((SECONDS - started))s)"
