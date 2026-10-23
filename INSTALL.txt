@@ -34,21 +34,38 @@ kubectl、jq、可用的默认 StorageClass，以及管理员 kubeconfig。推�
 
 2. 打开 Dashboard
 -----------------
-安装成功直接打印 Dashboard 地址、用户名 admin、初始密码文件位置（0600）。
-在浏览器可达节点的网络内打开地址，读取密码文件，首次登录按页面提示修改密码。
+安装成功直接打印 Dashboard 访问说明、用户名 admin、初始密码文件位置（0600）。
+NodePort 模式下，默认 ./install.sh 自动选择对外地址，优先级为：本次显式指定的
+--dashboard-host、已保存的显式地址、Kubernetes Node ExternalIP、节点直接配置的
+公网 IP、阿里云 ECS 元数据中的公网 IP/EIP。元数据仅在确认安装器运行于目标
+Worker 时读取；不会使用第三方公网 IP 查询服务，也不会把管理机的公网 IP 当成
+目标 Worker 的地址。
+在浏览器可达的网络内打开 Dashboard 地址，读取密码文件，首次登录按页面提示修改密码。
 密码不打印在安装日志中；已修改密码的账号继续使用当前密码，不会被升级重置。
 数据库会出现在 Dashboard 中，无需额外安装或注册。
 
-如果服务器使用公网地址映射，在同一次安装时指定：
+如果无法发现对外地址，摘要会显示 unavailable，并将私网地址明确标为内部地址；
+不会把私网地址当作已可从外网访问的 Dashboard 链接。可指定公网 IP、域名，或
+浏览器所在网络可达的节点地址：
   ./install.sh --dashboard-host 服务器公网IP
 
+访问摘要成功生成后，显式指定的地址按 Kubernetes 集群、namespace、release
+隔离保存，后续续跑和 --show-access 会自动复用；再次指定 --dashboard-host
+可更新地址。自动发现的 IP 不保存，下次会重新发现，避免服务器公网 IP 变化后
+仍展示过期地址。
+
 默认新装使用 Kubernetes 自动分配的 NodePort。网络安全组/防火墙需要允许浏览器
-访问该端口；安装器验证节点内访问，不声称外网防火墙已经连通。不会自动修改云
-安全组。已有 release 的 Service 类型和自定义 values 保留；若需要改为直接节点
-访问，可在同一安装命令中显式添加 --access nodeport。也支持 --access clusterip。
+访问该端口；自动发现地址不代表外网防火墙已经放行。安装器继续通过节点内部地址
+探活，成功摘要只显示该检查的通过状态，不会再把探活 URL 与浏览器访问 URL 并列。
+不会自动修改云安全组。已有 release 的 Service 类型和自定义 values 保留；若需要
+改为直接节点访问，可在同一安装命令中显式添加 --access nodeport。也支持
+--access clusterip，其地址仅在集群网络内可达，不会因 --dashboard-host 变成外网服务。
 
 重新查看访问说明（不会重建数据库）：
-  ./install.sh --show-access --dashboard-host 服务器公网IP
+  ./install.sh --show-access
+
+更新访问地址（不会重建数据库）：
+  ./install.sh --show-access --dashboard-host 新的公网IP或域名
 
 3. 预检查、续跑、自定义
 -----------------------

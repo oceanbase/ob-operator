@@ -111,7 +111,9 @@ func TestReviewAccessVerifiesActualServiceAndProtectsBootstrap(t *testing.T) {
 			if mode == "NodePort-internal" {
 				opts.host = ""
 			}
-			err = showAccess(context.Background(), run, opts, PreflightResult{NodeInternalIP: "127.0.0.1"}, state, &out)
+			err = showAccessWithDiscovery(context.Background(), run, opts, PreflightResult{NodeInternalIP: "127.0.0.1"}, state, &out, func(context.Context, PreflightResult) (string, string) {
+				return "", ""
+			})
 			if mode == "http-failure" || mode == "redirect" {
 				if err == nil || secretReads != 0 {
 					t.Fatal("failed HTTP readiness must not claim success or export credentials")
@@ -139,8 +141,8 @@ func TestReviewAccessVerifiesActualServiceAndProtectsBootstrap(t *testing.T) {
 			if mode == "show-access" && (!strings.Contains(out.String(), "Dashboard access") || strings.Contains(out.String(), "Installation complete")) {
 				t.Fatal("show-access must not claim to have installed a release", out.String())
 			}
-			if mode == "NodePort-internal" && (!strings.Contains(out.String(), server.URL+"/#/login") || !strings.Contains(out.String(), "--show-access --dashboard-host")) {
-				t.Fatal("internal IP fallback needs a usable URL and public access guidance", out.String())
+			if mode == "NodePort-internal" && (!strings.Contains(out.String(), "Dashboard (private network only): "+server.URL+"/#/login") || !strings.Contains(out.String(), "External Dashboard address: unavailable") || !strings.Contains(out.String(), "--dashboard-host <public-IP-or-DNS>") || strings.Contains(out.String(), "\nDashboard: ")) {
+				t.Fatal("internal IP fallback must be labelled private and explain how to set an external address", out.String())
 			}
 			if mode == "NodePort" && !strings.Contains(out.String(), "http://192.0.2.99:"+portStr+"/#/login") {
 				t.Fatal("advertised host override was ignored")

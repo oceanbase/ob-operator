@@ -16,6 +16,40 @@ import (
 )
 
 func showAccess(ctx context.Context, run RunCommand, o options, result PreflightResult, stateDir string, out io.Writer) error {
+	return showAccessWithDiscovery(ctx, run, o, result, stateDir, out, discoverDashboardHost)
+}
+
+type dashboardHostDiscovery func(context.Context, PreflightResult) (string, string)
+
+func dashboardHost(ctx context.Context, o options, result PreflightResult, stateDir string, discover dashboardHostDiscovery) (string, string, error) {
+	if o.host != "" {
+		return o.host, "--dashboard-host", nil
+	}
+	saved, err := os.ReadFile(filepath.Join(stateDir, "dashboard-host"))
+	if err == nil {
+		host := strings.TrimSpace(string(saved))
+		if _, err := parseOptions([]string{"--dashboard-host", host}, io.Discard); err != nil || host == "" {
+			return "", "", errors.New("saved Dashboard host is invalid; rerun with --dashboard-host <public-IP-or-DNS>")
+		}
+		return host, "saved --dashboard-host", nil
+	}
+	if !os.IsNotExist(err) {
+		return "", "", fmt.Errorf("cannot read saved Dashboard host: %w", err)
+	}
+	if isPublicDashboardIP(result.NodeExternalIP) {
+		return result.NodeExternalIP, "Kubernetes Node ExternalIP", nil
+	}
+	if isPublicDashboardIP(result.NodeInternalIP) {
+		return result.NodeInternalIP, "public Kubernetes node address", nil
+	}
+	host, source := discover(ctx, result)
+	if isPublicDashboardIP(host) {
+		return host, source, nil
+	}
+	return "", "", nil
+}
+
+func showAccessWithDiscovery(ctx context.Context, run RunCommand, o options, result PreflightResult, stateDir string, out io.Writer, discover dashboardHostDiscovery) error {
 	var svc struct {
 		Spec struct {
 			ClusterIP string                           `json:"clusterIP"`
@@ -46,11 +80,14 @@ func showAccess(ctx context.Context, run RunCommand, o options, result Preflight
 		var node struct {
 			Status struct {
 				Addresses []struct{ Type, Address string } `json:"addresses"`
+				NodeInfo  struct{ SystemUUID string }      `json:"nodeInfo"`
 			} `json:"status"`
 		}
 		if err := getJSON(ctx, run, &node, "get", "node", pods.Items[0].Spec.NodeName, "-o", "json"); err != nil {
 			return err
 		}
+		result.NodeName = pods.Items[0].Spec.NodeName
+		result.NodeSystemUUID = node.Status.NodeInfo.SystemUUID
 		for _, a := range node.Status.Addresses {
 			if a.Type == "InternalIP" {
 				result.NodeInternalIP = a.Address
@@ -60,24 +97,15 @@ func showAccess(ctx context.Context, run RunCommand, o options, result Preflight
 			}
 		}
 	}
-	host := result.NodeExternalIP
-	if host == "" {
-		host = result.NodeInternalIP
-	}
-	if o.host != "" {
-		host = o.host
-	}
 	port := svc.Spec.Ports[0].NodePort
 	verifyHost := result.NodeInternalIP
 	if svc.Spec.Type == "ClusterIP" {
-		host = svc.Spec.ClusterIP
-		verifyHost = host
+		verifyHost = svc.Spec.ClusterIP
 		port = svc.Spec.Ports[0].Port
 	}
-	if host == "" || verifyHost == "" || port == 0 {
+	if verifyHost == "" || port == 0 {
 		return errors.New("Dashboard address is not yet allocated")
 	}
-	url := "http://" + net.JoinHostPort(host, strconv.Itoa(int(port)))
 	verifiedURL := "http://" + net.JoinHostPort(verifyHost, strconv.Itoa(int(port)))
 	client := &http.Client{Timeout: 10 * time.Second, Transport: &http.Transport{Proxy: nil}, CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }}
 	for _, path := range []string{"/", "/api/v1/info"} {
@@ -95,6 +123,14 @@ func showAccess(ctx context.Context, run RunCommand, o options, result Preflight
 			return fmt.Errorf("Dashboard HTTP readiness failed: %s returned %d", path, resp.StatusCode)
 		}
 	}
+	var host, source string
+	if svc.Spec.Type != "ClusterIP" {
+		var err error
+		host, source, err = dashboardHost(ctx, o, result, stateDir, discover)
+		if err != nil {
+			return err
+		}
+	}
 	var secret struct {
 		Data map[string]string `json:"data"`
 	}
@@ -109,19 +145,30 @@ func showAccess(ctx context.Context, run RunCommand, o options, result Preflight
 	if err = writePrivate(passwordPath, password); err != nil {
 		return err
 	}
+	// Only persist an explicit choice. Automatically discovered addresses can
+	// change when a node's public IP/EIP is reassigned.
+	if o.host != "" && svc.Spec.Type != "ClusterIP" {
+		if err = writePrivate(filepath.Join(stateDir, "dashboard-host"), []byte(o.host+"\n")); err != nil {
+			return err
+		}
+	}
 	heading := "Installation complete."
 	if o.showAccess {
 		heading = "Dashboard access"
 	}
-	summary := fmt.Sprintf("\n%s\nRelease: %s\nNamespace: %s\nDashboard: %s/#/login\nUsername: admin\nInitial password file: %s (mode 0600)\nHTTP verified from this node: %s\n\nChange the initial password when prompted on first login. If already changed, use your current password.\n", heading, o.release, o.namespace, url, passwordPath, verifiedURL)
+	summary := fmt.Sprintf("\n%s\nRelease: %s\nNamespace: %s\n", heading, o.release, o.namespace)
 	if svc.Spec.Type == "ClusterIP" {
-		summary += "Access: ClusterIP; reachable only within the cluster network.\n"
+		summary += fmt.Sprintf("Dashboard (cluster network only): %s/#/login\nAccess: ClusterIP; reachable only within the cluster network.\nFor browser access, run on a computer with kubectl access:\n  kubectl -n %s port-forward service/oceanbase-dashboard-%s 18080:%d\nThen open http://127.0.0.1:18080/#/login on that computer.\n", verifiedURL, o.namespace, o.release, port)
 	} else {
-		summary += fmt.Sprintf("Access: NodePort; allow TCP port %d from your browser's network in the firewall/security group.\n", port)
-		if o.host == "" && result.NodeExternalIP == "" {
-			summary += "Using the node's internal IP. For public access, rerun with --show-access --dashboard-host <public-IP-or-DNS>.\n"
+		if host != "" {
+			url := "http://" + net.JoinHostPort(host, strconv.Itoa(int(port)))
+			summary += fmt.Sprintf("Dashboard: %s/#/login\nAddress source: %s\n", url, source)
+		} else {
+			summary += fmt.Sprintf("External Dashboard address: unavailable (could not be detected automatically).\nDashboard (private network only): %s/#/login\nSet your public IP or DNS name without reinstalling:\n  ./install.sh --show-access --release %s --namespace %s --dashboard-host <public-IP-or-DNS>\n", verifiedURL, o.release, o.namespace)
 		}
+		summary += fmt.Sprintf("Access: NodePort; allow TCP port %d from your browser's network in the firewall/security group.\n", port)
 	}
+	summary += fmt.Sprintf("Username: admin\nInitial password file: %s (mode 0600)\nHTTP readiness: passed (node network).\n\nChange the initial password when prompted on first login. If already changed, use your current password.\n", passwordPath)
 	summary += "Lakehouse and Dashboard share one Helm release. Rerun the same installation command to resume; existing data and accounts are retained.\n"
 	if err = writePrivate(filepath.Join(stateDir, "ACCESS.txt"), []byte(summary)); err != nil {
 		return err

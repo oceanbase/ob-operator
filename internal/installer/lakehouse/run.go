@@ -43,7 +43,7 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	fs.StringVar(&o.runtime, "runtime", "auto", "auto, k3s, docker or containerd")
 	fs.StringVar(&o.address, "containerd-address", "", "containerd socket for non-K3s installations")
 	fs.StringVar(&o.endpoint, "cri-endpoint", "", "CRI Unix socket for non-K3s installations")
-	fs.StringVar(&o.host, "dashboard-host", "", "Advertised Dashboard IP or DNS name, e.g. a server public IP")
+	fs.StringVar(&o.host, "dashboard-host", "", "Dashboard IP or DNS override, saved after access checks; otherwise use a saved override, public node address or local Alibaba Cloud ECS public IP/EIP")
 	fs.StringVar(&o.access, "access", "nodeport", "Dashboard access: nodeport or clusterip")
 	fs.BoolVar(&o.check, "check", false, "Read-only preflight; do not import images or install resources")
 	fs.BoolVar(&o.showAccess, "show-access", false, "Show URL and save initial password to a private local file")
