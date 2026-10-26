@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Complete single-worker lakehouse install, including Dashboard.
+# Complete single-worker or three-worker lakehouse install, including Dashboard.
 set -euo pipefail
 export LC_ALL=C
 bundle_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)

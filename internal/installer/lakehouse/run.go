@@ -33,16 +33,26 @@ type options struct {
 	progressMode                                                               string
 	files                                                                      valueFiles
 	resources                                                                  resourceOverrides
+	nodeNames                                                                  []string
+	ssh                                                                        ClusterSSHOptions
+	sshExplicit                                                                bool
 }
 
 func parseOptions(args []string, stderr io.Writer) (options, error) {
 	var o options
+	var nodes string
+	var sshHosts valueFiles
 	fs := flag.NewFlagSet("lakehouse-installer", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	fs.StringVar(&o.bundle, "bundle", ".", "Extracted bundle directory")
 	fs.StringVar(&o.release, "release", "ob-demo", "Helm release (reuse on retry)")
 	fs.StringVar(&o.namespace, "namespace", "ob-helm-demo", "Namespace (reuse on retry)")
 	fs.StringVar(&o.node, "node", "", "Target worker; automatic when unambiguous")
+	fs.StringVar(&nodes, "nodes", "", "Three Kubernetes node names, comma-separated; run on the first node (storage and Dashboard)")
+	fs.StringVar(&o.ssh.User, "ssh-user", "root", "SSH user for other workers; must have runtime access without interactive sudo")
+	fs.IntVar(&o.ssh.Port, "ssh-port", 22, "SSH port for other workers")
+	fs.StringVar(&o.ssh.IdentityFile, "ssh-identity", "", "SSH private key file; otherwise use configured SSH identities")
+	fs.Var(&sshHosts, "ssh-host", "SSH address override NODE=HOST; repeatable (default: Node InternalIP)")
 	fs.StringVar(&o.runtime, "runtime", "auto", "auto, k3s, docker or containerd")
 	fs.StringVar(&o.address, "containerd-address", "", "containerd socket for non-K3s installations")
 	fs.StringVar(&o.endpoint, "cri-endpoint", "", "CRI Unix socket for non-K3s installations")
@@ -57,11 +67,35 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	if err := fs.Parse(args); err != nil {
 		return o, err
 	}
+	var err error
+	o.nodeNames, err = parseThreeNodes(nodes)
+	if err != nil {
+		return o, err
+	}
+	if o.node != "" && len(o.nodeNames) != 0 {
+		return o, errors.New("--node and --nodes are mutually exclusive")
+	}
+	o.ssh.Hosts, err = parseSSHHosts(sshHosts)
+	if err != nil {
+		return o, err
+	}
 	fs.Visit(func(f *flag.Flag) {
 		if f.Name == "access" {
 			o.accessExplicit = true
 		}
+		if strings.HasPrefix(f.Name, "ssh-") {
+			o.sshExplicit = true
+		}
+		if f.Name == "nodes" && len(o.nodeNames) == 0 {
+			err = errors.New("--nodes requires exactly three distinct Kubernetes node names")
+		}
 	})
+	if err != nil {
+		return o, err
+	}
+	if o.ssh.Port < 1 || o.ssh.Port > 65535 {
+		return o, errors.New("--ssh-port must be between 1 and 65535")
+	}
 	if o.check && o.showAccess {
 		return o, errors.New("--check and --show-access are mutually exclusive")
 	}
@@ -86,7 +120,6 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	if o.host != "" && net.ParseIP(o.host) == nil && !regexp.MustCompile(`^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$`).MatchString(o.host) {
 		return o, errors.New("dashboard-host must be an IP or DNS name without scheme or port")
 	}
-	var err error
 	o.bundle, err = filepath.Abs(o.bundle)
 	return o, err
 }
@@ -223,6 +256,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 	}
 	existing := len(releases) > 0
 	var values map[string]interface{}
+	retained := existing
 	if existing {
 		raw, err = bounded(ctx, execute, "helm", "get", "values", o.release, "-n", o.namespace, "-o", "json")
 		if err != nil {
@@ -243,6 +277,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 		progress("Reusing installed settings; explicitly supplied values take precedence.")
 	} else {
 		values, err = readValues(filepath.Join(stateDir, "values.yaml"))
+		retained = err == nil
 		if os.IsNotExist(err) {
 			values, err = initialValues(o.bundle)
 		}
@@ -277,6 +312,31 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 	}
 	complete := mergeValues(defaults, values)
 	installedComplete := mergeValues(defaults, installedValues)
+	// Recover a saved three-worker plan before applying it. A retained plan is
+	// immutable: a retry must not turn a selector change into data relocation.
+	if len(o.nodeNames) == 0 {
+		plan := complete
+		if retained {
+			plan = installedComplete
+		}
+		o.nodeNames, err = inferThreeNodes(ctx, execute, plan)
+		if err != nil {
+			return err
+		}
+	}
+	if len(o.nodeNames) > 0 {
+		if o.node != "" {
+			return errors.New("this release uses three workers; use --nodes with the original order instead of --node")
+		}
+		values, err = configureThreeNodes(ctx, execute, values, defaults, installedComplete, o.nodeNames, retained)
+		if err != nil {
+			return err
+		}
+		complete = mergeValues(defaults, values)
+	}
+	if o.sshExplicit && len(o.nodeNames) == 0 && !o.showAccess {
+		return errors.New("SSH options require --nodes or a saved three-worker installation")
+	}
 	if err = o.resources.validateContext(complete, installedComplete, existing); err != nil {
 		return err
 	}
@@ -289,7 +349,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 		}
 	}
 	// Dashboard shares the placement of the lakehouse. Explicit user overrides
-	// remain subject to the same single-worker scheduling validation.
+	// remain subject to the selected layout's scheduling validation.
 	if pfGet(values, "dashboard", "nodeSelector") == nil {
 		setValue(values, pfGet(complete, "scheduling", "nodeSelector"), "dashboard", "nodeSelector")
 	}
@@ -297,15 +357,21 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 		setValue(values, pfGet(complete, "scheduling", "tolerations"), "dashboard", "tolerations")
 	}
 	complete = mergeValues(defaults, values)
-	result, err := CheckCluster(ctx, execute, PreflightOptions{Release: o.release, Namespace: o.namespace, NodeName: o.node, Values: complete, Existing: existing, PrepareOperator: true})
+	result, err := CheckCluster(ctx, execute, PreflightOptions{Release: o.release, Namespace: o.namespace, NodeName: o.node, NodeNames: o.nodeNames, Values: complete, Existing: existing, PrepareOperator: true})
 	if err != nil {
 		return err
 	}
 	if err = checkLocalWorker(result); err != nil {
 		return err
 	}
-	progress(fmt.Sprintf("  Node: %s", result.NodeName))
-	progress(fmt.Sprintf("  CPU: %.2f cores required / %.2f available; memory: %.1f GiB required / %.1f available", float64(result.RequiredCPUMilli)/1000, float64(result.AvailableCPUMilli)/1000, float64(result.RequiredMemoryBytes)/(1<<30), float64(result.AvailableMemoryBytes)/(1<<30)))
+	capacity := result.Nodes
+	if len(capacity) == 0 {
+		capacity = []PreflightResult{result}
+	}
+	for _, node := range capacity {
+		progress(fmt.Sprintf("  Node: %s", node.NodeName))
+		progress(fmt.Sprintf("  CPU: %.2f cores required / %.2f available; memory: %.1f GiB required / %.1f available", float64(node.RequiredCPUMilli)/1000, float64(node.AvailableCPUMilli)/1000, float64(node.RequiredMemoryBytes)/(1<<30), float64(node.AvailableMemoryBytes)/(1<<30)))
+	}
 	for _, warning := range result.Warnings {
 		progress("[warning] " + warning)
 	}
@@ -316,8 +382,20 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 	if o.check {
 		imageStep = "Checking local images"
 	}
+	if len(result.Nodes) > 0 {
+		imageStep = "Checking images on all three workers"
+		if !o.check {
+			imageStep += " and preparing missing images"
+		}
+	}
 	progress(fmt.Sprintf("[2/%d] %s", steps, imageStep))
-	if err = PrepareImages(ctx, execute, ImageOptions{BundleDir: o.bundle, Runtime: o.runtime, NodeRuntimeVersion: result.NodeRuntimeVersion, ContainerdAddress: o.address, CRIEndpoint: o.endpoint, CheckOnly: o.check}, progress); err != nil {
+	imageOptions := ImageOptions{BundleDir: o.bundle, Runtime: o.runtime, NodeRuntimeVersion: result.NodeRuntimeVersion, ContainerdAddress: o.address, CRIEndpoint: o.endpoint, CheckOnly: o.check}
+	if len(result.Nodes) > 0 {
+		err = PrepareClusterImages(ctx, execute, imageOptions, result.Nodes, o.ssh, progress)
+	} else {
+		err = PrepareImages(ctx, execute, imageOptions, progress)
+	}
+	if err != nil {
 		return err
 	}
 	if o.check {
@@ -355,7 +433,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 		if err = prepareOperator(ctx, execute, o, result, progress); err != nil {
 			return err
 		}
-		_, err = CheckCluster(ctx, execute, PreflightOptions{Release: o.release, Namespace: o.namespace, NodeName: result.NodeName, Values: mergeValues(defaults, values), Existing: existing})
+		_, err = CheckCluster(ctx, execute, PreflightOptions{Release: o.release, Namespace: o.namespace, NodeName: result.NodeName, NodeNames: o.nodeNames, Values: mergeValues(defaults, values), Existing: existing})
 		if err != nil {
 			return err
 		}

@@ -1,5 +1,5 @@
-OceanBase 湖库：单节点体验包
-============================
+OceanBase 湖库：单节点与三节点体验包
+==================================
 
 用户只需要「解压 → 执行一个安装命令 → 打开 Dashboard」。Dashboard、Prometheus、
 Alertmanager 默认随湖库安装在同一个 Helm release 中，不需要单独运行安装脚本。
@@ -45,7 +45,8 @@ kubectl、jq、可用的默认 StorageClass，以及管理员 kubeconfig。推�
 默认 release=ob-demo、namespace=ob-helm-demo；LogService 3×1CPU/4GiB，Observer
 2CPU/10GiB，MinIO及Dashboard另外占用资源。这是固定体验规格，不会按机器容量
 自动用满 CPU、内存或磁盘；预检计算剩余资源是否足够。首次随机生成并保存两个数据库集群ID。
-本入口为单 Worker 体验，不提供跨节点HA承诺；高级多节点使用 charts/ 下原流程。
+不指定 --nodes 时为单 Worker 体验；新建三节点使用第 4 节的 --nodes 入口。
+其他拓扑使用 charts/ 下高级流程。本包不提供整套系统的跨节点 HA 承诺。
 
 2. 打开 Dashboard
 -----------------
@@ -189,7 +190,63 @@ K3s/containerd、Docker 自动识别；非 K3s 的 containerd 需明确 --contai
 不同 Kubernetes 集群、namespace、release 分开保存；不要把此目录提交到 Git
 或共享给无关人员。Helm 的详细日志位于安装输出显示的私有临时目录。
 
-4. 范围和数据保留
+4. 三节点部署
+-------------
+三台 Linux amd64 Worker 必须已加入同一个 Kubernetes 集群，Ready 且可调度，
+具备可用 StorageClass，并已运行支持湖库的 ob-operator、CRD 和 webhook。
+三节点入口不创建 Kubernetes 集群，不自动安装共享 Operator/cert-manager。
+
+只需把完整 tar 解压到第一台 Worker，在该机器运行一次安装命令。
+--nodes 接受三个 Kubernetes Node 名称（kubectl get nodes 中的 NAME），顺序对应
+zone1、zone2、zone3；安装器会读取实际 hostname 标签，不要求它与 Node 名相同。
+每台部署一个 Observer 和一个 LogService；MinIO、Dashboard 与初始化任务放在
+第一个节点。默认每台数据库请求 3 CPU / 14Gi 内存，第一台还需辅助组件的资源；
+实际按全部配置和各节点已有工作负载分别预检，不会借用其他节点的剩余资源。
+
+查看节点名后，在第一个节点的解压目录执行：
+  kubectl get nodes -o wide
+  ./install.sh --nodes worker-1,worker-2,worker-3
+
+可与已有规格简写组合，仍然是每个实例的规格，而不是整个集群的总量：
+  ./install.sh --nodes worker-1,worker-2,worker-3 --oc 2 --om 16Gi --ods 100Gi
+
+第一台须能使用已配置的 SSH 密钥连接其他两个节点，默认用户 root、端口 22、
+目标地址为 Kubernetes Node InternalIP；SSH 主机密钥必须已通过可信方式确认并
+记录在 known_hosts 中。安装器不跳过主机密钥检查、不请求交互密码、不自动 sudo。
+非 root 用户需具备直接访问容器运行时、创建临时目录及导入镜像的权限。
+自定义连接示例（按实际账号、地址和密钥修改）：
+  ./install.sh --nodes worker-1,worker-2,worker-3 \
+    --ssh-user deploy --ssh-identity /secure/path/id_ed25519 \
+    --ssh-host worker-2=10.0.0.12 --ssh-host worker-3=10.0.0.13
+
+--ssh-port 可设置统一 SSH 端口。--ssh-host 可重复，只覆盖传输地址，不改变
+Kubernetes 节点或数据库拓扑；安装器仍核验远端 UUID/接口 IP 是否匹配目标节点。
+运行时逐节点识别，非 K3s containerd 仍需 --containerd-address 和 --cri-endpoint，
+两个 socket 路径需在各目标节点一致。不同路径的高级集群使用 Chart 流程。
+
+安装器先完成各节点资源、身份与运行时检查，再按节点检查锁定镜像 ID。已匹配的
+镜像复用；仅缺失的镜像归档通过 SSH/SCP 分发、校验并导入，完成后清理自身临时
+文件。远端不需要 Helm、kubectl、jq 或 kubeconfig；需要 SSH、sha256sum 和实际
+运行时工具（K3s 或 containerd+ctr/crictl 等）。这些操作不会安装节点操作系统。
+
+只读预检使用相同参数加 --check，不创建远端目录、不传文件、不导入镜像或安装资源：
+  ./install.sh --check --nodes worker-1,worker-2,worker-3
+冷节点缺少镜像时预检会报告失败；去掉 --check 后才自动分发和导入。
+
+三节点同样默认安装 Dashboard，并打印访问说明及初始密码文件位置。检查分布：
+  kubectl -n ob-helm-demo get pods -o wide
+  kubectl -n ob-helm-demo get obclusters,oblogserviceclusters
+
+失败后重跑原命令。已保存/安装的三节点拓扑可自动识别，但 SSH 非默认连接参数
+仍需再次传入。不支持通过 --nodes 把已有单节点转换为三节点，也不支持交换节点
+顺序、改 zone 或迁移已有 PVC；会在镜像导入和保存新 values 前拒绝。
+首次安装 --nodes 确定三组 zone 和每组一个实例，覆盖文件中的相应拓扑；额外池
+标签和 toleration 仍生效，若与所选节点不匹配则报错。其他拓扑走高级 Chart。
+
+内置 MinIO 仍为第一台上的单实例，三节点不代表整套系统高可用。生产环境需要
+独立可靠的对象存储，并验证实际数据库版本的容灾行为。
+
+5. 范围和数据保留
 -----------------
 这是一套 Linux amd64 内部 QA 体验包。本版更新日志下载后端、helper 和诊断镜像，
 保留原 Observer 镜像。诊断工具通过容器已有的 Python 完成日志打包和传输。

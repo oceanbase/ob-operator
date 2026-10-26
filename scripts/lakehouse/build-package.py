@@ -523,7 +523,7 @@ def build(args):
         lock.setdefault("binary_build_host", lock.pop("build_host"))
     lock.update(source_sha=source_sha, chart_source_sha=source_sha, chart_versions=versions,
                 build_date=datetime.now().astimezone().strftime("%Y-%m-%d"), build_host=socket.gethostname(),
-                scope="internal single-worker QA; base images retained; runtime image identities and diagnostic overrides recorded per role")
+                scope="internal QA; installer supports single or three workers; base images retained; runtime image identities and diagnostic overrides recorded per role")
     lock.setdefault("packaging", {}).update({"version": args.version, "installer_source_sha": source_sha,
         "installer_sha256": digest(installer), "binary_rebuild": False, "baseline_source_sha": baseline_sha,
         "source_archive": "provenance/current-source.tar.gz",

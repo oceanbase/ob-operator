@@ -37,6 +37,11 @@ or --oc 2 and forwards them to the compiled Go installer. Build that binary
 from the same source commit when packaging a new CLI option; changing docs
 alone does not add an option to an older tar. The advanced chart install.sh
 uses RELEASE NAMESPACE and Helm values arguments, not these sizing aliases.
+The root entry also supports --nodes NODE1,NODE2,NODE3 for three existing workers.
+Build the current installer binary to deliver it; older single-worker bundles
+cannot gain multi-worker support from documentation alone. Test both local and
+SSH image preparation, per-node preflight and unchanged-placement retries.
+Package validation does not itself constitute a live three-worker deployment.
 
 Diagnostic/log-download builds additionally supply both:
   --diagnostics-archive /path/diagnostics-images.tar.gz

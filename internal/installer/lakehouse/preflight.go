@@ -25,6 +25,7 @@ import (
 // or silently relocates an existing volume.
 type PreflightOptions struct {
 	Release, Namespace, NodeName string
+	NodeNames                    []string
 	Values                       map[string]interface{}
 	Existing, PrepareOperator    bool
 }
@@ -38,12 +39,13 @@ type PreflightResult struct {
 	RequiredCPUMilli, AvailableCPUMilli                                int64
 	RequiredMemoryBytes, AvailableMemoryBytes                          int64
 	Warnings                                                           []string
+	Nodes                                                              []PreflightResult
 }
 
 const pfCommandTimeout = 10 * time.Second
 
-// CheckCluster performs bounded, read-only checks for the single-worker
-// experience. Advanced placement is deliberately rejected, rather than guessed.
+// CheckCluster performs bounded, read-only checks for the single-worker or
+// explicit three-node experience. Other advanced placement is never guessed.
 func CheckCluster(ctx context.Context, run RunCommand, opts PreflightOptions) (PreflightResult, error) {
 	var result PreflightResult
 	var problems []error
@@ -106,7 +108,11 @@ func CheckCluster(ctx context.Context, run RunCommand, opts PreflightOptions) (P
 	claimsOK := read("kubectl", &claims, "get", "pvc", "--all-namespaces", "-o", "json")
 	volumesOK := read("kubectl", &volumes, "get", "pv", "-o", "json")
 	if nodesOK && podsOK && claimsOK && volumesOK {
-		if err := pfCheckCapacity(opts, nodes.Items, pods.Items, claims.Items, volumes.Items, &result); err != nil {
+		checkCapacity := pfCheckCapacity
+		if len(opts.NodeNames) == 3 {
+			checkCapacity = pfCheckMultiCapacity
+		}
+		if err := checkCapacity(opts, nodes.Items, pods.Items, claims.Items, volumes.Items, &result); err != nil {
 			problems = append(problems, err)
 		}
 	}
@@ -132,6 +138,9 @@ func CheckCluster(ctx context.Context, run RunCommand, opts PreflightOptions) (P
 			}
 			if read("kubectl", &clusters, "get", "obclusters", "-n", opts.Namespace, "-o", "json") {
 				for _, cluster := range clusters.Items {
+					if len(opts.NodeNames) == 3 && !opts.Existing && cluster.Metadata.Name == opts.Release+"-ob" {
+						problems = append(problems, fmt.Errorf("OBCluster %s/%s already exists without an existing Helm release; recover the original installation instead of adopting orphaned resources", opts.Namespace, cluster.Metadata.Name))
+					}
 					if cluster.Metadata.Name != opts.Release+"-ob" || cluster.Spec.DeploymentMode != "shared_storage" {
 						continue
 					}
@@ -139,6 +148,26 @@ func CheckCluster(ctx context.Context, run RunCommand, opts PreflightOptions) (P
 					// docker.io prefix change is an unsupported version update.
 					if cluster.Spec.Observer.Image == "" || cluster.Spec.Observer.Image != pfString(pfGet(opts.Values, "observer", "image")) {
 						problems = append(problems, fmt.Errorf("existing shared_storage OBCluster %s/%s does not support changes to observer.image; retain its exact installed image and update only the Dashboard diagnostic images", opts.Namespace, cluster.Metadata.Name))
+					}
+				}
+			}
+			break
+		}
+	}
+	if crdsOK && len(opts.NodeNames) == 3 && !opts.Existing {
+		for _, crd := range crds.Items {
+			if crd.Spec.Group != "oceanbase.oceanbase.com" || crd.Spec.Names.Plural != "oblogserviceclusters" {
+				continue
+			}
+			var clusters struct {
+				Items []struct {
+					Metadata struct{ Name string } `json:"metadata"`
+				} `json:"items"`
+			}
+			if read("kubectl", &clusters, "get", "oblogserviceclusters", "-n", opts.Namespace, "-o", "json") {
+				for _, cluster := range clusters.Items {
+					if cluster.Metadata.Name == opts.Release+"-ls" {
+						problems = append(problems, fmt.Errorf("OBLogServiceCluster %s/%s already exists without an existing Helm release; recover the original installation instead of adopting orphaned resources", opts.Namespace, cluster.Metadata.Name))
 					}
 				}
 			}
@@ -154,6 +183,8 @@ func CheckCluster(ctx context.Context, run RunCommand, opts PreflightOptions) (P
 		result.OperatorMissing = missing
 		if err != nil {
 			problems = append(problems, err)
+		} else if missing && len(opts.NodeNames) == 3 {
+			problems = append(problems, errors.New("three-node installation requires an existing compatible Operator; install a compatible Operator before using this multi-node cluster"))
 		} else if missing && !opts.PrepareOperator {
 			problems = append(problems, errors.New("SS-capable ob-operator is not installed; enable preparation or install the matching package prerequisites"))
 		} else if missing {

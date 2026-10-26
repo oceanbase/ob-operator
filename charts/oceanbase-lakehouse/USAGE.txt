@@ -1,4 +1,4 @@
-Packaged single-worker quick start
+Packaged lakehouse quick start
 ----------------------------------
 For the complete Linux amd64 bundle, run bash install.sh at its root. It checks
 capacity, reuses matching image IDs, imports missing archives, prepares an absent
@@ -49,6 +49,48 @@ Sizing flags and aliases belong to the PACKAGE-ROOT install.sh only. The chart
 script below accepts RELEASE NAMESPACE and Helm values options instead; do not
 pass --oc, --observer-cpu or the other sizing options to it or to helm directly.
 The advanced chart-only workflow below retains its existing prerequisites.
+
+Packaged three-worker installation
+----------------------------------
+For a NEW three-worker layout, use the same package-root entry point:
+  ./install.sh --nodes worker-1,worker-2,worker-3
+  ./install.sh --nodes worker-1,worker-2,worker-3 --oc 2 --om 16Gi --ods 100Gi
+
+Pass Kubernetes Node names, not IP addresses or hostname label values. The
+installer resolves actual hostname labels and creates zone1/zone2/zone3 with
+one LogService and one Observer per node. Storage, initialization and Dashboard
+run on the first node. Run the command on that first worker. All three must
+already be Linux amd64 members of the same Kubernetes cluster, with a working
+StorageClass and a compatible running Operator/CRDs/webhooks. Unlike the
+single-node cluster workflow, this mode does not install shared prerequisites.
+
+Only the first worker needs the complete extracted tar and Helm/kubectl/jq.
+The installer checks resource capacity on each worker and verifies remote host
+identity and runtime access before importing images. Matching image IDs are
+reused; only missing archives are copied, checksum-verified and imported over
+SSH/SCP. Remote workers need runtime tools, sha256sum and writable temporary
+storage. They do not receive kubeconfig, credentials or the whole bundle.
+
+SSH defaults to root, port 22 and each Node's InternalIP, using configured key
+authentication and trusted known_hosts entries. Host-key verification is never
+disabled, and interactive passwords or sudo are not used. Overrides:
+  ./install.sh --nodes worker-1,worker-2,worker-3 \
+    --ssh-user deploy --ssh-port 22 --ssh-identity /secure/path/id_ed25519 \
+    --ssh-host worker-2=10.0.0.12 --ssh-host worker-3=10.0.0.13
+
+The chosen user must have direct runtime access. Non-K3s containerd still needs
+--containerd-address and --cri-endpoint naming the same Unix socket on every
+worker. --check reads all workers but never copies files, creates staging
+directories or imports images; missing cached images cause a preflight failure.
+
+Sizing flags remain per instance. --nodes sets the initial three-zone topology
+over values files; pool selectors and tolerations still apply and must match.
+Saved/installed three-worker topology is recognized on retry even without
+--nodes, but supply custom SSH options again. Changing node order, zone layout,
+or placement on a saved/installed release is rejected before image import.
+This is not an in-place single-worker conversion or PVC migration mechanism.
+Bundled MinIO remains single-node; this mode alone does not provide system HA.
+Use the advanced chart workflow for other layouts or heterogeneous socket paths.
 
 OceanBase lakehouse online Helm installation (experimental; version in Chart.yaml)
 
@@ -189,7 +231,8 @@ under either persistence block references a user-managed PVC without adopting it
 For the chart-only workflow, explicitly set dashboard.nodeSelector and
 dashboard.tolerations when placement is required; database/storage scheduling.*
 does not automatically place Dashboard. The full package root installer places
-Dashboard on the selected single worker and inherits its placement settings.
+Dashboard on the selected worker (the first worker in three-node mode) and
+inherits its placement settings unless explicitly configured.
 
 Accounts, user-created roles and permissions, the initial-password Secret and
 owned Dashboard PVCs are retained across upgrades, disable/re-enable and uninstall.
