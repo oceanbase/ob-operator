@@ -35,6 +35,19 @@ func pfMultiTolerations(raw interface{}, field string) ([]corev1.Toleration, err
 	return out, nil
 }
 
+// Helm JSON values decode numeric IDs as float64. fmt.Sprint may then use an
+// exponent, unlike the decimal ID in Operator resource names. Normalize only
+// this identity field, preserving exact zone matching and the Chart's integer
+// range (which is exactly representable as float64).
+func pfClusterIDName(raw interface{}) (string, error) {
+	data, err := json.Marshal(raw)
+	var id float64
+	if err != nil || json.Unmarshal(data, &id) != nil || id < 1 || id > 2147483647 || id != float64(int64(id)) {
+		return "", errors.New("observer.clusterId must be an integer between 1 and 2147483647")
+	}
+	return strconv.FormatInt(int64(id), 10), nil
+}
+
 func pfMultiPlacement(opts PreflightOptions, nodes []corev1.Node) (multiPlacement, error) {
 	p := multiPlacement{demand: map[string]pfResources{}, zoneTargets: map[string]string{}}
 	if len(opts.NodeNames) != 3 {
@@ -103,6 +116,10 @@ func pfMultiPlacement(opts PreflightOptions, nodes []corev1.Node) (multiPlacemen
 	if err != nil {
 		return p, err
 	}
+	observerID, err := pfClusterIDName(pfGet(opts.Values, "observer", "clusterId"))
+	if err != nil {
+		return p, err
+	}
 	for _, component := range []string{"logService", "observer"} {
 		resources, err := pfQuantities(pfMap(pfGet(opts.Values, component, "resource")), component+".resource")
 		if err != nil {
@@ -153,7 +170,7 @@ func pfMultiPlacement(opts PreflightOptions, nodes []corev1.Node) (multiPlacemen
 			p.demand[target.Name] = demand
 			prefix := opts.Release + "-ls-" + zoneName
 			if component == "observer" {
-				prefix = opts.Release + "-ob-" + pfString(pfGet(opts.Values, "observer", "clusterId")) + "-" + zoneName
+				prefix = opts.Release + "-ob-" + observerID + "-" + zoneName
 			}
 			p.zoneTargets[prefix] = target.Name
 		}

@@ -2,6 +2,7 @@ package lakehouse
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"testing"
@@ -113,6 +114,128 @@ func pfMultiClaimAndPV() (corev1.PersistentVolumeClaim, corev1.PersistentVolume)
 	claim := corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "demo-ob-1002-z2-abcdef-data", Namespace: "demo-ns", UID: "claim-uid", OwnerReferences: []metav1.OwnerReference{{Kind: "OBServer", Name: "demo-ob-1002-z2-abcdef"}}, Annotations: map[string]string{"volume.kubernetes.io/selected-node": "worker-2"}}, Spec: corev1.PersistentVolumeClaimSpec{StorageClassName: &class, VolumeName: "pv-data"}}
 	pv := corev1.PersistentVolume{ObjectMeta: metav1.ObjectMeta{Name: "pv-data"}, Spec: corev1.PersistentVolumeSpec{ClaimRef: &corev1.ObjectReference{Name: claim.Name, Namespace: claim.Namespace, UID: claim.UID}, NodeAffinity: &corev1.VolumeNodeAffinity{Required: &corev1.NodeSelector{NodeSelectorTerms: []corev1.NodeSelectorTerm{{MatchExpressions: []corev1.NodeSelectorRequirement{{Key: "kubernetes.io/hostname", Operator: corev1.NodeSelectorOpIn, Values: []string{"host-2"}}}}}}}}}
 	return claim, pv
+}
+
+func pfMultiLargeIDRetryFixture(t *testing.T) (PreflightOptions, []corev1.Node, pfPod, corev1.PersistentVolumeClaim, corev1.PersistentVolume) {
+	t.Helper()
+	opts, nodes := pfMultiFixture()
+	opts.Existing = true
+	// Reproduce values returned by `helm get values -o json` for an actual
+	// generated installation ID, rather than the small 1002 fixture ID.
+	setValue(opts.Values, int64(821692080), "observer", "clusterId")
+	raw, err := json.Marshal(opts.Values)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(raw, &opts.Values); err != nil {
+		t.Fatal(err)
+	}
+	if id, ok := pfGet(opts.Values, "observer", "clusterId").(float64); !ok || id != 821692080 {
+		t.Fatalf("fixture must exercise Helm's float64 ID, got %#v", pfGet(opts.Values, "observer", "clusterId"))
+	}
+	pod := pfTestPod("2", true)
+	pod.Name = "demo-ob-821692080-z2-abcdef"
+	pod.Labels["ref-obzone"] = "demo-ob-821692080-z2"
+	pod.OwnerReferences = []metav1.OwnerReference{{Kind: "OBServer", Name: pod.Name}}
+	pod.Spec.NodeName = "worker-2"
+	claim, pv := pfMultiClaimAndPV()
+	claim.Name = pod.Name + "-data"
+	claim.OwnerReferences[0].Name = pod.Name
+	pv.Spec.ClaimRef.Name = claim.Name
+	pod.Spec.Volumes = []corev1.Volume{{Name: "data", VolumeSource: corev1.VolumeSource{PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{ClaimName: claim.Name}}}}
+	return opts, nodes, pod, claim, pv
+}
+
+func TestMultiPreflightLargeClusterIDJSONRetry(t *testing.T) {
+	for _, path := range []string{"pod-zone-label", "pod-owner", "retained-pvc-zone-label-without-pod", "retained-pvc-owner-without-pod"} {
+		t.Run(path, func(t *testing.T) {
+			opts, nodes, pod, claim, pv := pfMultiLargeIDRetryFixture(t)
+			pods := []pfPod{pod}
+			switch path {
+			case "pod-owner":
+				delete(pods[0].Labels, "ref-obzone")
+			case "retained-pvc-zone-label-without-pod":
+				pods = nil
+				claim.OwnerReferences = nil
+				claim.Labels = map[string]string{"ref-obcluster": "demo-ob", "ref-obzone": "demo-ob-821692080-z2"}
+			case "retained-pvc-owner-without-pod":
+				pods = nil
+			}
+			err := pfCheckMultiCapacity(opts, nodes, pods, []corev1.PersistentVolumeClaim{claim}, []corev1.PersistentVolume{pv}, &PreflightResult{StorageClass: "local-path"})
+			if err != nil {
+				t.Fatalf("unchanged existing placement with a Helm JSON cluster ID must be accepted: %v", err)
+			}
+		})
+	}
+}
+
+func TestMultiPreflightLargeClusterIDStillRejectsUnknownPlacement(t *testing.T) {
+	tests := []struct {
+		name, want string
+		change     func(*pfPod, *corev1.PersistentVolumeClaim, *corev1.PersistentVolume)
+		withoutPod bool
+	}{
+		{"pod-unknown-zone", "unconfigured zone", func(p *pfPod, _ *corev1.PersistentVolumeClaim, _ *corev1.PersistentVolume) {
+			p.Labels["ref-obzone"] = "demo-ob-821692080-z20"
+		}, false},
+		{"pod-wrong-cluster-id", "unconfigured zone", func(p *pfPod, _ *corev1.PersistentVolumeClaim, _ *corev1.PersistentVolume) {
+			p.Labels["ref-obzone"] = "demo-ob-821692081-z2"
+		}, false},
+		{"pod-relocation", "automatic migration", func(p *pfPod, _ *corev1.PersistentVolumeClaim, _ *corev1.PersistentVolume) {
+			p.Spec.NodeName = "worker-1"
+		}, false},
+		{"retained-pvc-unknown-zone", "unconfigured database zone", func(_ *pfPod, c *corev1.PersistentVolumeClaim, _ *corev1.PersistentVolume) {
+			c.OwnerReferences[0].Name = "demo-ob-821692080-z20-abcdef"
+		}, true},
+		{"retained-pvc-wrong-cluster-id", "unconfigured database zone", func(_ *pfPod, c *corev1.PersistentVolumeClaim, _ *corev1.PersistentVolume) {
+			c.OwnerReferences[0].Name = "demo-ob-821692081-z2-abcdef"
+		}, true},
+		{"retained-pvc-relocation", "automatic migration", func(_ *pfPod, c *corev1.PersistentVolumeClaim, _ *corev1.PersistentVolume) {
+			c.Annotations["volume.kubernetes.io/selected-node"] = "worker-3"
+		}, true},
+		{"retained-pv-relocation", "affinity excludes", func(_ *pfPod, _ *corev1.PersistentVolumeClaim, p *corev1.PersistentVolume) {
+			p.Spec.NodeAffinity.Required.NodeSelectorTerms[0].MatchExpressions[0].Values = []string{"host-3"}
+		}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opts, nodes, pod, claim, pv := pfMultiLargeIDRetryFixture(t)
+			tt.change(&pod, &claim, &pv)
+			pods := []pfPod{pod}
+			if tt.withoutPod {
+				pods = nil
+			}
+			err := pfCheckMultiCapacity(opts, nodes, pods, []corev1.PersistentVolumeClaim{claim}, []corev1.PersistentVolume{pv}, &PreflightResult{StorageClass: "local-path"})
+			if err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("want %q, got %v", tt.want, err)
+			}
+		})
+	}
+}
+
+func TestMultiPreflightRejectsInvalidObserverClusterID(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		id   interface{}
+	}{
+		{"zero", 0},
+		{"negative", -1},
+		{"fraction", 821692080.5},
+		{"out-of-range", int64(2147483648)},
+		{"string", "821692080"},
+		{"missing", nil},
+		{"boolean", true},
+		{"malformed-number", json.Number("NaN")},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			opts, nodes := pfMultiFixture()
+			setValue(opts.Values, tt.id, "observer", "clusterId")
+			_, err := pfMultiPlacement(opts, nodes)
+			if err == nil || !strings.Contains(err.Error(), "observer.clusterId must be an integer between 1 and 2147483647") {
+				t.Fatalf("invalid cluster identity must be rejected, got %v", err)
+			}
+		})
+	}
 }
 
 func TestMultiPreflightRetainsPerClaimBindingWithoutPods(t *testing.T) {
