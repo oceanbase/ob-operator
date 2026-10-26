@@ -28,6 +28,18 @@ kubectl、jq、可用的默认 StorageClass，以及管理员 kubeconfig。推�
 及 tarfile/gzip 模块（支持发行版自带的 platform-python）；无需在 Observer 中安装 tar。
 日志收集时才按需启动诊断 Job。整个过程输出阶段、等待时间及失败诊断，失败不自动删除数据库。
 
+交互终端默认原地刷新阶段状态，不重复刷满等待日志。等待数据库资源就绪时，会显示
+资源状态、Pod 就绪/调度数量及可识别的阻塞原因；Pod 信息可能使用短期缓存，会标明
+快照时间。耗时刷新不代表 Kubernetes 查询成功，查询失败时明确标为不可用。
+安装成功后停止刷新，再打印完整的 Dashboard 访问说明。失败时保留错误摘要和
+私有详细日志位置，安装日志及状态提示使用英文。
+
+将输出重定向到文件、在 CI 中执行或使用 TERM=dumb 时，自动使用逐行日志，不输出
+终端控制字符。终端空间不足时也会退回逐行输出。可显式选择逐行输出，便于复制或留档：
+  ./install.sh --progress plain
+
+默认 --progress auto 根据终端能力选择显示方式，不改变安装步骤、超时或数据保留策略。
+
 默认 release=ob-demo、namespace=ob-helm-demo；LogService 3×1CPU/4GiB，Observer
 2CPU/10GiB，MinIO及Dashboard另外占用资源。首次随机生成并保存两个数据库集群ID。
 本入口为单 Worker 体验，不提供跨节点HA承诺；高级多节点使用 charts/ 下原流程。

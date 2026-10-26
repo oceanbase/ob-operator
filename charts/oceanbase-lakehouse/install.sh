@@ -35,6 +35,7 @@ log_file=$work_dir/install.log
 : > "$log_file"
 base_values=$work_dir/previous-values.json
 started=$SECONDS
+phase_started=$SECONDS
 current_action=preflight
 active_pid=''
 monitor_pid=''
@@ -67,7 +68,7 @@ run_bounded() {
         exit 0
       fi
       if (( elapsed >= next_progress )); then
-        echo "[wait] $label: ${elapsed}s elapsed (limit ${budget}s)" >&2
+        echo "[wait] $label: wait elapsed=${elapsed}s (limit ${budget}s)" >&2
         next_progress=$((elapsed + progress_interval))
       fi
       /bin/sleep 1 & ticker_pid=$!; wait "$ticker_pid" || true
@@ -130,10 +131,11 @@ phase_label() {
 }
 announce() {
   current_action=$(phase_label "$1")
-  echo "[stage] $current_action ($((SECONDS - started))s elapsed)"
+  phase_started=$SECONDS
+  echo "[stage] $current_action (phase elapsed=0s; total elapsed=$((SECONDS - started))s)"
 }
 completed() {
-  echo "[done] $(phase_label "$1") ($((SECONDS - started))s elapsed)"
+  echo "[done] $(phase_label "$1") (phase elapsed=$((SECONDS - phase_started))s; total elapsed=$((SECONDS - started))s)"
 }
 skipped() {
   echo "[skip] $(phase_label "$1")"
@@ -175,8 +177,122 @@ upgrade() {
   run_bounded "$timeout" "Helm $1 stage" helm upgrade --install "$release" "$chart_dir" -n "$namespace" \
     "${helm_args[@]}" --set-string "stage=$1" --wait --wait-for-jobs --timeout "${timeout}s" >>"$log_file"
 }
+
+# Best-effort progress uses the same selectors as the Operator's Pod labels.
+# All output is counts or known enum values; Pod specs and event messages stay
+# off the console. These reads share at most two seconds of the running wait's
+# remaining budget and never replace its authoritative CR status/error.
+refresh_wait_details() {
+  local resource=$1 deadline=$2 selector sample_deadline budget pods_json summary relevant events_json
+  case "$resource" in
+    oblogservicecluster/*) selector="ref-oblogservicecluster=${resource#*/}" ;;
+    obcluster/*) selector="ref-obcluster=${resource#*/}" ;;
+    *) return 0 ;;
+  esac
+  (( SECONDS >= next_pod_check )) || return 0
+  next_pod_check=$((SECONDS + 10))
+  (( deadline - SECONDS >= 2 )) || return 0
+  sample_deadline=$((SECONDS + 2))
+  (( sample_deadline <= deadline )) || sample_deadline=$deadline
+  budget=$((sample_deadline - SECONDS))
+  # One-second requests leave room for both Pod and optional Event snapshots.
+  (( budget <= 1 )) || budget=1
+  if ! pods_json=$(run_bounded "$budget" 'optional Pod progress' kubectl -n "$namespace" get pods -l "$selector" -o json --request-timeout="${budget}s" 2>>"$log_file"); then
+    pod_summary='Pod details unavailable'
+    pod_checked=-1
+    event_summary=''
+    return 0
+  fi
+  if ! summary=$(jq -er '
+    if (.items | type) != "array" then error("invalid Pod list") else .items end
+    | map(select(.metadata.deletionTimestamp == null)) as $pods
+    | [$pods[] | select(any(.status.conditions[]?; .type == "Ready" and .status == "True"))] | length as $ready
+    | [$pods[] | select((.spec.nodeName // "") != "")] | length as $scheduled
+    | [$pods[] | (.status.initContainerStatuses[]?, .status.containerStatuses[]?) | .state.waiting.reason // empty
+       | select(. as $reason | ["ContainerCreating","PodInitializing","ErrImagePull","ImagePullBackOff","CrashLoopBackOff","CreateContainerConfigError","CreateContainerError","RunContainerError","InvalidImageName","ErrImageNeverPull"] | index($reason))] | unique as $waiting
+    | [$pods[] | .status.conditions[]? | select(.type == "PodScheduled" and .status == "False" and .reason == "Unschedulable")] | length as $unscheduled
+    | "podsReady=\($ready)/\($pods|length); scheduled=\($scheduled)/\($pods|length)"
+      + (if ($waiting|length) > 0 then "; waiting=" + ($waiting|join(",")) else "" end)
+      + (if $unscheduled > 0 then "; scheduling=Unschedulable" else "" end)
+      + (if ($pods|length) == 0 then "; waiting=PodCreation" elif $ready == ($pods|length) then "; waiting=ClusterInitialization" else "" end)
+  ' <<<"$pods_json" 2>>"$log_file"); then
+    pod_summary='Pod details unavailable'
+    pod_checked=-1
+    event_summary=''
+    return 0
+  fi
+  pod_summary=$summary
+  pod_checked=$SECONDS
+  # Only identifiers for currently unready Pods/PVCs are passed as jq arguments.
+  # Never put raw Pod specs (which may contain credentials) on a process argv.
+  if ! relevant=$(jq -ce '[.items[] | select(.metadata.deletionTimestamp == null)
+      | select(any(.status.conditions[]?; .type == "Ready" and .status == "True") | not)
+      | {uid: .metadata.uid, claims: [.spec.volumes[]?.persistentVolumeClaim.claimName // empty]}]' <<<"$pods_json" 2>>"$log_file"); then
+    event_summary=''
+    return 0
+  fi
+  if [[ $relevant != "$event_relevant" ]]; then event_summary=''; fi
+  event_relevant=$relevant
+  if [[ $relevant == '[]' ]]; then event_summary=''; return 0; fi
+  (( SECONDS >= next_event_check )) || return 0
+  next_event_check=$((SECONDS + 30))
+  budget=$((sample_deadline - SECONDS))
+  (( budget > 0 )) || return 0
+  (( budget <= 1 )) || budget=1
+  event_summary=''
+  if events_json=$(run_bounded "$budget" 'optional Pod warning progress' kubectl -n "$namespace" get events --field-selector=type=Warning -o json --request-timeout="${budget}s" 2>>"$log_file"); then
+    event_summary=$(jq -er --argjson relevant "$relevant" '
+      [.items[]?
+       | select(.involvedObject as $object | any($relevant[];
+           ($object.kind == "Pod" and .uid != null and .uid == $object.uid)
+           or ($object.kind == "PersistentVolumeClaim" and (.claims | index($object.name)) != null)))
+       | select(((.lastTimestamp // .eventTime // .metadata.creationTimestamp // "") | sub("\\.[0-9]+Z$"; "Z") | fromdateiso8601? // 0) >= (now - 120))
+       | .reason
+       | select(. as $reason | ["FailedScheduling","FailedMount","FailedAttachVolume","FailedBinding","ProvisioningFailed","FailedCreatePodSandBox"] | index($reason))]
+      | unique | if length > 0 then "recentWarnings=" + join(",") else "" end
+    ' <<<"$events_json" 2>>"$log_file") || event_summary=''
+  fi
+  return 0
+}
+
+report_wait_warning() {
+  local resource=$1 snapshot=$2 problems='' selector
+  case "$snapshot" in *Unschedulable*|*FailedScheduling*) problems='scheduling is blocked; check capacity, taints and volume binding' ;; esac
+  case "$snapshot" in
+    *FailedMount*|*FailedAttachVolume*|*FailedBinding*|*ProvisioningFailed*)
+      [[ -z $problems ]] || problems+='; '
+      problems+='storage is blocked; inspect volume events and referenced PVCs' ;;
+  esac
+  case "$snapshot" in
+    *ErrImagePull*|*ImagePullBackOff*|*InvalidImageName*|*ErrImageNeverPull*)
+      [[ -z $problems ]] || problems+='; '
+      problems+='image startup is blocked; check image names and node image cache' ;;
+  esac
+  case "$snapshot" in
+    *CrashLoopBackOff*|*CreateContainerConfigError*|*CreateContainerError*|*RunContainerError*)
+      [[ -z $problems ]] || problems+='; '
+      problems+='container startup is failing; inspect Pod events and container logs' ;;
+    *FailedCreatePodSandBox*)
+      [[ -z $problems ]] || problems+='; '
+      problems+='Pod sandbox creation is failing; inspect node runtime and networking' ;;
+  esac
+  # Unknown/unavailable detail is not evidence that an earlier warning cleared.
+  (( pod_checked >= 0 )) || return 0
+  [[ $problems != "$previous_warning" ]] || return 0
+  previous_warning=$problems
+  [[ -n $problems ]] || return 0
+  case "$resource" in
+    oblogservicecluster/*) selector="ref-oblogservicecluster=${resource#*/}" ;;
+    obcluster/*) selector="ref-obcluster=${resource#*/}" ;;
+    *) return 0 ;;
+  esac
+  echo "[warning] $resource: $problems."
+  echo "[warning] Inspect Pods: kubectl -n $namespace describe pods -l $selector"
+}
+
 wait_running() {
   local deadline=$((SECONDS + timeout)) began=$SECONDS remaining status previous='' delay budget next_progress=$SECONDS quiet=${2:-false}
+  local pod_summary='Pod details unavailable' event_summary='' event_relevant='' previous_warning='' pod_checked=-1 next_pod_check=$SECONDS next_event_check=$SECONDS snapshot snapshot_age
   current_action="Wait for $1 to become running"
   while (( SECONDS < deadline )); do
     remaining=$((deadline - SECONDS))
@@ -186,7 +302,7 @@ wait_running() {
     status=$(run_bounded "$budget" "read $1 status" kubectl -n "$namespace" get "$1" -o jsonpath='{.status.status}' --request-timeout="${budget}s")
     case "$status" in
       running)
-        if [[ $quiet != true ]]; then echo "[ready] $1 is running ($((SECONDS - began))s)"; fi
+        if [[ $quiet != true ]]; then echo "[ready] $1 is running (wait elapsed=$((SECONDS - began))s)"; fi
         return 0 ;;
       failed)
         echo "$1 entered failed status. Inspect the Operator events and resolve the cause before retrying; no data is deleted or bootstrap forced." >&2
@@ -198,11 +314,17 @@ wait_running() {
     # Normalize before comparing, so an unknown API value does not cause an
     # identical 'pending' message on every poll (and never exposes raw API text).
     case "$status" in new|pending|creating|initializing|upgrading|running|failed) ;; *) status=pending ;; esac
-    if [[ $status != "$previous" ]] || (( SECONDS >= next_progress )); then
+    refresh_wait_details "$1" "$deadline"
+    snapshot="status=$status; $pod_summary"
+    [[ -z $event_summary ]] || snapshot+="; $event_summary"
+    report_wait_warning "$1" "$snapshot"
+    if [[ $snapshot != "$previous" || ${LAKEHOUSE_LIVE_PROGRESS:-0} == 1 ]] || (( SECONDS >= next_progress )); then
       # Do not echo arbitrary API text. Known status values aid progress; unknown
       # values stay in the API and are summarized without exposing their content.
-      echo "[wait] $1: status=$status; $((SECONDS - began))s elapsed (limit ${timeout}s)"
-      previous=$status
+      snapshot_age=''
+      if (( pod_checked >= 0 )); then snapshot_age="; Pod snapshot age=$((SECONDS - pod_checked))s"; fi
+      echo "[wait] $1: $snapshot; wait elapsed=$((SECONDS - began))s (limit ${timeout}s); resource status checked$snapshot_age"
+      previous=$snapshot
       next_progress=$((SECONDS + progress_interval))
     fi
     remaining=$((deadline - SECONDS))
@@ -253,7 +375,7 @@ case "$dashboard_enabled" in
   false) skipped '[6/6] Dashboard: disabled by configuration' ;;
   *) echo 'Cannot determine Dashboard readiness: resolved dashboard.enabled is missing.' >&2; exit 1 ;;
 esac
-echo "Lakehouse ready: namespace=$namespace LogService=$release-ls OBCluster=$release-ob ($((SECONDS - started))s)"
+echo "Lakehouse ready: namespace=$namespace LogService=$release-ls OBCluster=$release-ob (total elapsed=$((SECONDS - started))s)"
 # The package entry point verifies HTTP access and prints one combined summary.
 # Only suppress expert access instructions after every readiness gate has passed.
 if [[ ${LAKEHOUSE_MANAGED_ACCESS:-0} == 1 ]]; then

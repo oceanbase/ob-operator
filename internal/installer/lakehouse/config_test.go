@@ -56,7 +56,7 @@ func TestPrivateStateAtomicAndRejectsSymlinkDirectory(t *testing.T) {
 }
 
 func TestOptionsRejectAmbiguousAndUnsafeInput(t *testing.T) {
-	for _, args := range [][]string{{"positional"}, {"--release", "../x"}, {"--namespace", "x/y"}, {"--access", "public"}, {"--dashboard-host", "http://example.com"}, {"--dashboard-host", "a;echo"}} {
+	for _, args := range [][]string{{"positional"}, {"--release", "../x"}, {"--namespace", "x/y"}, {"--access", "public"}, {"--progress", "fancy"}, {"--dashboard-host", "http://example.com"}, {"--dashboard-host", "a;echo"}} {
 		if _, err := parseOptions(args, &strings.Builder{}); err == nil {
 			t.Fatalf("accepted %v", args)
 		}
@@ -65,8 +65,28 @@ func TestOptionsRejectAmbiguousAndUnsafeInput(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(o.files) != 2 || o.access != "nodeport" {
+	if len(o.files) != 2 || o.access != "nodeport" || o.progressMode != "auto" {
 		t.Fatal("wrong defaults")
+	}
+	plain, err := parseOptions([]string{"--progress", "plain"}, &strings.Builder{})
+	if err != nil || plain.progressMode != "plain" {
+		t.Fatal("plain progress option must be accepted")
+	}
+}
+
+func TestRedirectedProgressDoesNotUseTerminalControl(t *testing.T) {
+	t.Setenv("TERM", "xterm-256color")
+	t.Setenv("CI", "")
+	if liveProgressEnabled(&strings.Builder{}, "auto") {
+		t.Fatal("redirected output must not receive terminal controls")
+	}
+	file, err := os.CreateTemp(t.TempDir(), "installation-log")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+	if liveProgressEnabled(file, "auto") || liveProgressEnabled(file, "plain") {
+		t.Fatal("regular files must retain line-by-line progress")
 	}
 }
 

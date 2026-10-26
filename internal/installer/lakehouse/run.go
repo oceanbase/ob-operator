@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/mattn/go-isatty"
 	"sigs.k8s.io/yaml"
 )
 
@@ -29,6 +30,7 @@ type options struct {
 	accessExplicit                                                             bool
 	bundle, release, namespace, node, runtime, address, endpoint, host, access string
 	check, showAccess                                                          bool
+	progressMode                                                               string
 	files                                                                      valueFiles
 }
 
@@ -47,6 +49,7 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	fs.StringVar(&o.access, "access", "nodeport", "Dashboard access: nodeport or clusterip")
 	fs.BoolVar(&o.check, "check", false, "Read-only preflight; do not import images or install resources")
 	fs.BoolVar(&o.showAccess, "show-access", false, "Show URL and save initial password to a private local file")
+	fs.StringVar(&o.progressMode, "progress", "auto", "Progress display: auto (live terminal) or plain (line-by-line logs)")
 	fs.Var(&o.files, "f", "Values file; repeatable, later files override earlier ones")
 	fs.Var(&o.files, "values", "Values file; repeatable")
 	if err := fs.Parse(args); err != nil {
@@ -71,6 +74,9 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	}
 	if o.access != "nodeport" && o.access != "clusterip" {
 		return o, errors.New("access must be nodeport or clusterip")
+	}
+	if o.progressMode != "auto" && o.progressMode != "plain" {
+		return o, errors.New("progress must be auto or plain")
 	}
 	if o.host != "" && net.ParseIP(o.host) == nil && !regexp.MustCompile(`^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$`).MatchString(o.host) {
 		return o, errors.New("dashboard-host must be an IP or DNS name without scheme or port")
@@ -119,7 +125,15 @@ func Run(ctx context.Context, args []string, out, stderr io.Writer) error {
 	return runWithCacheDirectory(ctx, args, out, stderr, os.UserCacheDir)
 }
 
-func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Writer, userCacheDir func() (string, error)) error {
+func liveProgressEnabled(out io.Writer, mode string) bool {
+	if mode == "plain" || os.Getenv("TERM") == "dumb" || os.Getenv("CI") != "" {
+		return false
+	}
+	f, ok := out.(interface{ Fd() uintptr })
+	return ok && isatty.IsTerminal(f.Fd())
+}
+
+func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Writer, userCacheDir func() (string, error)) (runErr error) {
 	o, err := parseOptions(args, stderr)
 	if errors.Is(err, flag.ErrHelp) {
 		return nil
@@ -133,6 +147,14 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 		}
 	}
 	progress := func(s string) { fmt.Fprintln(out, s) }
+	var console *consoleProgress
+	liveProgress := !o.showAccess && liveProgressEnabled(out, o.progressMode)
+	if !o.showAccess {
+		console = newConsoleProgress(out, liveProgress)
+		liveProgress = console.Live()
+		progress = console.Println
+		defer func() { console.Finish(runErr) }()
+	}
 	steps := 5
 	if o.check {
 		steps = 2
@@ -330,14 +352,19 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 	defer cancel()
 	cmd := command(installCtx, "bash", filepath.Join(o.bundle, "charts/oceanbase-lakehouse/install.sh"), o.release, o.namespace, "-f", filepath.Join(stateDir, "values.yaml"))
 	cmd.Env = append(os.Environ(), "LAKEHOUSE_MANAGED_ACCESS=1")
-	cmd.Stdout = out
-	cmd.Stderr = stderr
+	if liveProgress {
+		cmd.Env = append(cmd.Env, "LAKEHOUSE_LIVE_PROGRESS=1")
+	}
+	cmd.Stdout = console.Writer(out)
+	cmd.Stderr = console.Writer(stderr)
 	if err = cmd.Run(); err != nil {
 		return fmt.Errorf("installation did not complete; resolve the reported issue and rerun the same command to resume (data is retained): %w", err)
 	}
 	if !dashboardEnabled {
 		progress("[5/5] Dashboard access checks skipped: Dashboard is disabled by configuration.")
-		progress("Installation complete. Dashboard is disabled by configuration.")
+		progress("[skip] Dashboard is disabled by configuration.")
+		console.Finish(nil)
+		fmt.Fprintln(out, "Installation complete. Dashboard is disabled by configuration.")
 		return nil
 	}
 	progress("[5/5] Verifying log download support and Dashboard access")
@@ -349,7 +376,15 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 		return err
 	}
 	progress("[ready] Log download prerequisites verified: Observer archive/transfer support and diagnostic image IDs.")
-	return showAccess(ctx, execute, o, result, stateDir, out)
+	// Keep the access summary below the final progress frame. The access check
+	// still completes before the last stage is marked successful.
+	var accessSummary strings.Builder
+	if err = showAccess(ctx, execute, o, result, stateDir, &accessSummary); err != nil {
+		return err
+	}
+	console.Finish(nil)
+	fmt.Fprint(out, accessSummary.String())
+	return nil
 }
 
 func checkLocalWorker(result PreflightResult) error {
