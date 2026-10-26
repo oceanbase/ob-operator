@@ -32,6 +32,7 @@ type options struct {
 	check, showAccess                                                          bool
 	progressMode                                                               string
 	files                                                                      valueFiles
+	resources                                                                  resourceOverrides
 }
 
 func parseOptions(args []string, stderr io.Writer) (options, error) {
@@ -52,6 +53,7 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	fs.StringVar(&o.progressMode, "progress", "auto", "Progress display: auto (live terminal) or plain (line-by-line logs)")
 	fs.Var(&o.files, "f", "Values file; repeatable, later files override earlier ones")
 	fs.Var(&o.files, "values", "Values file; repeatable")
+	o.resources.register(fs)
 	if err := fs.Parse(args); err != nil {
 		return o, err
 	}
@@ -62,6 +64,9 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	})
 	if o.check && o.showAccess {
 		return o, errors.New("--check and --show-access are mutually exclusive")
+	}
+	if o.showAccess && len(o.resources) != 0 {
+		return o, errors.New("sizing options cannot be used with --show-access; use them when installing")
 	}
 	if fs.NArg() != 0 {
 		return o, errors.New("unexpected positional arguments; use --release, --namespace and -f")
@@ -248,6 +253,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 	if values == nil {
 		values = map[string]interface{}{}
 	}
+	installedValues := values
 	for _, path := range o.files {
 		overlay, err := readValues(path)
 		if err != nil {
@@ -255,6 +261,9 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 		}
 		values = mergeValues(values, overlay)
 	}
+	// Explicit sizing options take precedence over every values file, regardless
+	// of argument order. Unspecified options never reset stored configuration.
+	values = o.resources.apply(values)
 	if o.accessExplicit || (!existing && pfGet(values, "dashboard", "service", "type") == nil) {
 		if o.access == "nodeport" {
 			setValue(values, "NodePort", "dashboard", "service", "type")
@@ -267,6 +276,18 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 		return err
 	}
 	complete := mergeValues(defaults, values)
+	installedComplete := mergeValues(defaults, installedValues)
+	if err = o.resources.validateContext(complete, installedComplete, existing); err != nil {
+		return err
+	}
+	if existing {
+		values = o.resources.reuseInstalled(values, installedComplete)
+		complete = mergeValues(defaults, values)
+	} else if len(o.resources) > 0 {
+		if err = validateQuickstartSizing(complete); err != nil {
+			return err
+		}
+	}
 	// Dashboard shares the placement of the lakehouse. Explicit user overrides
 	// remain subject to the same single-worker scheduling validation.
 	if pfGet(values, "dashboard", "nodeSelector") == nil {
