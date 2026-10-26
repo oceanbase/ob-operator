@@ -13,6 +13,8 @@ kubectl、jq、可用的默认 StorageClass，以及管理员 kubeconfig。推�
 
 交付只有一个 tar：湖库、Dashboard、诊断、MinIO/mc 镜像和校验清单都在包内。
 把这一个 tar 复制到目标机器即可，不需要旁边的缓存包或校验文件，不需要手工导入镜像。
+先进入本次 tar 所在的目录，再解压并进入新目录；使用包内 README.txt 中与交付版本
+对应的完整文件名，避免在旧版本的解压目录中执行安装。
 
   tar -xf oceanbase-lakehouse-具体版本.tar
   cd oceanbase-lakehouse-具体版本
@@ -41,7 +43,8 @@ kubectl、jq、可用的默认 StorageClass，以及管理员 kubeconfig。推�
 默认 --progress auto 根据终端能力选择显示方式，不改变安装步骤、超时或数据保留策略。
 
 默认 release=ob-demo、namespace=ob-helm-demo；LogService 3×1CPU/4GiB，Observer
-2CPU/10GiB，MinIO及Dashboard另外占用资源。首次随机生成并保存两个数据库集群ID。
+2CPU/10GiB，MinIO及Dashboard另外占用资源。这是固定体验规格，不会按机器容量
+自动用满 CPU、内存或磁盘；预检计算剩余资源是否足够。首次随机生成并保存两个数据库集群ID。
 本入口为单 Worker 体验，不提供跨节点HA承诺；高级多节点使用 charts/ 下原流程。
 
 2. 打开 Dashboard
@@ -84,20 +87,25 @@ Worker 时读取；不会使用第三方公网 IP 查询服务，也不会把管
 只读检查（无镜像导入、无 Kubernetes 修改、无密码文件导出）：
   ./install.sh --check
 
+查看当前包支持的参数、完整名称和简写：
+  ./install.sh --help
+
 首次安装时，可直接用命令行设置常用规格，无需先编写 values 文件。例如将 Observer
 设为 2 核、16Gi 内存：
   ./install.sh --observer-cpu 2 --observer-memory 16Gi
 
-支持以下 9 个参数。CPU 示例中的引号用于明确值的写法，命令行中 '2' 与 2 等价；
-CPU 也支持 1.5 或 500m，小数最多 3 位，最小为 1m；1.5 会规范为 1500m。
+下面列出当前 QA 体验配置的首次安装默认值；实际交付以包内 values/quickstart.yaml
+为准。它与直接使用 Helm Chart 的默认配置不同，例如 Chart 的 LogService CPU 为 2。
+CPU 支持 2、1.5 或 500m，命令行中 '2' 与 2 等价；小数最多 3 位，最小为 1m。
+1.5 会规范为 1500m。
 内存和磁盘容量须使用正整数及 Mi、Gi 或 Ti 单位，如 512Mi、16Gi、1Ti。
 
-  参数                       简写    含义                              示例
-  --observer-cpu             --oc    每个 Observer 的 CPU 核数         '2'
-  --observer-memory          --om    每个 Observer 的内存              16Gi
-  --observer-data-size       --ods   每个 Observer 的数据盘容量        100Gi
+  参数                       简写    含义                              默认值
+  --observer-cpu             --oc    每个 Observer 的 CPU 核数         2
+  --observer-memory          --om    每个 Observer 的内存              10Gi
+  --observer-data-size       --ods   每个 Observer 的数据盘容量        50Gi
   --observer-log-size        --ols   每个 Observer 的日志盘容量        20Gi
-  --logservice-cpu           --lc    每个 LogService 实例的 CPU 核数   '1'
+  --logservice-cpu           --lc    每个 LogService 实例的 CPU 核数   1
   --logservice-memory        --lm    每个 LogService 实例的内存        4Gi
   --logservice-store-size    --lss   每个 LogService 实例的存储盘容量  20Gi
   --logservice-log-size      --lls   每个 LogService 实例的日志盘容量  10Gi
@@ -128,11 +136,30 @@ LogService 的存储/日志盘。示例中 Observer 的 20Gi 内存配 100Gi 数
     --logservice-log-size 10Gi \
     --minio-size 100Gi
 
-可在上述命令中加 --check 先检查资源和配置，再去掉 --check 执行安装。未指定的规格
+预检与安装应使用同一组配置。先用简写预检，再执行安装：
+  ./install.sh --check --oc 2 --om 16Gi --ods 100Gi
+  ./install.sh --oc 2 --om 16Gi --ods 100Gi
+
+--check 不保存规格，也不会开始安装；安装时仍需带上需要的参数。未指定的规格
 沿用已安装或已保存的配置；首次安装使用包内默认值，不会自动用满机器资源。
 配置优先级从低到高为：保留配置/默认值、依次合并的 -f 文件、显式规格参数。
 多个 -f 中后一个文件优先；上述 9 个规格参数始终优先于所有 -f，不受它们在命令行
 中前后排列的影响。高级配置仍可通过 -f 传入。
+
+需要保存一份可复用配置时，在解压目录外创建文件。下面与简写示例等价：
+cat > ../my-values.yaml <<'YAML'
+observer:
+  resource:
+    cpu: "2"
+    memory: 16Gi
+  dataSize: 100Gi
+YAML
+./install.sh --check -f ../my-values.yaml
+./install.sh -f ../my-values.yaml
+
+可以组合文件和参数，例如：
+  ./install.sh -f ../my-values.yaml --om 20Gi --ods 100Gi
+该命令保留文件中的 CPU 配置，并将 Observer 内存设置为 20Gi、数据盘设置为 100Gi。
 
 --show-access 只查看访问说明，不接受这 9 个规格参数。已有 Helm release 只接受与
 当前已安装配置等量的规格参数，用于重放安装命令；例如 1Gi 与 1024Mi 等量时保留
@@ -143,6 +170,8 @@ LogService 的存储/日志盘。示例中 Observer 的 20Gi 内存配 100Gi 数
 参数，容量由外部存储或 PVC 的管理流程处理。规格校验按包内默认 Operator 行为进行；
 高级数据库参数仍通过 -f 配置，需满足实际 Operator 的启动约束，这些规格参数不会
 自动调整 memory_limit、system_memory 等数据库参数。
+完整规格参数及简写仅适用于本 tar 根目录的 ./install.sh；不要传给
+charts/oceanbase-lakehouse/install.sh 或 helm。后两者使用 Helm values 配置。
 
 湖库安装阶段失败后，处理提示原因，再执行同一条命令。如果首次安装配套
 Operator/cert-manager 中断并留下不完整组件，需要先修复该前置组件，安装器不会

@@ -6,6 +6,10 @@ ob-operator 是满足 Kubernetes Operator 扩展范式的自动化工具，可�
 
 ## 快速上手
 
+湖库单节点 QA tar 包请参考[安装说明](./INSTALL.txt)，包含默认一起安装的 Dashboard、
+默认规格、命令行简写和自定义配置。直接使用 Helm Chart 的高级流程见
+[湖库 Chart 使用说明](./charts/oceanbase-lakehouse/USAGE.txt)。
+
 这部分以一个简单示例说明如何使用 ob-operator 快速部署 OceanBase 集群。
 
 ### 前提条件

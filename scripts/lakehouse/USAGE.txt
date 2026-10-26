@@ -19,6 +19,25 @@ internal build evidence; their presence is not required on the installation
 machine. The builder records the final tar SHA256 in build-result.json for
 internal transfer verification.
 
+values/quickstart.yaml starts from the baseline's single-worker-8core.yaml,
+falling back to single-worker.yaml. The builder explicitly sets LogService CPU
+to 1 per instance and Observer CPU to 2; other memory/volume sizing comes from
+that baseline profile. Document the actual packaged profile, not just the chart
+defaults (for example, the chart's LogService CPU default is 2).
+
+INSTALL.txt at the repository root is the user-guide source. The builder copies
+it into the tar and generates README.txt from it, substituting the exact tar and
+directory names. Keep sizing defaults, aliases, examples and retry limitations
+there; do not edit a delivered bundle's README.txt or INSTALL.txt in place,
+because both are covered by SHA256SUMS. Ship documentation changes in a newly
+built version when updating an existing delivery.
+
+The package-root install.sh accepts sizing options such as --observer-cpu 2
+or --oc 2 and forwards them to the compiled Go installer. Build that binary
+from the same source commit when packaging a new CLI option; changing docs
+alone does not add an option to an older tar. The advanced chart install.sh
+uses RELEASE NAMESPACE and Helm values arguments, not these sizing aliases.
+
 Diagnostic/log-download builds additionally supply both:
   --diagnostics-archive /path/diagnostics-images.tar.gz
   --diagnostics-lock /path/diagnostics-lock.json

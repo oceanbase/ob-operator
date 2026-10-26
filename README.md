@@ -6,6 +6,10 @@
 
 ## Quick Start
 
+For the single-worker lakehouse QA tar, see the [installation guide](./INSTALL.txt).
+It covers the bundled Dashboard, default sizing, short CLI options and custom values.
+For the advanced chart workflow, see [lakehouse chart usage](./charts/oceanbase-lakehouse/USAGE.txt).
+
 This section provides a step-by-step guide on how to use ob-operator to deploy an OceanBase cluster.
 
 ### Prerequisites

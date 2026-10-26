@@ -2,11 +2,55 @@ Packaged single-worker quick start
 ----------------------------------
 For the complete Linux amd64 bundle, run bash install.sh at its root. It checks
 capacity, reuses matching image IDs, imports missing archives, prepares an absent
-Operator, installs lakehouse plus Dashboard, and prints a verified node-local
-Dashboard URL. No separate Dashboard command is needed. See INSTALL.txt.
+Operator, installs lakehouse plus Dashboard, and prints Dashboard access
+information after verifying node-local HTTP readiness. In NodePort mode the
+installer discovers an external address when available; --dashboard-host can
+override it. Network/firewall access from your browser must be configured.
+No separate Dashboard command is needed. See INSTALL.txt at the bundle root.
+
+After extracting the full tar and entering its root directory:
+  ./install.sh --help
+  ./install.sh --check --oc 2 --om 16Gi --ods 100Gi
+  ./install.sh --oc 2 --om 16Gi --ods 100Gi
+
+Use the same settings for the check and installation commands: --check does not
+save the requested sizing or install resources. Common sizing options are:
+
+  Full option                 Alias   Value applies to
+  --observer-cpu              --oc    CPU per Observer
+  --observer-memory           --om    Memory per Observer
+  --observer-data-size        --ods   Data volume per Observer
+  --observer-log-size         --ols   Log volume per Observer
+  --logservice-cpu            --lc    CPU per LogService instance
+  --logservice-memory         --lm    Memory per LogService instance
+  --logservice-store-size     --lss   Store volume per LogService instance
+  --logservice-log-size       --lls   Log volume per LogService instance
+  --minio-size                --ms    Bundled MinIO volume
+
+Both -oc 2 and --oc 2 are accepted. Long and short names share one setting;
+the last occurrence wins. CPU accepts whole cores, up to three decimal places,
+or millicores (minimum 1m). Memory and volume sizes use positive integers with
+Mi, Gi or Ti. LogService has three instances by default; its options are per
+instance, not the total across all three. Explicit sizing flags override all
+-f files regardless of argument order; later -f files override earlier ones.
+Unspecified settings retain installed/saved values or the first-install profile
+in values/quickstart.yaml. The package uses fixed sizing, not automatic maximum
+utilization of the worker. Its profile may differ from this chart's defaults.
+
+These options configure a first installation or replay the same installed
+sizing. They reject resizing an existing release and cannot be used with
+--show-access. --minio-size also rejects external storage and existingClaim.
+For larger Observer memory, check the data volume too: with bundled Operator
+defaults, --om 20Gi needs a larger data volume than the default 50Gi, for example
+--ods 100Gi. Advanced parameters remain available through an external -f file;
+do not edit files covered by the bundle's SHA256SUMS.
+
+Sizing flags and aliases belong to the PACKAGE-ROOT install.sh only. The chart
+script below accepts RELEASE NAMESPACE and Helm values options instead; do not
+pass --oc, --observer-cpu or the other sizing options to it or to helm directly.
 The advanced chart-only workflow below retains its existing prerequisites.
 
-OceanBase lakehouse online Helm installation (experimental 0.3.0)
+OceanBase lakehouse online Helm installation (experimental; version in Chart.yaml)
 
 Prerequisites
 -------------
@@ -76,7 +120,7 @@ Example:
 
   bash charts/oceanbase-lakehouse/install.sh lakehouse lakehouse -f my-values.yaml
 
-For a downloaded archive, untar it and run install.sh inside oceanbase-lakehouse/.
+For a chart-only archive, untar it and run install.sh inside oceanbase-lakehouse/.
 This ONE command performs storage -> LogService -> Observer stages, each bounded
 by LAKEHOUSE_TIMEOUT (seconds, default 1800). It waits for the initialization Job
 and CR running status, Observer Pod readiness and Dashboard HTTP readiness, not
@@ -85,7 +129,9 @@ Run the same command to resume or upgrade. Existing Helm user values are reused;
 new values flags override them. New installs still need their image/storage configuration.
 Plain helm install defaults to the storage stage ONLY and is not a full install.
 
-Installer console output is in English. The package entry point uses five
+Installer console output is in English. The package entry point uses a live
+stage view on supported interactive terminals, and plain lines for redirected
+output, CI, TERM=dumb or --progress plain. It uses five
 overall steps (two for --check). Its detailed installation phases are named
 without a second progress count. The standalone chart script uses six numbered
 steps: preflight, storage initialization, LogService, OceanBase status, Observer
@@ -94,7 +140,8 @@ Pod readiness and Dashboard readiness.
 gate and [skip] explains a resumed stage or disabled Dashboard. Resume still
 checks the final LogService/OBCluster and Pod readiness; a previously reported
 LogService does not print the same success twice if it remains ready.
-Unchanged status is reported every 30 seconds; status changes are reported on
+In the chart script's plain output, unchanged status is reported every 30
+seconds; status changes are reported on
 the next poll. LAKEHOUSE_PROGRESS_INTERVAL overrides the chart script's interval.
 Image import, prerequisite setup and diagnostic verification also report quiet
 waits every 30 seconds. No percentage or completion time is estimated.
@@ -113,7 +160,10 @@ visible to its account, including this release's shared-storage cluster. Its
 administrative Kubernetes permissions are cluster-wide, not limited to this
 release; this bundle is intended for a trusted cluster administrator.
 
-The default Service is ClusterIP. After the installer reports Dashboard ready:
+The chart-only default Service is ClusterIP. The full QA bundle's root installer
+defaults to NodePort and prints its access information and private initial
+password file location; use ./install.sh --show-access to show that information
+again. For the chart-only ClusterIP workflow, after Dashboard becomes ready:
   kubectl -n lakehouse port-forward svc/oceanbase-dashboard-lakehouse 8080:80
 Open http://127.0.0.1:8080 on the computer running that command. If kubectl runs
 on a remote server, keep port-forward running there and use an SSH tunnel from
@@ -136,8 +186,10 @@ Prometheus data, 10Gi shared files). Both inherit the top-level storageClass.
 Optional dashboard.prometheus.persistence.storageClassName and
 dashboard.sharedVolume.persistence.storageClassName override it. An existingClaim
 under either persistence block references a user-managed PVC without adopting it.
-Dashboard placement is currently governed by the Kubernetes scheduler; the
-database/storage scheduling.* settings do not apply to Dashboard.
+For the chart-only workflow, explicitly set dashboard.nodeSelector and
+dashboard.tolerations when placement is required; database/storage scheduling.*
+does not automatically place Dashboard. The full package root installer places
+Dashboard on the selected single worker and inherits its placement settings.
 
 Accounts, user-created roles and permissions, the initial-password Secret and
 owned Dashboard PVCs are retained across upgrades, disable/re-enable and uninstall.
@@ -160,9 +212,13 @@ The three database stages share a single Dashboard; there is no separate release
 For QA/offline packages, also select the supplied SS-capable dashboard.image and
 load its Prometheus/Alertmanager/busybox dependencies on eligible workers.
 Log download requires the configured obdiag and oceanbase-helper images on every
-eligible worker, plus tar/gzip in the Observer and obdiag containers. The current
-QA offline package includes these diagnostic images and an Observer image with
-the required tools; use its locked values. SQL analyzer images are separate.
+eligible worker. The current QA package includes these diagnostic images and
+preserves the original Observer image. Its diagnostic transport uses an existing
+Python 3 interpreter with tarfile/gzip support in the Observer, including
+platform-python when available; the package verifies that support during
+installation, so no extra tar command is required in the Observer. Use the
+package's locked values and compatible Dashboard/diagnostic images. Other image
+combinations need their own dependency validation. SQL analyzer images are separate.
 Changing inspection image settings rolls out Dashboard so its mounted config is
 refreshed. A completed job or HTTP 200 alone does not prove logs were collected;
 verify the downloaded archive contains real Observer logs for the selected range.
@@ -322,8 +378,10 @@ Licensing and distribution
 --------------------------
 The repository LICENSE governs our original chart/installer code. MinIO server
 and mc are separately licensed third-party software (AGPL-3.0); their licenses are
-not replaced by this chart's license. This package contains no MinIO/mc source,
-binary, third-party chart or image. The worker pulls the configured images online.
+not replaced by this chart's license. The chart-only archive contains no MinIO/mc
+source, binary, third-party chart or image. Chart-only workers pull the configured
+images unless they are already cached. The complete QA tar includes locked
+MinIO/mc image archives, which its root installer imports as needed.
 https://github.com/minio/minio/blob/master/LICENSE
 https://github.com/minio/mc/blob/master/LICENSE
 https://github.com/minio/minio
