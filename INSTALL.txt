@@ -1,6 +1,8 @@
-OceanBase 湖库：单节点与三节点体验包
+OceanBase 湖库内部体验指南
 ==================================
 
+面向内部研发、测试和产品同学，用于安装 QA 包并体验湖库、Dashboard 和日志下载。
+建议第一次体验先使用单 Worker 默认规格；需要验证跨机器分布时再使用三节点入口。
 用户只需要「解压 → 执行一个安装命令 → 打开 Dashboard」。Dashboard、Prometheus、
 Alertmanager 默认随湖库安装在同一个 Helm release 中，不需要单独运行安装脚本。
 
@@ -10,6 +12,21 @@ Alertmanager 默认随湖库安装在同一个 Helm release 中，不需要单�
 kubectl、jq、可用的默认 StorageClass，以及管理员 kubeconfig。推荐独立 8 核、32GiB
 以上内存的体验机；脚本根据已占用资源计算能否安装，磁盘还需容纳镜像和PVC。
 本包不安装操作系统或 Kubernetes，不会修改已有共享 Operator。
+
+安装前在执行入口的 Worker 上确认：
+  uname -m
+  kubectl config current-context
+  kubectl get nodes -o wide
+  kubectl get storageclass
+  helm version --short
+  kubectl version
+  jq --version
+
+uname -m 应为 x86_64；ARM64/aarch64 不能直接运行本 amd64 包。kubectl 须能用
+管理员身份操作目标集群，节点须 Ready 且可调度。未配置默认 StorageClass 时，
+通过包外 values 文件设置 storageClass。容量不只包括数据库 PVC，还需预留完整 tar、
+解压目录、镜像导入/展开及容器运行时的磁盘空间。三节点还需第一台上的 ssh/scp
+客户端，以及它到其他两台的 SSH 密钥连接；详细要求见第 4 节。
 
 交付只有一个 tar：湖库、Dashboard、诊断、MinIO/mc 镜像和校验清单都在包内。
 把这一个 tar 复制到目标机器即可，不需要旁边的缓存包或校验文件，不需要手工导入镜像。
@@ -234,8 +251,16 @@ Kubernetes 节点或数据库拓扑；安装器仍核验远端 UUID/接口 IP �
 冷节点缺少镜像时预检会报告失败；去掉 --check 后才自动分发和导入。
 
 三节点同样默认安装 Dashboard，并打印访问说明及初始密码文件位置。检查分布：
+  kubectl get nodes -o wide
   kubectl -n ob-helm-demo get pods -o wide
   kubectl -n ob-helm-demo get obclusters,oblogserviceclusters
+  kubectl -n ob-helm-demo get pvc
+
+正常结果为：三个节点分别运行一个 Ready Observer 和一个 Ready LogService，
+相关数据库 CR 均为 running，所需 PVC 均为 Bound；第一台另有 MinIO 和 Dashboard。
+Dashboard Pod 内的 dashboard、prometheus、alertmanager 三个容器均须 Ready。
+安装完成以根目录脚本的 Installation complete. 为准，单次 Helm 输出 deployed
+仅代表该阶段资源已提交，不能替代数据库和 Dashboard 就绪检查。
 
 失败后重跑原命令。已保存/安装的三节点拓扑可自动识别，但 SSH 非默认连接参数
 仍需再次传入。不支持通过 --nodes 把已有单节点转换为三节点，也不支持交换节点
@@ -246,7 +271,46 @@ Kubernetes 节点或数据库拓扑；安装器仍核验远端 UUID/接口 IP �
 内置 MinIO 仍为第一台上的单实例，三节点不代表整套系统高可用。生产环境需要
 独立可靠的对象存储，并验证实际数据库版本的容灾行为。
 
-5. 范围和数据保留
+5. 常见问题和排查
+-----------------
+解压后仍看到旧日志或不认识 --nodes：先用 pwd、ls 确认当前目录对应本次版本，
+再运行 ./install.sh --help。tar 包使用 tar -xf，不加 gzip 专用的 -z；不要在旧
+版本目录中执行相对路径 cd 新版本目录。应先返回 tar 所在目录，再解压、进入新目录。
+
+--check 报镜像缺失：冷节点尚未缓存镜像时，这是预期的检查结果。若其余前置检查
+通过，执行不带 --check 的同一条安装命令，入口会自动分发和导入镜像。
+
+SSH 失败：从第一台用同一用户、端口、密钥和目标地址确认可非交互连接；先通过
+可信渠道核对主机指纹，再配置 known_hosts。--ssh-host 只改变连接地址，仍须对应
+--nodes 中的真实 Worker。运行时权限错误需要修正该账号的运行时访问权限。
+
+安装等待或失败：先看当前阶段的状态、Pod 数量、异常原因及详细日志位置，再查看：
+  kubectl -n ob-helm-demo get pods -o wide
+  kubectl -n ob-helm-demo get events --sort-by=.lastTimestamp
+  kubectl -n ob-helm-demo get obclusters,oblogserviceclusters
+  kubectl -n ob-helm-demo get pvc
+  kubectl -n ob-helm-demo describe pod 实际Pod名
+
+示例使用默认 namespace；指定了 --namespace 时请替换为对应值。详细日志可能包含
+敏感 Helm 输出，默认仅当前用户可读，发给他人前先检查并脱敏。修正原因后重跑
+同一安装命令，不要用删除 namespace/PVC/CR 或 helm --force/--atomic 重试。
+
+需要停止前台安装时使用 Ctrl+C，等待程序退出后再重跑。Ctrl+Z 只暂停进程，可能
+仍留有后台子进程；不要在另一个终端立即启动第二次安装。可用 jobs -l 查看当前
+Shell 中的暂停任务，fg 恢复对应任务后使用 Ctrl+C 退出。
+
+Dashboard 无法打开：用 ./install.sh --show-access 查看当前地址，确认浏览器能访问
+该节点及 NodePort，安全组/防火墙已放行；必要时用 --dashboard-host 指定可达地址。
+地址发现和节点内 HTTP 探活不等于浏览器到公网的链路已放行。
+
+Dashboard 密码不对：初始密码文件只对应首次登录。首次改密后继续使用自己设置的
+密码；--show-access 和重跑安装不会把当前账号重置为初始密码。
+
+日志下载：在 Dashboard 的对应集群中发起日志收集，等待任务成功后下载附件。
+应能解压出对应 Observer 的实际日志；任务完成或 HTTP 200 不能单独证明内容完整。
+当前包已包含所需诊断镜像和 Observer 打包/传输能力校验，无需额外安装 tar 命令。
+
+6. 范围和数据保留
 -----------------
 这是一套 Linux amd64 内部 QA 体验包。本版更新日志下载后端、helper 和诊断镜像，
 保留原 Observer 镜像。诊断工具通过容器已有的 Python 完成日志打包和传输。

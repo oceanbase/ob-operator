@@ -92,6 +92,24 @@ This is not an in-place single-worker conversion or PVC migration mechanism.
 Bundled MinIO remains single-node; this mode alone does not provide system HA.
 Use the advanced chart workflow for other layouts or heterogeneous socket paths.
 
+Verify the installation (replace the namespace if customized):
+  kubectl get nodes -o wide
+  kubectl -n ob-helm-demo get pods -o wide
+  kubectl -n ob-helm-demo get obclusters,oblogserviceclusters
+  kubectl -n ob-helm-demo get pvc
+Expect one Ready Observer and one Ready LogService on each chosen worker,
+running database CRs, Bound PVCs, and all three Dashboard containers Ready on
+the first worker. A Helm deployed message alone is not a readiness assertion;
+wait for the package-root installer's Installation complete. summary.
+
+For a cold cache, --check reports missing images and does not import them.
+Run the same command without --check to prepare the missing archives. To stop
+an active installation, use Ctrl+C and wait for exit before rerunning it;
+Ctrl+Z suspends the shell job and may leave child processes active. Reuse the
+same node order, release, namespace and settings on retry. An already changed
+Dashboard password remains current; --show-access exports only the bootstrap
+password and does not reset the account.
+
 OceanBase lakehouse online Helm installation (experimental; version in Chart.yaml)
 
 Prerequisites
