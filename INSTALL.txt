@@ -92,16 +92,23 @@ Worker 时读取；不会使用第三方公网 IP 查询服务，也不会把管
 CPU 也支持 1.5 或 500m，小数最多 3 位，最小为 1m；1.5 会规范为 1500m。
 内存和磁盘容量须使用正整数及 Mi、Gi 或 Ti 单位，如 512Mi、16Gi、1Ti。
 
-  参数                       含义                              示例
-  --observer-cpu             每个 Observer 的 CPU 核数         '2'
-  --observer-memory          每个 Observer 的内存              16Gi
-  --observer-data-size       每个 Observer 的数据盘容量        100Gi
-  --observer-log-size        每个 Observer 的日志盘容量        20Gi
-  --logservice-cpu           每个 LogService 实例的 CPU 核数   '1'
-  --logservice-memory        每个 LogService 实例的内存        4Gi
-  --logservice-store-size    每个 LogService 实例的存储盘容量  20Gi
-  --logservice-log-size      每个 LogService 实例的日志盘容量  10Gi
-  --minio-size               内置 MinIO 的存储盘容量           100Gi
+  参数                       简写    含义                              示例
+  --observer-cpu             --oc    每个 Observer 的 CPU 核数         '2'
+  --observer-memory          --om    每个 Observer 的内存              16Gi
+  --observer-data-size       --ods   每个 Observer 的数据盘容量        100Gi
+  --observer-log-size        --ols   每个 Observer 的日志盘容量        20Gi
+  --logservice-cpu           --lc    每个 LogService 实例的 CPU 核数   '1'
+  --logservice-memory        --lm    每个 LogService 实例的内存        4Gi
+  --logservice-store-size    --lss   每个 LogService 实例的存储盘容量  20Gi
+  --logservice-log-size      --lls   每个 LogService 实例的日志盘容量  10Gi
+  --minio-size               --ms    内置 MinIO 的存储盘容量           100Gi
+
+完整名称和简写均支持单短横线或双短横线，例如 -observer-cpu 2、--observer-cpu 2、
+-oc 2、--oc 2 完全等价。长短名称混用时，同一参数最后出现的值生效：
+  ./install.sh --observer-cpu 1 --oc 2 --om 16Gi
+上述命令最终使用 Observer 2 核、16Gi 内存。全部常用规格也可以写成：
+  ./install.sh --oc 2 --om 20Gi --ods 100Gi --ols 20Gi \
+    --lc 1 --lm 4Gi --lss 20Gi --lls 10Gi --ms 100Gi
 
 LogService 默认有 3 个实例，上述 LogService 规格是每个实例的值；例如 1 核、4Gi
 表示 3 个实例合计需要 3 核、12Gi 内存，还需另计 Observer、Dashboard、MinIO 等组件。

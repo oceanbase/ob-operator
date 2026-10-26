@@ -16,21 +16,21 @@ import (
 type resourceOverrides map[string]string
 
 type resourceOption struct {
-	name, help string
-	path       []string
-	cpu        bool
+	name, alias, help string
+	path              []string
+	cpu               bool
 }
 
 var resourceOptions = []resourceOption{
-	{"observer-cpu", "CPU per Observer, e.g. 2, 1.5 or 500m; overrides -f", []string{"observer", "resource", "cpu"}, true},
-	{"observer-memory", "Memory per Observer, e.g. 16Gi; overrides -f", []string{"observer", "resource", "memory"}, false},
-	{"observer-data-size", "Data volume per Observer, e.g. 100Gi; overrides -f", []string{"observer", "dataSize"}, false},
-	{"observer-log-size", "Log volume per Observer, e.g. 20Gi; overrides -f", []string{"observer", "logSize"}, false},
-	{"logservice-cpu", "CPU per LogService instance (three by default), e.g. 1; overrides -f", []string{"logService", "resource", "cpu"}, true},
-	{"logservice-memory", "Memory per LogService instance (three by default), e.g. 4Gi; overrides -f", []string{"logService", "resource", "memory"}, false},
-	{"logservice-store-size", "Store volume per LogService instance, e.g. 20Gi; overrides -f", []string{"logService", "storeSize"}, false},
-	{"logservice-log-size", "Log volume per LogService instance, e.g. 10Gi; overrides -f", []string{"logService", "logSize"}, false},
-	{"minio-size", "Bundled MinIO volume, e.g. 100Gi; overrides -f", []string{"minio", "size"}, false},
+	{"observer-cpu", "oc", "CPU per Observer, e.g. 2, 1.5 or 500m; overrides -f", []string{"observer", "resource", "cpu"}, true},
+	{"observer-memory", "om", "Memory per Observer, e.g. 16Gi; overrides -f", []string{"observer", "resource", "memory"}, false},
+	{"observer-data-size", "ods", "Data volume per Observer, e.g. 100Gi; overrides -f", []string{"observer", "dataSize"}, false},
+	{"observer-log-size", "ols", "Log volume per Observer, e.g. 20Gi; overrides -f", []string{"observer", "logSize"}, false},
+	{"logservice-cpu", "lc", "CPU per LogService instance (three by default), e.g. 1; overrides -f", []string{"logService", "resource", "cpu"}, true},
+	{"logservice-memory", "lm", "Memory per LogService instance (three by default), e.g. 4Gi; overrides -f", []string{"logService", "resource", "memory"}, false},
+	{"logservice-store-size", "lss", "Store volume per LogService instance, e.g. 20Gi; overrides -f", []string{"logService", "storeSize"}, false},
+	{"logservice-log-size", "lls", "Log volume per LogService instance, e.g. 10Gi; overrides -f", []string{"logService", "logSize"}, false},
+	{"minio-size", "ms", "Bundled MinIO volume, e.g. 100Gi; overrides -f", []string{"minio", "size"}, false},
 }
 
 var (
@@ -42,14 +42,16 @@ func (overrides *resourceOverrides) register(fs *flag.FlagSet) {
 	*overrides = resourceOverrides{}
 	for _, option := range resourceOptions {
 		option := option
-		fs.Func(option.name, option.help, func(value string) error {
+		set := func(value string) error {
 			normalized, err := normalizeResourceOption(option, value)
 			if err != nil {
 				return err
 			}
 			(*overrides)[option.name] = normalized
 			return nil
-		})
+		}
+		fs.Func(option.name, option.help+" (alias: --"+option.alias+")", set)
+		fs.Func(option.alias, "Alias for --"+option.name, set)
 	}
 }
 
