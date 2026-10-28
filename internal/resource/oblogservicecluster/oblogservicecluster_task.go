@@ -37,6 +37,15 @@ var taskMap = builder.NewTaskHub[*OBLogServiceClusterManager]()
 
 func CreateZones(m *OBLogServiceClusterManager) tasktypes.TaskError {
 	m.Logger.Info("Creating log service zones")
+	if err := resourceutils.WaitForStorageInitialization(m.Ctx, m.Client, m.Resource, 30*time.Minute, 2*time.Second); err != nil {
+		return err
+	}
+	objectStoreURL := m.Resource.Spec.ObjectStoreURL
+	resolvedURL, err := resourceutils.ResolveStorageServiceURL(m.Ctx, m.Client, m.Resource, objectStoreURL.BucketURL)
+	if err != nil {
+		return err
+	}
+	objectStoreURL.BucketURL = resolvedURL
 	existingZones, err := m.listZones()
 	if err != nil {
 		return errors.Wrap(err, "list existing zones")
@@ -76,7 +85,7 @@ func CreateZones(m *OBLogServiceClusterManager) tasktypes.TaskError {
 				Image:          m.Resource.Spec.LogService.Image,
 				Resource:       m.Resource.Spec.LogService.Resource,
 				Topology:       topo,
-				ObjectStoreURL: m.Resource.Spec.ObjectStoreURL,
+				ObjectStoreURL: objectStoreURL,
 				Storage:        m.Resource.Spec.LogService.Storage,
 				Parameters:     m.Resource.Spec.Parameters,
 				ServiceAccount: m.Resource.Spec.ServiceAccount,
@@ -255,14 +264,17 @@ func BootstrapLogService(m *OBLogServiceClusterManager) tasktypes.TaskError {
 		maxRetries, httpAddr, serverArgs, maxRetries, interval, interval,
 	)
 
+	resolvedURL, err := resourceutils.ResolveStorageServiceURL(m.Ctx, m.Client, m.Resource, m.Resource.Spec.ObjectStoreURL.BucketURL)
+	if err != nil {
+		return err
+	}
 	serverEnvVars = append(serverEnvVars, corev1.EnvVar{
 		Name:  "BUCKET_URL",
-		Value: m.Resource.Spec.ObjectStoreURL.BucketURL,
+		Value: resolvedURL,
 	})
 
 	m.Logger.Info("Execute log service bootstrap",
 		"host", httpAddr,
-		"bucketURL", m.Resource.Spec.ObjectStoreURL.BucketURL,
 		"serverArgs", serverArgs)
 
 	secretVolumeName := "oss-credentials"

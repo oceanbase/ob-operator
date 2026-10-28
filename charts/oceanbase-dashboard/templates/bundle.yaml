@@ -31,7 +31,7 @@ spec:
       {{- end }}
       initContainers:
         - name: prometheus-storage-owner-init
-          image: busybox:latest
+          image: {{ .Values.utilityImage | quote }}
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "chown -R 65534:65534 /prometheus"]
           volumeMounts:
@@ -99,7 +99,7 @@ spec:
             - name: SERVICE_ACCOUNT
               value: {{ .Release.Name }}-sa
         - name: prometheus
-          image: quay.io/prometheus/prometheus:v2.51.1
+          image: {{ .Values.prometheus.image | quote }}
           resources:
             requests:
               cpu: 100m
@@ -127,7 +127,7 @@ spec:
             - name: prometheus-rules-volume
               mountPath: /etc/prometheus/rules/
         - name: alertmanager
-          image: quay.io/prometheus/alertmanager:v0.27.0
+          image: {{ .Values.alertmanager.image | quote }}
           command: ["sh", "-c", "cp /etc/cfg/alertmanager/alertmanager.yml /etc/alertmanager/alertmanager.yml && /bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/alertmanager"]
           ports:
             - name: alertmanager

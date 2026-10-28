@@ -1,0 +1,213 @@
+# Linux AMD64 quickstart. No .env file, local build or preparation script required.
+name: ${COMPOSE_PROJECT_NAME:-ob-lakehouse}
+
+x-bootstrap-image: &bootstrap-image ${BOOTSTRAP_IMAGE:-ghcr.io/oceanbase/lakehouse-bootstrap:0.1.0}
+x-logservice: &logservice
+  image: ${LOGSERVICE_IMAGE:-oblogservice:1.3.0}
+  platform: linux/amd64
+  entrypoint: ["/opt/lakehouse/logservice-entrypoint.sh"]
+  restart: unless-stopped
+  cpus: ${LOGSERVICE_CPUS:-1}
+  mem_limit: ${LOGSERVICE_CONTAINER_MEMORY:-4g}
+  stop_grace_period: 60s
+  healthcheck:
+    test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/50052"]
+    interval: 5s
+    timeout: 3s
+    retries: 120
+  logging: &bounded-logging
+    driver: json-file
+    options: {max-size: "10m", max-file: "3"}
+
+x-logservice-env: &logservice-env
+  CLUSTER_ID: ${LOGSERVICE_CLUSTER_ID:-10002}
+  LOG_DISK_SIZE: ${LOGSERVICE_LOG_DISK_SIZE:-10G}
+  MEMORY_LIMIT: ${LOGSERVICE_MEMORY_LIMIT:-3G}
+
+services:
+  credentials-init:
+    image: *bootstrap-image
+    command: ["--mode", "credentials"]
+    user: "0:0"
+    restart: "no"
+    network_mode: none
+    volumes:
+      - credentials:/run/secrets
+    logging: *bounded-logging
+
+  minio:
+    image: ${MINIO_IMAGE:-minio/minio:RELEASE.2025-09-07T16-13-09Z}
+    entrypoint: ["/opt/lakehouse/minio-entrypoint.sh"]
+    user: "0:0"
+    restart: unless-stopped
+    mem_limit: ${MINIO_MEMORY:-1g}
+    volumes:
+      - minio-data:/data
+      - credentials:/run/secrets:ro
+      - ./scripts:/opt/lakehouse:ro
+    depends_on:
+      credentials-init: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+    networks:
+      lakehouse:
+        ipv4_address: ${MINIO_IP:-172.30.52.10}
+    logging: *bounded-logging
+
+  minio-init:
+    image: ${MINIO_MC_IMAGE:-minio/mc:RELEASE.2025-08-13T08-35-41Z}
+    entrypoint: ["/opt/lakehouse/minio-init.sh"]
+    user: "0:0"
+    restart: "no"
+    environment:
+      LOGSERVICE_BUCKET: ${LOGSERVICE_BUCKET:-lakehouse-logservice}
+      SHARED_STORAGE_BUCKET: ${SHARED_STORAGE_BUCKET:-lakehouse-data}
+    volumes:
+      - ./scripts:/opt/lakehouse:ro
+      - credentials:/run/secrets:ro
+    depends_on:
+      minio: {condition: service_healthy}
+    networks: [lakehouse]
+    logging: *bounded-logging
+
+  logservice-1:
+    <<: *logservice
+    environment:
+      <<: *logservice-env
+      LOCAL_IP: ${LOGSERVICE_IP_1:-172.30.52.11}
+    volumes:
+      - logservice-1-store:/home/admin/oblogservice/store
+      - logservice-1-log:/home/admin/oblogservice/log
+      - ./scripts:/opt/lakehouse:ro
+    networks:
+      lakehouse:
+        ipv4_address: ${LOGSERVICE_IP_1:-172.30.52.11}
+
+  logservice-2:
+    <<: *logservice
+    environment:
+      <<: *logservice-env
+      LOCAL_IP: ${LOGSERVICE_IP_2:-172.30.52.12}
+    volumes:
+      - logservice-2-store:/home/admin/oblogservice/store
+      - logservice-2-log:/home/admin/oblogservice/log
+      - ./scripts:/opt/lakehouse:ro
+    networks:
+      lakehouse:
+        ipv4_address: ${LOGSERVICE_IP_2:-172.30.52.12}
+
+  logservice-3:
+    <<: *logservice
+    environment:
+      <<: *logservice-env
+      LOCAL_IP: ${LOGSERVICE_IP_3:-172.30.52.13}
+    volumes:
+      - logservice-3-store:/home/admin/oblogservice/store
+      - logservice-3-log:/home/admin/oblogservice/log
+      - ./scripts:/opt/lakehouse:ro
+    networks:
+      lakehouse:
+        ipv4_address: ${LOGSERVICE_IP_3:-172.30.52.13}
+
+  logservice-bootstrap:
+    image: ${LOGSERVICE_IMAGE:-oblogservice:1.3.0}
+    platform: linux/amd64
+    entrypoint: ["/opt/lakehouse/logservice-bootstrap.sh"]
+    user: "0:0"
+    restart: "no"
+    environment:
+      LOGSERVICE_CLUSTER_ID: ${LOGSERVICE_CLUSTER_ID:-10002}
+      LOGSERVICE_IP_1: ${LOGSERVICE_IP_1:-172.30.52.11}
+      LOGSERVICE_IP_2: ${LOGSERVICE_IP_2:-172.30.52.12}
+      LOGSERVICE_IP_3: ${LOGSERVICE_IP_3:-172.30.52.13}
+      LOGSERVICE_BUCKET_URL: s3://${LOGSERVICE_BUCKET:-lakehouse-logservice}?host=http://${MINIO_IP:-172.30.52.10}:9000&s3_region=${S3_REGION:-us-east-1}
+      REGION_NAME: ${REGION_NAME:-region1}
+      ZONE_NAME_1: ${ZONE_NAME:-zone1}-1
+      ZONE_NAME_2: ${ZONE_NAME:-zone1}-2
+      ZONE_NAME_3: ${ZONE_NAME:-zone1}-3
+    volumes:
+      - ./scripts:/opt/lakehouse:ro
+      - credentials:/run/secrets:ro
+    depends_on:
+      minio-init: {condition: service_completed_successfully}
+      logservice-1: {condition: service_healthy}
+      logservice-2: {condition: service_healthy}
+      logservice-3: {condition: service_healthy}
+    networks: [lakehouse]
+    logging: *bounded-logging
+
+  observer:
+    image: ${OBSERVER_IMAGE:-oceanbase/oceanbase-ai-cloud-native:4.6.2.1-100000092026090921.al8}
+    platform: linux/amd64
+    entrypoint: ["/opt/lakehouse/observer-entrypoint.sh"]
+    restart: unless-stopped
+    cpus: ${OBSERVER_CPUS:-2}
+    mem_limit: ${OBSERVER_CONTAINER_MEMORY:-12g}
+    stop_grace_period: 90s
+    environment:
+      CLUSTER_NAME: ${CLUSTER_NAME:-lakehouse-compose}
+      CLUSTER_ID: ${OBSERVER_CLUSTER_ID:-10001}
+      ZONE_NAME: ${ZONE_NAME:-zone1}
+      LOCAL_IP: ${OBSERVER_IP:-172.30.52.21}
+      CPU_COUNT: ${OBSERVER_CPU_COUNT:-2}
+      DATAFILE_SIZE: ${OBSERVER_DATAFILE_SIZE:-10G}
+      MEMORY_LIMIT: ${OBSERVER_MEMORY_LIMIT:-10G}
+    volumes:
+      - observer-data:/home/admin/data-file
+      - observer-log:/home/admin/log
+      - ./scripts:/opt/lakehouse:ro
+    ports:
+      - "${HOST_BIND_ADDRESS:-127.0.0.1}:${OBSERVER_SQL_HOST_PORT:-32881}:2881"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/2881"]
+      interval: 5s
+      timeout: 3s
+      retries: 180
+    depends_on:
+      logservice-bootstrap: {condition: service_completed_successfully}
+    networks:
+      lakehouse:
+        ipv4_address: ${OBSERVER_IP:-172.30.52.21}
+    logging: *bounded-logging
+
+  observer-bootstrap:
+    image: *bootstrap-image
+    user: "0:0"
+    restart: "no"
+    environment:
+      OBSERVER_HOST: ${OBSERVER_IP:-172.30.52.21}
+      OBSERVER_SQL_PORT: "2881"
+      OBSERVER_RPC_PORT: "2882"
+      ZONE_NAME: ${ZONE_NAME:-zone1}
+      LOGSERVICE_CLUSTER_ID: ${LOGSERVICE_CLUSTER_ID:-10002}
+      LOGSERVICE_BUCKET_URL: s3://${LOGSERVICE_BUCKET:-lakehouse-logservice}?host=http://${MINIO_IP:-172.30.52.10}:9000&s3_region=${S3_REGION:-us-east-1}
+      SHARED_STORAGE_BUCKET_URL: s3://${SHARED_STORAGE_BUCKET:-lakehouse-data}?host=http://${MINIO_IP:-172.30.52.10}:9000&s3_region=${S3_REGION:-us-east-1}
+      BOOTSTRAP_TIMEOUT: ${BOOTSTRAP_TIMEOUT:-30m}
+      ALLOW_LEGACY_EMPTY_ROOT: ${ALLOW_LEGACY_EMPTY_ROOT:-false}
+    volumes:
+      - credentials:/run/secrets
+    depends_on:
+      observer: {condition: service_healthy}
+    networks: [lakehouse]
+    logging: *bounded-logging
+
+volumes:
+  credentials:
+  minio-data:
+  logservice-1-store:
+  logservice-1-log:
+  logservice-2-store:
+  logservice-2-log:
+  logservice-3-store:
+  logservice-3-log:
+  observer-data:
+  observer-log:
+
+networks:
+  lakehouse:
+    ipam:
+      config:
+        - subnet: ${COMPOSE_SUBNET:-172.30.52.0/24}

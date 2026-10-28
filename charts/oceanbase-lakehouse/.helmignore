@@ -1,4 +1,9 @@
+# Native Helm distributions contain Chart resources and documentation only.
+install.sh
+*_test.go
+testdata/
+.lakehouse-install/
+.DS_Store
 .git
 oceanbase-lakehouse-*.tgz
-*_test.go
 tests/

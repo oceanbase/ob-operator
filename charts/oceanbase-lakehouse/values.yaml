@@ -1,7 +1,18 @@
-# Run: bash ./install.sh RELEASE NAMESPACE -f your-values.yaml
-# Requires an installed SS-capable ob-operator. The installer advances these
-# stages only after storage initialization and LogService readiness succeed.
-stage: storage
+# Requires a native-lakehouse-capable ob-operator installed separately.
+# helm upgrade --install ob-demo ./oceanbase-lakehouse -n ob-demo --create-namespace \
+#   -f values-single-node.yaml --wait --wait-for-jobs --timeout 35m
+# The complete graph is declarative; Operator reconciles storage -> LS -> OB.
+stage: cluster
+native:
+  enabled: true
+  readiness:
+    # Must contain /lakehouse-readiness and match the installed Operator build.
+    image: oceanbase-qa/ob-operator:native-20261028
+    imagePullPolicy: IfNotPresent
+    timeoutSeconds: 1800
+    resources:
+      requests: {cpu: 25m, memory: 32Mi}
+      limits: {cpu: 100m, memory: 128Mi}
 storageClass: local-path
 imagePullSecrets: []
 
@@ -11,6 +22,9 @@ dashboard:
   enabled: true
   # Select an SS-capable image available to the worker (QA bundles override this).
   image: quay.io/oceanbase/oceanbase-dashboard:0.6.1
+  # Utilities/monitoring can be mirrored using utilityImage, prometheus.image
+  # and alertmanager.image. The release image-values file pins all of them,
+  # including inspection.obdiag.image and inspection.oceanbaseHelper.image.
   # Empty generates a random initial password. Login as admin; change it in UI.
   # For a supplied initial password use --set-file dashboard.adminPassword=FILE.
   adminPassword: ""

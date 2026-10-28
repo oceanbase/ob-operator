@@ -6,9 +6,11 @@ ob-operator 是满足 Kubernetes Operator 扩展范式的自动化工具，可�
 
 ## 快速上手
 
-湖库 QA tar 包请参考[安装说明](./INSTALL.txt)，包含单节点、`--nodes` 三节点部署、
-默认一起安装的 Dashboard、默认规格、命令行简写和自定义配置。直接使用 Helm Chart 的高级流程见
-[湖库 Chart 使用说明](./charts/oceanbase-lakehouse/USAGE.txt)。
+单机体验湖库 SQL，使用 [Docker Compose 快速上手](./deploy/compose/lakehouse/README.md)，无需 Kubernetes。
+已有 Kubernetes 集群，使用[原生 Helm Chart](./charts/oceanbase-lakehouse/USAGE.txt)，
+Dashboard 默认一起安装，并提供单节点和三节点 values 示例。
+原生 Chart 不附带 `install.sh`：先安装匹配版本的 Operator，再执行 Helm 命令安装湖库。
+两种方式都需要该版本提供的镜像；[旧版 QA tar 安装说明](./INSTALL.txt)仅适用于此前的脚本安装包。
 
 这部分以一个简单示例说明如何使用 ob-operator 快速部署 OceanBase 集群。
 

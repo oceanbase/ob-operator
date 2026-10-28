@@ -16,7 +16,7 @@ spec:
           restartPolicy: OnFailure
           containers:
           - name: cleanup
-            image: busybox:latest
+            image: {{ .Values.utilityImage | quote }}
             imagePullPolicy: IfNotPresent
             command:
             - /bin/sh

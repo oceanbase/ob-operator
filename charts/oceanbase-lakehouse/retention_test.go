@@ -29,6 +29,7 @@ type retentionAPI struct {
 	noGuard          bool
 	externalService  map[string]interface{}
 	externalEndpoint string
+	crs              map[string]interface{}
 }
 
 func (api *retentionAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -66,6 +67,10 @@ func (api *retentionAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			"data":     data,
 		})
 	default:
+		if cr, ok := api.crs[r.URL.Path]; ok {
+			_ = json.NewEncoder(w).Encode(cr)
+			return
+		}
 		const configmapPrefix = "/api/v1/namespaces/qa-ns/configmaps/"
 		if strings.HasPrefix(r.URL.Path, configmapPrefix) {
 			name := strings.TrimPrefix(r.URL.Path, configmapPrefix)
@@ -117,7 +122,7 @@ func TestBundledDatabaseUsesRetainedServiceIP(t *testing.T) {
 			api.mu.Lock()
 			api.serviceIP = tc.ip
 			api.mu.Unlock()
-			output, err := renderRetained(t, kubeconfig, map[string]interface{}{})
+			output, err := renderRetained(t, kubeconfig, map[string]interface{}{"native": map[string]interface{}{"enabled": false}})
 			if err != nil {
 				t.Fatalf("retained Service render: %v\n%s", err, output)
 			}

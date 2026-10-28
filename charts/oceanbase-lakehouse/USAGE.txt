@@ -1,451 +1,231 @@
-Packaged lakehouse quick start
-----------------------------------
-For the complete Linux amd64 bundle, run bash install.sh at its root. It checks
-capacity, reuses matching image IDs, imports missing archives, prepares an absent
-Operator, installs lakehouse plus Dashboard, and prints Dashboard access
-information after verifying node-local HTTP readiness. In NodePort mode the
-installer discovers an external address when available; --dashboard-host can
-override it. Network/firewall access from your browser must be configured.
-No separate Dashboard command is needed. See INSTALL.txt at the bundle root.
-
-After extracting the full tar and entering its root directory:
-  ./install.sh --help
-  ./install.sh --check --oc 2 --om 16Gi --ods 100Gi
-  ./install.sh --oc 2 --om 16Gi --ods 100Gi
-
-Use the same settings for the check and installation commands: --check does not
-save the requested sizing or install resources. Common sizing options are:
-
-  Full option                 Alias   Value applies to
-  --observer-cpu              --oc    CPU per Observer
-  --observer-memory           --om    Memory per Observer
-  --observer-data-size        --ods   Data volume per Observer
-  --observer-log-size         --ols   Log volume per Observer
-  --logservice-cpu            --lc    CPU per LogService instance
-  --logservice-memory         --lm    Memory per LogService instance
-  --logservice-store-size     --lss   Store volume per LogService instance
-  --logservice-log-size       --lls   Log volume per LogService instance
-  --minio-size                --ms    Bundled MinIO volume
-
-Both -oc 2 and --oc 2 are accepted. Long and short names share one setting;
-the last occurrence wins. CPU accepts whole cores, up to three decimal places,
-or millicores (minimum 1m). Memory and volume sizes use positive integers with
-Mi, Gi or Ti. LogService has three instances by default; its options are per
-instance, not the total across all three. Explicit sizing flags override all
--f files regardless of argument order; later -f files override earlier ones.
-Unspecified settings retain installed/saved values or the first-install profile
-in values/quickstart.yaml. The package uses fixed sizing, not automatic maximum
-utilization of the worker. Its profile may differ from this chart's defaults.
-
-These options configure a first installation or replay the same installed
-sizing. They reject resizing an existing release and cannot be used with
---show-access. --minio-size also rejects external storage and existingClaim.
-For larger Observer memory, check the data volume too: with bundled Operator
-defaults, --om 20Gi needs a larger data volume than the default 50Gi, for example
---ods 100Gi. Advanced parameters remain available through an external -f file;
-do not edit files covered by the bundle's SHA256SUMS.
-
-Sizing flags and aliases belong to the PACKAGE-ROOT install.sh only. The chart
-script below accepts RELEASE NAMESPACE and Helm values options instead; do not
-pass --oc, --observer-cpu or the other sizing options to it or to helm directly.
-The advanced chart-only workflow below retains its existing prerequisites.
-
-Packaged three-worker installation
-----------------------------------
-For a NEW three-worker layout, use the same package-root entry point:
-  ./install.sh --nodes worker-1,worker-2,worker-3
-  ./install.sh --nodes worker-1,worker-2,worker-3 --oc 2 --om 16Gi --ods 100Gi
-
-Pass Kubernetes Node names, not IP addresses or hostname label values. The
-installer resolves actual hostname labels and creates zone1/zone2/zone3 with
-one LogService and one Observer per node. Storage, initialization and Dashboard
-run on the first node. Run the command on that first worker. All three must
-already be Linux amd64 members of the same Kubernetes cluster, with a working
-StorageClass and a compatible running Operator/CRDs/webhooks. Unlike the
-single-node cluster workflow, this mode does not install shared prerequisites.
-
-Only the first worker needs the complete extracted tar and Helm/kubectl/jq.
-The installer checks resource capacity on each worker and verifies remote host
-identity and runtime access before importing images. Matching image IDs are
-reused; only missing archives are copied, checksum-verified and imported over
-SSH/SCP. Remote workers need runtime tools, sha256sum and writable temporary
-storage. They do not receive kubeconfig, credentials or the whole bundle.
-
-SSH defaults to root, port 22 and each Node's InternalIP, using configured key
-authentication and trusted known_hosts entries. Host-key verification is never
-disabled, and interactive passwords or sudo are not used. Overrides:
-  ./install.sh --nodes worker-1,worker-2,worker-3 \
-    --ssh-user deploy --ssh-port 22 --ssh-identity /secure/path/id_ed25519 \
-    --ssh-host worker-2=10.0.0.12 --ssh-host worker-3=10.0.0.13
-
-The chosen user must have direct runtime access. Non-K3s containerd still needs
---containerd-address and --cri-endpoint naming the same Unix socket on every
-worker. --check reads all workers but never copies files, creates staging
-directories or imports images; missing cached images cause a preflight failure.
-
-Sizing flags remain per instance. --nodes sets the initial three-zone topology
-over values files; pool selectors and tolerations still apply and must match.
-Saved/installed three-worker topology is recognized on retry even without
---nodes, but supply custom SSH options again. Changing node order, zone layout,
-or placement on a saved/installed release is rejected before image import.
-This is not an in-place single-worker conversion or PVC migration mechanism.
-Bundled MinIO remains single-node; this mode alone does not provide system HA.
-Use the advanced chart workflow for other layouts or heterogeneous socket paths.
-
-Verify the installation (replace the namespace if customized):
-  kubectl get nodes -o wide
-  kubectl -n ob-helm-demo get pods -o wide
-  kubectl -n ob-helm-demo get obclusters,oblogserviceclusters
-  kubectl -n ob-helm-demo get pvc
-Expect one Ready Observer and one Ready LogService on each chosen worker,
-running database CRs, Bound PVCs, and all three Dashboard containers Ready on
-the first worker. A Helm deployed message alone is not a readiness assertion;
-wait for the package-root installer's Installation complete. summary.
-
-For a cold cache, --check reports missing images and does not import them.
-Run the same command without --check to prepare the missing archives. To stop
-an active installation, use Ctrl+C and wait for exit before rerunning it;
-Ctrl+Z suspends the shell job and may leave child processes active. Reuse the
-same node order, release, namespace and settings on retry. An already changed
-Dashboard password remains current; --show-access exports only the bootstrap
-password and does not reset the account.
-
-OceanBase lakehouse online Helm installation (experimental; version in Chart.yaml)
+OceanBase Lakehouse: native Helm deployment
+==========================================
+Use Docker Compose for a quick database/SQL experience on one machine. Use this
+Chart when you already have Kubernetes. Dashboard is enabled by default and is
+installed in the SAME Helm release as the lakehouse. No install.sh is shipped in
+this Helm Chart, and no Helm process runs inside a Kubernetes Job.
 
 Prerequisites
 -------------
-Kubernetes >=1.27, Helm >=3.12, kubectl, jq, a working StorageClass, and an
-already installed/running SS-capable ob-operator with its webhooks/CRDs.
-The chart does NOT install, upgrade or uninstall the shared Operator.
-Dashboard (with Prometheus and Alertmanager) is included by default in the same
-Helm release; set dashboard.enabled=false to use an existing shared Dashboard.
-Run the installer with the intended kubeconfig/context. Kubernetes worker nodes
-(not just the workstation running Helm) need access to the selected registries.
-Set logService.image, observer.image and dashboard.image to compatible SS release images actually
-available in your registry. oblogservice:1.3.0 is a development image name, not a
-promise that this pre-release image is publicly downloadable. No images are
-included in the chart archive. imagePullSecrets must exist in the target namespace.
+- Kubernetes >=1.27, Helm 3, kubectl and an administrator kubeconfig.
+- A working StorageClass. Set storageClass to its actual name.
+- Enough allocatable CPU/memory and disk for the selected profile.
+- Workers can pull all configured images (or have the exact images preloaded).
+- Install cert-manager/ob-operator separately using the operator release guide.
+  The Operator must support native lakehouse v1: storage-init-job gating and
+  resolve-storage-service. Use the matching Operator image supplied in this
+  release. Older SS-capable builds alone are insufficient. The readiness hook image must contain /lakehouse-readiness and
+  should use the same verified Operator build. Use the image values supplied
+  with the release, not an arbitrary old public image tag.
 
-Optional scheduling.nodeSelector and scheduling.tolerations apply to storage Pods
-and every LogService/Observer zone. The Operator must also support inheriting zone
-placement and workload ServiceAccount for its bootstrap/check Jobs. Upgrade an
-older Operator first if those Jobs cannot schedule onto tainted worker pools.
-Use precise pool selectors/tolerations, never broad tolerations to bypass isolation.
-Changing placement does not migrate existing local-path PVC data between nodes.
+Check the current context before deployment:
+  kubectl config current-context
+  kubectl get nodes
+  kubectl get storageclass
+  kubectl get crd obclusters.oceanbase.oceanbase.com oblogserviceclusters.oceanbase.oceanbase.com
 
-Multi-worker placement
+An administrator installs Operator once per Kubernetes cluster; lakehouse users
+then install separate Helm releases. Do not install another Operator for every
+lakehouse release. Operator and database resources have different lifecycles.
+
+Single-node experience
 ----------------------
-Each logService.topology[] and observer.topology[] entry can set nodeSelector.
-Its keys override matching scheduling.nodeSelector defaults; unspecified keys
-(for example a project/pool label) and global tolerations are inherited. These
-defaults are not an authorization boundary: use only administrator-approved
-nodes and enforce project isolation through Kubernetes policy. Storage/init Pods
-keep the global selector. Zone overrides do not affect each other or storage.
-For a NEW three-worker database, configure the full topology before creation:
-  scheduling:
-    nodeSelector:
-      example.com/pool: lakehouse
-      kubernetes.io/hostname: worker-3
-  logService:
-    topology:
-      - {zone: zone1, replica: 1, nodeSelector: {kubernetes.io/hostname: worker-1}}
-      - {zone: zone2, replica: 1, nodeSelector: {kubernetes.io/hostname: worker-2}}
-      - {zone: zone3, replica: 1, nodeSelector: {kubernetes.io/hostname: worker-3}}
-  observer:
-    topology:
-      - {zone: zone1, replica: 1, nodeSelector: {kubernetes.io/hostname: worker-1}}
-      - {zone: zone2, replica: 1, nodeSelector: {kubernetes.io/hostname: worker-2}}
-      - {zone: zone3, replica: 1, nodeSelector: {kubernetes.io/hostname: worker-3}}
+Copy values-single-node.yaml to your working directory. Set image overrides
+using the matching release's image-values.yaml, and set storageClass if needed.
+Suggested worker: >=8 CPU, 32Gi memory, >=350Gi free data disk. The profile has
+one Observer (2 CPU/10Gi), three LogService processes (1 CPU/4Gi EACH), MinIO,
+Dashboard, Prometheus and Alertmanager. It uses fixed sizing, not all machine
+resources. CPU requests from other Kubernetes workloads count against capacity.
 
-Add the pool's exact toleration under scheduling.tolerations if required. A
-replica count alone does not guarantee different physical nodes. Multiple
-replicas pinned to the same hostname still share a failure domain. This example
-does NOT make bundled MinIO distributed or provide a node-failure HA guarantee.
-Do not change selectors to move existing local-path data, or assume online Zone
-addition is supported by the selected SS database version.
+  helm upgrade --install ob-demo ./oceanbase-lakehouse-0.4.0.tgz \
+    --namespace ob-demo --create-namespace \
+    -f image-values.yaml -f values-single-node.yaml \
+    --wait --wait-for-jobs --timeout 35m
 
-Online bundled MinIO
--------------------
-Create a values file selecting storageClass, resources, image versions, and IDs.
-Example:
+On a multi-node K8s cluster, add a hostname selector in the single-node values
+if you want all database Pods on a particular worker. A single-node experience
+has no node-level high availability.
+
+Three-node experience
+---------------------
+Copy values-three-nodes.yaml and replace worker-1/2/3 with the actual
+kubernetes.io/hostname label values (not assumed public IPs):
+
+  kubectl get nodes -L kubernetes.io/hostname
+  helm upgrade --install ob-demo ./oceanbase-lakehouse-0.4.0.tgz \
+    --namespace ob-demo --create-namespace \
+    -f image-values.yaml -f values-three-nodes.yaml \
+    --wait --wait-for-jobs --timeout 35m
+
+All workers must be members of one Kubernetes cluster. Kubernetes schedules one
+Observer and one LogService per worker. Storage, Dashboard and initialization
+run on worker-1 in this example. Budget at least 3 CPU/14Gi per worker for the
+database processes, plus the storage/Dashboard/system workloads on worker-1.
+Provision adequate capacity beyond these requests. This topology still uses
+one bundled MinIO instance; it is an experience setup, not highly available
+object storage. For shared production storage use objectStorage.mode=external.
+
+No SSH/SCP between workers is performed by Helm. Every worker must be able to
+pull the configured images or have the exact images preloaded by an admin.
+
+Common configuration
+--------------------
+Put custom settings in a values file and keep it for upgrades/reinstalls:
+
   storageClass: local-path
-  objectStorage:
-    mode: bundled
-  logService:
-    clusterId: 1001
-    image: registry.example.com/oceanbase/oblogservice:1.3.0
   observer:
-    clusterId: 1002
-    image: registry.example.com/oceanbase/oceanbase-ai-cloud-native:4.6.2.0
+    resource: {cpu: "2", memory: 16Gi}
+    dataSize: 100Gi
+    logSize: 20Gi
+  logService:
+    resource: {cpu: "1", memory: 4Gi}
+    storeSize: 20Gi
+    logSize: 10Gi
+  minio:
+    size: 100Gi
 
-  bash charts/oceanbase-lakehouse/install.sh lakehouse lakehouse -f my-values.yaml
+CPU/memory and disk values are PER PROCESS, not the sum across all replicas.
+Observer memory and volume sizing must meet Operator's checks. Larger memory
+can require larger data volumes. This guide describes first-install sizing;
+changing storage identity or resizing existing state needs a separate planned
+procedure. Use --set-string observer.resource.cpu=2 for a simple override; the
+old installer flags such as --oc/--nodes are not Helm flags.
 
-For a chart-only archive, untar it and run install.sh inside oceanbase-lakehouse/.
-This ONE command performs storage -> LogService -> Observer stages, each bounded
-by LAKEHOUSE_TIMEOUT (seconds, default 1800). It waits for the initialization Job
-and CR running status, Observer Pod readiness and Dashboard HTTP readiness, not
-merely Helm deployed status. Dashboard is present from the first storage stage.
-Run the same command to resume or upgrade. Existing Helm user values are reused;
-new values flags override them. New installs still need their image/storage configuration.
-Plain helm install defaults to the storage stage ONLY and is not a full install.
+For external storage use objectStorage.mode=external, endpoint, region,
+logBucket/dataBucket and existingSecret or per-side logExistingSecret and
+dataExistingSecret (keys: access_id/access_key). Buckets are checked read-only
+by default; createBuckets=true explicitly allows bucket creation. External
+credentials/storage are never adopted. LS 1.3 requires virtual-host bucket DNS
+for ordinary DNS endpoints. Same-cluster HTTP Service endpoints can be resolved
+to ClusterIP; HTTPS names are never replaced by IPs. Bundled MinIO uses the
+native Operator resolver without a Helm install/upgrade round trip.
 
-Installer console output is in English. The package entry point uses a live
-stage view on supported interactive terminals, and plain lines for redirected
-output, CI, TERM=dumb or --progress plain. It uses five
-overall steps (two for --check). Its detailed installation phases are named
-without a second progress count. The standalone chart script uses six numbered
-steps: preflight, storage initialization, LogService, OceanBase status, Observer
-Pod readiness and Dashboard readiness.
-[stage] announces work, [wait] reports bounded waits, [done] confirms a completed
-gate and [skip] explains a resumed stage or disabled Dashboard. Resume still
-checks the final LogService/OBCluster and Pod readiness; a previously reported
-LogService does not print the same success twice if it remains ready.
-In the chart script's plain output, unchanged status is reported every 30
-seconds; status changes are reported on
-the next poll. LAKEHOUSE_PROGRESS_INTERVAL overrides the chart script's interval.
-Image import, prerequisite setup and diagnostic verification also report quiet
-waits every 30 seconds. No percentage or completion time is estimated.
-Helm's full release/NOTES output stays in the private installation log whose
-path is printed once. Do not publish that log without reviewing sensitive data.
-The installer does not print another instruction to start itself. Direct manual
-Helm usage keeps stage-specific NOTES: partial stages explain continuation,
-whereas cluster stage explains runtime verification rather than starting over.
-Do not use helm --atomic, --force or --cleanup-on-fail for this stateful stack.
-The installer intentionally does not perform automatic rollback or data cleanup.
+Progress, failure and retry
+---------------------------
+The Chart declares MinIO, initialization Job, LS, OB and Dashboard together.
+Operator waits for successful storage initialization before creating LS zones;
+OB waits for LS. A read-only post-install/post-upgrade hook verifies all database
+Pods and Dashboard before Helm reports success. Helm --wait alone does not
+understand custom-resource readiness; do not use --no-hooks for acceptance.
+
+  kubectl -n ob-demo get pods,jobs,oblogserviceclusters,obclusters
+  kubectl -n ob-demo logs job/ob-demo-readiness
+  kubectl -n ob-demo get jobs -l app.kubernetes.io/component=storage-init
+  kubectl -n ob-demo logs job/<storage-init-job-name>
+  kubectl -n ob-demo describe pod <pending-or-failed-pod>
+
+The success hook Job is removed automatically. A failed hook is retained for
+inspection. Storage initialization Job retries transient failures within its
+deadline and is retained until the next Helm revision so Operator can verify
+it. After fixing image access, capacity, storage or credentials, rerun the same
+helm upgrade --install command. It creates a new initialization Job and hook,
+keeps existing data/credentials, and resumes reconciliation. Do not delete a
+namespace or rerun with another release name as a retry mechanism. Avoid
+--atomic/automatic rollback when first diagnosing a stateful failed install:
+retained resources deliberately outlive Helm's cleanup.
+
+Upgrade Operator before starting the lakehouse installation. Do not roll it out
+while database bootstrap is in progress: the current Operator task executor
+keeps active task handles in memory. If a restart leaves a CR in failed status,
+inspect its events and use the Operator's recovery procedure before retrying
+Helm. A Helm upgrade does not reset failed database CR status. The retry above
+recreates storage initialization; it is not a general database recovery command.
 
 Dashboard access
 ----------------
-No separate Dashboard installation is needed. The Dashboard lists the clusters
-visible to its account, including this release's shared-storage cluster. Its
-administrative Kubernetes permissions are cluster-wide, not limited to this
-release; this bundle is intended for a trusted cluster administrator.
+Run port-forward on the same computer whose browser you use:
 
-The chart-only default Service is ClusterIP. The full QA bundle's root installer
-defaults to NodePort and prints its access information and private initial
-password file location; use ./install.sh --show-access to show that information
-again. For the chart-only ClusterIP workflow, after Dashboard becomes ready:
-  kubectl -n lakehouse port-forward svc/oceanbase-dashboard-lakehouse 8080:80
-Open http://127.0.0.1:8080 on the computer running that command. If kubectl runs
-on a remote server, keep port-forward running there and use an SSH tunnel from
-your computer (replace USER and SERVER):
-  ssh -N -L 18080:127.0.0.1:8080 USER@SERVER
-Then open http://127.0.0.1:18080 locally. No public firewall rule is required.
+  kubectl -n ob-demo port-forward svc/oceanbase-dashboard-ob-demo 8080:80
 
-Username: admin. The initial password is randomly generated and stored in a
-Secret. To display it locally in your terminal:
-  kubectl -n lakehouse get secret lakehouse-dashboard-bootstrap -o jsonpath='{.data.password}' | base64 --decode; echo
-The first login prompts a password change. The bootstrap Secret is only the
-INITIAL password; subsequent logins use the password you set in the UI.
-An initial password can instead be supplied with
-  --set-file dashboard.adminPassword=/secure/path/password
-Use at least 12 characters and a file with no trailing newline. Never put the
-password directly in a command line or commit it to source control.
+Open http://127.0.0.1:8080, login admin. Initial password:
 
-Dashboard adds 700m CPU and about 1.5Gi memory requests plus two PVCs (8Gi
-Prometheus data, 10Gi shared files). Both inherit the top-level storageClass.
-Optional dashboard.prometheus.persistence.storageClassName and
-dashboard.sharedVolume.persistence.storageClassName override it. An existingClaim
-under either persistence block references a user-managed PVC without adopting it.
-For the chart-only workflow, explicitly set dashboard.nodeSelector and
-dashboard.tolerations when placement is required; database/storage scheduling.*
-does not automatically place Dashboard. The full package root installer places
-Dashboard on the selected worker (the first worker in three-node mode) and
-inherits its placement settings unless explicitly configured.
+  kubectl -n ob-demo get secret ob-demo-dashboard-bootstrap \
+    -o jsonpath='{.data.password}' | base64 --decode; echo
 
-Accounts, user-created roles and permissions, the initial-password Secret and
-owned Dashboard PVCs are retained across upgrades, disable/re-enable and uninstall.
-The Dashboard Deployment itself is removed when disabled or uninstalled.
-If retained authentication is incomplete, restore the missing resources before
-retrying; upgrades do not reset accounts. Keep the same release and namespace.
-This protects existing UI password changes during each installation stage.
-The integration requires initCredentials=false, retainData=true,
-rbac.includeNamespace=true, serviceAccount.create=false and persistence.create=false; the parent owns these
-resources. userCredentials/userNamespace/configNamespace must stay empty.
-The Dashboard ServiceAccount inherits top-level imagePullSecrets for private
-registries; the referenced Secrets must already exist in the release namespace.
+Use the new password after the first-login password change. For direct network
+access configure dashboard.service.type=NodePort (and optional nodePort) or
+LoadBalancer and allow access from your network. The default ClusterIP is not an
+external address; a public IP cannot be inferred reliably by a Helm template.
 
-Existing 0.1.x lakehouses
+Database SQL access
+-------------------
+The database is not exposed publicly by default. List Observer Pods and forward
+one on your client machine:
+
+  kubectl -n ob-demo get pods -l ref-obcluster=ob-demo-ob
+  kubectl -n ob-demo port-forward pod/<observer-pod-name> 12881:2881
+
+In another terminal, retrieve the initial password and connect with a local
+MySQL-compatible client (the Chart does not install a local SQL client):
+
+  kubectl -n ob-demo get secret ob-demo-db-root \
+    -o jsonpath='{.data.password}' | base64 --decode; echo
+  mysql -h 127.0.0.1 -P 12881 -u 'root@sys' -p
+
+Supply your own Secret name when observer.rootExistingSecret is configured.
+Direct ALTER USER changes in SQL do not update the Kubernetes Secret. Coordinate
+password changes with the Operator-supported credential workflow instead of
+assuming Secret and database password automatically stay synchronized.
+
+Retention and uninstall
 -----------------------
-Run this version's installer with the SAME release, namespace and complete values
-used previously. It detects the retained cluster, resumes at the cluster stage
-and adds Dashboard. Do not change cluster IDs, object storage or data locations.
-The three database stages share a single Dashboard; there is no separate release.
-For QA/offline packages, also select the supplied SS-capable dashboard.image and
-load its Prometheus/Alertmanager/busybox dependencies on eligible workers.
-Log download requires the configured obdiag and oceanbase-helper images on every
-eligible worker. The current QA package includes these diagnostic images and
-preserves the original Observer image. Its diagnostic transport uses an existing
-Python 3 interpreter with tarfile/gzip support in the Observer, including
-platform-python when available; the package verifies that support during
-installation, so no extra tar command is required in the Observer. Use the
-package's locked values and compatible Dashboard/diagnostic images. Other image
-combinations need their own dependency validation. SQL analyzer images are separate.
-Changing inspection image settings rolls out Dashboard so its mounted config is
-refreshed. A completed job or HTTP 200 alone does not prove logs were collected;
-verify the downloaded archive contains real Observer logs for the selected range.
+helm uninstall removes the release integration, Dashboard Deployment and hook
+RBAC, but intentionally retains database CRs, generated credentials, bundled
+MinIO StatefulSet/Service/PVC and Dashboard data. Reinstall with the SAME release,
+namespace and values to reconnect. Uninstall is not a way to free all resources.
+Explicitly deleting the namespace or database CRs is destructive and bypasses
+this retention; do so only when intentionally removing that experience's data.
 
-The included MinIO deployment is single-node with persistent storage: an evaluation
-profile, NOT production HA. LogService 1.3.0 requires exactly THREE nodes for its
-initial bootstrap; the installer rejects other initial totals. Existing clusters
-may scale replicas through the Operator. Three zones on one worker are NOT HA.
-For production, use a separately operated, supported object-storage service.
-Replace image tags with tested immutable digests for reproducible deployments.
-MinIO uses OnDelete updates: image changes require a planned manual Pod restart.
-The S3 service is ClusterIP only; the console is not exposed. Bundled S3 uses HTTP
-inside the cluster; use network isolation or an externally managed TLS service
-when required. Public/trusted-CA HTTPS endpoints are supported; custom/self-signed
-CA propagation to Observer/LogService is not implemented by this chart.
+Helm history can contain supplied/generated credential values. Protect release
+metadata and kubeconfig access. Do not publish rendered manifests containing
+Secrets or pass passwords in shell command lines. Use existingSecret references
+or --set-file dashboard.adminPassword=/secure/password-file.
 
-MinIO storage identities
+Storage identities and private registries
+---------------------------------------
+minio.runAsUser/runAsGroup/fsGroup and initialization.runAsUser/runAsGroup/fsGroup
+are independent non-root identities (default 1000). Use IDs assigned by your
+storage administrator and compatible with the volume ACL. For example, if UID
+1000 collides with a host ACL, approved values may be:
+  minio: {runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001}
+  initialization: {runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001}
+The chart does not chown host paths, rewrite ACLs, or run a privileged repair
+container. fsGroup behavior depends on the volume driver. Existing PVCs must
+already allow the selected identity; changing IDs does not migrate stored data.
+The Job's private /work and /tmp must also be writable. MinIO uses OnDelete
+updates, so plan a Pod restart for an intentional image/identity change.
+
+Set imagePullSecrets to names of existing Secrets in the release namespace.
+The same references are used by MinIO, initialization, readiness, Dashboard and
+Operator-managed workload ServiceAccounts. Dashboard has its own nodeSelector
+and tolerations; scheduling.* does not automatically place Dashboard.
+
+Dashboard privileges and diagnostic images
+------------------------------------------
+Dashboard manages Kubernetes resources with cluster-wide administrative
+permissions. This experience is intended for trusted cluster administrators.
+Its generated users/roles, bootstrap password and PVCs survive upgrades and
+uninstall. Missing retained authentication must be restored, not regenerated.
+The readiness hook only reads namespaced non-secret resources and does not
+inherit Dashboard's administrative ServiceAccount.
+
+Log download additionally requires compatible obdiag/oceanbase-helper images
+on eligible workers and the Observer's Python tarfile/gzip transport support.
+Use the complete image-values.yaml shipped for this build. Native Helm checks
+database/Pod/Dashboard readiness; it does not import images, install local
+clients or certify that diagnostic log contents are valid. Verify a real log
+download when accepting diagnostic capabilities.
+
+Existing staged releases
 ------------------------
-minio.runAsUser, minio.runAsGroup and minio.fsGroup default to 1000 and must be
-integer IDs between 1 and 2147483647. Match these IDs to volume permissions and
-identities assigned by your storage administrator. For example, a host-backed
-volume may inherit a named ACL for host UID 1000 that denies writes even though
-the directory mode appears writable. A separately assigned non-root identity
-such as 10001 can avoid that identity collision when the administrator approves:
-  minio:
-    runAsUser: 10001
-    runAsGroup: 10001
-    fsGroup: 10001
-  initialization:
-    runAsUser: 10001
-    runAsGroup: 10001
-    fsGroup: 10001
-
-The MinIO workload does not run a root init container or chown command, edit host
-ACLs, or disable SELinux. runAsNonRoot, RuntimeDefault seccomp and dropped Linux
-capabilities remain enforced. fsGroup behavior depends on the volume driver;
-do not assume it repairs hostPath/local-path permissions or ACLs. Kubernetes may
-adjust volume group ownership according to the driver's fsGroup behavior. An existing
-PVC must already permit the selected identity to access its stored data.
-Changing these IDs does not migrate data or rewrite existing object ownership.
-MinIO uses OnDelete updates, so identity changes require a planned Pod restart
-after validating access and taking backups.
-
-The storage-init Job has independent initialization.runAsUser/runAsGroup/fsGroup
-settings, each defaulting to 1000 with the same 1..2147483647 range. Changing only
-minio.* never changes the Job's identity, and changing initialization.* never
-changes MinIO's identity or permissions on an external storage server. Explicitly
-configure both sets when the administrator-assigned identities require it.
-Private emptyDirs can inherit host named ACLs too; the Job's /work and /tmp must
-be writable by its selected identity. The initialization script checks both
-directories before contacting storage and reports a local identity/volume ACL
-failure immediately, rather than misreporting it as rejected S3 credentials.
-The Job retains runAsNonRoot, RuntimeDefault, read-only root filesystem and
-dropped capabilities. No root permission-repair container or ACL rewrite is added.
-
-External MinIO / OSS-compatible S3 storage (default: no storage-side mutation)
-------------------------------------------------
-Provide a Secret in the SAME namespace, keys access_id and access_key. Create it
-through your secret-management process; do not put credentials in values files,
---set flags, Git, or command output. Pre-create distinct buckets and grant only
-the necessary bucket/object permissions for them.
-  objectStorage:
-    mode: external
-    endpoint: http://192.0.2.10:9000
-    region: us-east-1
-    logBucket: lakehouse-logs
-    dataBucket: lakehouse-data
-    existingSecret: lakehouse-object-storage
-    createBuckets: false
-
-Run the SAME install.sh command. No MinIO StatefulSet/PVC/Service/root Secret is
-created. The initialization Job only checks readiness and bucket access. Setting
-createBuckets: true explicitly authorizes creation of MISSING buckets using the
-provided credentials; it does not manage users, policies or existing objects.
-External mode also accepts identical logBucket/dataBucket names. This removes a
-Helm-only restriction: it does not change the database engines' object layout,
-move existing data, or establish a new security boundary within a bucket.
-Use dedicated buckets for a new deployment unless your database/storage setup
-has already validated shared-bucket placement. Do not change an installed
-release's bucket names to consolidate existing data.
-
-Independent external credentials (both Secrets in the release namespace):
-  objectStorage:
-    mode: external
-    endpoint: https://oss-cn-hangzhou.aliyuncs.com
-    region: cn-hangzhou
-    logBucket: customer-log-bucket
-    dataBucket: customer-data-bucket
-    logExistingSecret: log-storage-credentials
-    dataExistingSecret: data-storage-credentials
-    createBuckets: false
-
-Both Secrets use access_id/access_key. Each per-side reference may be omitted
-to inherit existingSecret, so old values and effective credential references
-remain unchanged. Supplying both per-side references makes existingSecret
-optional. No supplied Secret is created, modified, adopted or deleted. The
-LogService reference and Observer data reference are independent; the Operator
-also uses LogService credentials when configuring Observer's log access point.
-Preflight checks each bucket with its own credentials, never mc ready or mc admin
-against an external server. It does not require MinIO-specific readiness or
-global-list APIs. Per-side overrides are rejected in bundled mode rather than
-silently ignored. Effective references are protected by the retained storage
-identity; an existing release cannot switch credentials by changing these names.
-
-This chart emits s3:// URLs, including for OSS's compatible interface; it does
-not add native oss:// support. OSS signature/API compatibility and the actual
-Observer/LogService versions must be validated in your target environment.
-Supply endpoint only (no query, credentials or path). Credentials need not grant
-ListAllMyBuckets or administration permissions. Custom CA and HTTP path prefixes
-are not supported. The supplied credentials must allow the database's list/read/
-write/delete/multipart operations on the two selected buckets.
-LogService 1.3.0 chooses virtual-host addressing for hostname endpoints; adding
-addressing_model=path_style did not override it in acceptance testing of this image.
-For NEW releases, an HTTP endpoint of the form service.namespace.svc[:port] or
-service.namespace.svc.cluster.local[:port] is resolved through the Kubernetes API
-to the Service's stable ClusterIP. Helm must be allowed to read that Service.
-Both database CRs AND the external-storage preflight use the resolved endpoint.
-Headless/ExternalName Services, a missing Service or a wrong port are rejected.
-HTTPS Service DNS is rejected rather than weakening TLS hostname verification.
-Public DNS and custom cluster-domain endpoints are never rewritten: supply a
-reachable HTTP IP endpoint for path-style MinIO, or configure bucket.endpoint DNS
-and matching TLS certificates for virtual-hosted access. External preflight now
-checks that same addressing mode, so incompatible DNS fails before database CRs
-are created. Readiness alone still does not prove database read/write permissions.
-
-The resolved external address is retained in the storage-identity ConfigMap. A
-Service IP change is rejected rather than silently redirecting a database. Keep
-that Service intact. Legacy releases retain their exact database URLs and hashes;
-they are NOT automatically migrated. A failed legacy install using incompatible
-DNS requires a new release/namespace/cluster IDs and buckets after preserving its
-evidence; do not remove the identity guard or change immutable CR storage fields.
-Bundled MinIO retains the existing Service-IP database access behavior.
-
-Data protection and recovery
-----------------------------
-helm uninstall deliberately RETAINS OBCluster, OBLogServiceCluster, workload
-ServiceAccount, all generated Secrets, the storage-identity ConfigMap, and bundled
-MinIO StatefulSet, Service and PVC. Keeping CRs also prevents their Operator-owned
-Pods/Services/PVCs from being garbage-collected through CR deletion. The chart
-never deletes buckets or object contents, and never owns external Secrets/PVCs.
-Uninstall therefore does NOT stop the retained database or reclaim disk space.
-Reinstall using the same release, namespace and values to adopt retained resources.
-Credentials are reused; if a retained generated Secret is missing, installation
-fails rather than silently rotating it. Restore the original Secret from backup.
-Changing the storage mode/endpoint/buckets/region/credential names/MinIO claim,
-capacity/storage class/cluster IDs is rejected by a retained identity guard.
-Move data by an explicit supported migration, not by changing these values.
-
-This is an accidental-Helm-deletion safeguard, NOT a backup or an absolute delete
-lock. Deleting the namespace, explicitly deleting CRs/PVCs, administrative edits,
-manual helm rollback, storage failure or removing the guard can still destroy data.
-Keep independent database/object-storage backups and exported recovery credentials.
-Final decommission is an explicit administrator operation after backup, with OB
-stopped before its LogService/object storage. There is no automatic purge option.
-
-Licensing and distribution
---------------------------
-The repository LICENSE governs our original chart/installer code. MinIO server
-and mc are separately licensed third-party software (AGPL-3.0); their licenses are
-not replaced by this chart's license. The chart-only archive contains no MinIO/mc
-source, binary, third-party chart or image. Chart-only workers pull the configured
-images unless they are already cached. The complete QA tar includes locked
-MinIO/mc image archives, which its root installer imports as needed.
-https://github.com/minio/minio/blob/master/LICENSE
-https://github.com/minio/mc/blob/master/LICENSE
-https://github.com/minio/minio
-Upstream community MinIO is archived/unmaintained; pin and independently assess
-the chosen images. Online retrieval is NOT automatic legal clearance. Review the
-actual releases and distribution model with your open-source compliance team.
+Upgrade Operator first to the matching native build, keep the original values
+and render them for review. Use stage=cluster and native.enabled=true. This
+Chart preserves the existing CR bucket URLs and credential identity instead of
+rewriting immutable storage fields to new DNS URLs. The original release name,
+namespace, cluster IDs, buckets, storage Service and PVCs must stay unchanged.
+A fresh install keeps Service DNS in the parent CR; Operator resolves only the
+same-namespace HTTP Service at runtime for LS 1.3 compatibility. External HTTPS
+verification is never weakened, and external Service address drift remains
+blocked by the retained storage identity. Changing placement does not move
+local-path data. Do not use --force, namespace deletion or a new release name
+to work around immutable field checks on an existing database.

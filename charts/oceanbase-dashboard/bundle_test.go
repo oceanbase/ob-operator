@@ -375,3 +375,36 @@ func TestNotesDescribeActualCredentialOwnership(t *testing.T) {
 		}
 	}
 }
+
+func TestUtilityAndMonitoringImagesArePinnedAndOverridable(t *testing.T) {
+	for _, tc := range []struct {
+		name, utility, prometheus, alertmanager string
+		args                                    []string
+	}{
+		{"defaults", "busybox:1.36.1", "quay.io/prometheus/prometheus:v2.51.1", "quay.io/prometheus/alertmanager:v0.27.0", nil},
+		{"mirror", "registry.example/utility:tested", "registry.example/prometheus:tested", "registry.example/alertmanager:tested", []string{"--set-string", "utilityImage=registry.example/utility:tested,prometheus.image=registry.example/prometheus:tested,alertmanager.image=registry.example/alertmanager:tested"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			docs := renderDashboard(t, "qa-ns", tc.args...)
+			deployment := dashboardObject(t, docs, "Deployment", "oceanbase-dashboard-qa")
+			init := dashboardField(deployment, "spec", "template", "spec", "initContainers").([]interface{})
+			if got := dashboardField(init[0].(map[string]interface{}), "image"); got != tc.utility {
+				t.Fatalf("initialization image=%v, want %s", got, tc.utility)
+			}
+			for _, item := range dashboardField(deployment, "spec", "template", "spec", "containers").([]interface{}) {
+				c := item.(map[string]interface{})
+				if c["name"] == "prometheus" && c["image"] != tc.prometheus {
+					t.Fatalf("Prometheus image override lost: %v", c["image"])
+				}
+				if c["name"] == "alertmanager" && c["image"] != tc.alertmanager {
+					t.Fatalf("Alertmanager image override lost: %v", c["image"])
+				}
+			}
+			cron := dashboardObject(t, docs, "CronJob", "qa-cleanup")
+			containers := dashboardField(cron, "spec", "jobTemplate", "spec", "template", "spec", "containers").([]interface{})
+			if got := dashboardField(containers[0].(map[string]interface{}), "image"); got != tc.utility {
+				t.Fatalf("cleanup image=%v, want %s", got, tc.utility)
+			}
+		})
+	}
+}

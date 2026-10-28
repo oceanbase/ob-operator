@@ -6,6 +6,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
   annotations:
     helm.sh/resource-policy: keep
+    {{- if and .Values.native.enabled (eq .Values.objectStorage.mode "bundled") }}
+    oceanbase.oceanbase.com/resolve-storage-service: "true"
+    {{- end }}
     oceanbase.oceanbase.com/mode: service
     oceanbase.oceanbase.com/independent-pvc-lifecycle: "true"
   labels:
@@ -17,7 +20,7 @@ spec:
   deploymentMode: shared_storage
   logServiceRef: {name: {{ .Release.Name }}-ls}
   sharedStorageInfo:
-    bucketURL: {{ printf "s3://%s?host=%s&s3_region=%s" (include "lakehouse.dataBucket" .) (include "lakehouse.databaseEndpoint" .) .Values.objectStorage.region | quote }}
+    bucketURL: {{ include "lakehouse.dataBucketURL" . | quote }}
     secretRef: {name: {{ include "lakehouse.dataStorageSecret" . }}}
   userSecrets:
     root: {{ include "lakehouse.dbSecret" . }}

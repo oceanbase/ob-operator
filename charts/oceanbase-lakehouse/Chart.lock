@@ -1,6 +1,6 @@
 dependencies:
 - name: oceanbase-dashboard
   repository: file://../oceanbase-dashboard
-  version: 0.6.4
-digest: sha256:2f9d9eb525894ecc7e889ba2d2f20ceaa4f37f50ffce438b927cfc3f4f6b0ea3
-generated: "2026-10-21T15:27:19.004342+08:00"
+  version: 0.6.5
+digest: sha256:9922cde3ca6b91ca3489eb04995e680d702a0ce47b8ee91f207282986d8a507b
+generated: "2026-10-28T16:25:05.602301+08:00"

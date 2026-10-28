@@ -35,7 +35,9 @@ tolerations: {{ toYaml . | nindent 2 }}
 {{- define "lakehouse.databaseEndpoint" -}}
 {{- if eq .Values.objectStorage.mode "bundled" -}}
 {{- $service := lookup "v1" "Service" .Release.Namespace (printf "%s-minio" .Release.Name) -}}
-{{- if and $service $service.spec.clusterIP -}}
+{{- if .Values.native.enabled -}}
+{{- include "lakehouse.endpoint" . -}}
+{{- else if and $service $service.spec.clusterIP -}}
 {{- if contains ":" $service.spec.clusterIP -}}
 {{- printf "http://[%s]:9000" $service.spec.clusterIP -}}
 {{- else -}}
@@ -152,9 +154,25 @@ Actual per-side overrides are immutable, including after uninstall/reinstall. */
 {{- if ne (index $guard.data "identity") (include "lakehouse.identity" .) }}{{ fail "storage identity is immutable: endpoint/buckets/credential names/claim/storage class/cluster IDs must not change; use a new release and an explicit migration" }}{{ end -}}
 {{- end -}}
 {{- if eq .Values.stage "storage" -}}
-{{- if lookup "oceanbase.oceanbase.com/v1alpha1" "OBLogServiceCluster" .Release.Namespace (printf "%s-ls" .Release.Name) }}{{ fail "cannot downgrade stage to storage after LogService creation; use install.sh to resume" }}{{ end -}}
+{{- if lookup "oceanbase.oceanbase.com/v1alpha1" "OBLogServiceCluster" .Release.Namespace (printf "%s-ls" .Release.Name) }}{{ fail "cannot downgrade stage to storage after LogService creation; use helm upgrade with stage=cluster to resume" }}{{ end -}}
 {{- end -}}
 {{- if ne .Values.stage "cluster" -}}
-{{- if lookup "oceanbase.oceanbase.com/v1alpha1" "OBCluster" .Release.Namespace (printf "%s-ob" .Release.Name) }}{{ fail "cannot downgrade stage after OB creation; use install.sh to resume" }}{{ end -}}
+{{- if lookup "oceanbase.oceanbase.com/v1alpha1" "OBCluster" .Release.Namespace (printf "%s-ob" .Release.Name) }}{{ fail "cannot downgrade stage after OB creation; use helm upgrade with stage=cluster to resume" }}{{ end -}}
+{{- end -}}
+{{- end -}}
+
+{{/* Preserve immutable CR URLs when adopting a release created by the legacy
+staged installer. New native releases keep DNS in the parent CR, and Operator
+resolves its same-namespace Service at runtime without mutating this manifest. */}}
+{{- define "lakehouse.logBucketURL" -}}
+{{- $existing := lookup "oceanbase.oceanbase.com/v1alpha1" "OBLogServiceCluster" .Release.Namespace (printf "%s-ls" .Release.Name) -}}
+{{- if $existing -}}{{ $existing.spec.objectStoreUrl.bucketURL }}{{- else -}}
+{{- printf "s3://%s?host=%s&s3_region=%s" (include "lakehouse.logBucket" .) (include "lakehouse.databaseEndpoint" .) .Values.objectStorage.region -}}
+{{- end -}}
+{{- end -}}
+{{- define "lakehouse.dataBucketURL" -}}
+{{- $existing := lookup "oceanbase.oceanbase.com/v1alpha1" "OBCluster" .Release.Namespace (printf "%s-ob" .Release.Name) -}}
+{{- if $existing -}}{{ $existing.spec.sharedStorageInfo.bucketURL }}{{- else -}}
+{{- printf "s3://%s?host=%s&s3_region=%s" (include "lakehouse.dataBucket" .) (include "lakehouse.databaseEndpoint" .) .Values.objectStorage.region -}}
 {{- end -}}
 {{- end -}}

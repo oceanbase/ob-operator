@@ -1,0 +1,20 @@
+# Internal single-node experience profile. Use a node with >=8 CPU / 32Gi memory
+# and a working local-path StorageClass with >=350Gi free disk.
+# Set image values to the published/pinned images supplied with your release.
+storageClass: local-path
+logService:
+  resource: {cpu: "1", memory: 4Gi}
+  topology:
+    - {zone: zone1, replica: 1}
+    - {zone: zone2, replica: 1}
+    - {zone: zone3, replica: 1}
+observer:
+  resource: {cpu: "2", memory: 10Gi}
+  topology:
+    - {zone: zone1, replica: 1}
+# If this cluster has multiple nodes but you want a single-node experience,
+# explicitly select that worker for storage and database workloads:
+# scheduling:
+#   nodeSelector: {kubernetes.io/hostname: worker-1}
+# dashboard:
+#   nodeSelector: {kubernetes.io/hostname: worker-1}

@@ -4,6 +4,8 @@ adminPassword: admin
 
 # Empty uses quay.io/oceanbase/oceanbase-dashboard:<Chart appVersion>.
 image: ""
+# Shared utility image for volume initialization and report cleanup.
+utilityImage: busybox:1.36.1
 # Keep account, authorization and volume data when removing the dashboard.
 retainData: false
 rbac:
@@ -27,6 +29,7 @@ service:
   port: 80
 
 prometheus:
+  image: quay.io/prometheus/prometheus:v2.51.1
   persistence:
     enabled: true
     create: true
@@ -34,6 +37,9 @@ prometheus:
     storageClassName: ""
     accessMode: ReadWriteOnce
     storage: 8Gi
+
+alertmanager:
+  image: quay.io/prometheus/alertmanager:v0.27.0
 
 sharedVolume:
   persistence:

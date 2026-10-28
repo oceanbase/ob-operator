@@ -1,0 +1,9 @@
+# Maintainer-only: end users consume the release's prebuilt bootstrap image.
+x-build: &bootstrap-build
+  context: ../../..
+  dockerfile: deploy/compose/lakehouse/Dockerfile.bootstrap
+services:
+  credentials-init:
+    build: *bootstrap-build
+  observer-bootstrap:
+    build: *bootstrap-build

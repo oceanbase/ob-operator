@@ -1,0 +1,113 @@
+{{- if and .Values.native.enabled (eq .Values.stage "cluster") }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Release.Name }}-readiness
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+automountServiceAccountToken: true
+{{- with .Values.imagePullSecrets }}
+imagePullSecrets: {{ toYaml . | nindent 2 }}
+{{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Release.Name }}-readiness
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [batch]
+    resources: [jobs]
+    resourceNames: [{{ printf "%s-storage-init-%d" .Release.Name .Release.Revision | quote }}]
+    verbs: [get]
+  - apiGroups: [oceanbase.oceanbase.com]
+    resources: [oblogserviceclusters]
+    resourceNames: [{{ printf "%s-ls" .Release.Name | quote }}]
+    verbs: [get]
+  - apiGroups: [oceanbase.oceanbase.com]
+    resources: [obclusters]
+    resourceNames: [{{ printf "%s-ob" .Release.Name | quote }}]
+    verbs: [get]
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [list]
+  {{- if .Values.dashboard.enabled }}
+  - apiGroups: [apps]
+    resources: [deployments]
+    resourceNames: [{{ printf "oceanbase-dashboard-%s" .Release.Name | quote }}]
+    verbs: [get]
+  {{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-readiness
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Release.Name }}-readiness
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Release.Name }}-readiness
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-readiness
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "10"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+    app.kubernetes.io/component: readiness
+spec:
+  activeDeadlineSeconds: {{ add .Values.native.readiness.timeoutSeconds 30 }}
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: readiness
+    spec:
+      {{- include "lakehouse.scheduling" . | nindent 6 }}
+      restartPolicy: Never
+      serviceAccountName: {{ .Release.Name }}-readiness
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: readiness
+          image: {{ .Values.native.readiness.image | quote }}
+          imagePullPolicy: {{ .Values.native.readiness.imagePullPolicy }}
+          command: [/lakehouse-readiness]
+          args:
+            - --namespace={{ .Release.Namespace }}
+            - --release={{ .Release.Name }}
+            - --storage-job={{ .Release.Name }}-storage-init-{{ .Release.Revision }}
+            - --timeout={{ .Values.native.readiness.timeoutSeconds }}s
+            {{- $obReplicas := 0 }}
+            {{- range .Values.observer.topology }}{{ $obReplicas = add $obReplicas .replica }}{{ end }}
+            - --observer-replicas={{ $obReplicas }}
+            {{- $lsReplicas := 0 }}
+            {{- range .Values.logService.topology }}{{ $lsReplicas = add $lsReplicas .replica }}{{ end }}
+            - --logservice-replicas={{ $lsReplicas }}
+            {{- if .Values.dashboard.enabled }}
+            - --dashboard=oceanbase-dashboard-{{ .Release.Name }}
+            {{- end }}
+          resources: {{ toYaml .Values.native.readiness.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+{{- end }}

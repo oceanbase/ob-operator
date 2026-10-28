@@ -6,6 +6,12 @@ metadata:
   namespace: {{ .Release.Namespace }}
   annotations:
     helm.sh/resource-policy: keep
+    {{- if .Values.native.enabled }}
+    oceanbase.oceanbase.com/storage-init-job: {{ printf "%s-storage-init-%d" .Release.Name .Release.Revision | quote }}
+    {{- if eq .Values.objectStorage.mode "bundled" }}
+    oceanbase.oceanbase.com/resolve-storage-service: "true"
+    {{- end }}
+    {{- end }}
     oceanbase.oceanbase.com/mode: service
   labels:
     {{- include "lakehouse.labels" . | nindent 4 }}
@@ -13,7 +19,7 @@ spec:
   clusterId: {{ .Values.logService.clusterId }}
   serviceAccount: {{ .Release.Name }}-workload
   objectStoreUrl:
-    bucketURL: {{ printf "s3://%s?host=%s&s3_region=%s" (include "lakehouse.logBucket" .) (include "lakehouse.databaseEndpoint" .) .Values.objectStorage.region | quote }}
+    bucketURL: {{ include "lakehouse.logBucketURL" . | quote }}
     secretRef: {name: {{ include "lakehouse.logStorageSecret" . }}}
   logService:
     image: {{ .Values.logService.image | quote }}

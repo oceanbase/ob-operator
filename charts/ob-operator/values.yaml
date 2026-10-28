@@ -4,3 +4,7 @@
 #
 reporter: "ob-operator"
 
+# Override with the published native-lakehouse build for declarative lakehouse
+# installation. Existing operator deployments keep their default version.
+image: quay.io/oceanbase/ob-operator:2.3.4
+

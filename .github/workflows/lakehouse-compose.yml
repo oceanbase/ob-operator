@@ -1,0 +1,70 @@
+name: lakehouse compose
+
+on:
+  push:
+    paths:
+      - 'cmd/lakehouse-bootstrap/**'
+      - 'deploy/compose/lakehouse/**'
+      - '.github/workflows/lakehouse-compose.yml'
+  pull_request:
+    paths:
+      - 'cmd/lakehouse-bootstrap/**'
+      - 'deploy/compose/lakehouse/**'
+      - '.github/workflows/lakehouse-compose.yml'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Bootstrap image version
+        required: true
+        default: '0.1.0'
+      publish:
+        description: Publish the bootstrap image to GHCR
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go test -race -count=1 ./cmd/lakehouse-bootstrap ./deploy/compose/lakehouse
+      - run: shellcheck deploy/compose/lakehouse/scripts/*.sh
+      - name: Validate zero-preparation Compose configuration
+        working-directory: deploy/compose/lakehouse
+        run: |
+          docker compose --env-file /dev/null -f compose.yaml config --quiet
+          docker compose --env-file /dev/null -f compose.yaml -f compose.build.yaml config --quiet
+
+  bootstrap-image:
+    if: github.event_name == 'workflow_dispatch'
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate version
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: '[[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]'
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        if: inputs.publish
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/compose/lakehouse/Dockerfile.bootstrap
+          platforms: linux/amd64
+          push: ${{ inputs.publish }}
+          tags: ghcr.io/${{ github.repository_owner }}/lakehouse-bootstrap:${{ inputs.version }}

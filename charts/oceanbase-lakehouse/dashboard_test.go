@@ -506,3 +506,36 @@ func TestLakehousePackageContainsDashboardDependency(t *testing.T) {
 	find(t, docs, "OBLogServiceCluster", "qa-ls")
 	find(t, docs, "Secret", "qa-dashboard-bootstrap")
 }
+
+func TestPackagedDashboardDependencyPropagatesAllRuntimeImageOverrides(t *testing.T) {
+	const utility = "registry.example/utility@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	const prometheus = "registry.example/prometheus:v2.51.1"
+	const alertmanager = "registry.example/alertmanager:v0.27.0"
+	docs, output, err := render(t, map[string]interface{}{"dashboard": map[string]interface{}{
+		"utilityImage": utility,
+		"prometheus":   map[string]interface{}{"image": prometheus},
+		"alertmanager": map[string]interface{}{"image": alertmanager},
+	}})
+	if err != nil {
+		t.Fatal(err, output)
+	}
+	var deployment appsv1.Deployment
+	decodeScheduledObject(t, find(t, docs, "Deployment", "oceanbase-dashboard-qa"), &deployment)
+	if deployment.Spec.Template.Spec.InitContainers[0].Image != utility {
+		t.Fatal("packaged dependency lost utility image override")
+	}
+	for _, c := range deployment.Spec.Template.Spec.Containers {
+		if c.Name == "prometheus" && c.Image != prometheus {
+			t.Fatal("packaged dependency lost Prometheus override")
+		}
+		if c.Name == "alertmanager" && c.Image != alertmanager {
+			t.Fatal("packaged dependency lost Alertmanager override")
+		}
+	}
+	if !strings.Contains(output, "image: \""+utility+"\"") || strings.Count(output, utility) != 2 {
+		t.Fatal("cleanup and volume initialization must share the overridden utility image")
+	}
+	if strings.Contains(output, "busybox:latest") {
+		t.Fatal("mutable utility default remains in the packaged dependency")
+	}
+}

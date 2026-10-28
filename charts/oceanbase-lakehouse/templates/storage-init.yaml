@@ -83,8 +83,10 @@ metadata:
     app.kubernetes.io/component: storage-init
 spec:
   activeDeadlineSeconds: {{ .Values.initialization.deadlineSeconds }}
-  backoffLimit: 0
+  backoffLimit: 3
+  {{- if not .Values.native.enabled }}
   ttlSecondsAfterFinished: 3600
+  {{- end }}
   template:
     metadata:
       labels:

@@ -2,8 +2,47 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "additionalProperties": false,
-  "required": ["stage", "storageClass", "objectStorage", "minio", "initialization", "logService", "observer", "imagePullSecrets"],
+  "required": ["native", "stage", "storageClass", "objectStorage", "minio", "initialization", "logService", "observer", "imagePullSecrets"],
   "properties": {
+    "native": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "readiness"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "readiness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "image",
+            "imagePullPolicy",
+            "timeoutSeconds",
+            "resources"
+          ],
+          "properties": {
+            "image": {
+              "$ref": "#/definitions/image"
+            },
+            "imagePullPolicy": {
+              "$ref": "#/definitions/pullPolicy"
+            },
+            "timeoutSeconds": {
+              "type": "integer",
+              "minimum": 60,
+              "maximum": 7200
+            },
+            "resources": {
+              "$ref": "#/definitions/resources"
+            }
+          }
+        }
+      }
+    },
     "stage": {"enum": ["storage", "logservice", "cluster"]},
     "storageClass": {"$ref": "#/definitions/name"},
     "imagePullSecrets": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["name"], "properties": {"name": {"$ref": "#/definitions/name"}}}},
@@ -13,6 +52,11 @@
       "properties": {
         "enabled": {"type": "boolean"},
         "image": {"$ref": "#/definitions/image"},
+        "utilityImage": {"$ref": "#/definitions/image"},
+        "alertmanager": {
+          "type": "object",
+          "properties": {"image": {"$ref": "#/definitions/image"}}
+        },
         "adminPassword": {"type": "string", "anyOf": [{"maxLength": 0}, {"minLength": 12}]},
         "initCredentials": {"const": false},
         "retainData": {"const": true},
@@ -36,7 +80,7 @@
         },
         "prometheus": {
           "type": "object", "required": ["persistence"],
-          "properties": {"persistence": {"$ref": "#/definitions/dashboardPersistence"}}
+          "properties": {"image": {"$ref": "#/definitions/image"}, "persistence": {"$ref": "#/definitions/dashboardPersistence"}}
         },
         "sharedVolume": {
           "type": "object", "required": ["persistence"],

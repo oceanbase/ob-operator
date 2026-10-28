@@ -46,7 +46,7 @@ func schedulingLocations(t *testing.T, docs []manifest) []scheduledLocation {
 		case "Job":
 			var object batchv1.Job
 			decodeScheduledObject(t, doc, &object)
-			locations = append(locations, scheduledLocation{"initialization", object.Spec.Template.Spec.NodeSelector, object.Spec.Template.Spec.Tolerations})
+			locations = append(locations, scheduledLocation{object.Name, object.Spec.Template.Spec.NodeSelector, object.Spec.Template.Spec.Tolerations})
 		case "OBLogServiceCluster":
 			var object v1alpha1.OBLogServiceCluster
 			decodeScheduledObject(t, doc, &object)
@@ -68,7 +68,7 @@ func TestSchedulingDefaultDoesNotRestrictPlacement(t *testing.T) {
 	for _, mode := range []string{"bundled", "external"} {
 		t.Run(mode, func(t *testing.T) {
 			storage := map[string]interface{}{"mode": mode}
-			want := 6 // MinIO + init + three LS zones + one OB zone.
+			want := 7 // MinIO + init + readiness + three LS zones + one OB zone.
 			if mode == "external" {
 				storage["endpoint"] = "http://192.0.2.10:9000"
 				storage["existingSecret"] = "external-storage"
@@ -125,7 +125,7 @@ func TestSchedulingPropagatesToEveryPodAndZone(t *testing.T) {
 				t.Fatalf("render scheduled %s: %v\n%s", mode, err, output)
 			}
 			locations := schedulingLocations(t, docs)
-			want := 7 // MinIO + init + three LS zones + two OB zones.
+			want := 8 // MinIO + init + readiness + three LS zones + two OB zones.
 			if mode == "external" {
 				want-- // Existing MinIO is not managed or scheduled by this chart.
 			}
@@ -190,7 +190,7 @@ func TestZoneNodeSelectorsDistributeWithoutLeakingToOtherZones(t *testing.T) {
 				t.Fatalf("render: %v\n%s", err, output)
 			}
 			locations := schedulingLocations(t, docs)
-			wantCount := 8
+			wantCount := 9
 			if mode == "external" {
 				wantCount--
 			}

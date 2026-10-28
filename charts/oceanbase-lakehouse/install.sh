@@ -175,7 +175,7 @@ case "$stage" in storage|logservice|cluster) ;; *) echo 'Unknown retained instal
 completed '[1/6] Preflight: existing installation state checked'
 upgrade() {
   run_bounded "$timeout" "Helm $1 stage" helm upgrade --install "$release" "$chart_dir" -n "$namespace" \
-    "${helm_args[@]}" --set-string "stage=$1" --wait --wait-for-jobs --timeout "${timeout}s" >>"$log_file"
+    "${helm_args[@]}" --set-string "stage=$1" --set native.enabled=false --wait --wait-for-jobs --timeout "${timeout}s" >>"$log_file"
 }
 
 # Best-effort progress uses the same selectors as the Operator's Pod labels.

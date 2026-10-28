@@ -1,16 +1,18 @@
-Stage: {{ .Values.stage }}. This is not a readiness assertion.
-{{ if ne .Values.stage "cluster" }}
-For a partial manual Helm installation, continue with the ordered installer:
-  bash charts/oceanbase-lakehouse/install.sh {{ .Release.Name }} {{ .Release.Namespace }} -f your-values.yaml
-If that installer is already running, do not start it again; follow its progress.
+{{ if and .Values.native.enabled (eq .Values.stage "cluster") }}
+Native Helm deployment: the post-install/post-upgrade readiness Job checks
+storage initialization, LogService/OceanBase, database Pods and Dashboard.
+Successful Helm completion with hooks enabled includes these readiness checks.
 {{ else }}
-Cluster resources have been applied. Verify runtime readiness before use:
-  kubectl -n {{ .Release.Namespace }} get oblogservicecluster/{{ .Release.Name }}-ls obcluster/{{ .Release.Name }}-ob
-  kubectl -n {{ .Release.Namespace }} get pods -l ref-obcluster={{ .Release.Name }}-ob
-The ordered installer performs these readiness checks; Helm deployed status alone is insufficient.
+Legacy partial/manual Helm deployment (stage={{ .Values.stage }}).
+Verify runtime readiness before use; Helm deployed status alone is insufficient.
 {{ end }}
 
-Storage mode: {{ .Values.objectStorage.mode }}
+Inspect progress or a failed installation:
+  kubectl -n {{ .Release.Namespace }} get oblogservicecluster/{{ .Release.Name }}-ls obcluster/{{ .Release.Name }}-ob
+  kubectl -n {{ .Release.Namespace }} get pods,jobs
+  kubectl -n {{ .Release.Namespace }} logs job/{{ .Release.Name }}-readiness
+Retry with the SAME release, namespace and values using helm upgrade --install.
+
 {{ if .Values.dashboard.enabled }}
 Dashboard is included in this release. Once its Deployment is ready:
   kubectl -n {{ .Release.Namespace }} port-forward svc/oceanbase-dashboard-{{ .Release.Name }} 8080:{{ .Values.dashboard.service.port }}
@@ -21,9 +23,18 @@ After changing the password in Dashboard, use that new password.
 {{ else }}
 Dashboard is disabled (dashboard.enabled=false).
 {{ end }}
+
+Database root@sys password:
+  kubectl -n {{ .Release.Namespace }} get secret {{ if .Values.observer.rootExistingSecret }}{{ .Values.observer.rootExistingSecret }}{{ else }}{{ .Release.Name }}-db-root{{ end }} -o jsonpath='{.data.password}' | base64 --decode; echo
+List Observer Pods and forward one to a SQL client on this computer:
+  kubectl -n {{ .Release.Namespace }} get pods -l ref-obcluster={{ .Release.Name }}-ob
+  kubectl -n {{ .Release.Namespace }} port-forward pod/<observer-pod-name> 12881:2881
+  mysql -h 127.0.0.1 -P 12881 -u 'root@sys' -p
+Direct ALTER USER changes do not synchronize the Kubernetes Secret.
+
+Storage mode: {{ .Values.objectStorage.mode }}
 MinIO and mc are optional third-party AGPL-3.0 software, not relicensed by this chart.
-This Helm chart contains no container images. A self-contained lakehouse
-archive supplies its container images separately in its images/ directory.
+This chart contains no container images. Workers need access to the configured images.
 
 DATA PROTECTION: uninstall intentionally retains database CRs, credentials and
 bundled MinIO StatefulSet/Service/PVC. Namespace deletion or explicit Kubernetes
