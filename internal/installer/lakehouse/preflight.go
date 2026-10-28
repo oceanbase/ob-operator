@@ -196,7 +196,7 @@ func CheckCluster(ctx context.Context, run RunCommand, opts PreflightOptions) (P
 			result.RequiredCPUMilli += 500
 			result.RequiredMemoryBytes += 1024 * 1024 * 1024
 			if result.NodeName != "" && (result.RequiredCPUMilli > result.AvailableCPUMilli || result.RequiredMemoryBytes > result.AvailableMemoryBytes) {
-				problems = append(problems, errors.New("insufficient remaining capacity including the 500m CPU / 1Gi prerequisite preparation allowance"))
+				problems = append(problems, errors.New("insufficient remaining capacity including the 0.50 CPU cores / 1.0 GiB memory prerequisite preparation allowance"))
 			}
 			result.Warnings = append(result.Warnings, "Operator preparation is required; rerun preflight after it becomes ready before installing the lakehouse")
 		}
@@ -694,9 +694,14 @@ func pfCheckCapacity(opts PreflightOptions, nodes []corev1.Node, pods []pfPod, c
 	}
 	result.AvailableCPUMilli, result.AvailableMemoryBytes = available.cpu, available.memory
 	if demand.cpu > available.cpu || demand.memory > available.memory {
-		return fmt.Errorf("node %s lacks resources: installation needs %dm CPU / %dMi memory, available after other workloads %dm / %dMi", node.Name, demand.cpu, demand.memory/(1024*1024), available.cpu, available.memory/(1024*1024))
+		return pfCapacityError(node.Name, demand, available)
 	}
 	return nil
+}
+
+func pfCapacityError(node string, demand, available pfResources) error {
+	return fmt.Errorf("node %s lacks resources: installation needs %.2f CPU cores / %.1f GiB memory, available after other workloads %.2f CPU cores / %.1f GiB memory",
+		node, float64(demand.cpu)/1000, float64(demand.memory)/(1<<30), float64(available.cpu)/1000, float64(available.memory)/(1<<30))
 }
 
 func pfCheckOperator(crds []apiextv1.CustomResourceDefinition, deployments []appsv1.Deployment, mutating []admissionv1.MutatingWebhookConfiguration, validating []admissionv1.ValidatingWebhookConfiguration, endpoints []corev1.Endpoints) (bool, error) {

@@ -532,7 +532,7 @@ func pfCheckMultiCapacity(opts PreflightOptions, nodes []corev1.Node, pods []pfP
 		detail.AvailableCPUMilli, detail.AvailableMemoryBytes = available.cpu, available.memory
 		result.Nodes = append(result.Nodes, detail)
 		if demand.cpu > available.cpu || demand.memory > available.memory {
-			problems = append(problems, fmt.Errorf("node %s lacks resources: installation needs %dm CPU / %dMi memory, available after other workloads %dm / %dMi", node.Name, demand.cpu, demand.memory/(1024*1024), available.cpu, available.memory/(1024*1024)))
+			problems = append(problems, pfCapacityError(node.Name, demand, available))
 		}
 	}
 	details := result.Nodes
