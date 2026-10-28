@@ -31,6 +31,7 @@ type options struct {
 	bundle, release, namespace, node, runtime, address, endpoint, host, access string
 	check, showAccess                                                          bool
 	progressMode                                                               string
+	kubeconfig                                                                 string
 	files                                                                      valueFiles
 	resources                                                                  resourceOverrides
 	nodeNames                                                                  []string
@@ -61,6 +62,7 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 	fs.BoolVar(&o.check, "check", false, "Read-only preflight; do not import images or install resources")
 	fs.BoolVar(&o.showAccess, "show-access", false, "Show URL and save initial password to a private local file")
 	fs.StringVar(&o.progressMode, "progress", "auto", "Progress display: auto (live terminal) or plain (line-by-line logs)")
+	fs.StringVar(&o.kubeconfig, "kubeconfig", "", "Kubernetes config file for both kubectl and Helm; otherwise preserve existing configuration or use readable local K3s configuration")
 	fs.Var(&o.files, "f", "Values file; repeatable, later files override earlier ones")
 	fs.Var(&o.files, "values", "Values file; repeatable")
 	o.resources.register(fs)
@@ -126,6 +128,9 @@ func parseOptions(args []string, stderr io.Writer) (options, error) {
 
 func command(ctx context.Context, name string, args ...string) *exec.Cmd {
 	cmd := exec.CommandContext(ctx, name, args...)
+	if path, ok := ctx.Value(kubeconfigContextKey{}).(string); ok && path != "" {
+		cmd.Env = append(os.Environ(), "KUBECONFIG="+path)
+	}
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Cancel = func() error {
 		if cmd.Process == nil {
@@ -179,6 +184,13 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 	if err != nil {
 		return err
 	}
+	config, err := installerKubeconfig(o.kubeconfig, os.Getenv("KUBECONFIG"), "/etc/rancher/k3s/k3s.yaml")
+	if err != nil {
+		return err
+	}
+	if config != "" {
+		ctx = context.WithValue(ctx, kubeconfigContextKey{}, config)
+	}
 	for _, tool := range []string{"helm", "kubectl", "jq", "bash"} {
 		if _, err := exec.LookPath(tool); err != nil {
 			return fmt.Errorf("install prerequisite %s before running this command", tool)
@@ -199,6 +211,9 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 	}
 	if !o.showAccess {
 		progress(fmt.Sprintf("[1/%d] Checking cluster and installation settings", steps))
+	}
+	if config != "" {
+		progress("  Kubernetes configuration: " + config)
 	}
 	var identity struct {
 		Metadata struct {
@@ -450,7 +465,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 	installCtx, cancel := context.WithTimeout(ctx, 2*time.Hour)
 	defer cancel()
 	cmd := command(installCtx, "bash", filepath.Join(o.bundle, "charts/oceanbase-lakehouse/install.sh"), o.release, o.namespace, "-f", filepath.Join(stateDir, "values.yaml"))
-	cmd.Env = append(os.Environ(), "LAKEHOUSE_MANAGED_ACCESS=1")
+	cmd.Env = append(cmd.Environ(), "LAKEHOUSE_MANAGED_ACCESS=1")
 	if liveProgress {
 		cmd.Env = append(cmd.Env, "LAKEHOUSE_LIVE_PROGRESS=1")
 	}

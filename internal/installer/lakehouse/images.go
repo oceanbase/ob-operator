@@ -51,6 +51,8 @@ type imageArchive struct {
 	Path       string   `json:"path"`
 	SHA256     string   `json:"sha256"`
 	References []string `json:"references"`
+	URL        string   `json:"url,omitempty"`
+	SizeBytes  int64    `json:"size_bytes,omitempty"`
 }
 
 type archiveManifest struct {
@@ -139,6 +141,12 @@ func PrepareImages(ctx context.Context, run RunCommand, opts ImageOptions, progr
 			continue
 		}
 		paths[i] = path
+		if archive.URL != "" {
+			if err := ensureOnlineArchive(ctx, bundle, archive, progress); err != nil {
+				problems = append(problems, fmt.Errorf("%s: %w", archive.Name, err))
+				continue
+			}
+		}
 		info, statErr := os.Stat(path)
 		if statErr != nil {
 			problems = append(problems, fmt.Errorf("%s: required archive %s: %w", archive.Name, path, statErr))
@@ -215,6 +223,9 @@ func readImageDelivery(bundle string) (imageLock, archiveManifest, error) {
 		}
 		names[archive.Name] = true
 		if _, err := resolveImageArchive(bundle, archive); err != nil {
+			return lock, manifest, fmt.Errorf("invalid archive %s: %w", archive.Name, err)
+		}
+		if err := validateOnlineArchive(archive); err != nil {
 			return lock, manifest, fmt.Errorf("invalid archive %s: %w", archive.Name, err)
 		}
 		for _, ref := range archive.References {

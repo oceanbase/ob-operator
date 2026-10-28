@@ -23,4 +23,7 @@ if [[ ! -x "$installer" ]]; then
   exit 2
 fi
 echo "[done] Package integrity verified ($((SECONDS - verification_started))s elapsed)"
+if [[ -d "$bundle_dir/tools/bin" ]]; then
+  export PATH="$bundle_dir/tools/bin:$PATH"
+fi
 exec "$installer" --bundle "$bundle_dir" "$@"

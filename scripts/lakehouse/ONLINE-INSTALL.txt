@@ -1,0 +1,116 @@
+OceanBase 湖库在线测试包内部体验指南
+==================================
+
+本包不包含镜像，内置 Linux AMD64 Helm 和静态 jq。kubectl 复用机器上已有的
+客户端或 K3s。它使用与离线验收包相同的镜像：按需从 52 内网下载镜像归档，
+校验大小和 SHA256 后导入，再校验镜像 ID。本版尚未改成镜像仓库直接拉取。
+
+1. 准备和下载
+-------------
+目标为 Linux x86_64 / amd64 Worker；已有 Kubernetes >=1.27、管理员配置和可用
+默认 StorageClass。推荐 8 核、32GiB 以上内存，磁盘需容纳下载缓存、运行时镜像
+和 PVC。安装不自动部署 Kubernetes、不改系统 PATH、不自动 sudo。镜像服务为
+http://11.161.204.52:18088，仅供公司内网测试；执行机器必须能直接访问该地址。
+
+第一次依然要下载 GB 级镜像。包小不代表总下载量小。下载保存在解压目录的
+images/cache/，完成且校验正确的文件可复用；中断文件会清理，重跑按归档重新下载。
+不要删除仍需复用的缓存。不修改包内 Chart、清单或工具，自定义配置放在包外。
+
+收到 ONLINE_ARCHIVE_NAME 后，在包所在目录运行：
+  tar -xf ONLINE_ARCHIVE_NAME
+  cd ONLINE_BUNDLE_NAME
+  ./install.sh --help
+
+2. 单节点体验
+-------------
+必须在目标 Worker 执行。包内 Helm、jq 自动生效，不用修改 PATH。
+已有 KUBECONFIG 或当前用户 ~/.kube/config 时保留其集群选择；否则尝试读取
+/etc/rancher/k3s/k3s.yaml。不会复制、覆盖 ~/.kube/config，也不会修改文件权限。
+
+普通用户能访问运行时且有管理员配置时：
+  ./install.sh --check
+  ./install.sh
+
+K3s 的运行时只允许 root 时，用以下命令明确使用同一集群配置：
+  sudo ./install.sh --kubeconfig /etc/rancher/k3s/k3s.yaml --check
+  sudo ./install.sh --kubeconfig /etc/rancher/k3s/k3s.yaml
+
+--check 不下载、不导入镜像、不改 Kubernetes。冷节点会报告缺少镜像，这是预期
+结果；其余前置条件通过后，使用相同参数去掉 --check 才开始在线下载和安装。
+执行 sudo 后也使用包内工具；Kubernetes 权限与容器运行时权限是两项独立要求。
+
+3. 三节点体验
+-------------
+三台 Worker 已在同一集群 Ready，且已有兼容的湖库 Operator/CRD/webhook。
+只在第一台解压小包并执行命令；它下载镜像后，通过已有 SSH/SCP 流程向缺少
+镜像的节点分发。其他节点不用安装 Helm/jq，但须具备运行时工具和权限。
+--nodes 使用 kubectl get nodes 的 NAME，不能使用 IP；顺序对应三个 zone。
+
+  kubectl get nodes -o wide
+  ./install.sh --nodes worker-1,worker-2,worker-3 \
+    --ssh-identity /root/.ssh/id_ed25519
+
+SSH 默认 root、22、Node InternalIP，需已核对主机指纹并配置 known_hosts。
+可重复使用 --ssh-host worker-2=连接地址，或设置 --ssh-user / --ssh-port。
+三节点重跑继续携带自定义 SSH 参数；不交换节点顺序、不从原单节点直接转换。
+
+4. 常用参数和续跑
+-----------------
+与离线包相同：默认 Observer 2 CPU/10Gi，LogService 每实例 1 CPU/4Gi，共 3 个。
+这是一套固定体验规格，不会自动用满机器。规格参数用于新建或重复原配置，
+不用于已安装集群的在线扩缩容。示例同时增加 Observer 内存和数据盘：
+  ./install.sh --oc 2 --om 16Gi --ods 100Gi
+
+CPU：--observer-cpu/--oc、--logservice-cpu/--lc。
+内存：--observer-memory/--om、--logservice-memory/--lm。
+磁盘：--observer-data-size/--ods、--observer-log-size/--ols、
+--logservice-store-size/--lss、--logservice-log-size/--lls、--minio-size/--ms。
+高级配置使用 -f ../my-values.yaml。显示逐行日志使用 --progress plain。
+
+中断使用 Ctrl+C 并等待退出；Ctrl+Z 仅暂停。修正原因后重跑原命令。
+已下载完整归档、已匹配镜像、已有数据库配置和账号会复用，不删除数据库和 PVC。
+
+5. 打开 Dashboard
+-----------------
+Dashboard 默认一起安装。看到 Installation complete. 后，按输出 URL 登录，
+用户名 admin，初始密码文件路径会打印；读取后首次登录改密。改密后使用当前密码。
+访问地址不对时可只重新查看/指定可达地址：
+  ./install.sh --show-access --dashboard-host 你的公网IP或域名
+浏览器网络需能访问对应 NodePort，安全组/防火墙须放行。安装器不修改云安全组。
+
+6. 连接数据库
+-------------
+数据库密码与 Dashboard 密码独立。以下默认 namespace=ob-helm-demo、集群=ob-demo-ob；
+自定义安装名称时替换。先查 root Secret 引用并在自己的终端读取密码：
+  NS=ob-helm-demo
+  CLUSTER=ob-demo-ob
+  ROOT_SECRET=$(kubectl -n "$NS" get obcluster "$CLUSTER" -o jsonpath='{.spec.userSecrets.root}')
+  kubectl -n "$NS" get secret "$ROOT_SECRET" -o jsonpath='{.data.password}' | base64 --decode
+  printf '\n'
+
+如果使用 K3s root 配置，请在 root Shell 中执行以上 kubectl 命令，或显式导出
+KUBECONFIG=/etc/rancher/k3s/k3s.yaml；普通用户 kubeconfig 按原配置使用。
+查看每个 Observer 的 Service，SQL 端口为 2881。默认不开放外部 SQL NodePort。
+在有 kubectl 和集群访问凭据的电脑运行端口转发，服务名使用实际 Observer 名称：
+  kubectl -n "$NS" get observers
+  kubectl -n "$NS" get svc
+  kubectl -n "$NS" port-forward svc/实际Observer名 12881:2881
+
+保持转发进程运行，在该电脑另一个终端使用已有 MySQL/OBClient 客户端连接：
+  mysql -h 127.0.0.1 -P 12881 -u 'root@sys' -p
+  # 进入 SQL 后
+  SELECT 1;
+若转发命令运行于远端服务器，在自己电脑另开 SSH 隧道：
+  ssh -N -L 12881:127.0.0.1:12881 用户@服务器
+
+本版没有 SQL 改密反向同步 Secret 的功能；直接 ALTER USER 后 Secret 会保留旧值，
+依赖该凭据的管理功能可能失败。体验时保留数据库 root 原密码；需要改密请走维护
+流程保证数据库和 Secret 一致。不要把数据库密码放进命令参数或问题截图。
+
+7. 出问题时
+-----------
+提供包版本、完整安装参数和错误摘要，详细日志按控制台路径查找并先脱敏。
+下载失败先确认目标机器能访问 52 内网服务；校验失败不会导入该文件。
+运行时权限错误使用合适执行身份，并明确 kubeconfig；不要开放 socket 全局权限。
+检查 Pod、事件、PVC，再修正原因重跑，不删除 namespace/PVC/CR 作为重试手段。
+本包用于内部功能体验，内置 MinIO 为单实例，不作为整套生产高可用方案。
