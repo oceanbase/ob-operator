@@ -13,7 +13,7 @@ if ! command -v sha256sum >/dev/null 2>&1; then
   exit 2
 fi
 verification_started=$SECONDS
-echo '[verify] Verifying package contents (including all bundled images)...'
+echo '[verify] Verifying package integrity...'
 if ! (cd -- "$bundle_dir" && sha256sum --check --quiet SHA256SUMS); then
   echo 'Package verification failed. Extract the complete tar again; put custom values in a separate file and pass -f.' >&2
   exit 2

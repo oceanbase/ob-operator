@@ -29,6 +29,8 @@ type ImageOptions struct {
 	CheckOnly          bool
 	CommandTimeout     time.Duration
 	ImportTimeout      time.Duration
+	// Additional workers transfer a verified archive before running their import.
+	importArchive func(context.Context, imageRuntime, time.Duration, string) error
 }
 
 type lockedImage struct {
@@ -171,6 +173,9 @@ func PrepareImages(ctx context.Context, run RunCommand, opts ImageOptions, progr
 		progress(fmt.Sprintf("  Importing archive %d/%d: %s into %s", i+1, len(needed), archive.Name, runtime.name))
 		start := time.Now()
 		if err := withProgress(ctx, progressInterval, progress, "Importing "+archive.Name+" images", func() error {
+			if opts.importArchive != nil {
+				return opts.importArchive(ctx, runtime, opts.ImportTimeout, paths[i])
+			}
 			return runtime.importArchive(ctx, run, opts.ImportTimeout, paths[i])
 		}); err != nil {
 			return fmt.Errorf("import %s failed; previous imports are safe to reuse on retry: %w", archive.Name, err)
@@ -410,13 +415,28 @@ func inspectLockedImages(ctx context.Context, run RunCommand, runtime imageRunti
 }
 
 func (runtime imageRuntime) importArchive(ctx context.Context, run RunCommand, timeout time.Duration, path string) error {
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	if runtime.name != "docker" {
+		// Older containerd clients require an uncompressed tar stream. Keep the
+		// verified gzip cache intact and remove this private temporary tar on all
+		// exits; decompression never extracts archive entries onto the host.
+		plain, cleanup, err := containerdImportTar(ctx, path)
+		if err != nil {
+			return err
+		}
+		defer cleanup()
+		path = plain
+	}
+	return runtime.importPreparedArchive(ctx, run, timeout, path)
+}
+
+func (runtime imageRuntime) importPreparedArchive(ctx context.Context, run RunCommand, timeout time.Duration, path string) error {
 	var err error
 	switch runtime.name {
 	case "docker":
 		_, err = runImageCommand(ctx, run, timeout, "docker", "--host", runtime.address, "load", "--input", path)
 	case "k3s":
-		// containerd 2.x's transfer importer accepts gzip Docker-save archives;
-		// --local does not, so do not add it to this invocation.
 		_, err = runImageCommand(ctx, run, timeout, "k3s", "ctr", "images", "import", path)
 	case "containerd":
 		_, err = runImageCommand(ctx, run, timeout, "ctr", "--address", runtime.address, "--namespace", "k8s.io", "images", "import", path)

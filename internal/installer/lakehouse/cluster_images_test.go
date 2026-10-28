@@ -360,7 +360,9 @@ func TestClusterSSHArgumentsKeepShellSyntaxLiteral(t *testing.T) {
 func TestClusterImagesImportDeadlineStillCleansRemoteStaging(t *testing.T) {
 	f := newClusterImageFake(t)
 	f.block = "scp "
-	err := PrepareClusterImages(context.Background(), f.run, ImageOptions{BundleDir: f.bundle.dir, Runtime: "auto", ImportTimeout: time.Millisecond}, f.nodes, ClusterSSHOptions{}, nil)
+	// Give archive preparation time to finish; the blocked copy must be the
+	// operation that hits the deadline, rather than an earlier file read.
+	err := PrepareClusterImages(context.Background(), f.run, ImageOptions{BundleDir: f.bundle.dir, Runtime: "auto", ImportTimeout: 100 * time.Millisecond}, f.nodes, ClusterSSHOptions{}, nil)
 	if !errors.Is(err, context.DeadlineExceeded) || len(f.imports) != 0 {
 		t.Fatalf("copy deadline failed or imported an incomplete archive: %v", err)
 	}

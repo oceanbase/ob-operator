@@ -49,8 +49,10 @@ def build(args):
     (bundle / "tools/bin/kubectl").write_text('''#!/usr/bin/env bash
 set -euo pipefail
 # Reuse a real local client; K3s already includes kubectl.
-for client in /usr/local/bin/kubectl /usr/bin/kubectl /bin/kubectl; do
-  if [[ -x "$client" && ! "$client" -ef "${BASH_SOURCE[0]}" ]]; then exec "$client" "$@"; fi
+IFS=: read -r -a client_dirs <<< "$PATH"
+for directory in "${client_dirs[@]}"; do
+  client="${directory:-.}/kubectl"
+  if [[ -f "$client" && -x "$client" && ! "$client" -ef "${BASH_SOURCE[0]}" ]]; then exec "$client" "$@"; fi
 done
 if command -v k3s >/dev/null 2>&1; then exec k3s kubectl "$@"; fi
 echo 'kubectl is missing. Prepare Kubernetes/K3s and its client before installing.' >&2

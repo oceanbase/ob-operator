@@ -2,7 +2,9 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
+import subprocess
 import tarfile
 import tempfile
 import unittest
@@ -40,6 +42,13 @@ class OnlinePackageTest(unittest.TestCase):
                 BUILDER.build(args)
             record=json.loads((args.output/"build-result.json").read_text())
             self.assertEqual(record["image_payload_files"],0)
+            custom=root/"custom-client";custom.mkdir()
+            client=custom/"kubectl"
+            client.write_text("#!/bin/sh\nprintf 'custom kubectl %s' \"$1\"\n")
+            client.chmod(0o755)
+            shim=next(args.output.glob("*/tools/bin/kubectl"))
+            result=subprocess.check_output(["/bin/bash",str(shim),"version"],env={**os.environ,"PATH":str(shim.parent)+os.pathsep+str(custom)},text=True)
+            self.assertEqual(result,"custom kubectl version")
             with tarfile.open(record["package"]) as archive:
                 names=archive.getnames()
                 self.assertTrue(any(n.endswith("tools/bin/helm") for n in names))

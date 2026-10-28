@@ -272,31 +272,45 @@ func (worker *clusterImageWorker) prepare(ctx context.Context, opts ImageOptions
 			result = errors.Join(result, fmt.Errorf("could not remove temporary image directory %s on %s: %w", worker.tempDir, worker.host, err))
 		}
 	}()
-	proxy := func(commandCtx context.Context, name string, args ...string) ([]byte, error) {
-		isImport := (name == "docker" && len(args) >= 3 && args[len(args)-2] == "--input") ||
-			((name == "k3s" || name == "ctr") && len(args) >= 3 && args[len(args)-2] == "import")
-		if !isImport {
-			return worker.remote(commandCtx, name, args...)
-		}
+	opts.importArchive = func(commandCtx context.Context, runtime imageRuntime, timeout time.Duration, localPath string) error {
 		if opts.CheckOnly {
-			return nil, errors.New("read-only image check cannot transfer or import archives")
+			return errors.New("read-only image check cannot transfer or import archives")
 		}
-		localPath := args[len(args)-1]
-		remotePath, err := worker.transfer(commandCtx, localPath, archiveSHA[localPath])
+		commandCtx, cancel := context.WithTimeout(commandCtx, timeout)
+		defer cancel()
+		expected := archiveSHA[localPath]
+		if !imageSHA256.MatchString(expected) {
+			return errors.New("cannot transfer an archive absent from the verified delivery manifest")
+		}
+		if runtime.name != "docker" {
+			plain, cleanup, err := containerdImportTar(commandCtx, localPath)
+			if err != nil {
+				return err
+			}
+			defer cleanup()
+			if plain != localPath {
+				// This tar is derived locally from the already verified gzip. Check
+				// its own digest on the worker before importing the expanded bytes.
+				expected, err = hashImageArchive(commandCtx, plain)
+				if err != nil {
+					return err
+				}
+				localPath = plain
+			}
+		}
+		remotePath, err := worker.transfer(commandCtx, localPath, expected)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		remoteArgs := append([]string(nil), args...)
-		remoteArgs[len(remoteArgs)-1] = remotePath
-		output, err := worker.remote(commandCtx, name, remoteArgs...)
+		err = runtime.importPreparedArchive(commandCtx, worker.remote, timeout, remotePath)
 		if err == nil {
 			// Keep peak staging space to one archive. Deferred cleanup also handles
 			// failed transfers, verification, imports or cancellation.
 			_, err = worker.remote(commandCtx, "rm", "-f", "--", remotePath)
 		}
-		return output, err
+		return err
 	}
-	return PrepareImages(ctx, proxy, opts, worker.progress)
+	return PrepareImages(ctx, worker.remote, opts, worker.progress)
 }
 
 func (worker *clusterImageWorker) transfer(ctx context.Context, localPath, expected string) (string, error) {
