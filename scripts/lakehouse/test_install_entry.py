@@ -60,7 +60,7 @@ class InstallEntryTest(unittest.TestCase):
         args = ["--release", "demo", "-f", "values path ' quoted.yaml", "--dashboard-host", "127.0.0.1"]
         result = self.run_entry(args)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("Verifying package contents", result.stdout)
+        self.assertIn("Package integrity verified", result.stdout)
         actual = self.trace.read_bytes().decode().split("\0")[:-1]
         self.assertEqual(actual, ["--bundle", str(self.bundle)] + args)
 
