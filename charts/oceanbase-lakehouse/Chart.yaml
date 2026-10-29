@@ -2,8 +2,8 @@ apiVersion: v2
 name: oceanbase-lakehouse
 description: Shared-storage OceanBase with Dashboard and optional bundled MinIO
 type: application
-version: 0.4.0
-appVersion: "4.6.2.0"
+version: 0.4.1
+appVersion: "4.6.2.1"
 kubeVersion: ">=1.27.0-0"
 dependencies:
   - name: oceanbase-dashboard

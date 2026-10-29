@@ -177,7 +177,7 @@ func TestImageRegistrySelection(t *testing.T) {
 	const digest = "private.example.invalid/custom/observer@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	releaseEnv := strings.Replace(string(example),
 		"${IMAGE_REGISTRY:-ghcr.io/oceanbase}/lakehouse-bootstrap:0.1.0",
-		"${IMAGE_REGISTRY:-oceanbase-qa}/lakehouse-bootstrap:native-e43fab5cc687", 1)
+		"${IMAGE_REGISTRY:-oceanbase}/lakehouse-bootstrap:native-e43fab5cc687", 1)
 	if releaseEnv == string(example) {
 		t.Fatal("release fixture must replace the bootstrap reference")
 	}
@@ -199,7 +199,7 @@ func TestImageRegistrySelection(t *testing.T) {
 		{name: "explicit env file", file: strings.Replace(string(example), "IMAGE_REGISTRY=", "IMAGE_REGISTRY="+registry, 1), explicit: true, prefix: registry},
 		{name: "shell overrides file registry", file: strings.Replace(string(example), "IMAGE_REGISTRY=", "IMAGE_REGISTRY=ignored.example.invalid/old", 1), env: map[string]string{"IMAGE_REGISTRY": registry}, explicit: true, prefix: registry},
 		{name: "full digest override", file: string(example), env: map[string]string{"IMAGE_REGISTRY": registry, "OBSERVER_IMAGE": digest}, prefix: registry, override: true},
-		{name: "release defaults", file: releaseEnv, bootstrap: "oceanbase-qa/lakehouse-bootstrap:native-e43fab5cc687"},
+		{name: "release defaults", file: releaseEnv, bootstrap: "oceanbase/lakehouse-bootstrap:native-e43fab5cc687"},
 		{name: "release registry", file: releaseEnv, env: map[string]string{"IMAGE_REGISTRY": registry}, prefix: registry, bootstrap: registry + "/lakehouse-bootstrap:native-e43fab5cc687"},
 		{name: "release custom env file", file: strings.Replace(releaseEnv, "IMAGE_REGISTRY=", "IMAGE_REGISTRY="+registry, 1), explicit: true, prefix: registry, bootstrap: registry + "/lakehouse-bootstrap:native-e43fab5cc687"},
 	} {
@@ -207,7 +207,7 @@ func TestImageRegistrySelection(t *testing.T) {
 			services := renderComposeEnvironment(t, tc.env, tc.file, tc.explicit)
 			expected := map[string]string{
 				"observer":         "oceanbase/oceanbase-ai-cloud-native:4.6.2.1-100000092026090921.al8",
-				"logservice-1":     "oblogservice:1.3.0",
+				"logservice-1":     "oceanbase/oblogservice:1.3.0",
 				"minio":            "minio/minio:RELEASE.2025-09-07T16-13-09Z",
 				"minio-init":       "minio/mc:RELEASE.2025-08-13T08-35-41Z",
 				"credentials-init": "ghcr.io/oceanbase/lakehouse-bootstrap:0.1.0",

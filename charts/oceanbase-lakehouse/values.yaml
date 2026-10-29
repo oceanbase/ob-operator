@@ -7,7 +7,7 @@ native:
   enabled: true
   readiness:
     # Must contain /lakehouse-readiness and match the installed Operator build.
-    image: oceanbase-qa/ob-operator:native-20261028
+    image: oceanbase/ob-operator:native-44337ae7540b
     imagePullPolicy: IfNotPresent
     timeoutSeconds: 1800
     resources:
@@ -117,7 +117,7 @@ initialization:
 logService:
   clusterId: 1001
   # Set to a registry image available to your cluster. Do not use latest.
-  image: oblogservice:1.3.0
+  image: oceanbase/oblogservice:1.3.0
   resource: {cpu: "2", memory: 4Gi}
   storeSize: 20Gi
   logSize: 10Gi
@@ -130,7 +130,7 @@ logService:
 
 observer:
   clusterId: 1002
-  image: oceanbase/oceanbase-ai-cloud-native:4.6.2.0
+  image: oceanbase/oceanbase-ai-cloud-native:4.6.2.1-100000092026090921.al8
   resource: {cpu: "2", memory: 10Gi}
   dataSize: 50Gi
   logSize: 20Gi

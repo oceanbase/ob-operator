@@ -5,13 +5,31 @@ Chart when you already have Kubernetes. Dashboard is enabled by default and is
 installed in the SAME Helm release as the lakehouse. No install.sh is shipped in
 this Helm Chart, and no Helm process runs inside a Kubernetes Job.
 
+Matching release images
+-----------------------
+The native Helm and Compose bundles for one delivery version are generated
+together from release-images.lock.json. Observer, LogService, MinIO and mc use
+the same image names, versions and config image IDs in both bundles. Helm also
+includes Operator, Dashboard and its supporting images; Compose adds bootstrap.
+image-lock.json lists this bundle's images. Config IDs are not registry manifest
+digests. The packaged Chart defaults already match image-values.yaml.
+
+The lightweight bundles do not include image layers. Use the matching shared
+image archive or a registry containing those exact builds. On a Docker-based
+worker, import the matching archive with docker load; on containerd/K3s use that
+runtime's import command. Import on every target worker. A local Docker cache is
+not automatically available to a separate containerd runtime. Do not substitute
+an older Helm image archive or retag different binaries as the current version.
+Registry publication/public pull access is not implied by these internal tags.
+
 Prerequisites
 -------------
 - Kubernetes >=1.27, Helm 3, kubectl and an administrator kubeconfig.
 - A working StorageClass. Set storageClass to its actual name.
 - Enough allocatable CPU/memory and disk for the selected profile.
 - Workers can pull all configured images (or have the exact images preloaded).
-- Install cert-manager/ob-operator separately using the operator release guide.
+- Install cert-manager before Operator; verify its controller, cainjector and
+  webhook Deployments are available in your cert-manager namespace.
   The Operator must support native lakehouse v1: storage-init-job gating and
   resolve-storage-service. Use the matching Operator image supplied in this
   release. Older SS-capable builds alone are insufficient. The readiness hook image must contain /lakehouse-readiness and
@@ -28,6 +46,26 @@ An administrator installs Operator once per Kubernetes cluster; lakehouse users
 then install separate Helm releases. Do not install another Operator for every
 lakehouse release. Operator and database resources have different lifecycles.
 
+For a NEW cluster without Operator, after cert-manager, StorageClass and the
+locked worker images are ready, run from the extracted native Helm bundle:
+
+  kubectl -n cert-manager rollout status deployment/cert-manager --timeout=120s
+  kubectl -n cert-manager rollout status deployment/cert-manager-cainjector --timeout=120s
+  kubectl -n cert-manager rollout status deployment/cert-manager-webhook --timeout=120s
+  helm upgrade --install ob-operator ./ob-operator-2.3.4.tgz \
+    --namespace oceanbase-system --create-namespace \
+    -f operator-values.yaml --wait --timeout 5m
+  kubectl -n oceanbase-system rollout status deployment/oceanbase-controller-manager --timeout=180s
+  kubectl wait --for=condition=Established --timeout=60s \
+    crd/obclusters.oceanbase.oceanbase.com \
+    crd/oblogserviceclusters.oceanbase.oceanbase.com
+
+These cert-manager commands assume its usual release/namespace names; use the
+actual names for a customized installation. On a cluster with an existing
+Operator, first check helm list -A and its Deployment image. Reuse its existing
+release and namespace; do not install a second controller or try to take over its
+CRDs. Finish any required Operator upgrade before database bootstrap begins.
+
 Single-node experience
 ----------------------
 Copy values-single-node.yaml to your working directory. Set image overrides
@@ -37,7 +75,7 @@ one Observer (2 CPU/10Gi), three LogService processes (1 CPU/4Gi EACH), MinIO,
 Dashboard, Prometheus and Alertmanager. It uses fixed sizing, not all machine
 resources. CPU requests from other Kubernetes workloads count against capacity.
 
-  helm upgrade --install ob-demo ./oceanbase-lakehouse-0.4.0.tgz \
+  helm upgrade --install ob-demo ./oceanbase-lakehouse-0.4.1.tgz \
     --namespace ob-demo --create-namespace \
     -f image-values.yaml -f values-single-node.yaml \
     --wait --wait-for-jobs --timeout 35m
@@ -52,7 +90,7 @@ Copy values-three-nodes.yaml and replace worker-1/2/3 with the actual
 kubernetes.io/hostname label values (not assumed public IPs):
 
   kubectl get nodes -L kubernetes.io/hostname
-  helm upgrade --install ob-demo ./oceanbase-lakehouse-0.4.0.tgz \
+  helm upgrade --install ob-demo ./oceanbase-lakehouse-0.4.1.tgz \
     --namespace ob-demo --create-namespace \
     -f image-values.yaml -f values-three-nodes.yaml \
     --wait --wait-for-jobs --timeout 35m

@@ -1,0 +1,63 @@
+name: lakehouse release consistency
+
+on:
+  push:
+    paths:
+      - 'charts/oceanbase-lakehouse/**'
+      - 'charts/oceanbase-dashboard/**'
+      - 'charts/ob-operator/**'
+      - 'deploy/compose/lakehouse/**'
+      - 'scripts/lakehouse/build-native-packages.py'
+      - 'scripts/lakehouse/release-images.lock.json'
+      - 'scripts/lakehouse/test_native_packages.py'
+      - 'scripts/lakehouse/NATIVE-RELEASE.md'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/lakehouse-release.yml'
+  pull_request:
+    paths:
+      - 'charts/oceanbase-lakehouse/**'
+      - 'charts/oceanbase-dashboard/**'
+      - 'charts/ob-operator/**'
+      - 'deploy/compose/lakehouse/**'
+      - 'scripts/lakehouse/build-native-packages.py'
+      - 'scripts/lakehouse/release-images.lock.json'
+      - 'scripts/lakehouse/test_native_packages.py'
+      - 'scripts/lakehouse/NATIVE-RELEASE.md'
+      - 'go.mod'
+      - 'go.sum'
+      - '.github/workflows/lakehouse-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: azure/setup-helm@v4
+        with:
+          version: 'v3.16.4'
+      - name: Prepare build-time YAML parser
+        run: python -m pip install 'PyYAML==6.0.3'
+      - name: Require real rendering tools
+        run: |
+          helm version --short
+          docker compose version
+      - name: Validate native release identity and actual package rendering
+        # Image metadata is synthetic test input. No registry pull or live
+        # installation is claimed by these configuration/packaging regressions.
+        run: python -m unittest discover -s scripts/lakehouse -p test_native_packages.py -v
+      - name: Check public Helm and Compose shared image defaults
+        run: >-
+          go test -count=1 ./charts/oceanbase-lakehouse
+          -run '^TestSharedDatabaseImagesMatchCompose$'

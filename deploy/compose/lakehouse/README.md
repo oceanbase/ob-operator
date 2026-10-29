@@ -26,6 +26,31 @@ registry reference. End users do not build Go code, install Helm or run a
 credential-preparation script. The source defaults are versioned references;
 a public bootstrap image must be published before its GHCR default is usable.
 
+## Matching Helm and Compose releases
+
+Use the Compose bundle and images from the same delivery version. Both native
+Helm and Compose bundles are generated from `release-images.lock.json`: their
+Observer, LogService, MinIO and mc references, versions and config image IDs are
+identical. Helm includes additional Kubernetes components; Compose additionally
+uses the bootstrap image. `image-lock.json` lists the subset needed by this
+bundle. Config image IDs are not registry manifest digests.
+
+For an internal offline delivery, load the matching shared image archive once
+into Docker, then start from the extracted **Compose** directory:
+
+```bash
+docker load -i /path/to/oceanbase-lakehouse-images-<delivery-version>.tar.gz
+cd /path/to/oceanbase-lakehouse-compose-<delivery-version>
+docker compose up -d --pull never
+```
+
+The lightweight Compose and native Helm archives do not contain image layers.
+An older Helm image archive can contain different component versions and is not
+a substitute for the matching release image archive. Do not retag a different
+Observer build to make it appear to match. Release maintainers build both
+channels together with `scripts/lakehouse/build-native-packages.py`; see
+`scripts/lakehouse/NATIVE-RELEASE.md` in the source repository.
+
 ## Choose an image registry (optional)
 
 If the default registries are unreachable, use your organization's registry by
