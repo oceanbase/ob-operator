@@ -26,6 +26,72 @@ registry reference. End users do not build Go code, install Helm or run a
 credential-preparation script. The source defaults are versioned references;
 a public bootstrap image must be published before its GHCR default is usable.
 
+## Choose an image registry (optional)
+
+If the default registries are unreachable, use your organization's registry by
+setting one variable. Replace the example with a registry/namespace that contains
+all five release images; omit `https://` and any trailing slash. For a private
+registry, first run `docker login registry.example.com:5000`.
+
+```bash
+export IMAGE_REGISTRY=registry.example.com:5000/team/lakehouse
+docker compose config --images
+docker compose pull
+docker compose up -d
+```
+
+You can also prefix each command with the variable instead of exporting it:
+
+```bash
+IMAGE_REGISTRY=registry.example.com:5000/team/lakehouse docker compose config --images
+IMAGE_REGISTRY=registry.example.com:5000/team/lakehouse docker compose pull
+IMAGE_REGISTRY=registry.example.com:5000/team/lakehouse docker compose up -d
+```
+
+Inline variables apply only to that command. Use the same setting for later
+Compose commands, or save it in `.env`. `docker compose up` has no `--registry`
+or `-e` option for selecting images.
+
+`IMAGE_REGISTRY` replaces the registry/namespace and keeps each image name and
+release tag:
+
+| Image override | Image under `IMAGE_REGISTRY` |
+| --- | --- |
+| `OBSERVER_IMAGE` | `oceanbase-ai-cloud-native:<release-tag>` |
+| `LOGSERVICE_IMAGE` | `oblogservice:<release-tag>` |
+| `BOOTSTRAP_IMAGE` | `lakehouse-bootstrap:<release-tag>` |
+| `MINIO_IMAGE` | `minio:<release-tag>` |
+| `MINIO_MC_IMAGE` | `mc:<release-tag>` |
+
+For persistent configuration, edit `IMAGE_REGISTRY` in the delivered `.env`.
+If no `.env` was delivered, copy `.env.example` to `.env` first. **Retain the
+delivered image tags/build references**: a release may pin different builds from
+the source example, especially `lakehouse-bootstrap`. Do not replace the
+delivered `.env` with the source example.
+
+To keep a separate configuration file, copy the complete delivered `.env` and
+edit its `IMAGE_REGISTRY` value; a minimal `--env-file` containing only the
+registry would omit the release's image pins:
+
+```bash
+cp .env my-registry.env
+# Edit IMAGE_REGISTRY in my-registry.env; preserve the other release settings.
+docker compose --env-file my-registry.env config --images
+docker compose --env-file my-registry.env pull
+docker compose --env-file my-registry.env up -d
+```
+
+If your registry uses different image names or paths, set any individual
+`*_IMAGE` variable from the table to a full `registry/path/name:tag` or
+`registry/path/name@sha256:<digest>` reference. These overrides take precedence
+over `IMAGE_REGISTRY`; check `docker compose config --images` before pulling.
+
+This setting selects image locations; it does not configure a Docker Engine
+registry mirror or upload images. The selected registry must be reachable and
+contain the exact compatible release images. There is no automatic fallback to
+an unverified public mirror, and the source defaults do not guarantee public
+image availability.
+
 ## Start
 
 Extract the supplied quickstart archive and enter its directory, then run:
@@ -166,8 +232,11 @@ docker compose logs --tail=100 credentials-init minio-init logservice-bootstrap 
 docker compose logs --tail=100 observer logservice-1
 ```
 
-- **Image pull failed:** obtain the release images or correct their registry
-  references. The bootstrap image must already be built by the release owner.
+- **Image pull failed / Docker Hub timeout:** use the registry configuration
+  above and check `docker compose config --images`, then retry `docker compose
+  pull`. Other services may report `context canceled` after one pull fails; fix
+  that pull error first. The registry must contain the exact release images,
+  including the prebuilt bootstrap image.
 - **Container exited / OOMKilled:** check available host memory and limits. The
   defaults cap each LogService to avoid consuming the host's full memory.
 - **Initialization failed:** the dependency chain stops the dependent service.

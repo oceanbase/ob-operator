@@ -39,6 +39,11 @@ type service struct {
 
 func renderCompose(t *testing.T) map[string]service {
 	t.Helper()
+	return renderComposeEnvironment(t, nil, "", true)
+}
+
+func renderComposeEnvironment(t *testing.T, overrides map[string]string, envFile string, explicitEnvFile bool) map[string]service {
+	t.Helper()
 	if _, err := exec.LookPath("docker"); err != nil {
 		t.Skip("Docker Compose CLI is required for configuration validation")
 	}
@@ -55,7 +60,17 @@ func renderCompose(t *testing.T) map[string]service {
 	if err := os.Mkdir(filepath.Join(dir, "scripts"), 0700); err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command("docker", "compose", "--env-file", "/dev/null", "-f", filepath.Join(dir, "compose.yaml"), "config", "--format", "json")
+	envPath := filepath.Join(dir, ".env")
+	if err := os.WriteFile(envPath, []byte(envFile), 0600); err != nil {
+		t.Fatal(err)
+	}
+	args := []string{"compose"}
+	if explicitEnvFile {
+		args = append(args, "--env-file", envPath)
+	}
+	args = append(args, "-f", filepath.Join(dir, "compose.yaml"), "config", "--format", "json")
+	cmd := exec.Command("docker", args...)
+	cmd.Dir = dir
 	// Defaults must not accidentally inherit a developer's Compose overrides.
 	for _, kv := range os.Environ() {
 		name := strings.SplitN(kv, "=", 2)[0]
@@ -63,9 +78,12 @@ func renderCompose(t *testing.T) map[string]service {
 			cmd.Env = append(cmd.Env, kv)
 		}
 	}
-	out, err := cmd.Output()
+	for name, value := range overrides {
+		cmd.Env = append(cmd.Env, name+"="+value)
+	}
+	out, err := cmd.CombinedOutput()
 	if err != nil {
-		t.Fatalf("compose config: %v", err)
+		t.Fatalf("compose config: %v\n%s", err, out)
 	}
 	var cfg struct {
 		Services map[string]service `json:"services"`
@@ -145,5 +163,75 @@ func TestPrivateCredentialsAndBoundedResources(t *testing.T) {
 	ports := services["observer"].Ports
 	if len(ports) != 1 || ports[0].HostIP != "127.0.0.1" || ports[0].Published != "32881" {
 		t.Fatalf("unexpected SQL exposure %+v", ports)
+	}
+}
+
+// Exercise real Compose interpolation: the same registry selection must reach
+// every consumer, work with the shipped .env, and preserve pinned release tags.
+func TestImageRegistrySelection(t *testing.T) {
+	example, err := os.ReadFile(".env.example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	const registry = "registry.example.invalid:5000/team/lakehouse"
+	const digest = "private.example.invalid/custom/observer@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	releaseEnv := strings.Replace(string(example),
+		"${IMAGE_REGISTRY:-ghcr.io/oceanbase}/lakehouse-bootstrap:0.1.0",
+		"${IMAGE_REGISTRY:-oceanbase-qa}/lakehouse-bootstrap:native-e43fab5cc687", 1)
+	if releaseEnv == string(example) {
+		t.Fatal("release fixture must replace the bootstrap reference")
+	}
+	for _, tc := range []struct {
+		name      string
+		env       map[string]string
+		file      string
+		explicit  bool
+		prefix    string
+		bootstrap string
+		override  bool
+	}{
+		{name: "original defaults"},
+		{name: "empty prefix", env: map[string]string{"IMAGE_REGISTRY": ""}},
+		{name: "inline or exported registry", env: map[string]string{"IMAGE_REGISTRY": registry}, prefix: registry},
+		{name: "copied example", file: string(example)},
+		{name: "environment overrides example", file: string(example), env: map[string]string{"IMAGE_REGISTRY": registry}, prefix: registry},
+		{name: "registry in dot env", file: strings.Replace(string(example), "IMAGE_REGISTRY=", "IMAGE_REGISTRY="+registry, 1), prefix: registry},
+		{name: "explicit env file", file: strings.Replace(string(example), "IMAGE_REGISTRY=", "IMAGE_REGISTRY="+registry, 1), explicit: true, prefix: registry},
+		{name: "shell overrides file registry", file: strings.Replace(string(example), "IMAGE_REGISTRY=", "IMAGE_REGISTRY=ignored.example.invalid/old", 1), env: map[string]string{"IMAGE_REGISTRY": registry}, explicit: true, prefix: registry},
+		{name: "full digest override", file: string(example), env: map[string]string{"IMAGE_REGISTRY": registry, "OBSERVER_IMAGE": digest}, prefix: registry, override: true},
+		{name: "release defaults", file: releaseEnv, bootstrap: "oceanbase-qa/lakehouse-bootstrap:native-e43fab5cc687"},
+		{name: "release registry", file: releaseEnv, env: map[string]string{"IMAGE_REGISTRY": registry}, prefix: registry, bootstrap: registry + "/lakehouse-bootstrap:native-e43fab5cc687"},
+		{name: "release custom env file", file: strings.Replace(releaseEnv, "IMAGE_REGISTRY=", "IMAGE_REGISTRY="+registry, 1), explicit: true, prefix: registry, bootstrap: registry + "/lakehouse-bootstrap:native-e43fab5cc687"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			services := renderComposeEnvironment(t, tc.env, tc.file, tc.explicit)
+			expected := map[string]string{
+				"observer":         "oceanbase/oceanbase-ai-cloud-native:4.6.2.1-100000092026090921.al8",
+				"logservice-1":     "oblogservice:1.3.0",
+				"minio":            "minio/minio:RELEASE.2025-09-07T16-13-09Z",
+				"minio-init":       "minio/mc:RELEASE.2025-08-13T08-35-41Z",
+				"credentials-init": "ghcr.io/oceanbase/lakehouse-bootstrap:0.1.0",
+			}
+			if tc.prefix != "" {
+				for name, ref := range expected {
+					expected[name] = tc.prefix + "/" + ref[strings.LastIndex(ref, "/")+1:]
+				}
+			}
+			if tc.bootstrap != "" {
+				expected["credentials-init"] = tc.bootstrap
+			}
+			if tc.override {
+				expected["observer"] = digest
+			}
+			for _, name := range []string{"logservice-2", "logservice-3", "logservice-bootstrap"} {
+				expected[name] = expected["logservice-1"]
+			}
+			expected["observer-bootstrap"] = expected["credentials-init"]
+			for name, want := range expected {
+				if got := services[name].Image; got != want {
+					t.Errorf("%s image = %q, want %q", name, got, want)
+				}
+			}
+		})
 	}
 }

@@ -1,9 +1,11 @@
 # Linux AMD64 quickstart. No .env file, local build or preparation script required.
 name: ${COMPOSE_PROJECT_NAME:-ob-lakehouse}
 
-x-bootstrap-image: &bootstrap-image ${BOOTSTRAP_IMAGE:-ghcr.io/oceanbase/lakehouse-bootstrap:0.1.0}
+# IMAGE_REGISTRY is an optional registry/namespace prefix, without a trailing slash.
+# A complete per-image reference always takes precedence (including @sha256 digests).
+x-bootstrap-image: &bootstrap-image ${BOOTSTRAP_IMAGE:-${IMAGE_REGISTRY:-ghcr.io/oceanbase}/lakehouse-bootstrap:0.1.0}
 x-logservice: &logservice
-  image: ${LOGSERVICE_IMAGE:-oblogservice:1.3.0}
+  image: ${LOGSERVICE_IMAGE:-${IMAGE_REGISTRY:+${IMAGE_REGISTRY}/}oblogservice:1.3.0}
   platform: linux/amd64
   entrypoint: ["/opt/lakehouse/logservice-entrypoint.sh"]
   restart: unless-stopped
@@ -36,7 +38,7 @@ services:
     logging: *bounded-logging
 
   minio:
-    image: ${MINIO_IMAGE:-minio/minio:RELEASE.2025-09-07T16-13-09Z}
+    image: ${MINIO_IMAGE:-${IMAGE_REGISTRY:-minio}/minio:RELEASE.2025-09-07T16-13-09Z}
     entrypoint: ["/opt/lakehouse/minio-entrypoint.sh"]
     user: "0:0"
     restart: unless-stopped
@@ -58,7 +60,7 @@ services:
     logging: *bounded-logging
 
   minio-init:
-    image: ${MINIO_MC_IMAGE:-minio/mc:RELEASE.2025-08-13T08-35-41Z}
+    image: ${MINIO_MC_IMAGE:-${IMAGE_REGISTRY:-minio}/mc:RELEASE.2025-08-13T08-35-41Z}
     entrypoint: ["/opt/lakehouse/minio-init.sh"]
     user: "0:0"
     restart: "no"
@@ -113,7 +115,7 @@ services:
         ipv4_address: ${LOGSERVICE_IP_3:-172.30.52.13}
 
   logservice-bootstrap:
-    image: ${LOGSERVICE_IMAGE:-oblogservice:1.3.0}
+    image: ${LOGSERVICE_IMAGE:-${IMAGE_REGISTRY:+${IMAGE_REGISTRY}/}oblogservice:1.3.0}
     platform: linux/amd64
     entrypoint: ["/opt/lakehouse/logservice-bootstrap.sh"]
     user: "0:0"
@@ -140,7 +142,7 @@ services:
     logging: *bounded-logging
 
   observer:
-    image: ${OBSERVER_IMAGE:-oceanbase/oceanbase-ai-cloud-native:4.6.2.1-100000092026090921.al8}
+    image: ${OBSERVER_IMAGE:-${IMAGE_REGISTRY:-oceanbase}/oceanbase-ai-cloud-native:4.6.2.1-100000092026090921.al8}
     platform: linux/amd64
     entrypoint: ["/opt/lakehouse/observer-entrypoint.sh"]
     restart: unless-stopped
