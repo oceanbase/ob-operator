@@ -17,7 +17,9 @@ import (
 	"path/filepath"
 )
 
-var credentialNames = []string{"minio_access_id", "minio_access_key", "ob_root_password"}
+var credentialNames = []string{"minio_access_id", "minio_access_key", "ob_root_password", "ob_monitor_password"}
+
+const credentialFormatVersion = 2
 
 // initCredentials runs in an init container before any database or object-store
 // process. The named volume survives container recreation and compose down.
@@ -33,9 +35,13 @@ func initCredentials(dir string) error {
 		return err
 	}
 	marker := filepath.Join(dir, ".initialized")
-	_, err = os.Lstat(marker)
-	initialized := err == nil
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
+	version := 0
+	markerValue, err := os.ReadFile(marker)
+	if err == nil {
+		if _, err := fmt.Sscanf(string(markerValue), "v%d", &version); err != nil || version < 1 || version > credentialFormatVersion {
+			return errors.New("credential marker has an unsupported version")
+		}
+	} else if !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
 	for _, name := range credentialNames {
@@ -56,7 +62,9 @@ func initCredentials(dir string) error {
 		if !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
-		if initialized {
+		// Version 2 adds a least-privilege OBAgent password. It is the only
+		// credential that may be added to an existing version-1 volume.
+		if version > 0 && !(version == 1 && name == "ob_monitor_password") {
 			return fmt.Errorf("%s is missing from initialized credentials; restore the credentials volume from backup", name)
 		}
 		var random [24]byte
@@ -71,10 +79,34 @@ func initCredentials(dir string) error {
 			return fmt.Errorf("save %s: %w", name, err)
 		}
 	}
-	if !initialized {
-		return writePrivateFile(marker, []byte("v1\n"))
+	if version != credentialFormatVersion {
+		return replacePrivateFile(marker, []byte(fmt.Sprintf("v%d\n", credentialFormatVersion)))
 	}
 	return nil
+}
+
+func replacePrivateFile(path string, contents []byte) error {
+	tmp, err := os.CreateTemp(filepath.Dir(path), ".credential-marker-")
+	if err != nil {
+		return err
+	}
+	defer os.Remove(tmp.Name())
+	if err := tmp.Chmod(0600); err != nil {
+		tmp.Close()
+		return err
+	}
+	if _, err := tmp.Write(contents); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Sync(); err != nil {
+		tmp.Close()
+		return err
+	}
+	if err := tmp.Close(); err != nil {
+		return err
+	}
+	return os.Rename(tmp.Name(), path)
 }
 
 func writePrivateFile(path string, contents []byte) error {

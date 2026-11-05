@@ -65,8 +65,8 @@ func TestInitializationIdentityIsIndependentAndNonRoot(t *testing.T) {
 				var minio appsv1.StatefulSet
 				decodeScheduledObject(t, find(t, docs, "StatefulSet", "qa-minio"), &minio)
 				security := minio.Spec.Template.Spec.SecurityContext
-				if security == nil || security.RunAsUser == nil || *security.RunAsUser != 1000 ||
-					security.RunAsGroup == nil || *security.RunAsGroup != 1000 || security.FSGroup == nil || *security.FSGroup != 1000 {
+				if security == nil || security.RunAsUser == nil || *security.RunAsUser != 10001 ||
+					security.RunAsGroup == nil || *security.RunAsGroup != 10001 || security.FSGroup == nil || *security.FSGroup != 10001 {
 					t.Fatal("changing initialization identity must not change MinIO's independent default identity")
 				}
 			}

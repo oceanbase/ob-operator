@@ -43,6 +43,31 @@ func TestCredentialsCreatedOnceAndRetained(t *testing.T) {
 	if before["minio_access_key"] == before["ob_root_password"] {
 		t.Fatal("database and storage share a password")
 	}
+	if before["ob_monitor_password"] == before["ob_root_password"] {
+		t.Fatal("monitor and root accounts share a password")
+	}
+}
+
+func TestVersionOneVolumeAddsOnlyMonitorCredential(t *testing.T) {
+	dir := t.TempDir()
+	for _, name := range []string{"minio_access_id", "minio_access_key", "ob_root_password"} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte("existing-"+name+"\n"), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(dir, ".initialized"), []byte("v1\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := initCredentials(dir); err != nil {
+		t.Fatal(err)
+	}
+	if value, err := readCredential(filepath.Join(dir, "ob_monitor_password")); err != nil || len(value) < 20 {
+		t.Fatalf("monitor credential migration failed: %v", err)
+	}
+	marker, _ := os.ReadFile(filepath.Join(dir, ".initialized"))
+	if string(marker) != "v2\n" {
+		t.Fatalf("unexpected marker %q", marker)
+	}
 }
 
 func TestInitializedCredentialCorruptionDoesNotRotatePasswords(t *testing.T) {

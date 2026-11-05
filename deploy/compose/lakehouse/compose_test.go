@@ -35,6 +35,7 @@ type service struct {
 		HostIP    string `json:"host_ip"`
 		Published string `json:"published"`
 	} `json:"ports"`
+	NetworkMode string `json:"network_mode"`
 }
 
 func renderCompose(t *testing.T) map[string]service {
@@ -96,8 +97,8 @@ func renderComposeEnvironment(t *testing.T, overrides map[string]string, envFile
 
 func TestQuickstartWithoutPreparation(t *testing.T) {
 	services := renderCompose(t)
-	if len(services) != 9 {
-		t.Fatalf("expected five services and four initialization containers, got %d", len(services))
+	if len(services) != 13 {
+		t.Fatalf("expected eight services and five initialization containers, got %d", len(services))
 	}
 	for name, s := range services {
 		if s.Image == "" || s.Build != nil {
@@ -107,13 +108,15 @@ func TestQuickstartWithoutPreparation(t *testing.T) {
 			t.Fatalf("%s uses floating image", name)
 		}
 		for _, mount := range s.Volumes {
-			if mount.Type == "bind" && !strings.HasSuffix(mount.Source, "/scripts") {
+			if mount.Type == "bind" && !strings.HasSuffix(mount.Source, "/scripts") &&
+				!strings.Contains(mount.Source, "/monitoring/") {
 				t.Fatalf("%s needs host-prepared files: %+v", name, mount)
 			}
 		}
 	}
 	for _, tc := range []struct{ service, dependency, condition string }{
 		{"minio", "credentials-init", "service_completed_successfully"},
+		{"host-info-init", "credentials-init", "service_completed_successfully"},
 		{"minio-init", "minio", "service_healthy"},
 		{"logservice-bootstrap", "minio-init", "service_completed_successfully"},
 		{"logservice-bootstrap", "logservice-1", "service_healthy"},
@@ -121,16 +124,149 @@ func TestQuickstartWithoutPreparation(t *testing.T) {
 		{"logservice-bootstrap", "logservice-3", "service_healthy"},
 		{"observer", "logservice-bootstrap", "service_completed_successfully"},
 		{"observer-bootstrap", "observer", "service_healthy"},
+		{"observer-bootstrap", "host-info-init", "service_completed_successfully"},
+		{"obagent", "observer-bootstrap", "service_completed_successfully"},
+		{"prometheus", "obagent", "service_healthy"},
+		{"prometheus", "alertmanager", "service_healthy"},
 	} {
 		if services[tc.service].DependsOn[tc.dependency].Condition != tc.condition {
 			t.Fatalf("%s must wait for %s (%s)", tc.service, tc.dependency, tc.condition)
 		}
 	}
+	if services["obagent"].NetworkMode != "service:observer" {
+		t.Fatalf("OBAgent must share the Observer network namespace, got %q", services["obagent"].NetworkMode)
+	}
+	if services["host-info-init"].NetworkMode != "host" {
+		t.Fatalf("host-info-init must inspect the host network namespace, got %q", services["host-info-init"].NetworkMode)
+	}
+	ports := services["observer"].Ports
+	foundSQL, foundObshell := false, false
+	for _, port := range ports {
+		switch port.Published {
+		case "32881":
+			foundSQL = port.HostIP == "0.0.0.0"
+		case "32886":
+			foundObshell = port.HostIP == "0.0.0.0"
+		}
+	}
+	if !foundSQL || !foundObshell {
+		t.Fatalf("expected SQL on 0.0.0.0:32881 and obshell on 0.0.0.0:32886, got %+v", ports)
+	}
+	if got := services["observer-bootstrap"].Environment["OBSHELL_HOST_PORT"]; got != "32886" {
+		t.Fatalf("observer-bootstrap OBSHELL_HOST_PORT = %q, want 32886", got)
+	}
+	observer := services["observer"]
+	if observer.Environment["AUTO_REGISTER_MONITORING"] != "true" ||
+		observer.Environment["PROMETHEUS_INTERNAL_URL"] != "http://prometheus:9090/" ||
+		observer.Environment["ALERTMANAGER_INTERNAL_URL"] != "http://alertmanager:9093" {
+		t.Fatalf("observer monitoring auto-registration defaults are incomplete: %+v", observer.Environment)
+	}
+}
+
+func TestEntrypointScriptsAreExecutable(t *testing.T) {
+	for _, name := range []string{
+		"minio-entrypoint.sh", "minio-init.sh", "logservice-entrypoint.sh",
+		"logservice-bootstrap.sh", "observer-entrypoint.sh", "observer-bootstrap.sh",
+		"obagent-entrypoint.sh", "host-info-init.sh", "obshell-monitoring-register.sh",
+	} {
+		info, err := os.Stat(filepath.Join("scripts", name))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if info.Mode().Perm()&0111 == 0 {
+			t.Errorf("%s is configured as an entrypoint but is not executable", name)
+		}
+	}
+	bootstrap, err := os.ReadFile(filepath.Join("scripts", "observer-bootstrap.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		`host_ip="$(cat /run/secrets/docker_host_ip)"`,
+		"${host_ip}:${OBSERVER_SQL_HOST_PORT:-32881}",
+		"http://${host_ip}:${OBSHELL_HOST_PORT:-32886}/",
+		"http://${host_ip}:${PROMETHEUS_HOST_PORT:-39090}/",
+		"http://${host_ip}:${ALERTMANAGER_HOST_PORT:-39093}/",
+		"docker compose run --rm --no-deps observer-bootstrap --mode show-password",
+	} {
+		if !strings.Contains(string(bootstrap), want) {
+			t.Fatalf("observer bootstrap completion output is missing %q", want)
+		}
+	}
+}
+
+func TestObshellUsesTheRetainedDatabaseCredentialOnEveryStart(t *testing.T) {
+	entrypoint, err := os.ReadFile(filepath.Join("scripts", "observer-entrypoint.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := string(entrypoint)
+	for _, required := range []string{
+		`root_password="$(cat /run/secrets/ob_root_password)"`,
+		`obshell_args=(agent start --ip "${LOCAL_IP}" --password "${root_password}")`,
+	} {
+		if !strings.Contains(body, required) {
+			t.Fatalf("Observer entrypoint does not always seed obshell with the retained root credential: missing %q", required)
+		}
+	}
+	if strings.Contains(body, `if [[ "${existing_installation}" == true ]]`) {
+		t.Fatal("obshell credential must also be supplied during the first installation")
+	}
+
+	acceptance, err := os.ReadFile(filepath.Join("scripts", "acceptance.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(acceptance), "obshell cluster show") ||
+		!strings.Contains(string(acceptance), "grep -Eq '[[:space:]]ACTIVE[[:space:]]'") {
+		t.Fatal("acceptance must verify an obshell operation that reads the authenticated cluster state")
+	}
+	bootstrap, err := os.ReadFile(filepath.Join("scripts", "observer-bootstrap.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(bootstrap), "/run/secrets/observer_bootstrap_complete") ||
+		!strings.Contains(body, "/run/secrets/observer_bootstrap_complete") {
+		t.Fatal("bootstrap completion must trigger the first authenticated obshell takeover")
+	}
+	if !strings.HasPrefix(string(bootstrap), "#!/bin/sh\n") || strings.Contains(string(bootstrap), "bash") {
+		t.Fatal("bootstrap wrapper must run in the bootstrap image, which only guarantees /bin/sh")
+	}
+	if !strings.Contains(body, `kill -TERM "${observer_pid}"`) {
+		t.Fatal("failed obshell takeover must terminate Observer so the container restart policy can recover")
+	}
+}
+
+func TestObshellMonitoringRegistrationUsesLocalSocket(t *testing.T) {
+	register, err := os.ReadFile(filepath.Join("scripts", "obshell-monitoring-register.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := string(register)
+	for _, want := range []string{
+		`--unix-socket "${socket}"`,
+		`/api/v1/system/external/${name}`,
+		`wait_ready prometheus`,
+		`wait_ready alertmanager`,
+		`register prometheus`,
+		`register alertmanager`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("monitoring registration is missing %q", want)
+		}
+	}
+	entrypoint, err := os.ReadFile(filepath.Join("scripts", "observer-entrypoint.sh"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(entrypoint), `/opt/lakehouse/obshell-monitoring-register.sh &`) {
+		t.Fatal("Observer must start automatic monitoring registration in the background")
+	}
 }
 
 func TestPrivateCredentialsAndBoundedResources(t *testing.T) {
 	services := renderCompose(t)
-	for _, name := range []string{"credentials-init", "minio", "minio-init", "logservice-bootstrap", "observer-bootstrap"} {
+	for _, name := range []string{"credentials-init", "host-info-init", "minio", "minio-init", "logservice-bootstrap", "observer", "observer-bootstrap", "obagent"} {
 		found := false
 		for _, mount := range services[name].Volumes {
 			if mount.Target != "/run/secrets" {
@@ -140,7 +276,7 @@ func TestPrivateCredentialsAndBoundedResources(t *testing.T) {
 			if mount.Type != "volume" || mount.Source != "credentials" {
 				t.Fatalf("%s credentials are not persistent named storage", name)
 			}
-			if name != "credentials-init" && name != "observer-bootstrap" && !mount.ReadOnly {
+			if name != "credentials-init" && name != "host-info-init" && name != "observer-bootstrap" && !mount.ReadOnly {
 				t.Fatalf("%s can change credentials", name)
 			}
 		}
@@ -156,13 +292,20 @@ func TestPrivateCredentialsAndBoundedResources(t *testing.T) {
 		}
 	}
 	for name, s := range services {
-		if name != "observer" && len(s.Ports) > 0 {
+		if name != "observer" && name != "prometheus" && name != "alertmanager" && len(s.Ports) > 0 {
 			t.Fatalf("%s publishes unnecessary host ports", name)
 		}
 	}
 	ports := services["observer"].Ports
-	if len(ports) != 1 || ports[0].HostIP != "127.0.0.1" || ports[0].Published != "32881" {
-		t.Fatalf("unexpected SQL exposure %+v", ports)
+	if len(ports) != 2 || ports[0].HostIP != "0.0.0.0" || ports[0].Published != "32881" ||
+		ports[1].HostIP != "0.0.0.0" || ports[1].Published != "32886" {
+		t.Fatalf("unexpected SQL/obshell exposure %+v", ports)
+	}
+	if ports := services["prometheus"].Ports; len(ports) != 1 || ports[0].HostIP != "0.0.0.0" || ports[0].Published != "39090" {
+		t.Fatalf("unexpected Prometheus exposure %+v", ports)
+	}
+	if ports := services["alertmanager"].Ports; len(ports) != 1 || ports[0].HostIP != "0.0.0.0" || ports[0].Published != "39093" {
+		t.Fatalf("unexpected Alertmanager exposure %+v", ports)
 	}
 }
 
@@ -176,7 +319,7 @@ func TestImageRegistrySelection(t *testing.T) {
 	const registry = "registry.example.invalid:5000/team/lakehouse"
 	const digest = "private.example.invalid/custom/observer@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	releaseEnv := strings.Replace(string(example),
-		"${IMAGE_REGISTRY:-ghcr.io/oceanbase}/lakehouse-bootstrap:0.1.0",
+		"${IMAGE_REGISTRY:-oceanbase}/lakehouse-bootstrap:20261103-monitoring-r1",
 		"${IMAGE_REGISTRY:-oceanbase}/lakehouse-bootstrap:native-e43fab5cc687", 1)
 	if releaseEnv == string(example) {
 		t.Fatal("release fixture must replace the bootstrap reference")
@@ -206,11 +349,14 @@ func TestImageRegistrySelection(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			services := renderComposeEnvironment(t, tc.env, tc.file, tc.explicit)
 			expected := map[string]string{
-				"observer":         "oceanbase/oceanbase-ai-cloud-native:4.6.2.1-100000092026090921.al8",
-				"logservice-1":     "oceanbase/oblogservice:1.3.0",
+				"observer":         "oceanbase/oceanbase-ai-cloud-native:4.6.3.0-82026110121.al8-r3",
+				"logservice-1":     "oceanbase/oblogservice:1.3.3-42026110118.al8-r1",
 				"minio":            "minio/minio:RELEASE.2025-09-07T16-13-09Z",
 				"minio-init":       "minio/mc:RELEASE.2025-08-13T08-35-41Z",
-				"credentials-init": "ghcr.io/oceanbase/lakehouse-bootstrap:0.1.0",
+				"credentials-init": "oceanbase/lakehouse-bootstrap:20261103-monitoring-r1",
+				"obagent":          "oceanbase/obagent:4.2.4-200000022025090416",
+				"prometheus":       "quay.io/prometheus/prometheus:v2.51.1",
+				"alertmanager":     "quay.io/prometheus/alertmanager:v0.27.0",
 			}
 			if tc.prefix != "" {
 				for name, ref := range expected {

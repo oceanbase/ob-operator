@@ -1,4 +1,5 @@
-# Internal single-node experience profile. Use a node with >=8 CPU / 32Gi memory
+# Optional explicit copy of the default single-node experience sizing.
+# No values file is needed for the default install. Use >=8 CPU / 32Gi memory
 # and a working local-path StorageClass with >=350Gi free disk.
 # Set image values to the published/pinned images supplied with your release.
 storageClass: local-path

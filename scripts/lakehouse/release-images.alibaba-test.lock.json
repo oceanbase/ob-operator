@@ -1,0 +1,208 @@
+{
+  "schemaVersion": 1,
+  "releaseVersion": "20261104-alibaba-online-r1",
+  "platform": "linux/amd64",
+  "scope": "Internal online test release. All 14 runtime images pushed and pulled on the build host; target machines need access to this registry.",
+  "excluded_optional": {
+    "sql-analyzer": {
+      "reference": "quay.io/oceanbase/sql-analyzer:0.1.0",
+      "reason": "Optional Dashboard SQL analyzer is not included or validated; only its inactive ConfigMap default may occur."
+    }
+  },
+  "prerequisites": [
+    "Kubernetes with a working StorageClass and cert-manager (prepared separately, not bundled)"
+  ],
+  "images": [
+    {
+      "role": "observer",
+      "reference": "reg.docker.alibaba-inc.com/ob-opensource-test/lakebase:oceanbase-ai-cloud-native-4.6.3.0-82026110121.al8-r3",
+      "image_id": "sha256:bd2948df84fff6234bf663175583ffedafd7b992714cd9b59232b9f43ec59071",
+      "platform": "linux/amd64",
+      "channels": [
+        "compose",
+        "helm"
+      ],
+      "source_reference": "oceanbase/oceanbase-ai-cloud-native:4.6.3.0-82026110121.al8-r3",
+      "publication": "verified-registry-pull",
+      "upstream_reference": "oceanbase/oceanbase-ai-cloud-native:4.6.3.0-82026110121.al8-r3",
+      "manifest_digest": "sha256:19ba7bc6c74a3f35989bb0e265120625e12765e174243ba50d4f9dccf9d4d7d5"
+    },
+    {
+      "role": "logservice",
+      "reference": "reg.docker.alibaba-inc.com/ob-opensource-test/lakebase:oblogservice-1.3.3-42026110118.al8-r1",
+      "image_id": "sha256:1f695623a7893f46879d19142d30a1839972354b50619e0d380db3bd06a4907b",
+      "platform": "linux/amd64",
+      "channels": [
+        "compose",
+        "helm"
+      ],
+      "source_reference": "oceanbase/oblogservice:1.3.3-42026110118.al8-r1",
+      "publication": "verified-registry-pull",
+      "upstream_reference": "oceanbase/oblogservice:1.3.3-42026110118.al8-r1",
+      "manifest_digest": "sha256:a19e58c4befc8d747e6cc5b30c995dac653a422e479accd12164810d618cd5fa"
+    },
+    {
+      "role": "minio",
+      "reference": "reg.docker.alibaba-inc.com/ob-opensource-test/lakebase:minio-RELEASE.2025-09-07T16-13-09Z",
+      "image_id": "sha256:69b2ec208575b69597784255eec6fa6a2985ee9e1a47f4411a51f7f5fdd193a9",
+      "platform": "linux/amd64",
+      "channels": [
+        "compose",
+        "helm"
+      ],
+      "source_reference": "minio/minio:RELEASE.2025-09-07T16-13-09Z",
+      "publication": "verified-registry-pull",
+      "upstream_reference": "minio/minio:RELEASE.2025-09-07T16-13-09Z",
+      "manifest_digest": "sha256:52dfd5c0bbd38d3219f2058c7af216d9f9a27a994b7b5baad09bbd38866015ff"
+    },
+    {
+      "role": "mc",
+      "reference": "reg.docker.alibaba-inc.com/ob-opensource-test/lakebase:mc-RELEASE.2025-08-13T08-35-41Z",
+      "image_id": "sha256:c2ad77420d33bb4ad8694457d3edf7188076428582bd24e3dd4d09d6a1d52872",
+      "platform": "linux/amd64",
+      "channels": [
+        "compose",
+        "helm"
+      ],
+      "source_reference": "minio/mc:RELEASE.2025-08-13T08-35-41Z",
+      "publication": "verified-registry-pull",
+      "upstream_reference": "minio/mc:RELEASE.2025-08-13T08-35-41Z",
+      "manifest_digest": "sha256:bdfae21c72b19fae5a005c56dddba25a873d75fac3dda60f55aea7e417382cbe"
+    },
+    {
+      "role": "bootstrap",
+      "reference": "reg.docker.alibaba-inc.com/ob-opensource-test/lakebase:lakehouse-bootstrap-20261103-monitoring-r1",
+      "image_id": "sha256:d1fd3f7cfbb1189340743bf5eda5737dabc78552e84bd3d9b0c002a80f4e313e",
+      "platform": "linux/amd64",
+      "channels": [
+        "compose"
+      ],
+      "source_reference": "oceanbase/lakehouse-bootstrap:20261103-monitoring-r1",
+      "publication": "verified-registry-pull",
+      "upstream_reference": "oceanbase/lakehouse-bootstrap:20261103-monitoring-r1",
+      "manifest_digest": "sha256:dec6ee3528dbf56c03722b2ad0a4ad2df4e2676d9503d220f4b25aee13a297f6"
+    },
+    {
+      "role": "obagent",
+      "reference": "reg.docker.alibaba-inc.com/ob-opensource-test/lakebase:obagent-4.2.4-200000022025090416",
+      "image_id": "sha256:0e1ac8c9480dd99661c3afb4380ffa988fc3d0705f0ab4140bd6410cbd096338",
+      "manifest_digest": "sha256:c71cdcddd91492a6bb91067c450fdccce7a16e1f10509d88c98604362da96d82",
+      "platform": "linux/amd64",
+      "channels": [
+        "compose"
+      ],
+      "source_reference": "oceanbase/obagent:4.2.4-200000022025090416",
+      "publication": "verified-registry-pull",
+      "upstream_reference": "oceanbase/obagent:4.2.4-200000022025090416",
+      "upstream_manifest_digest": "sha256:1e1b45663f9521d21e627ba06fe3e1df98e78076e93eab54ff214fd7981d64ea"
+    },
+    {
+      "role": "operator",
+      "reference": "reg.docker.alibaba-inc.com/ob-opensource-test/lakebase:ob-operator-native-44337ae7540b",
+      "image_id": "sha256:f8f1e569c2bc8082308e2789ddada0ef42ec397d3a599412f4f766512f056026",
+      "platform": "linux/amd64",
+      "channels": [
+        "helm"
+      ],
+      "source_reference": "oceanbase-qa/ob-operator:native-44337ae7540b",
+      "publication": "verified-registry-pull",
+      "upstream_reference": "oceanbase/ob-operator:native-44337ae7540b",
+      "manifest_digest": "sha256:6d24a26e684585bbf739ccf340d21042657c25f8acbca34b862ff278c117f21c"
+    },
+    {
+      "role": "dashboard",
+      "reference": "reg.docker.alibaba-inc.com/ob-opensource-test/lakebase:oceanbase-dashboard-93d77619-diagnostics-20261021",
+      "image_id": "sha256:3d88461a3a5acd5cc3fa26db3ffdecdc74ec82851cf92e71d34ad09a98f4e01a",
+      "platform": "linux/amd64",
+      "channels": [
+        "helm"
+      ],
+      "source_reference": "oceanbase-qa/oceanbase-dashboard:93d77619-diagnostics-20261021",
+      "publication": "verified-registry-pull",
+      "upstream_reference": "oceanbase/oceanbase-dashboard:93d77619-diagnostics-20261021",
+      "manifest_digest": "sha256:12e32b31e8bac9b870f627b9d92207108ef96f4e608a9f034d279a02f738ac87"
+    },
+    {
+      "role": "obdiag",
+      "reference": "reg.docker.alibaba-inc.com/ob-opensource-test/lakebase:obdiag-5.0.1-k8s-compat-19a3b560-20261021",
+      "image_id": "sha256:0204c3d57797cb1f322a6234a301e8140d0222f900728d16fee636630d9843a1",
+      "platform": "linux/amd64",
+      "channels": [
+        "helm"
+      ],
+      "source_reference": "oceanbase-qa/obdiag:5.0.1-k8s-compat-19a3b560-20261021",
+      "publication": "verified-registry-pull",
+      "upstream_reference": "oceanbase/obdiag:5.0.1-k8s-compat-19a3b560-20261021",
+      "manifest_digest": "sha256:d2cfd6f7ba9a4f8fea25882bd805064641e7ce5a66d3803c4cf017609b1e471c"
+    },
+    {
+      "role": "oceanbase-helper",
+      "reference": "reg.docker.alibaba-inc.com/ob-opensource-test/lakebase:oceanbase-helper-93d77619-20261021",
+      "image_id": "sha256:deef30d65e610da4ee847248b1e5dfc629bcc174bdba0dc499f3b4b7437d5c9a",
+      "platform": "linux/amd64",
+      "channels": [
+        "helm"
+      ],
+      "source_reference": "oceanbase-qa/oceanbase-helper:93d77619-20261021",
+      "publication": "verified-registry-pull",
+      "upstream_reference": "oceanbase/oceanbase-helper:93d77619-20261021",
+      "manifest_digest": "sha256:46a9976d86f945a0bd4cf618a9b7beb0712d7e950021b85f87a467654ab05199"
+    },
+    {
+      "role": "utility",
+      "reference": "reg.docker.alibaba-inc.com/ob-opensource-test/lakebase:busybox-1.36.1",
+      "image_id": "sha256:b116e155074440ffd9e449559433feb4cd2341eb3554b1da1c638c976e56451d",
+      "manifest_digest": "sha256:5b0745afdfec8efe7225bbe20cd87dc9139381e676400707ea979ec5406de3a8",
+      "platform": "linux/amd64",
+      "channels": [
+        "helm"
+      ],
+      "source_reference": "busybox:1.36.1",
+      "publication": "verified-registry-pull",
+      "upstream_reference": "busybox:1.36.1",
+      "upstream_manifest_digest": "sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662"
+    },
+    {
+      "role": "prometheus",
+      "reference": "reg.docker.alibaba-inc.com/ob-opensource-test/lakebase:prometheus-v2.51.1",
+      "image_id": "sha256:e350b167c4fa1aa73a73d9bdce67465f2b98edfff7a3d5f3b14e4bc92e7578ea",
+      "platform": "linux/amd64",
+      "channels": [
+        "compose",
+        "helm"
+      ],
+      "source_reference": "quay.io/prometheus/prometheus:v2.51.1",
+      "publication": "verified-registry-pull",
+      "upstream_reference": "quay.io/prometheus/prometheus:v2.51.1",
+      "manifest_digest": "sha256:a9a1bf9db3b86dd5b0a5bea5b2626d3f471bce4e47c60e82591ce28b1f50aa5a"
+    },
+    {
+      "role": "alertmanager",
+      "reference": "reg.docker.alibaba-inc.com/ob-opensource-test/lakebase:alertmanager-v0.27.0",
+      "image_id": "sha256:11f11916f8cdfb17c1da74b20deb2075d778357b4d60474d82453303f8d461f5",
+      "platform": "linux/amd64",
+      "channels": [
+        "compose",
+        "helm"
+      ],
+      "source_reference": "quay.io/prometheus/alertmanager:v0.27.0",
+      "publication": "verified-registry-pull",
+      "upstream_reference": "quay.io/prometheus/alertmanager:v0.27.0",
+      "manifest_digest": "sha256:16e4cd32c471bf4cda9b6d93d9c70c8a93a2eb82a68f5efc58350960b390068f"
+    },
+    {
+      "role": "kube-rbac-proxy",
+      "reference": "reg.docker.alibaba-inc.com/ob-opensource-test/lakebase:kube-rbac-proxy-v0.13.1",
+      "image_id": "sha256:eb5a02daef2feb1aba3cf562f206a9ca50c1d0d095782a645e9c4093482288c3",
+      "platform": "linux/amd64",
+      "channels": [
+        "helm"
+      ],
+      "source_reference": "oceanbase/kube-rbac-proxy:v0.13.1",
+      "publication": "verified-registry-pull",
+      "upstream_reference": "oceanbase/kube-rbac-proxy:v0.13.1",
+      "manifest_digest": "sha256:18f12fc3a0085bbc303cfbd2ad1151127c1c959c4641e36027547b6b66eb4c92"
+    }
+  ],
+  "distribution_repository": "reg.docker.alibaba-inc.com/ob-opensource-test/lakebase"
+}

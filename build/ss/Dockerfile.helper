@@ -1,0 +1,16 @@
+# Build the Linux helper binary first; see README.md. Build context: repo root.
+ARG BASE_IMAGE=alibaba-cloud-linux-3-registry.cn-hangzhou.cr.aliyuncs.com/alinux3/alinux3@sha256:e5791e41fc76bcd6de81842fd808f07a12913869315f150c7b07f9ed28cef9e7
+FROM ${BASE_IMAGE}
+USER root
+RUN yum install -y bash coreutils findutils procps-ng tar gzip shadow-utils tzdata \
+        libgcc libstdc++ zlib python3 \
+    && yum clean all \
+    && if ! id admin >/dev/null 2>&1; then useradd -m -s /bin/bash admin; fi \
+    && ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+COPY build/ss/bin/oceanbase-helper /home/admin/oceanbase/bin/oceanbase-helper
+COPY LICENSE /usr/share/licenses/oceanbase-helper/LICENSE
+RUN test -x /home/admin/oceanbase/bin/oceanbase-helper
+RUN python3 -c 'import sys, json, tarfile, gzip, pathlib, subprocess, tempfile; assert sys.version_info >= (3, 6)'
+WORKDIR /home/admin/oceanbase
+ENTRYPOINT []
+CMD ["/bin/bash"]

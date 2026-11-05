@@ -7,22 +7,32 @@ historical installer bundles; they are not the native release entry point.
 
 ## One component, one image identity
 
+The Alibaba online test inventory is `release-images.alibaba-test.lock.json`.
+It uses the single repository `reg.docker.alibaba-inc.com/ob-opensource-test/lakebase`
+with `<component>-<original-tag>` tags. `upstream_reference` preserves the original
+component tag, while config IDs remain unchanged. Use `--lock` to select this
+inventory; do not apply an IMAGE_REGISTRY prefix to the old multi-repository tags.
+When building this distribution, pass the actual per-role push/pull report using
+`--publication-report` and actual Docker inspection evidence. The builder rejects
+mismatched references, config IDs, platforms or manifest digests. Operator's
+`kubeRbacProxyImage` is also overridden so this dependency uses the same registry.
+
 [`release-images.lock.json`](release-images.lock.json) is the release input.
 Every component has one role, canonical image reference (including a fixed tag),
 full Docker config image ID, and platform. Both delivery formats use that record.
 A role cannot select a different Observer build simply because it runs in Helm.
 
-The current internal release contains 13 roles:
+The current internal release contains 14 roles:
 
 | Delivery | Roles |
 | --- | --- |
-| Shared by Compose and Helm | `observer`, `logservice`, `minio`, `mc` |
-| Compose only | `bootstrap` |
-| Helm only | `operator`, `dashboard`, `obdiag`, `oceanbase-helper`, `utility`, `prometheus`, `alertmanager`, `kube-rbac-proxy` |
+| Shared by Compose and Helm | `observer`, `logservice`, `minio`, `mc`, `prometheus`, `alertmanager` |
+| Compose only | `bootstrap`, `obagent` |
+| Helm only | `operator`, `dashboard`, `obdiag`, `oceanbase-helper`, `utility`, `kube-rbac-proxy` |
 
 The shared Observer is
-`oceanbase/oceanbase-ai-cloud-native:4.6.2.1-100000092026090921.al8`;
-LogService uses `oceanbase/oblogservice:1.3.0`. Exact config IDs and the MinIO/mc
+`oceanbase/oceanbase-ai-cloud-native:4.6.3.0-82026110121.al8-r3`;
+LogService uses `oceanbase/oblogservice:1.3.3-42026110118.al8-r1`. Exact config IDs and the MinIO/mc
 versions belong in the lock rather than a second manually maintained list.
 The Operator image also supplies the native readiness executable.
 
@@ -74,6 +84,16 @@ missing canonical tag will fail validation. The snapshot must come from actual
 Docker inspection; do not manufacture it from the expected lock for a release.
 
 ## Build both configuration bundles
+
+For a configuration-only test preview without available image evidence, explicitly
+use `--configuration-only` instead of an evidence argument. This mode still lints,
+renders and checks image references, but records zero inspected images and must
+not be presented as a verified image release or proof of registry availability.
+Both bundles include `tools/package-offline.py` and `OFFLINE.md`: list the actual
+configured images, check local Docker identities, or export an offline directory.
+The offline exporter includes CR and diagnostic-job images, verifies config IDs
+and architecture, and never changes the user's cluster. Its unit/regression tests
+are in `test_package_offline.py` (the cached BusyBox smoke test never pulls images).
 
 From the reviewed source checkout, choose a new output directory and version:
 
@@ -139,6 +159,17 @@ The Helm bundle contains the native lakehouse and Operator `.tgz` charts,
 `image-values.yaml`, `operator-values.yaml`, and single-node/three-node profiles.
 Chart defaults and the supplied image values come from the same lock. It contains
 **no `install.sh`**: install with native Helm commands described in `USAGE.txt`.
+`QUICKSTART.md` gives the default one-command installation with Dashboard enabled;
+neither an image override file nor a separate Dashboard release is required.
+Operator, cert-manager, worker storage and image availability remain prerequisites.
+
+Both bundles include `registry-mirrors/` from `deploy/registry-mirrors/`. Its
+Docker and K3s examples preserve canonical image references and are optional:
+neither packaging nor Helm modifies host runtime configuration. The public proxy
+endpoints are examples, not verified image-delivery evidence. Validate each exact
+release image from the intended worker network before using a public proxy for
+delivery; it cannot supply unpublished images. Tests are excluded from the
+delivered helper directory, and every included file is covered by `SHA256SUMS`.
 
 ## Validation gates and acceptance scope
 
@@ -156,9 +187,11 @@ Before creating the delivery archives, the builder:
 5. Includes Dashboard diagnostic-job images and Operator kube-rbac-proxy.
    Unknown rendered runtime images are rejected.
 
-The shared-storage release does not configure an OBAgent monitor; the Operator
-only creates that container when a MonitorTemplate is configured. Enabling an
-unlocked monitor, including a topology override, fails this release gate.
+The Helm shared-storage release does not configure an OBAgent monitor; the
+Operator only creates that container when a MonitorTemplate is configured.
+Enabling an unlocked Helm monitor, including a topology override, fails this
+release gate. The Compose bundle separately locks OBAgent, Prometheus and
+Alertmanager and runs OBAgent with the Observer network namespace.
 The Dashboard SQL analyzer is an optional inactive ConfigMap default, explicitly
 excluded from this release's validated features; this exception does not allow
 an unlocked runtime Pod. Kubernetes, StorageClass, and cert-manager are separately

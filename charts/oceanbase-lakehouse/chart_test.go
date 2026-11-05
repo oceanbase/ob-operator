@@ -89,6 +89,12 @@ func TestStagesAndRetention(t *testing.T) {
 				if field(doc, "metadata", "namespace") != "qa-ns" {
 					t.Fatalf("wrong namespace: %v", doc["metadata"])
 				}
+				if kind == "Service" && field(doc, "metadata", "name") == "qa-sql" {
+					if field(doc, "metadata", "annotations", "helm.sh/resource-policy") == "keep" {
+						t.Fatal("SQL access Service should be removed on uninstall")
+					}
+					continue
+				}
 				switch kind {
 				case "Secret", "PersistentVolumeClaim", "StatefulSet", "Service", "ServiceAccount", "OBCluster", "OBLogServiceCluster":
 					if field(doc, "metadata", "annotations", "helm.sh/resource-policy") != "keep" {
@@ -145,6 +151,9 @@ func TestExternalMinIOAndUserOwnedResources(t *testing.T) {
 		t.Fatalf("render: %v\n%s", err, output)
 	}
 	for _, doc := range docs {
+		if doc["kind"] == "Service" && field(doc, "metadata", "name") == "qa-sql" {
+			continue
+		}
 		switch doc["kind"] {
 		case "StatefulSet", "PersistentVolumeClaim", "Service", "Secret":
 			t.Fatalf("external mode must not own storage or supplied Secrets: %v", doc["kind"])

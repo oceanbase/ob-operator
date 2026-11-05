@@ -23,13 +23,16 @@ import time
 import yaml
 
 HERE = Path(__file__).resolve().parent
-SHARED = {'observer', 'logservice', 'minio', 'mc'}
-COMPOSE_ROLES = SHARED | {'bootstrap'}
+SHARED = {'observer', 'logservice', 'minio', 'mc', 'prometheus', 'alertmanager'}
+COMPOSE_ROLES = SHARED | {'bootstrap', 'obagent'}
 HELM_ROLES = SHARED | {'operator', 'dashboard', 'obdiag', 'oceanbase-helper',
                        'utility', 'prometheus', 'alertmanager', 'kube-rbac-proxy'}
 CHANNELS = {'compose': COMPOSE_ROLES, 'helm': HELM_ROLES}
 SERVICE_ROLES = {'observer': 'observer', 'minio': 'minio', 'minio-init': 'mc',
-                 'credentials-init': 'bootstrap', 'observer-bootstrap': 'bootstrap',
+                 'credentials-init': 'bootstrap', 'host-info-init': 'bootstrap',
+                 'observer-bootstrap': 'bootstrap',
+                 'obagent': 'obagent', 'prometheus': 'prometheus',
+                 'alertmanager': 'alertmanager',
                  'logservice-bootstrap': 'logservice',
                  **{'logservice-%d' % i: 'logservice' for i in (1, 2, 3)}}
 CONTAINER_ROLES = {'manager': 'operator', 'kube-rbac-proxy': 'kube-rbac-proxy',
@@ -38,9 +41,12 @@ CONTAINER_ROLES = {'manager': 'operator', 'kube-rbac-proxy': 'kube-rbac-proxy',
                    'initialize': 'mc', 'readiness': 'operator',
                    'prometheus-storage-owner-init': 'utility', 'cleanup': 'utility'}
 ENV_ROLES = {'OBSERVER_IMAGE': 'observer', 'LOGSERVICE_IMAGE': 'logservice',
-             'BOOTSTRAP_IMAGE': 'bootstrap', 'MINIO_IMAGE': 'minio', 'MINIO_MC_IMAGE': 'mc'}
+             'BOOTSTRAP_IMAGE': 'bootstrap', 'MINIO_IMAGE': 'minio', 'MINIO_MC_IMAGE': 'mc',
+             'OBAGENT_IMAGE': 'obagent', 'PROMETHEUS_IMAGE': 'prometheus',
+             'ALERTMANAGER_IMAGE': 'alertmanager'}
 ROLE_REPOSITORIES = {'observer': 'oceanbase-ai-cloud-native', 'logservice': 'oblogservice',
                      'minio': 'minio', 'mc': 'mc', 'bootstrap': 'lakehouse-bootstrap',
+                     'obagent': 'obagent',
                      'operator': 'ob-operator', 'dashboard': 'oceanbase-dashboard',
                      'obdiag': 'obdiag', 'oceanbase-helper': 'oceanbase-helper',
                      'utility': 'busybox', 'prometheus': 'prometheus',
@@ -89,7 +95,16 @@ def validate_lock(lock):
             raise ValueError('Canonical reference requires an explicit non-latest tag: ' + ref)
         if 'oceanbase-qa/' in ref:
             raise ValueError('QA source aliases must not be release references: ' + ref)
-        if ref.rsplit('/', 1)[-1].rsplit(':', 1)[0] != ROLE_REPOSITORIES[role]:
+        distribution_repo = lock.get('distribution_repository')
+        if distribution_repo:
+            upstream = item.get('upstream_reference', '')
+            if (':' not in upstream.rsplit('/', 1)[-1] or
+                    upstream.rsplit('/', 1)[-1].rsplit(':', 1)[0] != ROLE_REPOSITORIES[role]):
+                raise ValueError('Upstream repository does not match image role: ' + role)
+            expected = distribution_repo + ':' + ROLE_REPOSITORIES[role] + '-' + upstream.rsplit(':', 1)[1]
+            if ref != expected:
+                raise ValueError('Distribution reference does not match image role: ' + role)
+        elif ref.rsplit('/', 1)[-1].rsplit(':', 1)[0] != ROLE_REPOSITORIES[role]:
             raise ValueError('Canonical repository does not match image role: ' + role)
         if normalize_ref(ref) in refs:
             raise ValueError('Duplicate canonical reference: ' + ref)
@@ -285,8 +300,24 @@ def merge(target, overlay):
 
 def compose_env(lock):
     roles = validate_lock(lock)
-    lines = ['# Generated from release-images.lock.json. Registry publication is not verified.',
-             '# Set IMAGE_REGISTRY only to a registry/namespace containing these exact builds.', 'IMAGE_REGISTRY=']
+    publication = ('Registry publication and pull are verified; see image-lock.json.'
+                   if all(i.get('publication') == 'verified-registry-pull' for i in roles.values())
+                   else 'Registry publication is not verified.')
+    lines = ['# Generated from release-images.lock.json. ' + publication,
+             '# Set IMAGE_REGISTRY only to a registry/namespace containing these exact builds.',
+             'IMAGE_REGISTRY=', '',
+             '# SQL, obshell Dashboard, Prometheus and Alertmanager are published by default.',
+             '# Empty auto-detects the default-route source IP; set this for multi-NIC/NAT hosts.',
+             'HOST_ACCESS_IP=',
+             'HOST_BIND_ADDRESS=0.0.0.0',
+             'OBSERVER_SQL_BIND_ADDRESS=0.0.0.0',
+             'OBSERVER_SQL_HOST_PORT=32881',
+             'OBSHELL_BIND_ADDRESS=0.0.0.0',
+             'OBSHELL_HOST_PORT=32886',
+             'AUTO_REGISTER_MONITORING=true',
+             'PROMETHEUS_INTERNAL_URL=http://prometheus:9090/',
+             'ALERTMANAGER_INTERNAL_URL=http://alertmanager:9093',
+             'MONITORING_REGISTER_TIMEOUT_SECONDS=600']
     for key, role in ENV_ROLES.items():
         ref = roles[role]['reference']
         prefix, image = ref.rsplit('/', 1) if '/' in ref else ('docker.io/library', ref)
@@ -348,12 +379,29 @@ def clean_compose_env():
 def build(args):
     lock = load_lock(args.lock)
     roles = validate_lock(lock)
+    publication_evidence = None
+    if getattr(args, 'publication_report', None):
+        publication = json.loads(Path(args.publication_report).read_text())
+        for role, item in roles.items():
+            proof = publication.get(role, {})
+            if (not proof.get('registry_pull_verified') or
+                    any(proof.get(key) != item.get(key) for key in
+                        ('reference', 'image_id', 'platform', 'manifest_digest')) or
+                    not IMAGE_ID.fullmatch(proof.get('manifest_digest', ''))):
+                raise ValueError('Registry publication evidence mismatch: ' + role)
+        publication_evidence = {'source': 'supplied-push-and-pull-report',
+                                'sha256': sha256(args.publication_report),
+                                'images_checked': len(roles)}
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,79}', args.version):
         raise ValueError('Invalid delivery version')
     source, output = Path(args.source).resolve(), Path(args.output).resolve()
     if output.exists():
         raise ValueError('Output already exists; choose a new directory')
-    if args.docker_metadata:
+    if getattr(args, 'configuration_only', False):
+        evidence = {'kind': 'configuration-only', 'images_checked': 0,
+                    'live_docker_checked': False, 'image_layers_verified': False,
+                    'registry_pull_verified': False, 'archive_config_bytes_verified': False}
+    elif args.docker_metadata:
         evidence = verify_metadata(lock, json.loads(Path(args.docker_metadata).read_text()))
         evidence.update(source='supplied-metadata-snapshot', sha256=sha256(args.docker_metadata),
                         live_docker_checked=False)
@@ -378,10 +426,13 @@ def build(args):
     for name in ('compose.yaml', 'README.md'):
         shutil.copyfile(source / 'deploy/compose/lakehouse' / name, compose / name)
     shutil.copytree(source / 'deploy/compose/lakehouse/scripts', compose / 'scripts')
+    shutil.copytree(source / 'deploy/compose/lakehouse/monitoring', compose / 'monitoring')
     (compose / '.env').write_text(compose_env(lock))
     values = image_values(lock)
     write_yaml(helm / 'image-values.yaml', values)
-    write_yaml(helm / 'operator-values.yaml', {'image': roles['operator']['reference']})
+    operator_values = {'image': roles['operator']['reference'],
+                       'kubeRbacProxyImage': roles['kube-rbac-proxy']['reference']}
+    write_yaml(helm / 'operator-values.yaml', operator_values)
     with tempfile.TemporaryDirectory(prefix='lakehouse-release-charts-') as temp:
         temp = Path(temp)
         for name in ('oceanbase-dashboard', 'oceanbase-lakehouse', 'ob-operator'):
@@ -390,7 +441,7 @@ def build(args):
         write_yaml(parent / 'values.yaml', merge(yaml.safe_load((parent / 'values.yaml').read_text()), values))
         op = temp / 'ob-operator'
         write_yaml(op / 'values.yaml', merge(yaml.safe_load((op / 'values.yaml').read_text()),
-                                            {'image': roles['operator']['reference']}))
+                                            operator_values))
         (parent / 'charts').mkdir(exist_ok=True)
         child = temp / 'oceanbase-dashboard'
         child_version = yaml.safe_load((child / 'Chart.yaml').read_text())['version']
@@ -402,6 +453,27 @@ def build(args):
         shutil.copyfile(source / 'charts/oceanbase-lakehouse' / name, helm / name)
     lakehouse_chart, = helm.glob('oceanbase-lakehouse-*.tgz')
     operator_chart, = helm.glob('ob-operator-*.tgz')
+    (helm / 'QUICKSTART.md').write_text(
+        '# Install Lakehouse with Dashboard\n\n'
+        'Use a prepared Kubernetes cluster with the matching OceanBase Operator, '
+        'cert-manager, a working `local-path` StorageClass, and the release images '
+        'available on its workers. See `USAGE.txt` for administrator preparation.\n\n'
+        'From this extracted directory, run one command:\n\n```bash\n'
+        'helm upgrade --install ob-demo ./' + lakehouse_chart.name +
+        ' --namespace ob-demo --create-namespace --wait --wait-for-jobs --timeout 35m\n'
+        '```\n\n'
+        'Dashboard and its readiness check are enabled by default. No values file '
+        'or separate Dashboard installation is required. The default experience '
+        'uses one Observer and three LogService processes.\n\n'
+        'These are first-install defaults. Keep the existing sizing and custom '
+        'values when upgrading an installation.\n\n'
+        'For another StorageClass, append `--set storageClass=YOUR_STORAGE_CLASS`. '
+        'Dashboard and SQL default to NodePorts 31183 and 30881. '
+        'Helm prints the node IP and login commands. For NAT or multiple NICs, '
+        'append `--set access.host=YOUR_REACHABLE_IP`.\n\n'
+        'Optional image acceleration: [registry-mirrors/README.md](registry-mirrors/README.md). '
+        'It preserves image names and is configured on workers, separately from Helm. '
+        'The examples are not applied automatically and do not publish missing images.\n')
     compose_json = run([args.docker, 'compose', '--env-file', compose / '.env', '-f', compose / 'compose.yaml',
                         'config', '--format', 'json'], cwd=compose, env=clean_compose_env())
     op_render = run([args.helm, 'template', 'ob-operator', operator_chart, '-n', 'oceanbase-system'])
@@ -415,8 +487,36 @@ def build(args):
               'archive_timestamp': timestamp,
               'release_lock_sha256': sha256(args.lock), 'identity_evidence': evidence,
               'rendered_roles': rendered, 'live_installation_tested': False,
-              'registry_publication_verified': False, 'image_payload_included': False}
+              'registry_publication_verified': publication_evidence is not None,
+              'registry_publication_evidence': publication_evidence,
+              'image_payload_included': False}
     for channel, directory in (('compose', compose), ('helm', helm)):
+        (directory / 'tools').mkdir()
+        shutil.copyfile(HERE / 'package-offline.py', directory / 'tools/package-offline.py')
+        (directory / 'tools/requirements.txt').write_text('PyYAML==6.0.3\n')
+        shutil.copyfile(HERE / 'OFFLINE.md', directory / 'OFFLINE.md')
+        if publication_evidence:
+            offline = directory / 'OFFLINE.md'
+            offline.write_text(offline.read_text().replace(
+                '当前测试版的部分自建镜像尚未验证仓库发布，不能保证在全新机器直接在线拉取。\n'
+                '已有匹配镜像的测试机可以直接使用；制作离线包可从已有缓存导出。',
+                '本包的所有运行镜像已经推送到指定测试仓库并完成回拉校验。\n'
+                '目标机器需要能访问该仓库；制作离线包也可从已有匹配缓存导出。'))
+        shutil.copyfile(HERE / 'THIRD-PARTY-NOTICES.md', directory / 'THIRD-PARTY-NOTICES.md')
+        if channel == 'compose':
+            shutil.copyfile(directory / '.env', directory / '.env.example')
+        else:
+            shutil.copyfile(directory / 'QUICKSTART.md', directory / 'README.md')
+        with (directory / 'README.md').open('a') as readme:
+            readme.write('\n## Offline preparation and third-party components\n\n'
+                         'See [OFFLINE.md](OFFLINE.md) for image listing, checking and offline packaging. '
+                         'See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for MinIO/mc notices.\n'
+                         'This configuration bundle contains no image layers. ' +
+                         ('All release images have push/pull evidence for the configured registry.\n'
+                          if publication_evidence else
+                          'Internal image publication/public pull access is not verified.\n'))
+        shutil.copytree(source / 'deploy/registry-mirrors', directory / 'registry-mirrors',
+                        ignore=shutil.ignore_patterns('tests', '__pycache__', '*.pyc'))
         selected = copy.deepcopy(lock)
         selected['images'] = [i for i in selected['images'] if channel in i['channels']]
         selected.update(delivery_channel=channel, delivery_version=args.version)
@@ -427,9 +527,12 @@ def build(args):
         (directory / 'IMAGE-DELIVERY.txt').write_text(
             'Images are not included in this bundle. Canonical image references and config IDs are in image-lock.json.\n'
             'source_reference records build-cache provenance only. It is not a published registry promise.\n'
-            'Prepare the exact canonical tags in your runtime, or mirror identical images to your registry.\n'
-            'Registry publication and public pull access have NOT been verified by this package build.\n'
-            'Optional SQL analyzer and OBAgent are not included or validated; cert-manager is an external prerequisite.\n')
+            'Prepare the exact canonical tags in your runtime, or mirror identical images to your registry.\n' +
+            ('Registry publication and pull verified against the supplied report. Target network access is required.\n'
+             if publication_evidence else
+             'Registry publication and public pull access have NOT been verified by this package build.\n') +
+            'Optional SQL analyzer is not included or validated; cert-manager is an external prerequisite.\n'
+            'Compose includes the open-source MinIO/mc references, OBAgent, Prometheus and Alertmanager.\n')
         checksums = [sha256(p) + '  ' + p.relative_to(directory).as_posix() for p in sorted(directory.rglob('*')) if p.is_file()]
         (directory / 'SHA256SUMS').write_text('\n'.join(checksums) + '\n')
         tar_tree(directory, output / (directory.name + '.tar.gz'), timestamp)
@@ -445,7 +548,11 @@ def main():
     parser.add_argument('--lock', type=Path, default=HERE / 'release-images.lock.json')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--version', required=True)
+    parser.add_argument('--publication-report', type=Path,
+                        help='Actual per-role registry push/pull evidence, matching the lock')
     evidence = parser.add_mutually_exclusive_group()
+    evidence.add_argument('--configuration-only', action='store_true',
+                          help='Build configuration preview only; explicitly skip image identity evidence (not a verified image release)')
     evidence.add_argument('--docker-metadata', type=Path, help='Saved docker image inspect JSON; only metadata is verified')
     evidence.add_argument('--image-archive', type=Path, action='append', help='Docker save tar/tar.gz with canonical tags; config bytes are verified')
     parser.add_argument('--helm', default='helm')

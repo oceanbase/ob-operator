@@ -93,10 +93,10 @@ func TestDashboardIncludedInEveryLakehouseStage(t *testing.T) {
 			service := find(t, docs, "Service", "oceanbase-dashboard-qa")
 			var typedService corev1.Service
 			decodeScheduledObject(t, service, &typedService)
-			if typedService.Spec.Type != corev1.ServiceTypeClusterIP ||
+			if typedService.Spec.Type != corev1.ServiceTypeNodePort ||
 				len(typedService.Spec.Ports) != 1 || typedService.Spec.Ports[0].Port != 80 ||
-				typedService.Spec.Ports[0].TargetPort.IntVal != 8080 || typedService.Spec.Ports[0].NodePort != 0 {
-				t.Fatal("Dashboard should have an internal HTTP Service by default")
+				typedService.Spec.Ports[0].TargetPort.IntVal != 8080 || typedService.Spec.Ports[0].NodePort != 31183 {
+				t.Fatal("Dashboard should have a persistent NodePort by default")
 			}
 			for _, resource := range []struct{ kind, name string }{
 				{"Secret", "qa-user-credentials"}, {"Secret", "qa-dashboard-bootstrap"},

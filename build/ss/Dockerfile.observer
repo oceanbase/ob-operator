@@ -1,0 +1,34 @@
+# The same resulting image is used by Operator and Compose.
+ARG HELPER_IMAGE=oceanbase-helper:lakehouse-ce
+FROM ${HELPER_IMAGE}
+USER root
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG RPM_VERSION
+COPY build/ss/rpms/observer/ /tmp/rpms/
+RUN set -eu; \
+    test -n "${RPM_VERSION}"; \
+    cd /tmp/rpms; \
+    sha256sum --strict -c SHA256SUMS; \
+    duplicates="$(rpm -qp --qf '%{NAME}\n' ./*.rpm | sort | uniq -d)"; \
+    test -z "${duplicates}"; \
+    yum install -y ./*.rpm; \
+    test "$(rpm -q --qf '%{VERSION}-%{RELEASE}' oceanbase.ai-ce)" = "${RPM_VERSION}"; \
+    test "$(rpm -q --qf '%{VERSION}-%{RELEASE}' oceanbase.ai-ce-libs)" = "${RPM_VERSION}"; \
+    test -x /home/admin/oceanbase/bin/observer; \
+    test -x /home/admin/oceanbase/bin/obshell; \
+    test -x /home/admin/oceanbase/bin/oceanbase-helper; \
+    yum clean all; \
+    rm -rf /tmp/rpms
+# Observer checks the owner of its local etc directory against the startup UID.
+# Keep it consistent with this image's explicit root runtime for both deployers.
+RUN chown 0:0 /home/admin/oceanbase/etc \
+    && test "$(stat -c %u /home/admin/oceanbase/etc)" = "$(id -u)"
+ENV LD_LIBRARY_PATH=/home/admin/oceanbase/lib
+RUN dependencies="$(ldd /home/admin/oceanbase/bin/observer)" \
+    && printf '%s\n' "${dependencies}" \
+    && [[ "${dependencies}" != *"not found"* ]] \
+    && /home/admin/oceanbase/bin/observer -V
+WORKDIR /home/admin/oceanbase
+EXPOSE 2881 2882 2886
+ENTRYPOINT []
+CMD ["/home/admin/oceanbase/bin/oceanbase-helper", "start"]

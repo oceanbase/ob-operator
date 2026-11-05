@@ -3,9 +3,9 @@ name: ${COMPOSE_PROJECT_NAME:-ob-lakehouse}
 
 # IMAGE_REGISTRY is an optional registry/namespace prefix, without a trailing slash.
 # A complete per-image reference always takes precedence (including @sha256 digests).
-x-bootstrap-image: &bootstrap-image ${BOOTSTRAP_IMAGE:-${IMAGE_REGISTRY:-ghcr.io/oceanbase}/lakehouse-bootstrap:0.1.0}
+x-bootstrap-image: &bootstrap-image ${BOOTSTRAP_IMAGE:-${IMAGE_REGISTRY:-oceanbase}/lakehouse-bootstrap:20261103-monitoring-r1}
 x-logservice: &logservice
-  image: ${LOGSERVICE_IMAGE:-${IMAGE_REGISTRY:-oceanbase}/oblogservice:1.3.0}
+  image: ${LOGSERVICE_IMAGE:-${IMAGE_REGISTRY:-oceanbase}/oblogservice:1.3.3-42026110118.al8-r1}
   platform: linux/amd64
   entrypoint: ["/opt/lakehouse/logservice-entrypoint.sh"]
   restart: unless-stopped
@@ -35,6 +35,21 @@ services:
     network_mode: none
     volumes:
       - credentials:/run/secrets
+    logging: *bounded-logging
+
+  host-info-init:
+    image: *bootstrap-image
+    entrypoint: ["/opt/lakehouse/host-info-init.sh"]
+    user: "0:0"
+    restart: "no"
+    network_mode: host
+    environment:
+      HOST_ACCESS_IP: ${HOST_ACCESS_IP:-}
+    volumes:
+      - credentials:/run/secrets
+      - ./scripts:/opt/lakehouse:ro
+    depends_on:
+      credentials-init: {condition: service_completed_successfully}
     logging: *bounded-logging
 
   minio:
@@ -115,7 +130,7 @@ services:
         ipv4_address: ${LOGSERVICE_IP_3:-172.30.52.13}
 
   logservice-bootstrap:
-    image: ${LOGSERVICE_IMAGE:-${IMAGE_REGISTRY:-oceanbase}/oblogservice:1.3.0}
+    image: ${LOGSERVICE_IMAGE:-${IMAGE_REGISTRY:-oceanbase}/oblogservice:1.3.3-42026110118.al8-r1}
     platform: linux/amd64
     entrypoint: ["/opt/lakehouse/logservice-bootstrap.sh"]
     user: "0:0"
@@ -142,7 +157,7 @@ services:
     logging: *bounded-logging
 
   observer:
-    image: ${OBSERVER_IMAGE:-${IMAGE_REGISTRY:-oceanbase}/oceanbase-ai-cloud-native:4.6.2.1-100000092026090921.al8}
+    image: ${OBSERVER_IMAGE:-${IMAGE_REGISTRY:-oceanbase}/oceanbase-ai-cloud-native:4.6.3.0-82026110121.al8-r3}
     platform: linux/amd64
     entrypoint: ["/opt/lakehouse/observer-entrypoint.sh"]
     restart: unless-stopped
@@ -154,17 +169,23 @@ services:
       CLUSTER_ID: ${OBSERVER_CLUSTER_ID:-10001}
       ZONE_NAME: ${ZONE_NAME:-zone1}
       LOCAL_IP: ${OBSERVER_IP:-172.30.52.21}
+      AUTO_REGISTER_MONITORING: ${AUTO_REGISTER_MONITORING:-true}
+      PROMETHEUS_INTERNAL_URL: ${PROMETHEUS_INTERNAL_URL:-http://prometheus:9090/}
+      ALERTMANAGER_INTERNAL_URL: ${ALERTMANAGER_INTERNAL_URL:-http://alertmanager:9093}
+      MONITORING_REGISTER_TIMEOUT_SECONDS: ${MONITORING_REGISTER_TIMEOUT_SECONDS:-600}
       CPU_COUNT: ${OBSERVER_CPU_COUNT:-2}
       DATAFILE_SIZE: ${OBSERVER_DATAFILE_SIZE:-10G}
       MEMORY_LIMIT: ${OBSERVER_MEMORY_LIMIT:-10G}
     volumes:
       - observer-data:/home/admin/data-file
       - observer-log:/home/admin/log
+      - credentials:/run/secrets:ro
       - ./scripts:/opt/lakehouse:ro
     ports:
-      - "${HOST_BIND_ADDRESS:-127.0.0.1}:${OBSERVER_SQL_HOST_PORT:-32881}:2881"
+      - "${OBSERVER_SQL_BIND_ADDRESS:-0.0.0.0}:${OBSERVER_SQL_HOST_PORT:-32881}:2881"
+      - "${OBSHELL_BIND_ADDRESS:-0.0.0.0}:${OBSHELL_HOST_PORT:-32886}:2886"
     healthcheck:
-      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/2881"]
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/2881 && exec 4<>/dev/tcp/127.0.0.1/2886"]
       interval: 5s
       timeout: 3s
       retries: 180
@@ -178,6 +199,7 @@ services:
   observer-bootstrap:
     image: *bootstrap-image
     user: "0:0"
+    entrypoint: ["/opt/lakehouse/observer-bootstrap.sh"]
     restart: "no"
     environment:
       OBSERVER_HOST: ${OBSERVER_IP:-172.30.52.21}
@@ -189,10 +211,88 @@ services:
       SHARED_STORAGE_BUCKET_URL: s3://${SHARED_STORAGE_BUCKET:-lakehouse-data}?host=http://${MINIO_IP:-172.30.52.10}:9000&s3_region=${S3_REGION:-us-east-1}
       BOOTSTRAP_TIMEOUT: ${BOOTSTRAP_TIMEOUT:-30m}
       ALLOW_LEGACY_EMPTY_ROOT: ${ALLOW_LEGACY_EMPTY_ROOT:-false}
+      OBSERVER_SQL_HOST_PORT: ${OBSERVER_SQL_HOST_PORT:-32881}
+      OBSHELL_HOST_PORT: ${OBSHELL_HOST_PORT:-32886}
+      PROMETHEUS_HOST_PORT: ${PROMETHEUS_HOST_PORT:-39090}
+      ALERTMANAGER_HOST_PORT: ${ALERTMANAGER_HOST_PORT:-39093}
     volumes:
       - credentials:/run/secrets
+      - ./scripts:/opt/lakehouse:ro
     depends_on:
       observer: {condition: service_healthy}
+      host-info-init: {condition: service_completed_successfully}
+    networks: [lakehouse]
+    logging: *bounded-logging
+
+  # OBAgent is the Observer sidecar: a separate image sharing the Observer
+  # network namespace so its fixed 127.0.0.1:2881 target reaches this node.
+  obagent:
+    image: ${OBAGENT_IMAGE:-${IMAGE_REGISTRY:-oceanbase}/obagent:4.2.4-200000022025090416}
+    platform: linux/amd64
+    network_mode: service:observer
+    entrypoint: ["/opt/lakehouse/obagent-entrypoint.sh"]
+    restart: unless-stopped
+    cpus: ${OBAGENT_CPUS:-0.5}
+    mem_limit: ${OBAGENT_MEMORY:-512m}
+    environment:
+      HOST_IP: ${OBSERVER_IP:-172.30.52.21}
+      CLUSTER_ID: ${OBSERVER_CLUSTER_ID:-10001}
+      CLUSTER_NAME: ${CLUSTER_NAME:-lakehouse-compose}
+      ZONE_NAME: ${ZONE_NAME:-zone1}
+      MONITOR_USER: monitor
+    volumes:
+      - credentials:/run/secrets:ro
+      - ./scripts:/opt/lakehouse:ro
+    depends_on:
+      observer-bootstrap: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8088/metrics/stat"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+    logging: *bounded-logging
+
+  alertmanager:
+    image: ${ALERTMANAGER_IMAGE:-${IMAGE_REGISTRY:-quay.io/prometheus}/alertmanager:v0.27.0}
+    platform: linux/amd64
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    ports:
+      - "${HOST_BIND_ADDRESS:-0.0.0.0}:${ALERTMANAGER_HOST_PORT:-39093}:9093"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9093/-/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+    networks: [lakehouse]
+    logging: *bounded-logging
+
+  prometheus:
+    image: ${PROMETHEUS_IMAGE:-${IMAGE_REGISTRY:-quay.io/prometheus}/prometheus:v2.51.1}
+    platform: linux/amd64
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    ports:
+      - "${HOST_BIND_ADDRESS:-0.0.0.0}:${PROMETHEUS_HOST_PORT:-39090}:9090"
+    depends_on:
+      obagent: {condition: service_healthy}
+      alertmanager: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9090/-/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
     networks: [lakehouse]
     logging: *bounded-logging
 
@@ -207,6 +307,8 @@ volumes:
   logservice-3-log:
   observer-data:
   observer-log:
+  prometheus-data:
+  alertmanager-data:
 
 networks:
   lakehouse:

@@ -5,6 +5,28 @@ Chart when you already have Kubernetes. Dashboard is enabled by default and is
 installed in the SAME Helm release as the lakehouse. No install.sh is shipped in
 this Helm Chart, and no Helm process runs inside a Kubernetes Job.
 
+Quick install: database and Dashboard
+-------------------------------------
+On an existing Kubernetes cluster with the matching native-capable Operator,
+cert-manager and a working local-path StorageClass, run this ONE command from
+the extracted release bundle. All workers must already be able to pull the
+release's exact images or have them imported into their Kubernetes runtime:
+
+  helm upgrade --install ob-demo ./oceanbase-lakehouse-0.4.2.tgz --namespace ob-demo --create-namespace --wait --wait-for-jobs --timeout 35m
+
+No values file or separate Dashboard installation is needed. The packaged Chart
+already pins this delivery's images and enables Dashboard, its monitoring,
+bundled MinIO, three LogService processes and one Observer. Suggested worker:
+>=8 CPU, 32Gi memory and 350Gi free data disk, with enough allocatable capacity
+after other workloads. Successful completion with hooks enabled includes the
+database and Dashboard readiness checks. Helm prints access and login commands.
+
+If your StorageClass has another name, append --set storageClass=<actual-name>.
+To reuse a separately managed Dashboard, append --set dashboard.enabled=false.
+Operator/cert-manager are cluster prerequisites, not installed by this command;
+see Prerequisites below if your cluster is new. This command is for first-install
+defaults; keep your existing sizing/custom values when upgrading a deployment.
+
 Matching release images
 -----------------------
 The native Helm and Compose bundles for one delivery version are generated
@@ -21,6 +43,9 @@ runtime's import command. Import on every target worker. A local Docker cache is
 not automatically available to a separate containerd runtime. Do not substitute
 an older Helm image archive or retag different binaries as the current version.
 Registry publication/public pull access is not implied by these internal tags.
+For optional acceleration while keeping image names unchanged, see
+registry-mirrors/README.md in the extracted release bundle. Configure the actual
+worker runtime: Docker daemon mirrors do not configure Kubernetes containerd/K3s.
 
 Prerequisites
 -------------
@@ -68,21 +93,19 @@ CRDs. Finish any required Operator upgrade before database bootstrap begins.
 
 Single-node experience
 ----------------------
-Copy values-single-node.yaml to your working directory. Set image overrides
-using the matching release's image-values.yaml, and set storageClass if needed.
-Suggested worker: >=8 CPU, 32Gi memory, >=350Gi free data disk. The profile has
+The quick-install command already selects this sizing. values-single-node.yaml
+is an optional explicit copy for customization; image-values.yaml is supplied
+for inspection/overrides, and is already incorporated into the packaged Chart.
+Suggested worker: >=8 CPU, 32Gi memory, >=350Gi free data disk. The defaults have
 one Observer (2 CPU/10Gi), three LogService processes (1 CPU/4Gi EACH), MinIO,
 Dashboard, Prometheus and Alertmanager. It uses fixed sizing, not all machine
 resources. CPU requests from other Kubernetes workloads count against capacity.
 
-  helm upgrade --install ob-demo ./oceanbase-lakehouse-0.4.1.tgz \
-    --namespace ob-demo --create-namespace \
-    -f image-values.yaml -f values-single-node.yaml \
-    --wait --wait-for-jobs --timeout 35m
-
 On a multi-node K8s cluster, add a hostname selector in the single-node values
-if you want all database Pods on a particular worker. A single-node experience
-has no node-level high availability.
+if you want all database Pods on a particular worker, and append
+-f values-single-node.yaml to the command. Without a selector Kubernetes may
+spread Pods across available workers. A single-node experience has no node-level
+high availability.
 
 Three-node experience
 ---------------------
@@ -90,9 +113,9 @@ Copy values-three-nodes.yaml and replace worker-1/2/3 with the actual
 kubernetes.io/hostname label values (not assumed public IPs):
 
   kubectl get nodes -L kubernetes.io/hostname
-  helm upgrade --install ob-demo ./oceanbase-lakehouse-0.4.1.tgz \
+  helm upgrade --install ob-demo ./oceanbase-lakehouse-0.4.2.tgz \
     --namespace ob-demo --create-namespace \
-    -f image-values.yaml -f values-three-nodes.yaml \
+    -f values-three-nodes.yaml \
     --wait --wait-for-jobs --timeout 35m
 
 All workers must be members of one Kubernetes cluster. Kubernetes schedules one
@@ -147,7 +170,7 @@ Pods and Dashboard before Helm reports success. Helm --wait alone does not
 understand custom-resource readiness; do not use --no-hooks for acceptance.
 
   kubectl -n ob-demo get pods,jobs,oblogserviceclusters,obclusters
-  kubectl -n ob-demo logs job/ob-demo-readiness
+  kubectl -n ob-demo logs -f job/ob-demo-readiness
   kubectl -n ob-demo get jobs -l app.kubernetes.io/component=storage-init
   kubectl -n ob-demo logs job/<storage-init-job-name>
   kubectl -n ob-demo describe pod <pending-or-failed-pod>
@@ -169,41 +192,29 @@ inspect its events and use the Operator's recovery procedure before retrying
 Helm. A Helm upgrade does not reset failed database CR status. The retry above
 recreates storage initialization; it is not a general database recovery command.
 
-Dashboard access
-----------------
-Run port-forward on the same computer whose browser you use:
+Dashboard and SQL access
+------------------------
+The default installation publishes Dashboard on NodePort 31183 and SQL on
+NodePort 30881. Helm prints the Ready node's InternalIP (ExternalIP fallback):
+  Dashboard: http://NODE-IP:31183/ (username admin)
+  SQL: mysql -h NODE-IP -P 30881 -u 'root@sys' -p
+Use the password retrieval commands printed by Helm. The two accounts are
+independent. Direct ALTER USER changes do not update the Kubernetes Secret.
 
-  kubectl -n ob-demo port-forward svc/oceanbase-dashboard-ob-demo 8080:80
+No port-forward process is needed for default access. The client must reach the
+node and these TCP ports. Set --set access.host=YOUR-IP-OR-DNS for NAT or multiple
+NICs, or when Helm cannot list Nodes. This changes printed addresses only; it
+does not configure NAT/firewall rules or assign an address to the node.
+Offline helm template cannot discover node addresses and prints discovery steps.
 
-Open http://127.0.0.1:8080, login admin. Initial password:
-
-  kubectl -n ob-demo get secret ob-demo-dashboard-bootstrap \
-    -o jsonpath='{.data.password}' | base64 --decode; echo
-
-Use the new password after the first-login password change. For direct network
-access configure dashboard.service.type=NodePort (and optional nodePort) or
-LoadBalancer and allow access from your network. The default ClusterIP is not an
-external address; a public IP cannot be inferred reliably by a Helm template.
-
-Database SQL access
--------------------
-The database is not exposed publicly by default. List Observer Pods and forward
-one on your client machine:
-
-  kubectl -n ob-demo get pods -l ref-obcluster=ob-demo-ob
-  kubectl -n ob-demo port-forward pod/<observer-pod-name> 12881:2881
-
-In another terminal, retrieve the initial password and connect with a local
-MySQL-compatible client (the Chart does not install a local SQL client):
-
-  kubectl -n ob-demo get secret ob-demo-db-root \
-    -o jsonpath='{.data.password}' | base64 --decode; echo
-  mysql -h 127.0.0.1 -P 12881 -u 'root@sys' -p
-
-Supply your own Secret name when observer.rootExistingSecret is configured.
-Direct ALTER USER changes in SQL do not update the Kubernetes Secret. Coordinate
-password changes with the Operator-supported credential workflow instead of
-assuming Secret and database password automatically stay synchronized.
+Override ports with --set dashboard.service.nodePort=31184 and
+--set sqlService.nodePort=30882. Use free ports within your cluster's NodePort
+range (normally 30000-32767), especially for multiple releases on one cluster.
+Existing releases with custom values must explicitly select NodePort to enable it.
+To keep both services internal, use --set dashboard.service.type=ClusterIP
+--set sqlService.type=ClusterIP. Helm then prints local port-forward guidance.
+Dashboard also supports --set dashboard.service.type=LoadBalancer when the
+cluster has a load balancer provider.
 
 Retention and uninstall
 -----------------------
@@ -222,9 +233,10 @@ or --set-file dashboard.adminPassword=/secure/password-file.
 Storage identities and private registries
 ---------------------------------------
 minio.runAsUser/runAsGroup/fsGroup and initialization.runAsUser/runAsGroup/fsGroup
-are independent non-root identities (default 1000). Use IDs assigned by your
-storage administrator and compatible with the volume ACL. For example, if UID
-1000 collides with a host ACL, approved values may be:
+are independent non-root identities (default 10001). The dedicated default
+avoids common host login IDs such as 1000, whose named ACL can override the PVC
+mode bits. Use IDs assigned by your storage administrator and compatible with
+the volume ACL. For example, approved values may be:
   minio: {runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001}
   initialization: {runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001}
 The chart does not chown host paths, rewrite ACLs, or run a privileged repair

@@ -133,7 +133,7 @@ Actual per-side overrides are immutable, including after uninstall/reinstall. */
 {{- $_ := set $zones $zone.zone true -}}
 {{- end -}}
 {{- end -}}
-{{- $existingLS := lookup "oceanbase.oceanbase.com/v1alpha1" "OBLogServiceCluster" .Release.Namespace (printf "%s-ls" .Release.Name) -}}
+{{- $existingLS := (include "lakehouse.lookupResource" (dict "root" . "kind" "OBLogServiceCluster" "name" (printf "%s-ls" .Release.Name)) | fromJson) -}}
 {{- if not $existingLS -}}
 {{- $nodes := 0 -}}
 {{- range .Values.logService.topology }}{{ $nodes = add $nodes (int .replica) }}{{ end -}}
@@ -154,10 +154,10 @@ Actual per-side overrides are immutable, including after uninstall/reinstall. */
 {{- if ne (index $guard.data "identity") (include "lakehouse.identity" .) }}{{ fail "storage identity is immutable: endpoint/buckets/credential names/claim/storage class/cluster IDs must not change; use a new release and an explicit migration" }}{{ end -}}
 {{- end -}}
 {{- if eq .Values.stage "storage" -}}
-{{- if lookup "oceanbase.oceanbase.com/v1alpha1" "OBLogServiceCluster" .Release.Namespace (printf "%s-ls" .Release.Name) }}{{ fail "cannot downgrade stage to storage after LogService creation; use helm upgrade with stage=cluster to resume" }}{{ end -}}
+{{- if (include "lakehouse.lookupResource" (dict "root" . "kind" "OBLogServiceCluster" "name" (printf "%s-ls" .Release.Name)) | fromJson) }}{{ fail "cannot downgrade stage to storage after LogService creation; use helm upgrade with stage=cluster to resume" }}{{ end -}}
 {{- end -}}
 {{- if ne .Values.stage "cluster" -}}
-{{- if lookup "oceanbase.oceanbase.com/v1alpha1" "OBCluster" .Release.Namespace (printf "%s-ob" .Release.Name) }}{{ fail "cannot downgrade stage after OB creation; use helm upgrade with stage=cluster to resume" }}{{ end -}}
+{{- if (include "lakehouse.lookupResource" (dict "root" . "kind" "OBCluster" "name" (printf "%s-ob" .Release.Name)) | fromJson) }}{{ fail "cannot downgrade stage after OB creation; use helm upgrade with stage=cluster to resume" }}{{ end -}}
 {{- end -}}
 {{- end -}}
 
@@ -165,14 +165,49 @@ Actual per-side overrides are immutable, including after uninstall/reinstall. */
 staged installer. New native releases keep DNS in the parent CR, and Operator
 resolves its same-namespace Service at runtime without mutating this manifest. */}}
 {{- define "lakehouse.logBucketURL" -}}
-{{- $existing := lookup "oceanbase.oceanbase.com/v1alpha1" "OBLogServiceCluster" .Release.Namespace (printf "%s-ls" .Release.Name) -}}
+{{- $existing := (include "lakehouse.lookupResource" (dict "root" . "kind" "OBLogServiceCluster" "name" (printf "%s-ls" .Release.Name)) | fromJson) -}}
 {{- if $existing -}}{{ $existing.spec.objectStoreUrl.bucketURL }}{{- else -}}
 {{- printf "s3://%s?host=%s&s3_region=%s" (include "lakehouse.logBucket" .) (include "lakehouse.databaseEndpoint" .) .Values.objectStorage.region -}}
 {{- end -}}
 {{- end -}}
 {{- define "lakehouse.dataBucketURL" -}}
-{{- $existing := lookup "oceanbase.oceanbase.com/v1alpha1" "OBCluster" .Release.Namespace (printf "%s-ob" .Release.Name) -}}
+{{- $existing := (include "lakehouse.lookupResource" (dict "root" . "kind" "OBCluster" "name" (printf "%s-ob" .Release.Name)) | fromJson) -}}
 {{- if $existing -}}{{ $existing.spec.sharedStorageInfo.bucketURL }}{{- else -}}
 {{- printf "s3://%s?host=%s&s3_region=%s" (include "lakehouse.dataBucket" .) (include "lakehouse.databaseEndpoint" .) .Values.objectStorage.region -}}
 {{- end -}}
 {{- end -}}
+
+{{- define "lakehouse.lookupResource" -}}
+{{- if .root.Capabilities.APIVersions.Has (printf "oceanbase.oceanbase.com/v1alpha1/%s" .kind) -}}
+{{- lookup "oceanbase.oceanbase.com/v1alpha1" .kind .root.Release.Namespace .name | toJson -}}
+{{- else -}}{}{{- end -}}
+{{- end -}}
+
+{{/* Presentation address only: never put a discovered node IP into Service specs. */}}
+{{- define "lakehouse.accessHost" -}}
+{{- if .Values.access.host -}}
+{{- .Values.access.host -}}
+{{- else -}}
+{{- $host := "" -}}
+{{- range (lookup "v1" "Node" "" "").items -}}
+  {{- $ready := false -}}
+  {{- range .status.conditions -}}
+    {{- if and (eq .type "Ready") (eq .status "True") -}}{{- $ready = true -}}{{- end -}}
+  {{- end -}}
+  {{- if and $ready (not $host) -}}
+    {{- $internal := "" -}}{{- $external := "" -}}
+    {{- range .status.addresses -}}
+      {{- if eq .type "InternalIP" -}}{{- $internal = .address -}}{{- end -}}
+      {{- if eq .type "ExternalIP" -}}{{- $external = .address -}}{{- end -}}
+    {{- end -}}
+    {{- $host = default $external $internal -}}
+  {{- end -}}
+{{- end -}}
+{{- $host -}}
+{{- end -}}
+{{- end -}}
+{{- define "lakehouse.urlHost" -}}
+{{- if contains ":" . -}}[{{ . }}]{{- else -}}{{ . }}{{- end -}}
+{{- end -}}
+
+{{/* Do not query custom APIs before CRDs exist on first installation. */}}

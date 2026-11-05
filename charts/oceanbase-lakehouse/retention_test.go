@@ -21,15 +21,16 @@ import (
 // retentionAPI supplies only the discovery and read-only lookup responses Helm
 // needs. These tests never connect to the developer's current Kubernetes context.
 type retentionAPI struct {
-	mu               sync.RWMutex
-	identity         string
-	secrets          map[string]map[string]string
-	configmaps       map[string]map[string]string
-	serviceIP        string
-	noGuard          bool
-	externalService  map[string]interface{}
-	externalEndpoint string
-	crs              map[string]interface{}
+	missingOceanBaseAPI bool
+	mu                  sync.RWMutex
+	identity            string
+	secrets             map[string]map[string]string
+	configmaps          map[string]map[string]string
+	serviceIP           string
+	noGuard             bool
+	externalService     map[string]interface{}
+	externalEndpoint    string
+	crs                 map[string]interface{}
 }
 
 func (api *retentionAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -46,10 +47,21 @@ func (api *retentionAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case "/api":
 		fmt.Fprint(w, `{"kind":"APIVersions","apiVersion":"v1","versions":["v1"]}`)
 	case "/apis":
+		if api.missingOceanBaseAPI {
+			fmt.Fprint(w, `{"kind":"APIGroupList","apiVersion":"v1","groups":[]}`)
+			return
+		}
 		fmt.Fprint(w, `{"kind":"APIGroupList","apiVersion":"v1","groups":[{"name":"oceanbase.oceanbase.com","versions":[{"groupVersion":"oceanbase.oceanbase.com/v1alpha1","version":"v1alpha1"}],"preferredVersion":{"groupVersion":"oceanbase.oceanbase.com/v1alpha1","version":"v1alpha1"}}]}`)
 	case "/api/v1":
-		fmt.Fprint(w, `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"v1","resources":[{"name":"configmaps","kind":"ConfigMap","namespaced":true,"verbs":["get","list"]},{"name":"secrets","kind":"Secret","namespaced":true,"verbs":["get","list"]},{"name":"services","kind":"Service","namespaced":true,"verbs":["get","list"]}]}`)
+		fmt.Fprint(w, `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"v1","resources":[{"name":"nodes","kind":"Node","namespaced":false,"verbs":["get","list"]},{"name":"configmaps","kind":"ConfigMap","namespaced":true,"verbs":["get","list"]},{"name":"secrets","kind":"Secret","namespaced":true,"verbs":["get","list"]},{"name":"services","kind":"Service","namespaced":true,"verbs":["get","list"]}]}`)
+	case "/api/v1/nodes":
+		fmt.Fprint(w, `{"apiVersion":"v1","kind":"NodeList","items":[]}`)
 	case "/apis/oceanbase.oceanbase.com/v1alpha1":
+		if api.missingOceanBaseAPI {
+			w.WriteHeader(http.StatusNotFound)
+			fmt.Fprint(w, `{"kind":"Status","apiVersion":"v1","status":"Failure","reason":"NotFound","code":404}`)
+			return
+		}
 		fmt.Fprint(w, `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"oceanbase.oceanbase.com/v1alpha1","resources":[{"name":"obclusters","kind":"OBCluster","namespaced":true,"verbs":["get","list"]},{"name":"oblogserviceclusters","kind":"OBLogServiceCluster","namespaced":true,"verbs":["get","list"]}]}`)
 	case "/api/v1/namespaces/qa-ns/configmaps/qa-storage-identity":
 		if api.noGuard {
@@ -166,6 +178,10 @@ func retainedCredentials(t *testing.T) (*retentionAPI, string) {
 }
 
 func renderRetained(t *testing.T, kubeconfig string, values map[string]interface{}) (string, error) {
+	return renderWithDiscovery(t, kubeconfig, values, true)
+}
+
+func renderWithDiscovery(t *testing.T, kubeconfig string, values map[string]interface{}, oceanbaseAPI bool) (string, error) {
 	t.Helper()
 	helm := os.Getenv("HELM_BINARY")
 	if helm == "" {
@@ -179,8 +195,13 @@ func renderRetained(t *testing.T, kubeconfig string, values map[string]interface
 	if err := os.WriteFile(file, data, 0600); err != nil {
 		t.Fatal(err)
 	}
-	output, err := exec.Command(helm, "template", "qa", ".", "-n", "qa-ns", "-f", file,
-		"--set", "stage=cluster", "--dry-run=server", "--kubeconfig", kubeconfig).CombinedOutput()
+	args := []string{"template", "qa", ".", "-n", "qa-ns", "-f", file,
+		"--set", "stage=cluster", "--dry-run=server", "--kubeconfig", kubeconfig}
+	// helm template uses explicit capabilities even with server-side lookup.
+	if oceanbaseAPI {
+		args = append(args, "--api-versions", "oceanbase.oceanbase.com/v1alpha1/OBLogServiceCluster", "--api-versions", "oceanbase.oceanbase.com/v1alpha1/OBCluster")
+	}
+	output, err := exec.Command(helm, args...).CombinedOutput()
 	return string(output), err
 }
 
@@ -263,5 +284,18 @@ func TestMissingRetainedSecretFailsClosed(t *testing.T) {
 				t.Fatalf("missing retained Secret did not fail closed: %v\n%s", err, output)
 			}
 		})
+	}
+}
+
+func TestFirstInstallWithoutOceanBaseAPIDoesNotLookupMissingCRD(t *testing.T) {
+	api, config := retainedCredentials(t)
+	api.missingOceanBaseAPI = true
+	api.noGuard = true
+	output, err := renderWithDiscovery(t, config, map[string]interface{}{}, false)
+	if err != nil {
+		t.Fatal(err, output)
+	}
+	if !strings.Contains(output, "kind: OBLogServiceCluster") {
+		t.Fatal("fresh install must still declare LogService")
 	}
 }

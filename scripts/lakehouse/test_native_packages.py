@@ -25,8 +25,15 @@ SPEC.loader.exec_module(BUILDER)
 
 
 def metadata(lock):
-    return [{'Id': i['image_id'], 'Os': 'linux', 'Architecture': 'amd64',
-             'RepoTags': [i['reference'], i['source_reference']]} for i in lock['images']]
+    records = []
+    for item in lock['images']:
+        record = {'Id': item['image_id'], 'Os': 'linux', 'Architecture': 'amd64',
+                  'RepoTags': [item['reference'], item['source_reference']]}
+        if item.get('manifest_digest'):
+            repository = item['reference'].rsplit(':', 1)[0]
+            record['RepoDigests'] = [repository + '@' + item['manifest_digest']]
+        records.append(record)
+    return records
 
 
 def rendering(lock):
@@ -51,7 +58,7 @@ class ReleaseContractTests(unittest.TestCase):
         roles = BUILDER.validate_lock(self.lock)
         for role in BUILDER.SHARED:
             self.assertEqual(set(roles[role]['channels']), {'compose', 'helm'})
-        self.assertEqual(roles['observer']['reference'], 'oceanbase/oceanbase-ai-cloud-native:4.6.2.1-100000092026090921.al8')
+        self.assertEqual(roles['observer']['reference'], 'oceanbase/oceanbase-ai-cloud-native:4.6.3.0-82026110121.al8-r3')
         BUILDER.validate_rendered(self.lock, self.compose, self.helm)
         result = BUILDER.verify_metadata(self.lock, metadata(self.lock))
         self.assertFalse(result['archive_config_bytes_verified'])
@@ -62,6 +69,19 @@ class ReleaseContractTests(unittest.TestCase):
         a['reference'], b['reference'] = b['reference'], a['reference']
         a['image_id'], b['image_id'] = b['image_id'], a['image_id']
         with self.assertRaisesRegex(ValueError, 'repository does not match image role'):
+            BUILDER.validate_lock(self.lock)
+
+    def test_single_repository_distribution_keeps_role_identity(self):
+        self.lock['distribution_repository'] = 'registry.example/team/lakebase'
+        for item in self.lock['images']:
+            original = item['reference']
+            item['upstream_reference'] = original
+            item['reference'] = self.lock['distribution_repository'] + ':' + original.rsplit('/', 1)[-1].replace(':', '-', 1)
+        BUILDER.validate_lock(self.lock)
+        compose, helm = rendering(self.lock)
+        BUILDER.validate_rendered(self.lock, compose, helm)
+        self.lock['images'][0]['reference'] = self.lock['images'][1]['reference']
+        with self.assertRaisesRegex(ValueError, 'Distribution reference does not match image role'):
             BUILDER.validate_lock(self.lock)
 
     def test_zone_observer_override_cannot_hide_a_different_component(self):
@@ -92,6 +112,7 @@ class ReleaseContractTests(unittest.TestCase):
         item = self.lock['images'][0]
         item['manifest_digest'] = 'sha256:' + 'f' * 64
         records = metadata(self.lock)
+        records[0].pop('RepoDigests', None)
         with self.assertRaisesRegex(ValueError, 'manifest digest is not proven'):
             BUILDER.verify_metadata(self.lock, records)
         records[0]['RepoDigests'] = [item['reference'].rsplit(':', 1)[0] + '@' + item['manifest_digest']]
@@ -194,6 +215,45 @@ class ReleaseContractTests(unittest.TestCase):
 
 @unittest.skipUnless(shutil.which('helm') and shutil.which('docker'), 'Helm and Docker Compose CLIs required')
 class RealPackagingTests(unittest.TestCase):
+    def test_single_repository_charts_and_publication_evidence(self):
+        with tempfile.TemporaryDirectory() as root:
+            root = Path(root)
+            lock = BUILDER.load_lock(HERE / 'release-images.lock.json')
+            lock['distribution_repository'] = 'registry.example/team/lakebase'
+            proof = {}
+            for item in lock['images']:
+                original = item['reference']
+                item['upstream_reference'] = original
+                item['reference'] = lock['distribution_repository'] + ':' + original.rsplit('/', 1)[-1].replace(':', '-', 1)
+                item['manifest_digest'] = 'sha256:' + hashlib.sha256(item['reference'].encode()).hexdigest()
+                item['publication'] = 'verified-registry-pull'
+                proof[item['role']] = dict(item, registry_pull_verified=True)
+            lock_file = root / 'fixture-lock.json'
+            lock_file.write_text(json.dumps(lock))
+            evidence = root / 'synthetic-inspect-fixture.json'
+            evidence.write_text(json.dumps(metadata(lock)))
+            publication = root / 'synthetic-publication-fixture.json'
+            publication.write_text(json.dumps(proof))
+            args = argparse.Namespace(source=HERE.parent.parent, lock=lock_file, output=root / 'delivery',
+                                      version='fixture', docker_metadata=evidence, image_archive=None,
+                                      publication_report=publication, helm='helm', docker='docker')
+            report = BUILDER.build(args)
+            self.assertTrue(report['registry_publication_verified'])
+            for profile in report['rendered_roles'].values():
+                for roles in profile.values():
+                    self.assertTrue(all(ref.startswith(lock['distribution_repository'] + ':') for ref in roles.values()))
+            helm = args.output / 'oceanbase-lakehouse-native-helm-fixture'
+            with tarfile.open(next(helm.glob('ob-operator-*.tgz'))) as archive:
+                values = yaml.safe_load(archive.extractfile('ob-operator/values.yaml'))
+                self.assertEqual(values['kubeRbacProxyImage'], proof['kube-rbac-proxy']['reference'])
+            self.assertNotIn('尚未验证仓库发布', (helm / 'OFFLINE.md').read_text())
+            proof['observer']['image_id'] = 'sha256:' + '0' * 64
+            publication.write_text(json.dumps(proof))
+            args.output = root / 'must-not-build'
+            with self.assertRaisesRegex(ValueError, 'publication evidence mismatch'):
+                BUILDER.build(args)
+            self.assertFalse(args.output.exists())
+
     def test_both_deliveries_are_rendered_and_share_exact_refs(self):
         with tempfile.TemporaryDirectory() as root:
             root = Path(root)
@@ -217,6 +277,20 @@ class RealPackagingTests(unittest.TestCase):
                     self.assertEqual(rendered['compose'][role], rendered['helm'][role], profile)
             compose = args.output / 'oceanbase-lakehouse-compose-test'
             helm = args.output / 'oceanbase-lakehouse-native-helm-test'
+            self.assertFalse((compose / 'compose.aistor.yaml').exists())
+            compose_env = (compose / '.env').read_text()
+            self.assertIn('HOST_ACCESS_IP=', compose_env)
+            self.assertIn('HOST_BIND_ADDRESS=0.0.0.0', compose_env)
+            self.assertIn('AUTO_REGISTER_MONITORING=true', compose_env)
+            self.assertIn('PROMETHEUS_INTERNAL_URL=http://prometheus:9090/', compose_env)
+            self.assertIn('ALERTMANAGER_INTERNAL_URL=http://alertmanager:9093', compose_env)
+            self.assertIn('OBSERVER_SQL_BIND_ADDRESS=0.0.0.0', compose_env)
+            self.assertIn('OBSHELL_BIND_ADDRESS=0.0.0.0', compose_env)
+            self.assertIn('OBSHELL_HOST_PORT=32886', compose_env)
+            self.assertIn('${IMAGE_REGISTRY:-minio}/minio:', compose_env)
+            self.assertIn('${IMAGE_REGISTRY:-minio}/mc:', compose_env)
+            readme = (compose / 'README.md').read_text()
+            self.assertIn('docker compose up -d && docker compose logs -f observer-bootstrap', readme)
             c = json.loads((compose / 'image-lock.json').read_text())
             h = json.loads((helm / 'image-lock.json').read_text())
             self.assertEqual({i['role'] for i in c['images']}, BUILDER.COMPOSE_ROLES)
@@ -228,6 +302,38 @@ class RealPackagingTests(unittest.TestCase):
                 refs = {i['role']: i['reference'] for i in lock['images']}
                 self.assertEqual(values['observer']['image'], refs['observer'])
                 self.assertEqual(values['logService']['image'], refs['logservice'])
+                self.assertTrue(values['dashboard']['enabled'])
+                self.assertTrue(values['native']['enabled'])
+                self.assertEqual(values['logService']['resource']['cpu'], '1')
+            quickstart = (helm / 'QUICKSTART.md').read_text()
+            install = next(line for line in quickstart.splitlines() if line.startswith('helm upgrade'))
+            self.assertIn(next(helm.glob('oceanbase-lakehouse-*.tgz')).name, install)
+            self.assertIn('--wait --wait-for-jobs --timeout 35m', install)
+            self.assertNotIn(' -f ', install)
+            for directory in (compose, helm):
+                mirror_root = directory / 'registry-mirrors'
+                self.assertTrue((mirror_root / 'README.md').is_file())
+                self.assertTrue((mirror_root / 'configure-docker.py').is_file())
+                docker_config = json.loads((mirror_root / 'docker-daemon.json').read_text())
+                self.assertEqual(len(docker_config['registry-mirrors']), 14)
+                self.assertEqual(docker_config['registry-mirrors'][0], 'https://mirror.ccs.tencentyun.com')
+                self.assertEqual(docker_config['registry-mirrors'][-1], 'https://docker.m.daocloud.io')
+                self.assertEqual(docker_config['max-concurrent-downloads'], 10)
+                self.assertEqual(docker_config['max-concurrent-uploads'], 5)
+                registry_config = yaml.safe_load((mirror_root / 'k3s-registries.yaml').read_text())
+                self.assertEqual(registry_config['mirrors']['docker.io']['endpoint'],
+                                 docker_config['registry-mirrors'])
+                self.assertEqual(registry_config['mirrors']['quay.io']['endpoint'],
+                                 ['https://quay.m.daocloud.io'])
+                checksums = (directory / 'SHA256SUMS').read_text().splitlines()
+                for path in mirror_root.rglob('*'):
+                    self.assertNotIn(path.name, ('tests', '__pycache__'))
+                    if path.is_file():
+                        self.assertIn(BUILDER.sha256(path) + '  ' + path.relative_to(directory).as_posix(), checksums)
+                with tarfile.open(args.output / (directory.name + '.tar.gz'), 'r:gz') as archive:
+                    prefix = directory.name + '/registry-mirrors/'
+                    for name in ('README.md', 'configure-docker.py', 'docker-daemon.json', 'k3s-registries.yaml'):
+                        self.assertEqual(archive.extractfile(prefix + name).read(), (mirror_root / name).read_bytes())
             # Re-read the delivered archive, including its hidden Compose .env.
             with tarfile.open(args.output / 'oceanbase-lakehouse-compose-test.tar.gz', 'r:gz') as archive:
                 self.assertIsNotNone(archive.getmember('oceanbase-lakehouse-compose-test/.env'))

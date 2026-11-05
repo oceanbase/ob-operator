@@ -1,8 +1,10 @@
 # OceanBase lakehouse: Docker Compose quickstart
 
 Use this single-machine environment to try lakehouse SQL without Kubernetes.
-It starts five persistent services: one Observer, three LogServices and MinIO.
-Four initialization containers create credentials, buckets and the database;
+It starts eight persistent services: one Observer with its RPM-matched obshell,
+three LogServices, MinIO, one OBAgent sidecar, Prometheus and Alertmanager.
+Five initialization containers detect the host access IP and create credentials,
+buckets and the database;
 `Exited (0)` is their expected final state.
 
 The Kubernetes Dashboard is not included in this Compose environment. Use the
@@ -15,11 +17,12 @@ fault tolerance.
 - Linux AMD64, Docker Engine 24+ and the Docker Compose v2 plugin (`docker compose`).
 - At least 8 CPU cores, 32 GiB **available** memory and 100 GiB free space in
   Docker's data directory. Leave additional space for your data and logs.
-- The five versioned images selected in `compose.yaml` or the release's `.env`:
-  Observer, LogService, MinIO, mc and `lakehouse-bootstrap`. Obtain these from the
+- The eight versioned images selected in `compose.yaml` or the release's `.env`:
+  Observer, LogService, MinIO, mc, `lakehouse-bootstrap`, OBAgent, Prometheus and
+  Alertmanager. Obtain these from the
   internal release owner and load them into Docker, or use the registry URLs
-  supplied with that release. The current Observer/LogService combination is
-  4.6.2.1/1.3.0 and is not asserted to be publicly downloadable or ARM64 compatible.
+  supplied with that release. obshell comes from the same `oceanbase.ai-ce` RPM
+  as Observer. OBAgent is a separate component image and has its own version.
 
 A prepared release includes the prebuilt bootstrap image or its accessible
 registry reference. End users do not build Go code, install Helm or run a
@@ -30,9 +33,10 @@ a public bootstrap image must be published before its GHCR default is usable.
 
 Use the Compose bundle and images from the same delivery version. Both native
 Helm and Compose bundles are generated from `release-images.lock.json`: their
-Observer, LogService, MinIO and mc references, versions and config image IDs are
-identical. Helm includes additional Kubernetes components; Compose additionally
-uses the bootstrap image. `image-lock.json` lists the subset needed by this
+Observer, LogService, MinIO, mc, Prometheus and Alertmanager references, versions
+and config image IDs are identical. Helm includes additional Kubernetes
+components; Compose additionally uses the bootstrap and OBAgent images.
+`image-lock.json` lists the subset needed by this
 bundle. Config image IDs are not registry manifest digests.
 
 For an internal offline delivery, load the matching shared image archive once
@@ -44,6 +48,9 @@ cd /path/to/oceanbase-lakehouse-compose-<delivery-version>
 docker compose up -d --pull never
 ```
 
+The matching Compose image archive includes the pinned open-source
+`minio/minio` and `minio/mc` images. No AIStor image or license is required.
+
 The lightweight Compose and native Helm archives do not contain image layers.
 An older Helm image archive can contain different component versions and is not
 a substitute for the matching release image archive. Do not retag a different
@@ -51,11 +58,30 @@ Observer build to make it appear to match. Release maintainers build both
 channels together with `scripts/lakehouse/build-native-packages.py`; see
 `scripts/lakehouse/NATIVE-RELEASE.md` in the source repository.
 
+## Keep image names and use a mirror (optional)
+
+The delivery includes `registry-mirrors/README.md`, a Docker configuration example
+and a Python 3 merge helper. Preview the optional Docker Hub mirror settings,
+then explicitly apply them if suitable for your network:
+
+```bash
+sudo python3 registry-mirrors/configure-docker.py
+sudo python3 registry-mirrors/configure-docker.py --apply
+```
+
+Follow that guide to validate and reload Docker, then run `docker compose pull`.
+Existing daemon settings and mirrors are preserved. Image names and release tags
+stay unchanged. This configuration only accelerates Docker Hub; Quay/GHCR images
+still require access to their own registries or the supplied offline archive.
+The configuration includes the complete 14-address mirror list. Inclusion does
+not guarantee availability of release images at every endpoint.
+In the source tree, these files are under `deploy/registry-mirrors/`.
+
 ## Choose an image registry (optional)
 
 If the default registries are unreachable, use your organization's registry by
 setting one variable. Replace the example with a registry/namespace that contains
-all five release images; omit `https://` and any trailing slash. For a private
+all eight release images; omit `https://` and any trailing slash. For a private
 registry, first run `docker login registry.example.com:5000`.
 
 ```bash
@@ -87,6 +113,9 @@ release tag:
 | `BOOTSTRAP_IMAGE` | `lakehouse-bootstrap:<release-tag>` |
 | `MINIO_IMAGE` | `minio:<release-tag>` |
 | `MINIO_MC_IMAGE` | `mc:<release-tag>` |
+| `OBAGENT_IMAGE` | `obagent:<release-tag>` |
+| `PROMETHEUS_IMAGE` | `prometheus:<release-tag>` |
+| `ALERTMANAGER_IMAGE` | `alertmanager:<release-tag>` |
 
 For persistent configuration, edit `IMAGE_REGISTRY` in the delivered `.env`.
 If no `.env` was delivered, copy `.env.example` to `.env` first. **Retain the
@@ -122,8 +151,7 @@ image availability.
 Extract the supplied quickstart archive and enter its directory, then run:
 
 ```bash
-docker compose up -d
-docker compose logs -f observer-bootstrap
+docker compose up -d && docker compose logs -f observer-bootstrap
 ```
 
 Initialization is automatic. Wait for:
@@ -143,6 +171,24 @@ docker compose run --rm --no-deps observer-bootstrap --mode check
 
 The check is read-only. If initialization fails, inspect the relevant service
 logs and rerun `docker compose up -d` after correcting the cause.
+
+The final `observer-bootstrap` log prints the password retrieval command and
+the SQL, obshell Dashboard, Prometheus and Alertmanager addresses using the
+automatically detected Docker host IP.
+`docker compose up -d` remains the native start command; the chained `logs -f`
+only follows initialization output.
+
+OBAgent starts after the authenticated bootstrap creates its read-only `monitor`
+account. Prometheus then waits for OBAgent and Alertmanager. The Observer
+entrypoint registers both internal service addresses with obshell through its
+local Unix socket, following OBD's registration API. The performance and alert
+pages therefore open without asking the user for addresses or credentials.
+Verify the chain:
+
+```bash
+docker compose ps
+docker compose logs --tail=100 obagent prometheus alertmanager
+```
 
 ## Connect and try SQL
 
@@ -176,18 +222,28 @@ docker compose run --rm --no-deps observer-bootstrap --mode smoke-write
 This creates only `compose_smoke.t` and verifies a stored row. Later use
 `--mode smoke-read` to verify the same row survives restart.
 
-SQL binds to `127.0.0.1:32881` on the Docker host by default. For access from
-another machine, forward the port over SSH:
+SQL is published on `0.0.0.0:32881` by default. Connect from another machine
+with the Docker host address and allow TCP port 32881 in the host firewall or
+security group:
 
 ```bash
-ssh -N -L 32881:127.0.0.1:32881 user@docker-host
+mysql -h<Docker-host-IP> -P32881 -uroot@sys -p
 ```
 
-Then connect the local client to `127.0.0.1:32881`. Alternatively set
-`HOST_BIND_ADDRESS` to the host interface address (or `0.0.0.0`) in `.env` and
-allow port 32881 from your client network. Do not use container IPs as the
-external connection address. MinIO and LogService management ports remain
-internal to the Compose network.
+Use the host address rather than a container IP. The management endpoints are:
+
+- obshell Dashboard: `http://<Docker-host-IP>:32886/` (published on
+  `0.0.0.0:32886` by default; use HTTP, not HTTPS)
+- Prometheus: `http://<Docker-host-IP>:39090/`
+- Alertmanager: `http://<Docker-host-IP>:39093/`
+
+Allow TCP ports 32886, 39090 and 39093 from the client network. To make these
+interfaces local-only, set their bind addresses to `127.0.0.1` in `.env`.
+
+The obshell process is the binary shipped by the exact Observer RPM. Each
+OBAgent monitors one Observer through `127.0.0.1:2881`; Compose therefore runs
+it as a separate container sharing the Observer network namespace, matching the
+Operator sidecar model. MinIO and LogService management ports remain internal.
 
 ## Optional configuration
 
@@ -197,12 +253,22 @@ includes `.env`, edit that file and retain its image references. Otherwise copy
 
 | Setting | Default | Purpose |
 | --- | --- | --- |
+| `HOST_ACCESS_IP` | auto-detected | Address printed for clients; set explicitly on multi-NIC or NAT hosts |
 | `OBSERVER_SQL_HOST_PORT` | `32881` | SQL port on the Docker host |
-| `HOST_BIND_ADDRESS` | `127.0.0.1` | Host interface accepting SQL connections |
+| `OBSHELL_HOST_PORT` | `32886` | obshell port on the Docker host |
+| `PROMETHEUS_HOST_PORT` | `39090` | Prometheus port on the Docker host |
+| `ALERTMANAGER_HOST_PORT` | `39093` | Alertmanager port on the Docker host |
+| `OBSERVER_SQL_BIND_ADDRESS` | `0.0.0.0` | Host interface accepting SQL connections |
+| `OBSHELL_BIND_ADDRESS` | `0.0.0.0` | Host interface accepting obshell Dashboard connections |
+| `HOST_BIND_ADDRESS` | `0.0.0.0` | Host interface for Prometheus and Alertmanager |
+| `AUTO_REGISTER_MONITORING` | `true` | Register Prometheus and Alertmanager in obshell automatically |
+| `PROMETHEUS_INTERNAL_URL` | `http://prometheus:9090/` | Stable Compose address stored in obshell |
+| `ALERTMANAGER_INTERNAL_URL` | `http://alertmanager:9093` | Stable Compose address stored in obshell |
 | `OBSERVER_CPUS` / `OBSERVER_CPU_COUNT` | `2` / `2` | Container CPU limit / database CPU count |
 | `OBSERVER_MEMORY_LIMIT` / `OBSERVER_CONTAINER_MEMORY` | `10G` / `12g` | Database memory target / container limit |
 | `LOGSERVICE_CPUS` | `1` | CPU limit of each LogService |
 | `LOGSERVICE_MEMORY_LIMIT` / `LOGSERVICE_CONTAINER_MEMORY` | `3G` / `4g` | Each LogService memory target / container limit |
+| `OBAGENT_CPUS` / `OBAGENT_MEMORY` | `0.5` / `512m` | OBAgent container limit |
 | `OBSERVER_DATAFILE_SIZE` / `LOGSERVICE_LOG_DISK_SIZE` | `10G` / `10G` | Initial local data / each LogService log space |
 | `COMPOSE_PROJECT_NAME` | `ob-lakehouse` | Groups this installation's containers and volumes |
 
@@ -216,6 +282,10 @@ database. Configure these before first use. To avoid a subnet collision, change
 `COMPOSE_SUBNET` and all five `*_IP` values together. Changing `.env` resource
 values on an existing deployment does not necessarily reconfigure persisted
 database settings; use this version's defaults for the first experience.
+
+Host IP detection runs once in a short-lived container with host networking and
+uses the source address of the default IPv4 route. Set `HOST_ACCESS_IP` in
+`.env` when clients must use another interface or a NAT/public address.
 
 ## Stop, resume and remove
 
@@ -234,7 +304,7 @@ docker compose up -d
 Restart only running database services:
 
 ```bash
-docker compose restart logservice-1 logservice-2 logservice-3 observer
+docker compose restart logservice-1 logservice-2 logservice-3 observer obagent prometheus alertmanager
 ```
 
 Delete this installation **including all database/object-store data and passwords**:
@@ -254,11 +324,11 @@ fail until the stored credential is updated consistently.
 ```bash
 docker compose ps -a
 docker compose logs --tail=100 credentials-init minio-init logservice-bootstrap observer-bootstrap
-docker compose logs --tail=100 observer logservice-1
+docker compose logs --tail=100 observer obagent prometheus alertmanager logservice-1
 ```
 
-- **Image pull failed / Docker Hub timeout:** use the registry configuration
-  above and check `docker compose config --images`, then retry `docker compose
+- **Image pull failed / Docker Hub timeout:** use the optional mirror or registry
+  configuration above and check `docker compose config --images`, then retry `docker compose
   pull`. Other services may report `context canceled` after one pull fails; fix
   that pull error first. The registry must contain the exact release images,
   including the prebuilt bootstrap image.
@@ -268,6 +338,14 @@ docker compose logs --tail=100 observer logservice-1
   Correct the reported issue and run `docker compose up -d` again.
 - **Authentication rejected:** verify the credentials volume matches this
   deployment. Initialization never silently replaces a persisted password.
+- **OBAgent unavailable:** confirm `observer-bootstrap` completed and inspect
+  the OBAgent log. Its monitor password is generated separately from root.
+- **Monitoring setup page still appears:** inspect the Observer log for the two
+  `obshell ... registered` messages and confirm Prometheus and Alertmanager are
+  healthy. Registration is idempotent and runs again when Observer restarts.
+- **Wrong address printed:** set `HOST_ACCESS_IP` in `.env` to the address
+  reachable from the client, then recreate `host-info-init` and
+  `observer-bootstrap`.
 - **Port/subnet conflict:** choose an unused SQL port and subnet before first use.
 
 Container console logs are rotated (3 files of 10 MiB per container). Database

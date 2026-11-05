@@ -14,7 +14,7 @@ func TestMinIONonRootIdentityConfiguration(t *testing.T) {
 		user, group, fs int64
 		values          map[string]interface{}
 	}{
-		{"default", 1000, 1000, 1000, nil},
+		{"default", 10001, 10001, 10001, nil},
 		{"platform-assigned", 10001, 10002, 10003, map[string]interface{}{"minio": map[string]interface{}{"runAsUser": 10001, "runAsGroup": 10002, "fsGroup": 10003}}},
 		{"existing-pvc", 10001, 10001, 10001, map[string]interface{}{"dashboard": map[string]interface{}{"enabled": false}, "minio": map[string]interface{}{"runAsUser": 10001, "runAsGroup": 10001, "fsGroup": 10001, "existingClaim": "user-owned-pvc"}}},
 	} {
@@ -58,8 +58,8 @@ func TestMinIONonRootIdentityConfiguration(t *testing.T) {
 			var initialize batchv1.Job
 			decodeScheduledObject(t, find(t, docs, "Job", "qa-storage-init-1"), &initialize)
 			jobSecurity := initialize.Spec.Template.Spec.SecurityContext
-			if jobSecurity == nil || jobSecurity.RunAsUser == nil || *jobSecurity.RunAsUser != 1000 ||
-				jobSecurity.RunAsGroup == nil || *jobSecurity.RunAsGroup != 1000 || jobSecurity.FSGroup == nil || *jobSecurity.FSGroup != 1000 {
+			if jobSecurity == nil || jobSecurity.RunAsUser == nil || *jobSecurity.RunAsUser != 10001 ||
+				jobSecurity.RunAsGroup == nil || *jobSecurity.RunAsGroup != 10001 || jobSecurity.FSGroup == nil || *jobSecurity.FSGroup != 10001 {
 				t.Fatal("MinIO PVC identity must not change the independent emptyDir initialization Job")
 			}
 		})

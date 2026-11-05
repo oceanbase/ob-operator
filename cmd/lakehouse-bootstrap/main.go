@@ -82,6 +82,21 @@ func main() {
 	}); err != nil {
 		log.Fatal(err)
 	}
+	if *mode == "bootstrap" {
+		monitorPassword, err := readCredential(envOrDefault(os.Getenv, "MONITOR_PASSWORD_FILE", "/run/secrets/ob_monitor_password"))
+		if err != nil {
+			log.Fatalf("read monitor password: %v", err)
+		}
+		db, err := openDatabase(cfg, password)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+		if err := ensureMonitorUser(ctx, db, monitorPassword); err != nil {
+			log.Fatal(err)
+		}
+		log.Print("OBAgent monitor user ready")
+	}
 }
 
 func openDatabase(cfg config, password string) (*sql.DB, error) {
