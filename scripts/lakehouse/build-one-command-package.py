@@ -41,7 +41,7 @@ def build(args):
   (payload/'cert-manager.yaml').write_text(text)
   allowed=next(i for i in lock['images'] if i['role']=='operator')
   (payload/'operator-compatible-images.txt').write_text('\n'.join(dict.fromkeys([allowed['reference'],allowed.get('upstream_reference',''),allowed.get('source_reference','')]))+'\n')
-  values=yaml.safe_load((chart/'values.yaml').read_text());values['prerequisites']={'enabled':True,'image':refs['prerequisites'],'timeoutSeconds':900}
+  values=yaml.safe_load((chart/'values.yaml').read_text());values['prerequisites']={'enabled':True,'image':refs['prerequisites'],'timeoutSeconds':1800}
   (chart/'values.yaml').write_text(yaml.safe_dump(values,sort_keys=False))
   meta=yaml.safe_load((chart/'Chart.yaml').read_text());meta['version']='0.5.0';(chart/'Chart.yaml').write_text(yaml.safe_dump(meta,sort_keys=False))
   run(['helm','lint','--strict',chart]);rendered=run(['helm','template','ob-demo',chart,'-n','ob-demo','--include-crds'])

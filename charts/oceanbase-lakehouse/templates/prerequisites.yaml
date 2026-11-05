@@ -68,6 +68,8 @@ spec:
           imagePullPolicy: IfNotPresent
           command: [/bin/sh, /payload/prepare.sh]
           env:
+            - name: WAIT_TIMEOUT_SECONDS
+              value: {{ .Values.prerequisites.timeoutSeconds | quote }}
             - name: HOME
               value: /tmp
             - name: BOOTSTRAP_BINDING

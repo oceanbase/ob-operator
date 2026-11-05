@@ -162,4 +162,4 @@ observer:
 prerequisites:
   enabled: false
   image: ""
-  timeoutSeconds: 900
+  timeoutSeconds: 1800

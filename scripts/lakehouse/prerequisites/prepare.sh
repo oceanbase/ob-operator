@@ -1,5 +1,8 @@
 #!/bin/sh
 set -eu
+WAIT_TIMEOUT_SECONDS=${WAIT_TIMEOUT_SECONDS:-1800}
+case "$WAIT_TIMEOUT_SECONDS" in ''|*[!0-9]*) echo 'Invalid readiness timeout' >&2; exit 2;; esac
+[ "$WAIT_TIMEOUT_SECONDS" -ge 60 ] && [ "$WAIT_TIMEOUT_SECONDS" -le 1800 ] || exit 2
 # K3s kubectl otherwise defaults to its node-local kubeconfig, even inside a Pod.
 umask 077
 export KUBECONFIG=/tmp/prerequisites-kubeconfig
@@ -30,8 +33,8 @@ trap cleanup EXIT
 trap 'exit 1' INT TERM
 wait_operator() {
   ns="$1"
-  k -n "$ns" rollout status deployment/oceanbase-controller-manager --timeout=300s
-  for attempt in $(seq 1 120); do
+  k -n "$ns" rollout status deployment/oceanbase-controller-manager --timeout="${WAIT_TIMEOUT_SECONDS}s"
+  for attempt in $(seq 1 "$((WAIT_TIMEOUT_SECONDS / 2))"); do
     endpoints="$(k -n "$ns" get endpoints oceanbase-webhook-service -o jsonpath='{.subsets[*].addresses[*].ip}')"
     ca="$(k get validatingwebhookconfiguration oceanbase-validating-webhook-configuration -o jsonpath='{.webhooks[0].clientConfig.caBundle}')"
     mutating_ca="$(k get mutatingwebhookconfiguration oceanbase-mutating-webhook-configuration -o jsonpath='{.webhooks[0].clientConfig.caBundle}')"
@@ -69,10 +72,10 @@ else
   k apply --server-side --field-manager=lakehouse-prerequisites -f /payload/cert-manager.yaml
 fi
 for name in cert-manager cert-manager-cainjector cert-manager-webhook; do
-  k -n cert-manager rollout status deployment/"$name" --timeout=300s
+  k -n cert-manager rollout status deployment/"$name" --timeout="${WAIT_TIMEOUT_SECONDS}s"
 done
 # cert-manager Deployment readiness may precede API-server webhook CA injection.
-for attempt in $(seq 1 90); do
+for attempt in $(seq 1 "$((WAIT_TIMEOUT_SECONDS / 2))"); do
   ca="$(k get validatingwebhookconfiguration cert-manager-webhook -o jsonpath='{.webhooks[0].clientConfig.caBundle}')"
   [ -n "$ca" ] && break
   sleep 2
@@ -85,11 +88,11 @@ owned="$(k get -f /payload/operator.yaml --ignore-not-found -o jsonpath='{range 
 echo 'Installing matched OceanBase Operator'
 # Retry API webhook readiness races; SSA never forces another field manager's fields.
 ready=false
-for attempt in $(seq 1 30); do
+for attempt in $(seq 1 "$((WAIT_TIMEOUT_SECONDS / 3))"); do
   if k apply --server-side --field-manager=lakehouse-prerequisites -f /payload/operator.yaml; then ready=true; break; fi
   sleep 3
 done
 [ "$ready" = true ] || exit 1
-k -n oceanbase-system wait --for=condition=Ready certificate/oceanbase-serving-cert --timeout=300s
+k -n oceanbase-system wait --for=condition=Ready certificate/oceanbase-serving-cert --timeout="${WAIT_TIMEOUT_SECONDS}s"
 wait_operator oceanbase-system
 echo 'Cluster prerequisites ready; Helm will now install Lakehouse and Dashboard.'
