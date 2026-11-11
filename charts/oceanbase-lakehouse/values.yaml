@@ -1,0 +1,165 @@
+# Requires a native-lakehouse-capable ob-operator installed separately.
+# helm upgrade --install ob-demo ./oceanbase-lakehouse -n ob-demo --create-namespace \
+#   --wait --wait-for-jobs --timeout 35m
+# Defaults match values-single-node.yaml: 1 Observer, 3 LogService processes,
+# bundled MinIO and Dashboard. Budget >=8 CPU / 32Gi RAM / 350Gi free disk;
+# account for allocatable capacity and other workloads on the selected worker.
+# The complete graph is declarative; Operator reconciles storage -> LS -> OB.
+stage: cluster
+native:
+  enabled: true
+  readiness:
+    # Must contain /lakehouse-readiness and match the installed Operator build.
+    image: oceanbase/ob-operator:native-44337ae7540b
+    imagePullPolicy: IfNotPresent
+    timeoutSeconds: 1800
+    resources:
+      requests: {cpu: 25m, memory: 32Mi}
+      limits: {cpu: 100m, memory: 128Mi}
+storageClass: local-path
+imagePullSecrets: []
+
+access:
+  # Empty discovers a Ready node InternalIP (ExternalIP fallback) for printed URLs.
+  # Set a reachable IP/DNS name for NAT, multiple NICs or restricted node-list RBAC.
+  host: ""
+sqlService:
+  type: NodePort
+  port: 2881
+  nodePort: 0 # Kubernetes allocates a free port; set explicitly to pin a port.
+
+# Dashboard, Prometheus and Alertmanager are installed in the SAME release.
+# Set enabled=false if an existing shared Dashboard already manages this cluster.
+dashboard:
+  enabled: true
+  # Select an SS-capable image available to the worker (QA bundles override this).
+  image: quay.io/oceanbase/oceanbase-dashboard:0.6.1
+  # Utilities/monitoring can be mirrored using utilityImage, prometheus.image
+  # and alertmanager.image. The release image-values file pins all of them,
+  # including inspection.obdiag.image and inspection.oceanbaseHelper.image.
+  # Empty generates a random initial password. Login as admin; change it in UI.
+  # For a supplied initial password use --set-file dashboard.adminPassword=FILE.
+  adminPassword: ""
+  # The parent owns credentials/PVCs; keep these integration settings unchanged.
+  initCredentials: false
+  retainData: true
+  userCredentials: ""
+  userNamespace: ""
+  configNamespace: ""
+  rbac:
+    includeNamespace: true
+  serviceAccount:
+    create: false # parent passes imagePullSecrets to this account
+  nodeSelector: {}
+  tolerations: []
+  service:
+    type: NodePort
+    port: 80
+    nodePort: 0 # Allocate independently for each release.
+  prometheus:
+    persistence:
+      enabled: true
+      create: false
+      existingClaim: ""
+      storageClassName: "" # inherits the top-level storageClass
+      accessMode: ReadWriteOnce
+      storage: 8Gi
+  sharedVolume:
+    persistence:
+      enabled: true
+      create: false
+      existingClaim: ""
+      storageClassName: "" # inherits the top-level storageClass
+      accessMode: ReadWriteOnce
+      storage: 10Gi
+
+# Defaults for storage Pods and every LogService/Observer zone. A topology entry
+# may override nodeSelector keys to place that zone on a different worker.
+scheduling:
+  nodeSelector: {}
+  tolerations: []
+
+objectStorage:
+  # bundled: deploy MinIO; external: NEVER deploy or administer a storage server.
+  mode: bundled
+  # External HTTP service.namespace.svc[.cluster.local] endpoints are resolved to
+  # a retained ClusterIP on NEW installs. Other DNS requires bucket.endpoint DNS.
+  endpoint: "" # required in external mode; http(s)://hostname[:port]
+  region: us-east-1
+  logBucket: "" # defaults to RELEASE-logs
+  dataBucket: "" # defaults to RELEASE-data; bundled mode requires distinct buckets
+  existingSecret: "" # external: shared fallback; keys access_id and access_key
+  # External storage may use the same bucket and/or independent credentials.
+  # Empty per-side references inherit existingSecret, preserving old installs.
+  logExistingSecret: ""
+  dataExistingSecret: ""
+  # External mode is read-only by default. true explicitly permits bucket creation
+  # using the supplied credentials; never changes users/policies/existing objects.
+  createBuckets: false
+
+minio:
+  # No binary/image is included in this chart; kubelet pulls this image online.
+  # Optional third-party software, independently licensed under AGPL-3.0.
+  image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+  imagePullPolicy: IfNotPresent
+  rootExistingSecret: "" # optional keys rootUser/rootPassword; otherwise generated
+  existingClaim: "" # optional independently managed RWO claim
+  # Use a dedicated non-root identity. UID/GID 1000 commonly belongs to a host
+  # login account and may have an explicit ACL that overrides the PVC mode bits.
+  # No root init/chown is performed; changing IDs does not migrate existing data.
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  size: 100Gi
+  resources:
+    requests: {cpu: 100m, memory: 512Mi}
+    limits: {cpu: "1", memory: 1Gi}
+
+initialization:
+  image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+  imagePullPolicy: IfNotPresent
+  # Independent from minio.*; private emptyDirs can also inherit host ACLs.
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  deadlineSeconds: 600
+  resources:
+    requests: {cpu: 50m, memory: 64Mi}
+    limits: {cpu: 500m, memory: 256Mi}
+
+logService:
+  clusterId: 1001
+  # Set to a registry image available to your cluster. Do not use latest.
+  image: oceanbase/oblogservice:1.3.3-42026110118.al8-r1
+  resource: {cpu: "1", memory: 4Gi}
+  storeSize: 20Gi
+  logSize: 10Gi
+  topology:
+    - {zone: zone1, replica: 1}
+    - {zone: zone2, replica: 1}
+    - {zone: zone3, replica: 1}
+  parameters:
+    - {name: log_level, value: INFO}
+
+observer:
+  clusterId: 1002
+  image: oceanbase/oceanbase-ai-cloud-native:4.6.3.0-82026110121.al8-r3
+  resource: {cpu: "2", memory: 10Gi}
+  dataSize: 50Gi
+  logSize: 20Gi
+  rootExistingSecret: "" # optional key password; otherwise generated and retained
+  topology:
+    - {zone: zone1, replica: 1}
+  parameters:
+    - {name: system_memory, value: 1G}
+    - {name: __min_full_resource_pool_memory, value: "2147483648"}
+
+# Unconditional retention protects database CRs, credentials, MinIO workload,
+# Service and PVC on helm uninstall/failed-install cleanup. It is NOT a backup
+# and does not protect against deleting the namespace or explicit kubectl delete.
+
+# The single-command delivery enables this and includes matched CRDs/manifests.
+prerequisites:
+  enabled: false
+  image: ""
+  timeoutSeconds: 1800

@@ -21,6 +21,7 @@ import (
 
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/analyzer"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/api/model"
+	analyticmodel "github.com/oceanbase/ob-operator/internal/sql-analyzer/model"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/oceanbase"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/store"
 )
@@ -80,9 +81,9 @@ func GetSqlDetailInfo(ctx context.Context, cm *oceanbase.ConnectionManager, audi
 		logger.Debugf("[GetSqlDetailInfo] Query Indexes total took %v", time.Since(indexStart))
 	}
 
-	// Initialize the SQL Analyzer and run analysis
-	// Analyze now requires Indexes
-	analyzerManager := analyzer.NewManager()
+	planOperators := getPlanOperators(planStore, resp)
+	// Initialize the SQL Analyzer and run analysis with actual execution plan evidence.
+	analyzerManager := analyzer.NewManager(planOperators...)
 	if resp != nil && resp.QuerySql != "" {
 		analyzeStart := time.Now()
 		diagnoseResults := analyzerManager.Analyze(resp.QuerySql, resp.Indexes)
@@ -98,4 +99,28 @@ func GetSqlDetailInfo(ctx context.Context, cm *oceanbase.ConnectionManager, audi
 
 	logger.Debugf("[GetSqlDetailInfo] Total execution time: %v", time.Since(start))
 	return resp, nil
+}
+
+func getPlanOperators(planStore *store.PlanStore, resp *model.SqlDetailResponse) []string {
+	if resp == nil {
+		return nil
+	}
+
+	operators := make([]string, 0)
+	for _, plan := range resp.Plans {
+		details, err := planStore.GetPlanDetail(analyticmodel.SqlPlanIdentifier{
+			TenantID: plan.TenantID,
+			SvrIP:    plan.SvrIP,
+			SvrPort:  plan.SvrPort,
+			PlanID:   plan.PlanID,
+		})
+		if err != nil {
+			logger.Warnf("Failed to query execution plan %d on %s:%d: %v", plan.PlanID, plan.SvrIP, plan.SvrPort, err)
+			continue
+		}
+		for _, detail := range details {
+			operators = append(operators, detail.Operator)
+		}
+	}
+	return operators
 }

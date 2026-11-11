@@ -62,6 +62,15 @@ type SilencerParam struct {
 
 func extractInstances(matcherMap map[string]alarm.Matcher) []oceanbase.OBInstance {
 	instances := make([]oceanbase.OBInstance, 0)
+	if ls, ok := matcherMap["logservice"]; ok {
+		namespaceMatcher := matcherMap["namespace"]
+		for _, namespace := range namespaceMatcher.ExtractMatchedValues() {
+			for _, name := range ls.ExtractMatchedValues() {
+				instances = append(instances, oceanbase.OBInstance{Type: oceanbase.TypeLogService, LogService: namespace + "/" + strings.ReplaceAll(name, "\\.", ".")})
+			}
+		}
+		return instances
+	}
 	var matchedInstanceType oceanbase.OBInstanceType
 	clusterMatcher, matchCluster := matcherMap[alarmconstant.LabelOBCluster]
 	zoneMatcher, matchZone := matcherMap[alarmconstant.LabelOBZone]

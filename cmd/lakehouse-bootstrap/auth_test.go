@@ -29,6 +29,7 @@ type testDatabase struct {
 	acceptInitialPassword                   bool
 	failBootstrap                           bool
 	bootstraps, passwordChanges, emptyOpens int
+	queries                                 []string
 }
 type testDriver struct {
 	state    *testDatabase
@@ -72,6 +73,7 @@ func (c *testConnection) QueryContext(_ context.Context, query string, _ []drive
 	return &testRows{value: "lakehouse-compose"}, nil
 }
 func (c *testConnection) ExecContext(_ context.Context, query string, args []driver.NamedValue) (driver.Result, error) {
+	c.state.queries = append(c.state.queries, query)
 	if strings.HasPrefix(query, "ALTER SYSTEM BOOTSTRAP") {
 		c.state.bootstraps++
 		if c.state.failBootstrap {
@@ -79,7 +81,7 @@ func (c *testConnection) ExecContext(_ context.Context, query string, args []dri
 		}
 		c.state.ready = true
 	}
-	if strings.HasPrefix(query, "ALTER USER") {
+	if strings.HasPrefix(query, "ALTER USER root") {
 		c.state.passwordChanges++
 		c.state.password = args[0].Value.(string)
 	}

@@ -191,7 +191,10 @@ func (m *OBLogServiceClusterManager) HandleFailure() {
 }
 
 func (m *OBLogServiceClusterManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
-	return taskMap.GetTask(name, m)
+	// Status updates decode into the reconciler's Resource while tasks run.
+	taskManager := *m
+	taskManager.Resource = m.Resource.DeepCopy()
+	return taskMap.GetTask(name, &taskManager)
 }
 
 func (m *OBLogServiceClusterManager) PrintErrEvent(err error) {

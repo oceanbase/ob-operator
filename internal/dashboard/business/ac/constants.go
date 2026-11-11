@@ -23,16 +23,22 @@ const (
 )
 
 const (
-	DomainAc         acmodel.Domain = "ac"
-	DomainAlarm      acmodel.Domain = "alarm"
-	DomainSystem     acmodel.Domain = "system"
-	DomainK8sCluster acmodel.Domain = "k8s-cluster"
-	DomainOBCluster  acmodel.Domain = "obcluster"
-	DomainOBTenant   acmodel.Domain = "obtenant"
-	DomainOBProxy    acmodel.Domain = "obproxy"
+	DomainAc            acmodel.Domain = "ac"
+	DomainAlarm         acmodel.Domain = "alarm"
+	DomainSystem        acmodel.Domain = "system"
+	DomainK8sCluster    acmodel.Domain = "k8s-cluster"
+	DomainOBCluster     acmodel.Domain = "obcluster"
+	DomainOBTenant      acmodel.Domain = "obtenant"
+	DomainOBProxy       acmodel.Domain = "obproxy"
+	DomainOBLogService  acmodel.Domain = "oblogservice"
+	DomainObjectStorage acmodel.Domain = "objectstorage"
 )
 
 var AllPolicies = []acmodel.Policy{
+	{Domain: DomainObjectStorage, Action: ActionRead},
+	{Domain: DomainObjectStorage, Action: ActionWrite},
+	{Domain: DomainOBLogService, Action: ActionRead},
+	{Domain: DomainOBLogService, Action: ActionWrite},
 	{
 		Domain: DomainOBCluster,
 		Action: ActionRead,

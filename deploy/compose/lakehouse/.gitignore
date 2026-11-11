@@ -1,3 +1,5 @@
 .env
 secrets/*
 !secrets/.gitkeep
+*.tar
+*.tar.gz

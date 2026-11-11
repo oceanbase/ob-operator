@@ -42,6 +42,8 @@ func getMockedCreateClusterParam() *param.CreateOBClusterParam {
 				Value: "test-node-selector-value",
 			}},
 			Tolerations: []common.TolerationSpec{{
+				Operator: "Equal",
+				Effect:   "NoSchedule",
 				KVPair: common.KVPair{
 					Key:   "test-toleration",
 					Value: "test-toleration-value",
@@ -49,20 +51,23 @@ func getMockedCreateClusterParam() *param.CreateOBClusterParam {
 			}},
 			Affinities: []common.AffinitySpec{{
 				SelectorExpression: common.SelectorExpression{
-					Key:    "test-node-affinity",
-					Values: []string{"test-node-affinity-value"},
+					Operator: "In",
+					Key:      "test-node-affinity",
+					Values:   []string{"test-node-affinity-value"},
 				},
 				Type: common.NodeAffinityType,
 			}, {
 				SelectorExpression: common.SelectorExpression{
-					Key:    "test-pod-affinity",
-					Values: []string{"test-pod-affinity-value"},
+					Operator: "In",
+					Key:      "test-pod-affinity",
+					Values:   []string{"test-pod-affinity-value"},
 				},
 				Type: common.PodAffinityType,
 			}, {
 				SelectorExpression: common.SelectorExpression{
-					Key:    "test-pod-anti-affinity",
-					Values: []string{"test-pod-anti-affinity-value"},
+					Operator: "In",
+					Key:      "test-pod-anti-affinity",
+					Values:   []string{"test-pod-anti-affinity-value"},
 				},
 				Type: common.PodAntiAffinityType,
 			}},

@@ -1,25 +1,51 @@
 initCredentials: true
-# admin's password. If not set, the chart will generate it randomly
+# Initial admin password; existing accounts are preserved on upgrade.
 adminPassword: admin
+
+# Empty uses quay.io/oceanbase/oceanbase-dashboard:<Chart appVersion>.
+image: ""
+# Shared utility image for volume initialization and report cleanup.
+utilityImage: busybox:1.36.1
+# Keep account, authorization and volume data when removing the dashboard.
+retainData: false
+rbac:
+  # Avoid cluster-scoped name collisions between equal releases in namespaces.
+  includeNamespace: false
+serviceAccount:
+  # Embedded charts can create the same <release>-sa with inherited pull secrets.
+  create: true
 
 userCredentials: 
 userNamespace: 
 configNamespace: 
 
+nodeSelector: {}
+tolerations: []
+
 service:
+  # Empty lets Kubernetes allocate an available port.
+  nodePort: null
   type: NodePort
   port: 80
 
 prometheus:
+  image: quay.io/prometheus/prometheus:v2.51.1
   persistence:
     enabled: true
+    create: true
+    existingClaim: ""
     storageClassName: ""
     accessMode: ReadWriteOnce
     storage: 8Gi
 
+alertmanager:
+  image: quay.io/prometheus/alertmanager:v0.27.0
+
 sharedVolume:
   persistence:
     enabled: true
+    create: true
+    existingClaim: ""
     storageClassName: ""
     accessMode: ReadWriteOnce
     storage: 10Gi

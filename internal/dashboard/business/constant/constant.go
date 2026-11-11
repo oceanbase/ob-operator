@@ -12,6 +12,11 @@ See the Mulan PSL v2 for more details.
 
 package constant
 
+import (
+	"os"
+	"strings"
+)
+
 const (
 	GB = 1024 * 1024 * 1024
 )
@@ -22,6 +27,19 @@ const (
 )
 
 const (
-	DASHBOARD_APP_NAME   = "oceanbase-dashboard"
-	SERVICE_ACCOUNT_NAME = "oceanbase-dashboard-sa"
+	DASHBOARD_APP_NAME = "oceanbase-dashboard"
+
+	defaultServiceAccountName = "oceanbase-dashboard-sa"
 )
+
+// ServiceAccountName returns the service account configured by the deployment.
+func ServiceAccountName() string {
+	return serviceAccountName(os.Getenv("SERVICE_ACCOUNT"))
+}
+
+func serviceAccountName(configuredName string) string {
+	if name := strings.TrimSpace(configuredName); name != "" {
+		return name
+	}
+	return defaultServiceAccountName
+}

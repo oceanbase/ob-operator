@@ -29,8 +29,8 @@ export default function BakMethodsList({
       </h3>
       <p>
         {intl.formatMessage({
-          id: 'Dashboard.Detail.NewBackup.BakMethodsList.ConfigureAtLeastOneFull',
-          defaultMessage: '至少配置 1 个全量备份',
+          id: 'Dashboard.Detail.NewBackup.BakMethodsList.ConfigureAtLeastOneFullAndOneIncremental',
+          defaultMessage: '至少配置 1 个全量备份和 1 个增量备份',
         })}
       </p>
       {dataSource?.days

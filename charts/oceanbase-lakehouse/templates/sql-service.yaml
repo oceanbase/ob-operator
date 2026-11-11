@@ -1,0 +1,21 @@
+{{- if eq .Values.stage "cluster" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-sql
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.sqlService.type }}
+  selector:
+    ref-obcluster: {{ .Release.Name }}-ob
+  ports:
+    - name: sql
+      port: {{ .Values.sqlService.port }}
+      targetPort: 2881
+      protocol: TCP
+      {{- if and (eq .Values.sqlService.type "NodePort") .Values.sqlService.nodePort }}
+      nodePort: {{ .Values.sqlService.nodePort }}
+      {{- end }}
+{{- end }}

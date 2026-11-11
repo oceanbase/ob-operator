@@ -370,16 +370,7 @@ func GetScopedEvents(ctx context.Context, ns, kind string, scoped []string) []re
 	var events []response.K8sEvent
 	for _, event := range eventList.Items {
 		if _, ok := existMapping[event.InvolvedObject.Name]; ok {
-			events = append(events, response.K8sEvent{
-				Namespace:  event.Namespace,
-				Message:    event.Message,
-				Reason:     event.Reason,
-				Type:       event.Type,
-				Object:     event.InvolvedObject.Kind + "/" + event.InvolvedObject.Name,
-				Count:      event.Count,
-				FirstOccur: event.FirstTimestamp.Unix(),
-				LastSeen:   event.LastTimestamp.Unix(),
-			})
+			events = append(events, response.NewK8sEvent(event))
 		}
 	}
 	return events

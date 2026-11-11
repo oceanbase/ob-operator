@@ -61,6 +61,12 @@ export default function ZoneItem({
   const replica = REPLICA_TYPE_LIST?.find((item) =>
     item.value?.toLowerCase().includes(obZoneResource['type']?.toLowerCase()),
   );
+  const logDiskLabel = obZoneResource?.logDiskUnlimited
+    ? intl.formatMessage({
+        id: 'Dashboard.Tenant.ResourcePools.NoLocalLogDiskLimit',
+        defaultMessage: '无本地日志盘限制',
+      })
+    : `${obZoneResource?.availableLogDisk}GB`;
   return (
     <div
       style={{
@@ -127,7 +133,7 @@ export default function ZoneItem({
             }GB ${intl.formatMessage({
               id: 'Dashboard.Tenant.New.ResourcePools.LogDiskSize',
               defaultMessage: '日志磁盘大小',
-            })} ${obZoneResource['availableLogDisk']}GB`}
+            })} ${logDiskLabel}`}
           >
             <div
               style={{
@@ -154,7 +160,7 @@ export default function ZoneItem({
                   id: 'Dashboard.Tenant.New.ResourcePools.LogDiskSize',
                   defaultMessage: '日志磁盘大小',
                 })}
-                {obZoneResource['availableLogDisk']}GB
+                {logDiskLabel}
               </span>
             </div>
           </Tooltip>

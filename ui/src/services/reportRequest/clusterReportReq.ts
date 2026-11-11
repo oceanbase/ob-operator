@@ -8,7 +8,7 @@ import {
   upgradeObcluster,
 } from '..';
 
-export async function createClusterReportWrap({ ...params }: { body: any }) {
+export async function createClusterReportWrap({ ...params }: API.CreateClusterData) {
   const r = await createObclusterReq(params);
   if (r.successful) {
     reportData({

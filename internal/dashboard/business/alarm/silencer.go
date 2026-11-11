@@ -72,6 +72,7 @@ func CreateOrUpdateSilencer(ctx context.Context, param *silence.SilencerParam) (
 	labelOBCluster := alarmconstant.LabelOBCluster
 	labelInstance := alarmconstant.LabelOBCluster
 	obcluster := ""
+	lsNamespace := ""
 	instances := make([]string, 0, len(param.Instances))
 	for _, instance := range param.Instances {
 		if instanceType == oceanbase.TypeUnknown {
@@ -85,6 +86,17 @@ func CreateOrUpdateSilencer(ctx context.Context, param *silence.SilencerParam) (
 		}
 		obcluster = instance.OBCluster
 		switch instance.Type {
+		case oceanbase.TypeLogService:
+			ns, name, err := logServiceSilenceIdentity(instance.LogService)
+			if err != nil {
+				return nil, err
+			}
+			if lsNamespace != "" && lsNamespace != ns {
+				return nil, errors.NewBadRequest("Select LogServices from one namespace per silence")
+			}
+			lsNamespace = ns
+			instances = append(instances, strings.ReplaceAll(name, ".", "\\."))
+			labelInstance = "logservice"
 		case oceanbase.TypeOBCluster:
 			instances = append(instances, instance.OBCluster)
 		case oceanbase.TypeOBServer:
@@ -101,7 +113,12 @@ func CreateOrUpdateSilencer(ctx context.Context, param *silence.SilencerParam) (
 		}
 	}
 	instanceValues := strings.Join(instances, alarmconstant.RegexOR)
-	if instanceType != oceanbase.TypeOBCluster {
+	if instanceType == oceanbase.TypeLogService {
+		labelNamespace := "namespace"
+		m := &ammodels.Matcher{IsEqual: &trueValue, IsRegex: &falseValue, Name: &labelNamespace, Value: &lsNamespace}
+		matchers = append(matchers, m)
+		matcherMap[labelNamespace] = m
+	} else if instanceType != oceanbase.TypeOBCluster {
 		clusterMatcher := &ammodels.Matcher{
 			IsEqual: &trueValue,
 			IsRegex: &falseValue,

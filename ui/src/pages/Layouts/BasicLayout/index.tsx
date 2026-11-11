@@ -16,6 +16,7 @@ import { IconFont, BasicLayout as OBLayout } from '@oceanbase/ui';
 import { Outlet, history, useAccess, useLocation, useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { useEffect, useState } from 'react';
+import { initialRouteRedirect } from './initialRoute';
 
 const BasicLayout: React.FC = () => {
   const location = useLocation();
@@ -43,6 +44,12 @@ const BasicLayout: React.FC = () => {
   }, []);
 
   const menus: MenuItem[] = [
+    {
+      title: 'LogService',
+      link: '/logservice',
+      icon: <IconFont type="cluster" />,
+      accessible: access.oblogserviceread || access.oblogservicewrite,
+    },
     {
       title: intl.formatMessage({
         id: 'dashboard.Layouts.BasicLayout.Overview',
@@ -151,14 +158,11 @@ const BasicLayout: React.FC = () => {
   );
 
   useEffect(() => {
-    const path = window.location.hash.split('#')[1];
     const allLink = menus
       .filter((item) => item.accessible)
       .map((accItem) => accItem?.link);
-    const targetPath = allLink.find((item) => path.includes(item));
-    history.replace(
-      targetPath || menus.find((item) => item.accessible)?.link || '/overview',
-    );
+    const targetPath = initialRouteRedirect(location.pathname, allLink);
+    if (targetPath) history.replace(targetPath);
   }, []);
 
   return (

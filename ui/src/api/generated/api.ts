@@ -559,6 +559,19 @@ export interface CommonKVPair {
 /**
  * 
  * @export
+ * @interface CommonObjectReference
+ */
+export interface CommonObjectReference {
+    /**
+     *
+     * @type {string}
+     * @memberof CommonObjectReference
+     */
+    'name': string;
+}
+/**
+ *
+ * @export
  * @interface CommonResourceSpec
  */
 export interface CommonResourceSpec {
@@ -577,6 +590,37 @@ export interface CommonResourceSpec {
 }
 /**
  * 
+ * @export
+ * @interface CommonSharedStorageSpec
+ */
+export interface CommonSharedStorageSpec {
+    /**
+     *
+     * @type {string}
+     * @memberof CommonSharedStorageSpec
+     */
+    'bucketURL': string;
+    /**
+     *
+     * @type {string}
+     * @memberof CommonSharedStorageSpec
+     */
+    'maxBandwidth'?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof CommonSharedStorageSpec
+     */
+    'maxIOPS'?: string;
+    /**
+     *
+     * @type {CommonObjectReference}
+     * @memberof CommonSharedStorageSpec
+     */
+    'secretRef': CommonObjectReference;
+}
+/**
+ *
  * @export
  * @interface CommonStorageSpec
  */
@@ -3069,6 +3113,12 @@ export interface ObproxyConfigItem {
      * @type {string}
      * @memberof ObproxyConfigItem
      */
+    'configLevel'?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof ObproxyConfigItem
+     */
     'info'?: string;
     /**
      * 
@@ -3084,6 +3134,12 @@ export interface ObproxyConfigItem {
     'needReboot'?: boolean;
     /**
      * 
+     * @type {string}
+     * @memberof ObproxyConfigItem
+     */
+    'range'?: string;
+    /**
+     *
      * @type {string}
      * @memberof ObproxyConfigItem
      */
@@ -3424,6 +3480,7 @@ export type ObproxyPatchOBProxyParamServiceTypeEnum = typeof ObproxyPatchOBProxy
  * @interface OceanbaseOBInstance
  */
 export interface OceanbaseOBInstance {
+    'logservice'?: string;
     /**
      * 
      * @type {string}
@@ -3464,6 +3521,7 @@ export interface OceanbaseOBInstance {
  */
 
 export const OceanbaseOBInstanceType = {
+    TypeLogService: 'logservice',
     TypeUnknown: 'unknown',
     TypeOBCluster: 'obcluster',
     TypeOBZone: 'obzone',
@@ -3710,6 +3768,18 @@ export interface ParamCreateOBClusterParam {
      */
     'deletionProtection'?: boolean;
     /**
+     * DeploymentMode is independent of the networking mode (NORMAL/SERVICE/STANDALONE).
+     * @type {string}
+     * @memberof ParamCreateOBClusterParam
+     */
+    'deploymentMode'?: ParamCreateOBClusterParamDeploymentModeEnum;
+    /**
+     *
+     * @type {CommonObjectReference}
+     * @memberof ParamCreateOBClusterParam
+     */
+    'logServiceRef'?: CommonObjectReference;
+    /**
      * 
      * @type {CommonClusterMode}
      * @memberof ParamCreateOBClusterParam
@@ -3771,12 +3841,24 @@ export interface ParamCreateOBClusterParam {
     'scenario': string;
     /**
      * 
+     * @type {CommonSharedStorageSpec}
+     * @memberof ParamCreateOBClusterParam
+     */
+    'sharedStorageInfo'?: CommonSharedStorageSpec;
+    /**
+     *
      * @type {Array<ParamZoneTopology>}
      * @memberof ParamCreateOBClusterParam
      */
     'topology': Array<ParamZoneTopology>;
 }
 
+export const ParamCreateOBClusterParamDeploymentModeEnum = {
+    normal: 'normal',
+    shared_storage: 'shared_storage'
+} as const;
+
+export type ParamCreateOBClusterParamDeploymentModeEnum = typeof ParamCreateOBClusterParamDeploymentModeEnum[keyof typeof ParamCreateOBClusterParamDeploymentModeEnum];
 
 /**
  * 
@@ -4115,7 +4197,7 @@ export interface ParamOBServerStorageSpec {
      * @type {CommonStorageSpec}
      * @memberof ParamOBServerStorageSpec
      */
-    'redoLog': CommonStorageSpec;
+    'redoLog'?: CommonStorageSpec;
 }
 /**
  * 
@@ -6059,9 +6141,21 @@ export interface ResponseOBCluster {
      * @type {string}
      * @memberof ResponseOBCluster
      */
+    'deploymentMode'?: string;
+    /**
+     *
+     * @type {string}
+     * @memberof ResponseOBCluster
+     */
     'image': string;
     /**
      * 
+     * @type {CommonObjectReference}
+     * @memberof ResponseOBCluster
+     */
+    'logServiceRef'?: CommonObjectReference;
+    /**
+     *
      * @type {ResponseOBMetrics}
      * @memberof ResponseOBCluster
      */
@@ -6116,6 +6210,12 @@ export interface ResponseOBCluster {
     'rootPasswordSecret': string;
     /**
      * 
+     * @type {CommonSharedStorageSpec}
+     * @memberof ResponseOBCluster
+     */
+    'sharedStorageInfo'?: CommonSharedStorageSpec;
+    /**
+     *
      * @type {string}
      * @memberof ResponseOBCluster
      */
@@ -6185,6 +6285,12 @@ export interface ResponseOBClusterMeta {
     'deletionProtection': boolean;
     /**
      * 
+     * @type {string}
+     * @memberof ResponseOBClusterMeta
+     */
+    'deploymentMode'?: string;
+    /**
+     *
      * @type {CommonClusterMode}
      * @memberof ResponseOBClusterMeta
      */
@@ -6291,6 +6397,12 @@ export interface ResponseOBClusterOverview {
     'deletionProtection': boolean;
     /**
      * 
+     * @type {string}
+     * @memberof ResponseOBClusterOverview
+     */
+    'deploymentMode'?: string;
+    /**
+     *
      * @type {string}
      * @memberof ResponseOBClusterOverview
      */
@@ -6562,6 +6674,13 @@ export interface ResponseOBServerAvailableResource {
      */
     'availableMemory': number;
     /**
+     * LogDiskUnlimited indicates shared log service has no local log disk quota.
+     * When true, AvailableLogDisk is zero and must not be used as a capacity.
+     * @type {boolean}
+     * @memberof ResponseOBServerAvailableResource
+     */
+    'logDiskUnlimited'?: boolean;
+    /**
      * 
      * @type {string}
      * @memberof ResponseOBServerAvailableResource
@@ -6597,7 +6716,7 @@ export interface ResponseOBServerStorage {
      * @type {ResponseStorageSpec}
      * @memberof ResponseOBServerStorage
      */
-    'redoLogStorage': ResponseStorageSpec;
+    'redoLogStorage'?: ResponseStorageSpec;
     /**
      * 
      * @type {ResponseStorageSpec}
@@ -7042,6 +7161,13 @@ export interface ResponseOBZoneAvailableResource {
      * @memberof ResponseOBZoneAvailableResource
      */
     'availableMemory': number;
+    /**
+     * LogDiskUnlimited indicates shared log service has no local log disk quota.
+     * When true, AvailableLogDisk is zero and must not be used as a capacity.
+     * @type {boolean}
+     * @memberof ResponseOBZoneAvailableResource
+     */
+    'logDiskUnlimited'?: boolean;
     /**
      * 
      * @type {string}
@@ -7883,7 +8009,7 @@ export interface SqlPlanDetail {
     'planDetail': SqlPlanOperator;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof SqlPlanDetail
      */
     'planHash': string;
@@ -8030,7 +8156,7 @@ export interface SqlPlanStatistic {
     'ioCost'?: number;
     /**
      * 
-     * @type {number}
+     * @type {string}
      * @memberof SqlPlanStatistic
      */
     'planHash': string;
@@ -8474,12 +8600,6 @@ export interface SqlSqlInfo {
      * @memberof SqlSqlInfo
      */
     'executionStatistics': Array<SqlSqlStatisticMetric>;
-    /**
-     * 
-     * @type {string}
-     * @memberof SqlSqlInfo
-     */
-    'formatSqlId'?: string;
     /**
      * 
      * @type {number}
@@ -18460,7 +18580,7 @@ export const TerminalApiAxiosParamCreator = function (configuration?: Configurat
         connectDatabase: async (terminalId: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'terminalId' is not null or undefined
             assertParamExists('connectDatabase', 'terminalId', terminalId)
-            const localVarPath = `/api/v1/conn/{terminalId}`
+            const localVarPath = `/api/v1/terminal/{terminalId}`
                 .replace(`{${"terminalId"}}`, encodeURIComponent(String(terminalId)));
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -19027,6 +19147,4 @@ export class WebhookApi extends BaseAPI {
         return WebhookApiFp(this.configuration).logAlerts(body, options).then((request) => request(this.axios, this.basePath));
     }
 }
-
-
 

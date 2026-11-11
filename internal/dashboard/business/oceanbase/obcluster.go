@@ -139,6 +139,8 @@ func buildOBClusterResponse(ctx context.Context, obcluster *v1alpha1.OBCluster) 
 	respCluster := &response.OBCluster{
 		OBClusterOverview: *overview,
 		OBClusterExtra: response.OBClusterExtra{
+			SharedStorageInfo:  modelcommon.SharedStorageFromAPI(obcluster.Spec.SharedStorageInfo),
+			LogServiceRef:      modelcommon.LogServiceRefFromAPI(obcluster.Spec.LogServiceRef),
 			RootPasswordSecret: obcluster.Spec.UserSecrets.Root,
 			Version:            versionStr,
 			Parameters:         nil,
@@ -625,15 +627,18 @@ func generateOBClusterInstance(param *param.CreateOBClusterParam) *v1alpha1.OBCl
 			Annotations: map[string]string{},
 		},
 		Spec: v1alpha1.OBClusterSpec{
-			ClusterName:      param.ClusterName,
-			ClusterId:        param.ClusterId,
-			OBServerTemplate: observerTemplate,
-			MonitorTemplate:  monitorTemplate,
-			BackupVolume:     backupVolume,
-			Parameters:       parameters,
-			Topology:         topology,
-			UserSecrets:      generateUserSecrets(param.Name, param.ClusterId),
-			Scenario:         param.Scenario,
+			DeploymentMode:    param.DeploymentMode,
+			SharedStorageInfo: param.SharedStorageInfo.ToAPI(),
+			LogServiceRef:     param.LogServiceRef.ToLogServiceRef(),
+			ClusterName:       param.ClusterName,
+			ClusterId:         param.ClusterId,
+			OBServerTemplate:  observerTemplate,
+			MonitorTemplate:   monitorTemplate,
+			BackupVolume:      backupVolume,
+			Parameters:        parameters,
+			Topology:          topology,
+			UserSecrets:       generateUserSecrets(param.Name, param.ClusterId),
+			Scenario:          param.Scenario,
 		},
 	}
 	switch param.Mode {
@@ -653,6 +658,12 @@ func generateOBClusterInstance(param *param.CreateOBClusterParam) *v1alpha1.OBCl
 }
 
 func CreateOBCluster(ctx context.Context, param *param.CreateOBClusterParam) error {
+	if err := param.ValidateStorageMode(); err != nil {
+		return oberr.NewBadRequest(err.Error())
+	}
+	if err := validateSharedStorageDependencies(ctx, param); err != nil {
+		return err
+	}
 	obcluster := generateOBClusterInstance(param)
 	err := clients.CreateSecretsForOBCluster(ctx, obcluster, param)
 	if err != nil {
@@ -670,6 +681,9 @@ func UpgradeObCluster(ctx context.Context, obclusterIdentity *param.K8sObjectIde
 	obcluster, err := clients.GetOBCluster(ctx, obclusterIdentity.Namespace, obclusterIdentity.Name)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Get obcluster %s %s", obclusterIdentity.Namespace, obclusterIdentity.Name)
+	}
+	if obcluster.Spec.DeploymentMode == "shared_storage" {
+		return nil, oberr.NewBadRequest("shared_storage mode does not support image upgrade in this version")
 	}
 	if obcluster.Status.Status != clusterstatus.Running {
 		return nil, errors.Errorf("Obcluster status invalid %s", obcluster.Status.Status)
@@ -842,6 +856,9 @@ func PatchOBCluster(ctx context.Context, nn *param.K8sObjectIdentity, param *par
 	}
 	if obcluster.Status.Status != clusterstatus.Running {
 		return nil, errors.Errorf("OBCluster status is invalid: %s, expected to be running", obcluster.Status.Status)
+	}
+	if obcluster.Spec.DeploymentMode == "shared_storage" && param.Storage != nil && param.Storage.RedoLog != nil {
+		return nil, oberr.NewBadRequest("observer.storage.redoLog must be omitted for shared_storage deploymentMode")
 	}
 	alreadyIgnoredDeletion := obcluster.Annotations[oceanbaseconst.AnnotationsIgnoreDeletion] == "true"
 

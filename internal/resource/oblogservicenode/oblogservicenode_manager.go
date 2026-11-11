@@ -21,6 +21,7 @@ import (
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	apipod "k8s.io/kubernetes/pkg/api/v1/pod"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 
@@ -76,7 +77,7 @@ func (m *OBLogServiceNodeManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 
 	var taskFlow *tasktypes.TaskFlow
 	switch m.Resource.Status.Status {
-	case nodestatus.New:
+	case nodestatus.New, nodestatus.Failed:
 		clusterName := m.Resource.Spec.ClusterName
 		lsCluster := &v1alpha1.OBLogServiceCluster{}
 		err := m.Client.Get(m.Ctx, client.ObjectKey{
@@ -89,7 +90,7 @@ func (m *OBLogServiceNodeManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 			} else {
 				return nil, err
 			}
-		} else if lsCluster.Status.Status == lsstatus.New {
+		} else if lsCluster.Status.Status == lsstatus.New || lsCluster.Status.Status == lsstatus.Failed {
 			m.Logger.Info("Prepare log service node for bootstrap")
 			taskFlow = genPrepareNodeForBootstrapFlow(m)
 		} else {
@@ -162,6 +163,10 @@ func (m *OBLogServiceNodeManager) UpdateStatus() error {
 			return err
 		}
 		if err == nil {
+			// Task functions run on snapshots. Derive observed pod state here,
+			// rather than relying on asynchronous writes to the reconciler's CR.
+			m.Resource.Status.CNI = resourceutils.GetCNIFromAnnotation(pod)
+			m.Resource.Status.Ready = pod.Status.Phase == corev1.PodRunning && apipod.IsPodReady(pod)
 			m.Resource.Status.PodPhase = pod.Status.Phase
 			// A failed/evicted pod may report an empty PodIP; keep the last
 			// known IP so recovery can pin the recreated pod to it.
@@ -177,7 +182,6 @@ func (m *OBLogServiceNodeManager) UpdateStatus() error {
 			m.Logger.Info("LogService node pod not found, need recovery", "pod", m.Resource.Status.PodName)
 			m.setRecoveryStatus()
 		} else if pod.Name != "" {
-			m.Resource.Status.Ready = pod.Status.Phase == corev1.PodRunning
 			if pod.Status.Phase == corev1.PodFailed {
 				m.Logger.Info("LogService node pod in Failed phase, need recovery", "pod", m.Resource.Status.PodName)
 				m.setRecoveryStatus()
@@ -234,7 +238,12 @@ func (m *OBLogServiceNodeManager) setRecoveryStatus() {
 }
 
 func (m *OBLogServiceNodeManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
-	return taskMap.GetTask(name, m)
+	// Coordinator starts the task asynchronously, then Status().Update decodes
+	// its response into Resource. Never share that mutable object with the task:
+	// the decoder can temporarily clear metadata/spec between PVC creations.
+	taskManager := *m
+	taskManager.Resource = m.Resource.DeepCopy()
+	return taskMap.GetTask(name, &taskManager)
 }
 
 func (m *OBLogServiceNodeManager) PrintErrEvent(err error) {

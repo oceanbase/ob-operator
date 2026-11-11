@@ -1,0 +1,17 @@
+# Internal QA backend update. Build with the verified cached base CONFIG ID.
+# Its frontend is reused only after proving ui/ has the same source tree as the
+# base build revision (e747a05aba0ac89ab3b0a769c92f84ad3e2de5e1).
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+ARG SOURCE_REVISION
+ARG BACKEND_SHA256
+LABEL org.opencontainers.image.source="https://github.com/oceanbase/ob-operator" \
+      org.opencontainers.image.revision="${SOURCE_REVISION}" \
+      qa.backend.sha256="${BACKEND_SHA256}" \
+      qa.frontend.source-revision="e747a05aba0ac89ab3b0a769c92f84ad3e2de5e1" \
+      qa.distribution="internal-test-only"
+COPY oceanbase-dashboard /root/oceanbase-dashboard
+USER root
+WORKDIR /root
+ENTRYPOINT ["/root/oceanbase-dashboard"]
+CMD []

@@ -119,6 +119,7 @@ export default () => {
                 />
               </div>
               <ClusterSelect
+                style={{ flex: 1, minWidth: 0 }}
                 valueProp="id"
                 value={`${clusterDetail?.info?.clusterName}:${clusterDetail?.info?.clusterId}`}
                 bordered={false}
@@ -156,6 +157,7 @@ export default () => {
                 <IconFont type="tenant" style={{ fontSize: '16px' }} />
               </div>
               <TenantSelect
+                style={{ flex: 1, minWidth: 0 }}
                 valueProp="id"
                 value={tenantDetail?.info?.tenantName}
                 bordered={false}

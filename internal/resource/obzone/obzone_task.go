@@ -14,6 +14,8 @@ package obzone
 
 import (
 	"fmt"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,6 +25,7 @@ import (
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
@@ -76,7 +79,10 @@ func AddSharedStorageDest(m *OBZoneManager) tasktypes.TaskError {
 		return errors.Wrap(err, "Get oceanbase operation manager")
 	}
 	accessInfo := fmt.Sprintf("access_id=%s&access_key=%s", accessID, accessKey)
-	attribute := buildSharedStorageAttribute(obcluster.Spec.SharedStorageInfo.MaxIOPS, obcluster.Spec.SharedStorageInfo.MaxBandwidth)
+	attribute, err := sharedStorageAttributeFromSpec(obcluster.Spec.SharedStorageInfo)
+	if err != nil {
+		return err
+	}
 	return oceanbaseOperationManager.AddSharedStorageDest(
 		m.Ctx,
 		obcluster.Spec.SharedStorageInfo.BucketURL,
@@ -87,14 +93,37 @@ func AddSharedStorageDest(m *OBZoneManager) tasktypes.TaskError {
 }
 
 func buildSharedStorageAttribute(maxIOPS, maxBandwidth string) string {
-	attributes := make([]string, 0, 2)
-	if maxIOPS != "" {
-		attributes = append(attributes, "max_iops="+maxIOPS)
+	maxIOPS, maxBandwidth = strings.TrimSpace(maxIOPS), strings.TrimSpace(maxBandwidth)
+	if maxIOPS == "" {
+		maxIOPS = "0"
 	}
-	if maxBandwidth != "" {
-		attributes = append(attributes, "max_bandwidth="+maxBandwidth)
+	if maxBandwidth == "" {
+		maxBandwidth = "0B"
+	} else if _, err := strconv.ParseUint(maxBandwidth, 10, 64); err == nil {
+		maxBandwidth += "B"
 	}
-	return strings.Join(attributes, "&")
+	return "max_iops=" + maxIOPS + "&max_bandwidth=" + maxBandwidth
+}
+
+func sharedStorageAttributeFromSpec(storage *apitypes.SharedStorageSpec) (string, error) {
+	// Preserve limits embedded in bucketURL, as accepted by BOOTSTRAP. Explicit
+	// fields take precedence. Do not log the URL: it may contain credentials.
+	parsed, err := url.Parse(storage.BucketURL)
+	if err != nil {
+		return "", errors.New("invalid shared storage bucket URL")
+	}
+	query, err := url.ParseQuery(parsed.RawQuery)
+	if err != nil {
+		return "", errors.New("invalid shared storage bucket URL query")
+	}
+	maxIOPS, maxBandwidth := storage.MaxIOPS, storage.MaxBandwidth
+	if strings.TrimSpace(maxIOPS) == "" {
+		maxIOPS = query.Get("max_iops")
+	}
+	if strings.TrimSpace(maxBandwidth) == "" {
+		maxBandwidth = query.Get("max_bandwidth")
+	}
+	return buildSharedStorageAttribute(maxIOPS, maxBandwidth), nil
 }
 
 func StartOBZone(m *OBZoneManager) tasktypes.TaskError {
@@ -290,9 +319,18 @@ func WaitOBServerUpgraded(m *OBZoneManager) tasktypes.TaskError {
 }
 
 func DeleteOBZoneInCluster(m *OBZoneManager) tasktypes.TaskError {
+	cluster, err := m.getOBCluster()
+	if err != nil {
+		return errors.Wrap(err, "Get obcluster before deleting zone")
+	}
 	operationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return errors.Wrapf(err, "OBZone %s get oceanbase operation manager", m.OBZone.Name)
+	}
+	if cluster.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
+		if err := operationManager.DropZoneSharedStorage(m.Ctx, m.OBZone.Spec.Topology.Zone); err != nil {
+			return errors.Wrap(err, "Drop shared storage before deleting zone")
+		}
 	}
 	err = operationManager.DeleteZone(m.Ctx, m.OBZone.Spec.Topology.Zone)
 	if err != nil {

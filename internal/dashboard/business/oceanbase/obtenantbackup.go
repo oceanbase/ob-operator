@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
@@ -52,6 +53,13 @@ func dayToNumber(day string) int {
 }
 
 func setScheduleDatesToPolicy(policy *v1alpha1.OBTenantBackupPolicy, p *param.ScheduleBase) error {
+	if p.ScheduleType != "Weekly" && p.ScheduleType != "Monthly" {
+		return oberr.NewBadRequest("Schedule type must be Weekly or Monthly")
+	}
+	scheduleTime, err := time.Parse("15:04", p.ScheduleTime)
+	if err != nil || scheduleTime.Format("15:04") != p.ScheduleTime {
+		return oberr.NewBadRequest("Schedule time must use HH:MM in the 24-hour format")
+	}
 	hourMinutes := strings.Split(p.ScheduleTime, ":")
 	crontabParts := fmt.Sprintf("%s %s", hourMinutes[1], hourMinutes[0])
 
@@ -69,12 +77,11 @@ func setScheduleDatesToPolicy(policy *v1alpha1.OBTenantBackupPolicy, p *param.Sc
 		if len(fullCrontabWeekdays) == 0 {
 			return oberr.NewBadRequest("At least one full backup day is required")
 		}
-		policy.Spec.DataBackup.FullCrontab = crontabParts + " " + strings.Join(fullCrontabWeekdays, ",")
-		if len(incrementalCrontabWeekdays) > 0 {
-			policy.Spec.DataBackup.IncrementalCrontab = crontabParts + " " + strings.Join(incrementalCrontabWeekdays, ",")
-		} else {
-			policy.Spec.DataBackup.IncrementalCrontab = crontabParts + " *"
+		if len(incrementalCrontabWeekdays) == 0 {
+			return oberr.NewBadRequest("At least one incremental backup day is required")
 		}
+		policy.Spec.DataBackup.FullCrontab = crontabParts + " " + strings.Join(fullCrontabWeekdays, ",")
+		policy.Spec.DataBackup.IncrementalCrontab = crontabParts + " " + strings.Join(incrementalCrontabWeekdays, ",")
 	} else if p.ScheduleType == "Monthly" {
 		fullCrontabMonthdays := make([]string, 0)
 		incrementalCrontabMonthdays := make([]string, 0)
@@ -88,12 +95,11 @@ func setScheduleDatesToPolicy(policy *v1alpha1.OBTenantBackupPolicy, p *param.Sc
 		if len(fullCrontabMonthdays) == 0 {
 			return oberr.NewBadRequest("At least one full backup day is required")
 		}
-		policy.Spec.DataBackup.FullCrontab = strings.Join([]string{crontabParts, strings.Join(fullCrontabMonthdays, ","), "* *"}, " ")
-		if len(incrementalCrontabMonthdays) > 0 {
-			policy.Spec.DataBackup.IncrementalCrontab = strings.Join([]string{crontabParts, strings.Join(incrementalCrontabMonthdays, ","), "* *"}, " ")
-		} else {
-			policy.Spec.DataBackup.IncrementalCrontab = strings.Join([]string{crontabParts, "*", "* *"}, " ")
+		if len(incrementalCrontabMonthdays) == 0 {
+			return oberr.NewBadRequest("At least one incremental backup day is required")
 		}
+		policy.Spec.DataBackup.FullCrontab = strings.Join([]string{crontabParts, strings.Join(fullCrontabMonthdays, ","), "* *"}, " ")
+		policy.Spec.DataBackup.IncrementalCrontab = strings.Join([]string{crontabParts, strings.Join(incrementalCrontabMonthdays, ","), "* *"}, " ")
 	}
 	return nil
 }
@@ -316,16 +322,7 @@ func GetTenantBackupPolicy(ctx context.Context, nn types.NamespacedName) (*respo
 	}
 	events.Items = append(events.Items, jobEvents.Items...)
 	for _, event := range events.Items {
-		respPolicy.Events = append(respPolicy.Events, response.K8sEvent{
-			Namespace:  event.Namespace,
-			Type:       event.Type,
-			Count:      event.Count,
-			FirstOccur: event.FirstTimestamp.Unix(),
-			LastSeen:   event.LastTimestamp.Unix(),
-			Reason:     event.Reason,
-			Message:    event.Message,
-			Object:     fmt.Sprintf("%s/%s", event.InvolvedObject.Kind, event.InvolvedObject.Name),
-		})
+		respPolicy.Events = append(respPolicy.Events, response.NewK8sEvent(event))
 	}
 	return respPolicy, nil
 }

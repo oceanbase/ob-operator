@@ -1,0 +1,32 @@
+{
+  "observer_base": "sha256:4c378226714155d6d7a9211cad0cb2a2e290ef7bac204ae6ecdb7efd9fec0b56",
+  "observer_binary_sha256": "f62e5d7227cc904a701700528edb286d7d83d670392d22aa1a758ff5aa8b9194",
+  "runtime_base": "sha256:98d0bf0224047aa0a1887eb51627ed969e9467ae99e00bafb3756a74481cb023",
+  "runtime_source": "alibaba-cloud-linux-3-registry.cn-hangzhou.cr.aliyuncs.com/alinux3/alinux3@sha256:e5791e41fc76bcd6de81842fd808f07a12913869315f150c7b07f9ed28cef9e7",
+  "python_runtime": "Base image platform-python 3.6.8; /usr/bin/python3 points to /usr/libexec/platform-python (no additional Python packages)",
+  "helper_revision": "93d776193be51482df277c6157c73afe5e85ddc5",
+  "helper_build": "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go1.25.0 build -trimpath -buildvcs=false -ldflags=-buildid= ./cmd/oceanbase-helper/main.go",
+  "inputs": {
+    "RPM-GPG-KEY-OceanBase-old": {
+      "sha256": "dff33e8dcee747a23c285eaaea1d7dea14175000b726e9452bd90c431c21aafe",
+      "source": "https://mirrors.oceanbase.com/RPM-GPG-KEY-OceanBase-old"
+    },
+    "tar-1.30-13.0.1.al8.x86_64.rpm": {
+      "sha256": "647a01d937eeaefe36857bc26c429d16bbaa651d953b1ac262a9fc43becf0c90",
+      "source": "https://mirrors.aliyun.com/alinux/3/updates/x86_64/Packages/tar-1.30-13.0.1.al8.x86_64.rpm"
+    },
+    "oceanbase-diagnostic-tool-5.0.1-32026101919.el8.x86_64.rpm": {
+      "sha256": "19a4d249d439afa82ec7ce034e272bb57eadc49d3ecc6a057c74a6ed8528b6bd",
+      "source": "https://mirrors.aliyun.com/oceanbase/community/stable/el/8/x86_64/oceanbase-diagnostic-tool-5.0.1-32026101919.el8.x86_64.rpm",
+      "source_tag": "https://github.com/oceanbase/obdiag/tree/v5.0.1",
+      "source_revision": "33696699b1148d40e315472afbad006258410d61",
+      "rpm_license_metadata": "Commercial"
+    },
+    "oceanbase-helper": {
+      "sha256": "38dec5a85c9151c500099c7eff3615e56bf534f968d8bb09d7163dee00138e37",
+      "source": "https://github.com/oceanbase/ob-operator/tree/93d776193be51482df277c6157c73afe5e85ddc5"
+    }
+  },
+  "helper_binary_rebuild": true,
+  "helper_source_archive_sha256": "26604b1468b0fbab77213d887383f98f78d4126343804a2d4f3095ac9f092687"
+}

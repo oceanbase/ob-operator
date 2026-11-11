@@ -16,7 +16,7 @@ spec:
           restartPolicy: OnFailure
           containers:
           - name: cleanup
-            image: busybox:latest
+            image: {{ .Values.utilityImage | quote }}
             imagePullPolicy: IfNotPresent
             command:
             - /bin/sh
@@ -29,5 +29,5 @@ spec:
           volumes:
           - name: shared-volume
             persistentVolumeClaim:
-              claimName: {{ .Release.Name }}-shared-volume-pvc
+              claimName: {{ include "oceanbase-dashboard.sharedClaim" . }}
 {{- end }}

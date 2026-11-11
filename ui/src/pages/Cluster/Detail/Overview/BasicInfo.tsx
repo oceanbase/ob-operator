@@ -111,6 +111,9 @@ export default function BasicInfo({
   clusterName,
   style,
   deletionProtection,
+  deploymentMode,
+  sharedStorageInfo,
+  logServiceRef,
   ...props
 }: ResponseOBCluster & {
   style?: React.CSSProperties;
@@ -211,6 +214,42 @@ export default function BasicInfo({
         >
           {MODE_MAP.get(mode)?.text || '-'}
         </Descriptions.Item>
+        <Descriptions.Item
+          label={intl.formatMessage({
+            id: 'dashboard.Cluster.SharedStorage.Mode',
+            defaultMessage: '部署模式',
+          })}
+        >
+          {deploymentMode === 'shared_storage'
+            ? 'SS (shared_storage)'
+            : 'normal'}
+        </Descriptions.Item>
+        {deploymentMode === 'shared_storage' && (
+          <>
+            <Descriptions.Item label="LogService">
+              {logServiceRef?.name ? <a href={`#/logservice/${encodeURIComponent(namespace)}/${encodeURIComponent(logServiceRef.name)}`}>{logServiceRef.name}</a> : '-'}
+            </Descriptions.Item>
+            <Descriptions.Item
+              label={intl.formatMessage({
+                id: 'dashboard.Cluster.SharedStorage.Bucket',
+                defaultMessage: '共享存储 Bucket URL',
+              })}
+              span={3}
+            >
+              <Text style={{ overflowWrap: 'anywhere' }} copyable>
+                {sharedStorageInfo?.bucketURL || '-'}
+              </Text>
+            </Descriptions.Item>
+            <Descriptions.Item
+              label={intl.formatMessage({
+                id: 'dashboard.Cluster.SharedStorage.Secret',
+                defaultMessage: '对象存储 Secret 名称',
+              })}
+            >
+              {sharedStorageInfo?.secretRef?.name || '-'}
+            </Descriptions.Item>
+          </>
+        )}
         <Descriptions.Item
           label={intl.formatMessage({
             id: 'OBDashboard.Detail.Overview.BasicInfo.ClusterStatus',

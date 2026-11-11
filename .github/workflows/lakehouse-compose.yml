@@ -2,8 +2,6 @@ name: lakehouse compose
 
 on:
   push:
-    branches:
-      - 'codex/lakehouse-compose'
     paths:
       - 'cmd/lakehouse-bootstrap/**'
       - 'deploy/compose/lakehouse/**'
@@ -35,16 +33,13 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - run: go test -race -count=1 ./cmd/lakehouse-bootstrap
-      - run: shellcheck deploy/compose/lakehouse/scripts/*.sh deploy/compose/lakehouse/tests/*.sh
-      - run: bash deploy/compose/lakehouse/tests/prepare.sh
-      - name: Validate Compose configuration
+      - run: go test -race -count=1 ./cmd/lakehouse-bootstrap ./deploy/compose/lakehouse
+      - run: shellcheck deploy/compose/lakehouse/scripts/*.sh
+      - name: Validate zero-preparation Compose configuration
         working-directory: deploy/compose/lakehouse
         run: |
-          ./scripts/prepare.sh
-          docker compose -f compose.yaml config --quiet
-          docker compose -f compose.yaml -f compose.build.yaml config --quiet
-          docker compose -f compose.yaml -f compose.debug.yaml config --quiet
+          docker compose --env-file /dev/null -f compose.yaml config --quiet
+          docker compose --env-file /dev/null -f compose.yaml -f compose.build.yaml config --quiet
 
   bootstrap-image:
     if: github.event_name == 'workflow_dispatch'
@@ -59,7 +54,6 @@ jobs:
         env:
           RELEASE_VERSION: ${{ inputs.version }}
         run: '[[ "$RELEASE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]'
-      - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - uses: docker/login-action@v3
         if: inputs.publish
@@ -71,6 +65,6 @@ jobs:
         with:
           context: .
           file: deploy/compose/lakehouse/Dockerfile.bootstrap
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: ${{ inputs.publish }}
           tags: ghcr.io/${{ github.repository_owner }}/lakehouse-bootstrap:${{ inputs.version }}

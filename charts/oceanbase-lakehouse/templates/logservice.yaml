@@ -1,0 +1,37 @@
+{{- if ne .Values.stage "storage" }}
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBLogServiceCluster
+metadata:
+  name: {{ .Release.Name }}-ls
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+    {{- if .Values.native.enabled }}
+    oceanbase.oceanbase.com/storage-init-job: {{ printf "%s-storage-init-%d" .Release.Name .Release.Revision | quote }}
+    {{- if eq .Values.objectStorage.mode "bundled" }}
+    oceanbase.oceanbase.com/resolve-storage-service: "true"
+    {{- end }}
+    {{- end }}
+    oceanbase.oceanbase.com/mode: service
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+spec:
+  clusterId: {{ .Values.logService.clusterId }}
+  serviceAccount: {{ .Release.Name }}-workload
+  objectStoreUrl:
+    bucketURL: {{ include "lakehouse.logBucketURL" . | quote }}
+    secretRef: {name: {{ include "lakehouse.logStorageSecret" . }}}
+  logService:
+    image: {{ .Values.logService.image | quote }}
+    resource: {{ toYaml .Values.logService.resource | nindent 6 }}
+    storage:
+      storeStorage: {storageClass: {{ .Values.storageClass | quote }}, size: {{ .Values.logService.storeSize | quote }}}
+      logStorage: {storageClass: {{ .Values.storageClass | quote }}, size: {{ .Values.logService.logSize | quote }}}
+  topology:
+    {{- range .Values.logService.topology }}
+    - zone: {{ .zone | quote }}
+      replica: {{ .replica }}
+      {{- include "lakehouse.zoneScheduling" (dict "root" $ "zone" .) | nindent 6 }}
+    {{- end }}
+  parameters: {{ toYaml .Values.logService.parameters | nindent 4 }}
+{{- end }}

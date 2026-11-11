@@ -37,7 +37,7 @@ export default function MonitorDetail({
   const [isRefresh, setIsRefresh] = useState<boolean>(false);
   const [realTime, setRealTime] = useState<string>(getDate());
   const access = useAccess();
-  const timerRef = useRef<NodeJS.Timeout>();
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const updateTimer = useRef<NodeJS.Timer>();
   const [queryRange, setQueryRange] =
     useState<Monitor.QueryRangeType>(DEFAULT_QUERY_RANGE);
@@ -60,12 +60,16 @@ export default function MonitorDetail({
         setQueryRange(newQueryRangeRef.current);
       }, REFRESH_FREQUENCY * 1000);
     }
-    if (!isRefresh) {
+    if (!isRefresh && timerRef.current) {
       clearInterval(timerRef.current);
+      timerRef.current = null;
     }
 
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
     };
   }, [isRefresh]);
 

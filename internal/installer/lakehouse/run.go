@@ -1,0 +1,520 @@
+package lakehouse
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/json"
+	"errors"
+	"flag"
+	"fmt"
+	"io"
+	"net"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"regexp"
+	"strings"
+	"syscall"
+	"time"
+
+	"github.com/mattn/go-isatty"
+	"sigs.k8s.io/yaml"
+)
+
+type valueFiles []string
+
+func (v *valueFiles) String() string     { return strings.Join(*v, ",") }
+func (v *valueFiles) Set(s string) error { *v = append(*v, s); return nil }
+
+type options struct {
+	accessExplicit                                                             bool
+	bundle, release, namespace, node, runtime, address, endpoint, host, access string
+	check, showAccess                                                          bool
+	progressMode                                                               string
+	kubeconfig                                                                 string
+	files                                                                      valueFiles
+	resources                                                                  resourceOverrides
+	nodeNames                                                                  []string
+	ssh                                                                        ClusterSSHOptions
+	sshExplicit                                                                bool
+}
+
+func parseOptions(args []string, stderr io.Writer) (options, error) {
+	var o options
+	var nodes string
+	var sshHosts valueFiles
+	fs := flag.NewFlagSet("lakehouse-installer", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	fs.StringVar(&o.bundle, "bundle", ".", "Extracted bundle directory")
+	fs.StringVar(&o.release, "release", "ob-demo", "Helm release (reuse on retry)")
+	fs.StringVar(&o.namespace, "namespace", "ob-helm-demo", "Namespace (reuse on retry)")
+	fs.StringVar(&o.node, "node", "", "Target worker; automatic when unambiguous")
+	fs.StringVar(&nodes, "nodes", "", "Three Kubernetes node names, comma-separated; run on the first node (storage and Dashboard)")
+	fs.StringVar(&o.ssh.User, "ssh-user", "root", "SSH user for other workers; must have runtime access without interactive sudo")
+	fs.IntVar(&o.ssh.Port, "ssh-port", 22, "SSH port for other workers")
+	fs.StringVar(&o.ssh.IdentityFile, "ssh-identity", "", "SSH private key file; otherwise use configured SSH identities")
+	fs.Var(&sshHosts, "ssh-host", "SSH address override NODE=HOST; repeatable (default: Node InternalIP)")
+	fs.StringVar(&o.runtime, "runtime", "auto", "auto, k3s, docker or containerd")
+	fs.StringVar(&o.address, "containerd-address", "", "containerd socket for non-K3s installations")
+	fs.StringVar(&o.endpoint, "cri-endpoint", "", "CRI Unix socket for non-K3s installations")
+	fs.StringVar(&o.host, "dashboard-host", "", "Dashboard IP or DNS override, saved after access checks; otherwise use a saved override, public node address or local Alibaba Cloud ECS public IP/EIP")
+	fs.StringVar(&o.access, "access", "nodeport", "Dashboard access: nodeport or clusterip")
+	fs.BoolVar(&o.check, "check", false, "Read-only preflight; do not import images or install resources")
+	fs.BoolVar(&o.showAccess, "show-access", false, "Show URL and save initial password to a private local file")
+	fs.StringVar(&o.progressMode, "progress", "auto", "Progress display: auto (live terminal) or plain (line-by-line logs)")
+	fs.StringVar(&o.kubeconfig, "kubeconfig", "", "Kubernetes config file for both kubectl and Helm; otherwise preserve existing configuration or use readable local K3s configuration")
+	fs.Var(&o.files, "f", "Values file; repeatable, later files override earlier ones")
+	fs.Var(&o.files, "values", "Values file; repeatable")
+	o.resources.register(fs)
+	if err := fs.Parse(args); err != nil {
+		return o, err
+	}
+	var err error
+	o.nodeNames, err = parseThreeNodes(nodes)
+	if err != nil {
+		return o, err
+	}
+	if o.node != "" && len(o.nodeNames) != 0 {
+		return o, errors.New("--node and --nodes are mutually exclusive")
+	}
+	o.ssh.Hosts, err = parseSSHHosts(sshHosts)
+	if err != nil {
+		return o, err
+	}
+	fs.Visit(func(f *flag.Flag) {
+		if f.Name == "access" {
+			o.accessExplicit = true
+		}
+		if strings.HasPrefix(f.Name, "ssh-") {
+			o.sshExplicit = true
+		}
+		if f.Name == "nodes" && len(o.nodeNames) == 0 {
+			err = errors.New("--nodes requires exactly three distinct Kubernetes node names")
+		}
+	})
+	if err != nil {
+		return o, err
+	}
+	if o.ssh.Port < 1 || o.ssh.Port > 65535 {
+		return o, errors.New("--ssh-port must be between 1 and 65535")
+	}
+	if o.check && o.showAccess {
+		return o, errors.New("--check and --show-access are mutually exclusive")
+	}
+	if o.showAccess && len(o.resources) != 0 {
+		return o, errors.New("sizing options cannot be used with --show-access; use them when installing")
+	}
+	if fs.NArg() != 0 {
+		return o, errors.New("unexpected positional arguments; use --release, --namespace and -f")
+	}
+	if !regexp.MustCompile(`^[a-z]([a-z0-9-]{0,38}[a-z0-9])?$`).MatchString(o.release) {
+		return o, errors.New("release must be 1-40 DNS characters")
+	}
+	if !regexp.MustCompile(`^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$`).MatchString(o.namespace) {
+		return o, errors.New("invalid namespace")
+	}
+	if o.access != "nodeport" && o.access != "clusterip" {
+		return o, errors.New("access must be nodeport or clusterip")
+	}
+	if o.progressMode != "auto" && o.progressMode != "plain" {
+		return o, errors.New("progress must be auto or plain")
+	}
+	if o.host != "" && net.ParseIP(o.host) == nil && !regexp.MustCompile(`^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$`).MatchString(o.host) {
+		return o, errors.New("dashboard-host must be an IP or DNS name without scheme or port")
+	}
+	o.bundle, err = filepath.Abs(o.bundle)
+	return o, err
+}
+
+func command(ctx context.Context, name string, args ...string) *exec.Cmd {
+	cmd := exec.CommandContext(ctx, name, args...)
+	if path, ok := ctx.Value(kubeconfigContextKey{}).(string); ok && path != "" {
+		cmd.Env = append(os.Environ(), "KUBECONFIG="+path)
+	}
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.Cancel = func() error {
+		if cmd.Process == nil {
+			return os.ErrProcessDone
+		}
+		err := syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+		if err == syscall.ESRCH {
+			return os.ErrProcessDone
+		}
+		return err
+	}
+	cmd.WaitDelay = 5 * time.Second
+	return cmd
+}
+func execute(ctx context.Context, name string, args ...string) ([]byte, error) {
+	return command(ctx, name, args...).Output()
+}
+func bounded(ctx context.Context, run RunCommand, name string, args ...string) ([]byte, error) {
+	c, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	return run(c, name, args...)
+}
+func getJSON(ctx context.Context, run RunCommand, dst interface{}, args ...string) error {
+	raw, err := bounded(ctx, run, "kubectl", append([]string{"--request-timeout=20s"}, args...)...)
+	if err != nil {
+		return fmt.Errorf("Kubernetes read failed: %w", err)
+	}
+	if err = json.Unmarshal(raw, dst); err != nil {
+		return errors.New("Kubernetes returned invalid JSON")
+	}
+	return nil
+}
+
+func Run(ctx context.Context, args []string, out, stderr io.Writer) error {
+	return runWithCacheDirectory(ctx, args, out, stderr, os.UserCacheDir)
+}
+
+func liveProgressEnabled(out io.Writer, mode string) bool {
+	if mode == "plain" || os.Getenv("TERM") == "dumb" || os.Getenv("CI") != "" {
+		return false
+	}
+	f, ok := out.(interface{ Fd() uintptr })
+	return ok && isatty.IsTerminal(f.Fd())
+}
+
+func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Writer, userCacheDir func() (string, error)) (runErr error) {
+	o, err := parseOptions(args, stderr)
+	if errors.Is(err, flag.ErrHelp) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	config, err := installerKubeconfig(o.kubeconfig, os.Getenv("KUBECONFIG"), "/etc/rancher/k3s/k3s.yaml")
+	if err != nil {
+		return err
+	}
+	if config != "" {
+		ctx = context.WithValue(ctx, kubeconfigContextKey{}, config)
+	}
+	for _, tool := range []string{"helm", "kubectl", "jq", "bash"} {
+		if _, err := exec.LookPath(tool); err != nil {
+			return fmt.Errorf("install prerequisite %s before running this command", tool)
+		}
+	}
+	progress := func(s string) { fmt.Fprintln(out, s) }
+	var console *consoleProgress
+	liveProgress := !o.showAccess && liveProgressEnabled(out, o.progressMode)
+	if !o.showAccess {
+		console = newConsoleProgress(out, liveProgress)
+		liveProgress = console.Live()
+		progress = console.Println
+		defer func() { console.Finish(runErr) }()
+	}
+	steps := 5
+	if o.check {
+		steps = 2
+	}
+	if !o.showAccess {
+		progress(fmt.Sprintf("[1/%d] Checking cluster and installation settings", steps))
+	}
+	if config != "" {
+		progress("  Kubernetes configuration: " + config)
+	}
+	var identity struct {
+		Metadata struct {
+			UID string `json:"uid"`
+		} `json:"metadata"`
+	}
+	if err = getJSON(ctx, execute, &identity, "get", "namespace", "kube-system", "-o", "json"); err != nil {
+		return err
+	}
+	if identity.Metadata.UID == "" {
+		return errors.New("cluster identity is missing")
+	}
+	key := fmt.Sprintf("%x", sha256.Sum256([]byte(identity.Metadata.UID+"/"+o.namespace+"/"+o.release)))[:16]
+	stateDir := filepath.Join(o.bundle, ".lakehouse-install", key)
+	if o.showAccess {
+		return showAccess(ctx, execute, o, PreflightResult{}, stateDir, out)
+	}
+	if !o.check {
+		cacheDir, err := userCacheDir()
+		if err != nil {
+			return fmt.Errorf("cannot locate installation lock directory: %w", err)
+		}
+		cacheDir = filepath.Join(cacheDir, "oceanbase-lakehouse")
+		if err = privateDirectory(cacheDir); err != nil {
+			return err
+		}
+		lockDir := filepath.Join(cacheDir, "locks")
+		if err = privateDirectory(lockDir); err != nil {
+			return err
+		}
+		// Share the lock across extracted bundles for this user and release. Helm
+		// additionally serializes server mutations. Never remove a held lock file.
+		lock, err := os.OpenFile(filepath.Join(lockDir, key), os.O_CREATE|os.O_RDWR|syscall.O_NOFOLLOW, 0600)
+		if err != nil {
+			return err
+		}
+		defer lock.Close()
+		if err = lock.Chmod(0600); err != nil {
+			return err
+		}
+		if err = syscall.Flock(int(lock.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
+			return errors.New("another installation of this release is running")
+		}
+		defer syscall.Flock(int(lock.Fd()), syscall.LOCK_UN)
+	}
+	var releases []struct {
+		Name string `json:"name"`
+	}
+	raw, err := bounded(ctx, execute, "helm", "list", "-n", o.namespace, "--all", "--filter", "^"+o.release+"$", "-o", "json")
+	if err != nil {
+		return fmt.Errorf("cannot read installed Helm release: %w", err)
+	}
+	if err = json.Unmarshal(raw, &releases); err != nil {
+		return errors.New("invalid Helm release list")
+	}
+	existing := len(releases) > 0
+	var values map[string]interface{}
+	retained := existing
+	if existing {
+		raw, err = bounded(ctx, execute, "helm", "get", "values", o.release, "-n", o.namespace, "-o", "json")
+		if err != nil {
+			return fmt.Errorf("cannot read existing user values: %w", err)
+		}
+		if err = json.Unmarshal(raw, &values); err != nil {
+			return errors.New("invalid existing user values")
+		}
+		effectiveRaw, readErr := bounded(ctx, execute, "helm", "get", "values", o.release, "-n", o.namespace, "--all", "-o", "json")
+		if readErr != nil {
+			return fmt.Errorf("cannot read effective installed values: %w", readErr)
+		}
+		var effective map[string]interface{}
+		if err = json.Unmarshal(effectiveRaw, &effective); err != nil {
+			return errors.New("invalid effective installed values")
+		}
+		values = retainConfiguration(effective, values)
+		progress("Reusing installed settings; explicitly supplied values take precedence.")
+	} else {
+		values, err = readValues(filepath.Join(stateDir, "values.yaml"))
+		retained = err == nil
+		if os.IsNotExist(err) {
+			values, err = initialValues(o.bundle)
+		}
+		if err != nil {
+			return err
+		}
+	}
+	if values == nil {
+		values = map[string]interface{}{}
+	}
+	installedValues := values
+	for _, path := range o.files {
+		overlay, err := readValues(path)
+		if err != nil {
+			return err
+		}
+		values = mergeValues(values, overlay)
+	}
+	// Explicit sizing options take precedence over every values file, regardless
+	// of argument order. Unspecified options never reset stored configuration.
+	values = o.resources.apply(values)
+	if o.accessExplicit || (!existing && pfGet(values, "dashboard", "service", "type") == nil) {
+		if o.access == "nodeport" {
+			setValue(values, "NodePort", "dashboard", "service", "type")
+		} else {
+			setValue(values, "ClusterIP", "dashboard", "service", "type")
+		}
+	}
+	defaults, err := defaultValues(o.bundle)
+	if err != nil {
+		return err
+	}
+	complete := mergeValues(defaults, values)
+	installedComplete := mergeValues(defaults, installedValues)
+	// Recover a saved three-worker plan before applying it. A retained plan is
+	// immutable: a retry must not turn a selector change into data relocation.
+	if len(o.nodeNames) == 0 {
+		plan := complete
+		if retained {
+			plan = installedComplete
+		}
+		o.nodeNames, err = inferThreeNodes(ctx, execute, plan)
+		if err != nil {
+			return err
+		}
+	}
+	if len(o.nodeNames) > 0 {
+		if o.node != "" {
+			return errors.New("this release uses three workers; use --nodes with the original order instead of --node")
+		}
+		values, err = configureThreeNodes(ctx, execute, values, defaults, installedComplete, o.nodeNames, retained)
+		if err != nil {
+			return err
+		}
+		complete = mergeValues(defaults, values)
+	}
+	if o.sshExplicit && len(o.nodeNames) == 0 && !o.showAccess {
+		return errors.New("SSH options require --nodes or a saved three-worker installation")
+	}
+	if err = o.resources.validateContext(complete, installedComplete, existing); err != nil {
+		return err
+	}
+	if existing {
+		values = o.resources.reuseInstalled(values, installedComplete)
+		complete = mergeValues(defaults, values)
+	} else if len(o.resources) > 0 {
+		if err = validateQuickstartSizing(complete); err != nil {
+			return err
+		}
+	}
+	// Dashboard shares the placement of the lakehouse. Explicit user overrides
+	// remain subject to the selected layout's scheduling validation.
+	if pfGet(values, "dashboard", "nodeSelector") == nil {
+		setValue(values, pfGet(complete, "scheduling", "nodeSelector"), "dashboard", "nodeSelector")
+	}
+	if pfGet(values, "dashboard", "tolerations") == nil {
+		setValue(values, pfGet(complete, "scheduling", "tolerations"), "dashboard", "tolerations")
+	}
+	complete = mergeValues(defaults, values)
+	result, err := CheckCluster(ctx, execute, PreflightOptions{Release: o.release, Namespace: o.namespace, NodeName: o.node, NodeNames: o.nodeNames, Values: complete, Existing: existing, PrepareOperator: true})
+	if err != nil {
+		return err
+	}
+	if err = checkLocalWorker(result); err != nil {
+		return err
+	}
+	capacity := result.Nodes
+	if len(capacity) == 0 {
+		capacity = []PreflightResult{result}
+	}
+	for _, node := range capacity {
+		progress(fmt.Sprintf("  Node: %s", node.NodeName))
+		progress(fmt.Sprintf("  CPU: %.2f cores required / %.2f available; memory: %.1f GiB required / %.1f available", float64(node.RequiredCPUMilli)/1000, float64(node.AvailableCPUMilli)/1000, float64(node.RequiredMemoryBytes)/(1<<30), float64(node.AvailableMemoryBytes)/(1<<30)))
+	}
+	for _, warning := range result.Warnings {
+		progress("[warning] " + warning)
+	}
+	if err = validateConfiguredImages(o.bundle, complete); err != nil {
+		return err
+	}
+	imageStep := "Checking local images and preparing missing images"
+	if o.check {
+		imageStep = "Checking local images"
+	}
+	if len(result.Nodes) > 0 {
+		imageStep = "Checking images on all three workers"
+		if !o.check {
+			imageStep += " and preparing missing images"
+		}
+	}
+	progress(fmt.Sprintf("[2/%d] %s", steps, imageStep))
+	imageOptions := ImageOptions{BundleDir: o.bundle, Runtime: o.runtime, NodeRuntimeVersion: result.NodeRuntimeVersion, ContainerdAddress: o.address, CRIEndpoint: o.endpoint, CheckOnly: o.check}
+	if len(result.Nodes) > 0 {
+		err = PrepareClusterImages(ctx, execute, imageOptions, result.Nodes, o.ssh, progress)
+	} else {
+		err = PrepareImages(ctx, execute, imageOptions, progress)
+	}
+	if err != nil {
+		return err
+	}
+	if o.check {
+		progress("Preflight passed. No images were imported or Kubernetes resources changed.")
+		return nil
+	}
+	// Use the node's actual hostname label, not its metadata.name.
+	var node struct {
+		Metadata struct {
+			Labels map[string]string `json:"labels"`
+		} `json:"metadata"`
+	}
+	if err = getJSON(ctx, execute, &node, "get", "node", result.NodeName, "-o", "json"); err != nil {
+		return err
+	}
+	hostname := node.Metadata.Labels["kubernetes.io/hostname"]
+	if hostname == "" {
+		return errors.New("target node has no hostname label")
+	}
+	if !existing {
+		setValue(values, hostname, "scheduling", "nodeSelector", "kubernetes.io/hostname")
+	}
+	setValue(values, hostname, "dashboard", "nodeSelector", "kubernetes.io/hostname")
+	setValue(values, result.StorageClass, "storageClass")
+	raw, err = yaml.Marshal(values)
+	if err != nil {
+		return err
+	}
+
+	if err = writePrivate(filepath.Join(stateDir, "values.yaml"), raw); err != nil {
+		return err
+	}
+	progress("[3/5] Checking Operator prerequisites")
+	if result.OperatorMissing {
+		if err = prepareOperator(ctx, execute, o, result, progress); err != nil {
+			return err
+		}
+		_, err = CheckCluster(ctx, execute, PreflightOptions{Release: o.release, Namespace: o.namespace, NodeName: result.NodeName, NodeNames: o.nodeNames, Values: mergeValues(defaults, values), Existing: existing})
+		if err != nil {
+			return err
+		}
+		progress("[ready] Operator and admission webhooks are ready.")
+	} else {
+		progress("[skip] Compatible Operator and admission webhooks are already ready.")
+	}
+	dashboardEnabled, _ := pfGet(complete, "dashboard", "enabled").(bool)
+	if dashboardEnabled {
+		progress("[4/5] Installing lakehouse resources and Dashboard")
+	} else {
+		progress("[4/5] Installing lakehouse resources (Dashboard disabled by configuration)")
+	}
+	installCtx, cancel := context.WithTimeout(ctx, 2*time.Hour)
+	defer cancel()
+	cmd := command(installCtx, "bash", filepath.Join(o.bundle, "charts/oceanbase-lakehouse/install.sh"), o.release, o.namespace, "-f", filepath.Join(stateDir, "values.yaml"))
+	cmd.Env = append(cmd.Environ(), "LAKEHOUSE_MANAGED_ACCESS=1")
+	if liveProgress {
+		cmd.Env = append(cmd.Env, "LAKEHOUSE_LIVE_PROGRESS=1")
+	}
+	cmd.Stdout = console.Writer(out)
+	cmd.Stderr = console.Writer(stderr)
+	if err = cmd.Run(); err != nil {
+		return fmt.Errorf("installation did not complete; resolve the reported issue and rerun the same command to resume (data is retained): %w", err)
+	}
+	if !dashboardEnabled {
+		progress("[5/5] Dashboard access checks skipped: Dashboard is disabled by configuration.")
+		progress("[skip] Dashboard is disabled by configuration.")
+		console.Finish(nil)
+		fmt.Fprintln(out, "Installation complete. Dashboard is disabled by configuration.")
+		return nil
+	}
+	progress("[5/5] Verifying log download support and Dashboard access")
+	diagnosticCtx, diagnosticCancel := context.WithTimeout(ctx, 15*time.Minute)
+	defer diagnosticCancel()
+	if err = withProgress(diagnosticCtx, progressInterval, progress, "Verifying Observer log download support", func() error {
+		return verifyObserverDiagnostics(diagnosticCtx, execute, o.namespace, o.release, complete, 3*time.Second)
+	}); err != nil {
+		return err
+	}
+	progress("[ready] Log download prerequisites verified: Observer archive/transfer support and diagnostic image IDs.")
+	// Keep the access summary below the final progress frame. The access check
+	// still completes before the last stage is marked successful.
+	var accessSummary strings.Builder
+	if err = showAccess(ctx, execute, o, result, stateDir, &accessSummary); err != nil {
+		return err
+	}
+	console.Finish(nil)
+	fmt.Fprint(out, accessSummary.String())
+	return nil
+}
+
+func checkLocalWorker(result PreflightResult) error {
+	uuid, err := os.ReadFile("/sys/class/dmi/id/product_uuid")
+	if err == nil && result.NodeSystemUUID != "" && strings.EqualFold(strings.TrimSpace(string(uuid)), result.NodeSystemUUID) {
+		return nil
+	}
+	addresses, err := net.InterfaceAddrs()
+	if err != nil {
+		return err
+	}
+	for _, a := range addresses {
+		ip, _, err := net.ParseCIDR(a.String())
+		if err == nil && !ip.IsLoopback() && result.NodeInternalIP != "" && ip.Equal(net.ParseIP(result.NodeInternalIP)) {
+			return nil
+		}
+	}
+	return fmt.Errorf("run this bundle on target worker %s: this host's UUID/IP does not match; importing into a different host would not make images available to Pods", result.NodeName)
+}

@@ -365,6 +365,8 @@ func (r *OBCluster) validateMutation() error {
 	if r.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
 		if r.Spec.SharedStorageInfo == nil {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("sharedStorageInfo"), "sharedStorageInfo is required for shared_storage mode"))
+		} else if err := apitypes.ValidateSharedStorageBucketURL(r.Spec.SharedStorageInfo.BucketURL); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "sharedStorageInfo", "bucketURL"), "<redacted>", err.Error()))
 		}
 		if r.Spec.LogServiceRef == nil {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("logServiceRef"), "logServiceRef is required for shared_storage mode"))

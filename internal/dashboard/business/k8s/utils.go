@@ -113,16 +113,7 @@ func ListK8sClusterEvents(ctx context.Context, c *client.Client, queryEventParam
 					continue
 				}
 			}
-			events = append(events, response.K8sEvent{
-				Namespace:  event.Namespace,
-				Type:       event.Type,
-				Count:      event.Count,
-				FirstOccur: event.FirstTimestamp.Unix(),
-				LastSeen:   event.LastTimestamp.Unix(),
-				Reason:     event.Reason,
-				Message:    event.Message,
-				Object:     fmt.Sprintf("%s/%s", event.InvolvedObject.Kind, event.InvolvedObject.Name),
-			})
+			events = append(events, response.NewK8sEvent(event))
 		}
 	}
 	return events, err

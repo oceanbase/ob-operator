@@ -788,11 +788,14 @@ func DeleteSQLAnalyzerDeployment(ctx context.Context, tenant *v1alpha1.OBTenant)
 }
 
 func ListAllOBTenants(ctx context.Context, ns string, listOptions v1.ListOptions) ([]*response.OBTenantOverview, error) {
+	username, ok := ctx.Value("username").(string)
+	if !ok || username == "" {
+		return nil, oberr.NewUnauthorized("login required")
+	}
 	tenantList, err := clients.ListAllOBTenants(ctx, ns, listOptions)
 	if err != nil {
 		return nil, err
 	}
-	username := ctx.Value("username").(string)
 	tenantList = filterTenants(username, "read", tenantList)
 	sort.Slice(tenantList.Items, func(i, j int) bool {
 		return tenantList.Items[i].Name < tenantList.Items[j].Name

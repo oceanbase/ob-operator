@@ -1,0 +1,105 @@
+Lakehouse QA packaging (build host only)
+=======================================
+
+build-package.py accepts a clean Git checkout, or an extracted original git
+archive supplied using --source-archive. Installation hosts use the packaged
+Go executable and do not require Python. Do not modify the baseline package.
+
+The user receives exactly one .tar. All image archives, including the MinIO/mc
+build input supplied with --minio-cache, are copied into its images/ directory.
+MinIO/mc uses images/minio-images.tar.gz. Every images/archives.json entry has
+base=bundle and is covered by the internal SHA256SUMS; no archive resolves
+beside the package or relative to the user's current directory.
+
+Hand off only the final oceanbase-lakehouse-qa-*.tar. The user extracts it with
+tar -xf, enters the extracted directory, and runs ./install.sh as described
+by the included README.txt. There is no separate MinIO archive or external
+checksum file to locate. build-result.json and the extracted build tree remain
+internal build evidence; their presence is not required on the installation
+machine. The builder records the final tar SHA256 in build-result.json for
+internal transfer verification.
+
+values/quickstart.yaml starts from the baseline's single-worker-8core.yaml,
+falling back to single-worker.yaml. The builder explicitly sets LogService CPU
+to 1 per instance and Observer CPU to 2; other memory/volume sizing comes from
+that baseline profile. Document the actual packaged profile, not just the chart
+defaults (for example, the chart's LogService CPU default is 2).
+
+INSTALL.txt at the repository root is the user-guide source. The builder copies
+it into the tar and generates README.txt from it, substituting the exact tar and
+directory names. Keep sizing defaults, aliases, examples and retry limitations
+there; do not edit a delivered bundle's README.txt or INSTALL.txt in place,
+because both are covered by SHA256SUMS. Ship documentation changes in a newly
+built version when updating an existing delivery.
+
+The package-root install.sh accepts sizing options such as --observer-cpu 2
+or --oc 2 and forwards them to the compiled Go installer. Build that binary
+from the same source commit when packaging a new CLI option; changing docs
+alone does not add an option to an older tar. The advanced chart install.sh
+uses RELEASE NAMESPACE and Helm values arguments, not these sizing aliases.
+The root entry also supports --nodes NODE1,NODE2,NODE3 for three existing workers.
+Build the current installer binary to deliver it; older single-worker bundles
+cannot gain multi-worker support from documentation alone. Test both local and
+SSH image preparation, per-node preflight and unchanged-placement retries.
+Package validation does not itself constitute a live three-worker deployment.
+
+Diagnostic/log-download builds additionally supply both:
+  --diagnostics-archive /path/diagnostics-images.tar.gz
+  --diagnostics-lock /path/diagnostics-lock.json
+
+The lock is produced from real image builds/saves, never guessed versions:
+  {
+    "schemaVersion": 1,
+    "archive_sha256": "<SHA256 of the supplied gzip Docker-save archive>",
+    "binary_rebuild": true,
+    "images": [
+      {
+        "role": "obdiag",
+        "reference": "<distinct fixed tag or digest>",
+        "image_id": "sha256:<actual config SHA256>",
+        "source": {"description": "<record the actual build provenance>"}
+      }
+    ]
+  }
+Include obdiag and oceanbase-helper records. A dashboard record is also
+supported when its binary/image has changed. The current diagnostics profile
+contains these three images and deliberately omits observer: its Kubernetes
+transport uses the existing container's Python tarfile/gzip support, including
+platform-python, without adding tar or changing the database image.
+Set binary_rebuild according
+to the actual build; per-image source metadata is preserved. References must be
+distinct from the baseline and use explicit non-latest tags or digests.
+
+The builder checks the archive checksum, actual Linux/amd64 config IDs, and
+exact image membership before copying it to images/diagnostics-images.tar.gz.
+The existing Go installer consumes images/archives.json and imports any missing
+diagnostic image automatically. No additional user command is required.
+
+The unchanged core archive remains covered by the final lock; replaced images
+are recorded with a -base suffix while active roles point to the new identities.
+When observer is omitted, its original role, reference and config ID remain
+unchanged. Use the original baseline for each build, not a previous
+diagnostics bundle. This preserves provenance without recursively accumulating
+old overridden images.
+
+Both bundled and standalone Dashboard configuration receive the locked obdiag
+and oceanbaseHelper image references. values/quickstart.yaml receives the full
+fresh-install profile. values/diagnostics-upgrade.yaml contains only Dashboard
+and diagnostic-tool image references. It never includes observer, so an explicit
+-f upgrade preserves the existing Observer image as well as cluster IDs,
+resources, storage and credentials. shared_storage does not support Observer
+image upgrades; do not use quickstart.yaml to upgrade an existing release.
+
+For a separately validated fresh-install image build, an optional observer
+record is accepted with base_image_id matching the original baseline Observer.
+It changes fresh-install values only; it does not authorize upgrading an
+existing shared_storage cluster or add observer to diagnostics-upgrade.yaml.
+
+Run regression fixtures on the build host:
+  python3 -m unittest discover -s scripts/lakehouse -p 'test_*.py'
+  python3 -m unittest discover -s scripts/qa -p 'test_*.py'
+
+The full-build fixture builds twice from the same source, compares complete tar
+hashes, copies only the resulting tar into an empty recipient directory, and
+checks the extracted checksums, archive paths, actual image config IDs, image
+closure, and executable entrypoint modes. It does not install into Kubernetes.

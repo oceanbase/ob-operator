@@ -50,8 +50,23 @@ type config struct {
 }
 
 func main() {
-	mode := flag.String("mode", "bootstrap", "bootstrap, check, smoke-write or smoke-read")
+	mode := flag.String("mode", "bootstrap", "credentials, show-password, bootstrap, check, smoke-write or smoke-read")
 	flag.Parse()
+	if *mode == "credentials" {
+		if err := initCredentials(envOrDefault(os.Getenv, "CREDENTIALS_DIR", "/run/secrets")); err != nil {
+			log.Fatal(err)
+		}
+		log.Print("Credentials ready; existing passwords are preserved")
+		return
+	}
+	if *mode == "show-password" {
+		password, err := readCredential(envOrDefault(os.Getenv, "ROOT_PASSWORD_FILE", "/run/secrets/ob_root_password"))
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(password)
+		return
+	}
 	cfg, err := loadConfig(os.Getenv)
 	if err != nil {
 		log.Fatal(err)
@@ -66,6 +81,21 @@ func main() {
 		return openDatabase(cfg, pass)
 	}); err != nil {
 		log.Fatal(err)
+	}
+	if *mode == "bootstrap" {
+		monitorPassword, err := readCredential(envOrDefault(os.Getenv, "MONITOR_PASSWORD_FILE", "/run/secrets/ob_monitor_password"))
+		if err != nil {
+			log.Fatalf("read monitor password: %v", err)
+		}
+		db, err := openDatabase(cfg, password)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer db.Close()
+		if err := ensureMonitorUser(ctx, db, monitorPassword); err != nil {
+			log.Fatal(err)
+		}
+		log.Print("OBAgent monitor user ready")
 	}
 }
 
@@ -162,6 +192,16 @@ func run(ctx context.Context, cfg config, mode, password string, open func(strin
 		if value != "lakehouse-compose" {
 			return errors.New("smoke persistence value mismatch")
 		}
+	}
+	// Authenticate on a fresh connection after ALTER USER. An existing
+	// bootstrap session alone cannot prove the new password is usable.
+	verified, err := open(password)
+	if err != nil {
+		return err
+	}
+	defer verified.Close()
+	if err := waitForConnection(ctx, verified, cfg.RetryInterval); err != nil {
+		return err
 	}
 	log.Printf("OceanBase %s completed with authenticated SQL access", mode)
 	return nil

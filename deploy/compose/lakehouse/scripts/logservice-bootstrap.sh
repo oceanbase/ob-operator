@@ -24,8 +24,10 @@ for attempt in $(seq 1 60); do
     exit 0
   fi
   if grep -qi "already bootstrap" <<<"${output}"; then
-    echo "LogService is already bootstrapped"
-    exit 0
+    # Only show-ap can confirm that the existing cluster has the expected ID.
+    # Retry it instead of treating an unverified "already bootstrap" as success.
+    sleep 5
+    continue
   fi
   safe_output="${output//${access_id}/***ID***}"
   safe_output="${safe_output//${access_key}/***KEY***}"

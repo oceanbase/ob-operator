@@ -49,6 +49,19 @@ var _ = Describe("Test OBCluster Webhook", Label("webhook"), func() {
 		Expect(k8sClient.Create(ctx, cluster)).ShouldNot(Succeed())
 	})
 
+	It("rejects malformed shared storage bucket URLs at admission", func() {
+		cluster := newOBCluster("shared-storage-invalid-bucket", 1, 1)
+		cluster.Spec.DeploymentMode = oceanbaseconst.DeploymentModeSharedStorage
+		cluster.Spec.SharedStorageInfo = &apitypes.SharedStorageSpec{
+			BucketURL: "invalid-storage-url",
+			SecretRef: corev1.LocalObjectReference{Name: "storage-secret"},
+		}
+		cluster.Spec.LogServiceRef = &apitypes.LogServiceReference{Name: "logservice"}
+		err := k8sClient.Create(ctx, cluster)
+		Expect(err).To(HaveOccurred())
+		Expect(err.Error()).To(ContainSubstring("bucketURL"))
+	})
+
 	It("Check storage class", func() {
 		cluster := newOBCluster("test", 3, 1)
 		cluster.Spec.OBServerTemplate.Storage.DataStorage.StorageClass = "storage-class-that-does-not-exist"

@@ -8,6 +8,9 @@ spec:
   type: {{ .Values.service.type | default "NodePort" }}
   ports:
     - port: {{ .Values.service.port | default 80 }}
+      {{- if and .Values.service.nodePort (has (.Values.service.type | default "NodePort") (list "NodePort" "LoadBalancer")) }}
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}
       targetPort: 8080
       protocol: TCP
       name: dashboard-backend

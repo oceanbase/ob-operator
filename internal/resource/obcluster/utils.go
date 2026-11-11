@@ -444,8 +444,12 @@ func (m *OBClusterManager) buildLogServiceAccessPoint() (string, error) {
 	accessId := string(secret.Data["access_id"])
 	accessKey := string(secret.Data["access_key"])
 
+	bucketURL, err := resourceutils.ResolveStorageServiceURL(m.Ctx, m.Client, lsCluster, lsCluster.Spec.ObjectStoreURL.BucketURL)
+	if err != nil {
+		return "", err
+	}
 	accessPoint := fmt.Sprintf("%s&access_id=%s&access_key=%s&logservice_cluster_id=%d",
-		lsCluster.Spec.ObjectStoreURL.BucketURL, accessId, accessKey, lsCluster.Spec.ClusterId)
+		bucketURL, accessId, accessKey, lsCluster.Spec.ClusterId)
 	return accessPoint, nil
 }
 
@@ -460,8 +464,12 @@ func (m *OBClusterManager) buildSharedStorageInfo() (string, error) {
 	accessId := string(secret.Data["access_id"])
 	accessKey := string(secret.Data["access_key"])
 
+	bucketURL, err := resourceutils.ResolveStorageServiceURL(m.Ctx, m.Client, m.OBCluster, m.OBCluster.Spec.SharedStorageInfo.BucketURL)
+	if err != nil {
+		return "", err
+	}
 	info := fmt.Sprintf("%s&access_id=%s&access_key=%s",
-		m.OBCluster.Spec.SharedStorageInfo.BucketURL, accessId, accessKey)
+		bucketURL, accessId, accessKey)
 	if m.OBCluster.Spec.SharedStorageInfo.MaxIOPS != "" {
 		info += "&max_iops=" + m.OBCluster.Spec.SharedStorageInfo.MaxIOPS
 	}

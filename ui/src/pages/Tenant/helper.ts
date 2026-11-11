@@ -258,6 +258,17 @@ export const checkScheduleDatesHaveFull = (scheduleDates): boolean => {
   return false;
 };
 
+export const checkScheduleDatesHaveIncremental = (scheduleDates): boolean => {
+  for (const key of Object.keys(scheduleDates)) {
+    if (!isNaN(key)) {
+      if (scheduleDates[key] === 'Incremental') {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
 export const getClusterFromTenant = (
   clusterList: API.SimpleClusterList,
   clusterResourceName: string,

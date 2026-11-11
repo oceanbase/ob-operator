@@ -1,0 +1,335 @@
+OceanBase 湖库内部体验指南
+==================================
+
+面向内部研发、测试和产品同学，用于安装 QA 包并体验湖库、Dashboard 和日志下载。
+建议第一次体验先使用单 Worker 默认规格；需要验证跨机器分布时再使用三节点入口。
+用户只需要「解压 → 执行一个安装命令 → 打开 Dashboard」。Dashboard、Prometheus、
+Alertmanager 默认随湖库安装在同一个 Helm release 中，不需要单独运行安装脚本。
+
+1. 准备
+-------
+在目标 Kubernetes Worker 上执行。需要 Linux amd64、Kubernetes >=1.27、Helm >=3.12、
+kubectl、jq、可用的默认 StorageClass，以及管理员 kubeconfig。推荐独立 8 核、32GiB
+以上内存的体验机；脚本根据已占用资源计算能否安装，磁盘还需容纳镜像和PVC。
+本包不安装操作系统或 Kubernetes，不会修改已有共享 Operator。
+
+安装前在执行入口的 Worker 上确认：
+  uname -m
+  kubectl config current-context
+  kubectl get nodes -o wide
+  kubectl get storageclass
+  helm version --short
+  kubectl version
+  jq --version
+
+uname -m 应为 x86_64；ARM64/aarch64 不能直接运行本 amd64 包。kubectl 须能用
+管理员身份操作目标集群，节点须 Ready 且可调度。未配置默认 StorageClass 时，
+通过包外 values 文件设置 storageClass。容量不只包括数据库 PVC，还需预留完整 tar、
+解压目录、镜像导入/展开及容器运行时的磁盘空间。三节点还需第一台上的 ssh/scp
+客户端，以及它到其他两台的 SSH 密钥连接；详细要求见第 4 节。
+
+交付只有一个 tar：湖库、Dashboard、诊断、MinIO/mc 镜像和校验清单都在包内。
+把这一个 tar 复制到目标机器即可，不需要旁边的缓存包或校验文件，不需要手工导入镜像。
+先进入本次 tar 所在的目录，再解压并进入新目录；使用包内 README.txt 中与交付版本
+对应的完整文件名，避免在旧版本的解压目录中执行安装。
+
+  tar -xf oceanbase-lakehouse-具体版本.tar
+  cd oceanbase-lakehouse-具体版本
+  ./install.sh
+
+安装入口先自动核对包内 SHA256SUMS，文件缺失或损坏时在执行安装器前停止。
+请保留包内原文件；自定义配置另存为 my-values.yaml，通过 -f 传入。
+然后检查版本、存储、节点状态、剩余资源、Operator/Webhook 和镜像 ID；
+只导入缺少或不匹配的镜像。在没有 Operator 的单节点集群上，安装配套 cert-manager
+与支持湖库的 Operator。已有但不完整/不兼容的组件会给出明确错误，要求先修复。
+随后依次安装存储、LogService、Observer，等待 Dashboard 三个容器就绪，并验证
+节点内 HTTP。诊断镜像默认随主包导入，并检查 Observer 中可调用的 Python 3
+及 tarfile/gzip 模块（支持发行版自带的 platform-python）；无需在 Observer 中安装 tar。
+日志收集时才按需启动诊断 Job。整个过程输出阶段、等待时间及失败诊断，失败不自动删除数据库。
+
+交互终端默认原地刷新阶段状态，不重复刷满等待日志。等待数据库资源就绪时，会显示
+资源状态、Pod 就绪/调度数量及可识别的阻塞原因；Pod 信息可能使用短期缓存，会标明
+快照时间。耗时刷新不代表 Kubernetes 查询成功，查询失败时明确标为不可用。
+安装成功后停止刷新，再打印完整的 Dashboard 访问说明。失败时保留错误摘要和
+私有详细日志位置，安装日志及状态提示使用英文。
+
+将输出重定向到文件、在 CI 中执行或使用 TERM=dumb 时，自动使用逐行日志，不输出
+终端控制字符。终端空间不足时也会退回逐行输出。可显式选择逐行输出，便于复制或留档：
+  ./install.sh --progress plain
+
+默认 --progress auto 根据终端能力选择显示方式，不改变安装步骤、超时或数据保留策略。
+
+默认 release=ob-demo、namespace=ob-helm-demo；LogService 3×1CPU/4GiB，Observer
+2CPU/10GiB，MinIO及Dashboard另外占用资源。这是固定体验规格，不会按机器容量
+自动用满 CPU、内存或磁盘；预检计算剩余资源是否足够。首次随机生成并保存两个数据库集群ID。
+不指定 --nodes 时为单 Worker 体验；新建三节点使用第 4 节的 --nodes 入口。
+其他拓扑使用 charts/ 下高级流程。本包不提供整套系统的跨节点 HA 承诺。
+
+2. 打开 Dashboard
+-----------------
+安装成功直接打印 Dashboard 访问说明、用户名 admin、初始密码文件位置（0600）。
+NodePort 模式下，默认 ./install.sh 自动选择对外地址，优先级为：本次显式指定的
+--dashboard-host、已保存的显式地址、Kubernetes Node ExternalIP、节点直接配置的
+公网 IP、阿里云 ECS 元数据中的公网 IP/EIP。元数据仅在确认安装器运行于目标
+Worker 时读取；不会使用第三方公网 IP 查询服务，也不会把管理机的公网 IP 当成
+目标 Worker 的地址。
+在浏览器可达的网络内打开 Dashboard 地址，读取密码文件，首次登录按页面提示修改密码。
+密码不打印在安装日志中；已修改密码的账号继续使用当前密码，不会被升级重置。
+数据库会出现在 Dashboard 中，无需额外安装或注册。
+
+如果无法发现对外地址，摘要会显示 unavailable，并将私网地址明确标为内部地址；
+不会把私网地址当作已可从外网访问的 Dashboard 链接。可指定公网 IP、域名，或
+浏览器所在网络可达的节点地址：
+  ./install.sh --dashboard-host 服务器公网IP
+
+访问摘要成功生成后，显式指定的地址按 Kubernetes 集群、namespace、release
+隔离保存，后续续跑和 --show-access 会自动复用；再次指定 --dashboard-host
+可更新地址。自动发现的 IP 不保存，下次会重新发现，避免服务器公网 IP 变化后
+仍展示过期地址。
+
+默认新装使用 Kubernetes 自动分配的 NodePort。网络安全组/防火墙需要允许浏览器
+访问该端口；自动发现地址不代表外网防火墙已经放行。安装器继续通过节点内部地址
+探活，成功摘要只显示该检查的通过状态，不会再把探活 URL 与浏览器访问 URL 并列。
+不会自动修改云安全组。已有 release 的 Service 类型和自定义 values 保留；若需要
+改为直接节点访问，可在同一安装命令中显式添加 --access nodeport。也支持
+--access clusterip，其地址仅在集群网络内可达，不会因 --dashboard-host 变成外网服务。
+
+重新查看访问说明（不会重建数据库）：
+  ./install.sh --show-access
+
+更新访问地址（不会重建数据库）：
+  ./install.sh --show-access --dashboard-host 新的公网IP或域名
+
+3. 预检查、续跑、自定义
+-----------------------
+只读检查（无镜像导入、无 Kubernetes 修改、无密码文件导出）：
+  ./install.sh --check
+
+查看当前包支持的参数、完整名称和简写：
+  ./install.sh --help
+
+首次安装时，可直接用命令行设置常用规格，无需先编写 values 文件。例如将 Observer
+设为 2 核、16Gi 内存：
+  ./install.sh --observer-cpu 2 --observer-memory 16Gi
+
+下面列出当前 QA 体验配置的首次安装默认值；实际交付以包内 values/quickstart.yaml
+为准。它与直接使用 Helm Chart 的默认配置不同，例如 Chart 的 LogService CPU 为 2。
+CPU 支持 2、1.5 或 500m，命令行中 '2' 与 2 等价；小数最多 3 位，最小为 1m。
+1.5 会规范为 1500m。
+内存和磁盘容量须使用正整数及 Mi、Gi 或 Ti 单位，如 512Mi、16Gi、1Ti。
+
+  参数                       简写    含义                              默认值
+  --observer-cpu             --oc    每个 Observer 的 CPU 核数         2
+  --observer-memory          --om    每个 Observer 的内存              10Gi
+  --observer-data-size       --ods   每个 Observer 的数据盘容量        50Gi
+  --observer-log-size        --ols   每个 Observer 的日志盘容量        20Gi
+  --logservice-cpu           --lc    每个 LogService 实例的 CPU 核数   1
+  --logservice-memory        --lm    每个 LogService 实例的内存        4Gi
+  --logservice-store-size    --lss   每个 LogService 实例的存储盘容量  20Gi
+  --logservice-log-size      --lls   每个 LogService 实例的日志盘容量  10Gi
+  --minio-size               --ms    内置 MinIO 的存储盘容量           100Gi
+
+完整名称和简写均支持单短横线或双短横线，例如 -observer-cpu 2、--observer-cpu 2、
+-oc 2、--oc 2 完全等价。长短名称混用时，同一参数最后出现的值生效：
+  ./install.sh --observer-cpu 1 --oc 2 --om 16Gi
+上述命令最终使用 Observer 2 核、16Gi 内存。全部常用规格也可以写成：
+  ./install.sh --oc 2 --om 20Gi --ods 100Gi --ols 20Gi \
+    --lc 1 --lm 4Gi --lss 20Gi --lls 10Gi --ms 100Gi
+
+LogService 默认有 3 个实例，上述 LogService 规格是每个实例的值；例如 1 核、4Gi
+表示 3 个实例合计需要 3 核、12Gi 内存，还需另计 Observer、Dashboard、MinIO 等组件。
+
+需要同时指定 CPU、内存和磁盘时，可使用多行命令。下面是更大内存的首次安装示例，
+需按节点剩余资源选择；提高 Observer 内存时同时核对其数据盘容量，Observer 数据盘
+至少应为实际生效的 memory_limit 的 3 倍。该约束不适用于 Observer 日志盘或
+LogService 的存储/日志盘。示例中 Observer 的 20Gi 内存配 100Gi 数据盘：
+  ./install.sh \
+    --observer-cpu '2' \
+    --observer-memory 20Gi \
+    --observer-data-size 100Gi \
+    --observer-log-size 20Gi \
+    --logservice-cpu '1' \
+    --logservice-memory 4Gi \
+    --logservice-store-size 20Gi \
+    --logservice-log-size 10Gi \
+    --minio-size 100Gi
+
+预检与安装应使用同一组配置。先用简写预检，再执行安装：
+  ./install.sh --check --oc 2 --om 16Gi --ods 100Gi
+  ./install.sh --oc 2 --om 16Gi --ods 100Gi
+
+--check 不保存规格，也不会开始安装；安装时仍需带上需要的参数。未指定的规格
+沿用已安装或已保存的配置；首次安装使用包内默认值，不会自动用满机器资源。
+配置优先级从低到高为：保留配置/默认值、依次合并的 -f 文件、显式规格参数。
+多个 -f 中后一个文件优先；上述 9 个规格参数始终优先于所有 -f，不受它们在命令行
+中前后排列的影响。高级配置仍可通过 -f 传入。
+
+需要保存一份可复用配置时，在解压目录外创建文件。下面与简写示例等价：
+cat > ../my-values.yaml <<'YAML'
+observer:
+  resource:
+    cpu: "2"
+    memory: 16Gi
+  dataSize: 100Gi
+YAML
+./install.sh --check -f ../my-values.yaml
+./install.sh -f ../my-values.yaml
+
+可以组合文件和参数，例如：
+  ./install.sh -f ../my-values.yaml --om 20Gi --ods 100Gi
+该命令保留文件中的 CPU 配置，并将 Observer 内存设置为 20Gi、数据盘设置为 100Gi。
+
+--show-access 只查看访问说明，不接受这 9 个规格参数。已有 Helm release 只接受与
+当前已安装配置等量的规格参数，用于重放安装命令；例如 1Gi 与 1024Mi 等量时保留
+已安装的原文本。请求改变已有规格会在导入镜像、保存 values 或执行 Helm 前报错。
+本入口的规格参数不用于在线扩缩容，也不提供已有 PVC 自动扩容能力。
+
+--minio-size 仅用于内置 MinIO；外部对象存储或 minio.existingClaim 配置下会拒绝此
+参数，容量由外部存储或 PVC 的管理流程处理。规格校验按包内默认 Operator 行为进行；
+高级数据库参数仍通过 -f 配置，需满足实际 Operator 的启动约束，这些规格参数不会
+自动调整 memory_limit、system_memory 等数据库参数。
+完整规格参数及简写仅适用于本 tar 根目录的 ./install.sh；不要传给
+charts/oceanbase-lakehouse/install.sh 或 helm。后两者使用 Helm values 配置。
+
+湖库安装阶段失败后，处理提示原因，再执行同一条命令。如果首次安装配套
+Operator/cert-manager 中断并留下不完整组件，需要先修复该前置组件，安装器不会
+自动覆盖或删除它。已存在的 Helm release 配置自动保留，
+首次安装中断前保存的配置也会复用。已有集群ID、资源规格、存储、账号不恢复为
+新建示例。显式传入的新 values 覆盖保留配置；不要随意修改存储身份或集群ID。
+
+  ./install.sh --release my-ob --namespace my-ob -f my-values.yaml
+
+选择节点：--node 节点名。入口必须在该 Worker 上执行，避免把镜像导入错误主机。
+K3s/containerd、Docker 自动识别；非 K3s 的 containerd 需明确 --containerd-address
+和 --cri-endpoint，两个参数指向同一本机 Unix socket，不推测运行时。
+
+受保护的续跑 values、ACCESS.txt 和初始密码保存在包内 .lakehouse-install/ 下。
+不同 Kubernetes 集群、namespace、release 分开保存；不要把此目录提交到 Git
+或共享给无关人员。Helm 的详细日志位于安装输出显示的私有临时目录。
+
+4. 三节点部署
+-------------
+三台 Linux amd64 Worker 必须已加入同一个 Kubernetes 集群，Ready 且可调度，
+具备可用 StorageClass，并已运行支持湖库的 ob-operator、CRD 和 webhook。
+三节点入口不创建 Kubernetes 集群，不自动安装共享 Operator/cert-manager。
+
+只需把完整 tar 解压到第一台 Worker，在该机器运行一次安装命令。
+--nodes 接受三个 Kubernetes Node 名称（kubectl get nodes 中的 NAME），顺序对应
+zone1、zone2、zone3；安装器会读取实际 hostname 标签，不要求它与 Node 名相同。
+每台部署一个 Observer 和一个 LogService；MinIO、Dashboard 与初始化任务放在
+第一个节点。默认每台数据库请求 3 CPU / 14Gi 内存，第一台还需辅助组件的资源；
+实际按全部配置和各节点已有工作负载分别预检，不会借用其他节点的剩余资源。
+
+查看节点名后，在第一个节点的解压目录执行：
+  kubectl get nodes -o wide
+  ./install.sh --nodes worker-1,worker-2,worker-3
+
+可与已有规格简写组合，仍然是每个实例的规格，而不是整个集群的总量：
+  ./install.sh --nodes worker-1,worker-2,worker-3 --oc 2 --om 16Gi --ods 100Gi
+
+第一台须能使用已配置的 SSH 密钥连接其他两个节点，默认用户 root、端口 22、
+目标地址为 Kubernetes Node InternalIP；SSH 主机密钥必须已通过可信方式确认并
+记录在 known_hosts 中。安装器不跳过主机密钥检查、不请求交互密码、不自动 sudo。
+非 root 用户需具备直接访问容器运行时、创建临时目录及导入镜像的权限。
+自定义连接示例（按实际账号、地址和密钥修改）：
+  ./install.sh --nodes worker-1,worker-2,worker-3 \
+    --ssh-user deploy --ssh-identity /secure/path/id_ed25519 \
+    --ssh-host worker-2=10.0.0.12 --ssh-host worker-3=10.0.0.13
+
+--ssh-port 可设置统一 SSH 端口。--ssh-host 可重复，只覆盖传输地址，不改变
+Kubernetes 节点或数据库拓扑；安装器仍核验远端 UUID/接口 IP 是否匹配目标节点。
+运行时逐节点识别，非 K3s containerd 仍需 --containerd-address 和 --cri-endpoint，
+两个 socket 路径需在各目标节点一致。不同路径的高级集群使用 Chart 流程。
+
+安装器先完成各节点资源、身份与运行时检查，再按节点检查锁定镜像 ID。已匹配的
+镜像复用；仅缺失的镜像归档通过 SSH/SCP 分发、校验并导入，完成后清理自身临时
+文件。远端不需要 Helm、kubectl、jq 或 kubeconfig；需要 SSH、sha256sum 和实际
+运行时工具（K3s 或 containerd+ctr/crictl 等）。这些操作不会安装节点操作系统。
+
+只读预检使用相同参数加 --check，不创建远端目录、不传文件、不导入镜像或安装资源：
+  ./install.sh --check --nodes worker-1,worker-2,worker-3
+冷节点缺少镜像时预检会报告失败；去掉 --check 后才自动分发和导入。
+
+三节点同样默认安装 Dashboard，并打印访问说明及初始密码文件位置。检查分布：
+  kubectl get nodes -o wide
+  kubectl -n ob-helm-demo get pods -o wide
+  kubectl -n ob-helm-demo get obclusters,oblogserviceclusters
+  kubectl -n ob-helm-demo get pvc
+
+正常结果为：三个节点分别运行一个 Ready Observer 和一个 Ready LogService，
+相关数据库 CR 均为 running，所需 PVC 均为 Bound；第一台另有 MinIO 和 Dashboard。
+Dashboard Pod 内的 dashboard、prometheus、alertmanager 三个容器均须 Ready。
+安装完成以根目录脚本的 Installation complete. 为准，单次 Helm 输出 deployed
+仅代表该阶段资源已提交，不能替代数据库和 Dashboard 就绪检查。
+
+失败后重跑原命令。已保存/安装的三节点拓扑可自动识别，但 SSH 非默认连接参数
+仍需再次传入。不支持通过 --nodes 把已有单节点转换为三节点，也不支持交换节点
+顺序、改 zone 或迁移已有 PVC；会在镜像导入和保存新 values 前拒绝。
+首次安装 --nodes 确定三组 zone 和每组一个实例，覆盖文件中的相应拓扑；额外池
+标签和 toleration 仍生效，若与所选节点不匹配则报错。其他拓扑走高级 Chart。
+
+内置 MinIO 仍为第一台上的单实例，三节点不代表整套系统高可用。生产环境需要
+独立可靠的对象存储，并验证实际数据库版本的容灾行为。
+
+5. 常见问题和排查
+-----------------
+解压后仍看到旧日志或不认识 --nodes：先用 pwd、ls 确认当前目录对应本次版本，
+再运行 ./install.sh --help。tar 包使用 tar -xf，不加 gzip 专用的 -z；不要在旧
+版本目录中执行相对路径 cd 新版本目录。应先返回 tar 所在目录，再解压、进入新目录。
+
+--check 报镜像缺失：冷节点尚未缓存镜像时，这是预期的检查结果。若其余前置检查
+通过，执行不带 --check 的同一条安装命令，入口会自动分发和导入镜像。
+
+SSH 失败：从第一台用同一用户、端口、密钥和目标地址确认可非交互连接；先通过
+可信渠道核对主机指纹，再配置 known_hosts。--ssh-host 只改变连接地址，仍须对应
+--nodes 中的真实 Worker。运行时权限错误需要修正该账号的运行时访问权限。
+
+安装等待或失败：先看当前阶段的状态、Pod 数量、异常原因及详细日志位置，再查看：
+  kubectl -n ob-helm-demo get pods -o wide
+  kubectl -n ob-helm-demo get events --sort-by=.lastTimestamp
+  kubectl -n ob-helm-demo get obclusters,oblogserviceclusters
+  kubectl -n ob-helm-demo get pvc
+  kubectl -n ob-helm-demo describe pod 实际Pod名
+
+示例使用默认 namespace；指定了 --namespace 时请替换为对应值。详细日志可能包含
+敏感 Helm 输出，默认仅当前用户可读，发给他人前先检查并脱敏。修正原因后重跑
+同一安装命令，不要用删除 namespace/PVC/CR 或 helm --force/--atomic 重试。
+
+需要停止前台安装时使用 Ctrl+C，等待程序退出后再重跑。Ctrl+Z 只暂停进程，可能
+仍留有后台子进程；不要在另一个终端立即启动第二次安装。可用 jobs -l 查看当前
+Shell 中的暂停任务，fg 恢复对应任务后使用 Ctrl+C 退出。
+
+Dashboard 无法打开：用 ./install.sh --show-access 查看当前地址，确认浏览器能访问
+该节点及 NodePort，安全组/防火墙已放行；必要时用 --dashboard-host 指定可达地址。
+地址发现和节点内 HTTP 探活不等于浏览器到公网的链路已放行。
+
+Dashboard 密码不对：初始密码文件只对应首次登录。首次改密后继续使用自己设置的
+密码；--show-access 和重跑安装不会把当前账号重置为初始密码。
+
+日志下载：在 Dashboard 的对应集群中发起日志收集，等待任务成功后下载附件。
+应能解压出对应 Observer 的实际日志；任务完成或 HTTP 200 不能单独证明内容完整。
+当前包已包含所需诊断镜像和 Observer 打包/传输能力校验，无需额外安装 tar 命令。
+
+6. 范围和数据保留
+-----------------
+这是一套 Linux amd64 内部 QA 体验包。本版更新日志下载后端、helper 和诊断镜像，
+保留原 Observer 镜像。诊断工具通过容器已有的 Python 完成日志打包和传输。
+真实源码版本和镜像 ID 见 image-lock.json。
+MinIO/mc 是独立第三方 AGPL-3.0 软件，其镜像包含在本 tar 的 images/ 目录中，
+不改变其许可证。charts/ 中的 Helm Chart 本身不包含容器镜像。
+
+功能范围：本包覆盖湖库运行、Dashboard 基础管理、监控与日志下载。obdiag 和
+oceanbase-helper 使用固定版本/镜像ID，归档在主包内，无需用户手工拉取。日志
+收集会检查采集结果后发布附件；失败摘要不能被当成成功日志包。巡检/告警诊断
+也使用这些镜像，但各自场景需要独立验证，不因镜像已就绪而宣称全部通过。
+SQL分析器镜像仍需另行准备。
+
+从旧QA包升级诊断功能：保留相同release/namespace，显式使用包内镜像升级配置：
+  ./install.sh -f values/diagnostics-upgrade.yaml --dashboard-host 服务器公网IP
+该文件仅更新Dashboard和诊断镜像，不修改Observer镜像、集群ID、规格、存储或账号。
+诊断升级不要求重启Observer。Dashboard更新期间页面可能短暂不可用；安装入口仍会
+检查现有Observer是否具备日志采集所需能力，缺少时明确报错。
+
+不要通过删 namespace、PVC、CR 或 helm --force/--atomic 处理安装失败。卸载默认
+保留数据库CR、凭据和存储，并不回收磁盘，也不代替备份。已有镜像/身份不兼容时
+应明确迁移，不会在后台重建数据库。更多配置见 charts/oceanbase-lakehouse/USAGE.txt。

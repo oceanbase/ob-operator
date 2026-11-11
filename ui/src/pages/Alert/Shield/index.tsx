@@ -256,13 +256,14 @@ export default function Shield() {
   ];
 
   const formatInstanceParam = (instanceParam: Alert.InstanceParamType) => {
-    const { obcluster, observer, obtenant, type } = instanceParam;
+    const { obcluster, observer, obtenant, logservice, type } = instanceParam;
     const res: Alert.InstancesType = {
       type,
       obcluster: [obcluster!],
     };
     if (observer) res.observer = [observer];
     if (obtenant) res.obtenant = [obtenant];
+    if (logservice) { res.logservice = [logservice]; res.obcluster = []; }
     return res;
   };
   const initialValues: Alert.ShieldDrawerInitialValues = {};

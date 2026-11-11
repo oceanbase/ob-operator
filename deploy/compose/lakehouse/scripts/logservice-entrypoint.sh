@@ -16,7 +16,7 @@ ln -s "${persist_etc}" "${home}/etc"
 
 args=()
 if [[ ! -f "${persist_etc}/config.toml" ]]; then
-  args=(-g "cluster_id=${CLUSTER_ID},local_ip=${LOCAL_IP},rpc_port=50051,http_port=50052,local_storage_dir=${local_storage},log_disk_size=${LOG_DISK_SIZE}")
+  args=(-g "cluster_id=${CLUSTER_ID},local_ip=${LOCAL_IP},rpc_port=50051,http_port=50052,local_storage_dir=${local_storage},log_disk_size=${LOG_DISK_SIZE},memory_limit=${MEMORY_LIMIT}")
 fi
 
 "${home}/bin/oblogservice" "${args[@]}"

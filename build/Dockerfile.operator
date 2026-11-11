@@ -14,6 +14,7 @@ RUN make operator
 FROM openanolis/anolisos:8.8
 WORKDIR /
 COPY --from=builder /workspace/bin/manager .
+COPY --from=builder /workspace/bin/lakehouse-readiness /lakehouse-readiness
 RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 USER 65534:65534
 

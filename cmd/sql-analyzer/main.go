@@ -23,6 +23,7 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+	_ "time/tzdata" // provide TZ data for the minimal runtime image
 
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"

@@ -1,0 +1,27 @@
+# The same resulting image is used by Operator and Compose.
+ARG HELPER_IMAGE=oceanbase-helper:lakehouse-ce
+FROM ${HELPER_IMAGE}
+USER root
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+ARG RPM_VERSION
+COPY build/ss/rpms/logservice/ /tmp/rpms/
+RUN set -eu; \
+    test -n "${RPM_VERSION}"; \
+    cd /tmp/rpms; \
+    sha256sum --strict -c SHA256SUMS; \
+    duplicates="$(rpm -qp --qf '%{NAME}\n' ./*.rpm | sort | uniq -d)"; \
+    test -z "${duplicates}"; \
+    yum install -y ./*.rpm; \
+    test "$(rpm -q --qf '%{VERSION}-%{RELEASE}' oblogservice-ce)" = "${RPM_VERSION}"; \
+    test -x /home/admin/oblogservice/bin/oblogservice; \
+    test -x /home/admin/oceanbase/bin/oceanbase-helper; \
+    ln -s /home/admin/oceanbase/bin/oceanbase-helper /home/admin/oblogservice/bin/oceanbase-helper; \
+    yum clean all; \
+    rm -rf /tmp/rpms
+RUN dependencies="$(ldd /home/admin/oblogservice/bin/oblogservice)" \
+    && printf '%s\n' "${dependencies}" \
+    && [[ "${dependencies}" != *"not found"* ]]
+WORKDIR /home/admin/oblogservice
+EXPOSE 50051 50052
+ENTRYPOINT []
+CMD ["/home/admin/oblogservice/bin/oceanbase-helper", "logservice", "start"]

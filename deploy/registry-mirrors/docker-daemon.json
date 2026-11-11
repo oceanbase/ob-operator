@@ -1,0 +1,20 @@
+{
+  "registry-mirrors": [
+    "https://mirror.ccs.tencentyun.com",
+    "https://registry.docker-cn.com",
+    "https://docker.mirrors.ustc.edu.cn",
+    "https://hub-mirror.c.163.com",
+    "https://docker.1panel.live",
+    "https://docker.1ms.run",
+    "https://dytt.online",
+    "https://lispy.org",
+    "https://docker.xiaogenban1993.com",
+    "https://docker.yomansunter.com",
+    "https://666860.xyz",
+    "https://a.ussh.net",
+    "https://hub.rat.dev",
+    "https://docker.m.daocloud.io"
+  ],
+  "max-concurrent-downloads": 10,
+  "max-concurrent-uploads": 5
+}

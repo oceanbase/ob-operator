@@ -13,11 +13,12 @@ See the Mulan PSL v2 for more details.
 package oceanbase
 
 type OBInstance struct {
-	Type      OBInstanceType `json:"type" binding:"required"`
-	OBCluster string         `json:"obcluster,omitempty"`
-	OBZone    string         `json:"obzone,omitempty"` // obzone may exist in labels
-	OBServer  string         `json:"observer,omitempty"`
-	OBTenant  string         `json:"obtenant,omitempty"`
+	Type       OBInstanceType `json:"type" binding:"required"`
+	OBCluster  string         `json:"obcluster,omitempty"`
+	OBZone     string         `json:"obzone,omitempty"` // obzone may exist in labels
+	OBServer   string         `json:"observer,omitempty"`
+	OBTenant   string         `json:"obtenant,omitempty"`
+	LogService string         `json:"logservice,omitempty"`
 }
 
 func (o *OBInstance) Equals(other *OBInstance) bool {
@@ -25,6 +26,8 @@ func (o *OBInstance) Equals(other *OBInstance) bool {
 		return false
 	}
 	switch o.Type {
+	case TypeLogService:
+		return o.LogService == other.LogService
 	case TypeOBCluster:
 		return o.OBCluster == other.OBCluster
 	case TypeOBServer:

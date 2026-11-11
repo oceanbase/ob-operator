@@ -21,3 +21,7 @@
 .idea/
 *.tmproj
 .vscode/
+# Source-only files and generated chart archives.
+*.tgz
+*_test.go
+tests/

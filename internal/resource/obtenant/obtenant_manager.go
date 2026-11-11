@@ -30,6 +30,7 @@ import (
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
@@ -54,6 +55,17 @@ type OBTenantManager struct {
 	Client   client.Client
 	Recorder telemetry.Recorder
 	Logger   *logr.Logger
+}
+
+func tenantRoleFromDatabase(current apitypes.TenantRole, tenant *model.OBTenant) apitypes.TenantRole {
+	if tenant == nil {
+		return current
+	}
+	role := apitypes.TenantRole(strings.ToUpper(tenant.TenantRole))
+	if role == apiconst.TenantRolePrimary || role == apiconst.TenantRoleStandby {
+		return role
+	}
+	return current
 }
 
 func (m *OBTenantManager) GetMeta() metav1.Object {
@@ -170,6 +182,9 @@ func (m *OBTenantManager) UpdateStatus() error {
 		m.OBTenant.Status.OperationContext = nil
 		m.OBTenant.Status.Status = tenantstatus.CancelingRestore
 	} else if m.OBTenant.Status.Status != tenantstatus.Running {
+		if m.OBTenant.Status.Status == tenantstatus.RestoreFailed {
+			m.refreshTenantRoleFromDatabase()
+		}
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info(fmt.Sprintf("OBTenant status is %s (not running), skip compare", m.OBTenant.Status.Status))
 	} else {
 		// build tenant status from DB
@@ -572,6 +587,7 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprint("Cannot Get Tenant Failed When Build Tenant Status", tenantName))
 	}
+	tenantCurrentStatus.TenantRole = tenantRoleFromDatabase(tenantCurrentStatus.TenantRole, obtenant)
 
 	poolStatusList, err := m.buildPoolStatusList(obtenant)
 
@@ -645,6 +661,25 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 	tenantCurrentStatus.Variables = variableStatusList
 
 	return tenantCurrentStatus, nil
+}
+
+func (m *OBTenantManager) refreshTenantRoleFromDatabase() {
+	tenantName := m.OBTenant.Spec.TenantName
+	tenantExists, err := m.tenantExist(tenantName)
+	if err != nil {
+		m.Logger.Error(err, "Failed to check tenant before refreshing role", "tenantName", tenantName)
+		return
+	}
+	if !tenantExists {
+		return
+	}
+
+	tenantRecord, err := m.getTenantByName(tenantName)
+	if err != nil {
+		m.Logger.Error(err, "Failed to refresh tenant role from database", "tenantName", tenantName)
+		return
+	}
+	m.OBTenant.Status.TenantRole = tenantRoleFromDatabase(m.OBTenant.Status.TenantRole, tenantRecord)
 }
 
 func (m *OBTenantManager) buildPoolStatusList(obTenant *model.OBTenant) ([]v1alpha1.ResourcePoolStatus, error) {

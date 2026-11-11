@@ -1,0 +1,65 @@
+- name: ss-rule
+  rules:
+  - alert: ss_collector_unavailable
+    expr: up{job="ss-specialized"} == 0 or absent(up{job="ss-specialized"})
+    for: 2m
+    labels: {instance_type: unknown, rule_name: ss_collector_unavailable, rule_type: builtin, severity: critical}
+    annotations:
+      summary: 'SS monitoring collector is unavailable.'
+      description: 'No successful SS scrape for two minutes. Missing metrics do not indicate a healthy system.'
+  - alert: ss_ls_replica_shortage
+    expr: ss_ls_ready_replicas < ss_ls_desired_replicas
+    for: 2m
+    labels: {instance_type: logservice, rule_name: ss_ls_replica_shortage, rule_type: builtin, severity: critical}
+    annotations:
+      summary: 'LogService {{ $labels.namespace }}/{{ $labels.logservice }} has a replica shortage.'
+      description: 'Zone {{ $labels.zone }} has {{ $value }} Ready replicas, fewer than desired, for two minutes.'
+  - alert: ss_ls_registry_unavailable
+    expr: ss_ls_registry_success == 0
+    for: 2m
+    labels: {instance_type: logservice, rule_name: ss_ls_registry_unavailable, rule_type: builtin, severity: critical}
+    annotations:
+      summary: 'LogService registry cannot be queried.'
+      description: 'Cannot read LN registry for {{ $labels.namespace }}/{{ $labels.logservice }}. Check LS HTTP connectivity and manager health.'
+  - alert: ss_ls_inactive_nodes
+    expr: ss_ls_active_nodes < ss_ls_desired_replicas
+    for: 2m
+    labels: {instance_type: logservice, rule_name: ss_ls_inactive_nodes, rule_type: builtin, severity: critical}
+    annotations:
+      summary: 'LogService has fewer Active LNs than desired.'
+      description: '{{ $labels.namespace }}/{{ $labels.logservice }} zone {{ $labels.zone }} has {{ $value }} Active LNs.'
+  - alert: ss_ls_restarts
+    expr: sum by (namespace, logservice) (increase(ss_ls_container_restarts_total[10m])) > 3
+    for: 1m
+    labels: {instance_type: logservice, rule_name: ss_ls_restarts, rule_type: builtin, severity: warning}
+    annotations:
+      summary: 'LogService containers repeatedly restart.'
+      description: '{{ $labels.namespace }}/{{ $labels.logservice }} has {{ $value }} restarts in ten minutes.'
+  - alert: ss_database_collection_failed
+    expr: ss_ob_collection_success == 0
+    for: 2m
+    labels: {instance_type: obcluster, rule_name: ss_database_collection_failed, rule_type: builtin, severity: warning}
+    annotations:
+      summary: 'SS database metric collection failed.'
+      description: 'Cannot query SS GV$SYSSTAT for {{ $labels.namespace }}/{{ $labels.obcluster }}. Check SQL connectivity, root Secret and server version.'
+  - alert: ss_object_storage_head_errors
+    expr: sum by (namespace, obcluster, ob_cluster_name) (rate(ss_ob_stat_total{stat_id="240023"}[5m])) > 0
+    for: 2m
+    labels: {instance_type: obcluster, rule_name: ss_object_storage_head_errors, rule_type: builtin, severity: warning}
+    annotations:
+      summary: 'SS object storage HEAD requests are failing.'
+      description: '{{ $labels.ob_cluster_name }} reports {{ $value }} HEAD failures per second (five-minute rate).'
+  - alert: ss_micro_cache_errors
+    expr: sum by (namespace, obcluster, ob_cluster_name) (rate(ss_ob_stat_total{stat_id=~"240003|240004"}[5m])) > 0
+    for: 2m
+    labels: {instance_type: obcluster, rule_name: ss_micro_cache_errors, rule_type: builtin, severity: warning}
+    annotations:
+      summary: 'SS micro-cache get/add operations are failing.'
+      description: '{{ $labels.ob_cluster_name }} reports {{ $value }} SS cache errors per second.'
+  - alert: ss_micro_cache_low_hit_ratio
+    expr: (sum by (namespace, obcluster, ob_cluster_name) (rate(ss_ob_stat_total{stat_id="240001"}[5m])) / sum by (namespace, obcluster, ob_cluster_name) (rate(ss_ob_stat_total{stat_id=~"240001|240002"}[5m])) < 0.8) and (sum by (namespace, obcluster, ob_cluster_name) (rate(ss_ob_stat_total{stat_id=~"240001|240002"}[5m])) > 10)
+    for: 10m
+    labels: {instance_type: obcluster, rule_name: ss_micro_cache_low_hit_ratio, rule_type: builtin, severity: caution}
+    annotations:
+      summary: 'SS micro-cache hit ratio remains below 80%.'
+      description: '{{ $labels.ob_cluster_name }} cache hit ratio is {{ $value }} for ten minutes with more than ten requests per second. Idle workloads do not trigger this rule.'

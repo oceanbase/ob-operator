@@ -299,9 +299,9 @@ func RegisterNodeToCluster(m *OBLogServiceZoneManager) tasktypes.TaskError {
 		jobName := fmt.Sprintf("%s-add-ln", node.Name)
 
 		m.Logger.Info("Running ls_ctrl add ln", "host", hostAddr, "node", nodeAddr, "zone", zoneName)
-		_, exitCode, jobErr := resourceutils.RunJob(
+		_, exitCode, jobErr := resourceutils.RunJobWithScheduling(
 			m.Ctx, m.Client, m.Logger, m.Resource.Namespace,
-			jobName, m.Resource.Spec.Image, nil, cmd,
+			jobName, m.Resource.Spec.Image, nil, m.membershipJobScheduling(), cmd,
 		)
 		if jobErr != nil {
 			m.Logger.Info("ls_ctrl add ln failed", "node", nodeAddr, "exitCode", exitCode, "err", jobErr)
@@ -435,9 +435,9 @@ func UnregisterNodeFromCluster(m *OBLogServiceZoneManager) tasktypes.TaskError {
 		jobName := fmt.Sprintf("%s-del-ln", node.Name)
 
 		m.Logger.Info("Running ls_ctrl delete ln", "host", hostAddr, "node", nodeAddr)
-		_, exitCode, jobErr := resourceutils.RunJob(
+		_, exitCode, jobErr := resourceutils.RunJobWithScheduling(
 			m.Ctx, m.Client, m.Logger, m.Resource.Namespace,
-			jobName, m.Resource.Spec.Image, nil, cmd,
+			jobName, m.Resource.Spec.Image, nil, m.membershipJobScheduling(), cmd,
 		)
 		if jobErr != nil {
 			return errors.Wrapf(jobErr, "ls_ctrl delete ln failed for %s, exitCode=%d", nodeAddr, exitCode)
@@ -477,15 +477,24 @@ func UnregisterAllNodesFromCluster(m *OBLogServiceZoneManager) tasktypes.TaskErr
 		jobName := fmt.Sprintf("%s-del-ln", node.Name)
 
 		m.Logger.Info("Running ls_ctrl delete ln", "host", hostAddr, "node", nodeAddr)
-		_, exitCode, jobErr := resourceutils.RunJob(
+		_, exitCode, jobErr := resourceutils.RunJobWithScheduling(
 			m.Ctx, m.Client, m.Logger, m.Resource.Namespace,
-			jobName, m.Resource.Spec.Image, nil, cmd,
+			jobName, m.Resource.Spec.Image, nil, m.membershipJobScheduling(), cmd,
 		)
 		if jobErr != nil {
 			m.Logger.Info("ls_ctrl delete ln warning", "node", nodeAddr, "exitCode", exitCode, "err", jobErr)
 		}
 	}
 	return nil
+}
+
+func (m *OBLogServiceZoneManager) membershipJobScheduling() *resourceutils.JobScheduling {
+	return &resourceutils.JobScheduling{
+		NodeSelector:       m.Resource.Spec.Topology.NodeSelector,
+		Affinity:           m.Resource.Spec.Topology.Affinity,
+		Tolerations:        m.Resource.Spec.Topology.Tolerations,
+		ServiceAccountName: m.Resource.Spec.ServiceAccount,
+	}
 }
 
 func (m *OBLogServiceZoneManager) getRunningNodeHttpAddr(excludeNames ...string) (string, error) {

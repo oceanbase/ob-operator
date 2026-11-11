@@ -1,0 +1,61 @@
+rule_files:
+  - ss-rules.generated.yaml
+evaluation_interval: 30s
+tests:
+  - name: LS replica shortage fires and recovers
+    interval: 30s
+    input_series:
+      - series: 'up{job="ss-specialized"}'
+        values: '1x20'
+      - series: 'ss_ls_desired_replicas{namespace="test",logservice="ls",zone="zone1"}'
+        values: '1x20'
+      - series: 'ss_ls_ready_replicas{namespace="test",logservice="ls",zone="zone1"}'
+        values: '0x5 1x15'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: ss_ls_replica_shortage
+        exp_alerts:
+          - exp_labels: {namespace: test, logservice: ls, zone: zone1, instance_type: logservice, rule_name: ss_ls_replica_shortage, rule_type: builtin, severity: critical}
+            exp_annotations:
+              summary: 'LogService test/ls has a replica shortage.'
+              description: 'Zone zone1 has 0 Ready replicas, fewer than desired, for two minutes.'
+      - eval_time: 4m
+        alertname: ss_ls_replica_shortage
+        exp_alerts: []
+  - name: Idle cache does not fire low hit ratio
+    interval: 30s
+    input_series:
+      - series: 'up{job="ss-specialized"}'
+        values: '1x30'
+      - series: 'ss_ob_stat_total{namespace="test",obcluster="ob",ob_cluster_name="ob",stat_id="240001"}'
+        values: '0x30'
+      - series: 'ss_ob_stat_total{namespace="test",obcluster="ob",ob_cluster_name="ob",stat_id="240002"}'
+        values: '0x30'
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: ss_micro_cache_low_hit_ratio
+        exp_alerts: []
+  - name: Busy cache with zero hits fires
+    interval: 30s
+    input_series:
+      - series: 'up{job="ss-specialized"}'
+        values: '1x30'
+      - series: 'ss_ob_stat_total{namespace="test",obcluster="ob",ob_cluster_name="ob",stat_id="240001"}'
+        values: '0x30'
+      - series: 'ss_ob_stat_total{namespace="test",obcluster="ob",ob_cluster_name="ob",stat_id="240002"}'
+        values: '0+600x30'
+    promql_expr_test:
+      - expr: 'sum(rate(ss_ob_stat_total{stat_id=~"240001|240002"}[5m]))'
+        eval_time: 12m
+        exp_samples:
+          - labels: '{}'
+            value: 20
+    alert_rule_test:
+      # Allow the 5-minute rate window to warm up before the 10-minute hold.
+      - eval_time: 14m
+        alertname: ss_micro_cache_low_hit_ratio
+        exp_alerts:
+          - exp_labels: {namespace: test, obcluster: ob, ob_cluster_name: ob, instance_type: obcluster, rule_name: ss_micro_cache_low_hit_ratio, rule_type: builtin, severity: caution}
+            exp_annotations:
+              summary: 'SS micro-cache hit ratio remains below 80%.'
+              description: 'ob cache hit ratio is 0 for ten minutes with more than ten requests per second. Idle workloads do not trigger this rule.'

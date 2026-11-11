@@ -16,6 +16,7 @@ import { BasicLayout, IconFont } from '@oceanbase/ui';
 import { Outlet, history, useAccess, useLocation, useModel } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { useEffect, useState } from 'react';
+import './index.less';
 
 interface DetailLayoutProps {
   subSideSelectKey: string;
@@ -46,6 +47,13 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
   });
 
   const subSideMenus: MenuItem[] = [
+    {
+      title: 'LogService',
+      key: 'logservice',
+      link: '/logservice',
+      icon: <IconFont type="cluster" />,
+      accessible: access.oblogserviceread || access.oblogservicewrite,
+    },
     {
       title: intl.formatMessage({
         id: 'dashboard.Cluster.Detail.Overview',
@@ -165,6 +173,7 @@ const DetailLayout: React.FC<DetailLayoutProps> = ({
   return (
     <div>
       <BasicLayout
+        className="dashboard-detail-layout"
         logoUrl={logoImg}
         simpleLogoUrl={logoImg}
         topHeader={{

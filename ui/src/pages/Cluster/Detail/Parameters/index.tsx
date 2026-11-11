@@ -86,7 +86,7 @@ export default function Parameters() {
           })}
         </Tag>
       ),
-      value: 'notMatched',
+      value: 'not match',
     },
   ];
 
@@ -201,30 +201,20 @@ export default function Parameters() {
         value,
       })),
       onFilter: (value, record) => {
-        return value === 'matched'
-          ? record.status === value
-          : record.status !== 'matched';
+        return (
+          record?.isManagedByOperator === true &&
+          statusList.some((status) => status.value === value) &&
+          record.status === value
+        );
       },
 
-      render: (text) => {
+      render: (text, record) => {
         const content =
-          text === 'matched' ? (
-            <Tag color={'green'}>
-              {intl.formatMessage({
-                id: 'src.pages.Cluster.Detail.Overview.D5CCD27D',
-                defaultMessage: '已匹配',
-              })}
-            </Tag>
-          ) : (
-            <Tag color={'gold'}>
-              {intl.formatMessage({
-                id: 'src.pages.Cluster.Detail.Overview.DF83C06D',
-                defaultMessage: '不匹配',
-              })}
-            </Tag>
-          );
+          record?.isManagedByOperator === true
+            ? statusList.find((status) => status.value === text)?.label
+            : undefined;
 
-        return <span>{content}</span>;
+        return <span>{content ?? '—'}</span>;
       },
     },
     {

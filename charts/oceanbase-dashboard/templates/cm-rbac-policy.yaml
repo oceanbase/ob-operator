@@ -1,12 +1,24 @@
+{{- $existing := dict -}}
+{{- if .Values.retainData -}}
+{{- $existing = lookup "v1" "ConfigMap" .Release.Namespace (printf "%s-rbac-policy" .Release.Name) -}}
+{{- end -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-rbac-policy
   namespace: {{ .Release.Namespace }}
+  {{- if .Values.retainData }}
+  annotations:
+    helm.sh/resource-policy: keep
+  {{- end }}
   labels:
     {{- include "oceanbase-dashboard.labels" . | nindent 4}}
     name: {{ .Release.Name }}-rbac-policy
 data:
+  {{- if $existing }}
+  {{- toYaml $existing.data | nindent 2 }}
+  {{- else }}
   rbac_policy.csv: |-
     p, admin, *, *, "Super admin"
     g, admin, admin
+  {{- end }}

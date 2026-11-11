@@ -1,0 +1,9 @@
+*
+!.gitignore
+!Dockerfile.helper
+!Dockerfile.observer
+!Dockerfile.oblogservice
+!README.md
+!rpms/
+!rpms/*/
+!rpms/*/SHA256SUMS.example

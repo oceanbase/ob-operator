@@ -1,32 +1,25 @@
-Welcome to OceanBase dashboard!
-  ___                       ____
- / _ \  ___ ___  __ _ _ __ | __ )  __ _ ___  ___
-| | | |/ __/ _ \/ _` | '_ \|  _ \ / _` / __|/ _ \
-| |_| | (_|  __/ (_| | | | | |_) | (_| \__ \  __/
- \___/ \___\___|\__,_|_| |_|____/ \__,_|___/\___|
+OceanBase Dashboard: oceanbase-dashboard-{{ .Release.Name }}
 
- ____            _     _                         _
-|  _ \  __ _ ___| |__ | |__   ___   __ _ _ __ __| |
-| | | |/ _` / __| '_ \| '_ \ / _ \ / _` | '__/ _` |
-| |_| | (_| \__ \ | | | |_) | (_) | (_| | | | (_| |
-|____/ \__,_|___/_| |_|_.__/ \___/ \__,_|_|  \__,_|
-
-
-1. [Temporary accessing] After installing the dashboard chart, you can use `port-forward` to expose the dashboard outside as following command:
-
-  > kubectl port-forward -n {{ .Release.Namespace }} services/oceanbase-dashboard-{{ .Release.Name }} 18081:80 --address 0.0.0.0
-
-then you can visit the dashboard on http://$YOUR_SERVER_IP:18081 (Take 18081 as an example here)
-
-2. For security reason, it is recommended to use a service to access the dashboard. By default the oceanbase-dashboard helm chart creates a service of type NodePort.
-   You can use the following command to get the nodePort of the dashboard service:
-
-  > export SERVICE_NODE_PORT=$(kubectl get -n {{ .Release.Namespace }} service/oceanbase-dashboard-{{ .Release.Name }} -o jsonpath="{.spec.ports[?(@.name=='dashboard-backend')].nodePort}")
-
-then you can visit the dashboard on http://$YOUR_SERVER_IP:$SERVICE_NODE_PORT
-
-3. Login the dashboard with the following default account. 
-   For users that log in for the first time, it is required to reset the password.
-
-Username: admin
-Password: <The password you set in values or "admin" by default>
+Open a local connection after the Deployment becomes Ready:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/oceanbase-dashboard-{{ .Release.Name }} 18081:{{ .Values.service.port }}
+Then visit http://127.0.0.1:18081 on the computer running port-forward.
+When running this on a remote server, use an SSH tunnel to that server's loopback port.
+{{ if eq .Values.service.type "NodePort" }}
+The Service also uses NodePort. Inspect the allocated port with:
+  kubectl -n {{ .Release.Namespace }} get svc oceanbase-dashboard-{{ .Release.Name }}
+{{ end }}
+{{ if .Values.initCredentials }}
+Initial username: admin.
+On first installation, the password is the configured adminPassword value
+(the standalone chart default is "admin"). Change it on first login.
+For an existing installation with retained credentials, use the current password;
+changing Helm values does not reset a retained account.
+{{ else }}
+Account initialization is managed outside this Dashboard chart.
+Use the account and current password supplied by the parent installer or the
+administrator of Secret {{ .Values.userCredentials | default (printf "%s-user-credentials" .Release.Name) }}
+in namespace {{ .Values.userNamespace | default .Release.Namespace }}.
+For the oceanbase-lakehouse parent chart, username is admin and the INITIAL
+password is in Secret {{ .Release.Name }}-dashboard-bootstrap (key: password).
+After changing the password, use the new password instead of the bootstrap value.
+{{ end }}

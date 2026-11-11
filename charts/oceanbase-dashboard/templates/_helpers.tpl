@@ -62,3 +62,28 @@ Create the name of the cleanup cronjob
 {{- define "oceanbase-dashboard.cleanup.fullname" -}}
 {{- printf "%s-cleanup" (include "oceanbase-dashboard.fullname" .) -}}
 {{- end -}}
+
+{{/* Keep standalone names stable; embedded releases may scope RBAC by namespace. */}}
+{{- define "oceanbase-dashboard.rbacName" -}}
+{{- if .Values.rbac.includeNamespace -}}
+{{- printf "%s-%s" .Release.Namespace .Release.Name -}}
+{{- else -}}
+{{- .Release.Name -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "oceanbase-dashboard.clusterRoleName" -}}
+{{- printf "%s-cluster-role" (include "oceanbase-dashboard.rbacName" .) -}}
+{{- end -}}
+
+{{- define "oceanbase-dashboard.clusterRoleBindingName" -}}
+{{- printf "%s-cluster-role-binding" (include "oceanbase-dashboard.rbacName" .) -}}
+{{- end -}}
+
+{{- define "oceanbase-dashboard.prometheusClaim" -}}
+{{- default (printf "%s-prometheus-pvc" .Release.Name) .Values.prometheus.persistence.existingClaim -}}
+{{- end -}}
+
+{{- define "oceanbase-dashboard.sharedClaim" -}}
+{{- default (printf "%s-shared-volume-pvc" .Release.Name) .Values.sharedVolume.persistence.existingClaim -}}
+{{- end -}}
