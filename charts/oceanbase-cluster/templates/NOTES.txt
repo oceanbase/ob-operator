@@ -15,3 +15,32 @@ You can use the following command to wait for the OBCluster to be ready.
 After that, the cluster is ready to handle connections stably. Example command is following:
 
 > mysql -A -h$(kubectl get pods -n {{ .Release.Namespace }} -l ref-obcluster={{ .Release.Name }} -o jsonpath='{.items[0].status.podIP}') -P2881 -uroot -p$(kubectl get secret -n {{ .Release.Namespace }} {{ .Values.userSecrets.root }} -o jsonpath='{.data.password}' | base64 -d)
+{{- if .Values.lakehouse.enabled }}
+
+Lakehouse deployment mode is enabled.
+
+Release resources:
+  OBLogServiceCluster: {{ include "oceanbase-cluster.logServiceName" . }}
+  OBCluster: {{ .Release.Name }}
+
+Check reconciliation:
+  kubectl get oblogservicecluster {{ include "oceanbase-cluster.logServiceName" . }} -n {{ .Release.Namespace }}
+  kubectl get obcluster {{ .Release.Name }} -n {{ .Release.Namespace }}
+
+These fields are immutable after creation: deploymentMode, logServiceRef,
+sharedStorageInfo, objectStoreUrl, observer image, and the LogService template.
+Changing the S3 buckets or credentials normally requires a new release and a
+data-migration plan.
+
+Existing S3 Secrets:
+{{- if .Values.lakehouse.logService.existingSecretName }}
+  Log-service Secret: {{ .Values.lakehouse.logService.existingSecretName }}
+{{- else }}
+  Log-service Secret: generated as {{ include "oceanbase-cluster.logServiceSecretName" . }}
+{{- end }}
+{{- if .Values.lakehouse.sharedStorage.existingSecretName }}
+  Shared-storage Secret: {{ .Values.lakehouse.sharedStorage.existingSecretName }}
+{{- else }}
+  Shared-storage Secret: generated as {{ include "oceanbase-cluster.sharedStorageSecretName" . }}
+{{- end }}
+{{- end }}

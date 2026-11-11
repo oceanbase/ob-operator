@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$(git rev-parse --show-toplevel)/.agents/skills/ob-operator-dima/scripts/prompt_hook.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

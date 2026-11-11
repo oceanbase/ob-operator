@@ -24,11 +24,62 @@ monitorResource:
   cpu: 500m
   memory: 1Gi
 
+observerImage: "" # Defaults to oceanbase/oceanbase-cloud-native:<chart appVersion>
+
 parameters:
   - name: system_memory
     value: 2G
   - name: "__min_full_resource_pool_memory"
     value: "2147483648" # 2G
+
+# Lakebase/shared-storage deployment. When enabled, the chart creates an
+# OBLogServiceCluster and configures the OBCluster with independent log-service
+# and shared-data buckets.
+lakehouse:
+  enabled: false
+  # Required when enabled. Use an OceanBase AI image compatible with your
+  # Operator and OBLogService versions.
+  observerImage: ""
+
+  logService:
+    # Defaults to <release-name>-logservice.
+    nameOverride: ""
+    clusterId: 10002
+    # Required. Use the OBLogService image published by your trusted OceanBase
+    # distribution.
+    image: ""
+    resource:
+      cpu: 2
+      memory: 8Gi
+    storageClass: local-path
+    storeStorageSize: 50Gi
+    logStorageSize: 50Gi
+    topology:
+      - zone: zone1
+        replica: 1
+      - zone: zone2
+        replica: 1
+      - zone: zone3
+        replica: 1
+    # The URL must contain the scheme, bucket, endpoint, and region, for example:
+    # s3://lakehouse-logservice?host=http://<minio-service-ip>:9000&s3_region=us-east-1
+    bucketURL: ""
+    # Leave empty to generate a Secret from lakehouse.credentials.
+    existingSecretName: ""
+
+  sharedStorage:
+    # Use a different bucket from lakehouse.logService.bucketURL.
+    bucketURL: ""
+    # Leave empty to generate a Secret from lakehouse.credentials.
+    existingSecretName: ""
+    maxIOPS: ""
+    maxBandwidth: ""
+
+  # Required only when either existingSecretName is empty. Both generated
+  # Secrets use these credentials.
+  credentials:
+    accessId: ""
+    accessKey: ""
 
 backupVolumeEnabled: false # set true and config volume if you want to enable backup volume
 backupVolume:

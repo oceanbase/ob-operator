@@ -10,6 +10,12 @@ functional testing, not for production or high availability.
 - At least 16 CPU cores, 32 GiB available memory, and 60 GiB free disk space
 - The images configured in `.env.example` loaded into the local Docker daemon
 
+Run `docker compose version` before starting, with the same user or `sudo`
+prefix you will use to deploy. Some Linux images, including Alibaba Cloud
+Linux 3 images with Docker preinstalled, omit the Compose plugin. If the
+command is unavailable, [install the Compose CLI plugin](https://docs.docker.com/compose/install/linux/)
+for your distribution and run the version check again.
+
 Prepare credentials and start the environment:
 
 ```bash

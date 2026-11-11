@@ -18,6 +18,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"syscall"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -109,7 +110,7 @@ func startOBServer() error {
 
 func startOBServerWithConfig() error {
 	cmd := fmt.Sprintf("cp %s/store/etc/%s %s/etc/%s && %s/bin/observer --nodaemon", DefaultHomePath, BackupConfigFileName, DefaultHomePath, ConfigFileName, DefaultHomePath)
-	return exec.Command("bash", "-c", cmd).Run()
+	return runObserver(cmd)
 }
 
 func startOBServerWithParam() error {
@@ -182,5 +183,23 @@ func startOBServerWithParam() error {
 		cmd = fmt.Sprintf("cd %s && %s/bin/observer %s --nodaemon --appname %s --cluster_id %s --zone %s -i %s -p %d -P %d -d %s -l info -o config_additional_dir=%s/store/etc,%s", DefaultHomePath, DefaultHomePath, modeFlag, clusterName, clusterId, zoneName, DefaultDevName, DefaultSqlPort, DefaultRpcPort, dataDir, DefaultHomePath, optStr)
 	}
 	log.Println("Start commands: ", cmd)
-	return exec.Command("bash", "-c", cmd).Run()
+	return runObserver(cmd)
+}
+
+func runObserver(cmd string) error {
+	var limit syscall.Rlimit
+	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &limit); err != nil {
+		return fmt.Errorf("read Observer file descriptor limit: %w", err)
+	}
+	// Go can raise the helper's soft limit at startup and restore the
+	// inherited limit on exec. Set it explicitly so Observer gets the
+	// runtime's hard limit while leaving that hard limit unchanged.
+	limit.Cur = limit.Max
+	if err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &limit); err != nil {
+		return fmt.Errorf("set Observer soft file descriptor limit to %d: %w", limit.Cur, err)
+	}
+
+	child := exec.Command("bash", "-c", cmd)
+	child.Stderr = os.Stderr
+	return child.Run()
 }
