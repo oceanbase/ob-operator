@@ -22,7 +22,7 @@ if [[ -f "${backup_config}" ]]; then
   mkdir -p "${home}/etc"
   cp "${backup_config}" "${runtime_config}"
 else
-  options="config_additional_dir=${home}/store/etc,cpu_count=${CPU_COUNT},datafile_size=${DATAFILE_SIZE},enable_syslog_recycle=true,max_syslog_file_count=4,enable_logservice=True,memory_limit=${MEMORY_LIMIT}"
+  options="config_additional_dir=${home}/store/etc,cpu_count=${CPU_COUNT},datafile_size=${DATAFILE_SIZE},datafile_maxsize=${DATAFILE_MAXSIZE:-47G},datafile_next=${DATAFILE_NEXT:-5G},enable_syslog_recycle=true,max_syslog_file_count=4,enable_logservice=True,memory_limit=${MEMORY_LIMIT},__min_full_resource_pool_memory=2147483648"
   observer_args+=(
     -m shared_storage
     --appname "${CLUSTER_NAME}"

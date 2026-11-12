@@ -288,12 +288,48 @@ includes `.env`, edit that file and retain its image references. Otherwise copy
 | `LOGSERVICE_MEMORY_LIMIT` / `LOGSERVICE_CONTAINER_MEMORY` | `3G` / `4g` | Each LogService memory target / container limit |
 | `OBAGENT_CPUS` / `OBAGENT_MEMORY` | `0.5` / `512m` | OBAgent container limit |
 | `OBSERVER_DATAFILE_SIZE` / `LOGSERVICE_LOG_DISK_SIZE` | `10G` / `10G` | Initial local data / each LogService log space |
+| `OBSERVER_DATAFILE_MAXSIZE` / `OBSERVER_DATAFILE_NEXT` | `47G` / `5G` | Observer local data growth ceiling / increment; reserve at least 50 GiB for this volume |
 | `COMPOSE_PROJECT_NAME` | `ob-lakehouse` | Groups this installation's containers and volumes |
 
 These are fixed experience defaults, not automatic maximum-use sizing. Keep
 container memory above the corresponding application memory target. Initial
 datafile and log sizes do not cap total Docker disk use; MinIO data and logs
 also consume space.
+
+The Observer starts with a 10 GiB data file and can grow in 5 GiB increments
+up to 47 GiB, matching the usable budget of the Helm 50 GiB data volume.
+A fixed 10 GiB ceiling can prevent creating a business tenant because the
+initial sys unit already requests 10 GiB of data space. The business resource
+pool memory minimum is 2 GiB; this is a tenant minimum, not the memory required
+by the complete deployment.
+
+For an existing installation, changing `.env` alone does not replace the
+persisted Observer configuration. After checking free space on the data volume,
+apply the matching values through a sys-tenant SQL session:
+
+```sql
+ALTER SYSTEM SET __min_full_resource_pool_memory=2147483648;
+ALTER SYSTEM SET datafile_maxsize='47G';
+ALTER SYSTEM SET datafile_next='5G';
+```
+
+Read back the parameters and `oceanbase.GV$OB_SERVERS` before creating a new
+resource pool. These changes do not require restarting the database.
+
+For basic tenant validation, start with a 1 CPU / 2 GiB memory unit, at least
+3 GiB log space and 2 GiB data space, after checking remaining server capacity.
+This is a small functional-test configuration, not a production sizing claim.
+Keep the whole Compose host budget above: 8 CPU cores, 32 GiB available memory
+and 100 GiB free disk; allow more disk for growing MinIO data and logs.
+
+A new tenant's first major compaction includes its system tablets as well as
+the test table. Allow up to 15 minutes for acceptance and record progress from
+`GV$OB_COMPACTION_PROGRESS`; a three-minute observation timeout alone does not
+prove a resource shortage. Capture the new `FROZEN_SCN` after issuing the freeze,
+then require `LAST_SCN >= FROZEN_SCN`, `STATUS='IDLE'` and `IS_ERROR='NO'` in
+`CDB_OB_MAJOR_COMPACTION` for that tenant. The initial `SCN=1, IDLE` state before
+the asynchronous freeze starts is not a successful major compaction. Finally,
+verify the test data on a new SQL connection and check its objects in MinIO.
 
 Cluster IDs, bucket names and static container addresses are persisted in the
 database. Configure these before first use. To avoid a subnet collision, change
