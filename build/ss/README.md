@@ -42,7 +42,8 @@ cp build/ss/rpms/logservice/SHA256SUMS.example build/ss/rpms/logservice/SHA256SU
 ```
 
 更换 RPM 时，同时更新校验清单、`RPM_VERSION` 和镜像 tag。Dockerfile 不查询制品
-平台，也不会在指定版本不存在时换用新版。缺文件、校验失败、同包名存在多个版本、
+平台，也不会在指定版本不存在时换用新版。目录中的 RPM 必须与 SHA256SUMS 清单
+一一对应；额外文件、缺文件、校验失败、同包名存在多个版本、
 安装后的版本不匹配或动态库缺失都会使构建失败。RPM、二进制和临时下载链接不提交到仓库。
 
 平台当前展示的这批产物标为调试包，下载入口限定内部非生产验证。
@@ -58,7 +59,7 @@ helper 启动需要的工具和 Dashboard 日志下载需要的 Python 3。它�
 基础镜像，两个业务镜像再继承它。
 已有满足依赖、包含共享存储命令的固定版本 helper 镜像时，可直接复用，无须重建。
 
-以下命令全部从仓库根目录运行，当前样例为 `linux/amd64`，需要 Go 1.25：
+以下命令全部从仓库根目录运行，当前样例为 `linux/amd64`，需要 Go 1.25，以及支持 `RUN --mount` 的 Docker BuildKit/buildx：
 
 ```bash
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -buildvcs=false \
@@ -92,7 +93,9 @@ docker build --platform linux/amd64 -f build/ss/Dockerfile.oblogservice \
   -t "$LOGSERVICE_IMAGE" .
 ```
 
-构建会安装本地 RPM，保留 RPM 自带的程序和配置目录。LogService 仅补上 Operator
+构建通过 BuildKit 只读 bind mount 安装本地 RPM，校验脚本同样只读挂载；不会先
+COPY 安装包到镜像层。RPM 及校验脚本不会残留在最终镜像层中。构建会保留 RPM
+自带的程序和配置目录。LogService 仅补上 Operator
 要求的 helper 链接：`/home/admin/oblogservice/bin/oceanbase-helper`。
 Observer 当前以 root 启动，镜像构建时将本地 `etc` 目录属主设为 root，满足程序的
 启动 UID 校验；不递归更改安装目录或已有数据卷的属主。
@@ -147,3 +150,19 @@ Compose 使用自己的启动脚本，不执行这个 helper。新 RPM 的完整
 若仍被引用，删除请求会留下 `deletionTimestamp`，但控制器阻止移除 finalizer，
 并记录 `DeletionBlocked` 事件。因此先删 LogService 不会正常完成删除；应先完成
 OBCluster 的删除，再删除 LogService。此行为来自控制器，与镜像 Dockerfile 无关。
+
+## Compose 内置运行脚本的派生镜像
+
+需要将启动脚本内置到 `/opt/lakehouse/` 时，使用 `Dockerfile.compose-runtime`。
+准备独立构建上下文，将已审定版本的脚本置于 `lakehouse/`，并将
+`OBSERVER_DIGEST_REFERENCE` 设为已发布的 `仓库地址@sha256:摘要`，然后执行：
+
+```bash
+docker build -f build/ss/Dockerfile.compose-runtime \
+  --build-arg BASE_IMAGE="$OBSERVER_DIGEST_REFERENCE" \
+  -t registry.example.com/observer:compose-version /path/to/runtime-context
+```
+
+LogService 派生镜像使用同一配方并传入对应的 LogService digest。
+`BASE_IMAGE` 无默认浮动 tag，并拒绝不含 digest 的输入。发布脚本应从推送结果或锁文件
+读取该引用，同时把它记入交付清单；不要改写历史版本的构建快照。

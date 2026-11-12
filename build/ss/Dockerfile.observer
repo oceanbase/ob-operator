@@ -4,11 +4,12 @@ FROM ${HELPER_IMAGE}
 USER root
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG RPM_VERSION
-COPY build/ss/rpms/observer/ /tmp/rpms/
-RUN set -eu; \
+RUN --mount=type=bind,source=build/ss/rpms/observer,target=/tmp/rpms \
+    --mount=type=bind,source=build/ss/verify-rpms.py,target=/tmp/verify-rpms.py \
+    set -eu; \
     test -n "${RPM_VERSION}"; \
     cd /tmp/rpms; \
-    sha256sum --strict -c SHA256SUMS; \
+    python3 /tmp/verify-rpms.py /tmp/rpms; \
     duplicates="$(rpm -qp --qf '%{NAME}\n' ./*.rpm | sort | uniq -d)"; \
     test -z "${duplicates}"; \
     yum install -y ./*.rpm; \
@@ -17,8 +18,7 @@ RUN set -eu; \
     test -x /home/admin/oceanbase/bin/observer; \
     test -x /home/admin/oceanbase/bin/obshell; \
     test -x /home/admin/oceanbase/bin/oceanbase-helper; \
-    yum clean all; \
-    rm -rf /tmp/rpms
+    yum clean all
 # Observer checks the owner of its local etc directory against the startup UID.
 # Keep it consistent with this image's explicit root runtime for both deployers.
 RUN chown 0:0 /home/admin/oceanbase/etc \

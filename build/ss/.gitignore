@@ -7,3 +7,6 @@
 !rpms/
 !rpms/*/
 !rpms/*/SHA256SUMS.example
+!verify-rpms.py
+!test_verify_rpms.py
+!Dockerfile.compose-runtime

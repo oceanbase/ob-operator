@@ -4,11 +4,12 @@ FROM ${HELPER_IMAGE}
 USER root
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG RPM_VERSION
-COPY build/ss/rpms/logservice/ /tmp/rpms/
-RUN set -eu; \
+RUN --mount=type=bind,source=build/ss/rpms/logservice,target=/tmp/rpms \
+    --mount=type=bind,source=build/ss/verify-rpms.py,target=/tmp/verify-rpms.py \
+    set -eu; \
     test -n "${RPM_VERSION}"; \
     cd /tmp/rpms; \
-    sha256sum --strict -c SHA256SUMS; \
+    python3 /tmp/verify-rpms.py /tmp/rpms; \
     duplicates="$(rpm -qp --qf '%{NAME}\n' ./*.rpm | sort | uniq -d)"; \
     test -z "${duplicates}"; \
     yum install -y ./*.rpm; \
@@ -16,8 +17,7 @@ RUN set -eu; \
     test -x /home/admin/oblogservice/bin/oblogservice; \
     test -x /home/admin/oceanbase/bin/oceanbase-helper; \
     ln -s /home/admin/oceanbase/bin/oceanbase-helper /home/admin/oblogservice/bin/oceanbase-helper; \
-    yum clean all; \
-    rm -rf /tmp/rpms
+    yum clean all
 RUN dependencies="$(ldd /home/admin/oblogservice/bin/oblogservice)" \
     && printf '%s\n' "${dependencies}" \
     && [[ "${dependencies}" != *"not found"* ]]
