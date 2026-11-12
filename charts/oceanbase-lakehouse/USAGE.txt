@@ -324,3 +324,13 @@ Export helm get values RELEASE -n NAMESPACE --all -o yaml into a protected file.
 Run python3 tools/migrate-minio-values.py previous-values.yaml --output migrated-values.yaml,
 then pass -f migrated-values.yaml to helm upgrade. The installer performs this
 conversion automatically for an installed legacy release. See SHARED-INFRA.md.
+
+Connection output after installation
+------------------------------------
+Helm renders NOTES before newly allocated NodePorts exist; --wait does not render
+NOTES again. For direct final URL/SQL output, use the release package installer:
+  bash install-helm-and-show-access.sh ob-demo CHART.tgz -n ob-demo --create-namespace --wait --wait-for-jobs --timeout 35m
+It prints actual addresses after Helm succeeds and respects access.host from values,
+--kubeconfig and --kube-context. Python 3 is required by this wrapper. Plain Helm
+users can execute the complete lookup commands in NOTES after installation.
+NodePorts remain stable while Services are retained, but may change if recreated.

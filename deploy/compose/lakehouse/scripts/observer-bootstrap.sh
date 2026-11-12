@@ -33,7 +33,7 @@ if [ "${mode}" = bootstrap ]; then
     printf "'"
   }
   sql_host="$(shell_quote "${host_ip}")"
-  compose_project="$(shell_quote "${COMPOSE_PROJECT_NAME:-ob-lakehouse}")"
+  project_filter="$(shell_quote "label=com.docker.compose.project=${COMPOSE_PROJECT_NAME:-ob-lakehouse}")"
   url_host="${host_ip}"
   case "${url_host}" in *:*) url_host="[${url_host}]" ;; esac
 
@@ -56,10 +56,12 @@ the same overlay for every subsequent Compose command.
   Alertmanager: http://127.0.0.1:${ALERTMANAGER_HOST_PORT:-39093}/
 
 Accounts: root for obshell, root@sys for SQL.
-Retrieve the root password on the Docker host, from the deployment directory:
-  sudo docker compose -p ${compose_project} run --rm --no-deps observer-bootstrap --mode show-password
-If startup used -f or --env-file, include those same options before run.
-If Docker is accessible without sudo, you may omit sudo.
-This prints the root password; do not share its output.
+Retrieve the saved root password on the Docker host (any directory):
+  sudo docker exec "\$(sudo docker ps -q --filter ${project_filter} --filter 'label=com.docker.compose.service=observer' --filter 'label=com.docker.compose.oneoff=False')" cat /run/secrets/ob_root_password; printf '\n'
+This command locates the running Observer by project/service labels; no Compose files or environment options are needed.
+If Docker is accessible without sudo, you may omit both sudo occurrences.
+This reads the saved credential file, not the current password from the database.
+After changing the password manually, use the new password; the saved file may be stale.
+This prints a password; do not share its output.
 EOF
 fi

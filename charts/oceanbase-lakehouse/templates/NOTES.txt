@@ -25,7 +25,8 @@ these notes. After installation, run the following with kubectl access:
 If the printed node address is not reachable from your browser, replace
 NODE_HOST with a reachable node IP or DNS name, then repeat the case and printf commands.
 {{ end }}
-NodePort is persistent; no port-forward process is needed.
+NodePort remains stable while its Service is retained; deleting and recreating
+the Service may allocate a different port. No port-forward process is needed.
 {{ if $host }}The displayed address must be reachable from your client; override with --set access.host=<reachable-IP>.{{ end }}
 {{ else if eq .Values.dashboard.service.type "LoadBalancer" }}
 Wait for an external IP/hostname from your cluster's load balancer:

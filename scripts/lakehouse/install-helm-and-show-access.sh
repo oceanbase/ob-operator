@@ -12,6 +12,7 @@ chart=$2
 shift 2
 namespace=default
 args=("$@")
+kubectl_args=()
 for ((i = 0; i < ${#args[@]}; i++)); do
   case "${args[i]}" in
     -n|--namespace)
@@ -23,13 +24,28 @@ for ((i = 0; i < ${#args[@]}; i++)); do
       ((i += 1))
       ;;
     --namespace=*) namespace=${args[i]#*=} ;;
+    --kubeconfig|--kube-context)
+      if (( i + 1 >= ${#args[@]} )); then echo "Missing value for ${args[i]}" >&2; exit 2; fi
+      option=${args[i]}; [[ $option != --kube-context ]] || option=--context
+      kubectl_args+=("$option" "${args[i+1]}"); ((i += 1)) ;;
+    --kubeconfig=*) kubectl_args+=("${args[i]}") ;;
+    --kube-context=*) kubectl_args+=("--context=${args[i]#*=}") ;;
   esac
 done
 
 helm upgrade --install "$release" "$chart" "$@"
 
+kubectl() { command kubectl "${kubectl_args[@]}" "$@"; }
+
+helm_context=()
+for ((i=0; i<${#kubectl_args[@]}; i++)); do
+  option=${kubectl_args[i]}; option=${option/--context/--kube-context}; helm_context+=("$option")
+done
+configured_host=$(helm get values "$release" -n "$namespace" "${helm_context[@]}" -o json | python3 -c 'import json,sys; print(((json.load(sys.stdin) or {}).get("access") or {}).get("host", ""))')
 if [[ -n ${LAKEHOUSE_ACCESS_HOST:-} ]]; then
   node_host=$LAKEHOUSE_ACCESS_HOST
+elif [[ -n $configured_host ]]; then
+  node_host=$configured_host
 else
   nodes=$(kubectl get nodes -o wide --no-headers)
   node_host=$(awk '$2 ~ /^Ready/ {print $6; exit}' <<< "$nodes")

@@ -34,17 +34,36 @@ class AccessNotesTests(unittest.TestCase):
         root, result = self.render()
         self.assertEqual(result.returncode, 0, result.stderr)
         sql = next(line.strip() for line in result.stdout.splitlines() if line.strip().startswith('mysql '))
-        credentials = next(line.strip() for line in result.stdout.splitlines() if line.strip().startswith('sudo docker compose '))
+        credentials = next(line.strip() for line in result.stdout.splitlines() if line.strip().startswith('sudo docker exec '))
         self.assertEqual(shlex.split(sql), ['mysql', '-h', '192.0.2.4', '-P', '33881', '-u', 'root@sys', '-p'])
-        self.assertEqual(shlex.split(credentials), ['sudo', 'docker', 'compose', '-p', 'ob-lakehouse', 'run', '--rm', '--no-deps', 'observer-bootstrap', '--mode', 'show-password'])
+        self.assertIn("label=com.docker.compose.project=ob-lakehouse", credentials)
+        self.assertIn("label=com.docker.compose.service=observer", credentials)
+        self.assertIn("cat ", credentials)
+        self.assertIn("saved file may be stale", result.stdout)
         self.assertIn('http://192.0.2.4:33886/', result.stdout)
         self.assertEqual((root / 'secrets/observer_bootstrap_complete').stat().st_mode & 0o777, 0o600)
 
     def test_custom_project_is_preserved(self):
         _, result = self.render(project='notes-second-project')
-        command = next(line.strip() for line in result.stdout.splitlines() if line.strip().startswith('sudo docker compose '))
-        self.assertEqual(shlex.split(command)[4], 'notes-second-project')
-        self.assertIn('same options before run', result.stdout)
+        command = next(line.strip() for line in result.stdout.splitlines() if line.strip().startswith('sudo docker exec '))
+        self.assertIn('label=com.docker.compose.project=notes-second-project', command)
+        self.assertIn('no Compose files or environment options are needed', result.stdout)
+
+    def test_credential_command_runs_without_compose_files(self):
+        root, result = self.render(project='custom-project')
+        command = next(line.strip() for line in result.stdout.splitlines() if line.strip().startswith('sudo docker exec '))
+        sudo = root / 'sudo'
+        sudo.write_text('#!/bin/sh\nexec "$@"\n')
+        sudo.chmod(0o755)
+        docker = root / 'docker'
+        docker.write_text('#!/bin/sh\nprintf "%s\n" "$@" >> "$ARGS_FILE"\ncase "$1" in ps) echo observer-id ;; exec) test "$2" = observer-id && echo saved-password ;; *) exit 99 ;; esac\n')
+        docker.chmod(0o755)
+        args_file = root / 'args'
+        r = subprocess.run(['sh', '-c', command], cwd=root, env=dict(os.environ, PATH=str(root)+':'+os.environ['PATH'], ARGS_FILE=str(args_file)), text=True, capture_output=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.strip(), 'saved-password')
+        self.assertIn('label=com.docker.compose.project=custom-project', args_file.read_text())
+        self.assertNotIn('compose\n', args_file.read_text())
 
     def test_ipv6_and_shell_quoting(self):
         _, result = self.render(host='2001:db8::12')

@@ -190,7 +190,8 @@ func TestEntrypointScriptsAreExecutable(t *testing.T) {
 		"http://${url_host}:${OBSHELL_HOST_PORT:-32886}/",
 		"http://127.0.0.1:${PROMETHEUS_HOST_PORT:-39090}/",
 		"http://127.0.0.1:${ALERTMANAGER_HOST_PORT:-39093}/",
-		"sudo docker compose -p ${compose_project} run --rm --no-deps observer-bootstrap --mode show-password",
+		"--filter ${project_filter}",
+		"This reads the saved credential file, not the current password from the database.",
 	} {
 		if !strings.Contains(string(bootstrap), want) {
 			t.Fatalf("observer bootstrap completion output is missing %q", want)

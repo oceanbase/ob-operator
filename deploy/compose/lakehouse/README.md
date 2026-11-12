@@ -202,12 +202,12 @@ docker compose logs --tail=100 obagent prometheus alertmanager
 The completion log prints a complete MySQL command with the discovered host
 address and configured SQL port, plus a complete password command containing
 the actual Compose project name (including a name chosen with `-p`). Run the
-password command on the Docker host from the deployment directory. If startup
-used `-f` or `--env-file`, keep those options before `run`. Do not share its output.
+password command on the Docker host from any directory. It uses container labels,
+so custom `-f` and `--env-file` arguments are not needed. Do not share its output.
 For the default project:
 
 ```bash
-sudo docker compose -p ob-lakehouse run --rm --no-deps observer-bootstrap --mode show-password
+sudo docker exec "$(sudo docker ps -q --filter 'label=com.docker.compose.project=ob-lakehouse' --filter 'label=com.docker.compose.service=observer' --filter 'label=com.docker.compose.oneoff=False')" cat /run/secrets/ob_root_password
 ```
 
 You may omit `sudo` if your user can access Docker directly.
@@ -437,3 +437,8 @@ COMPOSE_PROJECT_NAME=ob-lakehouse-qa-acceptance ./scripts/acceptance.sh
 The test checks initialization, authenticated SQL, wrong-password rejection,
 repeated bootstrap, service restart, and `down`/`up` persistence. It preserves
 the QA volumes for inspection; `down -v` is an explicit separate action.
+
+
+### Saved credentials and custom Compose arguments
+
+The completion log prints a complete Docker command using the actual Compose project label. Run it on the Docker host from any directory; `-f`, `--env-file`, and custom container names do not need to be reconstructed. It requires exactly one running Observer for that project. It reads the saved credential file, not the current database password. Manual password changes do not automatically update that file; use the new password after a change. Do not share the output.
