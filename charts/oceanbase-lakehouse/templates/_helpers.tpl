@@ -285,3 +285,12 @@ resolves its same-namespace Service at runtime without mutating this manifest. *
 {{- if and $service $service.spec.ports -}}{{ (index $service.spec.ports 0).nodePort | default 0 }}{{- else -}}0{{- end -}}
 {{- end -}}
 {{- end -}}
+
+{{/* Presentation only: prefer an explicit port, otherwise read the existing Service. */}}
+{{- define "lakehouse.dashboardNodePort" -}}
+{{- if gt (int .Values.dashboard.service.nodePort) 0 -}}{{ .Values.dashboard.service.nodePort }}
+{{- else -}}
+{{- $service := lookup "v1" "Service" .Release.Namespace (printf "oceanbase-dashboard-%s" .Release.Name) -}}
+{{- if and $service $service.spec.ports -}}{{ (index $service.spec.ports 0).nodePort | default 0 }}{{- else -}}0{{- end -}}
+{{- end -}}
+{{- end -}}

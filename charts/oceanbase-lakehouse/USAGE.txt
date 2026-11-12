@@ -192,6 +192,12 @@ No port-forward process is needed for default access. The client must reach the
 node and these TCP ports. Set --set access.host=YOUR-IP-OR-DNS for NAT or multiple
 NICs, or when Helm cannot list Nodes. This changes printed addresses only; it
 does not configure NAT/firewall rules or assign an address to the node.
+On upgrade, Helm reads the existing Service NodePorts and prints direct URLs
+when a node address is available. On first install the Services do not exist yet:
+access.host supplies the address but cannot supply a port that Kubernetes has
+not allocated. Run the post-install commands in NOTES to obtain the actual URL.
+Those commands retain access.host when supplied and bracket IPv6 Dashboard hosts.
+helm get notes returns the saved installation notes; it does not rerun discovery.
 Offline helm template cannot discover node addresses and prints discovery steps.
 
 Override ports with --set dashboard.service.nodePort=31184 and
