@@ -33,7 +33,7 @@ if [ "${mode}" = bootstrap ]; then
     printf "'"
   }
   sql_host="$(shell_quote "${host_ip}")"
-  project_filter="$(shell_quote "label=com.docker.compose.project=${COMPOSE_PROJECT_NAME:-ob-lakehouse}")"
+  credential_source="$(shell_quote "${HOSTNAME}:/run/secrets/ob_root_password")"
   url_host="${host_ip}"
   case "${url_host}" in *:*) url_host="[${url_host}]" ;; esac
 
@@ -57,9 +57,10 @@ the same overlay for every subsequent Compose command.
 
 Accounts: root for obshell, root@sys for SQL.
 Retrieve the saved root password on the Docker host (any directory):
-  sudo docker exec "\$(sudo docker ps -q --filter ${project_filter} --filter 'label=com.docker.compose.service=observer' --filter 'label=com.docker.compose.oneoff=False')" cat /run/secrets/ob_root_password; printf '\n'
-This command locates the running Observer by project/service labels; no Compose files or environment options are needed.
-If Docker is accessible without sudo, you may omit both sudo occurrences.
+  sudo docker cp ${credential_source} - | tar -xOf -
+This command reads this bootstrap container's saved credential, even after it exits.
+No Compose files, project flags or environment options are needed. Keep this container until retrieval.
+If Docker is accessible without sudo, you may omit sudo.
 This reads the saved credential file, not the current password from the database.
 After changing the password manually, use the new password; the saved file may be stale.
 This prints a password; do not share its output.

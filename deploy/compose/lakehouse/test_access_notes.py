@@ -26,7 +26,7 @@ class AccessNotesTests(unittest.TestCase):
         env.pop('COMPOSE_PROJECT_NAME', None)
         if project is not None:
             env['COMPOSE_PROJECT_NAME'] = project
-        env.update(OBSERVER_SQL_HOST_PORT='33881', OBSHELL_HOST_PORT='33886')
+        env.update(OBSERVER_SQL_HOST_PORT='33881', OBSHELL_HOST_PORT='33886', HOSTNAME='0123456789ab')
         result = subprocess.run(['sh', str(script), *args], env=env, text=True, capture_output=True)
         return root, result
 
@@ -34,35 +34,37 @@ class AccessNotesTests(unittest.TestCase):
         root, result = self.render()
         self.assertEqual(result.returncode, 0, result.stderr)
         sql = next(line.strip() for line in result.stdout.splitlines() if line.strip().startswith('mysql '))
-        credentials = next(line.strip() for line in result.stdout.splitlines() if line.strip().startswith('sudo docker exec '))
+        credentials = next(line.strip() for line in result.stdout.splitlines() if line.strip().startswith('sudo docker cp '))
         self.assertEqual(shlex.split(sql), ['mysql', '-h', '192.0.2.4', '-P', '33881', '-u', 'root@sys', '-p'])
-        self.assertIn("label=com.docker.compose.project=ob-lakehouse", credentials)
-        self.assertIn("label=com.docker.compose.service=observer", credentials)
-        self.assertIn("cat ", credentials)
+        self.assertIn('0123456789ab:', credentials)
+        self.assertIn('tar -xOf -', credentials)
+        self.assertIn("docker cp ", credentials)
         self.assertIn("saved file may be stale", result.stdout)
         self.assertIn('http://192.0.2.4:33886/', result.stdout)
         self.assertEqual((root / 'secrets/observer_bootstrap_complete').stat().st_mode & 0o777, 0o600)
 
     def test_custom_project_is_preserved(self):
         _, result = self.render(project='notes-second-project')
-        command = next(line.strip() for line in result.stdout.splitlines() if line.strip().startswith('sudo docker exec '))
-        self.assertIn('label=com.docker.compose.project=notes-second-project', command)
-        self.assertIn('no Compose files or environment options are needed', result.stdout)
+        command = next(line.strip() for line in result.stdout.splitlines() if line.strip().startswith('sudo docker cp '))
+        self.assertIn('0123456789ab:', command)
+        self.assertNotIn('notes-second-project', command)
+        self.assertIn('No Compose files, project flags or environment options are needed', result.stdout)
 
     def test_credential_command_runs_without_compose_files(self):
         root, result = self.render(project='custom-project')
-        command = next(line.strip() for line in result.stdout.splitlines() if line.strip().startswith('sudo docker exec '))
+        command = next(line.strip() for line in result.stdout.splitlines() if line.strip().startswith('sudo docker cp '))
         sudo = root / 'sudo'
         sudo.write_text('#!/bin/sh\nexec "$@"\n')
         sudo.chmod(0o755)
         docker = root / 'docker'
-        docker.write_text('#!/bin/sh\nprintf "%s\n" "$@" >> "$ARGS_FILE"\ncase "$1" in ps) echo observer-id ;; exec) test "$2" = observer-id && echo saved-password ;; *) exit 99 ;; esac\n')
+        (root / 'saved').write_text('saved-password')
+        docker.write_text('#!/bin/sh\nprintf "%s\n" "$@" >> "$ARGS_FILE"\ntest "$1" = cp || exit 99\ntar -cf - -C "$STUB_ROOT" saved\n')
         docker.chmod(0o755)
         args_file = root / 'args'
-        r = subprocess.run(['sh', '-c', command], cwd=root, env=dict(os.environ, PATH=str(root)+':'+os.environ['PATH'], ARGS_FILE=str(args_file)), text=True, capture_output=True)
+        r = subprocess.run(['sh', '-c', command], cwd=root, env=dict(os.environ, PATH=str(root)+':'+os.environ['PATH'], ARGS_FILE=str(args_file), STUB_ROOT=str(root)), text=True, capture_output=True)
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual(r.stdout.strip(), 'saved-password')
-        self.assertIn('label=com.docker.compose.project=custom-project', args_file.read_text())
+        self.assertIn('0123456789ab:', args_file.read_text())
         self.assertNotIn('compose\n', args_file.read_text())
 
     def test_ipv6_and_shell_quoting(self):

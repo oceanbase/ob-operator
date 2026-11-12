@@ -11,7 +11,7 @@ import (
 )
 
 func externalValues(endpoint string) map[string]interface{} {
-	return map[string]interface{}{"objectStorage": map[string]interface{}{"mode": "external", "endpoint": endpoint, "existingSecret": "external-s3"}}
+	return map[string]interface{}{"minio": map[string]interface{}{"enabled": false}, "objectStorage": map[string]interface{}{"mode": "external", "endpoint": endpoint, "existingSecret": "external-s3"}}
 }
 
 func TestExternalServiceEndpointMatchesDatabaseAndPreflight(t *testing.T) {

@@ -22,7 +22,7 @@ func TestExternalIndependentCredentials(t *testing.T) {
 		if sameBucket {
 			storage["dataBucket"] = "customer-logs"
 		}
-		docs, output, err := render(t, map[string]interface{}{"stage": "cluster", "objectStorage": storage, "dashboard": map[string]interface{}{"enabled": false}})
+		docs, output, err := render(t, map[string]interface{}{"stage": "cluster", "minio": map[string]interface{}{"enabled": storage["mode"] != "external"}, "objectStorage": storage, "dashboard": map[string]interface{}{"enabled": false}})
 		if err != nil {
 			t.Fatalf("same bucket=%v: %v\n%s", sameBucket, err, output)
 		}
@@ -52,7 +52,7 @@ func TestExternalIndependentCredentials(t *testing.T) {
 
 func TestExternalSharedBucketWithLegacyCredentials(t *testing.T) {
 	storage := map[string]interface{}{"mode": "external", "endpoint": "https://oss-cn-hangzhou.aliyuncs.com", "existingSecret": "shared-credentials", "logBucket": "customer-bucket", "dataBucket": "customer-bucket"}
-	if _, output, err := render(t, map[string]interface{}{"stage": "cluster", "objectStorage": storage}); err != nil {
+	if _, output, err := render(t, map[string]interface{}{"stage": "cluster", "minio": map[string]interface{}{"enabled": storage["mode"] != "external"}, "objectStorage": storage}); err != nil {
 		t.Fatalf("external shared bucket was rejected: %v\n%s", err, output)
 	}
 }
@@ -69,7 +69,7 @@ func TestExternalCredentialFallbackAndValidation(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			storage := map[string]interface{}{"mode": "external", "endpoint": "https://oss-cn-hangzhou.aliyuncs.com", "existingSecret": tc.fallback, "logExistingSecret": tc.log, "dataExistingSecret": tc.data}
-			docs, output, err := render(t, map[string]interface{}{"stage": "cluster", "objectStorage": storage, "observer": map[string]interface{}{"rootExistingSecret": "db-root"}, "dashboard": map[string]interface{}{"enabled": false}})
+			docs, output, err := render(t, map[string]interface{}{"stage": "cluster", "minio": map[string]interface{}{"enabled": storage["mode"] != "external"}, "objectStorage": storage, "observer": map[string]interface{}{"rootExistingSecret": "db-root"}, "dashboard": map[string]interface{}{"enabled": false}})
 			if err != nil {
 				t.Fatal(err, output)
 			}
@@ -91,7 +91,7 @@ func TestExternalCredentialFallbackAndValidation(t *testing.T) {
 		{"mode": "external", "endpoint": "https://oss-cn-hangzhou.aliyuncs.com", "dataExistingSecret": "data"},
 		{"mode": "external", "endpoint": "https://oss-cn-hangzhou.aliyuncs.com", "logExistingSecret": "../bad", "dataExistingSecret": "data"},
 	} {
-		if _, _, err := render(t, map[string]interface{}{"objectStorage": storage}); err == nil {
+		if _, _, err := render(t, map[string]interface{}{"minio": map[string]interface{}{"enabled": storage["mode"] != "external"}, "objectStorage": storage}); err == nil {
 			t.Fatal("invalid or incomplete per-side credentials accepted")
 		}
 	}
@@ -101,7 +101,7 @@ func TestExternalCredentialIdentityRetention(t *testing.T) {
 	api, config := retainedCredentials(t)
 	api.noGuard = true
 	storage := map[string]interface{}{"mode": "external", "endpoint": "https://oss-cn-hangzhou.aliyuncs.com", "logBucket": "same-bucket", "dataBucket": "same-bucket", "logExistingSecret": "log-key", "dataExistingSecret": "data-key"}
-	values := map[string]interface{}{"objectStorage": storage}
+	values := map[string]interface{}{"minio": map[string]interface{}{"enabled": storage["mode"] != "external"}, "objectStorage": storage}
 	output, err := renderRetained(t, config, values)
 	if err != nil {
 		t.Fatal(err, output)

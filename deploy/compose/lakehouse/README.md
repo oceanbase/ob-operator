@@ -200,11 +200,12 @@ docker compose logs --tail=100 obagent prometheus alertmanager
 ## Connect and try SQL
 
 The completion log prints a complete MySQL command with the discovered host
-address and configured SQL port, plus a complete password command containing
-the actual Compose project name (including a name chosen with `-p`). Run the
-password command on the Docker host from any directory. It uses container labels,
-so custom `-f` and `--env-file` arguments are not needed. Do not share its output.
-For the default project:
+address and configured SQL port, plus a complete password command referencing
+the bootstrap container. Run that command on the Docker host from any directory;
+it works after bootstrap exits successfully and does not depend on `-p`, `-f`,
+or `--env-file`. Keep the bootstrap container until you retrieve the password.
+After recreating containers, copy the command from the latest completion log.
+Do not share its output. For the default project, a running Observer also allows:
 
 ```bash
 sudo docker exec "$(sudo docker ps -q --filter 'label=com.docker.compose.project=ob-lakehouse' --filter 'label=com.docker.compose.service=observer' --filter 'label=com.docker.compose.oneoff=False')" cat /run/secrets/ob_root_password
@@ -441,4 +442,4 @@ the QA volumes for inspection; `down -v` is an explicit separate action.
 
 ### Saved credentials and custom Compose arguments
 
-The completion log prints a complete Docker command using the actual Compose project label. Run it on the Docker host from any directory; `-f`, `--env-file`, and custom container names do not need to be reconstructed. It requires exactly one running Observer for that project. It reads the saved credential file, not the current database password. Manual password changes do not automatically update that file; use the new password after a change. Do not share the output.
+The completion log prints a complete `docker cp ... - | tar -xOf -` command using the bootstrap container's default Docker identity. Run it on the Docker host from any directory, including after bootstrap has exited successfully. Conflicting project names in `-p` and an environment file do not affect this command. Do not override the bootstrap service's `hostname`; the generated command uses its default Docker container ID. Removing or recreating that container invalidates the old command: copy the latest completion log after `down`/`up`. It reads the saved credential file, not the current database password. Manual password changes do not automatically update that file; use the new password after a change. Do not share the output.

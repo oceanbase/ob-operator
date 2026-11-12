@@ -74,7 +74,7 @@ func TestSchedulingDefaultDoesNotRestrictPlacement(t *testing.T) {
 				storage["existingSecret"] = "external-storage"
 				want--
 			}
-			docs, output, err := render(t, map[string]interface{}{"stage": "cluster", "objectStorage": storage})
+			docs, output, err := render(t, map[string]interface{}{"stage": "cluster", "minio": map[string]interface{}{"enabled": mode != "external"}, "objectStorage": storage})
 			if err != nil {
 				t.Fatalf("render: %v\n%s", err, output)
 			}
@@ -112,9 +112,9 @@ func TestSchedulingPropagatesToEveryPodAndZone(t *testing.T) {
 				storage["existingSecret"] = "external-storage"
 			}
 			values := map[string]interface{}{
-				"stage":         "cluster",
-				"objectStorage": storage,
-				"scheduling":    map[string]interface{}{"nodeSelector": selector, "tolerations": tolerations},
+				"stage": "cluster",
+				"minio": map[string]interface{}{"enabled": mode != "external", "nodeSelector": selector, "tolerations": tolerations}, "objectStorage": storage,
+				"scheduling": map[string]interface{}{"nodeSelector": selector, "tolerations": tolerations},
 				"observer": map[string]interface{}{"topology": []interface{}{
 					map[string]interface{}{"zone": "ob-zone1", "replica": 1},
 					map[string]interface{}{"zone": "ob-zone2", "replica": 1},
@@ -181,7 +181,7 @@ func TestZoneNodeSelectorsDistributeWithoutLeakingToOtherZones(t *testing.T) {
 				map[string]interface{}{"zone": "zone3", "replica": 1},
 			}
 			docs, output, err := render(t, map[string]interface{}{
-				"stage": "cluster", "objectStorage": storage,
+				"stage": "cluster", "minio": map[string]interface{}{"enabled": mode != "external", "nodeSelector": map[string]string{"example.com/pool": "qa", "kubernetes.io/hostname": "worker-3"}, "tolerations": tolerations}, "objectStorage": storage,
 				"scheduling": map[string]interface{}{"nodeSelector": map[string]string{"example.com/pool": "qa", "kubernetes.io/hostname": "worker-3"}, "tolerations": tolerations},
 				"logService": map[string]interface{}{"topology": topology},
 				"observer":   map[string]interface{}{"topology": topology},

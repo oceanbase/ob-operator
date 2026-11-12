@@ -2,7 +2,10 @@ package lakehouse_test
 
 import (
 	"bytes"
+	"fmt"
 	"os"
+	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 	"text/template"
@@ -22,7 +25,7 @@ func TestManualHelmNotesReflectStage(t *testing.T) {
 	for _, native := range []bool{false, true} {
 		for _, stage := range []string{"storage", "logservice", "cluster"} {
 			var out bytes.Buffer
-			err := notes.Execute(&out, map[string]interface{}{"Release": map[string]string{"Name": "qa", "Namespace": "qa-ns"}, "Values": map[string]interface{}{"stage": stage, "access": map[string]string{"host": "192.0.2.10"}, "sqlService": map[string]interface{}{"type": "NodePort", "nodePort": 30881}, "native": map[string]bool{"enabled": native}, "objectStorage": map[string]string{"mode": "external"}, "dashboard": map[string]interface{}{"enabled": false}, "observer": map[string]string{"rootExistingSecret": ""}}})
+			err := notes.Execute(&out, map[string]interface{}{"Release": map[string]string{"Name": "qa", "Namespace": "qa-ns"}, "Values": map[string]interface{}{"stage": stage, "access": map[string]string{"host": "192.0.2.10"}, "sqlService": map[string]interface{}{"type": "NodePort", "nodePort": 30881}, "native": map[string]bool{"enabled": native}, "objectStorage": map[string]string{"endpoint": "https://s3.example.com"}, "minio": map[string]bool{"enabled": false}, "dashboard": map[string]interface{}{"enabled": false}, "observer": map[string]string{"rootExistingSecret": ""}}})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -134,8 +137,10 @@ func notesTemplate(t *testing.T) *template.Template {
 	var tpl *template.Template
 	tpl = template.New("NOTES").Funcs(template.FuncMap{
 		"contains": func(sub, text string) bool { return strings.Contains(text, sub) },
-		"default": func(fallback, value string) string {
-			if value == "" {
+		"replace":  func(old, new, text string) string { return strings.ReplaceAll(text, old, new) },
+		"int":      func(value interface{}) int { n, _ := strconv.Atoi(fmt.Sprint(value)); return n },
+		"default": func(fallback, value interface{}) interface{} {
+			if value == nil || reflect.ValueOf(value).IsZero() {
 				return fallback
 			}
 			return value

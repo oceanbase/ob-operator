@@ -114,6 +114,13 @@ object storage. For distributed bundled storage on a fresh release, append
 for disk and placement requirements and for per-volume StorageClass overrides.
 For external storage, set objectStorage.endpoint and minio.enabled=false.
 
+Distributed MinIO requires the lakehouse-ready health endpoint supplied by the
+image pinned in this chart. Older r19 bundled images do not provide that endpoint
+and can leave distributed Pods Running but not Ready. Use a complete compatible
+release for a fresh installation; do not override its image with an upstream tag.
+The r20 custom-deployment checks cover three nodes and replacement of one MinIO
+Pod, not complete host loss, quorum loss, or capacity/stress certification.
+
 No SSH/SCP between workers is performed by Helm. Every worker must be able to
 pull the configured images or have the exact images preloaded by an admin.
 

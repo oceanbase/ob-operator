@@ -113,7 +113,7 @@ minio:
   imagePullSecrets: []
   # No binary/image is included in this chart; kubelet pulls this image online.
   # Optional third-party software, independently licensed under AGPL-3.0.
-  image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+  image: reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:26b57bceed2fee9713fb335d1a71cf9d13b8b245b2f8faa07635e6420653bcbf
   imagePullPolicy: IfNotPresent
   rootExistingSecret: "" # optional keys rootUser/rootPassword; otherwise generated
   existingClaim: "" # optional independently managed RWO claim

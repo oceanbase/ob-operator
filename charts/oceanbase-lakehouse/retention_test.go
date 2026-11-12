@@ -48,10 +48,12 @@ func (api *retentionAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"kind":"APIVersions","apiVersion":"v1","versions":["v1"]}`)
 	case "/apis":
 		if api.missingOceanBaseAPI {
-			fmt.Fprint(w, `{"kind":"APIGroupList","apiVersion":"v1","groups":[]}`)
+			fmt.Fprint(w, `{"kind":"APIGroupList","apiVersion":"v1","groups":[{"name":"apps","versions":[{"groupVersion":"apps/v1","version":"v1"}],"preferredVersion":{"groupVersion":"apps/v1","version":"v1"}}]}`)
 			return
 		}
-		fmt.Fprint(w, `{"kind":"APIGroupList","apiVersion":"v1","groups":[{"name":"oceanbase.oceanbase.com","versions":[{"groupVersion":"oceanbase.oceanbase.com/v1alpha1","version":"v1alpha1"}],"preferredVersion":{"groupVersion":"oceanbase.oceanbase.com/v1alpha1","version":"v1alpha1"}}]}`)
+		fmt.Fprint(w, `{"kind":"APIGroupList","apiVersion":"v1","groups":[{"name":"apps","versions":[{"groupVersion":"apps/v1","version":"v1"}],"preferredVersion":{"groupVersion":"apps/v1","version":"v1"}},{"name":"oceanbase.oceanbase.com","versions":[{"groupVersion":"oceanbase.oceanbase.com/v1alpha1","version":"v1alpha1"}],"preferredVersion":{"groupVersion":"oceanbase.oceanbase.com/v1alpha1","version":"v1alpha1"}}]}`)
+	case "/apis/apps/v1":
+		fmt.Fprint(w, `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"apps/v1","resources":[{"name":"deployments","kind":"Deployment","namespaced":true,"verbs":["get","list"]}]}`)
 	case "/api/v1":
 		fmt.Fprint(w, `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"v1","resources":[{"name":"nodes","kind":"Node","namespaced":false,"verbs":["get","list"]},{"name":"configmaps","kind":"ConfigMap","namespaced":true,"verbs":["get","list"]},{"name":"secrets","kind":"Secret","namespaced":true,"verbs":["get","list"]},{"name":"services","kind":"Service","namespaced":true,"verbs":["get","list"]}]}`)
 	case "/api/v1/nodes":
@@ -160,7 +162,8 @@ func retainedCredentials(t *testing.T) (*retentionAPI, string) {
 	}
 	encoded := func(value string) string { return base64.StdEncoding.EncodeToString([]byte(value)) }
 	api := &retentionAPI{
-		identity: identity,
+		identity:   identity,
+		configmaps: map[string]map[string]string{"qa-minio-identity": dashboardData(t, find(t, docs, "ConfigMap", "qa-minio-identity"))},
 		secrets: map[string]map[string]string{
 			"qa-db-root":    {"password": encoded("retained-db-password")},
 			"qa-minio-root": {"rootUser": encoded("retained-root-id"), "rootPassword": encoded("retained-root-password")},
@@ -251,7 +254,7 @@ func TestRetainedStorageIdentityRejectsDrift(t *testing.T) {
 	cases := map[string]map[string]interface{}{
 		"data-bucket":   {"objectStorage": map[string]interface{}{"dataBucket": "other-data"}},
 		"log-bucket":    {"objectStorage": map[string]interface{}{"logBucket": "other-logs"}},
-		"region":        {"objectStorage": map[string]interface{}{"region": "eu-west-1"}},
+		"region":        {"objectStorage": map[string]interface{}{"region": "eu-west-1"}, "minio": map[string]interface{}{"region": "eu-west-1"}},
 		"storage-mode":  {"objectStorage": map[string]interface{}{"mode": "external", "endpoint": "https://storage.example.com", "existingSecret": "external-storage"}},
 		"minio-claim":   {"minio": map[string]interface{}{"existingClaim": "other-pvc"}},
 		"minio-size":    {"minio": map[string]interface{}{"size": "200Gi"}},

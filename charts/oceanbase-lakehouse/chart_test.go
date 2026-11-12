@@ -143,6 +143,7 @@ func TestExternalMinIOAndUserOwnedResources(t *testing.T) {
 	values := map[string]interface{}{
 		"stage":         "cluster",
 		"dashboard":     map[string]interface{}{"enabled": false},
+		"minio":         map[string]interface{}{"enabled": false},
 		"objectStorage": map[string]interface{}{"mode": "external", "endpoint": "https://minio.example.com:9000", "existingSecret": "external-s3"},
 		"observer":      map[string]interface{}{"rootExistingSecret": "db-root"},
 	}
@@ -188,22 +189,24 @@ func TestExistingClaimAndRootSecretAreNotOwned(t *testing.T) {
 
 func TestRejectInvalidConfiguration(t *testing.T) {
 	cases := map[string]map[string]interface{}{
-		"external-no-secret":   {"objectStorage": map[string]interface{}{"mode": "external", "endpoint": "http://minio:9000"}},
-		"external-no-endpoint": {"objectStorage": map[string]interface{}{"mode": "external", "existingSecret": "creds"}},
-		"bad-mode":             {"objectStorage": map[string]interface{}{"mode": "typo"}},
-		"url-query":            {"objectStorage": map[string]interface{}{"endpoint": "http://minio:9000?access_key=SECRET"}},
-		"url-credentials":      {"objectStorage": map[string]interface{}{"endpoint": "http://user:SECRET@minio:9000"}},
-		"url-shell":            {"objectStorage": map[string]interface{}{"endpoint": "http://minio/$(id)"}},
-		"bad-bucket":           {"objectStorage": map[string]interface{}{"dataBucket": "bucket\"bad"}},
-		"same-bucket":          {"objectStorage": map[string]interface{}{"dataBucket": "same", "logBucket": "same"}},
-		"inline-creds":         {"objectStorage": map[string]interface{}{"access_key": "SECRET"}},
-		"latest":               {"minio": map[string]interface{}{"image": "minio/minio:latest"}},
-		"untagged":             {"minio": map[string]interface{}{"image": "minio/minio"}},
-		"empty-topology":       {"logService": map[string]interface{}{"topology": []interface{}{}}},
-		"zero-replicas":        {"logService": map[string]interface{}{"topology": []interface{}{map[string]interface{}{"zone": "zone1", "replica": 0}}}},
-		"duplicate-zones":      {"logService": map[string]interface{}{"topology": []interface{}{map[string]interface{}{"zone": "z1", "replica": 1}, map[string]interface{}{"zone": "z1", "replica": 1}}}},
-		"short-deadline":       {"initialization": map[string]interface{}{"deadlineSeconds": 0}},
-		"disable-persistence":  {"minio": map[string]interface{}{"persistence": false}},
+		"external-no-secret": {"minio": map[string]interface{}{"enabled": false},
+			"objectStorage": map[string]interface{}{"mode": "external", "endpoint": "http://minio:9000"}},
+		"external-no-endpoint": {"minio": map[string]interface{}{"enabled": false},
+			"objectStorage": map[string]interface{}{"mode": "external", "existingSecret": "creds"}},
+		"bad-mode":            {"objectStorage": map[string]interface{}{"mode": "typo"}},
+		"url-query":           {"objectStorage": map[string]interface{}{"endpoint": "http://minio:9000?access_key=SECRET"}},
+		"url-credentials":     {"objectStorage": map[string]interface{}{"endpoint": "http://user:SECRET@minio:9000"}},
+		"url-shell":           {"objectStorage": map[string]interface{}{"endpoint": "http://minio/$(id)"}},
+		"bad-bucket":          {"objectStorage": map[string]interface{}{"dataBucket": "bucket\"bad"}},
+		"same-bucket":         {"objectStorage": map[string]interface{}{"dataBucket": "same", "logBucket": "same"}},
+		"inline-creds":        {"objectStorage": map[string]interface{}{"access_key": "SECRET"}},
+		"latest":              {"minio": map[string]interface{}{"image": "minio/minio:latest"}},
+		"untagged":            {"minio": map[string]interface{}{"image": "minio/minio"}},
+		"empty-topology":      {"logService": map[string]interface{}{"topology": []interface{}{}}},
+		"zero-replicas":       {"logService": map[string]interface{}{"topology": []interface{}{map[string]interface{}{"zone": "zone1", "replica": 0}}}},
+		"duplicate-zones":     {"logService": map[string]interface{}{"topology": []interface{}{map[string]interface{}{"zone": "z1", "replica": 1}, map[string]interface{}{"zone": "z1", "replica": 1}}}},
+		"short-deadline":      {"initialization": map[string]interface{}{"deadlineSeconds": 0}},
+		"disable-persistence": {"minio": map[string]interface{}{"persistence": false}},
 	}
 	for name, values := range cases {
 		t.Run(name, func(t *testing.T) {

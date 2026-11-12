@@ -321,7 +321,9 @@ func retainedDashboard(t *testing.T) (*retentionAPI, string) {
 	for _, name := range []string{"qa-user-credentials", "qa-dashboard-bootstrap"} {
 		api.secrets[name] = dashboardData(t, find(t, docs, "Secret", name))
 	}
-	api.configmaps = map[string]map[string]string{}
+	if api.configmaps == nil {
+		api.configmaps = map[string]map[string]string{}
+	}
 	for _, name := range []string{"qa-dashboard-identity", "qa-rbac-policy"} {
 		api.configmaps[name] = dashboardData(t, find(t, docs, "ConfigMap", name))
 	}
@@ -348,20 +350,7 @@ func TestDashboardRetainsChangedAccountsAndAuthorization(t *testing.T) {
 			t.Fatalf("render retained Dashboard: %v\n%s", err, output)
 		}
 		docs := releaseDocuments(t, []byte(output))
-		for _, name := range []string{"qa-user-credentials", "qa-dashboard-bootstrap"} {
-			api.mu.RLock()
-			want := api.secrets[name]
-			api.mu.RUnlock()
-			if !reflect.DeepEqual(dashboardData(t, find(t, docs, "Secret", name)), want) {
-				t.Fatalf("Secret/%s was reset or lost accounts/metadata on render %d", name, attempt)
-			}
-		}
-		api.mu.RLock()
-		want := api.configmaps["qa-rbac-policy"]
-		api.mu.RUnlock()
-		if !reflect.DeepEqual(dashboardData(t, find(t, docs, "ConfigMap", "qa-rbac-policy")), want) {
-			t.Fatal("Dashboard role changes were overwritten on upgrade/reinstall")
-		}
+		assertDashboardAuthNotReplayed(t, docs)
 	}
 }
 
@@ -436,14 +425,7 @@ func TestDashboardCanRestoreOnlyItsMissingMarker(t *testing.T) {
 	}
 	docs := releaseDocuments(t, []byte(output))
 	find(t, docs, "ConfigMap", "qa-dashboard-identity")
-	for _, name := range []string{"qa-user-credentials", "qa-dashboard-bootstrap"} {
-		api.mu.RLock()
-		want := api.secrets[name]
-		api.mu.RUnlock()
-		if !reflect.DeepEqual(dashboardData(t, find(t, docs, "Secret", name)), want) {
-			t.Fatalf("restoring a marker changed Secret/%s", name)
-		}
-	}
+	assertDashboardAuthNotReplayed(t, docs)
 }
 
 func TestLakehousePackageContainsDashboardDependency(t *testing.T) {
@@ -537,5 +519,17 @@ func TestPackagedDashboardDependencyPropagatesAllRuntimeImageOverrides(t *testin
 	}
 	if strings.Contains(output, "busybox:latest") {
 		t.Fatal("mutable utility default remains in the packaged dependency")
+	}
+}
+
+// Retained authentication is intentionally absent from release manifests so
+// upgrades and rollbacks cannot replay stale accounts or permissions.
+func assertDashboardAuthNotReplayed(t *testing.T, docs []manifest) {
+	t.Helper()
+	for _, doc := range docs {
+		name := field(doc, "metadata", "name")
+		if (doc["kind"] == "Secret" && (name == "qa-user-credentials" || name == "qa-dashboard-bootstrap")) || (doc["kind"] == "ConfigMap" && name == "qa-rbac-policy") {
+			t.Fatalf("retained authentication must not be replayed: %v/%v", doc["kind"], name)
+		}
 	}
 }
