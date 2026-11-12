@@ -1,36 +1,39 @@
 schemaVersion: 1
 name: next-test-package
 status: validated
-releaseVersion: 20261112-access-dev-r19
+releaseVersion: 20261112-custom-dev-r20
 baseManifest:
-  url: http://6.12.233.107:18080/experience/20261112-access-dev-r19/release-manifest.json
-  sha256: 1a91e3f446d8b5a5ff7d3b7eb1f154bdebb9de9e7060d96ef68b81efb2095e15
+  url: http://6.12.233.107:18080/experience/20261112-custom-dev-r20/release-manifest.json
+  sha256: 35e281e4c00936eab90ed2fca5dea4ef1308803fae2bb61784543c46f63e1874
 imageLock:
-  url: http://6.12.233.107:18080/experience/20261112-access-dev-r19/image-lock.json
-  sha256: 8755e655b7013bc0d533eac0dc24cc7a7107e7037f0cd03f0211d15515395db8
+  url: http://6.12.233.107:18080/experience/20261112-custom-dev-r20/image-lock.json
+  sha256: 1f7b7ff95f322861f2c999d904f12bac9822830eade8a9b13d52dea05edcccb5
 composeImageLock:
-  url: http://6.12.233.107:18080/experience/20261112-access-dev-r19/compose-image-lock.json
-  sha256: c184ce1bd47972479df027424a5702cc463846e5afd75c606c287e0cc175dcd7
+  url: http://6.12.233.107:18080/experience/20261112-custom-dev-r20/compose-image-lock.json
+  sha256: b1b12251678906deea316fde9e93129739b6ba54500b1ebc332dc2546d780d1d
 helm:
   sourceCommit: 0f81669e
   notesFixCommit: 290f06f8f477ff9a3d5853cb1f5d2ae9803f1a90
   status: runtime-verified
   chart:
-    version: 0.5.7-dev.20261112.7
-    url: http://6.12.233.107:18080/experience/20261112-access-dev-r19/oceanbase-lakehouse-0.5.7-dev.20261112.7.tgz
-    sha256: b7cc764edf421d2eae3841d9384e6b22090df31174060c56076b6c3d9473d457
+    version: 0.5.7-dev.20261112.8
+    url: http://6.12.233.107:18080/experience/20261112-custom-dev-r20/oceanbase-lakehouse-0.5.7-dev.20261112.8.tgz
+    sha256: c7dc7a83b881826f76ac909b6845f54847426473bce12d151a36e4a4c370283c
   installer:
-    url: http://6.12.233.107:18080/experience/20261112-access-dev-r19/install-helm-and-show-access.sh
+    url: http://6.12.233.107:18080/experience/20261112-custom-dev-r20/install-helm-and-show-access.sh
     sha256: 3fea58c3fac1a68d90751d37f870b7fb4efdbe51dcb92b00b15e84073877c117
+  customFixCommit: 29ff7cd5715de74bcdbe18b9f2f50a4a85f97bf5
+  minioImage: reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:26b57bceed2fee9713fb335d1a71cf9d13b8b245b2f8faa07635e6420653bcbf
 compose:
   sourceCommit: 60f84e72
   status: runtime-verified
   configuration:
-    url: http://6.12.233.107:18080/experience/20261112-access-dev-r19/compose.yaml
-    sha256: 92eb89371c874e385bad464668fcf52b448177ef77b5c76ab5a37cb2000fc6af
+    url: http://6.12.233.107:18080/experience/20261112-custom-dev-r20/compose.yaml
+    sha256: de843e9945f5979444771440018be0d6816cd9803a6036e924bdc0ca5dd44d4c
   observerImage: reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:2c2bb4cfa01172e285f851297f47e347c1616ad252adef8dea88a56cd58a5f18
   notesFixCommit: 290f06f8f477ff9a3d5853cb1f5d2ae9803f1a90
-  bootstrapImage: reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:aded38cb0224ab2069f1dc84c699acdcd5db264152bfeb46f0969ebe2e588429
+  bootstrapImage: reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:37126e21c3750e2ec61150b82762b457a0b9aa272ea7d36875274a5668d6f303
+  customFixCommit: 29ff7cd5715de74bcdbe18b9f2f50a4a85f97bf5
 acceptance:
-  url: http://6.12.233.107:18080/experience/20261112-access-dev-r19/acceptance.json
-  sha256: 7d7201092b85a59970e414427ee10e59592808a81b2e680eb5f6f7fa40d74d4d
+  url: http://6.12.233.107:18080/experience/20261112-custom-dev-r20/acceptance.json
+  sha256: 80cc2bea0985247f084bb5b6903cff0e95944d2e6932df892fd32e9c74b6a842
