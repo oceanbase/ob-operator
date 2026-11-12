@@ -1,40 +1,35 @@
-# Inputs for the next consolidated lakehouse test package. This is a draft;
-# assign a new release version and replace any inputs changed by ongoing tests
-# only after their results have been reviewed. No published package uses it yet.
+# Consolidated release inputs, rebuilt and validated on an authorized pooled VM.
 schemaVersion: 1
 name: next-test-package
-status: awaiting-other-test-results
-releaseVersion: null
-
-# The pinned manifest supplies the current Compose and Helm image sets, each
-# image's immutable registry digest, and the remaining release dependencies.
+status: validated
+releaseVersion: 20261112-consolidated-dev-r17
 baseManifest:
-  url: http://6.12.233.107:18080/experience/20261112-helm-access-dev-r15/release-manifest.json
-  sha256: b7a83f9ddc808f9e3480fc9490e073477911aee09d64566c8e020aa9259632c3
+  url: http://6.12.233.107:18080/experience/20261112-consolidated-dev-r17/release-manifest.json
+  sha256: bcba46666c39b75a0ac4aae0accea745823c1279d1a262f2067c50c61087e09f
 imageLock:
-  url: http://6.12.233.107:18080/experience/20261112-helm-access-dev-r15/image-lock.json
-  sha256: 53f28404b41d3352b11aa0537b71617b5ded1e96133cd5af2ab90a2ad71ed908
-
+  url: http://6.12.233.107:18080/experience/20261112-consolidated-dev-r17/image-lock.json
+  sha256: 8755e655b7013bc0d533eac0dc24cc7a7107e7037f0cd03f0211d15515395db8
+composeImageLock:
+  url: http://6.12.233.107:18080/experience/20261112-consolidated-dev-r17/compose-image-lock.json
+  sha256: fff3b1645a15a2010ef3871ccff6fb1c602a423806896fdc9565563a481c70c3
 helm:
-  # The branch has a newer, unpublished Notes fix. Include it in the final
-  # source build only after its separate verification is complete.
-  pendingSource:
-    commit: 878f630fa8d9a606516117845776d7d5595c4073
-    chartVersion: 0.5.7-dev.20261112.5
-    status: awaiting-verification
-  # The following r15 inputs are already packaged and checksum verified.
-  sourceCommit: 64bdeb834fae4ae43f838503f0c5afa3391ecf5d
+  sourceCommit: 0f81669e
+  notesFixCommit: 878f630fa8d9a606516117845776d7d5595c4073
+  status: fresh-build-and-runtime-verified
   chart:
-    version: 0.5.7-dev.20261112.4
-    url: http://6.12.233.107:18080/experience/20261112-helm-access-dev-r15/oceanbase-lakehouse-0.5.7-dev.20261112.4.tgz
-    sha256: 7ef3c09f07bfff5517ff3461f9062aec340bdc717935ed3cd14e5e5675b8ea5b
+    version: 0.5.7-dev.20261112.6
+    url: http://6.12.233.107:18080/experience/20261112-consolidated-dev-r17/oceanbase-lakehouse-0.5.7-dev.20261112.6.tgz
+    sha256: a95986dd6609917fd2b678f3a9044190ed3966034fdb259f5e79ad11bbf595b5
   installer:
-    url: http://6.12.233.107:18080/experience/20261112-helm-access-dev-r15/install-helm-and-show-access.sh
+    url: http://6.12.233.107:18080/experience/20261112-consolidated-dev-r17/install-helm-and-show-access.sh
     sha256: 2f9e3119796309bbf7e8a3e54817d0bce7fbc3fc5e58507636b04058396de211
-
 compose:
-  source: baseManifest
-
-# Keep candidate image or configuration changes from other tests out of the
-# final package until those tests finish. Update the manifest and image lock
-# together before the consolidated build.
+  sourceCommit: 60f84e72
+  status: runtime-verified
+  configuration:
+    url: http://6.12.233.107:18080/experience/20261112-consolidated-dev-r17/compose.yaml
+    sha256: 80b3deb2b1dd3e9eb2b2f363831fbc5f5517f856373ee1b4c8adfed1043fdeb6
+  observerImage: reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:2c2bb4cfa01172e285f851297f47e347c1616ad252adef8dea88a56cd58a5f18
+acceptance:
+  url: http://6.12.233.107:18080/experience/20261112-consolidated-dev-r17/acceptance.json
+  sha256: 403647a21a4a04789c5bbb7dde142c6ddfd477aa13d08105b33256f63a084c1a
