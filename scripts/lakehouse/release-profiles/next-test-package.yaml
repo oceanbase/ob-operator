@@ -1,35 +1,37 @@
-# Consolidated release inputs, rebuilt and validated on an authorized pooled VM.
+# Verified consolidated release inputs.
 schemaVersion: 1
 name: next-test-package
 status: validated
-releaseVersion: 20261112-consolidated-dev-r17
+releaseVersion: 20261112-compose-notes-dev-r18
 baseManifest:
-  url: http://6.12.233.107:18080/experience/20261112-consolidated-dev-r17/release-manifest.json
-  sha256: bcba46666c39b75a0ac4aae0accea745823c1279d1a262f2067c50c61087e09f
+  url: http://6.12.233.107:18080/experience/20261112-compose-notes-dev-r18/release-manifest.json
+  sha256: 8a7535cc5eda4efe670a5a72b15dc6513fb70f2bec2ccae88c1582967528fc53
 imageLock:
-  url: http://6.12.233.107:18080/experience/20261112-consolidated-dev-r17/image-lock.json
+  url: http://6.12.233.107:18080/experience/20261112-compose-notes-dev-r18/image-lock.json
   sha256: 8755e655b7013bc0d533eac0dc24cc7a7107e7037f0cd03f0211d15515395db8
 composeImageLock:
-  url: http://6.12.233.107:18080/experience/20261112-consolidated-dev-r17/compose-image-lock.json
-  sha256: fff3b1645a15a2010ef3871ccff6fb1c602a423806896fdc9565563a481c70c3
+  url: http://6.12.233.107:18080/experience/20261112-compose-notes-dev-r18/compose-image-lock.json
+  sha256: 3eacbabc4650f0c179922f4e6dbe4c25c518ffd693ef0d73d1e5da6129cacd19
 helm:
   sourceCommit: 0f81669e
   notesFixCommit: 878f630fa8d9a606516117845776d7d5595c4073
-  status: fresh-build-and-runtime-verified
+  status: unchanged-from-runtime-verified-r17
   chart:
     version: 0.5.7-dev.20261112.6
-    url: http://6.12.233.107:18080/experience/20261112-consolidated-dev-r17/oceanbase-lakehouse-0.5.7-dev.20261112.6.tgz
+    url: http://6.12.233.107:18080/experience/20261112-compose-notes-dev-r18/oceanbase-lakehouse-0.5.7-dev.20261112.6.tgz
     sha256: a95986dd6609917fd2b678f3a9044190ed3966034fdb259f5e79ad11bbf595b5
   installer:
-    url: http://6.12.233.107:18080/experience/20261112-consolidated-dev-r17/install-helm-and-show-access.sh
+    url: http://6.12.233.107:18080/experience/20261112-compose-notes-dev-r18/install-helm-and-show-access.sh
     sha256: 2f9e3119796309bbf7e8a3e54817d0bce7fbc3fc5e58507636b04058396de211
 compose:
   sourceCommit: 60f84e72
   status: runtime-verified
   configuration:
-    url: http://6.12.233.107:18080/experience/20261112-consolidated-dev-r17/compose.yaml
-    sha256: 80b3deb2b1dd3e9eb2b2f363831fbc5f5517f856373ee1b4c8adfed1043fdeb6
+    url: http://6.12.233.107:18080/experience/20261112-compose-notes-dev-r18/compose.yaml
+    sha256: 8c2c6bcd76f03bf0b0391317634cff738d03fa836b15cf57fb32e20922d83a9e
   observerImage: reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:2c2bb4cfa01172e285f851297f47e347c1616ad252adef8dea88a56cd58a5f18
+  notesFixCommit: f091eccad772af9ebecfdbb5a4ee00d9d5bfdac7
+  bootstrapImage: reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:b82e0ffbc4e072595dab735ccdfe00969cb58e008a504ac5e9672e7a0a10ff21
 acceptance:
-  url: http://6.12.233.107:18080/experience/20261112-consolidated-dev-r17/acceptance.json
-  sha256: 403647a21a4a04789c5bbb7dde142c6ddfd477aa13d08105b33256f63a084c1a
+  url: http://6.12.233.107:18080/experience/20261112-compose-notes-dev-r18/acceptance.json
+  sha256: 56ddc6e6ea4aaa405ec5121cdd992e8f65a102b68bf984975c289e1386cef722
