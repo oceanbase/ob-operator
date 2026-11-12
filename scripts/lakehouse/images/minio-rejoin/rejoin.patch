@@ -1,0 +1,228 @@
+--- a/cmd/erasure-object.go
++++ b/cmd/erasure-object.go
+@@ -899,8 +899,22 @@
+ 		// when its a versioned bucket and empty versionID - at totalResp == setDriveCount
+ 		// we must use rawFileInfo to resolve versions to figure out the latest version.
+ 		if opts.VersionID == "" && totalResp == er.setDriveCount {
++			// Preserve the original disk replies: the version merge can turn a
++			// successful metadata read into a synthetic not-found when another
++			// disk is unavailable. Such a result cannot establish absence.
++			missing := countErrs(errs, errFileNotFound) + countErrs(errs, errFileVersionNotFound)
++			found := countErrs(errs, nil)
++			uncertain := found > 0 && missing+found < len(errs) && missing < len(errs)/2+1
+ 			fi, onlineMeta, onlineDisks, modTime, etag, err = calcQuorum(pickLatestQuorumFilesInfo(ctx,
+ 				rawArr, errs, bucket, object, readData, opts.InclFreeVersions))
++			if uncertain && IsErr(err, errFileNotFound, errFileVersionNotFound) {
++				rw.Unlock()
++				return FileInfo{}, nil, nil, InsufficientReadQuorum{
++					Bucket: bucket,
++					Object: decodeDirObject(object),
++					Type:   RQInsufficientOnlineDrives,
++				}
++			}
+ 		} else {
+ 			fi, onlineMeta, onlineDisks, modTime, etag, err = calcQuorum(metaArr, errs)
+ 		}
+--- a/cmd/erasure-server-pool.go
++++ b/cmd/erasure-server-pool.go
+@@ -30,6 +30,7 @@
+ 	"strconv"
+ 	"strings"
+ 	"sync"
++	"sync/atomic"
+ 	"time"
+ 
+ 	"github.com/dustin/go-humanize"
+@@ -61,6 +62,8 @@
+ 
+ 	serverPools []*erasureSets
+ 
++	lakehouseAdmitted atomic.Bool
++
+ 	// Active decommission canceler
+ 	decommissionCancelers []context.CancelFunc
+ 
+--- a/cmd/generic-handlers.go
++++ b/cmd/generic-handlers.go
+@@ -222,6 +222,7 @@
+ 		(req.URL.Path == healthCheckPathPrefix+healthCheckLivenessPath ||
+ 			req.URL.Path == healthCheckPathPrefix+healthCheckReadinessPath ||
+ 			req.URL.Path == healthCheckPathPrefix+healthCheckClusterPath ||
++			req.URL.Path == healthCheckPathPrefix+healthCheckLakehousePath ||
+ 			req.URL.Path == healthCheckPathPrefix+healthCheckClusterReadPath)
+ }
+ 
+--- a/cmd/healthcheck-handler.go
++++ b/cmd/healthcheck-handler.go
+@@ -86,9 +86,53 @@
+ 		}
+ 		return
+ 	}
++	if r.URL.Path == healthCheckPathPrefix+healthCheckLakehousePath {
++		pools, ok := objLayer.(*erasureServerPools)
++		if !ok || !pools.lakehouseReady(ctx) {
++			w.Header().Set(xhttp.MinIOServerStatus, "storage-peers-offline")
++			writeResponse(w, http.StatusServiceUnavailable, nil, mimeNone)
++			return
++		}
++	}
+ 	writeResponse(w, http.StatusOK, nil, mimeNone)
+ }
+ 
++// lakehouseReady gates admission for a new MinIO process. Once admitted, the
++// normal write-quorum check above keeps surviving members available.
++func (z *erasureServerPools) lakehouseReady(ctx context.Context) bool {
++	if z.lakehouseAdmitted.Load() {
++		return true
++	}
++	if len(z.serverPools) != 1 || len(z.serverPools[0].sets) != 1 {
++		return false
++	}
++	disks := z.serverPools[0].sets[0].getDisks()
++	if len(disks) != 3 {
++		return false
++	}
++	ctx, cancel := context.WithTimeout(ctx, 2*time.Second)
++	defer cancel()
++	for _, disk := range disks {
++		if disk == nil || !disk.IsOnline() {
++			return false
++		}
++		// Bypass cached health and verify the disk ID over the metadata RPC.
++		if _, err := disk.DiskInfo(ctx, DiskInfoOptions{NoOp: true}); err != nil {
++			return false
++		}
++		if peer, ok := disk.(*storageRESTClient); ok {
++			// Inline reads and object data use the authenticated REST client.
++			body, err := peer.call(ctx, storageRESTMethodHealth, nil, nil, -1)
++			if err != nil {
++				return false
++			}
++			xhttp.DrainBody(body)
++		}
++	}
++	z.lakehouseAdmitted.Store(true)
++	return true
++}
++
+ // ClusterReadCheckHandler returns if the server is ready for requests.
+ func ClusterReadCheckHandler(w http.ResponseWriter, r *http.Request) {
+ 	ctx := newContext(r, w, "ClusterReadCheckHandler")
+--- a/cmd/healthcheck-router.go
++++ b/cmd/healthcheck-router.go
+@@ -28,6 +28,7 @@
+ 	healthCheckLivenessPath    = "/live"
+ 	healthCheckReadinessPath   = "/ready"
+ 	healthCheckClusterPath     = "/cluster"
++	healthCheckLakehousePath   = "/lakehouse-ready"
+ 	healthCheckClusterReadPath = "/cluster/read"
+ 	healthCheckPathPrefix      = minioReservedBucketPath + healthCheckPath
+ )
+@@ -43,6 +44,8 @@
+ 	healthRouter.Methods(http.MethodGet).Path(healthCheckClusterReadPath).HandlerFunc(httpTraceAll(ClusterReadCheckHandler))
+ 	healthRouter.Methods(http.MethodHead).Path(healthCheckClusterReadPath).HandlerFunc(httpTraceAll(ClusterReadCheckHandler))
+ 
++	healthRouter.Methods(http.MethodGet, http.MethodHead).Path(healthCheckLakehousePath).HandlerFunc(httpTraceAll(ClusterCheckHandler))
++
+ 	// Liveness handler
+ 	healthRouter.Methods(http.MethodGet).Path(healthCheckLivenessPath).HandlerFunc(httpTraceAll(LivenessCheckHandler))
+ 	healthRouter.Methods(http.MethodHead).Path(healthCheckLivenessPath).HandlerFunc(httpTraceAll(LivenessCheckHandler))
+--- a/cmd/lakehouse-rejoin_test.go
++++ b/cmd/lakehouse-rejoin_test.go
+@@ -0,0 +1,96 @@
++package cmd
++
++import (
++	"context"
++	"testing"
++	"time"
++)
++
++type rejoinTestDisk struct {
++	StorageAPI
++	raw     RawFileInfo
++	readErr error
++	infoErr error
++}
++
++func (*rejoinTestDisk) IsOnline() bool { return true }
++
++func (disk *rejoinTestDisk) ReadXL(context.Context, string, string, bool) (RawFileInfo, error) {
++	return disk.raw, disk.readErr
++}
++
++func (disk *rejoinTestDisk) DiskInfo(_ context.Context, opts DiskInfoOptions) (DiskInfo, error) {
++	if !opts.NoOp {
++		panic("readiness used cached disk information")
++	}
++	return DiskInfo{}, disk.infoErr
++}
++
++func TestLakehouseRejoinObjectQuorum(t *testing.T) {
++	const bucket, object = "rejoin-bucket", "written-during-outage"
++	fi := newFileInfo(object, 2, 1)
++	fi.Volume = bucket
++	fi.ModTime = time.Unix(1700000000, 0).UTC()
++	fi.DataDir = mustGetUUID()
++	fi.Erasure.Index = 1
++	var xl xlMetaV2
++	if err := xl.AddVersion(fi); err != nil {
++		t.Fatal(err)
++	}
++	buf, err := xl.AppendTo(nil)
++	if err != nil {
++		t.Fatal(err)
++	}
++	present := &rejoinTestDisk{raw: RawFileInfo{Buf: buf}}
++	missing := &rejoinTestDisk{readErr: errFileNotFound}
++	for _, tt := range []struct {
++		name   string
++		disks  []StorageAPI
++		status int
++	}{
++		{"outage write with peer not yet connected", []StorageAPI{missing, present, nil}, 503},
++		{"genuine absence with peer offline", []StorageAPI{missing, missing, nil}, 404},
++		{"existing object with peer offline", []StorageAPI{present, present, nil}, 200},
++	} {
++		t.Run(tt.name, func(t *testing.T) {
++			ctx := context.Background()
++			er := erasureObjects{setDriveCount: 3, defaultParityCount: 1, getDisks: func() []StorageAPI { return tt.disks }}
++			_, _, _, err := er.getObjectFileInfo(ctx, bucket, object, ObjectOptions{}, false)
++			status := 200
++			if err != nil {
++				status = toAPIError(ctx, err).HTTPStatusCode
++			}
++			if status != tt.status {
++				t.Fatalf("expected HTTP %d, got %d (%v)", tt.status, status, err)
++			}
++		})
++	}
++}
++
++func TestLakehouseRejoinAdmission(t *testing.T) {
++	ctx := context.Background()
++	disks := []StorageAPI{&rejoinTestDisk{}, &rejoinTestDisk{}, nil}
++	newProcess := func() *erasureServerPools {
++		set := &erasureObjects{getDisks: func() []StorageAPI { return disks }}
++		return &erasureServerPools{serverPools: []*erasureSets{{sets: []*erasureObjects{set}}}}
++	}
++	running := newProcess()
++	if running.lakehouseReady(ctx) {
++		t.Fatal("new process admitted with an absent peer")
++	}
++	disks[2] = &rejoinTestDisk{infoErr: errDiskNotFound}
++	if running.lakehouseReady(ctx) {
++		t.Fatal("new process admitted with a stale peer")
++	}
++	disks[2] = &rejoinTestDisk{}
++	if !running.lakehouseReady(ctx) {
++		t.Fatal("process with three current disks did not admit")
++	}
++	disks[2] = nil
++	if !running.lakehouseReady(ctx) {
++		t.Fatal("admitted process lost admission during a single peer outage")
++	}
++	if newProcess().lakehouseReady(ctx) {
++		t.Fatal("admission survived a process restart")
++	}
++}

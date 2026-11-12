@@ -1,0 +1,22 @@
+# Second installation: reuse independently managed Operator, S3 and Dashboard.
+# Create the credential Secret in the NEW namespace before installing.
+skip-operator: true
+dashboard:
+  enabled: false
+objectStorage:
+  mode: external
+  endpoint: https://s3.example.com
+  region: us-east-1
+  logBucket: ob-second-log
+  dataBucket: ob-second-data
+  existingSecret: ob-second-s3
+  createBuckets: false
+sqlService:
+  nodePort: 0
+logService:
+  clusterId: 2001
+observer:
+  clusterId: 2002
+
+minio:
+  enabled: false

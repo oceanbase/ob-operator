@@ -9,6 +9,7 @@ utilityImage: busybox:1.36.1
 # Keep account, authorization and volume data when removing the dashboard.
 retainData: false
 rbac:
+  createPolicy: true
   # Avoid cluster-scoped name collisions between equal releases in namespaces.
   includeNamespace: false
 serviceAccount:

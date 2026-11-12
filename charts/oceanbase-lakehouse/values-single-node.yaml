@@ -19,3 +19,8 @@ observer:
 #   nodeSelector: {kubernetes.io/hostname: worker-1}
 # dashboard:
 #   nodeSelector: {kubernetes.io/hostname: worker-1}
+
+# Optional MinIO is independently scheduled/configured as a subchart:
+# minio:
+#   storageClass: local-path
+#   nodeSelector: {kubernetes.io/hostname: worker-1}

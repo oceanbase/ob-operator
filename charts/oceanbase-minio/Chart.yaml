@@ -1,0 +1,6 @@
+apiVersion: v2
+name: oceanbase-minio
+description: Optional standalone or distributed MinIO storage for OceanBase Lakehouse
+type: application
+version: 0.2.1
+appVersion: "RELEASE.2025-09-07T16-13-09Z"

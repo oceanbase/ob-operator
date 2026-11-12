@@ -175,11 +175,15 @@
         "rbac": {
           "type": "object",
           "required": [
-            "includeNamespace"
+            "includeNamespace",
+            "createPolicy"
           ],
           "properties": {
             "includeNamespace": {
               "const": true
+            },
+            "createPolicy": {
+              "const": false
             }
           }
         },
@@ -268,7 +272,6 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "mode",
         "endpoint",
         "region",
         "logBucket",
@@ -323,7 +326,13 @@
         "runAsGroup",
         "fsGroup",
         "size",
-        "resources"
+        "resources",
+        "enabled",
+        "storageClass",
+        "region",
+        "nodeSelector",
+        "tolerations",
+        "imagePullSecrets"
       ],
       "properties": {
         "image": {
@@ -334,6 +343,19 @@
         },
         "rootExistingSecret": {
           "$ref": "#/definitions/optionalName"
+        },
+        "mode": {
+          "enum": ["standalone", "distributed"]
+        },
+        "distributed": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["replicas", "drivesPerNode", "driveSize"],
+          "properties": {
+            "replicas": {"const": 3},
+            "drivesPerNode": {"const": 1},
+            "driveSize": {"$ref": "#/definitions/size"}
+          }
         },
         "existingClaim": {
           "$ref": "#/definitions/optionalName"
@@ -360,31 +382,26 @@
           "$ref": "#/definitions/resources"
         },
         "enabled": {
-          "type": "boolean",
-          "description": "Optional migration field; must match the corresponding parent configuration in this integrated chart."
+          "type": "boolean"
         },
         "storageClass": {
-          "$ref": "#/definitions/name",
-          "description": "Optional migration field; must match the corresponding parent configuration in this integrated chart."
+          "$ref": "#/definitions/name"
         },
         "region": {
           "type": "string",
-          "pattern": "^[a-zA-Z0-9-]{1,64}$",
-          "description": "Optional migration field; must match the corresponding parent configuration in this integrated chart."
+          "pattern": "^[a-zA-Z0-9-]{1,64}$"
         },
         "nodeSelector": {
           "type": "object",
           "additionalProperties": {
             "type": "string"
-          },
-          "description": "Optional migration field; must match the corresponding parent configuration in this integrated chart."
+          }
         },
         "tolerations": {
           "type": "array",
           "items": {
             "$ref": "#/definitions/toleration"
-          },
-          "description": "Optional migration field; must match the corresponding parent configuration in this integrated chart."
+          }
         },
         "imagePullSecrets": {
           "type": "array",
@@ -399,8 +416,10 @@
                 "$ref": "#/definitions/name"
               }
             }
-          },
-          "description": "Optional migration field; must match the corresponding parent configuration in this integrated chart."
+          }
+        },
+        "global": {
+          "type": "object"
         }
       }
     },
@@ -472,6 +491,12 @@
         "resource": {
           "$ref": "#/definitions/resource"
         },
+        "storeStorageClass": {
+          "$ref": "#/definitions/optionalName"
+        },
+        "logStorageClass": {
+          "$ref": "#/definitions/optionalName"
+        },
         "storeSize": {
           "$ref": "#/definitions/size"
         },
@@ -511,6 +536,12 @@
         "resource": {
           "$ref": "#/definitions/resource"
         },
+        "dataStorageClass": {
+          "$ref": "#/definitions/optionalName"
+        },
+        "logStorageClass": {
+          "$ref": "#/definitions/optionalName"
+        },
         "dataSize": {
           "$ref": "#/definitions/size"
         },
@@ -544,6 +575,9 @@
           "maximum": 1800
         }
       }
+    },
+    "skip-operator": {
+      "type": "boolean"
     }
   },
   "definitions": {

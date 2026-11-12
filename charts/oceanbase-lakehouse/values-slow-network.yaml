@@ -1,0 +1,5 @@
+# Optional final-readiness budget for slow first-time image downloads.
+# This does not extend prerequisite or storage-initialization deadlines.
+native:
+  readiness:
+    timeoutSeconds: 3600

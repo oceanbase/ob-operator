@@ -13,10 +13,13 @@ After changing it in Dashboard, use the new password instead:
 {{ if and $host .Values.dashboard.service.nodePort }}
   Dashboard URL: http://{{ include "lakehouse.urlHost" $host }}:{{ .Values.dashboard.service.nodePort }}/
 {{ else }}
-Discover the node address and allocated port:
-  kubectl get nodes -o wide
-  kubectl -n {{ .Release.Namespace }} get svc oceanbase-dashboard-{{ .Release.Name }} -o jsonpath='{.spec.ports[0].nodePort}{"\n"}'
-Set access.host to a reachable IP/DNS name to print a direct URL.
+Kubernetes assigns the NodePort after Helm renders these notes. Run the following
+on a computer with kubectl access to print the actual Dashboard URL:
+  NODE_HOST="$(kubectl get nodes -o wide --no-headers | awk '$2 ~ /^Ready/ {print $6; exit}')"
+  DASHBOARD_PORT="$(kubectl -n {{ .Release.Namespace }} get svc oceanbase-dashboard-{{ .Release.Name }} -o jsonpath='{.spec.ports[0].nodePort}')"
+  test -n "$NODE_HOST" && test -n "$DASHBOARD_PORT" && printf 'Dashboard URL: http://%s:%s/\n' "$NODE_HOST" "$DASHBOARD_PORT"
+If the printed node address is not reachable from your browser, replace
+NODE_HOST with a reachable node IP or DNS name and repeat the printf command.
 {{ end }}
 NodePort is persistent; no port-forward process is needed.
 {{ if $host }}The displayed address must be reachable from your client; override with --set access.host=<reachable-IP>.{{ end }}
@@ -33,7 +36,9 @@ also run this on the computer with your browser, then open the same URL:
   ssh -N -L 8080:127.0.0.1:8080 <user>@<remote-server>
 {{ end }}
 {{ else }}
-Dashboard is disabled (dashboard.enabled=false).
+Dashboard is disabled (dashboard.enabled=false); its monitoring stack is not installed.
+Use your existing Dashboard URL. Its administrator must grant visibility to namespace
+{{ .Release.Namespace }} and verify monitoring discovery for this database.
 {{ end }}
 
 Database SQL access
@@ -41,15 +46,16 @@ Retrieve the root@sys password in a trusted terminal; do not share its output:
   kubectl -n {{ .Release.Namespace }} get secret {{ if .Values.observer.rootExistingSecret }}{{ .Values.observer.rootExistingSecret }}{{ else }}{{ .Release.Name }}-db-root{{ end }} -o jsonpath='{.data.password}' | base64 --decode; echo
 {{ if eq .Values.stage "cluster" }}
 {{ if eq .Values.sqlService.type "NodePort" }}
-{{ if and $host .Values.sqlService.nodePort }}
+{{ if and $host (gt (int (include "lakehouse.sqlNodePort" .)) 0) }}
 Connect using a MySQL-compatible client:
-  mysql -h {{ $host }} -P {{ .Values.sqlService.nodePort }} -u 'root@sys' -p
+  mysql -h {{ $host }} -P {{ include "lakehouse.sqlNodePort" . }} -u 'root@sys' -p
 {{ else }}
-  kubectl get nodes -o wide
-  kubectl -n {{ .Release.Namespace }} get svc {{ .Release.Name }}-sql
-Use the allocated nodePort shown above with a reachable node address:
-  mysql -h <NODE-IP> -P <SQL-NODEPORT> -u 'root@sys' -p
-Set access.host and sqlService.nodePort explicitly to print a direct SQL command.
+Kubernetes assigns the SQL NodePort after Helm renders these notes. Run:
+  NODE_HOST="$(kubectl get nodes -o wide --no-headers | awk '$2 ~ /^Ready/ {print $6; exit}')"
+  SQL_PORT="$(kubectl -n {{ .Release.Namespace }} get svc {{ .Release.Name }}-sql -o jsonpath='{.spec.ports[0].nodePort}')"
+  test -n "$NODE_HOST" && test -n "$SQL_PORT" && printf "mysql -h %s -P %s -u 'root@sys' -p\n" "$NODE_HOST" "$SQL_PORT"
+If the printed node address is not reachable from your SQL client, replace
+NODE_HOST with a reachable node IP or DNS name and repeat the printf command.
 {{ end }}
 {{ else }}
 SQL is available inside Kubernetes at {{ .Release.Name }}-sql.{{ .Release.Namespace }}.svc:{{ .Values.sqlService.port }}.
@@ -92,7 +98,9 @@ Namespace deletion or explicit Kubernetes deletion is NOT protected. Keep backup
 Reinstall with the SAME release, namespace and values to reconnect retained data.
 External storage and user-provided Secrets/PVCs are never owned by this chart.
 
-{{ if eq .Values.objectStorage.mode "bundled" }}Bundled object storage uses MinIO and mc, distributed under AGPL-3.0.
+{{ if .Values.objectStorage.endpoint }}{{ if .Values.minio.enabled }}External object storage is configured and used. The separately enabled MinIO server is also deployed.
 {{ else }}External object storage is configured; no bundled MinIO server is deployed.
-The storage initialization Job uses mc (AGPL-3.0) to verify buckets and, when enabled, create them.
+{{ end }}The storage initialization Job uses mc (AGPL-3.0) to verify buckets and, when enabled, create them.
+{{ else }}Bundled object storage uses MinIO and mc, distributed under AGPL-3.0.
+{{ end }}{{ if .Values.minio.enabled }}The optional MinIO server is distributed under AGPL-3.0.
 {{ end }}See USAGE.txt for recovery, storage identities, image delivery and licensing.

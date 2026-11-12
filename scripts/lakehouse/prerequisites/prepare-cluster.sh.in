@@ -1,0 +1,93 @@
+#!/bin/sh
+set -eu
+umask 077
+
+release_url=@RELEASE_URL@
+chart=@CHART_FILE@
+chart_sha=@CHART_SHA256@
+cert=@CERT_MANAGER_FILE@
+cert_sha=@CERT_MANAGER_SHA256@
+
+usage() {
+    printf '%s\n' 'Usage: sh prepare-cluster.sh [--context CONTEXT] --new-cluster|--verify-only'
+}
+
+mode=
+context=
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --new-cluster|--verify-only)
+            [ -z "$mode" ] || { usage >&2; exit 2; }
+            mode=$1
+            shift ;;
+        --context)
+            if [ "$#" -lt 2 ] || [ -z "$2" ]; then
+                usage >&2
+                exit 2
+            fi
+            context=$2
+            shift 2 ;;
+        -h|--help) usage; exit 0 ;;
+        *) usage >&2; exit 2 ;;
+    esac
+done
+[ -n "$mode" ] || { usage >&2; exit 2; }
+for program in curl kubectl python3 tar sha256sum; do
+    command -v "$program" >/dev/null || { printf 'Required command: %s\n' "$program" >&2; exit 1; }
+done
+if [ -z "$context" ]; then
+    context=$(kubectl config current-context)
+fi
+[ -n "$context" ]
+printf 'Preparing Lakehouse shared components in kubeconfig context %s\n' "$context"
+kube() { kubectl --context "$context" --request-timeout=30s "$@"; }
+
+work=$(mktemp -d)
+trap 'rm -rf -- "$work"' EXIT
+# Keep the caller's directory because KUBECONFIG can contain relative paths.
+fetch() {
+    curl -fsSL --retry 2 --connect-timeout 10 --max-time 180 "$release_url/$1" -o "$work/$1"
+    if ! printf '%s  %s\n' "$2" "$work/$1" | sha256sum --status -c -; then
+        printf 'Download did not match the release: %s\n' "$1" >&2
+        exit 1
+    fi
+}
+fetch "$chart" "$chart_sha"
+tar -xzf "$work/$chart" -C "$work" oceanbase-lakehouse/files/prerequisites
+prepare="$work/oceanbase-lakehouse/files/prerequisites/prepare.sh"
+if [ "$mode" = --verify-only ]; then
+    sh "$prepare" --context "$context" --verify-only
+    exit
+fi
+
+namespace=$(kube get namespace cert-manager --ignore-not-found -o name)
+owner=
+if [ -n "$namespace" ]; then
+    owner=$(kube get namespace cert-manager -o jsonpath='{.metadata.annotations.lakehouse\.oceanbase\.com/cert-manager-manifest}')
+fi
+if [ -z "$namespace" ] || [ "$owner" = "$cert_sha" ]; then
+    fetch "$cert" "$cert_sha"
+    if [ -z "$namespace" ]; then
+        # Do not create a second installation for a different namespace.
+        crds=$(kube get crd -o name)
+        case "$crds" in
+            *.cert-manager.io*)
+                printf '%s\n' 'Existing cert-manager APIs found. Have the cluster administrator prepare the shared Operator.' >&2
+                exit 1 ;;
+        esac
+        operator=$(kube get deployments -A --field-selector metadata.name=oceanbase-controller-manager -o name)
+        [ -z "$operator" ] || { printf '%s\n' 'Existing Operator found. Use --verify-only.' >&2; exit 1; }
+        cat <<EOF | kube create -f -
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cert-manager
+  annotations:
+    lakehouse.oceanbase.com/cert-manager-manifest: "$cert_sha"
+EOF
+    fi
+    kube apply --server-side --field-manager=lakehouse-cert-manager -f "$work/$cert"
+else
+    printf '%s\n' 'Checking the existing cert-manager without changing its resources.'
+fi
+sh "$prepare" --context "$context"

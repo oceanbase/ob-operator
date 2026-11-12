@@ -1,0 +1,108 @@
+{{- if .Values.dashboard.enabled -}}
+{{- $usersName := printf "%s-user-credentials" .Release.Name -}}
+{{- $bootstrapName := printf "%s-dashboard-bootstrap" .Release.Name -}}
+{{- $identityName := printf "%s-dashboard-identity" .Release.Name -}}
+{{- $policyName := printf "%s-rbac-policy" .Release.Name -}}
+{{- $users := lookup "v1" "Secret" .Release.Namespace $usersName -}}
+{{- $bootstrap := lookup "v1" "Secret" .Release.Namespace $bootstrapName -}}
+{{- $identity := lookup "v1" "ConfigMap" .Release.Namespace $identityName -}}
+{{- $policy := lookup "v1" "ConfigMap" .Release.Namespace $policyName -}}
+{{- $deployment := lookup "apps/v1" "Deployment" .Release.Namespace (printf "oceanbase-dashboard-%s" .Release.Name) -}}
+{{- $seedKey := "oceanbase.oceanbase.com/dashboard-auth-seed" -}}
+{{- $initializing := false -}}
+{{- if and (not $identity) (not $deployment) $bootstrap $bootstrap.data.password -}}
+  {{- if eq (dig "metadata" "annotations" $seedKey "" $bootstrap) "v2" -}}
+    {{- $initializing = true -}}
+    {{- range $existing := list $users $policy -}}
+      {{- if and $existing (ne (dig "metadata" "annotations" $seedKey "" $existing) "v2") -}}
+        {{- $initializing = false -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if or $identity $deployment $users $bootstrap $policy -}}
+  {{- if and (not $initializing) (or (not $users) (not $users.data) (not $bootstrap) (not $bootstrap.data.password) (not $policy)) -}}
+    {{- fail "retained Dashboard authentication is incomplete; restore the user-credentials and dashboard-bootstrap Secrets and rbac-policy ConfigMap instead of resetting accounts" -}}
+  {{- end -}}
+  {{- if and $users (not $users.data) -}}
+    {{- fail "retained Dashboard user-credentials Secret has no account data" -}}
+  {{- end -}}
+  {{- if and $policy (not (hasKey ($policy.data | default dict) "rbac_policy.csv")) -}}
+    {{- fail "retained Dashboard rbac-policy ConfigMap is missing rbac_policy.csv; restore it instead of resetting permissions" -}}
+  {{- end -}}
+{{- end -}}
+{{/* Only seed missing authentication objects. They are never ordinary release
+manifests, so subsequent upgrades and rollbacks do not replay live auth data.
+An explicit delete policy prevents Helm's default before-hook-creation deletion. */}}
+{{- $password := "" -}}
+{{- if not $users -}}
+  {{- if $bootstrap -}}
+    {{- $password = $bootstrap.data.password | b64dec -}}
+  {{- else -}}
+    {{- $password = .Values.dashboard.adminPassword | default (randAlphaNum 32) -}}
+  {{- end -}}
+{{- end -}}
+{{- if not $bootstrap }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $bootstrapName }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-30"
+    helm.sh/hook-delete-policy: hook-failed
+    {{ $seedKey }}: "v2"
+type: Opaque
+data:
+  password: {{ $password | b64enc | quote }}
+---
+{{- end }}
+{{- if not $users }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $usersName }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-29"
+    helm.sh/hook-delete-policy: hook-failed
+    {{ $seedKey }}: "v2"
+type: Opaque
+data:
+  admin: {{ cat (sha256sum $password) "<|:SEP:|> admin <|:SEP:|> 0 <|:SEP:|> super admin" | b64enc | quote }}
+---
+{{- end }}
+{{- if not $policy }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $policyName }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-28"
+    helm.sh/hook-delete-policy: hook-failed
+    {{ $seedKey }}: "v2"
+data:
+  rbac_policy.csv: |-
+    p, admin, *, *, "Super admin"
+    g, admin, admin
+---
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $identityName }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+data:
+  version: "2"
+{{- end }}

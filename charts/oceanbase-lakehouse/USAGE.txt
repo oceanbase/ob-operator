@@ -7,12 +7,12 @@ this Helm Chart, and no Helm process runs inside a Kubernetes Job.
 
 Quick install: database and Dashboard
 -------------------------------------
-On an existing Kubernetes cluster with the matching native-capable Operator,
-cert-manager and a working local-path StorageClass, run this ONE command from
-the extracted release bundle. All workers must already be able to pull the
-release's exact images or have them imported into their Kubernetes runtime:
+On an empty Kubernetes cluster, the published Chart registers the CRDs and
+installs cert-manager and the Operator before it starts the lakehouse.
+Run with cluster-level install permissions. All workers need access to the
+locked images. Install from the Helm repository or the exact Chart archive:
 
-  helm upgrade --install ob-demo ./oceanbase-lakehouse-0.4.2.tgz --namespace ob-demo --create-namespace --wait --wait-for-jobs --timeout 35m
+  helm upgrade --install ob-demo ./oceanbase-lakehouse-*.tgz --namespace ob-demo --create-namespace --wait --wait-for-jobs --timeout 35m
 
 No values file or separate Dashboard installation is needed. The packaged Chart
 already pins this delivery's images and enables Dashboard, its monitoring,
@@ -21,23 +21,32 @@ bundled MinIO, three LogService processes and one Observer. Suggested worker:
 after other workloads. Successful completion with hooks enabled includes the
 database and Dashboard readiness checks. Helm prints access and login commands.
 
-If your StorageClass has another name, append --set storageClass=<actual-name>.
+If your StorageClass has another name, append --set storageClass=<actual-name> --set minio.storageClass=<actual-name>.
 To reuse a separately managed Dashboard, append --set dashboard.enabled=false.
-Operator/cert-manager are cluster prerequisites, not installed by this command;
-see Prerequisites below if your cluster is new. This command is for first-install
-defaults; keep your existing sizing/custom values when upgrading a deployment.
+The progress viewer automatically prefers KUBECONFIG, the current user's
+~/.kube/config, then a readable K3s kubeconfig; --kubeconfig always takes precedence.
+If the K3s admin kubeconfig is unreadable, it prints an administrator command to create
+a private copy and never interrupts the Helm installation.
+
+To reuse a compatible installed Operator, append --skip-crds --set skip-operator=true.
+Its served CRDs and admission webhooks must be ready.
+These are first-install defaults; keep existing sizing/custom values on upgrades.
 
 Matching release images
 -----------------------
-The native Helm and Compose bundles for one delivery version are generated
-together from release-images.lock.json. Observer, LogService, MinIO and mc use
-the same image names, versions and config image IDs in both bundles. Helm also
-includes Operator, Dashboard and its supporting images; Compose adds bootstrap.
-image-lock.json lists this bundle's images. Config IDs are not registry manifest
-digests. The packaged Chart defaults already match image-values.yaml.
+Compose and Helm lock their runtime references independently in each channel's
+release manifest and image-lock.json. Compose may use wrapper images while Helm
+uses the corresponding base images, so references and config image IDs can differ
+between channels. The manifest records the upstream component versions and source
+relationships. Use the exact images selected for the chosen channel; never copy
+or retag an image to impersonate another channel's locked build. Helm also includes
+Operator, Dashboard and supporting images; Compose adds its bootstrap runtime.
+Config IDs are not registry manifest digests. Check the delivery's
+release-defaults.yaml or image-values.yaml for its recorded overrides.
 
-The lightweight bundles do not include image layers. Use the matching shared
-image archive or a registry containing those exact builds. On a Docker-based
+The lightweight configuration artifacts do not include image layers. Use the
+matching channel-specific image archive or a registry containing those exact
+builds. On a Docker-based
 worker, import the matching archive with docker load; on containerd/K3s use that
 runtime's import command. Import on every target worker. A local Docker cache is
 not automatically available to a separate containerd runtime. Do not substitute
@@ -49,47 +58,23 @@ worker runtime: Docker daemon mirrors do not configure Kubernetes containerd/K3s
 
 Prerequisites
 -------------
-- Kubernetes >=1.27, Helm 3, kubectl and an administrator kubeconfig.
-- A working StorageClass. Set storageClass to its actual name.
+- For a fresh cluster, the bundled cert-manager 1.21 supports Kubernetes 1.33
+  through 1.36. The Chart's application API floor is Kubernetes 1.27 when
+  reusing a compatible Operator and cert-manager. See release acceptance for
+  the tested environment.
+- Helm 3 and kubectl. The person preparing cluster infrastructure needs
+  administrator access. Dashboard creates cluster-scoped permissions when enabled.
+- A working StorageClass. Set storageClass and minio.storageClass to its actual name.
 - Enough allocatable CPU/memory and disk for the selected profile.
 - Workers can pull all configured images (or have the exact images preloaded).
-- Install cert-manager before Operator; verify its controller, cainjector and
-  webhook Deployments are available in your cert-manager namespace.
-  The Operator must support native lakehouse v1: storage-init-job gating and
-  resolve-storage-service. Use the matching Operator image supplied in this
-  release. Older SS-capable builds alone are insufficient. The readiness hook image must contain /lakehouse-readiness and
-  should use the same verified Operator build. Use the image values supplied
-  with the release, not an arbitrary old public image tag.
+- An existing Operator must serve the lakehouse CRDs and support native storage
+  initialization and service resolution. The readiness hook uses the matched
+  /lakehouse-readiness image shipped with the Chart.
 
 Check the current context before deployment:
   kubectl config current-context
   kubectl get nodes
   kubectl get storageclass
-  kubectl get crd obclusters.oceanbase.oceanbase.com oblogserviceclusters.oceanbase.oceanbase.com
-
-An administrator installs Operator once per Kubernetes cluster; lakehouse users
-then install separate Helm releases. Do not install another Operator for every
-lakehouse release. Operator and database resources have different lifecycles.
-
-For a NEW cluster without Operator, after cert-manager, StorageClass and the
-locked worker images are ready, run from the extracted native Helm bundle:
-
-  kubectl -n cert-manager rollout status deployment/cert-manager --timeout=120s
-  kubectl -n cert-manager rollout status deployment/cert-manager-cainjector --timeout=120s
-  kubectl -n cert-manager rollout status deployment/cert-manager-webhook --timeout=120s
-  helm upgrade --install ob-operator ./ob-operator-2.3.4.tgz \
-    --namespace oceanbase-system --create-namespace \
-    -f operator-values.yaml --wait --timeout 5m
-  kubectl -n oceanbase-system rollout status deployment/oceanbase-controller-manager --timeout=180s
-  kubectl wait --for=condition=Established --timeout=60s \
-    crd/obclusters.oceanbase.oceanbase.com \
-    crd/oblogserviceclusters.oceanbase.oceanbase.com
-
-These cert-manager commands assume its usual release/namespace names; use the
-actual names for a customized installation. On a cluster with an existing
-Operator, first check helm list -A and its Deployment image. Reuse its existing
-release and namespace; do not install a second controller or try to take over its
-CRDs. Finish any required Operator upgrade before database bootstrap begins.
 
 Single-node experience
 ----------------------
@@ -113,7 +98,7 @@ Copy values-three-nodes.yaml and replace worker-1/2/3 with the actual
 kubernetes.io/hostname label values (not assumed public IPs):
 
   kubectl get nodes -L kubernetes.io/hostname
-  helm upgrade --install ob-demo ./oceanbase-lakehouse-0.4.2.tgz \
+  helm upgrade --install ob-demo ./oceanbase-lakehouse-*.tgz \
     --namespace ob-demo --create-namespace \
     -f values-three-nodes.yaml \
     --wait --wait-for-jobs --timeout 35m
@@ -124,7 +109,10 @@ run on worker-1 in this example. Budget at least 3 CPU/14Gi per worker for the
 database processes, plus the storage/Dashboard/system workloads on worker-1.
 Provision adequate capacity beyond these requests. This topology still uses
 one bundled MinIO instance; it is an experience setup, not highly available
-object storage. For shared production storage use objectStorage.mode=external.
+object storage. For distributed bundled storage on a fresh release, append
+-f values-minio-ha.yaml after -f values-three-nodes.yaml. See SHARED-INFRA.md
+for disk and placement requirements and for per-volume StorageClass overrides.
+For external storage, set objectStorage.endpoint and minio.enabled=false.
 
 No SSH/SCP between workers is performed by Helm. Every worker must be able to
 pull the configured images or have the exact images preloaded by an admin.
@@ -152,7 +140,7 @@ changing storage identity or resizing existing state needs a separate planned
 procedure. Use --set-string observer.resource.cpu=2 for a simple override; the
 old installer flags such as --oc/--nodes are not Helm flags.
 
-For external storage use objectStorage.mode=external, endpoint, region,
+For external storage use objectStorage.endpoint=<external-url> and minio.enabled=false, endpoint, region,
 logBucket/dataBucket and existingSecret or per-side logExistingSecret and
 dataExistingSecret (keys: access_id/access_key). Buckets are checked read-only
 by default; createBuckets=true explicitly allows bucket creation. External
@@ -194,12 +182,9 @@ recreates storage initialization; it is not a general database recovery command.
 
 Dashboard and SQL access
 ------------------------
-Kubernetes allocates a free NodePort for each Dashboard and SQL Service by
-default, allowing multiple releases in the same cluster. Read the allocated
-ports using the kubectl commands printed by Helm. Each Service retains its
-port across upgrades; uninstall/reinstall may allocate a different port.
-  Dashboard: http://NODE-IP:DASHBOARD-NODEPORT/ (username admin)
-  SQL: mysql -h NODE-IP -P SQL-NODEPORT -u 'root@sys' -p
+Kubernetes allocates Dashboard and SQL NodePorts when the default values are 0.
+Find the real allocated ports with kubectl -n ob-demo get svc. Use a reachable
+node address with those ports. Dashboard's default account is admin.
 Use the password retrieval commands printed by Helm. The two accounts are
 independent. Direct ALTER USER changes do not update the Kubernetes Secret.
 
@@ -220,10 +205,14 @@ cluster has a load balancer provider.
 
 Retention and uninstall
 -----------------------
-helm uninstall removes the release integration, Dashboard Deployment and hook
-RBAC, but intentionally retains database CRs, generated credentials, bundled
-MinIO StatefulSet/Service/PVC and Dashboard data. Reinstall with the SAME release,
-namespace and values to reconnect. Uninstall is not a way to free all resources.
+helm uninstall removes release-managed integration resources and the Dashboard
+Deployment. Database CRs, generated credentials, bundled MinIO
+StatefulSet/Service/PVC and Dashboard data remain. Reinstall with the SAME
+release, namespace and values to reconnect. Helm does not manage Hook resources
+on uninstall. After stopping old Helm operations, use the administrator's
+prepare.sh --revoke-legacy-binding NAMESPACE RELEASE to remove an abandoned
+legacy preparation binding. It checks the exact Hook, role, subject and that
+the old Jobs and Pods are inactive before deleting the binding.
 Explicitly deleting the namespace or database CRs is destructive and bypasses
 this retention; do so only when intentionally removing that experience's data.
 
@@ -231,6 +220,43 @@ Helm history can contain supplied/generated credential values. Protect release
 metadata and kubeconfig access. Do not publish rendered manifests containing
 Secrets or pass passwords in shell command lines. Use existingSecret references
 or --set-file dashboard.adminPassword=/secure/password-file.
+
+Dashboard authentication history migration
+-------------------------------------------
+From 0.5.7, Dashboard's accounts, bootstrap Secret and authorization policy keep
+their existing names and stay outside the ordinary Helm revision manifests.
+Fresh installs seed the objects once. An upgrade with an existing Dashboard
+keeps the live objects and checks that they are complete.
+
+If Dashboard has been enabled in a release from 0.5.6 or older, pause release
+changes before upgrading and make private
+backups of the current authentication resources, Helm history and values.
+For Helm's default Secret storage driver:
+
+  umask 077
+  backup=$(mktemp -d ./lakehouse-auth-backup.XXXXXXXX)
+  kubectl -n ob-demo get secret -l owner=helm,name=ob-demo -o json > "$backup/helm-history.json"
+  kubectl -n ob-demo get secret ob-demo-user-credentials ob-demo-dashboard-bootstrap -o json > "$backup/dashboard-secrets.json"
+  kubectl -n ob-demo get configmap ob-demo-rbac-policy -o json > "$backup/dashboard-policy.json"
+  helm get values ob-demo -n ob-demo --all -o yaml > "$backup/values.yaml"
+
+Use the corresponding backup mechanism for other Helm storage drivers. Check
+that each backup succeeded and keep it in protected storage. Use the migrated
+effective values for the first upgrade. Verify the new revision is deployed,
+the current password works and removed users remain revoked. For the explicit
+rollback boundary, run a second upgrade with the same new Chart and values:
+
+  helm upgrade ob-demo ./oceanbase-lakehouse-*.tgz -n ob-demo \
+    -f migrated-values.yaml --wait --wait-for-jobs --timeout 35m --history-max 1
+  helm history ob-demo -n ob-demo
+
+The second upgrade prunes the older rollback history, retaining the first
+deployed new revision and the new upgrade revision. Confirm that every listed
+revision uses the new Chart before allowing rollbacks. This is an administrator's
+explicit choice and removes old revisions from Helm's live history. Restore
+data and credentials from private backups or recover by a forward upgrade.
+Importing archived pre-migration Helm records into this release would make
+unsafe rollback targets available again.
 
 Storage identities and private registries
 ---------------------------------------
@@ -248,9 +274,10 @@ The Job's private /work and /tmp must also be writable. MinIO uses OnDelete
 updates, so plan a Pod restart for an intentional image/identity change.
 
 Set imagePullSecrets to names of existing Secrets in the release namespace.
-The same references are used by MinIO, initialization, readiness, Dashboard and
-Operator-managed workload ServiceAccounts. Dashboard has its own nodeSelector
-and tolerations; scheduling.* does not automatically place Dashboard.
+The parent references are used by initialization, readiness, Dashboard and
+Operator-managed workload ServiceAccounts. Set minio.imagePullSecrets separately.
+MinIO and Dashboard each have their own nodeSelector and tolerations; parent
+scheduling.* does not automatically place either subchart.
 
 Dashboard privileges and diagnostic images
 ------------------------------------------
@@ -282,11 +309,12 @@ blocked by the retained storage identity. Changing placement does not move
 local-path data. Do not use --force, namespace deletion or a new release name
 to work around immutable field checks on an existing database.
 
-MinIO values migration compatibility
------------------------------------
-The published migrate-minio-values.py adds MinIO subchart fields to exported
-effective values. This integrated chart accepts those fields when they match
-objectStorage.mode/region, storageClass, scheduling and imagePullSecrets.
-Conflicting overrides are rejected explicitly; configure this chart through
-its parent settings. Migration does not change existing storage identities,
-credentials, PVCs or MinIO placement.
+Storage selection: see SHARED-INFRA.md for the independent endpoint and minio.enabled controls.
+MinIO subchart storageClass/scheduling/imagePullSecrets must be configured under minio.*.
+
+Legacy MinIO upgrades
+--------------------
+Export helm get values RELEASE -n NAMESPACE --all -o yaml into a protected file.
+Run python3 tools/migrate-minio-values.py previous-values.yaml --output migrated-values.yaml,
+then pass -f migrated-values.yaml to helm upgrade. The installer performs this
+conversion automatically for an installed legacy release. See SHARED-INFRA.md.

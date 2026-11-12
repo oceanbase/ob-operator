@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   annotations:
     helm.sh/resource-policy: keep
-    {{- if and .Values.native.enabled (eq .Values.objectStorage.mode "bundled") }}
+    {{- if and .Values.native.enabled (eq (include "lakehouse.storageMode" .) "bundled") }}
     oceanbase.oceanbase.com/resolve-storage-service: "true"
     {{- end }}
     oceanbase.oceanbase.com/mode: service
@@ -28,8 +28,8 @@ spec:
     image: {{ .Values.observer.image | quote }}
     resource: {{ toYaml .Values.observer.resource | nindent 6 }}
     storage:
-      dataStorage: {storageClass: {{ .Values.storageClass | quote }}, size: {{ .Values.observer.dataSize | quote }}}
-      logStorage: {storageClass: {{ .Values.storageClass | quote }}, size: {{ .Values.observer.logSize | quote }}}
+      dataStorage: {storageClass: {{ default .Values.storageClass .Values.observer.dataStorageClass | quote }}, size: {{ .Values.observer.dataSize | quote }}}
+      logStorage: {storageClass: {{ default .Values.storageClass .Values.observer.logStorageClass | quote }}, size: {{ .Values.observer.logSize | quote }}}
   topology:
     {{- range .Values.observer.topology }}
     - zone: {{ .zone | quote }}

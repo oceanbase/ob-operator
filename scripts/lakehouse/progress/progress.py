@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Read-only Helm installation progress. Python 3.8+, kubectl and Helm 3."""
 import argparse
+from pathlib import Path
 import datetime as dt
 import json
 import os
-from pathlib import Path
 import re
 import shlex
 import shutil
@@ -131,20 +131,20 @@ def analyze(release, helm, items, crs):
                 started=timestamp(info.get('last_deployed')), description=info.get('description', ''))
 
 def default_kubeconfig():
-    # Preserve kubectl's merge semantics when KUBECONFIG lists several files.
+    candidates = []
     configured = os.environ.get('KUBECONFIG')
-    candidates = ([configured] if configured else []) + [str(Path.home() / '.kube/config'), '/etc/rancher/k3s/k3s.yaml']
+    if configured:
+        candidates.extend(Path(item).expanduser() for item in configured.split(os.pathsep) if item)
+    else:
+        candidates.append(Path.home() / '.kube' / 'config')
+    candidates.append(Path('/etc/rancher/k3s/k3s.yaml'))
     for candidate in candidates:
-        for item in candidate.split(os.pathsep):
-            try:
-                path = Path(item).expanduser()
-                if item and path.is_file() and os.access(path, os.R_OK):
-                    return candidate
-            except OSError:
-                pass
-    raise RuntimeError('No readable kubeconfig. Ask an administrator to create a private copy '
-                       '(directory mode 0700, file mode 0600) for your user, then set KUBECONFIG '
-                       'and verify the target with kubectl get nodes. This viewer does not modify or stop Helm.')
+        try:
+            if candidate.is_file() and os.access(candidate, os.R_OK):
+                return str(candidate)
+        except OSError:
+            pass
+    return None
 
 def execute(argv):
     try:
@@ -161,13 +161,11 @@ def execute(argv):
 def snapshot(args):
     flags = []
     hflags = []
+    kubeconfig = args.kubeconfig or default_kubeconfig()
     if args.context:
         flags += ['--context', args.context]
         hflags += ['--kube-context', args.context]
-    kubeconfig = args.kubeconfig or default_kubeconfig()
-    # --kubeconfig accepts one filename, while KUBECONFIG merges a path list.
-    # Let both clients inherit a selected environment value unchanged.
-    if kubeconfig and (args.kubeconfig or kubeconfig != os.environ.get('KUBECONFIG')):
+    if kubeconfig:
         flags += ['--kubeconfig', kubeconfig]
         hflags += ['--kubeconfig', kubeconfig]
     k = ['kubectl'] + flags + ['--request-timeout=8s', '-n', args.namespace]
@@ -218,22 +216,7 @@ def render(args, state, stage_start, watching_start):
         lines += ['', 'Read-only viewer; refresh every %s seconds. Ctrl+C exits the viewer without stopping Helm.' % args.interval]
     return '\n'.join(lines)
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('-n', '--namespace', default='ob-demo')
-    parser.add_argument('--release', default='ob-demo')
-    parser.add_argument('--interval', type=int, default=3)
-    parser.add_argument('--once', action='store_true', help='Print one snapshot and exit')
-    parser.add_argument('--no-clear', action='store_true', help='Append snapshots instead of refreshing the terminal')
-    parser.add_argument('--timeout', type=int, default=0, help='Viewer timeout in seconds; 0 means unlimited')
-    parser.add_argument('--context')
-    parser.add_argument('--kubeconfig')
-    args = parser.parse_args()
-    if args.interval < 1 or args.timeout < 0:
-        parser.error('interval must be >=1; timeout must be >=0')
-    for command in ['kubectl', 'helm']:
-        if not shutil.which(command):
-            parser.error('Required command not found: ' + command)
+def main_with_args(args):
     watching_start = stage_start = time.time()
     previous = None
     while True:
@@ -252,13 +235,41 @@ def main():
             if args.once:
                 return 0
         except RuntimeError as e:
-            print('Unable to read status (this does not mean installation failed): ' + str(e), file=sys.stderr, flush=True)
+            message = str(e)
+            if 'permission denied' in message.lower() and '/etc/rancher/k3s/k3s.yaml' in message:
+                message += (
+                    '\nK3s kubeconfig is not readable by the current user. Ask an administrator to run:\n'
+                    '  sudo install -d -m 700 -o "$USER" -g "$(id -gn "$USER")" "$HOME/.kube"\n'
+                    '  sudo install -m 600 -o "$USER" -g "$(id -gn "$USER")" /etc/rancher/k3s/k3s.yaml "$HOME/.kube/config"\n'
+                    'Then rerun this viewer in the same terminal.'
+                )
+            print('Unable to read status (this does not mean installation failed): ' + message, file=sys.stderr, flush=True)
             if args.once:
                 return 2
         if args.timeout and time.time() - watching_start >= args.timeout:
             print('Viewer timed out; Helm installation was not interrupted.', file=sys.stderr)
             return 2
         time.sleep(max(0, args.interval - (time.monotonic() - cycle_started)))
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('-n', '--namespace', default='ob-demo')
+    parser.add_argument('--release', default='ob-demo')
+    parser.add_argument('--interval', type=int, default=3)
+    parser.add_argument('--once', action='store_true', help='Print one snapshot and exit')
+    parser.add_argument('--no-clear', action='store_true', help='Append snapshots instead of refreshing the terminal')
+    parser.add_argument('--timeout', type=int, default=0, help='Viewer timeout in seconds; 0 means unlimited')
+    parser.add_argument('--context')
+    parser.add_argument('--kubeconfig')
+    args = parser.parse_args()
+    if args.interval < 1 or args.timeout < 0:
+        parser.error('interval must be >=1; timeout must be >=0')
+    for command in ['kubectl', 'helm']:
+        if not shutil.which(command):
+            parser.error('Required command not found: ' + command)
+    return main_with_args(args)
+
 
 if __name__ == '__main__':
     try:

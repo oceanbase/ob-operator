@@ -8,7 +8,7 @@ metadata:
     helm.sh/resource-policy: keep
     {{- if .Values.native.enabled }}
     oceanbase.oceanbase.com/storage-init-job: {{ printf "%s-storage-init-%d" .Release.Name .Release.Revision | quote }}
-    {{- if eq .Values.objectStorage.mode "bundled" }}
+    {{- if eq (include "lakehouse.storageMode" .) "bundled" }}
     oceanbase.oceanbase.com/resolve-storage-service: "true"
     {{- end }}
     {{- end }}
@@ -25,8 +25,8 @@ spec:
     image: {{ .Values.logService.image | quote }}
     resource: {{ toYaml .Values.logService.resource | nindent 6 }}
     storage:
-      storeStorage: {storageClass: {{ .Values.storageClass | quote }}, size: {{ .Values.logService.storeSize | quote }}}
-      logStorage: {storageClass: {{ .Values.storageClass | quote }}, size: {{ .Values.logService.logSize | quote }}}
+      storeStorage: {storageClass: {{ default .Values.storageClass .Values.logService.storeStorageClass | quote }}, size: {{ .Values.logService.storeSize | quote }}}
+      logStorage: {storageClass: {{ default .Values.storageClass .Values.logService.logStorageClass | quote }}, size: {{ .Values.logService.logSize | quote }}}
   topology:
     {{- range .Values.logService.topology }}
     - zone: {{ .zone | quote }}

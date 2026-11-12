@@ -1,3 +1,6 @@
+{{- define "lakehouse.storageMode" -}}
+{{- if .Values.objectStorage.endpoint -}}external{{- else -}}bundled{{- end -}}
+{{- end -}}
 {{- define "lakehouse.name" -}}
 {{- .Release.Name -}}
 {{- end -}}
@@ -28,12 +31,12 @@ tolerations: {{ toYaml . | nindent 2 }}
 {{- end -}}
 
 {{- define "lakehouse.endpoint" -}}
-{{- if eq .Values.objectStorage.mode "bundled" -}}
+{{- if eq (include "lakehouse.storageMode" .) "bundled" -}}
 {{- printf "http://%s-minio.%s.svc:9000" .Release.Name .Release.Namespace -}}
 {{- else -}}{{ .Values.objectStorage.endpoint }}{{- end -}}
 {{- end -}}
 {{- define "lakehouse.databaseEndpoint" -}}
-{{- if eq .Values.objectStorage.mode "bundled" -}}
+{{- if eq (include "lakehouse.storageMode" .) "bundled" -}}
 {{- $service := lookup "v1" "Service" .Release.Namespace (printf "%s-minio" .Release.Name) -}}
 {{- if .Values.native.enabled -}}
 {{- include "lakehouse.endpoint" . -}}
@@ -79,11 +82,11 @@ Old releases keep their exact URL; new ones pin the resolved address. */}}
 {{- end -}}
 {{- end -}}
 {{- define "lakehouse.preflightEndpoint" -}}
-{{- if eq .Values.objectStorage.mode "external" }}{{ include "lakehouse.databaseEndpoint" . }}{{ else }}{{ include "lakehouse.endpoint" . }}{{ end -}}
+{{- if eq (include "lakehouse.storageMode" .) "external" }}{{ include "lakehouse.databaseEndpoint" . }}{{ else }}{{ include "lakehouse.endpoint" . }}{{ end -}}
 {{- end -}}
 {{- define "lakehouse.preflightPath" -}}
 {{- $host := (urlParse (include "lakehouse.preflightEndpoint" .)).host -}}
-{{- if or (eq .Values.objectStorage.mode "bundled") (regexMatch "^([0-9]+\\.){3}[0-9]+(:[0-9]+)?$" $host) (hasPrefix "[" $host) -}}on{{- else -}}off{{- end -}}
+{{- if or (eq (include "lakehouse.storageMode" .) "bundled") (regexMatch "^([0-9]+\\.){3}[0-9]+(:[0-9]+)?$" $host) (hasPrefix "[" $host) -}}on{{- else -}}off{{- end -}}
 {{- end -}}
 {{- define "lakehouse.logBucket" -}}
 {{- default (printf "%s-logs" .Release.Name) .Values.objectStorage.logBucket -}}
@@ -95,12 +98,12 @@ Old releases keep their exact URL; new ones pin the resolved address. */}}
 {{- default (printf "%s-storage" .Release.Name) .Values.objectStorage.existingSecret -}}
 {{- end -}}
 {{- define "lakehouse.logStorageSecret" -}}
-{{- if eq .Values.objectStorage.mode "bundled" -}}
+{{- if eq (include "lakehouse.storageMode" .) "bundled" -}}
 {{- include "lakehouse.storageSecret" . -}}
 {{- else -}}{{ default .Values.objectStorage.existingSecret .Values.objectStorage.logExistingSecret }}{{- end -}}
 {{- end -}}
 {{- define "lakehouse.dataStorageSecret" -}}
-{{- if eq .Values.objectStorage.mode "bundled" -}}
+{{- if eq (include "lakehouse.storageMode" .) "bundled" -}}
 {{- include "lakehouse.storageSecret" . -}}
 {{- else -}}{{ default .Values.objectStorage.existingSecret .Values.objectStorage.dataExistingSecret }}{{- end -}}
 {{- end -}}
@@ -110,8 +113,27 @@ Old releases keep their exact URL; new ones pin the resolved address. */}}
 {{- define "lakehouse.dbSecret" -}}
 {{- default (printf "%s-db-root" .Release.Name) .Values.observer.rootExistingSecret -}}
 {{- end -}}
+{{- define "lakehouse.databaseVolumeClasses" -}}
+{{- dict
+  "observerData" (default .Values.storageClass .Values.observer.dataStorageClass)
+  "observerLog" (default .Values.storageClass .Values.observer.logStorageClass)
+  "logServiceStore" (default .Values.storageClass .Values.logService.storeStorageClass)
+  "logServiceLog" (default .Values.storageClass .Values.logService.logStorageClass)
+  | toJson -}}
+{{- end -}}
+{{- define "lakehouse.extendStorageIdentity" -}}
+{{- $classes := include "lakehouse.databaseVolumeClasses" .root | fromJson -}}
+{{- range $name, $class := $classes -}}
+  {{- if ne $class $.root.Values.storageClass -}}
+    {{- $_ := set $.identity $name $class -}}
+  {{- end -}}
+{{- end -}}
+{{- if and (eq (include "lakehouse.storageMode" .root) "bundled") (eq .root.Values.minio.mode "distributed") -}}
+  {{- $_ := set .identity "minioDistributed" .root.Values.minio.distributed -}}
+{{- end -}}
+{{- end -}}
 {{- define "lakehouse.identity" -}}
-{{- $identity := dict "mode" .Values.objectStorage.mode "endpoint" (include "lakehouse.endpoint" .) "region" .Values.objectStorage.region "logs" (include "lakehouse.logBucket" .) "data" (include "lakehouse.dataBucket" .) "secret" (include "lakehouse.storageSecret" .) "minioSecret" (include "lakehouse.minioSecret" .) "claim" .Values.minio.existingClaim "size" .Values.minio.size "storageClass" .Values.storageClass "dbSecret" (include "lakehouse.dbSecret" .) "lsId" .Values.logService.clusterId "obId" .Values.observer.clusterId -}}
+{{- $identity := dict "mode" (include "lakehouse.storageMode" .) "endpoint" (include "lakehouse.endpoint" .) "region" .Values.objectStorage.region "logs" (include "lakehouse.logBucket" .) "data" (include "lakehouse.dataBucket" .) "secret" (include "lakehouse.storageSecret" .) "minioSecret" (include "lakehouse.minioSecret" .) "claim" .Values.minio.existingClaim "size" .Values.minio.size "storageClass" .Values.storageClass "dbSecret" (include "lakehouse.dbSecret" .) "lsId" .Values.logService.clusterId "obId" .Values.observer.clusterId -}}
 {{/* Keep the exact legacy hash when both effective references are unchanged.
 Actual per-side overrides are immutable, including after uninstall/reinstall. */}}
 {{- if or (ne (include "lakehouse.logStorageSecret" .) (include "lakehouse.storageSecret" .)) (ne (include "lakehouse.dataStorageSecret" .) (include "lakehouse.storageSecret" .)) -}}
@@ -119,23 +141,26 @@ Actual per-side overrides are immutable, including after uninstall/reinstall. */
 {{- $_ := set $identity "dataSecret" (include "lakehouse.dataStorageSecret" .) -}}
 {{- end -}}
 {{- $guard := lookup "v1" "ConfigMap" .Release.Namespace (printf "%s-storage-identity" .Release.Name) -}}
-{{- if and (eq .Values.objectStorage.mode "external") (or (not $guard) (hasKey $guard.data "externalDatabaseEndpoint")) -}}
+{{- if and (eq (include "lakehouse.storageMode" .) "external") (or (not $guard) (hasKey $guard.data "externalDatabaseEndpoint")) -}}
 {{- $_ := set $identity "externalDatabaseEndpoint" (include "lakehouse.databaseEndpoint" .) -}}
 {{- end -}}
+{{- include "lakehouse.extendStorageIdentity" (dict "root" . "identity" $identity) -}}
+{{- $identity | toJson | sha256sum -}}
+{{- end -}}
+{{- define "lakehouse.databaseIdentity" -}}
+{{- $identity := dict "mode" (include "lakehouse.storageMode" .) "endpoint" (include "lakehouse.endpoint" .) "region" .Values.objectStorage.region "logs" (include "lakehouse.logBucket" .) "data" (include "lakehouse.dataBucket" .) "logSecret" (include "lakehouse.logStorageSecret" .) "dataSecret" (include "lakehouse.dataStorageSecret" .) "storageClass" .Values.storageClass "dbSecret" (include "lakehouse.dbSecret" .) "lsId" .Values.logService.clusterId "obId" .Values.observer.clusterId -}}
+{{- if eq (include "lakehouse.storageMode" .) "bundled" -}}
+{{- $_ := set $identity "minio" (dict "secret" (include "lakehouse.minioSecret" .) "claim" .Values.minio.existingClaim "size" .Values.minio.size "storageClass" .Values.minio.storageClass) -}}
+{{- end -}}
+{{- if eq (include "lakehouse.storageMode" .) "external" -}}
+{{- $_ := set $identity "externalDatabaseEndpoint" (include "lakehouse.databaseEndpoint" .) -}}
+{{- end -}}
+{{- include "lakehouse.extendStorageIdentity" (dict "root" . "identity" $identity) -}}
 {{- $identity | toJson | sha256sum -}}
 {{- end -}}
 {{- define "lakehouse.validate" -}}
-{{/* The published values migrator adds MinIO subchart fields. This chart still
-     uses the parent configuration; accept equivalent migration metadata and
-     reject conflicting overrides rather than silently ignoring them. */}}
-{{- $migration := dict "enabled" (eq .Values.objectStorage.mode "bundled") "storageClass" .Values.storageClass "region" .Values.objectStorage.region "nodeSelector" .Values.scheduling.nodeSelector "tolerations" .Values.scheduling.tolerations "imagePullSecrets" .Values.imagePullSecrets -}}
-{{- range $key, $expected := $migration -}}
-{{- if hasKey $.Values.minio $key -}}
-{{- if ne (toJson (get $.Values.minio $key)) (toJson $expected) -}}
-{{- fail (printf "migrated minio.%s must match the corresponding parent configuration; this chart uses integrated MinIO settings" $key) -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
+{{- if and (not .Values.objectStorage.endpoint) (not .Values.minio.enabled) }}{{ fail "configure objectStorage.endpoint or enable minio.enabled" }}{{ end -}}
+{{- if and (not .Values.objectStorage.endpoint) (ne .Values.objectStorage.region .Values.minio.region) }}{{ fail "internal storage requires matching objectStorage.region and minio.region; for legacy upgrades run tools/migrate-minio-values.py on helm get values --all" }}{{ end -}}
 {{- if gt (len .Release.Name) 40 }}{{ fail "release name must be at most 40 characters" }}{{ end -}}
 {{- range $topology := list .Values.logService.topology .Values.observer.topology -}}
 {{- $zones := dict -}}
@@ -145,13 +170,26 @@ Actual per-side overrides are immutable, including after uninstall/reinstall. */
 {{- end -}}
 {{- end -}}
 {{- $existingLS := (include "lakehouse.lookupResource" (dict "root" . "kind" "OBLogServiceCluster" "name" (printf "%s-ls" .Release.Name)) | fromJson) -}}
+{{- $existingOB := (include "lakehouse.lookupResource" (dict "root" . "kind" "OBCluster" "name" (printf "%s-ob" .Release.Name)) | fromJson) -}}
+{{- $classes := include "lakehouse.databaseVolumeClasses" . | fromJson -}}
+{{- $volumes := list
+  (dict "resource" $existingOB "component" "observer" "volume" "dataStorage" "expected" $classes.observerData)
+  (dict "resource" $existingOB "component" "observer" "volume" "logStorage" "expected" $classes.observerLog)
+  (dict "resource" $existingLS "component" "logService" "volume" "storeStorage" "expected" $classes.logServiceStore)
+  (dict "resource" $existingLS "component" "logService" "volume" "logStorage" "expected" $classes.logServiceLog) -}}
+{{- range $volumes -}}
+  {{- $actual := dig "spec" .component "storage" .volume "storageClass" "" .resource -}}
+  {{- if and $actual (ne $actual .expected) -}}
+    {{- fail (printf "%s.%s StorageClass is immutable for existing storage; use an explicit data migration" .component .volume) -}}
+  {{- end -}}
+{{- end -}}
 {{- if not $existingLS -}}
 {{- $nodes := 0 -}}
 {{- range .Values.logService.topology }}{{ $nodes = add $nodes (int .replica) }}{{ end -}}
 {{- if ne (int $nodes) 3 }}{{ fail "LogService 1.3.0 bootstrap requires exactly 3 nodes; configure topology replicas totaling 3 for a new installation" }}{{ end -}}
 {{- end -}}
-{{- if and (eq .Values.objectStorage.mode "bundled") (eq (include "lakehouse.logBucket" .) (include "lakehouse.dataBucket" .)) }}{{ fail "logBucket and dataBucket must differ in bundled mode" }}{{ end -}}
-{{- if eq .Values.objectStorage.mode "external" -}}
+{{- if and (eq (include "lakehouse.storageMode" .) "bundled") (eq (include "lakehouse.logBucket" .) (include "lakehouse.dataBucket" .)) }}{{ fail "logBucket and dataBucket must differ in bundled mode" }}{{ end -}}
+{{- if eq (include "lakehouse.storageMode" .) "external" -}}
 {{- if not .Values.objectStorage.endpoint }}{{ fail "external storage requires objectStorage.endpoint" }}{{ end -}}
 {{- if not (include "lakehouse.logStorageSecret" .) }}{{ fail "external storage requires objectStorage.logExistingSecret or objectStorage.existingSecret" }}{{ end -}}
 {{- if not (include "lakehouse.dataStorageSecret" .) }}{{ fail "external storage requires objectStorage.dataExistingSecret or objectStorage.existingSecret" }}{{ end -}}
@@ -162,7 +200,23 @@ Actual per-side overrides are immutable, including after uninstall/reinstall. */
 {{- end -}}
 {{- $guard := lookup "v1" "ConfigMap" .Release.Namespace (printf "%s-storage-identity" .Release.Name) -}}
 {{- if $guard -}}
-{{- if ne (index $guard.data "identity") (include "lakehouse.identity" .) }}{{ fail "storage identity is immutable: endpoint/buckets/credential names/claim/storage class/cluster IDs must not change; use a new release and an explicit migration" }}{{ end -}}
+{{- $expected := include "lakehouse.identity" . -}}
+{{- $actual := index $guard.data "identity" -}}
+{{- if hasKey $guard.data "databaseIdentity" -}}
+{{- $expected = include "lakehouse.databaseIdentity" . -}}
+{{- $actual = index $guard.data "databaseIdentity" -}}
+{{- end -}}
+{{- if ne $actual $expected }}{{ fail "storage identity is immutable: endpoint/buckets/credential names/claim/storage class/cluster IDs must not change; use a new release and an explicit migration" }}{{ end -}}
+{{- end -}}
+{{/* Before adopting old resources, require explicit preservation of the parent
+settings which the former MinIO template inherited. No template mutates values. */}}
+{{- if and $guard (not (hasKey $guard.data "databaseIdentity")) (eq (include "lakehouse.storageMode" .) "bundled") -}}
+{{- $different := and (not .Values.minio.existingClaim) (ne .Values.minio.storageClass .Values.storageClass) -}}
+{{- range $field := list "nodeSelector" "tolerations" -}}
+{{- if ne (toJson (index $.Values.minio $field)) (toJson (index $.Values.scheduling $field)) -}}{{- $different = true -}}{{- end -}}
+{{- end -}}
+{{- if ne (toJson .Values.minio.imagePullSecrets) (toJson .Values.imagePullSecrets) -}}{{- $different = true -}}{{- end -}}
+{{- if $different }}{{ fail "legacy MinIO configuration requires migration before upgrade: export helm get values --all and run tools/migrate-minio-values.py to preserve storageClass, region, scheduling and imagePullSecrets" }}{{ end -}}
 {{- end -}}
 {{- if eq .Values.stage "storage" -}}
 {{- if (include "lakehouse.lookupResource" (dict "root" . "kind" "OBLogServiceCluster" "name" (printf "%s-ls" .Release.Name)) | fromJson) }}{{ fail "cannot downgrade stage to storage after LogService creation; use helm upgrade with stage=cluster to resume" }}{{ end -}}
@@ -222,3 +276,12 @@ resolves its same-namespace Service at runtime without mutating this manifest. *
 {{- end -}}
 
 {{/* Do not query custom APIs before CRDs exist on first installation. */}}
+
+{{/* Zero allocates a new port on install and preserves this release's port on upgrade. */}}
+{{- define "lakehouse.sqlNodePort" -}}
+{{- if gt (int .Values.sqlService.nodePort) 0 -}}{{ .Values.sqlService.nodePort }}
+{{- else -}}
+{{- $service := lookup "v1" "Service" .Release.Namespace (printf "%s-sql" .Release.Name) -}}
+{{- if and $service $service.spec.ports -}}{{ (index $service.spec.ports 0).nodePort | default 0 }}{{- else -}}0{{- end -}}
+{{- end -}}
+{{- end -}}

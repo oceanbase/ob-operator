@@ -1,0 +1,13 @@
+# Add after values-three-nodes.yaml on a fresh native Helm install.
+# Requires three eligible Kubernetes workers on distinct hosts. Each gets a
+# separate RWO PVC. Use a StorageClass with topology-aware volume binding.
+minio:
+  enabled: true
+  mode: distributed
+  storageClass: local-path
+  distributed:
+    replicas: 3
+    drivesPerNode: 1
+    driveSize: 100Gi
+  # Optional: select a pool of at least three workers with a common label.
+  # nodeSelector: {lakehouse-minio: "true"}

@@ -15,7 +15,8 @@ spec:
       port: {{ .Values.sqlService.port }}
       targetPort: 2881
       protocol: TCP
-      {{- if and (eq .Values.sqlService.type "NodePort") .Values.sqlService.nodePort }}
-      nodePort: {{ .Values.sqlService.nodePort }}
+      {{- $nodePort := int (include "lakehouse.sqlNodePort" .) }}
+      {{- if and (eq .Values.sqlService.type "NodePort") (gt $nodePort 0) }}
+      nodePort: {{ $nodePort }}
       {{- end }}
 {{- end }}

@@ -1,3 +1,8 @@
+{{- $nodePort := int (.Values.service.nodePort | default 0) -}}
+{{- if not $nodePort -}}
+{{- $service := lookup "v1" "Service" .Release.Namespace (printf "oceanbase-dashboard-%s" .Release.Name) -}}
+{{- if and $service $service.spec.ports -}}{{- $nodePort = int ((index $service.spec.ports 0).nodePort | default 0) -}}{{- end -}}
+{{- end -}}
 apiVersion: v1
 kind: Service
 metadata:
@@ -8,8 +13,8 @@ spec:
   type: {{ .Values.service.type | default "NodePort" }}
   ports:
     - port: {{ .Values.service.port | default 80 }}
-      {{- if and .Values.service.nodePort (has (.Values.service.type | default "NodePort") (list "NodePort" "LoadBalancer")) }}
-      nodePort: {{ .Values.service.nodePort }}
+      {{- if and $nodePort (has (.Values.service.type | default "NodePort") (list "NodePort" "LoadBalancer")) }}
+      nodePort: {{ $nodePort }}
       {{- end }}
       targetPort: 8080
       protocol: TCP

@@ -118,13 +118,13 @@ spec:
             - {name: REGION, value: {{ .Values.objectStorage.region | quote }}}
             - {name: LOG_BUCKET, value: {{ include "lakehouse.logBucket" . | quote }}}
             - {name: DATA_BUCKET, value: {{ include "lakehouse.dataBucket" . | quote }}}
-            - {name: MODE, value: {{ .Values.objectStorage.mode | quote }}}
+            - {name: MODE, value: {{ (include "lakehouse.storageMode" .) | quote }}}
             - {name: CREATE_BUCKETS, value: {{ .Values.objectStorage.createBuckets | quote }}}
             - {name: POLICY_NAME, value: {{ printf "%s-buckets" .Release.Name | quote }}}
             - name: ACCESS_ID
               valueFrom:
                 secretKeyRef:
-                  {{- if eq .Values.objectStorage.mode "bundled" }}
+                  {{- if eq (include "lakehouse.storageMode" .) "bundled" }}
                   name: {{ include "lakehouse.minioSecret" . }}
                   key: rootUser
                   {{- else }}
@@ -134,14 +134,14 @@ spec:
             - name: ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  {{- if eq .Values.objectStorage.mode "bundled" }}
+                  {{- if eq (include "lakehouse.storageMode" .) "bundled" }}
                   name: {{ include "lakehouse.minioSecret" . }}
                   key: rootPassword
                   {{- else }}
                   name: {{ include "lakehouse.logStorageSecret" . }}
                   key: access_key
                   {{- end }}
-            {{- if eq .Values.objectStorage.mode "external" }}
+            {{- if eq (include "lakehouse.storageMode" .) "external" }}
             - name: DATA_ACCESS_ID
               valueFrom:
                 secretKeyRef: {name: {{ include "lakehouse.dataStorageSecret" . }}, key: access_id}
@@ -149,7 +149,7 @@ spec:
               valueFrom:
                 secretKeyRef: {name: {{ include "lakehouse.dataStorageSecret" . }}, key: access_key}
             {{- end }}
-            {{- if eq .Values.objectStorage.mode "bundled" }}
+            {{- if eq (include "lakehouse.storageMode" .) "bundled" }}
             - name: BUSINESS_ID
               valueFrom:
                 secretKeyRef: {name: {{ include "lakehouse.storageSecret" . }}, key: access_id}

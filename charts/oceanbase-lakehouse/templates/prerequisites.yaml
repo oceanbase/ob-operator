@@ -1,94 +1,149 @@
-{{- if .Values.prerequisites.enabled }}
-{{- if not (.Files.Get "files/prerequisites/operator.yaml") }}{{ fail "prerequisites.enabled requires the single-command distribution with bundled manifests" }}{{ end }}
+{{- if and .Values.prerequisites.enabled (not (index .Values "skip-operator")) }}
+{{- $foundation := .Files.Get "files/prerequisites/foundation.json" | fromJson }}
+{{- if not $foundation.certManager }}
+{{- fail "The bundled prerequisites are missing from this Chart. Use the published Chart or set skip-operator=true for a cluster with an Operator." }}
+{{- end }}
+{{- $certDeployment := lookup "apps/v1" "Deployment" "cert-manager" "cert-manager" }}
+{{- if and (not $certDeployment) (.Capabilities.APIVersions.Has "v1/Namespace") (not (semverCompare ">=1.33.0 <1.37.0" .Capabilities.KubeVersion.Version)) }}
+{{- fail "The bundled cert-manager supports Kubernetes 1.33 through 1.36. On another Kubernetes version, reuse a compatible Operator with --skip-crds --set skip-operator=true." }}
+{{- end }}
+{{- $kindOrder := dict "Namespace" 0 "ServiceAccount" 1 "ClusterRole" 2 "Role" 2 "ClusterRoleBinding" 3 "RoleBinding" 3 "Service" 4 "Issuer" 5 "Certificate" 6 "Deployment" 7 "MutatingWebhookConfiguration" 8 "ValidatingWebhookConfiguration" 8 }}
+{{- range $component := list (dict "objects" $foundation.certManager "weight" -150) (dict "objects" $foundation.operator "weight" -120) }}
+{{- range $object := $component.objects }}
+{{- $meta := $object.metadata }}
+{{- $namespace := default "" $meta.namespace }}
+{{- if not (or (and (eq $object.kind "Namespace") (eq $meta.name $.Release.Namespace)) (lookup $object.apiVersion $object.kind $namespace $meta.name)) }}
+{{- if not (hasKey $kindOrder $object.kind) }}
+{{- fail (printf "Unsupported bundled prerequisite kind %s" $object.kind) }}
+{{- end }}
+{{- $annotations := mergeOverwrite (default (dict) $meta.annotations) (dict
+  "helm.sh/hook" "pre-install,pre-upgrade"
+  "helm.sh/hook-weight" (toString (add $component.weight (index $kindOrder $object.kind)))
+  "helm.sh/hook-delete-policy" "hook-failed"
+  "helm.sh/resource-policy" "keep") }}
+{{- $_ := set $meta "annotations" $annotations }}
+---
+{{ toYaml $object }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- $stages := list
+  (dict "name" "cert" "namespace" "cert-manager" "weight" -140
+    "deployments" (list "cert-manager" "cert-manager-cainjector" "cert-manager-webhook")
+    "service" "cert-manager-webhook" "mutating" "cert-manager-webhook" "validating" "cert-manager-webhook")
+  (dict "name" "operator" "namespace" "oceanbase-system" "weight" -110
+    "deployments" (list "oceanbase-controller-manager")
+    "service" "oceanbase-webhook-service" "mutating" "oceanbase-mutating-webhook-configuration"
+    "validating" "oceanbase-validating-webhook-configuration" "certificate" "oceanbase-serving-cert") }}
+{{- range $stage := $stages }}
+{{- $id := printf "lakehouse-%s-%s" $stage.name (printf "%s/%s" $.Release.Namespace $.Release.Name | sha256sum | trunc 16) }}
+{{- $hook := dict "helm.sh/hook" "pre-install,pre-upgrade" "helm.sh/hook-delete-policy" "before-hook-creation,hook-succeeded" "helm.sh/hook-weight" (toString $stage.weight) }}
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: {{ .Release.Name }}-prerequisites
-  namespace: {{ .Release.Namespace }}
-  annotations:
-    helm.sh/hook: pre-install,pre-upgrade
-    helm.sh/hook-weight: "-40"
-    helm.sh/hook-delete-policy: before-hook-creation
-{{- with .Values.imagePullSecrets }}
+  name: {{ $id }}
+  namespace: {{ $.Release.Namespace }}
+  annotations: {{ toYaml $hook | nindent 4 }}
+{{- with $.Values.imagePullSecrets }}
 imagePullSecrets: {{ toYaml . | nindent 2 }}
 {{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $id }}
+  namespace: {{ $stage.namespace }}
+  annotations: {{ toYaml $hook | nindent 4 }}
+rules:
+  - apiGroups: [apps]
+    resources: [deployments]
+    resourceNames: {{ $stage.deployments | toJson }}
+    verbs: [get]
+  - apiGroups: [""]
+    resources: [endpoints]
+    resourceNames: [{{ $stage.service | quote }}]
+    verbs: [get]
+  {{- with $stage.certificate }}
+  - apiGroups: [cert-manager.io]
+    resources: [certificates]
+    resourceNames: [{{ . | quote }}]
+    verbs: [get]
+  {{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $id }}
+  namespace: {{ $stage.namespace }}
+  annotations: {{ toYaml $hook | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $id }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $id }}
+    namespace: {{ $.Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ $id }}
+  annotations: {{ toYaml $hook | nindent 4 }}
+rules:
+  - apiGroups: [admissionregistration.k8s.io]
+    resources: [mutatingwebhookconfigurations]
+    resourceNames: [{{ $stage.mutating | quote }}]
+    verbs: [get]
+  - apiGroups: [admissionregistration.k8s.io]
+    resources: [validatingwebhookconfigurations]
+    resourceNames: [{{ $stage.validating | quote }}]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ .Release.Namespace }}-{{ .Release.Name }}-prerequisites
-  annotations:
-    helm.sh/hook: pre-install,pre-upgrade
-    helm.sh/hook-weight: "-40"
-    helm.sh/hook-delete-policy: before-hook-creation
+  name: {{ $id }}
+  annotations: {{ toYaml $hook | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: cluster-admin
+  name: {{ $id }}
 subjects:
   - kind: ServiceAccount
-    name: {{ .Release.Name }}-prerequisites
-    namespace: {{ .Release.Namespace }}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ .Release.Name }}-prerequisites
-  namespace: {{ .Release.Namespace }}
-  annotations:
-    helm.sh/hook: pre-install,pre-upgrade
-    helm.sh/hook-weight: "-30"
-    helm.sh/hook-delete-policy: before-hook-creation
-data:
-{{ (.Files.Glob "files/prerequisites/*").AsConfig | indent 2 }}
+    name: {{ $id }}
+    namespace: {{ $.Release.Namespace }}
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Release.Name }}-prerequisites
-  namespace: {{ .Release.Namespace }}
-  annotations:
-    helm.sh/hook: pre-install,pre-upgrade
-    helm.sh/hook-weight: "-10"
-    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+  name: {{ $id }}
+  namespace: {{ $.Release.Namespace }}
+  annotations: {{ set (deepCopy $hook) "helm.sh/hook-weight" (toString (add $stage.weight 1)) | toYaml | nindent 4 }}
 spec:
-  activeDeadlineSeconds: {{ .Values.prerequisites.timeoutSeconds }}
   backoffLimit: 0
+  activeDeadlineSeconds: {{ $.Values.prerequisites.timeoutSeconds }}
   template:
     spec:
-      serviceAccountName: {{ .Release.Name }}-prerequisites
+      serviceAccountName: {{ $id }}
       restartPolicy: Never
       securityContext:
         runAsNonRoot: true
-        runAsUser: 65532
-        runAsGroup: 65532
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile: {type: RuntimeDefault}
       containers:
-        - name: prerequisites
-          image: {{ .Values.prerequisites.image | quote }}
-          imagePullPolicy: IfNotPresent
-          command: [/bin/sh, /payload/prepare.sh]
-          env:
-            - name: WAIT_TIMEOUT_SECONDS
-              value: {{ .Values.prerequisites.timeoutSeconds | quote }}
-            - name: HOME
-              value: /tmp
-            - name: BOOTSTRAP_BINDING
-              value: {{ printf "%s-%s-prerequisites" .Release.Namespace .Release.Name | quote }}
+        - name: wait
+          image: {{ required "prerequisites.image is required for bundled infrastructure" $.Values.prerequisites.image | quote }}
+          command: [/usr/libexec/platform-python, -u, -c]
+          args:
+            - |
+              {{- $.Files.Get "files/prerequisites/wait-ready.py" | nindent 14 }}
+            - {{ $stage | toJson | quote }}
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
-            capabilities:
-              drop: [ALL]
-          resources:
-            requests: {cpu: 25m, memory: 64Mi}
-            limits: {cpu: 250m, memory: 256Mi}
-          volumeMounts:
-            - {name: payload, mountPath: /payload, readOnly: true}
-            - {name: tmp, mountPath: /tmp}
-      volumes:
-        - name: payload
-          configMap:
-            name: {{ .Release.Name }}-prerequisites
-        - name: tmp
-          emptyDir: {}
+            capabilities: {drop: [ALL]}
+{{- end }}
 {{- end }}

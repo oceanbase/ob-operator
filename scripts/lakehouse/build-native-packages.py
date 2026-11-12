@@ -278,7 +278,11 @@ def validate_rendered(lock, compose_json, helm_yaml):
 
 
 def image_values(lock):
-    r = {role: item['reference'] for role, item in validate_lock(lock).items()}
+    return image_values_from_refs({role: item['reference'] for role, item in validate_lock(lock).items()})
+
+
+def image_values_from_refs(r):
+    """Apply one explicit role-to-values mapping in every Helm delivery builder."""
     return {'native': {'enabled': True, 'readiness': {'image': r['operator']}},
             'observer': {'image': r['observer']}, 'logService': {'image': r['logservice']},
             'minio': {'image': r['minio']}, 'initialization': {'image': r['mc']},
@@ -298,47 +302,6 @@ def merge(target, overlay):
     return target
 
 
-def write_standalone_compose(source, destination, lock):
-    """Embed shipped scripts/configuration so the published YAML works alone."""
-    root = source / 'deploy/compose/lakehouse'
-    model = yaml.safe_load((root / 'compose.yaml').read_text())
-    roles = validate_lock(lock)
-    configs = {}
-    for name, service in model['services'].items():
-        role = SERVICE_ROLES[name]
-        ref = roles[role]['reference']
-        variable = next(key for key, value in ENV_ROLES.items() if value == role)
-        prefix, image = ref.rsplit('/', 1) if '/' in ref else ('docker.io/library', ref)
-        service['image'] = '${%s:-${IMAGE_REGISTRY:-%s}/%s}' % (variable, prefix, image)
-        mounts = []
-        for volume in service.get('volumes', []):
-            if not isinstance(volume, str) or not volume.startswith('./'):
-                mounts.append(volume)
-                continue
-            relative, target, *options = volume.split(':')
-            if options != ['ro']:
-                raise ValueError('Standalone Compose only embeds read-only configuration: ' + relative)
-            path = root / relative
-            if path.is_dir():
-                files = [(file, target + '/' + file.name) for file in sorted(path.glob('*.sh'))]
-            elif path.is_file():
-                files = [(path, target)]
-            else:
-                raise ValueError('Missing Compose configuration: ' + relative)
-            for file, mount_target in files:
-                key = str(file.relative_to(root)).replace('/', '-').replace('.', '-')
-                configs[key] = {'content': file.read_text().replace('$', '$$')}
-                service.setdefault('configs', []).append({'source': key, 'target': mount_target,
-                                                          'mode': 0o555 if file.suffix == '.sh' else 0o444})
-        if mounts:
-            service['volumes'] = mounts
-        else:
-            service.pop('volumes', None)
-    model = {key: value for key, value in model.items() if not key.startswith('x-')}
-    model['configs'] = configs
-    write_yaml(destination, model)
-
-
 def compose_env(lock):
     roles = validate_lock(lock)
     publication = ('Registry publication and pull are verified; see image-lock.json.'
@@ -347,7 +310,7 @@ def compose_env(lock):
     lines = ['# Generated from release-images.lock.json. ' + publication,
              '# Set IMAGE_REGISTRY only to a registry/namespace containing these exact builds.',
              'IMAGE_REGISTRY=', '',
-             '# SQL and obshell are published; monitoring requires compose.monitoring.yaml.',
+             '# SQL, obshell Dashboard, Prometheus and Alertmanager are published by default.',
              '# Empty auto-detects the default-route source IP; set this for multi-NIC/NAT hosts.',
              'HOST_ACCESS_IP=',
              'HOST_BIND_ADDRESS=0.0.0.0',
@@ -417,7 +380,42 @@ def clean_compose_env():
             if key not in ENV_ROLES and key != 'IMAGE_REGISTRY' and not key.startswith('COMPOSE_')}
 
 
+def require_legacy_compose_source(source):
+    """The shared-image bundle builder cannot select Compose wrapper images."""
+    compose = yaml.safe_load((source / 'deploy/compose/lakehouse/compose.yaml').read_text())
+
+    def embedded_runtime(value):
+        if isinstance(value, str):
+            return '/opt/lakehouse/' in value
+        if isinstance(value, dict):
+            return any(embedded_runtime(child) for child in value.values())
+        if isinstance(value, list):
+            return any(embedded_runtime(child) for child in value)
+        return False
+
+    def script_bind(service):
+        for mount in service.get('volumes') or []:
+            if isinstance(mount, dict):
+                if mount.get('type') == 'bind' and str(mount.get('target', '')).rstrip('/') == '/opt/lakehouse':
+                    return True
+            elif isinstance(mount, str):
+                parts = mount.split(':')
+                if (len(parts) >= 2 and parts[0].startswith(('.', '/', '~'))
+                        and parts[1].rstrip('/') == '/opt/lakehouse'):
+                    return True
+        return False
+
+    for service in (compose.get('services') or {}).values():
+        if (any(embedded_runtime(service.get(field)) for field in ('entrypoint', 'command', 'healthcheck'))
+                and not script_bind(service)):
+            raise ValueError(
+                'Legacy combined builder cannot package embedded-runtime Compose with shared base images; '
+                'use build-compose-release.py and build-helm-release.py for channel-specific artifacts')
+
+
 def build(args):
+    source = Path(args.source).resolve()
+    require_legacy_compose_source(source)
     lock = load_lock(args.lock)
     roles = validate_lock(lock)
     publication_evidence = None
@@ -435,7 +433,7 @@ def build(args):
                                 'images_checked': len(roles)}
     if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._-]{0,79}', args.version):
         raise ValueError('Invalid delivery version')
-    source, output = Path(args.source).resolve(), Path(args.output).resolve()
+    output = Path(args.output).resolve()
     if output.exists():
         raise ValueError('Output already exists; choose a new directory')
     if getattr(args, 'configuration_only', False):
@@ -464,12 +462,11 @@ def build(args):
     compose = output / ('oceanbase-lakehouse-compose-' + args.version)
     helm = output / ('oceanbase-lakehouse-native-helm-' + args.version)
     compose.mkdir(); helm.mkdir()
-    for name in ('compose.yaml', 'compose.monitoring.yaml', 'README.md'):
+    for name in ('compose.yaml', 'README.md'):
         shutil.copyfile(source / 'deploy/compose/lakehouse' / name, compose / name)
     shutil.copytree(source / 'deploy/compose/lakehouse/scripts', compose / 'scripts')
     shutil.copytree(source / 'deploy/compose/lakehouse/monitoring', compose / 'monitoring')
     (compose / '.env').write_text(compose_env(lock))
-    write_standalone_compose(source, compose / 'compose.yaml', lock)
     values = image_values(lock)
     write_yaml(helm / 'image-values.yaml', values)
     operator_values = {'image': roles['operator']['reference'],
@@ -477,7 +474,7 @@ def build(args):
     write_yaml(helm / 'operator-values.yaml', operator_values)
     with tempfile.TemporaryDirectory(prefix='lakehouse-release-charts-') as temp:
         temp = Path(temp)
-        for name in ('oceanbase-dashboard', 'oceanbase-lakehouse', 'ob-operator'):
+        for name in ('oceanbase-dashboard', 'oceanbase-minio', 'oceanbase-lakehouse', 'ob-operator'):
             copy_chart(source / 'charts' / name, temp / name)
         parent = temp / 'oceanbase-lakehouse'
         write_yaml(parent / 'values.yaml', merge(yaml.safe_load((parent / 'values.yaml').read_text()), values))
@@ -485,13 +482,14 @@ def build(args):
         write_yaml(op / 'values.yaml', merge(yaml.safe_load((op / 'values.yaml').read_text()),
                                             operator_values))
         (parent / 'charts').mkdir(exist_ok=True)
-        child = temp / 'oceanbase-dashboard'
-        child_version = yaml.safe_load((child / 'Chart.yaml').read_text())['version']
-        tar_tree(child, parent / 'charts' / ('oceanbase-dashboard-%s.tgz' % child_version), timestamp)
+        for name in ('oceanbase-dashboard', 'oceanbase-minio'):
+            child = temp / name
+            child_version = yaml.safe_load((child / 'Chart.yaml').read_text())['version']
+            tar_tree(child, parent / 'charts' / ('%s-%s.tgz' % (name, child_version)), timestamp)
         for chart in (parent, op):
             run([args.helm, 'lint', '--strict', chart])
             run([args.helm, 'package', chart, '--destination', helm])
-    for name in ('values-single-node.yaml', 'values-three-nodes.yaml', 'USAGE.txt'):
+    for name in ('values-single-node.yaml', 'values-three-nodes.yaml', 'USAGE.txt', 'SHARED-INFRA.md'):
         shutil.copyfile(source / 'charts/oceanbase-lakehouse' / name, helm / name)
     lakehouse_chart, = helm.glob('oceanbase-lakehouse-*.tgz')
     operator_chart, = helm.glob('ob-operator-*.tgz')
@@ -509,8 +507,8 @@ def build(args):
         'uses one Observer and three LogService processes.\n\n'
         'These are first-install defaults. Keep the existing sizing and custom '
         'values when upgrading an installation.\n\n'
-        'For another StorageClass, append `--set storageClass=YOUR_STORAGE_CLASS`. '
-        'Dashboard and SQL default to automatically allocated NodePorts. '
+        'For another StorageClass, append `--set storageClass=YOUR_STORAGE_CLASS --set minio.storageClass=YOUR_STORAGE_CLASS`. '
+        'Dashboard and SQL use automatically allocated NodePorts. '
         'Helm prints the node IP and login commands. For NAT or multiple NICs, '
         'append `--set access.host=YOUR_REACHABLE_IP`.\n\n'
         'Optional image acceleration: [registry-mirrors/README.md](registry-mirrors/README.md). '
@@ -534,17 +532,12 @@ def build(args):
               'image_payload_included': False}
     for channel, directory in (('compose', compose), ('helm', helm)):
         (directory / 'tools').mkdir()
-        for name in ('package-offline.py', 'release_offline.py', 'package-offline-compose.py', 'package-offline-helm.py'):
-            shutil.copyfile(HERE / name, directory / 'tools' / name)
+        shutil.copyfile(HERE / ('package-offline-' + channel + '.py'), directory / 'tools/package-offline.py')
+        shutil.copyfile(HERE / 'offline_common.py', directory / 'tools/offline_common.py')
+        if channel == 'helm':
+            shutil.copyfile(HERE / 'migrate-minio-values.py', directory / 'tools/migrate-minio-values.py')
         (directory / 'tools/requirements.txt').write_text('PyYAML==6.0.3\n')
-        shutil.copyfile(HERE / 'OFFLINE.md', directory / 'OFFLINE.md')
-        if publication_evidence:
-            offline = directory / 'OFFLINE.md'
-            offline.write_text(offline.read_text().replace(
-                '当前测试版的部分自建镜像尚未验证仓库发布，不能保证在全新机器直接在线拉取。\n'
-                '已有匹配镜像的测试机可以直接使用；制作离线包可从已有缓存导出。',
-                '本包的所有运行镜像已经推送到指定测试仓库并完成回拉校验。\n'
-                '目标机器需要能访问该仓库；制作离线包也可从已有匹配缓存导出。'))
+        shutil.copyfile(HERE / 'OFFLINE-LEGACY.md', directory / 'OFFLINE.md')
         shutil.copyfile(HERE / 'THIRD-PARTY-NOTICES.md', directory / 'THIRD-PARTY-NOTICES.md')
         if channel == 'compose':
             shutil.copyfile(directory / '.env', directory / '.env.example')
@@ -562,7 +555,7 @@ def build(args):
                         ignore=shutil.ignore_patterns('tests', '__pycache__', '*.pyc'))
         selected = copy.deepcopy(lock)
         selected['images'] = [i for i in selected['images'] if channel in i['channels']]
-        selected.update(delivery_channel=channel, delivery_version=args.version)
+        selected.update(delivery_channel=channel, delivery_version=args.version, releaseVersion=args.version)
         write_json(directory / 'image-lock.json', selected)
         shutil.copyfile(args.lock, directory / 'release-images.lock.json')
         shutil.copyfile(source / 'LICENSE', directory / 'LICENSE')
