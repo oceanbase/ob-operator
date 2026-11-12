@@ -199,11 +199,18 @@ docker compose logs --tail=100 obagent prometheus alertmanager
 
 ## Connect and try SQL
 
-Display the generated database password locally:
+The completion log prints a complete MySQL command with the discovered host
+address and configured SQL port, plus a complete password command containing
+the actual Compose project name (including a name chosen with `-p`). Run the
+password command on the Docker host from the deployment directory. If startup
+used `-f` or `--env-file`, keep those options before `run`. Do not share its output.
+For the default project:
 
 ```bash
-docker compose run --rm --no-deps observer-bootstrap --mode show-password
+sudo docker compose -p ob-lakehouse run --rm --no-deps observer-bootstrap --mode show-password
 ```
+
+You may omit `sudo` if your user can access Docker directly.
 
 Connect using an existing MySQL-compatible client and enter that password at
 the prompt:

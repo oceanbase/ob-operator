@@ -186,11 +186,11 @@ func TestEntrypointScriptsAreExecutable(t *testing.T) {
 	}
 	for _, want := range []string{
 		`host_ip="$(cat /run/secrets/docker_host_ip)"`,
-		"${host_ip}:${OBSERVER_SQL_HOST_PORT:-32881}",
-		"http://${host_ip}:${OBSHELL_HOST_PORT:-32886}/",
+		"mysql -h ${sql_host} -P ${OBSERVER_SQL_HOST_PORT:-32881} -u 'root@sys' -p",
+		"http://${url_host}:${OBSHELL_HOST_PORT:-32886}/",
 		"http://127.0.0.1:${PROMETHEUS_HOST_PORT:-39090}/",
 		"http://127.0.0.1:${ALERTMANAGER_HOST_PORT:-39093}/",
-		"docker compose run --rm --no-deps observer-bootstrap --mode show-password",
+		"sudo docker compose -p ${compose_project} run --rm --no-deps observer-bootstrap --mode show-password",
 	} {
 		if !strings.Contains(string(bootstrap), want) {
 			t.Fatalf("observer bootstrap completion output is missing %q", want)

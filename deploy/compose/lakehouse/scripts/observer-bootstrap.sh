@@ -27,16 +27,26 @@ if [ "${mode}" = bootstrap ]; then
   trap - EXIT HUP INT TERM
 
   host_ip="$(cat /run/secrets/docker_host_ip)"
+  shell_quote() {
+    printf "'"
+    printf '%s' "$1" | sed "s/'/'\\\\''/g"
+    printf "'"
+  }
+  sql_host="$(shell_quote "${host_ip}")"
+  compose_project="$(shell_quote "${COMPOSE_PROJECT_NAME:-ob-lakehouse}")"
+  url_host="${host_ip}"
+  case "${url_host}" in *:*) url_host="[${url_host}]" ;; esac
 
   cat <<EOF
 
 Lakehouse deployment completed.
 
 OceanBase SQL:
-  ${host_ip}:${OBSERVER_SQL_HOST_PORT:-32881}
+  mysql -h ${sql_host} -P ${OBSERVER_SQL_HOST_PORT:-32881} -u 'root@sys' -p
+  Enter the password retrieved below when prompted.
 
 obshell Dashboard:
-  http://${host_ip}:${OBSHELL_HOST_PORT:-32886}/
+  http://${url_host}:${OBSHELL_HOST_PORT:-32886}/
   Use HTTP, not HTTPS. Allow TCP port ${OBSHELL_HOST_PORT:-32886} in the host firewall/security group.
 
 Monitoring is internal to the Compose network by default.
@@ -46,7 +56,10 @@ the same overlay for every subsequent Compose command.
   Alertmanager: http://127.0.0.1:${ALERTMANAGER_HOST_PORT:-39093}/
 
 Accounts: root for obshell, root@sys for SQL.
-Command to display the generated credentials locally:
-  docker compose run --rm --no-deps observer-bootstrap --mode show-password
+Retrieve the root password on the Docker host, from the deployment directory:
+  sudo docker compose -p ${compose_project} run --rm --no-deps observer-bootstrap --mode show-password
+If startup used -f or --env-file, include those same options before run.
+If Docker is accessible without sudo, you may omit sudo.
+This prints the root password; do not share its output.
 EOF
 fi
