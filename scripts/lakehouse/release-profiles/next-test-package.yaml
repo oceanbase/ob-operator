@@ -16,6 +16,13 @@ imageLock:
   sha256: 53f28404b41d3352b11aa0537b71617b5ded1e96133cd5af2ab90a2ad71ed908
 
 helm:
+  # The branch has a newer, unpublished Notes fix. Include it in the final
+  # source build only after its separate verification is complete.
+  pendingSource:
+    commit: 878f630fa8d9a606516117845776d7d5595c4073
+    chartVersion: 0.5.7-dev.20261112.5
+    status: awaiting-verification
+  # The following r15 inputs are already packaged and checksum verified.
   sourceCommit: 64bdeb834fae4ae43f838503f0c5afa3391ecf5d
   chart:
     version: 0.5.7-dev.20261112.4
