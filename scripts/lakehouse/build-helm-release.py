@@ -37,6 +37,7 @@ INPUT_PATHS += [Path('scripts/lakehouse/prerequisites'),
                 Path('scripts/lakehouse/images/minio-rejoin'), PROFILE]
 INPUT_PATHS += [Path('scripts/lakehouse') / name for name in
                 ('build-helm-release.py', 'build-native-packages.py', 'build-one-command-package.py',
+                 'install-helm-and-show-access.sh',
                  'migrate-minio-values.py', 'progress/progress.py', 'progress/progress.sh')]
 
 
