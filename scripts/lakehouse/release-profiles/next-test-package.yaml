@@ -1,0 +1,33 @@
+# Inputs for the next consolidated lakehouse test package. This is a draft;
+# assign a new release version and replace any inputs changed by ongoing tests
+# only after their results have been reviewed. No published package uses it yet.
+schemaVersion: 1
+name: next-test-package
+status: awaiting-other-test-results
+releaseVersion: null
+
+# The pinned manifest supplies the current Compose and Helm image sets, each
+# image's immutable registry digest, and the remaining release dependencies.
+baseManifest:
+  url: http://6.12.233.107:18080/experience/20261112-helm-access-dev-r15/release-manifest.json
+  sha256: b7a83f9ddc808f9e3480fc9490e073477911aee09d64566c8e020aa9259632c3
+imageLock:
+  url: http://6.12.233.107:18080/experience/20261112-helm-access-dev-r15/image-lock.json
+  sha256: 53f28404b41d3352b11aa0537b71617b5ded1e96133cd5af2ab90a2ad71ed908
+
+helm:
+  sourceCommit: 64bdeb834fae4ae43f838503f0c5afa3391ecf5d
+  chart:
+    version: 0.5.7-dev.20261112.4
+    url: http://6.12.233.107:18080/experience/20261112-helm-access-dev-r15/oceanbase-lakehouse-0.5.7-dev.20261112.4.tgz
+    sha256: 7ef3c09f07bfff5517ff3461f9062aec340bdc717935ed3cd14e5e5675b8ea5b
+  installer:
+    url: http://6.12.233.107:18080/experience/20261112-helm-access-dev-r15/install-helm-and-show-access.sh
+    sha256: 2f9e3119796309bbf7e8a3e54817d0bce7fbc3fc5e58507636b04058396de211
+
+compose:
+  source: baseManifest
+
+# Keep candidate image or configuration changes from other tests out of the
+# final package until those tests finish. Update the manifest and image lock
+# together before the consolidated build.
