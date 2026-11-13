@@ -71,7 +71,8 @@ func TestRunCmd(t *testing.T) {
 
 	cmd, err = utils.BuildCmd("cert-manager", "2.2.2_release")
 	assert.NoError(t, err)
-	err = utils.RunCmd(cmd)
-	assert.NoError(t, err)
+	// The command builder is checked without installing a historical cert-manager
+	// into whichever cluster happens to be selected by the test host.
+	assert.Equal(t, []string{"apply", "-f", "https://raw.githubusercontent.com/oceanbase/ob-operator/2.2.2_release/deploy/cert-manager.yaml"}, cmd.Args[1:])
 
 }

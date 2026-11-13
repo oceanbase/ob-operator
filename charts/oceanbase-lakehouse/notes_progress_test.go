@@ -134,6 +134,11 @@ func notesTemplate(t *testing.T) *template.Template {
 	}
 	source := string(helpers)
 	source = source[strings.Index(source, "{{/* Presentation address only:"):]
+	// The standalone fixture only executes presentation helpers; resource lookup
+	// helpers below them require the complete Helm function environment.
+	if end := strings.Index(source, "{{/* Preserve the webhook-generated account identity"); end >= 0 {
+		source = source[:end]
+	}
 	var tpl *template.Template
 	tpl = template.New("NOTES").Funcs(template.FuncMap{
 		"contains": func(sub, text string) bool { return strings.Contains(text, sub) },

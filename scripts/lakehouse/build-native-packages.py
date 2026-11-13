@@ -35,7 +35,7 @@ SERVICE_ROLES = {'observer': 'observer', 'minio': 'minio', 'minio-init': 'mc',
                  'alertmanager': 'alertmanager',
                  'logservice-bootstrap': 'logservice',
                  **{'logservice-%d' % i: 'logservice' for i in (1, 2, 3)}}
-CONTAINER_ROLES = {'obproxy': 'obproxy', 'manager': 'operator', 'kube-rbac-proxy': 'kube-rbac-proxy',
+CONTAINER_ROLES = {'discover-observers': 'operator', 'obproxy': 'obproxy', 'manager': 'operator', 'kube-rbac-proxy': 'kube-rbac-proxy',
                    'dashboard': 'dashboard', 'prometheus': 'prometheus',
                    'alertmanager': 'alertmanager', 'minio': 'minio',
                    'initialize': 'mc', 'readiness': 'operator',
@@ -381,6 +381,50 @@ def clean_compose_env():
             if key not in ENV_ROLES and key != 'IMAGE_REGISTRY' and not key.startswith('COMPOSE_')}
 
 
+def write_standalone_compose(source, target, lock):
+    """Embed repository scripts/configs without relying on host bind mounts."""
+    root = Path(source) / 'deploy/compose/lakehouse'
+    document = yaml.safe_load((root / 'compose.yaml').read_text())
+    if lock.get('delivery_channel') == 'compose':
+        if lock.get('schemaVersion') != 1 or lock.get('platform') != 'linux/amd64':
+            raise ValueError('Expected schemaVersion 1 and linux/amd64 Compose lock')
+        roles = {}
+        for item in lock.get('images', []):
+            role = item.get('role')
+            if (role in roles or role not in COMPOSE_ROLES or
+                    not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9._:/-]*@sha256:[0-9a-f]{64}', item.get('reference', '')) or
+                    not IMAGE_ID.fullmatch(item.get('image_id', '')) or item.get('platform') != lock['platform']):
+                raise ValueError('Invalid digest-locked Compose image: ' + str(role))
+            roles[role] = item
+        if roles.keys() != COMPOSE_ROLES:
+            raise ValueError('Incomplete Compose image lock')
+    else:
+        roles = validate_lock(lock)
+    configs = document.setdefault('configs', {})
+    for name, service in document['services'].items():
+        service['image'] = roles[SERVICE_ROLES[name]]['reference']
+        retained = []
+        for mount in service.get('volumes', []):
+            if not isinstance(mount, str) or not mount.startswith('./'):
+                retained.append(mount)
+                continue
+            parts = mount.split(':')
+            original = (root / parts[0]).resolve()
+            original.relative_to(root.resolve())
+            files = sorted(original.rglob('*')) if original.is_dir() else [original]
+            for path in files:
+                if not path.is_file():
+                    continue
+                if path.is_symlink():
+                    raise ValueError('Symlink bind source is not supported')
+                key = path.relative_to(root).as_posix().replace('/', '-').replace('.', '-')
+                configs[key] = {'content': path.read_text().replace('$', '$$')}
+                destination = parts[1] + ('/' + path.relative_to(original).as_posix() if original.is_dir() else '')
+                service.setdefault('configs', []).append({'source': key, 'target': destination, 'mode': 365})
+        service['volumes'] = retained
+    Path(target).write_text(yaml.safe_dump(document, sort_keys=False))
+
+
 def require_legacy_compose_source(source):
     """The shared-image bundle builder cannot select Compose wrapper images."""
     compose = yaml.safe_load((source / 'deploy/compose/lakehouse/compose.yaml').read_text())
@@ -538,7 +582,7 @@ def build(args):
         if channel == 'helm':
             shutil.copyfile(HERE / 'migrate-minio-values.py', directory / 'tools/migrate-minio-values.py')
         (directory / 'tools/requirements.txt').write_text('PyYAML==6.0.3\n')
-        shutil.copyfile(HERE / 'OFFLINE-LEGACY.md', directory / 'OFFLINE.md')
+        shutil.copyfile(HERE / 'OFFLINE.md', directory / 'OFFLINE.md')
         shutil.copyfile(HERE / 'THIRD-PARTY-NOTICES.md', directory / 'THIRD-PARTY-NOTICES.md')
         if channel == 'compose':
             shutil.copyfile(directory / '.env', directory / '.env.example')

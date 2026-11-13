@@ -263,7 +263,7 @@ def copy_chart(source, destination):
 def patch_charts(source, package, images, timestamp):
     charts = package / "charts"
     charts.mkdir()
-    for name in ("oceanbase-lakehouse", "oceanbase-dashboard", "ob-operator"):
+    for name in ("oceanbase-lakehouse", "oceanbase-dashboard", "oceanbase-minio", "ob-operator"):
         copy_chart(source / "charts" / name, charts / name)
     dashboard = charts / "oceanbase-dashboard"
     values = yaml.safe_load((dashboard / "values.yaml").read_text())
@@ -284,6 +284,8 @@ def patch_charts(source, package, images, timestamp):
     values = yaml.safe_load((parent / "values.yaml").read_text())
     # This builder ships the staged installer; native Helm uses its own builder.
     values.setdefault("native", {})["enabled"] = False
+    # Historical staged packages do not deliver an OBProxy image.
+    values.setdefault("obproxy", {})["enabled"] = False
     for section, role in (("dashboard", "dashboard"), ("logService", "logservice"),
                           ("observer", "observer"), ("minio", "minio"), ("initialization", "mc")):
         values[section]["image"] = images[role]["reference"]
@@ -306,13 +308,19 @@ def patch_charts(source, package, images, timestamp):
     parent_meta = yaml.safe_load((parent / "Chart.yaml").read_text())
     child_meta = yaml.safe_load((dashboard / "Chart.yaml").read_text())
     dependencies = parent_meta.get("dependencies", [])
-    if len(dependencies) != 1 or dependencies[0].get("repository") != "file://../oceanbase-dashboard" or str(dependencies[0].get("version")) != str(child_meta["version"]):
+    expected = {"oceanbase-dashboard", "oceanbase-minio"}
+    if {d.get("name") for d in dependencies} != expected or len(dependencies) != len(expected):
         raise ValueError("Unexpected lakehouse dependency; offline dependency requires review")
     (parent / "charts").mkdir(exist_ok=True)
-    tar_tree(dashboard, parent / "charts" / ("oceanbase-dashboard-%s.tgz" % child_meta["version"]),
-             "oceanbase-dashboard", timestamp, compressed=True)
+    for dependency in dependencies:
+        name = dependency["name"]
+        child = charts / name
+        metadata = yaml.safe_load((child / "Chart.yaml").read_text())
+        if dependency.get("repository") != "file://../" + name or str(dependency.get("version")) != str(metadata["version"]):
+            raise ValueError("Dependency identity/version mismatch: " + name)
+        tar_tree(child, parent / "charts" / (name + "-" + str(metadata["version"]) + ".tgz"), name, timestamp, compressed=True)
     changes = []
-    for name in ("oceanbase-lakehouse", "oceanbase-dashboard", "ob-operator"):
+    for name in ("oceanbase-lakehouse", "oceanbase-dashboard", "oceanbase-minio", "ob-operator"):
         for path in sorted((charts / name).rglob("*")):
             if not path.is_file() or path.suffix == ".tgz":
                 continue
@@ -332,6 +340,8 @@ def quickstart_profile(baseline, package, images):
         profile = baseline / "values/single-worker.yaml"
     values = yaml.safe_load(profile.read_text())
     values.setdefault("native", {})["enabled"] = False
+    # Historical staged packages do not deliver an OBProxy image.
+    values.setdefault("obproxy", {})["enabled"] = False
     values["storageClass"] = ""  # the Go preflight selects the sole default class
     values.setdefault("logService", {}).pop("clusterId", None)
     values.setdefault("observer", {}).pop("clusterId", None)
@@ -387,7 +397,7 @@ def rendered_images(text):
 def validate_charts(package, lock):
     charts = package / "charts"
     results = []
-    for name in ("oceanbase-lakehouse", "oceanbase-dashboard", "ob-operator"):
+    for name in ("oceanbase-lakehouse", "oceanbase-dashboard", "oceanbase-minio", "ob-operator"):
         args = ["helm", "lint", "--strict", str(charts / name)]
         if name == "oceanbase-dashboard":
             args += ["--set-string", "adminPassword=render-only-not-an-account"]

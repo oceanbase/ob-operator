@@ -245,6 +245,24 @@ class RealPackagingTests(unittest.TestCase):
             configs = rendered['services']['observer']['configs']
             self.assertTrue(any(item['target'] == '/opt/lakehouse/observer-entrypoint.sh' for item in configs))
 
+    def test_standalone_digest_lock_rejects_missing_or_mutable_images(self):
+        original = BUILDER.load_lock(HERE / 'release-images.lock.json')
+        lock = {'schemaVersion': 1, 'platform': 'linux/amd64', 'delivery_channel': 'compose',
+                'images': [dict(item, reference='registry.example/image@'+item['image_id'])
+                           for item in original['images'] if item['role'] in BUILDER.COMPOSE_ROLES]}
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / 'compose.yaml'
+            BUILDER.write_standalone_compose(HERE.parents[1], target, lock)
+            rendered = yaml.safe_load(target.read_text())
+            self.assertTrue(all('@sha256:' in v['image'] for v in rendered['services'].values()))
+            missing = copy.deepcopy(lock)
+            missing['images'].pop()
+            with self.assertRaisesRegex(ValueError, 'Incomplete'):
+                BUILDER.write_standalone_compose(HERE.parents[1], target, missing)
+            lock['images'][0]['reference'] = 'registry.example/image:latest'
+            with self.assertRaisesRegex(ValueError, 'Invalid digest'):
+                BUILDER.write_standalone_compose(HERE.parents[1], target, lock)
+
     def test_single_repository_charts_and_publication_evidence(self):
         with tempfile.TemporaryDirectory() as root:
             root = Path(root)
@@ -334,7 +352,7 @@ class RealPackagingTests(unittest.TestCase):
                 self.assertEqual(values['logService']['image'], refs['logservice'])
                 self.assertTrue(values['dashboard']['enabled'])
                 self.assertTrue(values['native']['enabled'])
-                self.assertEqual(values['logService']['resource']['cpu'], '1')
+                self.assertEqual(values['logService']['resource']['cpu'], '2')
             quickstart = (helm / 'QUICKSTART.md').read_text()
             install = next(line for line in quickstart.splitlines() if line.startswith('helm upgrade'))
             self.assertIn(next(helm.glob('oceanbase-lakehouse-*.tgz')).name, install)

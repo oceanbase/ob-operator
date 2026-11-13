@@ -27,7 +27,9 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	oceanbasev1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	"k8s.io/client-go/tools/record"
 )
 
 var _ = Describe("OBTenantVariable Controller", func() {
@@ -51,7 +53,7 @@ var _ = Describe("OBTenantVariable Controller", func() {
 						Name:      resourceName,
 						Namespace: "default",
 					},
-					// TODO(user): Specify other spec details if needed.
+					Spec: oceanbasev1alpha1.OBTenantVariableSpec{OBTenant: "test-tenant", Variable: &apitypes.Variable{Name: "ob_query_timeout", Value: "10000000"}},
 				}
 				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 			}
@@ -66,19 +68,22 @@ var _ = Describe("OBTenantVariable Controller", func() {
 			By("Cleanup the specific resource instance OBTenantVariable")
 			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
 		})
-		It("should successfully reconcile the resource", func() {
+		It("reports the missing tenant dependency without claiming reconciliation succeeded", func() {
 			By("Reconciling the created resource")
 			controllerReconciler := &OBTenantVariableReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
+				Client:   k8sClient,
+				Scheme:   k8sClient.Scheme(),
+				Recorder: record.NewFakeRecorder(10),
 			}
 
 			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
 				NamespacedName: typeNamespacedName,
 			})
-			Expect(err).NotTo(HaveOccurred())
-			// TODO(user): Add more specific assertions depending on your controller's reconciliation logic.
-			// Example: If you expect a certain status condition after reconciliation, verify it here.
+			Expect(err).To(HaveOccurred())
+			Expect(errors.IsNotFound(err)).To(BeTrue())
+			current := &oceanbasev1alpha1.OBTenantVariable{}
+			Expect(k8sClient.Get(ctx, typeNamespacedName, current)).To(Succeed())
+			Expect(current.Status.Status).NotTo(Equal("matched"))
 		})
 	})
 })

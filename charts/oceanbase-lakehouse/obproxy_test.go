@@ -35,6 +35,19 @@ func TestOBProxyDefaultAndOptOut(t *testing.T) {
 				t.Fatal(deploy.Spec)
 			}
 			c := deploy.Spec.Template.Spec.Containers[0]
+			init := deploy.Spec.Template.Spec.InitContainers
+			if len(init) != 1 || init[0].Name != "discover-observers" || !strings.Contains(strings.Join(init[0].Args, " "), "--obproxy-rslist-file=/bootstrap/rslist") {
+				t.Fatal("missing advertised Observer seed discovery")
+			}
+			if strings.Contains(c.Args[0], "getent") || strings.Contains(c.Args[0], "$address:2881") {
+				t.Fatal("load-balanced bootstrap VIP must not be used as a rootserver identity")
+			}
+			for _, mount := range c.VolumeMounts {
+				if mount.Name == "discovery-token" {
+					t.Fatal("proxy process must not receive Kubernetes credentials")
+				}
+			}
+
 			if c.ReadinessProbe == nil || c.StartupProbe == nil || c.LivenessProbe == nil {
 				t.Fatal("missing health probes")
 			}

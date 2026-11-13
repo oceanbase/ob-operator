@@ -149,7 +149,7 @@ spec:
           ports:
             - {name: s3, containerPort: 9000}
           readinessProbe:
-            httpGet: {path: {{ ternary "/minio/health/lakehouse-ready" "/minio/health/ready" $distributed }}, port: s3}
+            httpGet: {path: {{ ternary "/minio/health/cluster" "/minio/health/ready" $distributed }}, port: s3}
             periodSeconds: 5
             {{- if $distributed }}
             timeoutSeconds: 5

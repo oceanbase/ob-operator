@@ -664,33 +664,27 @@ func CheckAndCreateUserSecrets(m *OBClusterManager) tasktypes.TaskError {
 		m.OBCluster.Spec.UserSecrets.Monitor,
 		m.OBCluster.Spec.UserSecrets.ProxyRO,
 	}
+	var masterMonitorSecret *corev1.Secret
 	for _, secret := range secretList {
 		fetchedSec := &corev1.Secret{}
-		err := m.Client.Get(m.Ctx, types.NamespacedName{
-			Namespace: m.OBCluster.Namespace,
-			Name:      secret,
-		}, fetchedSec)
+		err := m.Client.Get(m.Ctx, types.NamespacedName{Namespace: m.OBCluster.Namespace, Name: secret}, fetchedSec)
 		if err != nil {
-			if kubeerrors.IsNotFound(err) {
-				err := m.Client.Create(m.Ctx, &corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      secret,
-						Namespace: m.OBCluster.Namespace,
-					},
-					StringData: map[string]string{
-						"password": rand.String(16),
-					},
-				})
-				if err != nil {
-					return errors.Wrap(err, "Create secret "+secret)
-				}
+			if !kubeerrors.IsNotFound(err) {
+				return errors.Wrapf(err, "Get secret %s/%s", m.OBCluster.Namespace, secret)
+			}
+			fetchedSec = &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{Name: secret, Namespace: m.OBCluster.Namespace},
+				Data:       map[string][]byte{"password": []byte(rand.String(16))},
+			}
+			if err := m.Client.Create(m.Ctx, fetchedSec); err != nil {
+				return errors.Wrap(err, "Create secret "+secret)
 			}
 		}
-	}
-	masterMonitorSecret := &corev1.Secret{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{Namespace: m.OBCluster.Namespace, Name: m.OBCluster.Spec.UserSecrets.Monitor}, masterMonitorSecret)
-	if err != nil {
-		return errors.Wrapf(err, "Failed to get secret %s in namespace %s", m.OBCluster.Namespace, m.OBCluster.Spec.UserSecrets.Monitor)
+		if secret == m.OBCluster.Spec.UserSecrets.Monitor {
+			// Create writes to the API server, while Get may still read a stale
+			// informer cache. Keep the returned Secret for remote-cluster copies.
+			masterMonitorSecret = fetchedSec
+		}
 	}
 	// create secret for monitor in remote K8s cluster if necessary
 	for _, zone := range m.OBCluster.Spec.Topology {

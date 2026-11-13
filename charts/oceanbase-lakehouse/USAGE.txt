@@ -21,12 +21,15 @@ soft anti-affinity prefers different hosts but still permits single-node trials.
 Two replicas on one host do not protect against host failure. A disruption
 budget permits one voluntary disruption when replicas > 1.
 
-The internal <release>-observer ClusterIP Service bootstraps the proxy; it
-never points back at the public SQL Service. It is resolved when a proxy starts,
-so first installation does not require already-existing Observer Pod addresses.
-This startup path resolves IPv4 Service addresses; IPv6-only clusters are not
-validated by this development integration.
-OBProxy then discovers the database topology. Database and Dashboard passwords
+Before OBProxy starts, an init container discovers the per-Observer Service
+addresses advertised by the SERVICE-mode database. It waits for the configured
+Observer count and writes the rootserver list into a shared temporary volume.
+It has namespace-scoped Service-list permission; the proxy process receives no
+Kubernetes API token. A load-balanced Service IP must not be used as a rootserver
+identity: it differs from the database topology and can cause SQL disconnects.
+The internal <release>-observer Service remains available for direct in-cluster
+access. IPv6-only clusters are not validated by this development integration.
+OBProxy then refreshes the database topology. Database and Dashboard passwords
 are unchanged. proxyro credentials are reused from an existing OBCluster; new
 clusters receive a dedicated credential. Proxy admin credentials are generated
 separately. Both survive disabling/re-enabling and uninstall/reinstall. Missing
