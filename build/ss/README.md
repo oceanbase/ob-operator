@@ -166,3 +166,31 @@ docker build -f build/ss/Dockerfile.compose-runtime \
 LogService 派生镜像使用同一配方并传入对应的 LogService digest。
 `BASE_IMAGE` 无默认浮动 tag，并拒绝不含 digest 的输入。发布脚本应从推送结果或锁文件
 读取该引用，同时把它记入交付清单；不要改写历史版本的构建快照。
+
+## LogService process supervision
+
+The final LogService image installs and checks `procps-ng` explicitly, even when
+`HELPER_IMAGE` is supplied by another build. Do not assume a helper binary brings
+its original runtime tools with it. The native helper and Compose launcher inspect
+Linux `/proc` directly, so missing `pgrep` cannot become a false startup timeout.
+Process inspection errors and a missing/exited daemon are distinct conditions.
+
+Before publishing, run the helper process regression in an isolated Linux PID
+namespace, then run both real startup paths with `pgrep` temporarily hidden in
+the test containers. Verify RPC/HTTP access, zero restarts beyond the Compose
+300-second boundary, and exit on real daemon failure. For the native helper,
+setting `LOGSERVICE_START_TIMEOUT_SECONDS=10` exercises its timeout boundary
+without waiting for the default 1800 seconds. Also check graceful termination.
+An initial open port or a successful bootstrap alone does not establish that the
+container will survive its startup deadline. Run these checks on pooled test
+machines, not development/build hosts.
+
+Container shutdown is bounded: both launchers forward TERM/INT, allow 20 seconds,
+then log a warning and use SIGKILL if the daemon remains alive. They allow a further
+3 seconds to observe termination. A requested stop returns success only after the
+daemon is gone; an unsolicited daemon death remains an error. This fits the normal
+30-second Kubernetes termination grace period (do not shorten it below 25 seconds).
+The tested LogService binary does not exit on TERM: this fallback is a forced stop,
+not proof of graceful flushing. Validate persisted SQL reads and new writes after
+restarting the LogService nodes. Startup and shutdown regressions must cover both
+native helper and Compose paths, including a daemon that ignores TERM.

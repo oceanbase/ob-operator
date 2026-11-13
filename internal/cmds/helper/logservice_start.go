@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -188,7 +189,7 @@ func startAndWaitForLauncher(cmd *exec.Cmd, startTimeout time.Duration) (time.Ti
 }
 
 // monitorDaemon polls for the oblogservice daemon process and exits if it dies.
-// It also forwards SIGTERM/SIGINT to the daemon PID for graceful shutdown.
+// It forwards SIGTERM/SIGINT and bounds shutdown with an explicit kill fallback.
 func monitorDaemon(deadline time.Time, startTimeout time.Duration) error {
 	daemonPid, err := waitForDaemon(deadline, startTimeout)
 	if err != nil {
@@ -196,19 +197,23 @@ func monitorDaemon(deadline time.Time, startTimeout time.Duration) error {
 	}
 	log.Printf("oblogservice daemon running with pid %d", daemonPid)
 
-	// Forward termination signals to the daemon
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
-	go func() {
-		s := <-sig
-		log.Printf("Received signal %v, forwarding to daemon pid %d", s, daemonPid)
-		_ = syscall.Kill(daemonPid, s.(syscall.Signal))
-	}()
-
+	defer signal.Stop(sig)
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
 	for {
-		time.Sleep(5 * time.Second)
-		if getDaemonPid() == 0 {
-			return errors.New("oblogservice daemon exited unexpectedly")
+		select {
+		case s := <-sig:
+			return stopLogServiceDaemon(daemonPid, s.(syscall.Signal), 20*time.Second)
+		case <-ticker.C:
+			running, err := logServiceProcessRunning("/proc", daemonPid)
+			if err != nil {
+				return errors.Wrap(err, "inspect oblogservice daemon")
+			}
+			if !running {
+				return errors.New("oblogservice daemon exited unexpectedly")
+			}
 		}
 	}
 }
@@ -224,7 +229,10 @@ func waitForDaemon(deadline time.Time, startTimeout time.Duration) (int, error) 
 	defer pollTicker.Stop()
 
 	for {
-		daemonPid := getDaemonPid()
+		daemonPid, err := findLogServiceDaemon("/proc")
+		if err != nil {
+			return 0, errors.Wrap(err, "inspect oblogservice processes")
+		}
 		if daemonPid > 0 {
 			return daemonPid, nil
 		}
@@ -249,18 +257,48 @@ func getLogServiceStartTimeout() time.Duration {
 	return time.Duration(seconds) * time.Second
 }
 
-func getDaemonPid() int {
-	out, err := exec.Command("pgrep", "-x", "oblogservice").Output()
+// Inspect procfs directly: minimal runtime images need not contain pgrep.
+// A failed inspection is an error, not evidence that the daemon is absent.
+func findLogServiceDaemon(procRoot string) (int, error) {
+	entries, err := os.ReadDir(procRoot)
 	if err != nil {
-		return 0
+		return 0, err
 	}
-	pidStr := strings.TrimSpace(strings.Split(string(out), "\n")[0])
-	if pidStr == "" {
-		return 0
+	oldest := 0
+	for _, entry := range entries {
+		pid, err := strconv.Atoi(entry.Name())
+		if err != nil || pid <= 0 {
+			continue
+		}
+		running, err := logServiceProcessRunning(procRoot, pid)
+		if err != nil {
+			return 0, err
+		}
+		if running && (oldest == 0 || pid < oldest) {
+			oldest = pid
+		}
 	}
-	var pid int
-	_, _ = fmt.Sscanf(pidStr, "%d", &pid)
-	return pid
+	return oldest, nil
+}
+
+func logServiceProcessRunning(procRoot string, pid int) (bool, error) {
+	data, err := os.ReadFile(filepath.Join(procRoot, strconv.Itoa(pid), "stat"))
+	if os.IsNotExist(err) {
+		return false, nil
+	} // Process exited during enumeration.
+	if err != nil {
+		return false, err
+	}
+	stat := string(data)
+	open, close := strings.IndexByte(stat, '('), strings.LastIndexByte(stat, ')')
+	if open < 0 || close <= open {
+		return false, errors.New("invalid process stat")
+	}
+	fields := strings.Fields(stat[close+1:])
+	if len(fields) == 0 {
+		return false, errors.New("missing process state in stat")
+	}
+	return stat[open+1:close] == "oblogservice" && fields[0] != "Z" && fields[0] != "X", nil
 }
 
 func getEnvOrDefault(key, defaultVal string) string {
@@ -268,4 +306,36 @@ func getEnvOrDefault(key, defaultVal string) string {
 		return v
 	}
 	return defaultVal
+}
+
+// Bound shutdown below Kubernetes' default 30-second termination grace period.
+// Some LogService builds handle TERM without exiting; report the forced fallback.
+func stopLogServiceDaemon(pid int, sig syscall.Signal, grace time.Duration) error {
+	log.Printf("Stopping LogService pid %d with %v", pid, sig)
+	if err := syscall.Kill(pid, sig); err != nil && err != syscall.ESRCH {
+		return err
+	}
+	deadline := time.Now().Add(grace)
+	forced := false
+	for {
+		running, err := logServiceProcessRunning("/proc", pid)
+		if err != nil {
+			return err
+		}
+		if !running {
+			return nil
+		}
+		if time.Now().After(deadline) {
+			if forced {
+				return errors.New("LogService remains alive after SIGKILL")
+			}
+			log.Printf("WARNING: LogService pid %d did not stop within %s; forcing SIGKILL", pid, grace)
+			if err := syscall.Kill(pid, syscall.SIGKILL); err != nil && err != syscall.ESRCH {
+				return err
+			}
+			forced = true
+			deadline = time.Now().Add(3 * time.Second)
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 }
