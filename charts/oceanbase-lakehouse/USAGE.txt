@@ -142,6 +142,10 @@ Prerequisites
 - An existing Operator must serve the lakehouse CRDs and support native storage
   initialization and service resolution. The readiness hook uses the matched
   /lakehouse-readiness image shipped with the Chart.
+- Reusing an existing shared Operator does NOT upgrade its image. A successful
+  API/webhook check is not proof that its binary matches this release. Have the
+  cluster owner validate and upgrade it separately, or use a fresh test cluster.
+  Do not change a shared Operator just to install another Lakehouse release.
 
 Check the current context before deployment:
   kubectl config current-context
