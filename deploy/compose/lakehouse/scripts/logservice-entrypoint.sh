@@ -50,9 +50,30 @@ if [[ -z "${pid}" ]]; then
   exit 1
 fi
 
-trap 'kill -TERM "${pid}" 2>/dev/null || true' TERM INT
+daemon_running() {
+  local stat_line state
+  IFS= read -r stat_line < "/proc/${pid}/stat" 2>/dev/null || return 1
+  state="${stat_line##*) }"; state="${state%% *}"
+  [[ "$state" != Z && "$state" != X ]]
+}
+stop_daemon() {
+  trap '' TERM INT
+  echo "Stopping LogService pid ${pid}" >&2
+  kill -TERM "${pid}" 2>/dev/null || true
+  local stop_deadline=$((SECONDS + 20))
+  while daemon_running && (( SECONDS < stop_deadline )); do sleep 0.1; done
+  if daemon_running; then
+    echo "WARNING: LogService did not stop within 20s; forcing SIGKILL" >&2
+    kill -KILL "${pid}" 2>/dev/null || true
+    stop_deadline=$((SECONDS + 3))
+    while daemon_running && (( SECONDS < stop_deadline )); do sleep 0.1; done
+  fi
+  if daemon_running; then echo "LogService remains alive after SIGKILL" >&2; exit 1; fi
+  exit 0
+}
+trap stop_daemon TERM INT
 
-while kill -0 "${pid}" 2>/dev/null; do
+while daemon_running; do
   sleep 5 &
   wait $! || true
 done

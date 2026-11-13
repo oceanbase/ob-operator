@@ -1,9 +1,11 @@
 package helper
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"syscall"
 	"testing"
 	"time"
 )
@@ -71,5 +73,52 @@ func TestLogServiceProcInspectionErrors(t *testing.T) {
 	}
 	if _, err := findLogServiceDaemon(root); err == nil {
 		t.Fatal("invalid process information must not become no-process")
+	}
+}
+
+func TestLogServiceStopTermAndKill(t *testing.T) {
+	for _, ignore := range []bool{false, true} {
+		t.Run(fmt.Sprint(ignore), func(t *testing.T) {
+			dir := t.TempDir()
+			binary, err := os.ReadFile("/bin/bash")
+			if err != nil {
+				t.Fatal(err)
+			}
+			path := filepath.Join(dir, "oblogservice")
+			if err = os.WriteFile(path, binary, 0755); err != nil {
+				t.Fatal(err)
+			}
+			ready := filepath.Join(dir, "ready")
+			script := "trap 'exit 0' TERM; "
+			if ignore {
+				script = "trap '' TERM; "
+			}
+			cmd := exec.Command(path, "-c", script+"touch \"$1\"; while :; do :; done", "test", ready)
+			if err = cmd.Start(); err != nil {
+				t.Fatal(err)
+			}
+			defer func() { _ = cmd.Process.Kill(); _ = cmd.Wait() }()
+			deadline := time.Now().Add(3 * time.Second)
+			for {
+				if _, err = os.Stat(ready); err == nil {
+					break
+				}
+				if time.Now().After(deadline) {
+					t.Fatal("child not ready")
+				}
+				time.Sleep(10 * time.Millisecond)
+			}
+			if err = stopLogServiceDaemon(cmd.Process.Pid, syscall.SIGTERM, 100*time.Millisecond); err != nil {
+				t.Fatal(err)
+			}
+			err = cmd.Wait()
+			if ignore {
+				if cmd.ProcessState.Sys().(syscall.WaitStatus).Signal() != syscall.SIGKILL {
+					t.Fatalf("expected forced kill: %v", err)
+				}
+			} else if err != nil {
+				t.Fatal(err)
+			}
+		})
 	}
 }

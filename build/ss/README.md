@@ -184,3 +184,13 @@ without waiting for the default 1800 seconds. Also check graceful termination.
 An initial open port or a successful bootstrap alone does not establish that the
 container will survive its startup deadline. Run these checks on pooled test
 machines, not development/build hosts.
+
+Container shutdown is bounded: both launchers forward TERM/INT, allow 20 seconds,
+then log a warning and use SIGKILL if the daemon remains alive. They allow a further
+3 seconds to observe termination. A requested stop returns success only after the
+daemon is gone; an unsolicited daemon death remains an error. This fits the normal
+30-second Kubernetes termination grace period (do not shorten it below 25 seconds).
+The tested LogService binary does not exit on TERM: this fallback is a forced stop,
+not proof of graceful flushing. Validate persisted SQL reads and new writes after
+restarting the LogService nodes. Startup and shutdown regressions must cover both
+native helper and Compose paths, including a daemon that ignores TERM.

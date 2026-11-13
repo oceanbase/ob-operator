@@ -189,7 +189,7 @@ func startAndWaitForLauncher(cmd *exec.Cmd, startTimeout time.Duration) (time.Ti
 }
 
 // monitorDaemon polls for the oblogservice daemon process and exits if it dies.
-// It also forwards SIGTERM/SIGINT to the daemon PID for graceful shutdown.
+// It forwards SIGTERM/SIGINT and bounds shutdown with an explicit kill fallback.
 func monitorDaemon(deadline time.Time, startTimeout time.Duration) error {
 	daemonPid, err := waitForDaemon(deadline, startTimeout)
 	if err != nil {
@@ -197,23 +197,23 @@ func monitorDaemon(deadline time.Time, startTimeout time.Duration) error {
 	}
 	log.Printf("oblogservice daemon running with pid %d", daemonPid)
 
-	// Forward termination signals to the daemon
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
-	go func() {
-		s := <-sig
-		log.Printf("Received signal %v, forwarding to daemon pid %d", s, daemonPid)
-		_ = syscall.Kill(daemonPid, s.(syscall.Signal))
-	}()
-
+	defer signal.Stop(sig)
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
 	for {
-		time.Sleep(5 * time.Second)
-		running, err := logServiceProcessRunning("/proc", daemonPid)
-		if err != nil {
-			return errors.Wrap(err, "inspect oblogservice daemon")
-		}
-		if !running {
-			return errors.New("oblogservice daemon exited unexpectedly")
+		select {
+		case s := <-sig:
+			return stopLogServiceDaemon(daemonPid, s.(syscall.Signal), 20*time.Second)
+		case <-ticker.C:
+			running, err := logServiceProcessRunning("/proc", daemonPid)
+			if err != nil {
+				return errors.Wrap(err, "inspect oblogservice daemon")
+			}
+			if !running {
+				return errors.New("oblogservice daemon exited unexpectedly")
+			}
 		}
 	}
 }
@@ -306,4 +306,36 @@ func getEnvOrDefault(key, defaultVal string) string {
 		return v
 	}
 	return defaultVal
+}
+
+// Bound shutdown below Kubernetes' default 30-second termination grace period.
+// Some LogService builds handle TERM without exiting; report the forced fallback.
+func stopLogServiceDaemon(pid int, sig syscall.Signal, grace time.Duration) error {
+	log.Printf("Stopping LogService pid %d with %v", pid, sig)
+	if err := syscall.Kill(pid, sig); err != nil && err != syscall.ESRCH {
+		return err
+	}
+	deadline := time.Now().Add(grace)
+	forced := false
+	for {
+		running, err := logServiceProcessRunning("/proc", pid)
+		if err != nil {
+			return err
+		}
+		if !running {
+			return nil
+		}
+		if time.Now().After(deadline) {
+			if forced {
+				return errors.New("LogService remains alive after SIGKILL")
+			}
+			log.Printf("WARNING: LogService pid %d did not stop within %s; forcing SIGKILL", pid, grace)
+			if err := syscall.Kill(pid, syscall.SIGKILL); err != nil && err != syscall.ESRCH {
+				return err
+			}
+			forced = true
+			deadline = time.Now().Add(3 * time.Second)
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
 }
