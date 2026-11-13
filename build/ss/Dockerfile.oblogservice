@@ -12,8 +12,9 @@ RUN --mount=type=bind,source=build/ss/rpms/logservice,target=/tmp/rpms \
     python3 /tmp/verify-rpms.py /tmp/rpms; \
     duplicates="$(rpm -qp --qf '%{NAME}\n' ./*.rpm | sort | uniq -d)"; \
     test -z "${duplicates}"; \
-    yum install -y ./*.rpm; \
+    yum install -y procps-ng ./*.rpm; \
     test "$(rpm -q --qf '%{VERSION}-%{RELEASE}' oblogservice-ce)" = "${RPM_VERSION}"; \
+    command -v pgrep; \
     test -x /home/admin/oblogservice/bin/oblogservice; \
     test -x /home/admin/oceanbase/bin/oceanbase-helper; \
     ln -s /home/admin/oceanbase/bin/oceanbase-helper /home/admin/oblogservice/bin/oceanbase-helper; \

@@ -21,10 +21,27 @@ fi
 
 "${home}/bin/oblogservice" "${args[@]}"
 
+# Procfs is part of the Linux runtime; do not depend on optional procps/pgrep.
+find_daemon_pid() {
+  local stat_file stat_line process_state candidate oldest=""
+  [[ -r /proc/self/stat ]] || { echo "cannot inspect /proc/self/stat" >&2; return 1; }
+  for stat_file in /proc/[0-9]*/stat; do
+    IFS= read -r stat_line < "${stat_file}" 2>/dev/null || continue
+    [[ "${stat_line#* (}" == oblogservice\)\ * ]] || continue
+    process_state="${stat_line##*) }"
+    process_state="${process_state%% *}"
+    [[ "${process_state}" != Z && "${process_state}" != X ]] || continue
+    candidate="${stat_file%/stat}"
+    candidate="${candidate##*/}"
+    if [[ -z "${oldest}" ]] || (( candidate < oldest )); then oldest="${candidate}"; fi
+  done
+  printf '%s' "${oldest}"
+}
+
 deadline=$((SECONDS + 300))
 pid=""
 while (( SECONDS < deadline )); do
-  pid="$(pgrep -xo oblogservice || true)"
+  pid="$(find_daemon_pid)" || { echo "failed to inspect LogService processes" >&2; exit 1; }
   [[ -n "${pid}" ]] && break
   sleep 1
 done

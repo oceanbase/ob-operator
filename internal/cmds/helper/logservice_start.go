@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
@@ -207,7 +208,11 @@ func monitorDaemon(deadline time.Time, startTimeout time.Duration) error {
 
 	for {
 		time.Sleep(5 * time.Second)
-		if getDaemonPid() == 0 {
+		running, err := logServiceProcessRunning("/proc", daemonPid)
+		if err != nil {
+			return errors.Wrap(err, "inspect oblogservice daemon")
+		}
+		if !running {
 			return errors.New("oblogservice daemon exited unexpectedly")
 		}
 	}
@@ -224,7 +229,10 @@ func waitForDaemon(deadline time.Time, startTimeout time.Duration) (int, error) 
 	defer pollTicker.Stop()
 
 	for {
-		daemonPid := getDaemonPid()
+		daemonPid, err := findLogServiceDaemon("/proc")
+		if err != nil {
+			return 0, errors.Wrap(err, "inspect oblogservice processes")
+		}
 		if daemonPid > 0 {
 			return daemonPid, nil
 		}
@@ -249,18 +257,48 @@ func getLogServiceStartTimeout() time.Duration {
 	return time.Duration(seconds) * time.Second
 }
 
-func getDaemonPid() int {
-	out, err := exec.Command("pgrep", "-x", "oblogservice").Output()
+// Inspect procfs directly: minimal runtime images need not contain pgrep.
+// A failed inspection is an error, not evidence that the daemon is absent.
+func findLogServiceDaemon(procRoot string) (int, error) {
+	entries, err := os.ReadDir(procRoot)
 	if err != nil {
-		return 0
+		return 0, err
 	}
-	pidStr := strings.TrimSpace(strings.Split(string(out), "\n")[0])
-	if pidStr == "" {
-		return 0
+	oldest := 0
+	for _, entry := range entries {
+		pid, err := strconv.Atoi(entry.Name())
+		if err != nil || pid <= 0 {
+			continue
+		}
+		running, err := logServiceProcessRunning(procRoot, pid)
+		if err != nil {
+			return 0, err
+		}
+		if running && (oldest == 0 || pid < oldest) {
+			oldest = pid
+		}
 	}
-	var pid int
-	_, _ = fmt.Sscanf(pidStr, "%d", &pid)
-	return pid
+	return oldest, nil
+}
+
+func logServiceProcessRunning(procRoot string, pid int) (bool, error) {
+	data, err := os.ReadFile(filepath.Join(procRoot, strconv.Itoa(pid), "stat"))
+	if os.IsNotExist(err) {
+		return false, nil
+	} // Process exited during enumeration.
+	if err != nil {
+		return false, err
+	}
+	stat := string(data)
+	open, close := strings.IndexByte(stat, '('), strings.LastIndexByte(stat, ')')
+	if open < 0 || close <= open {
+		return false, errors.New("invalid process stat")
+	}
+	fields := strings.Fields(stat[close+1:])
+	if len(fields) == 0 {
+		return false, errors.New("missing process state in stat")
+	}
+	return stat[open+1:close] == "oblogservice" && fields[0] != "Z" && fields[0] != "X", nil
 }
 
 func getEnvOrDefault(key, defaultVal string) string {
