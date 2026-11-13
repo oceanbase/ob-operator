@@ -36,6 +36,47 @@ the Docker Compose plugin using the
 When deploying with `sudo`, install the plugin where root can access it and
 verify with `sudo docker compose version`.
 
+## 部署前：端口清单与冲突处理
+
+**部署前端口清单（均为 TCP）**
+
+| 用途 | 宿主机端口 → 容器端口 | 默认开放情况 | 修改配置 |
+| --- | --- | --- | --- |
+| OceanBase SQL | 32881 → 2881 | 默认绑定 0.0.0.0 | `OBSERVER_SQL_HOST_PORT` |
+| obshell 管理页面/API | 32886 → 2886 | 默认绑定 0.0.0.0 | `OBSHELL_HOST_PORT` |
+| Prometheus | 39090 → 9090 | 仅启用监控端口覆盖文件时开放，默认绑定 127.0.0.1 | `PROMETHEUS_HOST_PORT` |
+| Alertmanager | 39093 → 9093 | 仅启用监控端口覆盖文件时开放，默认绑定 127.0.0.1 | `ALERTMANAGER_HOST_PORT` |
+
+默认安装只占用宿主机 **32881、32886**。Observer RPC 2882、LogService 50051/50052、MinIO 9000、OBAgent 8088 等用于容器网络内部通信，不需要在宿主机预留同号端口。使用额外调试覆盖文件时，按其实际映射另行检查。
+
+在部署主机上检查默认端口，并查看已有容器的端口映射：
+
+```bash
+sudo ss -ltnp '( sport = :32881 or sport = :32886 )'
+sudo docker ps --format 'table {{.Names}}\t{{.Ports}}'
+```
+
+`ss` 若出现 LISTEN 记录，先确认占用者；Docker 端口可能通过转发规则实现，也要检查 `docker ps`。启用监控覆盖文件时，再检查 39090、39093。使用自定义端口时检查替换后的值；检查结果仅代表当时状态。
+
+**遇到 `bind: address already in use`：** 例如 `0.0.0.0:32886` 表示宿主机 obshell 端口已被占用，不是数据库内部 2886 冲突。可以为本次部署选择其他空闲端口，不要直接停止未知服务。
+
+在 `compose.yaml` 同目录的 `.env` 中新增或修改下面两项；已有文件请保留其他配置，同名项只保留一条：
+
+```dotenv
+OBSERVER_SQL_HOST_PORT=33881
+OBSHELL_HOST_PORT=33886
+```
+
+33881、33886 仅是示例，使用前同样检查是否空闲。然后在原目录、使用原项目名重试：
+
+```bash
+sudo ss -ltnp '( sport = :33881 or sport = :33886 )'
+sudo docker compose config --quiet
+sudo docker compose up -d && sudo docker compose logs -f observer-bootstrap
+```
+
+配置解析检查不检查端口占用。已用 `--env-file` 时修改原环境文件，后续所有 Compose 命令沿用同一 `--env-file`、`-f`、`-p` 参数；显式环境文件场景不要只修改默认 `.env`。端口冲突发生后可能已有部分容器创建，直接用原项目重试即可，**不需要删除数据卷或执行 `down -v`**。最终访问使用新端口，并向客户端来源放行相应防火墙/安全组规则。若创建第二套实例，还需独立项目名和不冲突的容器网段。
+
 ## Matching Helm and Compose releases
 
 Use the Compose bundle and images from the same delivery version. Both native

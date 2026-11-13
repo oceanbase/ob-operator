@@ -51,6 +51,29 @@ Chart when you already have Kubernetes. Dashboard is enabled by default and is
 installed in the SAME Helm release as the lakehouse. No install.sh is shipped in
 this Helm Chart, and no Helm process runs inside a Kubernetes Job.
 
+部署前：端口清单与冲突处理
+-------------------------------------
+**部署前端口清单（Helm）**
+
+| 用途 | 集群内 Service 端口 | 节点对外端口 |
+| --- | --- | --- |
+| OceanBase SQL | TCP 2881 | `sqlService.nodePort`，默认 0，由 Kubernetes 自动分配 |
+| Dashboard | TCP 80 | `dashboard.service.nodePort`，默认 0，由 Kubernetes 自动分配 |
+
+最新源码默认启用 OBProxy：SQL Service 对客户端仍提供 `sqlService.port`（默认 2881），转发到 OBProxy 的容器端口 2883；设置 `obproxy.enabled=false` 时才直连 Observer 的 2881。不要把后端端口当作 NodePort。
+
+Helm 不沿用 Compose 的 32881/32886。默认 NodePort 从集群配置范围分配（通常为 30000–32767）；安装后查询实际端口，并仅向需要访问的客户端来源放行。集群内组件通信仍需满足现有 Kubernetes 网络策略。
+
+部署前查看已分配的 Service 端口：
+
+```bash
+kubectl get svc -A -o wide
+```
+
+固定 NodePort 时，两项应选择不同且未分配的端口，并处于集群允许范围；同时在目标节点检查宿主机已有服务。NodePort 可由转发规则实现，不能只凭 `ss` 没有监听就判定未占用。通常保留 `nodePort: 0` 即可，Kubernetes 会避开已分配给其他 Service 的 NodePort。
+
+如果配置为 ClusterIP，服务不直接占用节点 NodePort；执行 `kubectl port-forward` 时需在运行该命令的电脑预留本地端口，冲突时修改 `本地端口:Service端口` 的左侧。Kubernetes API、kubelet 和 CNI 的基础网络端口由集群管理员按实际集群配置准备。
+
 Quick install: database and Dashboard
 -------------------------------------
 On an empty Kubernetes cluster, the published Chart registers the CRDs and

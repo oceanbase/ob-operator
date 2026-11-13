@@ -92,6 +92,9 @@ const CLUSTER_INFO_CONFIG = [
 ];
 
 const TOPO_INFO_CONFIG = [
+  'deploymentMode',
+  'sharedStorageInfo',
+  'logServiceRef',
   'name',
   'clusterName',
   'namespace',
