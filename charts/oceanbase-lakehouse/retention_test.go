@@ -210,6 +210,9 @@ func renderWithDiscovery(t *testing.T, kubeconfig string, values map[string]inte
 
 func TestRetainedGeneratedCredentialsRemainStable(t *testing.T) {
 	api, kubeconfig := retainedCredentials(t)
+	// Proxy credentials are seeded separately and are never replayed by upgrades.
+	api.secrets["qa-proxyro"] = map[string]string{"password": "cmV0YWluZWQ="}
+	api.secrets["qa-proxysys"] = map[string]string{"password": "cmV0YWluZWQ="}
 	for attempt := 0; attempt < 2; attempt++ {
 		output, err := renderRetained(t, kubeconfig, map[string]interface{}{"dashboard": map[string]interface{}{"enabled": false}})
 		if err != nil {

@@ -47,7 +47,11 @@ Use your existing Dashboard URL. Its administrator must grant visibility to name
 {{ end }}
 
 Database SQL access
-Retrieve the root@sys password in a trusted terminal; do not share its output:
+{{ if .Values.obproxy.enabled }}SQL traffic goes through OBProxy ({{ .Values.obproxy.replicas }} replicas).
+Disable it with --set obproxy.enabled=false to connect directly to Observer.
+Changing this switch changes the SQL Service backend; reconnect clients afterwards.
+{{ else }}SQL traffic connects directly to Observer (obproxy.enabled=false).
+{{ end }}Retrieve the root@sys password in a trusted terminal; do not share its output:
   kubectl -n {{ .Release.Namespace }} get secret {{ if .Values.observer.rootExistingSecret }}{{ .Values.observer.rootExistingSecret }}{{ else }}{{ .Release.Name }}-db-root{{ end }} -o jsonpath='{.data.password}' | base64 --decode; echo
 {{ if eq .Values.stage "cluster" }}
 {{ if eq .Values.sqlService.type "NodePort" }}

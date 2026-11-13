@@ -10,7 +10,7 @@ scheduling:
 dashboard:
   nodeSelector: {kubernetes.io/hostname: worker-1}
 logService:
-  resource: {cpu: "1", memory: 4Gi}
+  resource: {cpu: "2", memory: 4Gi}
   topology:
     - zone: zone1
       replica: 1
@@ -22,7 +22,7 @@ logService:
       replica: 1
       nodeSelector: {kubernetes.io/hostname: worker-3}
 observer:
-  resource: {cpu: "2", memory: 10Gi}
+  resource: {cpu: "3", memory: 10Gi}
   topology:
     - zone: zone1
       replica: 1

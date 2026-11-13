@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "releaseVersion": "20261103-compose-monitoring",
+  "releaseVersion": "20261113-helm-obproxy-development",
   "platform": "linux/amd64",
   "scope": "Internal release. Canonical tags identify exact cached images; registry publication and public pull access have not been verified.",
   "excluded_optional": {
@@ -173,6 +173,17 @@
         "helm"
       ],
       "source_reference": "oceanbase/kube-rbac-proxy:v0.13.1",
+      "publication": "not-verified"
+    },
+    {
+      "role": "obproxy",
+      "reference": "oceanbase/obproxy-ce:4.3.3.0-5",
+      "image_id": "sha256:c3e1000942e7869f400beb6d5b71e2bb9a3b91f2c2afa9ba45f399c9977eb0db",
+      "platform": "linux/amd64",
+      "channels": [
+        "helm"
+      ],
+      "source_reference": "oceanbase/obproxy-ce:4.3.3.0-5",
       "publication": "not-verified"
     }
   ]

@@ -9,11 +9,16 @@ metadata:
 spec:
   type: {{ .Values.sqlService.type }}
   selector:
+    {{- if .Values.obproxy.enabled }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: obproxy
+    {{- else }}
     ref-obcluster: {{ .Release.Name }}-ob
+    {{- end }}
   ports:
     - name: sql
       port: {{ .Values.sqlService.port }}
-      targetPort: 2881
+      targetPort: {{ ternary 2883 2881 .Values.obproxy.enabled }}
       protocol: TCP
       {{- $nodePort := int (include "lakehouse.sqlNodePort" .) }}
       {{- if and (eq .Values.sqlService.type "NodePort") (gt $nodePort 0) }}

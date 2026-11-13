@@ -294,3 +294,9 @@ resolves its same-namespace Service at runtime without mutating this manifest. *
 {{- if and $service $service.spec.ports -}}{{ (index $service.spec.ports 0).nodePort | default 0 }}{{- else -}}0{{- end -}}
 {{- end -}}
 {{- end -}}
+
+{{/* Preserve the webhook-generated account identity when enabling on an existing cluster. */}}
+{{- define "lakehouse.proxyROSecret" -}}
+{{- $cluster := include "lakehouse.lookupResource" (dict "root" . "kind" "OBCluster" "name" (printf "%s-ob" .Release.Name)) | fromJson -}}
+{{- dig "spec" "userSecrets" "proxyro" (printf "%s-proxyro" .Release.Name) $cluster -}}
+{{- end -}}

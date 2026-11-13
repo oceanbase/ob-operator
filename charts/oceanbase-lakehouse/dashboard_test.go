@@ -160,7 +160,11 @@ func TestDashboardDisabledOmitsAllItsResources(t *testing.T) {
 			t.Fatalf("disabled Dashboard still renders %s/%s", doc["kind"], name)
 		}
 		switch doc["kind"] {
-		case "Deployment", "ClusterRole", "ClusterRoleBinding", "CronJob":
+		case "Deployment":
+			if name != "qa-obproxy" {
+				t.Fatalf("disabled Dashboard still renders %s/%s", doc["kind"], name)
+			}
+		case "ClusterRole", "ClusterRoleBinding", "CronJob":
 			t.Fatalf("disabled Dashboard still renders %s/%s", doc["kind"], name)
 		}
 	}

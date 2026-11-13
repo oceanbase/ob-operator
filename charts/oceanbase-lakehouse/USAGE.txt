@@ -1,3 +1,49 @@
+OBProxy SQL entry point (0.6.0 development chart)
+================================================
+The cluster stage installs one OBProxy replica by default. The existing
+<release>-sql Service keeps its public port/NodePort and sends SQL traffic to
+OBProxy:2883. Set --set obproxy.enabled=false to omit OBProxy and keep direct
+Observer:2881 access. Storage/logservice-only stages do not install OBProxy.
+
+Default settings:
+  obproxy.enabled: true
+  obproxy.replicas: 1
+  obproxy.image: oceanbase/obproxy-ce:4.3.3.0-5
+  obproxy.memoryLimit: 1536M
+  obproxy.resources.requests: {cpu: "1", memory: 2Gi}
+  obproxy.resources.limits: {cpu: "1", memory: 2Gi}
+
+The memoryLimit is per proxy process and must remain below the container limit.
+The default proxy requests/limits 1 CPU and 2Gi. Its 1536M process budget leaves
+container headroom. Count this in addition to database/monitoring resources.
+obproxy.nodeSelector and obproxy.tolerations control proxy placement separately;
+soft anti-affinity prefers different hosts but still permits single-node trials.
+Two replicas on one host do not protect against host failure. A disruption
+budget permits one voluntary disruption when replicas > 1.
+
+The internal <release>-observer ClusterIP Service bootstraps the proxy; it
+never points back at the public SQL Service. It is resolved when a proxy starts,
+so first installation does not require already-existing Observer Pod addresses.
+This startup path resolves IPv4 Service addresses; IPv6-only clusters are not
+validated by this development integration.
+OBProxy then discovers the database topology. Database and Dashboard passwords
+are unchanged. proxyro credentials are reused from an existing OBCluster; new
+clusters receive a dedicated credential. Proxy admin credentials are generated
+separately. Both survive disabling/re-enabling and uninstall/reinstall. Missing
+retained credentials must be restored, not regenerated.
+
+Changing enabled on an existing release switches the SQL Service backend.
+Schedule this as a connection change and reconnect clients; in-flight sessions
+and transactions are not guaranteed to survive. Keep the same release,
+namespace, SQL port settings and original values. Do not use --reuse-values
+from an older chart without supplying the new obproxy defaults. Check Helm
+NOTES, connect through <release>-sql and run SELECT 1 after deployment.
+TCP readiness probes check the proxy listener, not authenticated SQL routing;
+verify the application tenant and credentials before accepting traffic.
+
+Release packaging must include the selected OBProxy image in the Helm image
+lock and offline inventory; it is not a Compose dependency.
+
 OceanBase Lakehouse: native Helm deployment
 ==========================================
 Use Docker Compose for a quick database/SQL experience on one machine. Use this
@@ -16,9 +62,9 @@ locked images. Install from the Helm repository or the exact Chart archive:
 
 No values file or separate Dashboard installation is needed. The packaged Chart
 already pins this delivery's images and enables Dashboard, its monitoring,
-bundled MinIO, three LogService processes and one Observer. Suggested worker:
->=8 CPU, 32Gi memory and 350Gi free data disk, with enough allocatable capacity
-after other workloads. Successful completion with hooks enabled includes the
+bundled MinIO, three LogService processes, one Observer and one OBProxy.
+Database + proxy request 10 CPU / 24Gi; add Kubernetes, Dashboard, monitoring,
+object storage and other workloads. Keep >=350Gi free data disk for this bundle. Successful completion with hooks enabled includes the
 database and Dashboard readiness checks. Helm prints access and login commands.
 
 If your StorageClass has another name, append --set storageClass=<actual-name> --set minio.storageClass=<actual-name>.
@@ -81,10 +127,11 @@ Single-node experience
 The quick-install command already selects this sizing. values-single-node.yaml
 is an optional explicit copy for customization; image-values.yaml is supplied
 for inspection/overrides, and is already incorporated into the packaged Chart.
-Suggested worker: >=8 CPU, 32Gi memory, >=350Gi free data disk. The defaults have
-one Observer (2 CPU/10Gi), three LogService processes (1 CPU/4Gi EACH), MinIO,
-Dashboard, Prometheus and Alertmanager. It uses fixed sizing, not all machine
-resources. CPU requests from other Kubernetes workloads count against capacity.
+The defaults have one Observer (3 CPU/10Gi), three LogService processes
+(2 CPU/4Gi EACH) and one OBProxy (1 CPU/2Gi): 10 CPU/24Gi total requests.
+Add MinIO, Dashboard, Prometheus, Alertmanager and Kubernetes/system capacity;
+keep >=350Gi free disk. These are per-process budgets, not a whole-host minimum.
+CPU requests from other Kubernetes workloads count against capacity.
 
 On a multi-node K8s cluster, add a hostname selector in the single-node values
 if you want all database Pods on a particular worker, and append
@@ -105,8 +152,9 @@ kubernetes.io/hostname label values (not assumed public IPs):
 
 All workers must be members of one Kubernetes cluster. Kubernetes schedules one
 Observer and one LogService per worker. Storage, Dashboard and initialization
-run on worker-1 in this example. Budget at least 3 CPU/14Gi per worker for the
-database processes, plus the storage/Dashboard/system workloads on worker-1.
+run on worker-1 in this example. Budget at least 5 CPU/14Gi per worker for the
+database processes, plus 1 CPU/2Gi wherever OBProxy is scheduled and the
+storage/Dashboard/system workloads on worker-1.
 Provision adequate capacity beyond these requests. This topology still uses
 one bundled MinIO instance; it is an experience setup, not highly available
 object storage. For distributed bundled storage on a fresh release, append
@@ -124,18 +172,45 @@ Pod, not complete host loss, quorum loss, or capacity/stress certification.
 No SSH/SCP between workers is performed by Helm. Every worker must be able to
 pull the configured images or have the exact images preloaded by an admin.
 
+Minimum sizing reference (test defaults, production planning)
+-------------------------------------------------------------
+Source: https://yuque.antfin.com/ob/ai-storage/xs9go7b0xfobq5fv (draft).
+                    Nodes  Host CPU/RAM   Local disk    Component CPU/RAM
+Test ODP + Observer   >=1   4C / 16G      SSD 50GB      ODP 1C/2G, OB 3C/10G
+Test LogService       >=3   2C / 4G       20GB          LS 2C/4G each
+Prod ODP + Observer   >=2   8C / 32G      SSD 256GB     ODP 2C/4G, OB 6C/24G
+Prod LogService       >=3   2C / 4G       100GB         LS 2C/4G each
+
+Helm defaults implement the test component budgets, using Kubernetes Gi for
+memory/storage (the source uses G/GB). The source does not split data and logs;
+the chart allocates Observer 40Gi data + 10Gi logs, and each LogService 10Gi
+store + 10Gi diagnostic logs. Those totals are 50Gi and 20Gi respectively;
+Gi is slightly larger than decimal GB. Runtime/OS/images, proxy logs and object
+storage need extra disk. Host specifications are planning requirements, not
+Kubernetes node provisioning or guaranteed Pod placement.
+
+Production needs at least two Observer nodes/replicas and three LogService
+nodes, with per-component budgets shown above, independently sized persistent
+volumes and object storage. It is not selected by the default or the three-node
+experience example. Compose does not contain OBProxy; SQL connects directly
+to Observer. No proxy resources are allocated by Compose.
+
+These smaller PVC defaults are for FRESH installations. Preserve all existing
+observer.dataSize/logSize and logService.storeSize/logSize values on upgrade;
+Kubernetes/Operator do not support shrinking existing PVCs to this profile.
+
 Common configuration
 --------------------
 Put custom settings in a values file and keep it for upgrades/reinstalls:
 
   storageClass: local-path
   observer:
-    resource: {cpu: "2", memory: 16Gi}
-    dataSize: 100Gi
-    logSize: 20Gi
+    resource: {cpu: "3", memory: 10Gi}
+    dataSize: 40Gi
+    logSize: 10Gi
   logService:
-    resource: {cpu: "1", memory: 4Gi}
-    storeSize: 20Gi
+    resource: {cpu: "2", memory: 4Gi}
+    storeSize: 10Gi
     logSize: 10Gi
   minio:
     size: 100Gi
@@ -144,7 +219,7 @@ CPU/memory and disk values are PER PROCESS, not the sum across all replicas.
 Observer memory and volume sizing must meet Operator's checks. Larger memory
 can require larger data volumes. This guide describes first-install sizing;
 changing storage identity or resizing existing state needs a separate planned
-procedure. Use --set-string observer.resource.cpu=2 for a simple override; the
+procedure. Use --set-string observer.resource.cpu=3 for a simple override; the
 old installer flags such as --oc/--nodes are not Helm flags.
 
 For external storage use objectStorage.endpoint=<external-url> and minio.enabled=false, endpoint, region,

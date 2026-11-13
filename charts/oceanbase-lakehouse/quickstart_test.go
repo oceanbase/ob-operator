@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"gopkg.in/yaml.v3"
+	appsv1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
@@ -95,9 +96,29 @@ func TestDefaultSizingMatchesSingleNodeProfile(t *testing.T) {
 			memory += replicas * perMemory.Value()
 		}
 	}
-	// Leave room on the documented 8 CPU / 32Gi experience worker for MinIO,
-	// Dashboard, monitoring, initialization and Kubernetes itself.
-	if cpu > 5000 || memory > resource.NewQuantity(22<<30, resource.BinarySI).Value() {
-		t.Fatalf("database defaults exceed the single-node budget: %dm CPU, %d bytes memory", cpu, memory)
+	// Include OBProxy in the test-profile component budget. This does not
+	// include Kubernetes, monitoring or object storage overhead.
+	var proxy appsv1.Deployment
+	decodeScheduledObject(t, find(t, defaults, "Deployment", "qa-obproxy"), &proxy)
+	for _, container := range proxy.Spec.Template.Spec.Containers {
+		cpu += int64(*proxy.Spec.Replicas) * container.Resources.Requests.Cpu().MilliValue()
+		memory += int64(*proxy.Spec.Replicas) * container.Resources.Requests.Memory().Value()
+	}
+	if cpu != 10000 || memory != resource.NewQuantity(24<<30, resource.BinarySI).Value() {
+		t.Fatalf("test-profile database + proxy budget must be 10 CPU/24Gi: %dm CPU, %d bytes memory", cpu, memory)
+	}
+	for _, tc := range []struct {
+		kind, name, section, data string
+		total                     int64
+	}{
+		{"OBCluster", "qa-ob", "observer", "dataStorage", 50},
+		{"OBLogServiceCluster", "qa-ls", "logService", "storeStorage", 20},
+	} {
+		doc := find(t, defaults, tc.kind, tc.name)
+		data := resource.MustParse(field(doc, "spec", tc.section, "storage", tc.data, "size").(string))
+		logs := resource.MustParse(field(doc, "spec", tc.section, "storage", "logStorage", "size").(string))
+		if data.Value()+logs.Value() != tc.total<<30 {
+			t.Fatalf("%s volumes do not fit its %dGi per-instance budget", tc.kind, tc.total)
+		}
 	}
 }

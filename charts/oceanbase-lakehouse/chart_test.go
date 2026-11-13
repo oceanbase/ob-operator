@@ -78,7 +78,7 @@ func find(t *testing.T, docs []manifest, kind, name string) manifest {
 func TestStagesAndRetention(t *testing.T) {
 	for _, stage := range []string{"storage", "logservice", "cluster"} {
 		t.Run(stage, func(t *testing.T) {
-			docs, output, err := render(t, map[string]interface{}{"stage": stage, "native": map[string]interface{}{"enabled": false}, "dashboard": map[string]interface{}{"enabled": false}})
+			docs, output, err := render(t, map[string]interface{}{"obproxy": map[string]interface{}{"enabled": false}, "stage": stage, "native": map[string]interface{}{"enabled": false}, "dashboard": map[string]interface{}{"enabled": false}})
 			if err != nil {
 				t.Fatalf("render: %v\n%s", err, output)
 			}
@@ -141,6 +141,7 @@ func TestStagesAndRetention(t *testing.T) {
 
 func TestExternalMinIOAndUserOwnedResources(t *testing.T) {
 	values := map[string]interface{}{
+		"obproxy":       map[string]interface{}{"enabled": false},
 		"stage":         "cluster",
 		"dashboard":     map[string]interface{}{"enabled": false},
 		"minio":         map[string]interface{}{"enabled": false},

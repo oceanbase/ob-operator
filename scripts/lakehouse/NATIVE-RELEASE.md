@@ -5,6 +5,15 @@ It does not deploy Kubernetes, start a database, pull images, or publish images.
 The earlier `build-package.py` and `build-online-package.py` workflows reproduce
 historical installer bundles; they are not the native release entry point.
 
+## OBProxy-enabled development charts
+
+The current source chart installs OBProxy by default. Use the current
+`release-images.lock.json`, which includes the Helm-only `obproxy` image role.
+Historical distribution locks (including the Alibaba r1 lock) remain unchanged
+and cannot package this chart until their maintainer supplies a matching OBProxy
+entry and registry publication evidence. Do not invent an internal mirror tag
+or reuse a historical publication report for the new component.
+
 ## One component, one image identity
 
 The Alibaba online test inventory is `release-images.alibaba-test.lock.json`.
@@ -22,13 +31,13 @@ Every component has one role, canonical image reference (including a fixed tag),
 full Docker config image ID, and platform. Both delivery formats use that record.
 A role cannot select a different Observer build simply because it runs in Helm.
 
-The current internal release contains 14 roles:
+The current internal release contains 15 roles:
 
 | Delivery | Roles |
 | --- | --- |
 | Shared by Compose and Helm | `observer`, `logservice`, `minio`, `mc`, `prometheus`, `alertmanager` |
 | Compose only | `bootstrap`, `obagent` |
-| Helm only | `operator`, `dashboard`, `obdiag`, `oceanbase-helper`, `utility`, `kube-rbac-proxy` |
+| Helm only | `operator`, `dashboard`, `obproxy`, `obdiag`, `oceanbase-helper`, `utility`, `kube-rbac-proxy` |
 
 The shared Observer is
 `oceanbase/oceanbase-ai-cloud-native:4.6.3.0-82026110121.al8-r3`;

@@ -1,0 +1,173 @@
+{{- if and .Values.obproxy.enabled (eq .Values.stage "cluster") }}
+{{- $proxyRO := include "lakehouse.proxyROSecret" . }}
+{{- $cluster := include "lakehouse.lookupResource" (dict "root" . "kind" "OBCluster" "name" (printf "%s-ob" .Release.Name)) | fromJson }}
+{{- $identity := lookup "v1" "ConfigMap" .Release.Namespace (printf "%s-obproxy-identity" .Release.Name) }}
+{{- $existingRO := lookup "v1" "Secret" .Release.Namespace $proxyRO }}
+{{- if and (dig "spec" "userSecrets" "proxyro" "" $cluster) (not $existingRO) }}
+{{- fail "existing OBCluster proxyro Secret is missing; restore it before enabling OBProxy" }}
+{{- end }}
+{{/* Seed only absent credentials; never adopt or rewrite an Operator-owned Secret. */}}
+{{- range $name := list $proxyRO (printf "%s-proxysys" .Release.Name) }}
+{{- $existing := lookup "v1" "Secret" $.Release.Namespace $name }}
+{{- if and $identity (not $existing) }}
+{{- fail (printf "retained OBProxy credential Secret %s is missing; restore it instead of resetting credentials" $name) }}
+{{- end }}
+{{- if $existing }}
+{{- $_ := required (printf "OBProxy credential Secret %s requires password" $name) (dig "data" "password" "" $existing) }}
+{{- else }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-25"
+    helm.sh/hook-delete-policy: hook-failed
+type: Opaque
+data:
+  password: {{ randAlphaNum 32 | b64enc | quote }}
+{{- end }}
+{{- end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-obproxy-identity
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+data:
+  proxyroSecret: {{ $proxyRO | quote }}
+---
+# Stable bootstrap address, independent of the public SQL Service selector.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-observer
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    ref-obcluster: {{ .Release.Name }}-ob
+  ports:
+    - name: sql
+      port: 2881
+      targetPort: 2881
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-obproxy
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "lakehouse.labels" . | nindent 4 }}
+    app.kubernetes.io/component: obproxy
+spec:
+  replicas: {{ .Values.obproxy.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: {maxUnavailable: 0, maxSurge: 1}
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: obproxy
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: obproxy
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.obproxy.nodeSelector }}
+      nodeSelector: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.obproxy.tolerations }}
+      tolerations: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/instance: {{ .Release.Name }}
+                    app.kubernetes.io/component: obproxy
+      containers:
+        - name: obproxy
+          image: {{ .Values.obproxy.image | quote }}
+          imagePullPolicy: {{ .Values.obproxy.imagePullPolicy }}
+          workingDir: /home/admin/obproxy
+          command: [/bin/bash, -ec]
+          args:
+            - |
+              # Resolve at runtime, after the Service exists; no Helm lookup of Pod IPs.
+              while true; do
+                address="$(getent ahostsv4 "$OBSERVER_HOST" | awk 'NR == 1 {print $1}')"
+                if [ -n "$address" ]; then break; fi
+                sleep 2
+              done
+              proxyro_hash="$(sha1sum /credentials/proxyro/password | awk '{print $1}')"
+              proxysys_hash="$(sha1sum /credentials/proxysys/password | awk '{print $1}')"
+              # The image binary prints its arguments; redact credential hashes on stdout/stderr.
+              exec > >(sed -u -E 's/(observer_sys_password|obproxy_sys_password)=[^,[:space:]]+/\1=<redacted>/g') 2>&1
+              # Keep the proxy as PID 1 for Kubernetes termination signals.
+              exec /home/admin/obproxy/bin/obproxy --nodaemon -p 2883 -l 2884 \
+                -n "$APP_NAME" -c "$OB_CLUSTER" -r "$address:2881" \
+                -o "observer_sys_password=$proxyro_hash,obproxy_sys_password=$proxysys_hash,enable_metadb_used=false,enable_proxy_scramble=true,enable_cluster_checkout=false,skip_proxy_sys_private_check=true,enable_strict_kernel_release=false,proxy_mem_limited=$PROXY_MEMORY_LIMIT,log_dir_size_threshold=1G"
+          env:
+            - name: OBSERVER_HOST
+              value: {{ printf "%s-observer.%s.svc" .Release.Name .Release.Namespace | quote }}
+            - name: APP_NAME
+              value: {{ printf "%s-obproxy" .Release.Name | quote }}
+            - name: OB_CLUSTER
+              value: {{ printf "%s-ob" .Release.Name | quote }}
+            - name: PROXY_MEMORY_LIMIT
+              value: {{ .Values.obproxy.memoryLimit | quote }}
+          ports:
+            - {name: sql, containerPort: 2883}
+          startupProbe:
+            tcpSocket: {port: sql}
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            tcpSocket: {port: sql}
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket: {port: sql}
+            periodSeconds: 10
+            failureThreshold: 6
+          resources: {{ toYaml .Values.obproxy.resources | nindent 12 }}
+          volumeMounts:
+            - {name: proxyro, mountPath: /credentials/proxyro, readOnly: true}
+            - {name: proxysys, mountPath: /credentials/proxysys, readOnly: true}
+      volumes:
+        - name: proxyro
+          secret: {secretName: {{ $proxyRO }}, defaultMode: 256}
+        - name: proxysys
+          secret: {secretName: {{ printf "%s-proxysys" .Release.Name }}, defaultMode: 256}
+{{- if gt (int .Values.obproxy.replicas) 1 }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-obproxy
+  namespace: {{ .Release.Namespace }}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: obproxy
+{{- end }}
+{{- end }}

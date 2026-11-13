@@ -26,7 +26,7 @@ HERE = Path(__file__).resolve().parent
 SHARED = {'observer', 'logservice', 'minio', 'mc', 'prometheus', 'alertmanager'}
 COMPOSE_ROLES = SHARED | {'bootstrap', 'obagent'}
 HELM_ROLES = SHARED | {'operator', 'dashboard', 'obdiag', 'oceanbase-helper',
-                       'utility', 'prometheus', 'alertmanager', 'kube-rbac-proxy'}
+                       'utility', 'prometheus', 'alertmanager', 'kube-rbac-proxy', 'obproxy'}
 CHANNELS = {'compose': COMPOSE_ROLES, 'helm': HELM_ROLES}
 SERVICE_ROLES = {'observer': 'observer', 'minio': 'minio', 'minio-init': 'mc',
                  'credentials-init': 'bootstrap', 'host-info-init': 'bootstrap',
@@ -35,7 +35,7 @@ SERVICE_ROLES = {'observer': 'observer', 'minio': 'minio', 'minio-init': 'mc',
                  'alertmanager': 'alertmanager',
                  'logservice-bootstrap': 'logservice',
                  **{'logservice-%d' % i: 'logservice' for i in (1, 2, 3)}}
-CONTAINER_ROLES = {'manager': 'operator', 'kube-rbac-proxy': 'kube-rbac-proxy',
+CONTAINER_ROLES = {'obproxy': 'obproxy', 'manager': 'operator', 'kube-rbac-proxy': 'kube-rbac-proxy',
                    'dashboard': 'dashboard', 'prometheus': 'prometheus',
                    'alertmanager': 'alertmanager', 'minio': 'minio',
                    'initialize': 'mc', 'readiness': 'operator',
@@ -44,7 +44,7 @@ ENV_ROLES = {'OBSERVER_IMAGE': 'observer', 'LOGSERVICE_IMAGE': 'logservice',
              'BOOTSTRAP_IMAGE': 'bootstrap', 'MINIO_IMAGE': 'minio', 'MINIO_MC_IMAGE': 'mc',
              'OBAGENT_IMAGE': 'obagent', 'PROMETHEUS_IMAGE': 'prometheus',
              'ALERTMANAGER_IMAGE': 'alertmanager'}
-ROLE_REPOSITORIES = {'observer': 'oceanbase-ai-cloud-native', 'logservice': 'oblogservice',
+ROLE_REPOSITORIES = {'obproxy': 'obproxy-ce', 'observer': 'oceanbase-ai-cloud-native', 'logservice': 'oblogservice',
                      'minio': 'minio', 'mc': 'mc', 'bootstrap': 'lakehouse-bootstrap',
                      'obagent': 'obagent',
                      'operator': 'ob-operator', 'dashboard': 'oceanbase-dashboard',
@@ -284,6 +284,7 @@ def image_values(lock):
 def image_values_from_refs(r):
     """Apply one explicit role-to-values mapping in every Helm delivery builder."""
     return {'native': {'enabled': True, 'readiness': {'image': r['operator']}},
+            'obproxy': {'image': r['obproxy']},
             'observer': {'image': r['observer']}, 'logService': {'image': r['logservice']},
             'minio': {'image': r['minio']}, 'initialization': {'image': r['mc']},
             'dashboard': {'image': r['dashboard'], 'utilityImage': r['utility'],
