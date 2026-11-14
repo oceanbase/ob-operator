@@ -36,6 +36,14 @@ the Docker Compose plugin using the
 When deploying with `sudo`, install the plugin where root can access it and
 verify with `sudo docker compose version`.
 
+The Observer entrypoint raises its inherited soft file-descriptor limit to the
+container's hard limit before starting Observer and obshell. This also applies
+after recreation or restart. A Docker service may otherwise supply a soft limit
+of only 1024, causing database initialization to fail with
+`OB_TOO_MANY_OPEN_FILES`. Check the actual process limit with
+`sudo docker compose exec observer cat /proc/1/limits`; this startup adjustment
+does not change the host's limits or increase a low container hard limit.
+
 ## 部署前：端口清单与冲突处理
 
 **部署前端口清单（均为 TCP）**

@@ -1,6 +1,9 @@
 # 在线部署与离线准备
 
 本包不包含镜像层。启动入口保持 `docker compose up -d` 或原生 Helm 命令。
+Helm 镜像归档的 `load.sh` 优先使用显式 `K3S`，其次查找 PATH，最后查找
+K3s 默认安装位置 `/usr/local/bin/k3s`，兼容 Rocky/RHEL 的 sudo PATH。
+自定义安装路径可执行 `sudo env K3S=/实际路径/k3s sh load.sh`。
 镜像地址和发布验证结果以本包的锁文件及发布证据为准。
 在线部署需要能访问锁定的仓库；制作离线包可拉取镜像或从匹配的本地缓存导出。
 不要将旧镜像改名冒充当前版本，也不要改用 AIStor 或 latest 绕过缺失镜像。

@@ -593,6 +593,18 @@ def oci_archive(args, item, platform, target):
 CRI_IMAGE_FORMAT = '{{.status.id}}|{{.info.imageSpec.os}}/{{.info.imageSpec.architecture}}'
 K3S_CONTAINERD_SOCKET = '/run/k3s/containerd/containerd.sock'
 K3S_CRI_IMAGE_OPTIONS = ['crictl', '--config', '/dev/null', '--image-endpoint']
+K3S_DEFAULT_BINARY = '/usr/local/bin/k3s'
+
+
+def k3s_command_script():
+    # sudo's secure_path on Rocky/RHEL can omit the K3s installer directory.
+    fallback = shlex.quote(K3S_DEFAULT_BINARY)
+    return ('if [ -z "${K3S:-}" ]; then\n'
+            '  if command -v k3s >/dev/null 2>&1; then K3S=k3s\n'
+            '  elif [ -x ' + fallback + ' ]; then K3S=' + fallback + '\n'
+            '  else echo "K3s not found; set K3S to its executable path" >&2; exit 1\n'
+            '  fi\n'
+            'fi\n')
 
 
 def k3s_identity_check(item, platform):
@@ -741,6 +753,7 @@ def archive_images(args, selected):
         loader = root / 'load.sh'
         import_command = ('for image in images/*.tar; do "${DOCKER:-docker}" load -i "$image"; done\n'
                           if selected['channel'] == 'compose' else
+                          k3s_command_script() +
                           'for image in images/*.tar; do "${K3S:-k3s}" ctr -n k8s.io images import --platform ' +
                           shlex.quote(selected['platform']) + ' "$image"; done\n')
         verification = ''

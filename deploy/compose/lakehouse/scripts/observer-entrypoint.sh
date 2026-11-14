@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Compose starts Observer directly, without the Kubernetes helper that raises
+# RLIMIT_NOFILE. Docker can inherit a soft limit of 1024 from systemd.
+ulimit -Sn "$(ulimit -Hn)"
+
 home=/home/admin/oceanbase
 data_dir=/home/admin/data-file
 log_dir=/home/admin/log

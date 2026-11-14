@@ -446,3 +446,36 @@ It prints actual addresses after Helm succeeds and respects access.host from val
 --kubeconfig and --kube-context. Python 3 is required by this wrapper. Plain Helm
 users can execute the complete lookup commands in NOTES after installation.
 NodePorts remain stable while Services are retained, but may change if recreated.
+
+K3s on SELinux-enforcing systems
+================================
+When preloading a K3s binary with INSTALL_K3S_SKIP_DOWNLOAD=true, install the
+K3s SELinux policy explicitly. The skip-download option can also skip the policy
+RPM. Keep SELinux Enforcing; without the policy, local-path helper Pods may fail
+with "mkdir: Permission denied" and leave PVCs Pending.
+
+For Rocky Linux 9 with the default /var/lib/rancher/k3s data directory, configure
+the official signed repository before the initial K3s installation:
+
+sudo tee /etc/yum.repos.d/rancher-k3s-common.repo >/dev/null <<'REPO'
+[rancher-k3s-common-stable]
+name=Rancher K3s Common stable
+baseurl=https://rpm.rancher.io/k3s/stable/common/centos/9/noarch
+enabled=1
+gpgcheck=1
+repo_gpgcheck=0
+gpgkey=https://rpm.rancher.io/public.key
+REPO
+sudo dnf install -y k3s-selinux
+
+Enable `selinux: true` in /etc/rancher/k3s/config.yaml, preserving other settings.
+If the data directory was created before installing the policy, restore its
+labels with `sudo restorecon -Rv /var/lib/rancher/k3s /usr/local/bin/k3s`, then
+restart K3s in a planned maintenance window. Verify `getenforce` still reports
+Enforcing and `kubectl get pvc -A` shows the requested volumes Bound. Do not
+remove existing PVCs or disable SELinux to bypass this prerequisite. A custom
+K3s data directory needs equivalent policy/label configuration; the default-path
+commands above are not sufficient for it.
+
+Reference: https://docs.k3s.io/installation/airgap
+           https://docs.k3s.io/advanced#selinux-support

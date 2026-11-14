@@ -2,12 +2,15 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 from unittest import mock
 
 import release_offline as offline
+import offline_common
 
 
 class ReleaseOfflineTests(unittest.TestCase):
@@ -87,6 +90,38 @@ class ReleaseOfflineTests(unittest.TestCase):
         self.assertIn(item['image_id'] + '|linux/amd64', script)
         self.assertIn('Loaded K3s reference/manifest digest mismatch', script)
         self.assertIn('CONTAINERD_ADDRESS', script)
+
+    def test_k3s_loader_resolves_binary_with_restricted_sudo_path(self):
+        for module in (offline, offline_common):
+            with tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                bindir = root / 'bin'
+                bindir.mkdir()
+                fallback = root / 'installed-k3s'
+                override = root / 'custom-k3s'
+                for path, label in [(fallback, 'fallback'), (override, 'explicit')]:
+                    path.write_text('#!/bin/sh\nprintf "%s\\n" ' + label + '\n')
+                    path.chmod(0o755)
+                env = dict(os.environ, PATH=str(bindir))
+                env.pop('K3S', None)
+                with mock.patch.object(module, 'K3S_DEFAULT_BINARY', str(fallback)):
+                    script = module.k3s_command_script() + 'exec "$K3S" probe\n'
+                for label in ['fallback', 'path', 'explicit']:
+                    with self.subTest(module=module.__name__, selection=label):
+                        if label == 'path':
+                            binary = bindir / 'k3s'
+                            binary.write_text('#!/bin/sh\nprintf "path\\n"\n')
+                            binary.chmod(0o755)
+                        if label == 'explicit':
+                            env['K3S'] = str(override)
+                        result = subprocess.run(['/bin/sh', '-eu', '-c', script],
+                                                env=env, capture_output=True, text=True)
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        self.assertEqual(result.stdout.strip(), label)
+                env['K3S'] = str(root / 'missing-explicit-k3s')
+                result = subprocess.run(['/bin/sh', '-eu', '-c', script],
+                                        env=env, capture_output=True, text=True)
+                self.assertNotEqual(result.returncode, 0)
 
     def test_private_values_snapshot(self):
         with tempfile.TemporaryDirectory() as directory:
