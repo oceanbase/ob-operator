@@ -68,12 +68,21 @@ networks:
             self.skipTest('Requires cached busybox:1.36.1; test never pulls images')
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
+            # Docker's containerd image store reports an OCI descriptor in Id.
+            # Release locks identify the config bytes, independently of the store.
+            cached = root / 'cached-image.tar'
+            subprocess.run(['docker', 'image', 'save', '-o', str(cached),
+                            'busybox:1.36.1'], check=True)
+            with tarfile.open(cached) as archive:
+                entry, = json.load(archive.extractfile('manifest.json'))
+                config_id = 'sha256:' + hashlib.sha256(
+                    archive.extractfile(entry['Config']).read()).hexdigest()
             bundle = root / 'bundle'
             bundle.mkdir()
             (bundle / 'compose.yaml').write_text('services:\n  smoke:\n    image: busybox:1.36.1\n'
                                                 '    command: ["echo", "$$HOME"]\n')
             (bundle / '.env').write_text('')
-            item = {'role': 'fixture', 'reference': 'busybox:1.36.1', 'image_id': actual['Id']}
+            item = {'role': 'fixture', 'reference': 'busybox:1.36.1', 'image_id': config_id}
             (bundle / 'image-lock.json').write_text(json.dumps({
                 'delivery_channel': 'compose', 'delivery_version': 'fixture',
                 'platform': actual['Os'] + '/' + actual['Architecture'], 'images': [item]}))
@@ -84,7 +93,7 @@ networks:
                 manifest = json.load(archive.extractfile('manifest.json'))
                 self.assertEqual(manifest[0]['RepoTags'], ['busybox:1.36.1'])
                 raw = archive.extractfile(manifest[0]['Config']).read()
-                self.assertEqual('sha256:' + hashlib.sha256(raw).hexdigest(), actual['Id'])
+                self.assertEqual('sha256:' + hashlib.sha256(raw).hexdigest(), config_id)
             for line in (args.output / 'SHA256SUMS').read_text().splitlines():
                 digest, path = line.split('  ', 1)
                 self.assertEqual(OFFLINE.sha256(args.output / path), digest)
