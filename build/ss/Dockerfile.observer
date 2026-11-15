@@ -4,6 +4,8 @@ FROM ${HELPER_IMAGE}
 USER root
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG RPM_VERSION
+ARG RPM_PACKAGE=oceanseek
+ARG RPM_LIBS_PACKAGE=oceanseek-libs
 RUN --mount=type=bind,source=build/ss/rpms/observer,target=/tmp/rpms \
     --mount=type=bind,source=build/ss/verify-rpms.py,target=/tmp/verify-rpms.py \
     set -eu; \
@@ -13,8 +15,8 @@ RUN --mount=type=bind,source=build/ss/rpms/observer,target=/tmp/rpms \
     duplicates="$(rpm -qp --qf '%{NAME}\n' ./*.rpm | sort | uniq -d)"; \
     test -z "${duplicates}"; \
     yum install -y ./*.rpm; \
-    test "$(rpm -q --qf '%{VERSION}-%{RELEASE}' oceanbase.ai-ce)" = "${RPM_VERSION}"; \
-    test "$(rpm -q --qf '%{VERSION}-%{RELEASE}' oceanbase.ai-ce-libs)" = "${RPM_VERSION}"; \
+    test "$(rpm -q --qf '%{VERSION}-%{RELEASE}' "${RPM_PACKAGE}")" = "${RPM_VERSION}"; \
+    test "$(rpm -q --qf '%{VERSION}-%{RELEASE}' "${RPM_LIBS_PACKAGE}")" = "${RPM_VERSION}"; \
     test -x /home/admin/oceanbase/bin/observer; \
     test -x /home/admin/oceanbase/bin/obshell; \
     test -x /home/admin/oceanbase/bin/oceanbase-helper; \

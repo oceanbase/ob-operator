@@ -7,7 +7,7 @@ LogService 也是如此。Observer 与 LogService 是两个组件，各自有一
 
 ```text
 Linux 基础系统 + 当前源码编译的 helper -> oceanbase-helper
-oceanbase-helper + oceanbase.ai-ce / libs RPM -> Observer 镜像
+oceanbase-helper + oceanseek / libs RPM -> Observer 镜像
 oceanbase-helper + oblogservice-ce RPM        -> LogService 镜像
 ```
 
@@ -16,17 +16,17 @@ oceanbase-helper + oblogservice-ce RPM        -> LogService 镜像
 
 ## 准备 RPM
 
-本文示例对应 2026-11-02 核对的开源制品：
+本文示例对应 2026-11-15 核对的制品：
 
-- `oceanbase.ai-ce`：`4.6.3.0-82026110121.al8.x86_64`，配套同版本的 libs。
+- `oceanseek`：`4.6.3.1-282026111420.al8.x86_64`，配套同版本的 libs。
 - `oblogservice-ce`：`1.3.3-42026110118.al8.x86_64`。
 
 把需要的 RPM 放在以下目录，每个组件只放一个确定版本：
 
 ```text
 build/ss/rpms/observer/
-  oceanbase.ai-ce-4.6.3.0-82026110121.al8.x86_64.rpm
-  oceanbase.ai-ce-libs-4.6.3.0-82026110121.al8.x86_64.rpm
+  oceanseek-4.6.3.1-282026111420.al8.x86_64.rpm
+  oceanseek-libs-4.6.3.1-282026111420.al8.x86_64.rpm
   SHA256SUMS
 build/ss/rpms/logservice/
   oblogservice-ce-1.3.3-42026110118.al8.x86_64.rpm
@@ -40,6 +40,10 @@ SHA256 核对，再复制为 `SHA256SUMS`：
 cp build/ss/rpms/observer/SHA256SUMS.example build/ss/rpms/observer/SHA256SUMS
 cp build/ss/rpms/logservice/SHA256SUMS.example build/ss/rpms/logservice/SHA256SUMS
 ```
+
+默认校验内部包名 `oceanseek` / `oceanseek-libs`。构建历史 RPM 时显式传入
+`--build-arg RPM_PACKAGE=oceanbase.ai-ce --build-arg RPM_LIBS_PACKAGE=oceanbase.ai-ce-libs`。
+新旧 RPM 不混装，始终从干净的 helper 基础镜像构建。
 
 更换 RPM 时，同时更新校验清单、`RPM_VERSION` 和镜像 tag。Dockerfile 不查询制品
 平台，也不会在指定版本不存在时换用新版。目录中的 RPM 必须与 SHA256SUMS 清单
@@ -79,12 +83,12 @@ docker build --platform linux/amd64 -f build/ss/Dockerfile.helper -t "$HELPER_IM
 继续在同一个 shell 运行：
 
 ```bash
-OBSERVER_IMAGE=local/oceanbase-ai-ce:4.6.3.0-82026110121.al8-r3
+OBSERVER_IMAGE=local/oceanseek:4.6.3.1-282026111420.al8-r1
 LOGSERVICE_IMAGE=local/oblogservice-ce:1.3.3-42026110118.al8-r1
 
 docker build --platform linux/amd64 -f build/ss/Dockerfile.observer \
   --build-arg HELPER_IMAGE="$HELPER_IMAGE" \
-  --build-arg RPM_VERSION=4.6.3.0-82026110121.al8 \
+  --build-arg RPM_VERSION=4.6.3.1-282026111420.al8 \
   -t "$OBSERVER_IMAGE" .
 
 docker build --platform linux/amd64 -f build/ss/Dockerfile.oblogservice \

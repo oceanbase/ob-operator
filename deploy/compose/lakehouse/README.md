@@ -21,7 +21,7 @@ fault tolerance.
   Observer, LogService, MinIO, mc, `lakehouse-bootstrap`, OBAgent, Prometheus and
   Alertmanager. Obtain these from the
   internal release owner and load them into Docker, or use the registry URLs
-  supplied with that release. obshell comes from the same `oceanbase.ai-ce` RPM
+  supplied with that release. obshell comes from the same `oceanseek` RPM
   as Observer. OBAgent is a separate component image and has its own version.
 
 A prepared release includes the prebuilt bootstrap image or its accessible
