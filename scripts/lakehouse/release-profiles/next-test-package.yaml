@@ -1,40 +1,39 @@
 schemaVersion: 1
 name: next-test-package
 status: validated-with-documented-coverage-limits
-releaseVersion: 20261116-scaleout-dev-r31
-sourceCommit: 38bec718fcf572444cb7aed7c3e7b99fda3bb32e
+releaseVersion: 20261116-selinux-matrix-dev-r32
+sourceCommit: b9813b36c5fef16fccc57c0e9fc1bc7b4b5df493
 repository: https://github.com/gys-git/ob-operator
 branch: codex/oceanseek-compose
 baseManifest:
-  url: http://6.12.233.107:18080/experience/20261116-scaleout-dev-r31/release-manifest.json
-  sha256: dc2c9eed0a473f71634c7b9eda3777be5b925f744f4e946056837a56a6a51bf7
+  url: http://6.12.233.107:18080/experience/20261116-selinux-matrix-dev-r32/release-manifest.json
+  sha256: 0aaea4eb082321c9f0305f01a5e00b0d309890fdf8acedb14a3768aed99b6902
 imageLock:
-  url: http://6.12.233.107:18080/experience/20261116-scaleout-dev-r31/image-lock.json
-  sha256: 4f9b2b4a39ea68bf26d9469ed8ffd44f9156ee18a5fab28947dbb0d05a79e6c1
+  url: http://6.12.233.107:18080/experience/20261116-selinux-matrix-dev-r32/image-lock.json
+  sha256: af660557b13ad09d91e5355f0d4181dbdd92f5c3d8104bb6e80b15779f445cf7
 composeImageLock:
-  url: http://6.12.233.107:18080/experience/20261116-scaleout-dev-r31/compose-image-lock.json
-  sha256: 86d96704f8d3918258b3791094ad2125f415d6124268d1174fd7c58d93757743
+  url: http://6.12.233.107:18080/experience/20261116-selinux-matrix-dev-r32/compose-image-lock.json
+  sha256: 65e94546e77b87199edbb855463a5e9e34ff4502bbe4b6bd387712365db7301e
 acceptance:
-  url: http://6.12.233.107:18080/experience/20261116-scaleout-dev-r31/acceptance.json
-  sha256: 4dabb0ace01fd416647734ad7dae9e6827b19a16a9b5534e6337568ee01854b8
+  url: http://6.12.233.107:18080/experience/20261116-selinux-matrix-dev-r32/acceptance.json
+  sha256: 944e5d3fe21ef561e305f063b296ca45f67a0605f00b6c9d709bb12ddbc4ce89
 helm:
-  sourceCommit: 38bec718fcf572444cb7aed7c3e7b99fda3bb32e
-  status: Expansion fix validated on isolated lab; r31 merged regressions, image smoke
-    and package checks passed; see acceptance.json
+  sourceCommit: b9813b36c5fef16fccc57c0e9fc1bc7b4b5df493
+  status: Ubuntu/Debian/Rocky fresh K3s default/custom/lifecycle/browser/archive installation
+    passed
   chart:
-    url: http://6.12.233.107:18080/experience/20261116-scaleout-dev-r31/oceanbase-lakehouse-0.6.0-dev.20261116.3.tgz
-    version: 0.6.0-dev.20261116.3
-    sha256: 491486a73de1c43fb2af8b88f18f67fd43d15c453d0b6fe96588095748293424
-  installCommand: helm upgrade --install oceanseek http://6.12.233.107:18080/experience/20261116-scaleout-dev-r31/oceanbase-lakehouse-0.6.0-dev.20261116.3.tgz
+    url: http://6.12.233.107:18080/experience/20261116-selinux-matrix-dev-r32/oceanbase-lakehouse-0.6.0-dev.20261116.4.tgz
+    version: 0.6.0-dev.20261116.4
+    sha256: af2bd4e0cd8dbcdb404df684153c4a587fc79680b6e333e362776d12e028c355
+  installCommand: helm upgrade --install oceanseek http://6.12.233.107:18080/experience/20261116-selinux-matrix-dev-r32/oceanbase-lakehouse-0.6.0-dev.20261116.4.tgz
     -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
 compose:
-  sourceCommit: 38bec718fcf572444cb7aed7c3e7b99fda3bb32e
-  status: Byte-identical r30 configuration/images; r31 config and offline-plan checks
-    passed; live installation is historical r30 evidence
+  sourceCommit: b9813b36c5fef16fccc57c0e9fc1bc7b4b5df493
+  status: 'Exact r30 bytes/images verified in this three-OS matrix: SQL,major,restart,custom,archive,obshell/MinIO'
   configuration:
-    url: http://6.12.233.107:18080/experience/20261116-scaleout-dev-r31/compose.yaml
+    url: http://6.12.233.107:18080/experience/20261116-selinux-matrix-dev-r32/compose.yaml
     sha256: 6181ff7220f94ab1fac449eaeef2784eeb4a93e4b095846c3b929582356fc1cc
 obd:
   branch: dev_4.8.0
   mergeCommit: a2a25486c400a85ae873eeba890be7231e99b021
-  status: Verified fix merged; no OBD RPM included
+  status: Historical r31 verification retained; no OBD RPM included
