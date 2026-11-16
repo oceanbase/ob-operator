@@ -74,6 +74,7 @@ func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, star
 			},
 			Spec: corev1.PodSpec{
 				ServiceAccountName: bizconst.ServiceAccountName(),
+				SecurityContext:    bizconst.SharedVolumeSecurityContext(),
 				RestartPolicy:      corev1.RestartPolicyNever,
 				InitContainers: []corev1.Container{
 					{

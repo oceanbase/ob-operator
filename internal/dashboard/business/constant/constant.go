@@ -15,6 +15,8 @@ package constant
 import (
 	"os"
 	"strings"
+
+	corev1 "k8s.io/api/core/v1"
 )
 
 const (
@@ -42,4 +44,15 @@ func serviceAccountName(configuredName string) string {
 		return name
 	}
 	return defaultServiceAccountName
+}
+
+// SharedVolumeSecurityContext keeps report writers on the same SELinux level as
+// the Dashboard and cleanup pod. Otherwise each mount can relabel the PVC and
+// deny access to the other consumers on enforcing hosts.
+func SharedVolumeSecurityContext() *corev1.PodSecurityContext {
+	level := strings.TrimSpace(os.Getenv("SHARED_VOLUME_SELINUX_LEVEL"))
+	if level == "" {
+		return nil
+	}
+	return &corev1.PodSecurityContext{SELinuxOptions: &corev1.SELinuxOptions{Level: level}}
 }

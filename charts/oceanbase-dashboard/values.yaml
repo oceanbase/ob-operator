@@ -43,6 +43,10 @@ alertmanager:
   image: quay.io/prometheus/alertmanager:v0.27.0
 
 sharedVolume:
+  # All consumers must use the same label on SELinux hosts. s0 is a shared
+  # container label; set a site-assigned MCS level for stricter isolation.
+  # Set empty only when the cluster admission policy supplies matching labels.
+  seLinuxLevel: s0
   persistence:
     enabled: true
     create: true

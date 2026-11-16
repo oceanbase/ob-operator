@@ -12,6 +12,11 @@ spec:
       ttlSecondsAfterFinished: {{ .Values.cleanup.ttlSecondsAfterFinished }}
       template:
         spec:
+          {{- with .Values.sharedVolume.seLinuxLevel }}
+          securityContext:
+            seLinuxOptions:
+              level: {{ . | quote }}
+          {{- end }}
           serviceAccountName: {{ .Release.Name }}-sa
           restartPolicy: OnFailure
           containers:

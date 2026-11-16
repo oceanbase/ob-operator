@@ -151,6 +151,16 @@ const config = JSON.parse(
       expectedSA,
       'log Job must use the configured Dashboard ServiceAccount'
     );
+    const sharedLevel = deployment.spec.template.spec.securityContext?.seLinuxOptions?.level;
+    if (sharedLevel) {
+      assert.equal(
+        actual.spec.template.spec.securityContext?.seLinuxOptions?.level,
+        sharedLevel,
+        'log Job must share the Dashboard SELinux level for its report PVC'
+      );
+      proof.sharedVolumeSELinuxLevel = sharedLevel;
+      fs.writeFileSync(root + '/job-proof.json', JSON.stringify(proof, null, 2));
+    }
     if (process.env.EXPECT_MISSING_ACCOUNT === '1') {
       await page
         .getByRole('button', { name: /^(View Details|查看详情)$/ })

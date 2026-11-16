@@ -20,6 +20,11 @@ spec:
       labels:
         app: oceanbase-dashboard-{{ .Release.Name }}
     spec:
+      {{- with .Values.sharedVolume.seLinuxLevel }}
+      securityContext:
+        seLinuxOptions:
+          level: {{ . | quote }}
+      {{- end }}
       serviceAccountName: {{ .Release.Name }}-sa
       {{- with .Values.nodeSelector }}
       nodeSelector:
@@ -78,6 +83,8 @@ spec:
           env:
             - name: SHARED_VOLUME_PVC_NAME
               value: {{ include "oceanbase-dashboard.sharedClaim" . | quote }}
+            - name: SHARED_VOLUME_SELINUX_LEVEL
+              value: {{ .Values.sharedVolume.seLinuxLevel | default "" | quote }}
             - name: SHARED_VOLUME_MOUNT_PATH
               value: /shared-data
             - name: USER_CREDENTIALS_SECRET

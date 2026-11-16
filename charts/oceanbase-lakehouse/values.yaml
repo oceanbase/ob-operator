@@ -82,6 +82,8 @@ dashboard:
       accessMode: ReadWriteOnce
       storage: 8Gi
   sharedVolume:
+    # Same SELinux level for Dashboard, diagnostic Jobs and cleanup.
+    seLinuxLevel: s0
     persistence:
       enabled: true
       create: false

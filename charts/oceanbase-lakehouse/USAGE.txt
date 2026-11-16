@@ -493,3 +493,14 @@ SSH key/password, not the MinIO Secret. Run the tunnel on the browser computer.
 A successful ssh -N normally stays silent and opens no shell; keep it running
 until you finish using the console, then press Ctrl+C. Enter the MinIO Secret
 username/password only in the browser login form.
+
+Dashboard report storage on SELinux hosts
+The Dashboard, log/diagnostic Jobs and report cleanup CronJob share one PVC.
+They use the same dashboard.sharedVolume.seLinuxLevel (default s0), so one
+consumer cannot relabel the volume and deny access to another. SELinux remains
+enabled; s0 is a shared container level, without per-pod MCS category isolation
+for these consumers. Where site policy assigns MCS categories, set this value
+to that approved level (for example s0:c123,c456). All users of an existing shared
+claim must use the same level. Set it to an empty string only if cluster admission
+already supplies consistent labels. Existing report Jobs must finish before
+changing the level; changing it can temporarily interrupt volume access.

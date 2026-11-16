@@ -264,3 +264,61 @@ func TestInstallScriptArgumentSafety(t *testing.T) {
 		}
 	}
 }
+
+// Sharing a PVC with differently labelled job pods breaks downloads on SELinux
+// Enforcing hosts even when the archive has normal Unix ownership/permissions.
+func TestDashboardSharedVolumeSELinux(t *testing.T) {
+	for _, level := range []string{"s0", "s0:c123,c456", ""} {
+		t.Run(strings.ReplaceAll(level, ",", "_"), func(t *testing.T) {
+			values := map[string]interface{}{}
+			if level != "s0" {
+				values["dashboard"] = map[string]interface{}{"sharedVolume": map[string]interface{}{"seLinuxLevel": level}}
+			}
+			docs, output, err := render(t, values)
+			if err != nil {
+				t.Fatalf("render: %v\n%s", err, output)
+			}
+			deployment := find(t, docs, "Deployment", "oceanbase-dashboard-qa")
+			pod := field(deployment, "spec", "template", "spec").(manifest)
+			check := func(spec manifest) {
+				t.Helper()
+				got := field(spec, "securityContext", "seLinuxOptions", "level")
+				if level == "" {
+					if got != nil {
+						t.Fatalf("unexpected explicit SELinux level: %v", got)
+					}
+					return
+				}
+				if got != level {
+					t.Fatalf("shared volume consumer level = %v, want %q", got, level)
+				}
+			}
+			check(pod)
+			cleanupFound, envFound := false, false
+			for _, doc := range docs {
+				if doc["kind"] == "CronJob" {
+					check(field(doc, "spec", "jobTemplate", "spec", "template", "spec").(manifest))
+					cleanupFound = true
+				}
+			}
+			for _, container := range pod["containers"].([]interface{}) {
+				c := container.(manifest)
+				if c["name"] != "dashboard" {
+					continue
+				}
+				for _, e := range c["env"].([]interface{}) {
+					env := e.(manifest)
+					if env["name"] == "SHARED_VOLUME_SELINUX_LEVEL" {
+						if env["value"] != level {
+							t.Fatalf("runtime job level differs: %v", env)
+						}
+						envFound = true
+					}
+				}
+			}
+			if !cleanupFound || !envFound {
+				t.Fatal("missing cleanup or diagnostic job SELinux configuration")
+			}
+		})
+	}
+}
