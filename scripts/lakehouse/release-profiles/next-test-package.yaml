@@ -1,36 +1,40 @@
 schemaVersion: 1
 name: next-test-package
 status: validated-with-documented-coverage-limits
-releaseVersion: 20261116-minio-log-download-dev-r30
-sourceCommit: c45160b46979f300f94a442744d2e3a08642b1d5
+releaseVersion: 20261116-scaleout-dev-r31
+sourceCommit: 38bec718fcf572444cb7aed7c3e7b99fda3bb32e
 repository: https://github.com/gys-git/ob-operator
 branch: codex/oceanseek-compose
 baseManifest:
-  url: http://6.12.233.107:18080/experience/20261116-minio-log-download-dev-r30/release-manifest.json
-  sha256: 0b25e574626f3e4b47439381ee79cd059a8c6506a2225ce6a802a98916795b20
+  url: http://6.12.233.107:18080/experience/20261116-scaleout-dev-r31/release-manifest.json
+  sha256: dc2c9eed0a473f71634c7b9eda3777be5b925f744f4e946056837a56a6a51bf7
 imageLock:
-  url: http://6.12.233.107:18080/experience/20261116-minio-log-download-dev-r30/image-lock.json
-  sha256: 3316a8590bc2e31897ac612b089cbcfeb46d3b9f0b41f34474dbc4c30d226bb2
+  url: http://6.12.233.107:18080/experience/20261116-scaleout-dev-r31/image-lock.json
+  sha256: 4f9b2b4a39ea68bf26d9469ed8ffd44f9156ee18a5fab28947dbb0d05a79e6c1
 composeImageLock:
-  url: http://6.12.233.107:18080/experience/20261116-minio-log-download-dev-r30/compose-image-lock.json
-  sha256: 932511b0e4c39b0eb98237a4e2a6e57bc029bdbb180ebc723e77d8a4fc8c742c
+  url: http://6.12.233.107:18080/experience/20261116-scaleout-dev-r31/compose-image-lock.json
+  sha256: 86d96704f8d3918258b3791094ad2125f415d6124268d1174fd7c58d93757743
 acceptance:
-  url: http://6.12.233.107:18080/experience/20261116-minio-log-download-dev-r30/acceptance.json
-  sha256: ac7037fe14f9db1f964a0205cbd31333c3691d9b0299a23ee2c86d0c6a9a08e9
+  url: http://6.12.233.107:18080/experience/20261116-scaleout-dev-r31/acceptance.json
+  sha256: 4dabb0ace01fd416647734ad7dae9e6827b19a16a9b5534e6337568ee01854b8
 helm:
-  sourceCommit: c45160b46979f300f94a442744d2e3a08642b1d5
-  status: ALinux3 default two-node K3s SQL webhook Dashboard MinIO and repeated log
-    download verified
+  sourceCommit: 38bec718fcf572444cb7aed7c3e7b99fda3bb32e
+  status: Expansion fix validated on isolated lab; r31 merged regressions, image smoke
+    and package checks passed; see acceptance.json
   chart:
-    url: http://6.12.233.107:18080/experience/20261116-minio-log-download-dev-r30/oceanbase-lakehouse-0.6.0-dev.20261116.2.tgz
-    version: 0.6.0-dev.20261116.2
-    sha256: a78b0cc137dd29f104ae5e1f6aef21a29d960ccebe68e71763ee8fdf0b0599f9
-  installCommand: helm upgrade --install oceanseek http://6.12.233.107:18080/experience/20261116-minio-log-download-dev-r30/oceanbase-lakehouse-0.6.0-dev.20261116.2.tgz
+    url: http://6.12.233.107:18080/experience/20261116-scaleout-dev-r31/oceanbase-lakehouse-0.6.0-dev.20261116.3.tgz
+    version: 0.6.0-dev.20261116.3
+    sha256: 491486a73de1c43fb2af8b88f18f67fd43d15c453d0b6fe96588095748293424
+  installCommand: helm upgrade --install oceanseek http://6.12.233.107:18080/experience/20261116-scaleout-dev-r31/oceanbase-lakehouse-0.6.0-dev.20261116.3.tgz
     -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
 compose:
-  sourceCommit: c45160b46979f300f94a442744d2e3a08642b1d5
-  status: fresh install SQL rollback Observer restart and actual MinIO SSH/browser
-    verified
+  sourceCommit: 38bec718fcf572444cb7aed7c3e7b99fda3bb32e
+  status: Byte-identical r30 configuration/images; r31 config and offline-plan checks
+    passed; live installation is historical r30 evidence
   configuration:
-    url: http://6.12.233.107:18080/experience/20261116-minio-log-download-dev-r30/compose.yaml
+    url: http://6.12.233.107:18080/experience/20261116-scaleout-dev-r31/compose.yaml
     sha256: 6181ff7220f94ab1fac449eaeef2784eeb4a93e4b095846c3b929582356fc1cc
+obd:
+  branch: dev_4.8.0
+  mergeCommit: a2a25486c400a85ae873eeba890be7231e99b021
+  status: Verified fix merged; no OBD RPM included
