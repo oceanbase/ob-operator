@@ -303,3 +303,9 @@ func (m *OBZoneManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc
 func (m *OBZoneManager) PrintErrEvent(err error) {
 	m.Recorder.Event(m.OBZone, corev1.EventTypeWarning, "Task failed", err.Error())
 }
+
+// CanReplayTask allows only the read-only bootstrap readiness wait to resume
+// after an Operator restart. Database mutations must not be replayed blindly.
+func (m *OBZoneManager) CanReplayTask(name tasktypes.TaskName) bool {
+	return name == tWaitOBServerBootstrapReady
+}

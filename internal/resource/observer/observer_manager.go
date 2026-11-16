@@ -301,3 +301,9 @@ func (m *OBServerManager) ArchiveResource() {
 	m.OBServer.Status.Status = "Failed"
 	m.OBServer.Status.OperationContext = nil
 }
+
+// CanReplayTask allows only the read-only bootstrap readiness wait to resume
+// after an Operator restart. Database mutations must not be replayed blindly.
+func (m *OBServerManager) CanReplayTask(name tasktypes.TaskName) bool {
+	return name == tWaitOBServerReady
+}

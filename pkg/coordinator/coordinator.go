@@ -144,6 +144,12 @@ func (c *Coordinator) executeTaskFlow(f *tasktypes.TaskFlow) {
 				"resourceName", resName,
 			}
 			if err != nil {
+				if policy, ok := c.Manager.(TaskReplayPolicy); ok && errors.Is(err, task.ErrTaskNotFound) && policy.CanReplayTask(f.OperationContext.Task) {
+					c.Logger.Info("Resubmitting lost readiness task", loggingPairs...)
+					f.OperationContext.TaskId = ""
+					f.OperationContext.TaskStatus = taskstatus.Pending
+					return
+				}
 				c.Logger.Error(err, "Get task result got error", loggingPairs...)
 				c.Manager.PrintErrEvent(err)
 				f.OperationContext.TaskStatus = taskstatus.Failed

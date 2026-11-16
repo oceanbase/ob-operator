@@ -15,15 +15,13 @@ interface FormData {
 export default function ResetPwd() {
   const publicKey = usePublicKey();
   const navigate = useNavigate();
-  const { setInitialState, initialState, refresh } = useModel('@@initialState');
+  const { refresh } = useModel('@@initialState');
   const onFinish = async (values: FormData) => {
     values.password = encryptText(values.password, publicKey) as string;
     const res = await access.resetPassword({ password: values.password });
     if (res.successful) {
-      setInitialState({
-        ...initialState,
-        accountInfo: { ...initialState!.accountInfo, needReset: false },
-      });
+      // Fetch the authoritative account state after the password change;
+      // the initial state may still be loading on a direct /reset visit.
       await refresh();
       navigate('/overview');
     }

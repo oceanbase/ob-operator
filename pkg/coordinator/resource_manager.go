@@ -41,3 +41,10 @@ type ResourceUpdater interface {
 	ArchiveResource()
 	GetMeta() metav1.Object
 }
+
+// TaskReplayPolicy opts into resubmission after an in-memory task is lost.
+// Only tasks safe to repeat without side effects should be allowed. A real task
+// failure is never recovered through this policy.
+type TaskReplayPolicy interface {
+	CanReplayTask(tasktypes.TaskName) bool
+}
