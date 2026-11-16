@@ -74,6 +74,12 @@ func AddSharedStorageDest(m *OBZoneManager) tasktypes.TaskError {
 		return errors.New("access_key is required in shared storage secret")
 	}
 
+	// Use the same runtime endpoint as bootstrap, without changing the CR spec.
+	bucketURL, err := resourceutils.ResolveStorageServiceURL(m.Ctx, m.Client, obcluster, obcluster.Spec.SharedStorageInfo.BucketURL)
+	if err != nil {
+		return errors.Wrap(err, "Resolve shared storage endpoint")
+	}
+
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return errors.Wrap(err, "Get oceanbase operation manager")
@@ -85,7 +91,7 @@ func AddSharedStorageDest(m *OBZoneManager) tasktypes.TaskError {
 	}
 	return oceanbaseOperationManager.AddSharedStorageDest(
 		m.Ctx,
-		obcluster.Spec.SharedStorageInfo.BucketURL,
+		bucketURL,
 		accessInfo,
 		attribute,
 		m.OBZone.Spec.Topology.Zone,
