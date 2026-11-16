@@ -204,6 +204,28 @@ func TestServiceAccountOwnership(t *testing.T) {
 			if dashboardField(deployment, "spec", "template", "spec", "serviceAccountName") != "qa-sa" {
 				t.Fatal("deployment does not reference the expected service account")
 			}
+			// Log/diagnosis Jobs read SERVICE_ACCOUNT inside the Dashboard process.
+			// A correct Pod identity alone does not guarantee child Jobs use it.
+			containers := dashboardField(deployment, "spec", "template", "spec", "containers").([]interface{})
+			foundJobAccount := false
+			for _, value := range containers {
+				container := value.(map[string]interface{})
+				if container["name"] != "dashboard" {
+					continue
+				}
+				for _, value := range container["env"].([]interface{}) {
+					env := value.(map[string]interface{})
+					if env["name"] == "SERVICE_ACCOUNT" {
+						foundJobAccount = true
+						if env["value"] != dashboardField(deployment, "spec", "template", "spec", "serviceAccountName") {
+							t.Fatal("child Job identity differs from Dashboard Pod identity")
+						}
+					}
+				}
+			}
+			if !foundJobAccount {
+				t.Fatal("child Job SERVICE_ACCOUNT is not configured")
+			}
 		})
 	}
 }

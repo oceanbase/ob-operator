@@ -499,10 +499,29 @@ The completion log prints a complete `docker cp ... - | tar -xOf -` command usin
 
 ### MinIO console access after installation
 
-The bootstrap completion message prints an SSH tunnel command, the MinIO console
-URL, and complete commands to read the saved MinIO username and password on the
-Docker host. Run the tunnel on your browser computer, substituting your SSH user
-(and SSH port if needed), and keep it running while opening the printed URL.
+There are two separate logins: SSH uses your Docker host machine account and
+usual key/password; MinIO uses the saved username/password only in its web form.
+The container cannot reliably infer your SSH account, so replace `<ssh-user>`
+in the completion message with the account you normally use to SSH to this host.
+Do not substitute the MinIO username or the container's root user.
+
+1. On the computer running your browser, open a **new local terminal**. Do not
+   run the tunnel from a shell already logged into the Docker host.
+2. Run the printed SSH tunnel command, retaining any `-i`, `-J`, or `-p` options
+   your normal SSH login needs. `ssh -N` normally stays silent and opens no shell
+   after login. This is expected: leave it running; do not press Ctrl+C.
+3. Open `http://127.0.0.1:39001/` in the browser on that same computer.
+4. In a separate terminal logged into the Docker host, execute the two printed
+   `docker cp` commands to read the saved MinIO web username and password. Enter
+   them only in the web form. Keep the bootstrap container until retrieval and
+   do not share the credential output.
+5. When finished, press Ctrl+C in the tunnel terminal to close the connection.
+
+`ExitOnForwardFailure=yes` reports failure to establish the local forward, not
+MinIO service readiness. If local port 39001 is busy, select a different first
+port in `-L` and use that same port in the browser URL. SSH `Permission denied`
+means machine authentication failed; first confirm normal SSH works from the
+browser computer. MinIO passwords cannot fix SSH authentication.
 The console uses port 9001; port 9000 is the S3 API. No extra installation command
-or public port mapping is required. Keep the exited observer-bootstrap container
-until credential retrieval. Do not share the credential command output.
+or public port mapping is required. Custom container networks must use the MinIO
+address printed by their own deployment, not the default example address.

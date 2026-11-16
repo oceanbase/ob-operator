@@ -63,7 +63,7 @@ class TransportTest(unittest.TestCase):
                 output.write(data)
             destination = source + ".tar.gz"
             subprocess.run([sys.executable, "-c", transport.PACK_CODE, source, destination], check=True)
-            raw = subprocess.check_output([sys.executable, "-c", transport.DOWNLOAD_CODE, destination])
+            raw = subprocess.check_output([sys.executable, "-c", transport.DOWNLOAD_CODE, destination], input=b"OBDIAG_TRANSFER_COMPLETE\n")
             received = io.BytesIO()
             decoder = transport.Decoder(received)
             for offset in range(0, len(raw), 7):
@@ -118,6 +118,48 @@ class TransportTest(unittest.TestCase):
         self.assertEqual(transport.execute(self.client, ["test"],
             stream_factory=lambda *args, **kwargs: websocket), "output")
         self.assertTrue(websocket.closed)
+
+    def test_download_exec_acknowledges_only_validated_footer(self):
+        data = wire(b"verified archive")
+        chunks = data.splitlines(True)
+        websocket = WebSocket(chunks)
+        acknowledgements = []
+        def acknowledge(value):
+            self.assertEqual(websocket.chunks, [])
+            self.assertTrue(decoder.complete)
+            acknowledgements.append(value)
+        websocket.write_stdin = acknowledge
+        decoder = transport.Decoder(io.BytesIO())
+        def stream(*args, **kwargs):
+            self.assertTrue(kwargs["stdin"])
+            return websocket
+        transport.execute(self.client, ["test"], sink=decoder.feed,
+                          stream_factory=stream, acknowledge=True)
+        decoder.finish()
+        self.assertEqual(acknowledgements, ["OBDIAG_TRANSFER_COMPLETE\n"])
+        self.assertTrue(websocket.closed)
+
+    def test_download_exec_never_acknowledges_truncated_or_corrupt_data(self):
+        good = wire(b"archive")
+        for data in (good.rsplit("{", 1)[0], good.replace('"sha256": "', '"sha256": "bad')):
+            websocket = WebSocket([data])
+            websocket.write_stdin = mock.Mock()
+            decoder = transport.Decoder(io.BytesIO())
+            with self.assertRaises(transport.TransportError):
+                transport.execute(self.client, ["test"], sink=decoder.feed,
+                    stream_factory=lambda *args, **kwargs: websocket, acknowledge=True)
+            websocket.write_stdin.assert_not_called()
+            self.assertTrue(websocket.closed)
+
+    def test_remote_download_rejects_missing_or_invalid_acknowledgement(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "archive")
+            Path(path).write_bytes(b"archive")
+            for acknowledgement in (b"", b"NOT_VALID_ACKNOWLEDGEMENT\n"):
+                result = subprocess.run([sys.executable, "-c", transport.DOWNLOAD_CODE, path],
+                    input=acknowledgement, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(b"acknowledg", result.stderr)
 
     def test_exec_timeout_and_output_limit(self):
         websocket = WebSocket([], stuck=True)

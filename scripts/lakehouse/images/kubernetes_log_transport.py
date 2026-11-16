@@ -57,7 +57,7 @@ finally:
     if os.path.exists(temporary): os.unlink(temporary)
 '''
 
-DOWNLOAD_CODE = '''import base64,hashlib,json,os,stat,sys
+DOWNLOAD_CODE = '''import base64,hashlib,json,os,select,stat,sys,time
 path=sys.argv[1]
 fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW)
 with os.fdopen(fd,"rb") as stream:
@@ -77,6 +77,19 @@ with os.fdopen(fd,"rb") as stream:
     if final.st_size!=info.st_size or final.st_mtime_ns!=info.st_mtime_ns:
         raise ValueError("diagnostic archive changed during transfer")
     print(json.dumps({"size":size,"sha256":checksum.hexdigest()}),flush=True)
+    # Keep exec alive until the receiver has validated every byte. Some exec
+    # proxies deliver process exit before their stdout backlog has drained.
+    expected=b"OBDIAG_TRANSFER_COMPLETE\\n"
+    received=b""
+    deadline=time.monotonic()+300
+    while len(received)<len(expected):
+        remaining=deadline-time.monotonic()
+        if remaining<=0 or not select.select([sys.stdin],[],[],remaining)[0]:
+            raise ValueError("diagnostic transfer acknowledgement timed out")
+        block=os.read(sys.stdin.fileno(),len(expected)-len(received))
+        if not block: raise ValueError("diagnostic transfer was not acknowledged")
+        received+=block
+    if received!=expected: raise ValueError("invalid diagnostic transfer acknowledgement")
 '''
 
 
@@ -91,18 +104,21 @@ def _path(value):
     return os.path.normpath(value)
 
 
-def execute(client, command, sink=None, timeout=180, stream_factory=None):
+def execute(client, command, sink=None, timeout=180, stream_factory=None, acknowledge=False):
     """Consume stdout incrementally and require the Kubernetes exit status."""
     if stream_factory is None:
         from kubernetes.stream import stream
         stream_factory = stream
+    if acknowledge and sink is None:
+        raise TransportError("acknowledgement requires a validating sink")
     if timeout <= 0:
         raise TransportError("invalid exec timeout")
     websocket = stream_factory(client.client.connect_get_namespaced_pod_exec,
         client.pod_name, client.namespace, command=command, container=client.container_name,
-        stderr=True, stdin=False, stdout=True, tty=False, _preload_content=False,
+        stderr=True, stdin=acknowledge, stdout=True, tty=False, _preload_content=False,
         _request_timeout=timeout)
     captured, errors, size = [], [], 0
+    acknowledged = False
     deadline = time.monotonic() + timeout
     def remaining_time():
         remaining = deadline - time.monotonic()
@@ -110,12 +126,15 @@ def execute(client, command, sink=None, timeout=180, stream_factory=None):
             raise TransportError("diagnostic exec timed out")
         return remaining
     def drain():
-        nonlocal size
+        nonlocal size, acknowledged
         while websocket.peek_stdout():
             remaining_time()
             block = websocket.read_stdout()
             if sink is not None:
-                sink(block)
+                complete = sink(block)
+                if acknowledge and complete and not acknowledged:
+                    websocket.write_stdin("OBDIAG_TRANSFER_COMPLETE\n")
+                    acknowledged = True
             else:
                 size += len(block)
                 if size > 16384:
@@ -132,6 +151,8 @@ def execute(client, command, sink=None, timeout=180, stream_factory=None):
             drain()
         drain()
         remaining_time()
+        if acknowledge and not acknowledged:
+            raise TransportError("diagnostic stream ended before acknowledgement")
         if websocket.returncode != 0:
             raise TransportError("diagnostic exec failed or returned no exit status")
         return "".join(captured)
@@ -208,6 +229,7 @@ class Decoder:
                 self.stream.write(data)
         if len(self.pending) > 65536:
             raise TransportError("unterminated diagnostic stream frame")
+        return self.complete
 
     def finish(self):
         if self.pending or not self.complete:
@@ -224,7 +246,7 @@ def download(client, remote_path, local_path):
     try:
         with os.fdopen(descriptor, "wb") as output:
             decoder = Decoder(output)
-            execute(client, [python, "-B", "-c", DOWNLOAD_CODE, remote_path], sink=decoder.feed, timeout=300)
+            execute(client, [python, "-B", "-c", DOWNLOAD_CODE, remote_path], sink=decoder.feed, timeout=300, acknowledge=True)
             decoder.finish()
             output.flush()
             os.fsync(output.fileno())

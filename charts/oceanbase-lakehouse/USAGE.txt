@@ -487,3 +487,9 @@ and rootPassword from the actual MinIO Secret (including rootExistingSecret).
 If kubectl runs remotely, use the printed SSH tunnel on your browser computer.
 Keep both forwards running. This does not change installation commands or expose
 a public port. External-only storage uses the provider's console credentials.
+
+For MinIO access, SSH authentication uses the remote machine account and usual
+SSH key/password, not the MinIO Secret. Run the tunnel on the browser computer.
+A successful ssh -N normally stays silent and opens no shell; keep it running
+until you finish using the console, then press Ctrl+C. Enter the MinIO Secret
+username/password only in the browser login form.

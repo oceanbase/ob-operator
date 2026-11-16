@@ -91,7 +91,10 @@ Bundled MinIO console (separate from the database and Dashboard accounts).
   kubectl -n {{ .Release.Namespace }} port-forward statefulset/{{ .Release.Name }}-minio 39001:9001
 Open http://127.0.0.1:39001/ on that computer.
 If kubectl runs on a remote server, also run this on your browser computer:
-  ssh -N -L 39001:127.0.0.1:39001 <user>@<remote-server>
+  ssh -o ExitOnForwardFailure=yes -N -L 39001:127.0.0.1:39001 <user>@<remote-server>
+Use your usual SSH MACHINE account/key, not the MinIO web credentials below.
+Successful ssh -N normally has no output and does not open a shell; keep it running.
+Do not press Ctrl+C until you have finished using the console.
 Then open http://127.0.0.1:39001/ in your browser. Keep both commands running.
 Retrieve the MinIO username in a trusted terminal:
   kubectl -n {{ .Release.Namespace }} get secret {{ if .Values.minio.rootExistingSecret }}{{ .Values.minio.rootExistingSecret }}{{ else }}{{ .Release.Name }}-minio-root{{ end }} -o jsonpath='{.data.rootUser}' | base64 --decode; echo

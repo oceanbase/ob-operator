@@ -69,16 +69,33 @@ This reads the saved credential file, not the current password from the database
 After changing the password manually, use the new password; the saved file may be stale.
 This prints a password; do not share its output.
 
-MinIO object storage console (separate from the database accounts):
-Run on your browser computer, replacing <ssh-user> with your Docker host login:
-  ssh -N -L ${minio_tunnel} -l <ssh-user> ${sql_host}
-Keep the SSH tunnel running, then open http://127.0.0.1:39001/ in your browser.
-For a non-default SSH port, add -p <ssh-port> before the host.
-Retrieve the MinIO username on the Docker host:
+MinIO object storage console
+SSH machine login and MinIO web login use DIFFERENT accounts.
+
+Step 1 - On the computer running your browser (NOT inside this Docker host):
+Open a NEW terminal. Replace <ssh-user> with the MACHINE account you normally
+use to SSH into ${host_ip}. Do NOT use the MinIO username retrieved below.
+The container cannot reliably discover your SSH login account.
+  ssh -o ExitOnForwardFailure=yes -N -L ${minio_tunnel} -l <ssh-user> ${sql_host}
+Success normally shows NO OUTPUT and does NOT open a remote shell. This is expected.
+Leave this terminal running. Do NOT press Ctrl+C or close it while using MinIO.
+SSH uses your usual machine key/password, NEVER the MinIO password.
+If normal SSH needs -i, -J or -p, retain those same options before the host.
+If authentication fails, first make your usual SSH login work from this computer.
+
+Step 2 - In the browser on that SAME computer:
+  http://127.0.0.1:39001/
+Here, 127.0.0.1 means your browser computer, not the Docker host.
+
+Step 3 - In a SEPARATE terminal logged into the Docker host, read the WEB credentials:
+MinIO web username:
   sudo docker cp ${minio_user_source} - | tar -xOf -; echo
-Retrieve the MinIO password on the Docker host (do not share its output):
+MinIO web password (do not share its output):
   sudo docker cp ${minio_password_source} - | tar -xOf -; echo
+Enter these two values ONLY in the MinIO web login form, not at an SSH prompt.
 Keep this bootstrap container until retrieval. These commands read saved credentials.
+If port 39001 is already in use, choose another local port in BOTH -L and the browser URL.
+When finished with MinIO, press Ctrl+C in the tunnel terminal to close the connection.
 The S3 API uses port 9000; the browser console uses port 9001.
 
 EOF

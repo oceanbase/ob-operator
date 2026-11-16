@@ -24,3 +24,26 @@ Set `RESET_ITERATIONS=10` for repeated cold-context first-login coverage. An
 optional `nodeName` in the private config makes the global overview assertion
 wait for that specific Kubernetes node row. Topology and cluster overview also
 wait for their LogService content before navigation continues.
+
+## Log download and custom release ServiceAccount
+
+On an authorized disposable K3s environment, deploy with a non-default Helm
+release and use the same private configuration format described above. Run:
+
+```sh
+CHROMIUM_PATH=/path/to/chromium node tests/dashboard/log_download.cjs /private/evidence-directory
+```
+
+This drives Cluster Management -> Log Download -> last 30 minutes in the browser.
+It verifies the created Job uses the actual Dashboard Pod ServiceAccount, waits
+for successful completion and the visible download link, downloads the archive,
+and rejects generated credential paths. The evidence directory also contains a
+private log archive and the private login configuration; never publish either.
+`kubectl` must access the same disposable cluster as the configured Dashboard.
+
+For the missing-account negative case, explicitly configure the disposable
+Dashboard's `SERVICE_ACCOUNT` to a nonexistent name, put that exact name in the
+private config's `expectedServiceAccount`, and run with `EXPECT_MISSING_ACCOUNT=1`.
+The scenario requires the browser to show View Details and the actual Kubernetes
+FailedCreate/serviceaccount-not-found error. Restore the deployment environment
+when finished. Do not run this fault injection on a user acceptance environment.

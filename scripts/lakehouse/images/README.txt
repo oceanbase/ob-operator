@@ -74,3 +74,8 @@ that combined archive; it does not construct container images itself.
 Docker image IDs can differ on an uncached rebuild because Docker records build
 timestamps. Always distribute the config IDs from the actual exported archive;
 do not substitute the image tag for an immutable identity.
+
+Diagnostic downloads acknowledge the verified size/checksum footer over exec stdin
+before the remote sender exits. This prevents a successful process exit from
+closing the connection while stdout data is still in transit. Truncated or
+corrupt transfers remain failures and never replace the local archive.
