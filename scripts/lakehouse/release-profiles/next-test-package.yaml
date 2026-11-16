@@ -1,44 +1,34 @@
 schemaVersion: 1
 name: next-test-package
-status: validated
-releaseVersion: 20261113-logservice-stop-dev-r25
+status: validated-with-documented-coverage-limits
+releaseVersion: 20261116-readiness-login-dev-r29
+sourceCommit: be3953027d7fa7e4c31a15c823858036215273cb
+repository: https://github.com/gys-git/ob-operator
+branch: codex/oceanseek-compose
 baseManifest:
-  url: http://6.12.233.107:18080/experience/20261113-logservice-stop-dev-r25/release-manifest.json
-  sha256: 6e521db52957db3b8d4a5845369745c2c3b5aa83591406de627bbd13f110d6fa
+  url: http://6.12.233.107:18080/experience/20261116-readiness-login-dev-r29/release-manifest.json
+  sha256: c23d58223c676d7024f33a05e9d55119cb837d8d296a12e9fc851dac57ec53eb
 imageLock:
-  url: http://6.12.233.107:18080/experience/20261113-logservice-stop-dev-r25/image-lock.json
-  sha256: 2a7608aad11ea5f379513687d8b14a0fbd334b8101a2394e34509f6fdf50b4b8
+  url: http://6.12.233.107:18080/experience/20261116-readiness-login-dev-r29/image-lock.json
+  sha256: af6ca70d6a9a0e1950b637d5324f19dbd385944cfcebe6e8bcd60725c4facef0
 composeImageLock:
-  url: http://6.12.233.107:18080/experience/20261113-logservice-stop-dev-r25/compose-image-lock.json
-  sha256: 1c940cb41ef5bb41ea18f4d1fb1c91926f171f39410d3bd42913f7556a6f5f0e
-helm:
-  sourceCommit: 0f81669e
-  notesFixCommit: 7921c4fb3f8a373e3bd565316c6ff68157ddc66d
-  status: chart-lint-render-and-native-runtime-verified; full-k3s-not-repeated
-  chart:
-    url: http://6.12.233.107:18080/experience/20261113-logservice-stop-dev-r25/oceanbase-lakehouse-0.5.7-dev.20261113.2.tgz
-    version: 0.5.7-dev.20261113.2
-    sha256: 263274cd50b474632a8944e81e2c396f4608e5d8a5570a9b7a04b7537028180c
-  customFixCommit: 29ff7cd5715de74bcdbe18b9f2f50a4a85f97bf5
-  minioImage: reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:52dfd5c0bbd38d3219f2058c7af216d9f9a27a994b7b5baad09bbd38866015ff
-  installCommand: helm upgrade --install oceanseek http://6.12.233.107:18080/experience/20261113-logservice-stop-dev-r25/oceanbase-lakehouse-0.5.7-dev.20261113.2.tgz
-    -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
-  logServiceFixCommit: 3ec39107c05929a4a2732a98d55d20d4485c0d4c
-  logServiceImage: reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:3da3cdd8fc46b05947616c4ccc6e2ac0fce89c3676ac9f695cc0ff3bc3a7a191
-compose:
-  sourceCommit: 60f84e72
-  status: runtime-verified including survival beyond 300 seconds
-  configuration:
-    url: http://6.12.233.107:18080/experience/20261113-logservice-stop-dev-r25/compose.yaml
-    sha256: f8d18b4749f52b952e6b3d6160f45c780e8fc9cdc70d238076696e61de11794c
-  observerImage: reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:2c2bb4cfa01172e285f851297f47e347c1616ad252adef8dea88a56cd58a5f18
-  notesFixCommit: bc704287e070747418425de9b3f4c3e5fcfabe79
-  bootstrapImage: reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:0953f32a3f5c8cb673e1b6e8d23c3c3d98ebe758c484bda03d07c56e2fa01098
-  customFixCommit: 29ff7cd5715de74bcdbe18b9f2f50a4a85f97bf5
-  minioImage: reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:52dfd5c0bbd38d3219f2058c7af216d9f9a27a994b7b5baad09bbd38866015ff
-  mcImage: reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:bdfae21c72b19fae5a005c56dddba25a873d75fac3dda60f55aea7e417382cbe
-  logServiceFixCommit: 3ec39107c05929a4a2732a98d55d20d4485c0d4c
-  logServiceImage: reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:d4856077233d074d0f2c0f58231b5e9732d60320efcaf561692fe875c3acd59b
+  url: http://6.12.233.107:18080/experience/20261116-readiness-login-dev-r29/compose-image-lock.json
+  sha256: b5a6bad6b334b956d3c2e0c7ccac5c01bbc4870c71f50087ab6a801257b2207b
 acceptance:
-  url: http://6.12.233.107:18080/experience/20261113-logservice-stop-dev-r25/acceptance.json
-  sha256: 8ae3374b3641209a62aa1938ae1faf87bb649bf0033c2eccebca67f341b0fcd3
+  url: http://6.12.233.107:18080/experience/20261116-readiness-login-dev-r29/acceptance.json
+  sha256: 01e0014ea90130f28d78ca4078586e79e1017275de94b777f991129e01cdc136
+helm:
+  sourceCommit: be3953027d7fa7e4c31a15c823858036215273cb
+  status: Ubuntu Debian Rocky final Chart SQL webhook Dashboard verified
+  chart:
+    url: http://6.12.233.107:18080/experience/20261116-readiness-login-dev-r29/oceanbase-lakehouse-0.6.0-dev.20261116.1.tgz
+    version: 0.6.0-dev.20261116.1
+    sha256: 6279ab461302d8ef1955c65d679d69b5d2a16e35e06c588d5359ffed099e58ef
+  installCommand: helm upgrade --install oceanseek http://6.12.233.107:18080/experience/20261116-readiness-login-dev-r29/oceanbase-lakehouse-0.6.0-dev.20261116.1.tgz
+    -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
+compose:
+  sourceCommit: be3953027d7fa7e4c31a15c823858036215273cb
+  status: final YAML SQL transaction and Observer restart verified
+  configuration:
+    url: http://6.12.233.107:18080/experience/20261116-readiness-login-dev-r29/compose.yaml
+    sha256: 73cb91dc46a243681941a6067841167288a2e7b6512e8d2b153c08a7c042a263
