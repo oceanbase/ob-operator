@@ -10,7 +10,9 @@ import importlib.util
 import io
 import json
 from pathlib import Path
+import shlex
 import shutil
+import subprocess
 import tarfile
 import tempfile
 import unittest
@@ -222,6 +224,30 @@ class ReleaseContractTests(unittest.TestCase):
                     self.assertIn(entrypoint[0], ['sh', 'bash'])
             self.assertEqual(rendered['services']['observer']['entrypoint'][0], 'bash')
             self.assertIn('${COMPOSE_PROJECT_NAME:-oceanseek}', rendered['name'])
+
+    def test_standalone_observer_entrypoint_runs_nonexecutable_monitoring_helper(self):
+        with tempfile.TemporaryDirectory() as root:
+            root = Path(root)
+            target = root / 'compose.yaml'
+            BUILDER.write_standalone_compose(HERE.parents[1], target, self.lock)
+            rendered = yaml.safe_load(target.read_text())
+            service = rendered['services']['observer']
+            content = rendered['configs']['scripts-observer-entrypoint-sh']['content']
+            calls = [line.strip() for line in content.splitlines()
+                     if 'obshell-monitoring-register.sh' in line and line.strip().endswith('&')]
+            self.assertEqual(len(calls), 1, calls)
+            helper = root / 'obshell-monitoring-register.sh'
+            helper.write_text('#!/usr/bin/env bash\nprintf "monitoring helper started\\n"\n')
+            helper.chmod(0o444)
+            self.assertEqual(helper.stat().st_mode & 0o777, 0o444)
+            test_script = calls[0].replace('/opt/lakehouse/obshell-monitoring-register.sh', shlex.quote(str(helper))) + '\nwait $!\n'
+            completed = subprocess.run(
+                ['bash', '-c', test_script], cwd=root, text=True,
+                capture_output=True, timeout=5,
+            )
+            self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+            self.assertIn('monitoring helper started', completed.stdout)
+            self.assertIn('/opt/lakehouse/observer-entrypoint.sh', service['entrypoint'])
 
     def test_archive_config_hash_is_computed_from_bytes(self):
         with tempfile.TemporaryDirectory() as root:
