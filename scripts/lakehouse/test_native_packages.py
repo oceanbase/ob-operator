@@ -209,6 +209,20 @@ class ReleaseContractTests(unittest.TestCase):
             with tarfile.open(target, 'r:gz') as archive:
                 self.assertEqual({item.mtime for item in archive}, {946684800})
 
+    def test_standalone_compose_avoids_swarm_only_config_modes(self):
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / 'compose.yaml'
+            BUILDER.write_standalone_compose(HERE.parents[1], target, self.lock)
+            rendered = yaml.safe_load(target.read_text())
+            for service in rendered['services'].values():
+                for config in service.get('configs', []):
+                    self.assertFalse({'uid', 'gid', 'mode'} & config.keys())
+                entrypoint = service.get('entrypoint') or []
+                if any(str(arg).startswith('/opt/lakehouse/') for arg in entrypoint):
+                    self.assertIn(entrypoint[0], ['sh', 'bash'])
+            self.assertEqual(rendered['services']['observer']['entrypoint'][0], 'bash')
+            self.assertIn('${COMPOSE_PROJECT_NAME:-oceanseek}', rendered['name'])
+
     def test_archive_config_hash_is_computed_from_bytes(self):
         with tempfile.TemporaryDirectory() as root:
             target = Path(root) / 'images.tar.gz'
@@ -237,6 +251,11 @@ class RealPackagingTests(unittest.TestCase):
             self.assertEqual(list(target.parent.iterdir()), [target])
             for service in rendered['services'].values():
                 self.assertFalse(any(mount['type'] == 'bind' for mount in service.get('volumes', [])))
+                for config in service.get('configs', []):
+                    self.assertFalse({'uid', 'gid', 'mode'} & config.keys())
+                entrypoint = service.get('entrypoint') or []
+                if any(str(arg).startswith('/opt/lakehouse/') for arg in entrypoint):
+                    self.assertIn(entrypoint[0], ['sh', 'bash'])
             content = rendered['configs']['scripts-observer-entrypoint-sh']['content']
             # Compose config serializes literal dollars escaped again so its output
             # can itself be consumed by Compose. Runtime mounting is tested separately.

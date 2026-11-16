@@ -54,6 +54,16 @@ ROLE_REPOSITORIES = {'obproxy': 'obproxy-ce', 'observer': 'oceanbase-ai-cloud-na
 IMAGE_ID = re.compile(r'^sha256:[0-9a-f]{64}$')
 
 
+class ComposeLoader(yaml.SafeLoader):
+    pass
+
+
+ComposeLoader.add_multi_constructor(
+    '!',
+    lambda loader, suffix, node: loader.construct_scalar(node)
+)
+
+
 def sha256(path):
     h = hashlib.sha256()
     with Path(path).open('rb') as stream:
@@ -384,7 +394,7 @@ def clean_compose_env():
 def write_standalone_compose(source, target, lock):
     """Embed repository scripts/configs without relying on host bind mounts."""
     root = Path(source) / 'deploy/compose/lakehouse'
-    document = yaml.safe_load((root / 'compose.yaml').read_text())
+    document = yaml.load((root / 'compose.yaml').read_text(), Loader=ComposeLoader)
     if lock.get('delivery_channel') == 'compose':
         if lock.get('schemaVersion') != 1 or lock.get('platform') != 'linux/amd64':
             raise ValueError('Expected schemaVersion 1 and linux/amd64 Compose lock')
@@ -420,7 +430,11 @@ def write_standalone_compose(source, target, lock):
                 key = path.relative_to(root).as_posix().replace('/', '-').replace('.', '-')
                 configs[key] = {'content': path.read_text().replace('$', '$$')}
                 destination = parts[1] + ('/' + path.relative_to(original).as_posix() if original.is_dir() else '')
-                service.setdefault('configs', []).append({'source': key, 'target': destination, 'mode': 365})
+                service.setdefault('configs', []).append({'source': key, 'target': destination})
+                entrypoint = service.get('entrypoint')
+                if isinstance(entrypoint, list) and entrypoint and entrypoint[0] == destination:
+                    interpreter = 'bash' if 'bash' in path.read_text().splitlines()[0] else 'sh'
+                    service['entrypoint'] = [interpreter, *entrypoint]
         service['volumes'] = retained
     Path(target).write_text(yaml.safe_dump(document, sort_keys=False))
 
