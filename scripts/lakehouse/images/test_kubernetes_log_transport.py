@@ -49,6 +49,62 @@ class TransportTest(unittest.TestCase):
         self.client = types.SimpleNamespace(client=types.SimpleNamespace(connect_get_namespaced_pod_exec=object()),
             pod_name="test-ob", namespace="test", container_name="observer")
 
+    def test_continuous_frames_are_drained_before_the_sdk_buffers_the_archive(self):
+        # Kubernetes WSClient.update can drain every currently readable frame
+        # into a single channel string. A sustained producer must yield to the
+        # consumer, including when peek_stdout itself calls update again.
+        class StreamingSDK(WebSocket):
+            def __init__(self, chunks):
+                super().__init__(chunks)
+                self._all = io.StringIO()
+                self.peak_buffered = 0
+            def _frames_immediately_available(self):
+                return bool(self.chunks)
+            def update(self, timeout):
+                while self.chunks:
+                    block = self.chunks.pop(0)
+                    self.output.append(block)
+                    self._all.write(block)
+                    self.peak_buffered = max(self.peak_buffered, sum(map(len, self.output)))
+                    if self.peak_buffered > 3 * 65537:
+                        raise RuntimeError("SDK buffers the whole archive before yielding")
+                    if not self._frames_immediately_available():
+                        return
+                self.open = False
+            def peek_stdout(self):
+                self.update(0)
+                return bool(self.output)
+        data = bytes(range(256)) * 4096
+        frames = [json.dumps({"size": len(data)}) + "\n"]
+        frames += [base64.b64encode(data[i:i+49152]).decode() + "\n" for i in range(0, len(data), 49152)]
+        frames += [json.dumps({"size": len(data), "sha256": hashlib.sha256(data).hexdigest()}) + "\n"]
+        websocket = StreamingSDK(frames)
+        websocket.write_stdin = mock.Mock()
+        output = io.BytesIO()
+        decoder = transport.Decoder(output)
+        transport.execute(self.client, ["test"], sink=decoder.feed,
+                          stream_factory=lambda *a, **kw: websocket, acknowledge=True)
+        decoder.finish()
+        self.assertEqual(output.getvalue(), data)
+        websocket.write_stdin.assert_called_once_with("OBDIAG_TRANSFER_COMPLETE\n")
+        self.assertTrue(websocket.closed)
+        # The transport never consumes the SDK's duplicate aggregate stream.
+        self.assertNotIsInstance(websocket._all, io.StringIO)
+
+    def test_decoder_coalesced_archive_and_split_frame_boundaries(self):
+        data = bytes(range(256)) * 32768
+        encoded = (json.dumps({"size": len(data)}) + "\n" +
+                   "".join(base64.b64encode(data[i:i+49152]).decode() + "\n"
+                           for i in range(0, len(data), 49152)) +
+                   json.dumps({"size": len(data), "sha256": hashlib.sha256(data).hexdigest()}) + "\n")
+        for chunks in ([encoded], [encoded[:31], encoded[31:-17], encoded[-17:]]):
+            output = io.BytesIO()
+            decoder = transport.Decoder(output)
+            for chunk in chunks:
+                decoder.feed(chunk)
+            decoder.finish()
+            self.assertEqual(output.getvalue(), data)
+
     def test_python_probe_is_memory_only(self):
         with tempfile.TemporaryDirectory() as directory:
             subprocess.run([sys.executable, "-c", transport.PROBE_CODE], cwd=directory, check=True)

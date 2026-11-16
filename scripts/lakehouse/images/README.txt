@@ -79,3 +79,12 @@ Diagnostic downloads acknowledge the verified size/checksum footer over exec std
 before the remote sender exits. This prevents a successful process exit from
 closing the connection while stdout data is still in transit. Truncated or
 corrupt transfers remain failures and never replace the local archive.
+
+For the pinned obdiag SDK, the archive transport yields after each websocket
+frame instead of allowing WSClient.update() to concatenate the complete stream
+before returning. It also disables the unused aggregate output copy. These
+changes are scoped to the individual diagnostic connection; normal Kubernetes
+clients keep their upstream behavior. Protocol decoding splits each received
+chunk once, avoiding repeated copies of the remaining archive. The deadline,
+size limit, SHA256 footer and final acknowledgement still apply. Revalidate this
+adapter when changing the pinned obdiag/Kubernetes SDK.

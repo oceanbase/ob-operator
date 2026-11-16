@@ -104,6 +104,13 @@ def _path(value):
     return os.path.normpath(value)
 
 
+class _DiscardAggregate:
+    # WSClient keeps an optional second copy for read_all(), which this streaming
+    # transport never uses. Keep memory bounded to the current channel frame.
+    def write(self, data):
+        pass
+
+
 def execute(client, command, sink=None, timeout=180, stream_factory=None, acknowledge=False):
     """Consume stdout incrementally and require the Kubernetes exit status."""
     if stream_factory is None:
@@ -117,6 +124,14 @@ def execute(client, command, sink=None, timeout=180, stream_factory=None, acknow
         client.pod_name, client.namespace, command=command, container=client.container_name,
         stderr=True, stdin=acknowledge, stdout=True, tty=False, _preload_content=False,
         _request_timeout=timeout)
+    # The SDK bundled in the pinned obdiag RPM drains all immediately available
+    # frames in update(). Continuous output then grows _channels quadratically
+    # and prevents our deadline/sink from running. Yield after each frame on
+    # this connection only; older SDKs already return after one frame.
+    if callable(getattr(websocket, "_frames_immediately_available", None)):
+        websocket._frames_immediately_available = lambda: False
+    if hasattr(websocket, "_all"):
+        websocket._all = _DiscardAggregate()
     captured, errors, size = [], [], 0
     acknowledged = False
     deadline = time.monotonic() + timeout
@@ -201,9 +216,14 @@ class Decoder:
     def feed(self, chunk):
         if isinstance(chunk, bytes):
             chunk = chunk.decode("ascii")
-        self.pending += chunk
-        while "\n" in self.pending:
-            line, self.pending = self.pending.split("\n", 1)
+        # Split once: repeatedly copying the remaining archive is quadratic
+        # when the websocket coalesces many protocol lines into one chunk.
+        lines = chunk.split("\n")
+        lines[0] = self.pending + lines[0]
+        self.pending = lines.pop()
+        for line in lines:
+            if len(line) > 65536:
+                raise TransportError("oversized diagnostic stream frame")
             if self.complete or not line:
                 raise TransportError("unexpected diagnostic stream data")
             if self.expected is None:
