@@ -189,7 +189,7 @@ def snapshot(args):
 
 def render(args, state, stage_start, watching_start):
     now = time.time()
-    lines = ['Lakehouse installation progress  namespace=%s  release=%s' % (args.namespace, args.release),
+    lines = ['OceanSeek installation progress  namespace=%s  release=%s' % (args.namespace, args.release),
              'Helm status: ' + state['status'], '']
     for i, ok in enumerate(state['passed'][:-1]):
         if ok:
@@ -254,8 +254,8 @@ def main_with_args(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('-n', '--namespace', default='ob-demo')
-    parser.add_argument('--release', default='ob-demo')
+    parser.add_argument('-n', '--namespace', default='oceanseek')
+    parser.add_argument('--release', default='oceanseek')
     parser.add_argument('--interval', type=int, default=3)
     parser.add_argument('--once', action='store_true', help='Print one snapshot and exit')
     parser.add_argument('--no-clear', action='store_true', help='Append snapshots instead of refreshing the terminal')

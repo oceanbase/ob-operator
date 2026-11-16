@@ -84,7 +84,7 @@ installs cert-manager and the Operator before it starts the lakehouse.
 Run with cluster-level install permissions. All workers need access to the
 locked images. Install from the Helm repository or the exact Chart archive:
 
-  helm upgrade --install ob-demo ./oceanbase-lakehouse-*.tgz --namespace ob-demo --create-namespace --wait --wait-for-jobs --timeout 35m
+  helm upgrade --install oceanseek ./oceanbase-lakehouse-*.tgz --namespace oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
 
 No values file or separate Dashboard installation is needed. The packaged Chart
 already pins this delivery's images and enables Dashboard, its monitoring,
@@ -175,8 +175,8 @@ Copy values-three-nodes.yaml and replace worker-1/2/3 with the actual
 kubernetes.io/hostname label values (not assumed public IPs):
 
   kubectl get nodes -L kubernetes.io/hostname
-  helm upgrade --install ob-demo ./oceanbase-lakehouse-*.tgz \
-    --namespace ob-demo --create-namespace \
+  helm upgrade --install oceanseek ./oceanbase-lakehouse-*.tgz \
+    --namespace oceanseek --create-namespace \
     -f values-three-nodes.yaml \
     --wait --wait-for-jobs --timeout 35m
 
@@ -269,11 +269,11 @@ OB waits for LS. A read-only post-install/post-upgrade hook verifies all databas
 Pods and Dashboard before Helm reports success. Helm --wait alone does not
 understand custom-resource readiness; do not use --no-hooks for acceptance.
 
-  kubectl -n ob-demo get pods,jobs,oblogserviceclusters,obclusters
-  kubectl -n ob-demo logs -f job/ob-demo-readiness
-  kubectl -n ob-demo get jobs -l app.kubernetes.io/component=storage-init
-  kubectl -n ob-demo logs job/<storage-init-job-name>
-  kubectl -n ob-demo describe pod <pending-or-failed-pod>
+  kubectl -n oceanseek get pods,jobs,oblogserviceclusters,obclusters
+  kubectl -n oceanseek logs -f job/oceanseek-readiness
+  kubectl -n oceanseek get jobs -l app.kubernetes.io/component=storage-init
+  kubectl -n oceanseek logs job/<storage-init-job-name>
+  kubectl -n oceanseek describe pod <pending-or-failed-pod>
 
 The success hook Job is removed automatically. A failed hook is retained for
 inspection. Storage initialization Job retries transient failures within its
@@ -295,7 +295,7 @@ recreates storage initialization; it is not a general database recovery command.
 Dashboard and SQL access
 ------------------------
 Kubernetes allocates Dashboard and SQL NodePorts when the default values are 0.
-Find the real allocated ports with kubectl -n ob-demo get svc. Use a reachable
+Find the real allocated ports with kubectl -n oceanseek get svc. Use a reachable
 node address with those ports. Dashboard's default account is admin.
 Use the password retrieval commands printed by Helm. The two accounts are
 independent. Direct ALTER USER changes do not update the Kubernetes Secret.
@@ -353,10 +353,10 @@ For Helm's default Secret storage driver:
 
   umask 077
   backup=$(mktemp -d ./lakehouse-auth-backup.XXXXXXXX)
-  kubectl -n ob-demo get secret -l owner=helm,name=ob-demo -o json > "$backup/helm-history.json"
-  kubectl -n ob-demo get secret ob-demo-user-credentials ob-demo-dashboard-bootstrap -o json > "$backup/dashboard-secrets.json"
-  kubectl -n ob-demo get configmap ob-demo-rbac-policy -o json > "$backup/dashboard-policy.json"
-  helm get values ob-demo -n ob-demo --all -o yaml > "$backup/values.yaml"
+  kubectl -n oceanseek get secret -l owner=helm,name=oceanseek -o json > "$backup/helm-history.json"
+  kubectl -n oceanseek get secret oceanseek-user-credentials oceanseek-dashboard-bootstrap -o json > "$backup/dashboard-secrets.json"
+  kubectl -n oceanseek get configmap oceanseek-rbac-policy -o json > "$backup/dashboard-policy.json"
+  helm get values oceanseek -n oceanseek --all -o yaml > "$backup/values.yaml"
 
 Use the corresponding backup mechanism for other Helm storage drivers. Check
 that each backup succeeded and keep it in protected storage. Use the migrated
@@ -364,9 +364,9 @@ effective values for the first upgrade. Verify the new revision is deployed,
 the current password works and removed users remain revoked. For the explicit
 rollback boundary, run a second upgrade with the same new Chart and values:
 
-  helm upgrade ob-demo ./oceanbase-lakehouse-*.tgz -n ob-demo \
+  helm upgrade oceanseek ./oceanbase-lakehouse-*.tgz -n oceanseek \
     -f migrated-values.yaml --wait --wait-for-jobs --timeout 35m --history-max 1
-  helm history ob-demo -n ob-demo
+  helm history oceanseek -n oceanseek
 
 The second upgrade prunes the older rollback history, retaining the first
 deployed new revision and the new upgrade revision. Confirm that every listed
@@ -441,7 +441,7 @@ Connection output after installation
 ------------------------------------
 Helm renders NOTES before newly allocated NodePorts exist; --wait does not render
 NOTES again. For direct final URL/SQL output, use the release package installer:
-  bash install-helm-and-show-access.sh ob-demo CHART.tgz -n ob-demo --create-namespace --wait --wait-for-jobs --timeout 35m
+  bash install-helm-and-show-access.sh oceanseek CHART.tgz -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
 It prints actual addresses after Helm succeeds and respects access.host from values,
 --kubeconfig and --kube-context. Python 3 is required by this wrapper. Plain Helm
 users can execute the complete lookup commands in NOTES after installation.

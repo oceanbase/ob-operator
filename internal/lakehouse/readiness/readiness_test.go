@@ -51,7 +51,7 @@ func TestWaitReady(t *testing.T) {
 	if err := Wait(context.Background(), r, options(), &out); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(out.String(), "Dashboard ready") || len(r.requests) != 6 {
+	if !strings.Contains(out.String(), "OceanSeek ready:") || !strings.Contains(out.String(), "Dashboard ready") || len(r.requests) != 6 {
 		t.Fatalf("output=%s requests=%v", out.String(), r.requests)
 	}
 	for _, path := range r.requests {

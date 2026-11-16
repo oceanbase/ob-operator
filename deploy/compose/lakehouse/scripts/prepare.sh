@@ -27,4 +27,4 @@ generate_secret "${base_dir}/secrets/minio_access_key" 24
 generate_secret "${base_dir}/secrets/ob_root_password" 24
 chmod 600 "${base_dir}/secrets/minio_access_id" "${base_dir}/secrets/minio_access_key" "${base_dir}/secrets/ob_root_password"
 
-echo "Lakehouse Compose environment is prepared in ${base_dir}"
+echo "OceanSeek Compose environment is prepared in ${base_dir}"

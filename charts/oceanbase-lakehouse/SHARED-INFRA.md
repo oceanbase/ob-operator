@@ -49,8 +49,8 @@ was still downloading the Observer image. Warm-cache functional results do not
 mean that this cold attempt passed. Prepare the exact offline images on every
 eligible node, or explicitly extend the final readiness budget:
 
-  helm upgrade --install ob-demo ./oceanbase-lakehouse-*.tgz \
-    -n ob-demo --create-namespace -f values-slow-network.yaml \
+  helm upgrade --install oceanseek ./oceanbase-lakehouse-*.tgz \
+    -n oceanseek --create-namespace -f values-slow-network.yaml \
     --wait --wait-for-jobs --timeout 70m
 
 The profile sets native.readiness.timeoutSeconds=3600. It does not change the
@@ -96,9 +96,9 @@ Python 3 and PyYAML are required, as for the offline packaging tools.
 
 ```bash
 umask 077
-helm get values ob-demo -n ob-demo --all -o yaml > previous-values.yaml
+helm get values oceanseek -n oceanseek --all -o yaml > previous-values.yaml
 python3 tools/migrate-minio-values.py previous-values.yaml --output migrated-values.yaml
-helm upgrade ob-demo ./oceanbase-lakehouse-*.tgz -n ob-demo \
+helm upgrade oceanseek ./oceanbase-lakehouse-*.tgz -n oceanseek \
   -f migrated-values.yaml --wait --wait-for-jobs --timeout 35m
 ```
 

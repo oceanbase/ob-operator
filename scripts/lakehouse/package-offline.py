@@ -87,8 +87,8 @@ def plan(args):
             raise ValueError('Offline delivery requires prebuilt images, not Compose build directives')
         refs = {s['image'] for s in rendered['services'].values()}
     elif channel == 'helm':
-        cmd = [args.helm, 'template', 'ob-demo', one_chart(bundle, 'oceanbase-lakehouse-*.tgz'),
-               '--namespace', 'ob-demo']
+        cmd = [args.helm, 'template', 'oceanseek', one_chart(bundle, 'oceanbase-lakehouse-*.tgz'),
+               '--namespace', 'oceanseek']
         for path in args.values:
             cmd += ['--values', path.resolve()]
         rendered = run(cmd)
@@ -272,7 +272,7 @@ def export(args, selected):
         commands = ('# Import on EVERY target K3s worker (Docker load does not populate K3s).\n'
                     'gzip -dc images.tar.gz | sudo k3s ctr images import -\n'
                     'cd deployment\n# Check the Kubernetes and storage prerequisites in USAGE.txt.\n'
-                    'helm upgrade --install ob-demo ./' + chart + ' -n ob-demo --create-namespace ' +
+                    'helm upgrade --install oceanseek ./' + chart + ' -n oceanseek --create-namespace ' +
                     ' '.join(value_args) + ' --wait --wait-for-jobs --timeout 35m\n')
     loader = '#!/bin/sh\nset -eu\ncd -- "$(dirname -- "$0")"\nsha256sum -c SHA256SUMS\n'
     if selected['channel'] == 'compose':

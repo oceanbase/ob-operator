@@ -270,11 +270,11 @@ def build_release(source, lock, output, release_version=None, allow_existing_out
         chart = Path(tmp) / CHART_NAME
         meta, overlay = assemble_chart(snapshot, lock, chart)
         native.run(['helm', 'lint', '--strict', chart])
-        rendered = native.run(['helm', 'template', 'ob-demo', chart, '-n', 'ob-demo', '--include-crds'])
+        rendered = native.run(['helm', 'template', 'oceanseek', chart, '-n', 'oceanseek', '--include-crds'])
         (output / 'rendered-validation.yaml').write_text(rendered)
         profiles = ('values-three-nodes.yaml', 'values-minio-ha.yaml')
         profile_flags = [arg for name in profiles for arg in ('-f', chart / name)]
-        native.run(['helm', 'template', 'ob-demo', chart, '-n', 'ob-demo', *profile_flags])
+        native.run(['helm', 'template', 'oceanseek', chart, '-n', 'oceanseek', *profile_flags])
         target = package_chart(chart, output)
         for name in profiles:
             shutil.copyfile(chart / name, output / name)

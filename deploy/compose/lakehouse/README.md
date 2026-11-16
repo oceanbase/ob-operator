@@ -12,6 +12,10 @@ Helm deployment for Dashboard and Kubernetes management. This quickstart is for
 functional evaluation; three LogServices on one machine do not provide host
 fault tolerance.
 
+New installations use the Compose project name `oceanseek`. Existing installations must
+keep their original `COMPOSE_PROJECT_NAME` or `-p` value to reuse the same data volumes.
+Successful bootstrap prints `OceanSeek deployment completed.` and the actual project name.
+
 ## What to prepare
 
 - Linux AMD64, Docker Engine 24+ and the Docker Compose v2 plugin (`docker compose`).
@@ -257,7 +261,7 @@ After recreating containers, copy the command from the latest completion log.
 Do not share its output. For the default project, a running Observer also allows:
 
 ```bash
-sudo docker exec "$(sudo docker ps -q --filter 'label=com.docker.compose.project=ob-lakehouse' --filter 'label=com.docker.compose.service=observer' --filter 'label=com.docker.compose.oneoff=False')" cat /run/secrets/ob_root_password
+sudo docker exec "$(sudo docker ps -q --filter 'label=com.docker.compose.project=oceanseek' --filter 'label=com.docker.compose.service=observer' --filter 'label=com.docker.compose.oneoff=False')" cat /run/secrets/ob_root_password
 ```
 
 You may omit `sudo` if your user can access Docker directly.
@@ -346,7 +350,7 @@ includes `.env`, edit that file and retain its image references. Otherwise copy
 | `OBAGENT_CPUS` / `OBAGENT_MEMORY` | `0.5` / `512m` | OBAgent container limit |
 | `OBSERVER_DATAFILE_SIZE` / `LOGSERVICE_LOG_DISK_SIZE` | `10G` / `10G` | Initial local data / each LogService log space |
 | `OBSERVER_DATAFILE_MAXSIZE` / `OBSERVER_DATAFILE_NEXT` | `47G` / `5G` | Observer local data growth ceiling / increment; reserve at least 50 GiB for this volume |
-| `COMPOSE_PROJECT_NAME` | `ob-lakehouse` | Groups this installation's containers and volumes |
+| `COMPOSE_PROJECT_NAME` | `oceanseek` | Groups this installation's containers and volumes |
 
 These are fixed experience defaults, not automatic maximum-use sizing. Keep
 container memory above the corresponding application memory target. Initial

@@ -39,7 +39,8 @@ if [ "${mode}" = bootstrap ]; then
 
   cat <<EOF
 
-Lakehouse deployment completed.
+OceanSeek deployment completed.
+Compose project: ${COMPOSE_PROJECT_NAME:-oceanseek}
 
 OceanBase SQL:
   mysql -h ${sql_host} -P ${OBSERVER_SQL_HOST_PORT:-32881} -u 'root@sys' -p

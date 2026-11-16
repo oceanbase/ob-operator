@@ -1,5 +1,5 @@
 # Linux AMD64 quickstart. No .env file, local build or preparation script required.
-name: ${COMPOSE_PROJECT_NAME:-ob-lakehouse}
+name: ${COMPOSE_PROJECT_NAME:-oceanseek}
 
 # IMAGE_REGISTRY is an optional registry/namespace prefix, without a trailing slash.
 # A complete per-image reference always takes precedence (including @sha256 digests).
@@ -204,7 +204,7 @@ services:
     entrypoint: ["/opt/lakehouse/observer-bootstrap.sh"]
     restart: "no"
     environment:
-      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-ob-lakehouse}
+      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-oceanseek}
       OBSERVER_HOST: ${OBSERVER_IP:-172.30.52.21}
       OBSERVER_SQL_PORT: "2881"
       OBSERVER_RPC_PORT: "2882"

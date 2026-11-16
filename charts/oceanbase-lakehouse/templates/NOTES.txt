@@ -2,6 +2,10 @@
 {{- if or (and .Values.dashboard.enabled (eq .Values.dashboard.service.type "NodePort")) (eq .Values.sqlService.type "NodePort") -}}
 {{- $host = include "lakehouse.accessHost" . -}}
 {{- end -}}
+OceanSeek deployment access
+  Helm release: {{ .Release.Name }}
+  Namespace: {{ .Release.Namespace }}
+
 {{ if .Values.dashboard.enabled }}
 OceanBase Operator Dashboard
   Username: admin

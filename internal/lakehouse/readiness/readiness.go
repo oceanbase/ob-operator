@@ -101,7 +101,7 @@ func Wait(parent context.Context, reader Reader, o Options, output io.Writer) er
 			detail = "Kubernetes API temporarily unavailable; retrying"
 		}
 		if ready {
-			fmt.Fprintf(output, "Lakehouse ready: LogService and OceanBase running; all database Pods ready%s (%s)\n", dashboardSummary(o), time.Since(started).Round(time.Second))
+			fmt.Fprintf(output, "OceanSeek ready: LogService and OceanBase running; all database Pods ready%s (%s)\n", dashboardSummary(o), time.Since(started).Round(time.Second))
 			return nil
 		}
 		if strings.HasPrefix(detail, "Storage initialization failed") {

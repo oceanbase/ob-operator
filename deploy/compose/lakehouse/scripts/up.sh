@@ -48,4 +48,4 @@ if [[ "${exit_code}" != "0" ]]; then
   exit "${exit_code}"
 fi
 docker compose "${compose_args[@]}" run --rm --no-deps observer-bootstrap --mode check
-echo "Lakehouse is ready at ${HOST_BIND_ADDRESS:-127.0.0.1}:${OBSERVER_SQL_HOST_PORT:-32881}. Root password: secrets/ob_root_password (do not share this file)."
+echo "OceanSeek is ready at ${HOST_BIND_ADDRESS:-127.0.0.1}:${OBSERVER_SQL_HOST_PORT:-32881}. Root password: secrets/ob_root_password (do not share this file)."

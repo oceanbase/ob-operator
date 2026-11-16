@@ -1,5 +1,5 @@
 # Requires a native-lakehouse-capable ob-operator installed separately.
-# helm upgrade --install ob-demo ./oceanbase-lakehouse -n ob-demo --create-namespace \
+# helm upgrade --install oceanseek ./oceanbase-lakehouse -n oceanseek --create-namespace \
 #   --wait --wait-for-jobs --timeout 35m
 # Defaults match values-single-node.yaml: 1 Observer, 3 LogService processes,
 # 1 OBProxy, bundled MinIO and Dashboard. Database + proxy request 10 CPU / 24Gi;

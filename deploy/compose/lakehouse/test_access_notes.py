@@ -33,6 +33,8 @@ class AccessNotesTests(unittest.TestCase):
     def test_default_commands_are_complete(self):
         root, result = self.render()
         self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('OceanSeek deployment completed.', result.stdout)
+        self.assertIn('Compose project: oceanseek', result.stdout)
         sql = next(line.strip() for line in result.stdout.splitlines() if line.strip().startswith('mysql '))
         credentials = next(line.strip() for line in result.stdout.splitlines() if line.strip().startswith('sudo docker cp '))
         self.assertEqual(shlex.split(sql), ['mysql', '-h', '192.0.2.4', '-P', '33881', '-u', 'root@sys', '-p'])
@@ -45,6 +47,7 @@ class AccessNotesTests(unittest.TestCase):
 
     def test_custom_project_is_preserved(self):
         _, result = self.render(project='notes-second-project')
+        self.assertIn('Compose project: notes-second-project', result.stdout)
         command = next(line.strip() for line in result.stdout.splitlines() if line.strip().startswith('sudo docker cp '))
         self.assertIn('0123456789ab:', command)
         self.assertNotIn('notes-second-project', command)

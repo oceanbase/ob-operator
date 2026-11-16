@@ -221,8 +221,8 @@ def helm_values(snapshots):
 def helm_image_plan(args, bundle, release, excluded):
     release_name = getattr(args, 'release', None)
     namespace = getattr(args, 'namespace', None)
-    release_name = 'ob-demo' if release_name is None else release_name
-    namespace = 'ob-demo' if namespace is None else namespace
+    release_name = 'oceanseek' if release_name is None else release_name
+    namespace = 'oceanseek' if namespace is None else namespace
     if len(namespace) > 63 or not re.fullmatch(r'[a-z0-9](?:[a-z0-9-]*[a-z0-9])?', namespace):
         raise ValueError('Invalid Helm namespace name')
     chart = one_chart(bundle, 'oceanbase-lakehouse-*.tgz')
@@ -507,7 +507,7 @@ def export(args, selected):
         commands = ('# Import on EVERY target K3s worker (Docker load does not populate K3s).\n'
                     'gzip -dc images.tar.gz | sudo k3s ctr images import -\n'
                     'cd deployment\n# Check the Kubernetes and storage prerequisites in USAGE.txt.\n'
-                    'helm upgrade --install ob-demo ./' + chart + ' -n ob-demo --create-namespace ' +
+                    'helm upgrade --install oceanseek ./' + chart + ' -n oceanseek --create-namespace ' +
                     ' '.join(value_args) + ' --wait --wait-for-jobs --timeout 35m\n')
     (output / 'INSTALL.txt').write_text('Verify first: sha256sum -c SHA256SUMS\n\n' + commands +
                                       '\nNo cluster installation was performed by the packaging tool.\n')
@@ -847,8 +847,8 @@ def main(expected_channel=None, default_manifest=None, default_manifest_sha256=N
     parser.add_argument('--channel', choices=['compose', 'helm'], help='Compatibility entry only; fixed-channel tools do not require this')
     parser.add_argument('--env-file', type=Path, help='Optional user Compose interpolation file; no .env is required in release-manifest mode')
     parser.add_argument('--values', type=Path, action='append', default=[])
-    parser.add_argument('--release', help='Helm release used for planning and the offline install command (default ob-demo)')
-    parser.add_argument('--namespace', help='Helm namespace used for planning and the offline install command (default ob-demo)')
+    parser.add_argument('--release', help='Helm release used for planning and the offline install command (default oceanseek)')
+    parser.add_argument('--namespace', help='Helm namespace used for planning and the offline install command (default oceanseek)')
     parser.add_argument('--skip-crds', action='store_true', help='Include --skip-crds in the Helm offline install command')
     parser.add_argument('--include-prerequisites', action='store_true',
                         help='Include the release administrator bootstrap images and available cert-manager manifest')

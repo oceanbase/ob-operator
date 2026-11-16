@@ -21,8 +21,8 @@ helm:
     sha256: 263274cd50b474632a8944e81e2c396f4608e5d8a5570a9b7a04b7537028180c
   customFixCommit: 29ff7cd5715de74bcdbe18b9f2f50a4a85f97bf5
   minioImage: reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:52dfd5c0bbd38d3219f2058c7af216d9f9a27a994b7b5baad09bbd38866015ff
-  installCommand: helm upgrade --install ob-demo http://6.12.233.107:18080/experience/20261113-logservice-stop-dev-r25/oceanbase-lakehouse-0.5.7-dev.20261113.2.tgz
-    -n ob-demo --create-namespace --wait --wait-for-jobs --timeout 35m
+  installCommand: helm upgrade --install oceanseek http://6.12.233.107:18080/experience/20261113-logservice-stop-dev-r25/oceanbase-lakehouse-0.5.7-dev.20261113.2.tgz
+    -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
   logServiceFixCommit: 3ec39107c05929a4a2732a98d55d20d4485c0d4c
   logServiceImage: reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:3da3cdd8fc46b05947616c4ccc6e2ac0fce89c3676ac9f695cc0ff3bc3a7a191
 compose:

@@ -544,8 +544,8 @@ def build(args):
         'cert-manager, a working `local-path` StorageClass, and the release images '
         'available on its workers. See `USAGE.txt` for administrator preparation.\n\n'
         'From this extracted directory, run one command:\n\n```bash\n'
-        'helm upgrade --install ob-demo ./' + lakehouse_chart.name +
-        ' --namespace ob-demo --create-namespace --wait --wait-for-jobs --timeout 35m\n'
+        'helm upgrade --install oceanseek ./' + lakehouse_chart.name +
+        ' --namespace oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m\n'
         '```\n\n'
         'Dashboard and its readiness check are enabled by default. No values file '
         'or separate Dashboard installation is required. The default experience '
