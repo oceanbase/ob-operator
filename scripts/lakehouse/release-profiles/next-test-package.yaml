@@ -1,34 +1,36 @@
 schemaVersion: 1
 name: next-test-package
 status: validated-with-documented-coverage-limits
-releaseVersion: 20261116-readiness-login-dev-r29
-sourceCommit: be3953027d7fa7e4c31a15c823858036215273cb
+releaseVersion: 20261116-minio-log-download-dev-r30
+sourceCommit: c45160b46979f300f94a442744d2e3a08642b1d5
 repository: https://github.com/gys-git/ob-operator
 branch: codex/oceanseek-compose
 baseManifest:
-  url: http://6.12.233.107:18080/experience/20261116-readiness-login-dev-r29/release-manifest.json
-  sha256: c23d58223c676d7024f33a05e9d55119cb837d8d296a12e9fc851dac57ec53eb
+  url: http://6.12.233.107:18080/experience/20261116-minio-log-download-dev-r30/release-manifest.json
+  sha256: 0b25e574626f3e4b47439381ee79cd059a8c6506a2225ce6a802a98916795b20
 imageLock:
-  url: http://6.12.233.107:18080/experience/20261116-readiness-login-dev-r29/image-lock.json
-  sha256: af6ca70d6a9a0e1950b637d5324f19dbd385944cfcebe6e8bcd60725c4facef0
+  url: http://6.12.233.107:18080/experience/20261116-minio-log-download-dev-r30/image-lock.json
+  sha256: 3316a8590bc2e31897ac612b089cbcfeb46d3b9f0b41f34474dbc4c30d226bb2
 composeImageLock:
-  url: http://6.12.233.107:18080/experience/20261116-readiness-login-dev-r29/compose-image-lock.json
-  sha256: b5a6bad6b334b956d3c2e0c7ccac5c01bbc4870c71f50087ab6a801257b2207b
+  url: http://6.12.233.107:18080/experience/20261116-minio-log-download-dev-r30/compose-image-lock.json
+  sha256: 932511b0e4c39b0eb98237a4e2a6e57bc029bdbb180ebc723e77d8a4fc8c742c
 acceptance:
-  url: http://6.12.233.107:18080/experience/20261116-readiness-login-dev-r29/acceptance.json
-  sha256: 01e0014ea90130f28d78ca4078586e79e1017275de94b777f991129e01cdc136
+  url: http://6.12.233.107:18080/experience/20261116-minio-log-download-dev-r30/acceptance.json
+  sha256: ac7037fe14f9db1f964a0205cbd31333c3691d9b0299a23ee2c86d0c6a9a08e9
 helm:
-  sourceCommit: be3953027d7fa7e4c31a15c823858036215273cb
-  status: Ubuntu Debian Rocky final Chart SQL webhook Dashboard verified
+  sourceCommit: c45160b46979f300f94a442744d2e3a08642b1d5
+  status: ALinux3 default two-node K3s SQL webhook Dashboard MinIO and repeated log
+    download verified
   chart:
-    url: http://6.12.233.107:18080/experience/20261116-readiness-login-dev-r29/oceanbase-lakehouse-0.6.0-dev.20261116.1.tgz
-    version: 0.6.0-dev.20261116.1
-    sha256: 6279ab461302d8ef1955c65d679d69b5d2a16e35e06c588d5359ffed099e58ef
-  installCommand: helm upgrade --install oceanseek http://6.12.233.107:18080/experience/20261116-readiness-login-dev-r29/oceanbase-lakehouse-0.6.0-dev.20261116.1.tgz
+    url: http://6.12.233.107:18080/experience/20261116-minio-log-download-dev-r30/oceanbase-lakehouse-0.6.0-dev.20261116.2.tgz
+    version: 0.6.0-dev.20261116.2
+    sha256: a78b0cc137dd29f104ae5e1f6aef21a29d960ccebe68e71763ee8fdf0b0599f9
+  installCommand: helm upgrade --install oceanseek http://6.12.233.107:18080/experience/20261116-minio-log-download-dev-r30/oceanbase-lakehouse-0.6.0-dev.20261116.2.tgz
     -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
 compose:
-  sourceCommit: be3953027d7fa7e4c31a15c823858036215273cb
-  status: final YAML SQL transaction and Observer restart verified
+  sourceCommit: c45160b46979f300f94a442744d2e3a08642b1d5
+  status: fresh install SQL rollback Observer restart and actual MinIO SSH/browser
+    verified
   configuration:
-    url: http://6.12.233.107:18080/experience/20261116-readiness-login-dev-r29/compose.yaml
-    sha256: 73cb91dc46a243681941a6067841167288a2e7b6512e8d2b153c08a7c042a263
+    url: http://6.12.233.107:18080/experience/20261116-minio-log-download-dev-r30/compose.yaml
+    sha256: 6181ff7220f94ab1fac449eaeef2784eeb4a93e4b095846c3b929582356fc1cc
