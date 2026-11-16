@@ -479,3 +479,11 @@ commands above are not sufficient for it.
 
 Reference: https://docs.k3s.io/installation/airgap
            https://docs.k3s.io/advanced#selinux-support
+
+MinIO console after installation
+When bundled MinIO is enabled, Helm NOTES prints a kubectl port-forward command
+for its StatefulSet, the localhost console URL, and commands to read rootUser
+and rootPassword from the actual MinIO Secret (including rootExistingSecret).
+If kubectl runs remotely, use the printed SSH tunnel on your browser computer.
+Keep both forwards running. This does not change installation commands or expose
+a public port. External-only storage uses the provider's console credentials.

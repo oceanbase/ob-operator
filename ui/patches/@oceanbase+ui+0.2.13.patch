@@ -1,0 +1,32 @@
+diff --git a/node_modules/@oceanbase/ui/es/_util/genComponentStyleHook.js b/node_modules/@oceanbase/ui/es/_util/genComponentStyleHook.js
+index 7eef2ed..8f21d6c 100644
+--- a/node_modules/@oceanbase/ui/es/_util/genComponentStyleHook.js
++++ b/node_modules/@oceanbase/ui/es/_util/genComponentStyleHook.js
+@@ -9,10 +9,10 @@ import React from 'react';
+ import { ConfigProvider } from '@oceanbase/design';
+ export function genComponentStyleHook(componentName, styleFn) {
+   return function (prefixCls) {
++    var _React$useContext = React.useContext(ConfigProvider.ConfigContext),
++      getPrefixCls = _React$useContext.getPrefixCls,
++      iconPrefixCls = _React$useContext.iconPrefixCls;
+     return useStyle(componentName, function (token) {
+-      var _React$useContext = React.useContext(ConfigProvider.ConfigContext),
+-        getPrefixCls = _React$useContext.getPrefixCls,
+-        iconPrefixCls = _React$useContext.iconPrefixCls;
+       var rootPrefixCls = getPrefixCls();
+       var componentCls = ".".concat(prefixCls);
+       var mergedToken = _objectSpread(_objectSpread({}, token), {}, {
+diff --git a/node_modules/@oceanbase/ui/lib/_util/genComponentStyleHook.js b/node_modules/@oceanbase/ui/lib/_util/genComponentStyleHook.js
+index af9e5b6..b6dfa03 100644
+--- a/node_modules/@oceanbase/ui/lib/_util/genComponentStyleHook.js
++++ b/node_modules/@oceanbase/ui/lib/_util/genComponentStyleHook.js
+@@ -37,8 +37,8 @@ var import_react = __toESM(require("react"));
+ var import_design = require("@oceanbase/design");
+ function genComponentStyleHook(componentName, styleFn) {
+   return (prefixCls) => {
++    const { getPrefixCls, iconPrefixCls } = import_react.default.useContext(import_design.ConfigProvider.ConfigContext);
+     return (0, import_pro_components.useStyle)(componentName, (token) => {
+-      const { getPrefixCls, iconPrefixCls } = import_react.default.useContext(import_design.ConfigProvider.ConfigContext);
+       const rootPrefixCls = getPrefixCls();
+       const componentCls = `.${prefixCls}`;
+       const mergedToken = {

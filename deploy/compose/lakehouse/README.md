@@ -496,3 +496,13 @@ the QA volumes for inspection; `down -v` is an explicit separate action.
 ### Saved credentials and custom Compose arguments
 
 The completion log prints a complete `docker cp ... - | tar -xOf -` command using the bootstrap container's default Docker identity. Run it on the Docker host from any directory, including after bootstrap has exited successfully. Conflicting project names in `-p` and an environment file do not affect this command. Do not override the bootstrap service's `hostname`; the generated command uses its default Docker container ID. Removing or recreating that container invalidates the old command: copy the latest completion log after `down`/`up`. It reads the saved credential file, not the current database password. Manual password changes do not automatically update that file; use the new password after a change. Do not share the output.
+
+### MinIO console access after installation
+
+The bootstrap completion message prints an SSH tunnel command, the MinIO console
+URL, and complete commands to read the saved MinIO username and password on the
+Docker host. Run the tunnel on your browser computer, substituting your SSH user
+(and SSH port if needed), and keep it running while opening the printed URL.
+The console uses port 9001; port 9000 is the S3 API. No extra installation command
+or public port mapping is required. Keep the exited observer-bootstrap container
+until credential retrieval. Do not share the credential command output.

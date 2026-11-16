@@ -83,6 +83,25 @@ SQL access becomes available after stage=cluster.
 {{ end }}
 Direct ALTER USER changes do not synchronize the Kubernetes Secret.
 
+Object storage access
+{{ if .Values.minio.enabled }}
+Bundled MinIO console (separate from the database and Dashboard accounts).
+{{ if .Values.objectStorage.endpoint }}The database uses external object storage; this MinIO is deployed separately.
+{{ end }}Keep this command running on a computer with kubectl access:
+  kubectl -n {{ .Release.Namespace }} port-forward statefulset/{{ .Release.Name }}-minio 39001:9001
+Open http://127.0.0.1:39001/ on that computer.
+If kubectl runs on a remote server, also run this on your browser computer:
+  ssh -N -L 39001:127.0.0.1:39001 <user>@<remote-server>
+Then open http://127.0.0.1:39001/ in your browser. Keep both commands running.
+Retrieve the MinIO username in a trusted terminal:
+  kubectl -n {{ .Release.Namespace }} get secret {{ if .Values.minio.rootExistingSecret }}{{ .Values.minio.rootExistingSecret }}{{ else }}{{ .Release.Name }}-minio-root{{ end }} -o jsonpath='{.data.rootUser}' | base64 --decode; echo
+Retrieve the MinIO password (do not share its output):
+  kubectl -n {{ .Release.Namespace }} get secret {{ if .Values.minio.rootExistingSecret }}{{ .Values.minio.rootExistingSecret }}{{ else }}{{ .Release.Name }}-minio-root{{ end }} -o jsonpath='{.data.rootPassword}' | base64 --decode; echo
+The S3 API uses port 9000; the browser console uses port 9001.
+{{ else }}No bundled MinIO is deployed. Use your external object storage provider's
+console and login credentials; S3 access keys are not necessarily console credentials.
+{{ end }}
+
 {{ if and .Values.native.enabled (eq .Values.stage "cluster") }}
 Installation verification
 Helm completed after checking storage initialization, LogService/OceanBase,

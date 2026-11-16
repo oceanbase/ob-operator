@@ -109,7 +109,11 @@ func TestDashboardNotesMatchAccessType(t *testing.T) {
 				t.Fatalf("wrong guidance for %s:\n%s", tc.name, output)
 			}
 			if tc.enabled {
-				if !strings.HasPrefix(strings.TrimSpace(output), "OceanBase Operator Dashboard") ||
+				if !strings.HasPrefix(strings.TrimSpace(output), "OceanSeek deployment access") ||
+					!strings.Contains(output, "Helm release: qa") ||
+					!strings.Contains(output, "Namespace: qa-ns") ||
+					strings.Index(output, "OceanBase Operator Dashboard") < 0 ||
+					strings.Index(output, "OceanBase Operator Dashboard") > strings.Index(output, "Installation verification") ||
 					!strings.Contains(output, "Username: admin") ||
 					!strings.Contains(output, "separate from the database root@sys account") ||
 					!strings.Contains(output, "kubectl -n qa-ns get secret qa-dashboard-bootstrap") {
@@ -184,5 +188,58 @@ func TestAccessHostOverrideAndIPv6(t *testing.T) {
 	}
 	if out.String() != "[2001:db8::1]" {
 		t.Fatal(out.String())
+	}
+}
+
+func TestMinioAccessNotes(t *testing.T) {
+	source, err := os.ReadFile("templates/NOTES.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defaults, err := os.ReadFile("values.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name, secret, endpoint string
+		enabled                bool
+	}{
+		{"bundled", "", "", true},
+		{"existing-secret", "my-minio-root", "", true},
+		{"external-with-minio", "", "https://s3.example.test", true},
+		{"external-only", "", "https://s3.example.test", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var values map[string]interface{}
+			if err := yaml.Unmarshal(defaults, &values); err != nil {
+				t.Fatal(err)
+			}
+			values["minio"] = map[string]interface{}{"enabled": tc.enabled, "rootExistingSecret": tc.secret}
+			values["objectStorage"] = map[string]interface{}{"endpoint": tc.endpoint}
+			tpl, err := notesTemplate(t).Parse(string(source))
+			if err != nil {
+				t.Fatal(err)
+			}
+			var out bytes.Buffer
+			if err := tpl.Execute(&out, map[string]interface{}{"Release": map[string]string{"Name": "qa", "Namespace": "qa-ns"}, "Values": values}); err != nil {
+				t.Fatal(err)
+			}
+			text := out.String()
+			if !tc.enabled {
+				if strings.Contains(text, "rootPassword") || strings.Contains(text, "39001:9001") {
+					t.Fatal("external storage must not print bundled credentials")
+				}
+				return
+			}
+			secret := tc.secret
+			if secret == "" {
+				secret = "qa-minio-root"
+			}
+			for _, want := range []string{"port-forward statefulset/qa-minio 39001:9001", "http://127.0.0.1:39001/", "get secret " + secret + " -o jsonpath='{.data.rootUser}'", "get secret " + secret + " -o jsonpath='{.data.rootPassword}'"} {
+				if !strings.Contains(text, want) {
+					t.Fatalf("missing %s", want)
+				}
+			}
+		})
 	}
 }

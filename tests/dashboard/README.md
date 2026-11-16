@@ -19,3 +19,8 @@ first-login password resets with new accounts, and navigates through topology,
 cluster overview and global overview. It fails on uncaught JavaScript errors,
 missing navigation/content, or failed static assets. The private configuration
 must be excluded when collecting screenshots and JSON evidence.
+
+Set `RESET_ITERATIONS=10` for repeated cold-context first-login coverage. An
+optional `nodeName` in the private config makes the global overview assertion
+wait for that specific Kubernetes node row. Topology and cluster overview also
+wait for their LogService content before navigation continues.

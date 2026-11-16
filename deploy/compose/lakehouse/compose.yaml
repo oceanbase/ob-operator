@@ -205,6 +205,7 @@ services:
     restart: "no"
     environment:
       COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-oceanseek}
+      MINIO_IP: ${MINIO_IP:-172.30.52.10}
       OBSERVER_HOST: ${OBSERVER_IP:-172.30.52.21}
       OBSERVER_SQL_PORT: "2881"
       OBSERVER_RPC_PORT: "2882"

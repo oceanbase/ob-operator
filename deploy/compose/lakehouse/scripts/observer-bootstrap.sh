@@ -34,6 +34,9 @@ if [ "${mode}" = bootstrap ]; then
   }
   sql_host="$(shell_quote "${host_ip}")"
   credential_source="$(shell_quote "${HOSTNAME}:/run/secrets/ob_root_password")"
+  minio_user_source="$(shell_quote "${HOSTNAME}:/run/secrets/minio_access_id")"
+  minio_password_source="$(shell_quote "${HOSTNAME}:/run/secrets/minio_access_key")"
+  minio_tunnel="$(shell_quote "39001:${MINIO_IP:-172.30.52.10}:9001")"
   url_host="${host_ip}"
   case "${url_host}" in *:*) url_host="[${url_host}]" ;; esac
 
@@ -65,5 +68,18 @@ If Docker is accessible without sudo, you may omit sudo.
 This reads the saved credential file, not the current password from the database.
 After changing the password manually, use the new password; the saved file may be stale.
 This prints a password; do not share its output.
+
+MinIO object storage console (separate from the database accounts):
+Run on your browser computer, replacing <ssh-user> with your Docker host login:
+  ssh -N -L ${minio_tunnel} -l <ssh-user> ${sql_host}
+Keep the SSH tunnel running, then open http://127.0.0.1:39001/ in your browser.
+For a non-default SSH port, add -p <ssh-port> before the host.
+Retrieve the MinIO username on the Docker host:
+  sudo docker cp ${minio_user_source} - | tar -xOf -; echo
+Retrieve the MinIO password on the Docker host (do not share its output):
+  sudo docker cp ${minio_password_source} - | tar -xOf -; echo
+Keep this bootstrap container until retrieval. These commands read saved credentials.
+The S3 API uses port 9000; the browser console uses port 9001.
+
 EOF
 fi

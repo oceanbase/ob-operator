@@ -7,13 +7,14 @@
     "dev": "max dev",
     "format": "prettier --cache --write .",
     "gen:api": "openapi-generator-cli generate -i ../internal/dashboard/generated/swagger/swagger.json -g typescript-axios -c .openapi_config.yaml -o ./src/api/generated",
-    "postinstall": "max setup",
+    "postinstall": "patch-package --error-on-fail && max setup",
     "lint": "eslint src",
     "oic:clear": "oic --configPath ./must.cjs --clear",
     "oic:extract": "oic --configPath ./must.cjs --extract",
     "prepare": "cd .. && husky ui/.husky",
     "setup": "max setup",
-    "start": "npm run dev"
+    "start": "npm run dev",
+    "prebuild": "patch-package --error-on-fail"
   },
   "dependencies": {
     "@ant-design/icons": "^5.0.1",
@@ -22,7 +23,7 @@
     "@antv/g6": "^4.8.21",
     "@antv/g6-react-node": "^1.4.5",
     "@oceanbase/design": "^0.2.37",
-    "@oceanbase/ui": "^0.2.13",
+    "@oceanbase/ui": "0.2.13",
     "@umijs/max": "^4.0.72",
     "@xterm/xterm": "^5.4.0",
     "ahooks": "^3.7.8",
@@ -48,6 +49,7 @@
     "globals": "^15.0.0",
     "husky": "^9.0.11",
     "lint-staged": "^13.2.0",
+    "patch-package": "8.0.0",
     "prettier": "^2.8.7",
     "prettier-plugin-organize-imports": "^3.2.2",
     "prettier-plugin-packagejson": "^2.4.3",

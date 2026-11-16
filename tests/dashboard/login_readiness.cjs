@@ -91,7 +91,11 @@ const config = JSON.parse(
     const info = await (
       await context.request.get(config.url + '/api/v1/info')
     ).json();
-    for (let iteration = 0; iteration < 3; iteration++) {
+    for (
+      let iteration = 0;
+      iteration < Number(process.env.RESET_ITERATIONS || 3);
+      iteration++
+    ) {
       const username = 'qa-reset-' + crypto.randomBytes(6).toString('hex'),
         password = 'Qa!9' + crypto.randomBytes(16).toString('hex');
       const encrypted = crypto
@@ -171,6 +175,26 @@ const config = JSON.parse(
             null,
             { timeout: 30000 }
           );
+          if (route === routes[1]) {
+            await p
+              .getByText(config.release + '-ls', { exact: true })
+              .first()
+              .waitFor({ timeout: 60000 });
+          } else if (route === routes[2]) {
+            await p
+              .locator('.ant-descriptions-item-content')
+              .filter({ hasText: config.release + '-ls' })
+              .first()
+              .waitFor({ timeout: 60000 });
+          } else {
+            const rows = p.locator('.ant-table-row');
+            await (config.nodeName
+              ? rows.filter({ hasText: config.nodeName })
+              : rows
+            )
+              .first()
+              .waitFor({ timeout: 60000 });
+          }
         }
         if (failures.length) throw Error('JS exception ' + failures.join(';'));
         console.log('PASS first-reset iteration ' + iteration);

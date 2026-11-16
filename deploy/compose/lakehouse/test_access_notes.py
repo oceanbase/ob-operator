@@ -45,6 +45,15 @@ class AccessNotesTests(unittest.TestCase):
         self.assertIn('http://192.0.2.4:33886/', result.stdout)
         self.assertEqual((root / 'secrets/observer_bootstrap_complete').stat().st_mode & 0o777, 0o600)
 
+    def test_minio_credentials_and_tunnel(self):
+        root, result = self.render()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("ssh -N -L '39001:172.30.52.10:9001'", result.stdout)
+        self.assertIn('http://127.0.0.1:39001/', result.stdout)
+        for name in ('minio_access_id', 'minio_access_key'):
+            self.assertIn('0123456789ab:' + str(root / 'secrets' / name), result.stdout)
+        self.assertIn('separate from the database accounts', result.stdout)
+
     def test_custom_project_is_preserved(self):
         _, result = self.render(project='notes-second-project')
         self.assertIn('Compose project: notes-second-project', result.stdout)
