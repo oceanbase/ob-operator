@@ -275,8 +275,10 @@ def build_release(source, lock, output, release_version=None, allow_existing_out
         profiles = ('values-three-nodes.yaml', 'values-minio-ha.yaml')
         profile_flags = [arg for name in profiles for arg in ('-f', chart / name)]
         native.run(['helm', 'template', 'ob-demo', chart, '-n', 'ob-demo', *profile_flags])
+        test_profile = 'values-test-environment.yaml'
+        native.run(['helm', 'template', 'ob-demo', chart, '-n', 'ob-demo', '-f', chart / test_profile])
         target = package_chart(chart, output)
-        for name in profiles:
+        for name in (*profiles, test_profile):
             shutil.copyfile(chart / name, output / name)
     native.write_yaml(output / 'release-defaults.yaml', overlay)
     release_version = release_version or meta['version']

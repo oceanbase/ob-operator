@@ -9,7 +9,7 @@ x-logservice: &logservice
   platform: linux/amd64
   entrypoint: ["/opt/lakehouse/logservice-entrypoint.sh"]
   restart: unless-stopped
-  cpus: ${LOGSERVICE_CPUS:-1}
+  cpus: ${LOGSERVICE_CPUS:-2}
   mem_limit: ${LOGSERVICE_CONTAINER_MEMORY:-4g}
   stop_grace_period: 60s
   healthcheck:
@@ -23,8 +23,8 @@ x-logservice: &logservice
 
 x-logservice-env: &logservice-env
   CLUSTER_ID: ${LOGSERVICE_CLUSTER_ID:-10002}
-  LOG_DISK_SIZE: ${LOGSERVICE_LOG_DISK_SIZE:-10G}
-  MEMORY_LIMIT: ${LOGSERVICE_MEMORY_LIMIT:-3G}
+  LOG_DISK_SIZE: ${LOGSERVICE_LOG_DISK_SIZE:-9G}
+  MEMORY_LIMIT: ${LOGSERVICE_MEMORY_LIMIT:-3686M}
 
 services:
   credentials-init:
@@ -161,8 +161,8 @@ services:
     platform: linux/amd64
     entrypoint: ["/opt/lakehouse/observer-entrypoint.sh"]
     restart: unless-stopped
-    cpus: ${OBSERVER_CPUS:-2}
-    mem_limit: ${OBSERVER_CONTAINER_MEMORY:-12g}
+    cpus: ${OBSERVER_CPUS:-3}
+    mem_limit: ${OBSERVER_CONTAINER_MEMORY:-10g}
     stop_grace_period: 90s
     environment:
       CLUSTER_NAME: ${CLUSTER_NAME:-lakehouse-compose}
@@ -173,11 +173,11 @@ services:
       PROMETHEUS_INTERNAL_URL: ${PROMETHEUS_INTERNAL_URL:-http://prometheus:9090/}
       ALERTMANAGER_INTERNAL_URL: ${ALERTMANAGER_INTERNAL_URL:-http://alertmanager:9093}
       MONITORING_REGISTER_TIMEOUT_SECONDS: ${MONITORING_REGISTER_TIMEOUT_SECONDS:-600}
-      CPU_COUNT: ${OBSERVER_CPU_COUNT:-2}
+      CPU_COUNT: ${OBSERVER_CPU_COUNT:-3}
       DATAFILE_SIZE: ${OBSERVER_DATAFILE_SIZE:-10G}
-      DATAFILE_MAXSIZE: ${OBSERVER_DATAFILE_MAXSIZE:-47G}
-      DATAFILE_NEXT: ${OBSERVER_DATAFILE_NEXT:-5G}
-      MEMORY_LIMIT: ${OBSERVER_MEMORY_LIMIT:-10G}
+      DATAFILE_MAXSIZE: ${OBSERVER_DATAFILE_MAXSIZE:-38G}
+      DATAFILE_NEXT: ${OBSERVER_DATAFILE_NEXT:-4G}
+      MEMORY_LIMIT: ${OBSERVER_MEMORY_LIMIT:-9G}
     volumes:
       - observer-data:/home/admin/data-file
       - observer-log:/home/admin/log

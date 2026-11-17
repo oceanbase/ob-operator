@@ -24,6 +24,10 @@ spec:
     secretRef: {name: {{ include "lakehouse.dataStorageSecret" . }}}
   userSecrets:
     root: {{ include "lakehouse.dbSecret" . }}
+    {{- $existing := include "lakehouse.lookupResource" (dict "root" . "kind" "OBCluster" "name" (printf "%s-ob" .Release.Name)) | fromJson }}
+    {{- if or .Values.obproxy.enabled (dig "spec" "userSecrets" "proxyro" "" $existing) }}
+    proxyro: {{ include "lakehouse.proxyROSecret" . }}
+    {{- end }}
   observer:
     image: {{ .Values.observer.image | quote }}
     resource: {{ toYaml .Values.observer.resource | nindent 6 }}

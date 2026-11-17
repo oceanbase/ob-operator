@@ -14,6 +14,59 @@
     "imagePullSecrets"
   ],
   "properties": {
+    "obproxy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "image",
+        "imagePullPolicy",
+        "replicas",
+        "resources",
+        "nodeSelector",
+        "tolerations",
+        "memoryLimit"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "imagePullPolicy": {
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
+        },
+        "replicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "resources": {
+          "type": "object"
+        },
+        "nodeSelector": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "tolerations": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "memoryLimit": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*[MG]$"
+        }
+      }
+    },
     "access": {
       "type": "object",
       "additionalProperties": false,

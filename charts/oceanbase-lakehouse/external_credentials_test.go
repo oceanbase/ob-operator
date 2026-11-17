@@ -69,7 +69,7 @@ func TestExternalCredentialFallbackAndValidation(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			storage := map[string]interface{}{"mode": "external", "endpoint": "https://oss-cn-hangzhou.aliyuncs.com", "existingSecret": tc.fallback, "logExistingSecret": tc.log, "dataExistingSecret": tc.data}
-			docs, output, err := render(t, map[string]interface{}{"stage": "cluster", "objectStorage": storage, "observer": map[string]interface{}{"rootExistingSecret": "db-root"}, "dashboard": map[string]interface{}{"enabled": false}})
+			docs, output, err := render(t, map[string]interface{}{"stage": "cluster", "objectStorage": storage, "observer": map[string]interface{}{"rootExistingSecret": "db-root"}, "dashboard": map[string]interface{}{"enabled": false}, "obproxy": map[string]interface{}{"enabled": false}})
 			if err != nil {
 				t.Fatal(err, output)
 			}

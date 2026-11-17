@@ -15,7 +15,7 @@ fault tolerance.
 ## What to prepare
 
 - Linux AMD64, Docker Engine 24+ and the Docker Compose v2 plugin (`docker compose`).
-- At least 8 CPU cores, 32 GiB **available** memory and 100 GiB free space in
+- At least 12 CPU cores, 32 GiB **available** memory and 250 GiB free space in
   Docker's data directory. Leave additional space for your data and logs.
 - The eight versioned images selected in `compose.yaml` or the release's `.env`:
   Observer, LogService, MinIO, mc, `lakehouse-bootstrap`, OBAgent, Prometheus and
@@ -282,13 +282,13 @@ includes `.env`, edit that file and retain its image references. Otherwise copy
 | `AUTO_REGISTER_MONITORING` | `true` | Register Prometheus and Alertmanager in obshell automatically |
 | `PROMETHEUS_INTERNAL_URL` | `http://prometheus:9090/` | Stable Compose address stored in obshell |
 | `ALERTMANAGER_INTERNAL_URL` | `http://alertmanager:9093` | Stable Compose address stored in obshell |
-| `OBSERVER_CPUS` / `OBSERVER_CPU_COUNT` | `2` / `2` | Container CPU limit / database CPU count |
-| `OBSERVER_MEMORY_LIMIT` / `OBSERVER_CONTAINER_MEMORY` | `10G` / `12g` | Database memory target / container limit |
-| `LOGSERVICE_CPUS` | `1` | CPU limit of each LogService |
-| `LOGSERVICE_MEMORY_LIMIT` / `LOGSERVICE_CONTAINER_MEMORY` | `3G` / `4g` | Each LogService memory target / container limit |
+| `OBSERVER_CPUS` / `OBSERVER_CPU_COUNT` | `3` / `3` | Container CPU limit / database CPU count |
+| `OBSERVER_MEMORY_LIMIT` / `OBSERVER_CONTAINER_MEMORY` | `9G` / `10g` | Database memory target / container limit |
+| `LOGSERVICE_CPUS` | `2` | CPU limit of each LogService |
+| `LOGSERVICE_MEMORY_LIMIT` / `LOGSERVICE_CONTAINER_MEMORY` | `3686M` / `4g` | Each LogService memory target / container limit |
 | `OBAGENT_CPUS` / `OBAGENT_MEMORY` | `0.5` / `512m` | OBAgent container limit |
-| `OBSERVER_DATAFILE_SIZE` / `LOGSERVICE_LOG_DISK_SIZE` | `10G` / `10G` | Initial local data / each LogService log space |
-| `OBSERVER_DATAFILE_MAXSIZE` / `OBSERVER_DATAFILE_NEXT` | `47G` / `5G` | Observer local data growth ceiling / increment; reserve at least 50 GiB for this volume |
+| `OBSERVER_DATAFILE_SIZE` / `LOGSERVICE_LOG_DISK_SIZE` | `10G` / `9G` | Initial local data / each LogService log space |
+| `OBSERVER_DATAFILE_MAXSIZE` / `OBSERVER_DATAFILE_NEXT` | `38G` / `4G` | Observer local data growth ceiling / increment; reserve 40 GiB data plus 10 GiB logs |
 | `COMPOSE_PROJECT_NAME` | `ob-lakehouse` | Groups this installation's containers and volumes |
 
 These are fixed experience defaults, not automatic maximum-use sizing. Keep
@@ -296,31 +296,39 @@ container memory above the corresponding application memory target. Initial
 datafile and log sizes do not cap total Docker disk use; MinIO data and logs
 also consume space.
 
-The Observer starts with a 10 GiB data file and can grow in 5 GiB increments
-up to 47 GiB, matching the usable budget of the Helm 50 GiB data volume.
+The test component allocations follow [the minimum deployment draft](https://yuque.antfin.com/ob/ai-storage/xs9go7b0xfobq5fv):
+Observer 3 CPU/10 GiB, and three LogServices at 2 CPU/4 GiB each. Compose
+intentionally omits ODP and connects directly to Observer. Program memory is
+about 90% of each container allocation, matching Helm's default memory policy.
+The draft's G/GB are represented as binary GiB here; this is not an exact decimal
+GB capacity claim. Reserve SSD space: Observer 40 GiB data + 10 GiB logs, each
+LogService 10 GiB store + 10 GiB diagnostic logs. Named volumes do not enforce
+these quotas. MinIO data, monitoring, images and OS space are additional; the
+250 GiB host recommendation includes a 100 GiB initial MinIO data budget.
+The capped components total 9.5 CPU/23.5 GiB, excluding uncapped monitoring and
+initialization. Three LogService containers on one host are an experience setup,
+not the draft's three independent LogService nodes. Use Helm's
+`values-test-environment.yaml` for separate workers.
+
+The Observer starts with a 10 GiB data file and can grow in 4 GiB increments
+up to 38 GiB, matching the usable budget of the Helm 40 GiB data volume.
 A fixed 10 GiB ceiling can prevent creating a business tenant because the
 initial sys unit already requests 10 GiB of data space. The business resource
 pool memory minimum is 2 GiB; this is a tenant minimum, not the memory required
 by the complete deployment.
 
-For an existing installation, changing `.env` alone does not replace the
-persisted Observer configuration. After checking free space on the data volume,
-apply the matching values through a sys-tenant SQL session:
-
-```sql
-ALTER SYSTEM SET __min_full_resource_pool_memory=2147483648;
-ALTER SYSTEM SET datafile_maxsize='47G';
-ALTER SYSTEM SET datafile_next='5G';
-```
-
-Read back the parameters and `oceanbase.GV$OB_SERVERS` before creating a new
-resource pool. These changes do not require restarting the database.
+These defaults apply to fresh installations. Preserve the original `.env` and
+resource settings when upgrading an existing instance: lowering the container
+memory to 10g while persisted `memory_limit` remains 10G removes its headroom.
+Changing `.env` does not replace persisted Observer configuration. Review current
+parameters, assigned tenant resources and disk usage before any resize; do not
+automatically shrink existing data files or log budgets to these new defaults.
 
 For basic tenant validation, start with a 1 CPU / 2 GiB memory unit, at least
 3 GiB log space and 2 GiB data space, after checking remaining server capacity.
 This is a small functional-test configuration, not a production sizing claim.
-Keep the whole Compose host budget above: 8 CPU cores, 32 GiB available memory
-and 100 GiB free disk; allow more disk for growing MinIO data and logs.
+Keep the whole Compose host budget above: 12 CPU cores, 32 GiB available memory
+and 250 GiB free disk; allow more disk for growing MinIO data and logs.
 
 A new tenant's first major compaction includes its system tablets as well as
 the test table. Allow up to 15 minutes for acceptance and record progress from

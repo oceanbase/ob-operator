@@ -15,13 +15,13 @@ func TestSQLNodePortAndInternalAccess(t *testing.T) {
 		{"internal", "ClusterIP", 2881, 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			var values map[string]interface{}
+			values := map[string]interface{}{"obproxy": map[string]interface{}{"enabled": false}}
 			if tc.name != "default" {
 				service := map[string]interface{}{"type": tc.kind, "port": tc.port}
 				if tc.node != 0 {
 					service["nodePort"] = tc.node
 				}
-				values = map[string]interface{}{"sqlService": service}
+				values["sqlService"] = service
 			}
 			docs, output, err := render(t, values)
 			if err != nil {

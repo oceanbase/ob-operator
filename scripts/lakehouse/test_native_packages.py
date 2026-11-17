@@ -54,6 +54,29 @@ class ReleaseContractTests(unittest.TestCase):
         self.lock = BUILDER.load_lock(HERE / 'release-images.lock.json')
         self.compose, self.helm = rendering(self.lock)
 
+    def test_obproxy_is_locked_for_helm_only(self):
+        roles = BUILDER.validate_lock(self.lock)
+        self.assertEqual(roles['obproxy']['channels'], ['helm'])
+        values = BUILDER.image_values(self.lock)
+        self.assertEqual(values['obproxy']['image'], roles['obproxy']['reference'])
+        self.assertNotIn('obproxy', BUILDER.COMPOSE_ROLES)
+        missing = copy.deepcopy(self.lock)
+        missing['images'] = [item for item in missing['images'] if item['role'] != 'obproxy']
+        with self.assertRaisesRegex(ValueError, 'Missing required.*obproxy'):
+            BUILDER.validate_lock(missing)
+
+    def test_obproxy_discovery_init_container_uses_locked_proxy_image(self):
+        refs = {item['role']: item['reference'] for item in self.lock['images']}
+        discovery = {'name': 'discover-observers', 'image': refs['obproxy']}
+        self.helm.append({'kind': 'Deployment', 'spec': {'template': {'spec': {
+            'containers': [{'name': 'obproxy', 'image': refs['obproxy']}],
+            'initContainers': [discovery],
+        }}}})
+        BUILDER.validate_rendered(self.lock, self.compose, self.helm)
+        discovery['image'] = refs['utility']
+        with self.assertRaisesRegex(ValueError, 'helm role obproxy image mismatch'):
+            BUILDER.validate_rendered(self.lock, self.compose, self.helm)
+
     def test_shared_roles_have_one_actual_identity(self):
         roles = BUILDER.validate_lock(self.lock)
         for role in BUILDER.SHARED:
