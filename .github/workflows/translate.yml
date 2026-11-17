@@ -21,7 +21,7 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
-      - uses: lizheming/github-translate-action@1.1.2
+      - uses: lizheming/github-translate-action@b657888aa452b4b40f493836fa4477f6b66a23e5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
