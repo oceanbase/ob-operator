@@ -107,7 +107,7 @@ if ! start_obshell; then
 fi
 
 if [[ "${AUTO_REGISTER_MONITORING:-true}" == true ]]; then
-  /opt/lakehouse/obshell-monitoring-register.sh &
+  bash /opt/lakehouse/obshell-monitoring-register.sh &
   monitoring_register_pid=$!
 fi
 

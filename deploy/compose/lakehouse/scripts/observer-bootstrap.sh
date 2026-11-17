@@ -33,9 +33,11 @@ if [ "${mode}" = bootstrap ]; then
     printf "'"
   }
   sql_host="$(shell_quote "${host_ip}")"
-  credential_source="$(shell_quote "${HOSTNAME}:/run/secrets/ob_root_password")"
-  minio_user_source="$(shell_quote "${HOSTNAME}:/run/secrets/minio_access_id")"
-  minio_password_source="$(shell_quote "${HOSTNAME}:/run/secrets/minio_access_key")"
+  container_hostname="$(printenv HOSTNAME || true)"
+  container_hostname="${container_hostname:-$(hostname)}"
+  credential_source="$(shell_quote "${container_hostname}:/run/secrets/ob_root_password")"
+  minio_user_source="$(shell_quote "${container_hostname}:/run/secrets/minio_access_id")"
+  minio_password_source="$(shell_quote "${container_hostname}:/run/secrets/minio_access_key")"
   minio_tunnel="$(shell_quote "39001:${MINIO_IP:-172.30.52.10}:9001")"
   url_host="${host_ip}"
   case "${url_host}" in *:*) url_host="[${url_host}]" ;; esac
