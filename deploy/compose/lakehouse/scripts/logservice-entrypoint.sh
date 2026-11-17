@@ -79,4 +79,4 @@ while daemon_running; do
 done
 wait "${pid}" 2>/dev/null || true
 echo "oblogservice daemon exited" >&2
-exit 1
+false
