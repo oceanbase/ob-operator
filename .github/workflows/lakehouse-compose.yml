@@ -35,6 +35,9 @@ jobs:
           go-version-file: go.mod
       - run: go test -race -count=1 ./cmd/lakehouse-bootstrap ./deploy/compose/lakehouse
       - run: shellcheck deploy/compose/lakehouse/scripts/*.sh
+      - name: Test Compose shell behavior
+        working-directory: deploy/compose/lakehouse
+        run: python3 -m unittest -v test_access_notes test_host_info test_logservice_entrypoint test_observer_limits
       - name: Validate zero-preparation Compose configuration
         working-directory: deploy/compose/lakehouse
         run: |

@@ -10,7 +10,7 @@ SCRIPT = Path(os.environ.get('ACCESS_NOTES_SCRIPT', Path(__file__).parent / 'scr
 
 
 class AccessNotesTests(unittest.TestCase):
-    def render(self, host='192.0.2.4', project=None, args=(), failure=False):
+    def render(self, host='192.0.2.4', project=None, args=(), failure=False, hostname='0123456789ab'):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         root = Path(self.tmp.name)
@@ -26,9 +26,22 @@ class AccessNotesTests(unittest.TestCase):
         env.pop('COMPOSE_PROJECT_NAME', None)
         if project is not None:
             env['COMPOSE_PROJECT_NAME'] = project
-        env.update(OBSERVER_SQL_HOST_PORT='33881', OBSHELL_HOST_PORT='33886', HOSTNAME='0123456789ab')
+        env.update(OBSERVER_SQL_HOST_PORT='33881', OBSHELL_HOST_PORT='33886')
+        if hostname is None:
+            env.pop('HOSTNAME', None)
+        else:
+            env['HOSTNAME'] = hostname
         result = subprocess.run(['sh', str(script), *args], env=env, text=True, capture_output=True)
         return root, result
+
+    def test_missing_or_empty_hostname_uses_container_hostname(self):
+        expected = subprocess.check_output(['hostname'], text=True).strip()
+        for hostname in (None, ''):
+            with self.subTest(hostname=hostname):
+                root, result = self.render(hostname=hostname)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                for name in ('ob_root_password', 'minio_access_id', 'minio_access_key'):
+                    self.assertIn(expected + ':' + str(root / 'secrets' / name), result.stdout)
 
     def test_default_commands_are_complete(self):
         root, result = self.render()

@@ -71,7 +71,7 @@ stop_daemon() {
   if daemon_running; then echo "LogService remains alive after SIGKILL" >&2; exit 1; fi
   exit 0
 }
-trap stop_daemon TERM INT
+trap 'stop_daemon' TERM INT
 
 while daemon_running; do
   sleep 5 &

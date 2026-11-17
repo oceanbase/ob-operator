@@ -5,14 +5,8 @@ host_ip="${HOST_ACCESS_IP:-}"
 if [ -z "${host_ip}" ]; then
   # This container uses host networking, so the route source is the Docker
   # host's address rather than a Compose bridge address.
-  set -- $(ip route get "${HOST_IP_PROBE:-1.1.1.1}" 2>/dev/null)
-  while [ "$#" -gt 1 ]; do
-    if [ "$1" = src ]; then
-      host_ip="$2"
-      break
-    fi
-    shift
-  done
+  host_ip="$(ip route get "${HOST_IP_PROBE:-1.1.1.1}" 2>/dev/null |
+    awk '{ for (field = 1; field < NF; field++) if ($field == "src") { print $(field + 1); exit } }')"
 fi
 
 case "${host_ip}" in
