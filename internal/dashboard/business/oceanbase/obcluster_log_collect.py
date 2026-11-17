@@ -112,6 +112,8 @@ def validate_results(directory, expected):
             raise CollectionError("unexpected or duplicate node result")
         seen.add(node)
         if status != "Success" or not info.startswith("file save in "):
+            if info.startswith("archive transfer timed out for Observer "):
+                raise CollectionError("Observer " + node + ": archive transfer timed out; no attachment published")
             raise CollectionError("obdiag reported a failed node; no attachment published")
         payload = info[len("file save in "):]
         filename = os.path.basename(payload)

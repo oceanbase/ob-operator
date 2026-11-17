@@ -266,7 +266,13 @@ def download(client, remote_path, local_path):
     try:
         with os.fdopen(descriptor, "wb") as output:
             decoder = Decoder(output)
-            execute(client, [python, "-B", "-c", DOWNLOAD_CODE, remote_path], sink=decoder.feed, timeout=300, acknowledge=True)
+            try:
+                execute(client, [python, "-B", "-c", DOWNLOAD_CODE, remote_path], sink=decoder.feed, timeout=300, acknowledge=True)
+            except TransportError as error:
+                if str(error) == "diagnostic exec timed out":
+                    raise TransportError("archive transfer timed out for Observer {}/{}".format(
+                        client.namespace, client.pod_name)) from error
+                raise
             decoder.finish()
             output.flush()
             os.fsync(output.fileno())
