@@ -49,6 +49,8 @@ func BackupDestinationPath(ctx context.Context, reader client.Reader, namespace 
 		if model, ok := secret.Data["addressingModel"]; ok {
 			uri += "&addressing_model=" + string(model)
 		}
+	default:
+		// OSS and other providers use the access credentials without extra options.
 	}
 	return uri, nil
 }
