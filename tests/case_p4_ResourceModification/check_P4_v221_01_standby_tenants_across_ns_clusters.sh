@@ -10,7 +10,6 @@ source case_p4_ResourceModification/env_221_vars.sh
 prepare() {
     export PASSWORD=$(generate_random_str)
     export SUFFIX=$(generate_random_str | tr '[:upper:]' '[:lower:]')
-    echo $PASSWORD
     echo $SUFFIX
     export OBCLUSTER_OCEANBASE_TEST=obcluster-oceanbase-test-$SUFFIX
     export NS_OCEANBASE_TEST=$NAMESPACE_PREFIX-ocenbasetest-$SUFFIX
@@ -52,7 +51,6 @@ prepare() {
      
     export TENANT_RESTORE=tenantrestore$SUFFIX
     
-    echo $PASSWORD
 }
 
 export_to_file() {
@@ -122,6 +120,7 @@ check_resource_running() {
         fi
         sleep 3s
     done
+    [[ $RESOURCE_RUNNING == true ]]
 }
  
 check_obtenant_running() {
@@ -146,6 +145,7 @@ check_obtenant_running() {
         fi
         sleep 3s
     done
+    [[ $OBTENANT_RUNNING == true ]]
 }
 
 check_backup_policy_running() {
@@ -170,65 +170,70 @@ check_backup_policy_running() {
         fi
         sleep 3s
     done
+    [[ $BACKUP_RUNNING == true ]]
+}
+
+wait_for_recoverable_backup() {
+    local ip ready query
+    ip=$(kubectl get pods -n "$NS_DEFAULT" -l "ref-obcluster=$OBCLUSTER_DEFAULT_ONE" \
+        --field-selector=status.phase=Running -o jsonpath='{.items[0].status.podIP}') || return 1
+    # A completed FULL may still be ahead of the available archive checkpoint.
+    query="SELECT EXISTS (
+        SELECT 1 FROM CDB_OB_BACKUP_SET_FILES b
+        JOIN CDB_OB_ARCHIVELOG a ON a.TENANT_ID = b.TENANT_ID
+        JOIN DBA_OB_TENANTS t ON t.TENANT_ID = b.TENANT_ID
+        WHERE t.TENANT_NAME = '$TENANT_DEFAULT_ONE' AND b.BACKUP_TYPE = 'FULL'
+          AND b.STATUS = 'SUCCESS' AND b.FILE_STATUS = 'AVAILABLE'
+          AND a.START_SCN <= b.START_REPLAY_SCN AND a.CHECKPOINT_SCN >= b.MIN_RESTORE_SCN
+    )"
+    local deadline=$((SECONDS + 600))
+    while (( SECONDS < deadline )); do
+        if ready=$(MYSQL_PWD="$PASSWORD" mysql --connect-timeout=5 -h "$ip" -P 2881 \
+                -u root@sys -NB -Doceanbase -e "$query") && [[ $ready == 1 ]]; then
+            return 0
+        fi
+        sleep 3
+    done
+    echo "No completed FULL with sufficient archive coverage for $TENANT_DEFAULT_ONE" >&2
+    return 1
 }
 
 check_restore_policy_running() {
-    local restore_policy_name=$1
-    local namespace=$2
-    counter=0
-    timeout=120  
-    RESTORE_RUNNING='false'
-    while true; do
-        echo 'check restore resource'
-	counter=$((counter+1))
-        crd_primary_restore=`kubectl get obtenant -n $namespace| grep "$restore_policy_name"|awk -F' ' '{print $2}'`
-        crd_primary_obtenant=`kubectl get obtenantrestore -n $namespace| grep "$restore_policy_name"|awk -F' ' '{print $2}'`
-        echo "crd_primary_restore $crd_primary_restore  crd_primary_obtenant $crd_primary_obtenant"
-        if [[ $crd_primary_restore = "running" && $crd_primary_obtenant = "SUCCESSFUL" ]];then
-            RESTORE_RUNNING='true'
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "restore db resource still not running"
-            break
-        fi
-        sleep 3s
-    done
+    local tenant=$1 namespace=$2
+    kubectl wait -n "$namespace" "obtenant/$tenant" \
+        --for=jsonpath='{.status.status}'=running --timeout=15m &&
+        kubectl wait -n "$namespace" "obtenantrestore/$tenant-restore" \
+            --for=jsonpath='{.status.status}'=SUCCESSFUL --timeout=1m
 }
 
-
 validate() {
-    run "obcluster_ns_test.yaml"
-    run "obcluster_ns_default.yaml"
-    run "obcluster_ns_default2.yaml"
-    echo 'do validate'
-    check_resource_running $OBCLUSTER_OCEANBASE_TEST $NS_OCEANBASE_TEST $CLUSTER_ID_TEST
-    check_resource_running $OBCLUSTER_DEFAULT_ONE $NS_DEFAULT $CLUSTER_ID_DEFAULT_ONE
-    check_resource_running $OBCLUSTER_DEFAULT_TWO $NS_DEFAULT $CLUSTER_ID_DEFAULT_TWO
-    if [[ $RESOURCE_RUNNING == 'false' ]]; then
-        echo "case failed"
-    else
-        run "tenant_ns_default.yaml"
-	check_obtenant_running $TENANT_DEFAULT_ONE $NS_DEFAULT
-  	run "tenant_ns_default_2.yaml"
-	run "tenant_ns_test_empty.yaml"
-	run "tenant_default_backup_policy.yaml"
-	check_obtenant_running $TENANT_DEFAULT_TWO $NS_DEFAULT
-	check_obtenant_running $TENANT_OCEANBASE_EMPTY $NS_OCEANBASE_TEST
-	check_backup_policy_running $OBTENANT_DEFAULT_BACK_POLICY $NS_DEFAULT
-	sleep 60s
-	run "tenant_ns_test_restore.yaml"
-	check_restore_policy_running $TENANT_RESTORE $NS_OCEANBASE_TEST
-	check_obtenant_running $TENANT_RESTORE $NS_OCEANBASE_TEST
-        if [[ $RESTORE_RUNNING == 'false' ]]; then
-            echo "case failed"
-        else
-            echo "case passed"
-        fi
-    fi
+    run "obcluster_ns_test.yaml" || return 1
+    run "obcluster_ns_default.yaml" || return 1
+    run "obcluster_ns_default2.yaml" || return 1
+    check_resource_running "$OBCLUSTER_OCEANBASE_TEST" "$NS_OCEANBASE_TEST" "$CLUSTER_ID_TEST" || return 1
+    check_resource_running "$OBCLUSTER_DEFAULT_ONE" "$NS_DEFAULT" "$CLUSTER_ID_DEFAULT_ONE" || return 1
+    check_resource_running "$OBCLUSTER_DEFAULT_TWO" "$NS_DEFAULT" "$CLUSTER_ID_DEFAULT_TWO" || return 1
+    run "tenant_ns_default.yaml" || return 1
+    check_obtenant_running "$TENANT_DEFAULT_ONE" "$NS_DEFAULT" || return 1
+    run "tenant_ns_default_2.yaml" || return 1
+    run "tenant_ns_test_empty.yaml" || return 1
+    run "tenant_default_backup_policy.yaml" || return 1
+    check_obtenant_running "$TENANT_DEFAULT_TWO" "$NS_DEFAULT" || return 1
+    check_obtenant_running "$TENANT_OCEANBASE_EMPTY" "$NS_OCEANBASE_TEST" || return 1
+    check_backup_policy_running "$OBTENANT_DEFAULT_BACK_POLICY" "$NS_DEFAULT" || return 1
+    wait_for_recoverable_backup || return 1
+    run "tenant_ns_test_restore.yaml" || return 1
+    check_restore_policy_running "$TENANT_RESTORE" "$NS_OCEANBASE_TEST"
 }
 
 prepare
 export_to_file
-validate
+if validate; then
+    echo "case passed"
+    result=0
+else
+    echo "case failed"
+    result=1
+fi
 cleanup
+exit "$result"
