@@ -150,6 +150,8 @@ func (m *ObTenantRestoreManager) checkRestoreProgress() error {
 	case "FAIL", "FAILED":
 		m.Recorder.Event(m.Resource, corev1.EventTypeWarning, "Restore job failed", "Restore job failed")
 		m.Resource.Status.Status = constants.RestoreJobFailed
+	default:
+		// Physical restore phases remain active until OceanBase reports a terminal result.
 	}
 
 	return nil
