@@ -131,20 +131,20 @@ def analyze(release, helm, items, crs):
                 started=timestamp(info.get('last_deployed')), description=info.get('description', ''))
 
 def default_kubeconfig():
-    candidates = []
+    # Preserve kubectl's merge semantics when KUBECONFIG lists several files.
     configured = os.environ.get('KUBECONFIG')
-    if configured:
-        candidates.extend(Path(item).expanduser() for item in configured.split(os.pathsep) if item)
-    else:
-        candidates.append(Path.home() / '.kube' / 'config')
-    candidates.append(Path('/etc/rancher/k3s/k3s.yaml'))
+    candidates = ([configured] if configured else []) + [str(Path.home() / '.kube/config'), '/etc/rancher/k3s/k3s.yaml']
     for candidate in candidates:
-        try:
-            if candidate.is_file() and os.access(candidate, os.R_OK):
-                return str(candidate)
-        except OSError:
-            pass
-    return None
+        for item in candidate.split(os.pathsep):
+            try:
+                path = Path(item).expanduser()
+                if item and path.is_file() and os.access(path, os.R_OK):
+                    return candidate
+            except OSError:
+                pass
+    raise RuntimeError('No readable kubeconfig. Ask an administrator to create a private copy '
+                       '(directory mode 0700, file mode 0600) for your user, then set KUBECONFIG '
+                       'and verify the target with kubectl get nodes. This viewer does not modify or stop Helm.')
 
 def execute(argv):
     try:
@@ -161,11 +161,13 @@ def execute(argv):
 def snapshot(args):
     flags = []
     hflags = []
-    kubeconfig = args.kubeconfig or default_kubeconfig()
     if args.context:
         flags += ['--context', args.context]
         hflags += ['--kube-context', args.context]
-    if kubeconfig:
+    kubeconfig = args.kubeconfig or default_kubeconfig()
+    # --kubeconfig accepts one filename, while KUBECONFIG merges a path list.
+    # Let both clients inherit a selected environment value unchanged.
+    if kubeconfig and (args.kubeconfig or kubeconfig != os.environ.get('KUBECONFIG')):
         flags += ['--kubeconfig', kubeconfig]
         hflags += ['--kubeconfig', kubeconfig]
     k = ['kubectl'] + flags + ['--request-timeout=8s', '-n', args.namespace]
