@@ -15,6 +15,7 @@ package operation
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -69,13 +70,37 @@ func (m *OceanbaseOperationManager) ReplayStandbyLog(ctx context.Context, tenant
 	return nil
 }
 
+type tenantActivationOperations interface {
+	QueryRow(context.Context, any, string, ...any) error
+	ExecWithTimeout(context.Context, time.Duration, string, ...any) error
+}
+
 func (m *OceanbaseOperationManager) ActivateStandby(ctx context.Context, tenantName string) error {
-	err := m.ExecWithDefaultTimeout(ctx, sql.ActivateStandby, tenantName)
-	if err != nil {
-		m.Logger.Error(err, "Got exception when activate standby")
-		return errors.Wrap(err, "Activate standby")
+	return activateStandby(ctx, m, tenantName)
+}
+
+func activateStandby(ctx context.Context, op tenantActivationOperations, tenantName string) error {
+	var tenant model.OBTenant
+	if err := op.QueryRow(ctx, &tenant, sql.GetActivationState, tenantName); err != nil {
+		return errors.Wrap(err, "Read tenant before standby activation")
 	}
-	return nil
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if tenant.Status != "NORMAL" {
+		return errors.Errorf("Tenant %s is not ready (status %s)", tenantName, tenant.Status)
+	}
+	if tenant.TenantRole == "PRIMARY" {
+		if tenant.SwitchoverStatus != "NORMAL" {
+			return errors.Errorf("Primary tenant %s is still switching (%s)", tenantName, tenant.SwitchoverStatus)
+		}
+		return nil
+	}
+	if tenant.TenantRole != "STANDBY" {
+		return errors.Errorf("Cannot activate tenant %s with role %s", tenantName, tenant.TenantRole)
+	}
+	err := op.ExecWithTimeout(ctx, managerConfig.TenantSqlTimeout, sql.ActivateStandby, tenantName)
+	return errors.Wrap(err, "Activate standby")
 }
 
 func (m *OceanbaseOperationManager) ListRestoreProgress(ctx context.Context) ([]*model.RestoreProgress, error) {
