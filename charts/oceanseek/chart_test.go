@@ -145,7 +145,6 @@ func TestExternalMinIOAndUserOwnedResources(t *testing.T) {
 		"obproxy":       map[string]interface{}{"enabled": false},
 		"stage":         "cluster",
 		"dashboard":     map[string]interface{}{"enabled": false},
-		"minio":         map[string]interface{}{"enabled": false},
 		"objectStorage": map[string]interface{}{"mode": "external", "endpoint": "https://minio.example.com:9000", "existingSecret": "external-s3"},
 		"observer":      map[string]interface{}{"rootExistingSecret": "db-root"},
 	}
