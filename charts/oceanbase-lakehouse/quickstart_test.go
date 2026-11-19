@@ -122,3 +122,42 @@ func TestDefaultSizingMatchesSingleNodeProfile(t *testing.T) {
 		}
 	}
 }
+
+func TestTestEnvironmentUsesFourSeparateWorkers(t *testing.T) {
+	body, err := os.ReadFile("values-test-environment.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var profile map[string]interface{}
+	if err := yaml.Unmarshal(body, &profile); err != nil {
+		t.Fatal(err)
+	}
+	docs, output, err := render(t, profile)
+	if err != nil {
+		t.Fatal(err, output)
+	}
+	cluster := find(t, docs, "OBCluster", "qa-ob")
+	computeZones := field(cluster, "spec", "topology").([]interface{})
+	if len(computeZones) != 1 {
+		t.Fatal("test profile must have one compute zone")
+	}
+	compute := field(computeZones[0].(manifest), "nodeSelector", "kubernetes.io/hostname")
+	var proxy appsv1.Deployment
+	decodeScheduledObject(t, find(t, docs, "Deployment", "qa-obproxy"), &proxy)
+	if compute != "worker-compute" || proxy.Spec.Template.Spec.NodeSelector["kubernetes.io/hostname"] != compute {
+		t.Fatal("Observer and ODP must share the compute worker")
+	}
+	workers := map[interface{}]bool{compute: true}
+	logZones := field(find(t, docs, "OBLogServiceCluster", "qa-ls"), "spec", "topology").([]interface{})
+	if len(logZones) != 3 {
+		t.Fatal("test profile must have three LogService zones")
+	}
+	for _, item := range logZones {
+		zone := item.(manifest)
+		worker := field(zone, "nodeSelector", "kubernetes.io/hostname")
+		if worker == nil || workers[worker] || field(zone, "replica") != 1 {
+			t.Fatalf("LogService must use a distinct worker: %v", zone)
+		}
+		workers[worker] = true
+	}
+}

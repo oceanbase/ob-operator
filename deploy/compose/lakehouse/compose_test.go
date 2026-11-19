@@ -34,6 +34,7 @@ type service struct {
 		ReadOnly bool   `json:"read_only"`
 	} `json:"volumes"`
 	MemoryLimit json.RawMessage `json:"mem_limit"`
+	CPUs        json.RawMessage `json:"cpus"`
 	Ports       []struct {
 		HostIP    string `json:"host_ip"`
 		Published string `json:"published"`
@@ -268,8 +269,45 @@ func TestObshellMonitoringRegistrationUsesLocalSocket(t *testing.T) {
 	}
 }
 
+func TestSizingExampleMatchesDefaults(t *testing.T) {
+	body, err := os.ReadFile(".env.example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defaults := renderCompose(t)
+	example := renderComposeEnvironment(t, nil, string(body), true)
+	for _, name := range []string{"observer", "logservice-1", "logservice-2", "logservice-3", "obagent", "minio"} {
+		if string(defaults[name].CPUs) != string(example[name].CPUs) || string(defaults[name].MemoryLimit) != string(example[name].MemoryLimit) {
+			t.Fatalf("%s resource defaults differ from .env.example", name)
+		}
+		for _, key := range []string{"CPU_COUNT", "MEMORY_LIMIT", "DATAFILE_SIZE", "DATAFILE_MAXSIZE", "DATAFILE_NEXT", "LOG_DISK_SIZE"} {
+			if defaults[name].Environment[key] != example[name].Environment[key] {
+				t.Fatalf("%s %s differs from .env.example", name, key)
+			}
+		}
+	}
+}
+
 func TestPrivateCredentialsAndBoundedResources(t *testing.T) {
 	services := renderCompose(t)
+	for name, expected := range map[string]string{"observer": "3", "logservice-1": "2", "logservice-2": "2", "logservice-3": "2"} {
+		if strings.Trim(string(services[name].CPUs), `"`) != expected {
+			t.Fatalf("%s CPU limit = %s, want %s", name, services[name].CPUs, expected)
+		}
+	}
+	observer := services["observer"]
+	for name, expected := range map[string]string{"CPU_COUNT": "3", "MEMORY_LIMIT": "9G", "DATAFILE_MAXSIZE": "38G", "DATAFILE_NEXT": "4G"} {
+		if observer.Environment[name] != expected {
+			t.Fatalf("observer %s = %q, want %q", name, observer.Environment[name], expected)
+		}
+	}
+	observerMemory := strings.ToLower(strings.Trim(string(observer.MemoryLimit), `"`))
+	if observerMemory != "10737418240" && observerMemory != "10g" {
+		t.Fatalf("observer container memory = %s", observer.MemoryLimit)
+	}
+	if _, exists := services["obproxy"]; exists {
+		t.Fatal("Compose must retain direct Observer access without ODP")
+	}
 	for _, name := range []string{"credentials-init", "host-info-init", "minio", "minio-init", "logservice-bootstrap", "observer", "observer-bootstrap", "obagent"} {
 		found := false
 		for _, mount := range services[name].Volumes {
@@ -290,10 +328,13 @@ func TestPrivateCredentialsAndBoundedResources(t *testing.T) {
 	}
 	for _, name := range []string{"logservice-1", "logservice-2", "logservice-3"} {
 		s := services[name]
+		if s.Environment["LOG_DISK_SIZE"] != "9G" {
+			t.Fatalf("%s log disk does not leave headroom in the 10Gi store budget", name)
+		}
 		// Compose versions serialize the same 4 GiB limit as a number,
 		// a numeric string, or the original unit string.
 		memoryLimit := strings.ToLower(strings.Trim(string(s.MemoryLimit), `"`))
-		if (memoryLimit != "4294967296" && memoryLimit != "4g") || s.Environment["MEMORY_LIMIT"] != "3G" {
+		if (memoryLimit != "4294967296" && memoryLimit != "4g") || s.Environment["MEMORY_LIMIT"] != "3686M" {
 			t.Fatalf("%s resource defaults lost: memory limit=%s, MEMORY_LIMIT=%q", name, s.MemoryLimit, s.Environment["MEMORY_LIMIT"])
 		}
 	}

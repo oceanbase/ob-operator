@@ -548,7 +548,7 @@ def build(args):
         for chart in (parent, op):
             run([args.helm, 'lint', '--strict', chart])
             run([args.helm, 'package', chart, '--destination', helm])
-    for name in ('values-single-node.yaml', 'values-three-nodes.yaml', 'USAGE.txt', 'SHARED-INFRA.md'):
+    for name in ('values-single-node.yaml', 'values-three-nodes.yaml', 'values-test-environment.yaml', 'USAGE.txt', 'SHARED-INFRA.md'):
         shutil.copyfile(source / 'charts/oceanbase-lakehouse' / name, helm / name)
     lakehouse_chart, = helm.glob('oceanbase-lakehouse-*.tgz')
     operator_chart, = helm.glob('ob-operator-*.tgz')
@@ -577,7 +577,7 @@ def build(args):
                         'config', '--format', 'json'], cwd=compose, env=clean_compose_env())
     op_render = run([args.helm, 'template', 'ob-operator', operator_chart, '-n', 'oceanbase-system'])
     rendered = {}
-    for profile in (None, 'values-single-node.yaml', 'values-three-nodes.yaml'):
+    for profile in (None, 'values-single-node.yaml', 'values-three-nodes.yaml', 'values-test-environment.yaml'):
         command = [args.helm, 'template', 'release', lakehouse_chart, '-n', 'release-check']
         if profile:
             command += ['-f', helm / profile]
