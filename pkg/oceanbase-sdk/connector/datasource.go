@@ -78,7 +78,7 @@ func (ds *OceanBaseDataSource) DataSourceName() string {
 	if ds.Database != "" {
 		return fmt.Sprintf("%s%s%s@tcp(%s:%d)/%s?multiStatements=true&interpolateParams=true", ds.User, tenantPart, passwordPart, ds.Address, ds.Port, ds.Database)
 	}
-	return fmt.Sprintf("%s%s%s@tcp(%s:%d)/", ds.User, tenantPart, passwordPart, ds.Address, ds.Port)
+	return fmt.Sprintf("%s%s%s@tcp(%s:%d)/?interpolateParams=true", ds.User, tenantPart, passwordPart, ds.Address, ds.Port)
 }
 
 func (ds *OceanBaseDataSource) ID() string {
