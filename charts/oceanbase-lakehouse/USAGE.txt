@@ -504,3 +504,26 @@ to that approved level (for example s0:c123,c456). All users of an existing shar
 claim must use the same level. Set it to an empty string only if cluster admission
 already supplies consistent labels. Existing report Jobs must finish before
 changing the level; changing it can temporarily interrupt volume access.
+
+External S3 storage initialization diagnostics
+---------------------------------------------
+If Helm reports a timeout, inspect the storage initialization Job before retrying:
+
+  kubectl -n <namespace> get jobs -l app.kubernetes.io/instance=<release>,app.kubernetes.io/component=storage-init
+  kubectl -n <namespace> logs job/<release>-storage-init-<revision> --all-containers=true
+
+Select the Job for the failed Helm revision. Logs identify side=log or side=data,
+the bucket name, and Secret=<namespace>/<name>. Check that Secret's access_id /
+access_key and permissions for the reported bucket; log and data credentials can
+be different. Bundled MinIO initialization uses the root Secret, so diagnostics
+name that Secret instead of the database business-user Secret. Credential values
+and raw storage-client errors are suppressed. A progress line is emitted before
+network access so a deadline still leaves the current bucket/Secret reference.
+If the container never starts, inspect Pod events for missing Secrets, image
+pulls, or scheduling errors. Bucket access can also fail because of DNS, TLS,
+connectivity, or a missing bucket; a failure does not prove the key is wrong.
+
+Helm itself does not include Job logs in its timeout error. The optional
+scripts/lakehouse/install-helm-and-show-access.sh wrapper prints a storage-log
+command on failure, preserving the namespace, kubeconfig, context and Helm exit
+code. Direct Helm users should run the commands above with their install context.

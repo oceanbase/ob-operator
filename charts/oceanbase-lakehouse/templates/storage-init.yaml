@@ -20,6 +20,14 @@ data:
     case "$MC_PATH" in on|off) ;; *) echo 'Invalid preflight addressing mode.' >&2; exit 1 ;; esac
     # All user input is passed as quoted environment values, never evaluated.
     # Suppress client diagnostics, which can contain credential-bearing URLs.
+    # Log references only, never the endpoint, access ID/key, or raw mc output.
+    storage_context() {
+      printf 'Storage initialization: %s; side=%s bucket=%s Secret=%s/%s\n' "$1" "$side" "$bucket" "${STORAGE_NAMESPACE:-unknown}" "$secret" >&2
+    }
+    side=log
+    bucket=$LOG_BUCKET
+    secret=${LOG_SECRET_NAME:-unknown}
+    storage_context 'configuring storage identity'
     ready=false
     for attempt in $(seq 1 90); do
       # External OSS/S3 services do not implement MinIO's readiness API.
@@ -33,28 +41,32 @@ data:
       sleep 5
     done
     if [ "$ready" != true ]; then
-      echo 'Object storage is not reachable or credentials were rejected.' >&2
+      storage_context 'failed to reach storage or configure credentials; check the referenced Secret and endpoint connectivity'
       exit 1
     fi
     for side in log data; do
       bucket=$LOG_BUCKET
+      secret=${LOG_SECRET_NAME:-unknown}
       if [ "$side" = data ]; then
         bucket=$DATA_BUCKET
+        secret=${DATA_SECRET_NAME:-unknown}
+        storage_context 'configuring storage identity'
         if [ "$MODE" = external ]; then
           if ! mc alias set storage "$ENDPOINT" "$DATA_ACCESS_ID" "$DATA_ACCESS_KEY" --api S3v4 --path "$MC_PATH" >/dev/null 2>&1; then
-            echo 'Could not configure the data storage identity.' >&2
+            storage_context 'failed to configure storage identity; check the referenced Secret'
             exit 1
           fi
         fi
       fi
+      storage_context 'checking bucket access'
       if [ "$MODE" = bundled ] || [ "$CREATE_BUCKETS" = true ]; then
         if ! mc mb --ignore-existing --region "$REGION" "storage/$bucket" >/dev/null 2>&1; then
-          echo 'Could not initialize a required bucket.' >&2
+          storage_context 'failed to create bucket; check the referenced Secret and bucket permissions'
           exit 1
         fi
       fi
       if ! mc stat "storage/$bucket" >/dev/null 2>&1; then
-        echo 'A required bucket is inaccessible using the database addressing mode. DNS endpoints require bucket.endpoint resolution and matching TLS certificates. No external buckets are created by default.' >&2
+        storage_context 'bucket access failed; check bucket existence and the referenced Secret permissions. DNS endpoints require bucket.endpoint resolution and matching TLS certificates. External buckets are only created when objectStorage.createBuckets=true'
         exit 1
       fi
     done
@@ -110,9 +122,18 @@ spec:
           image: {{ .Values.initialization.image | quote }}
           imagePullPolicy: {{ .Values.initialization.imagePullPolicy }}
           command: [/bin/sh, /scripts/initialize.sh]
+          terminationMessagePolicy: FallbackToLogsOnError
           securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
           resources: {{ toYaml .Values.initialization.resources | nindent 12 }}
           env:
+            - {name: STORAGE_NAMESPACE, value: {{ .Release.Namespace | quote }}}
+            {{- if eq (include "lakehouse.storageMode" .) "bundled" }}
+            - {name: LOG_SECRET_NAME, value: {{ include "lakehouse.minioSecret" . | quote }}}
+            - {name: DATA_SECRET_NAME, value: {{ include "lakehouse.minioSecret" . | quote }}}
+            {{- else }}
+            - {name: LOG_SECRET_NAME, value: {{ include "lakehouse.logStorageSecret" . | quote }}}
+            - {name: DATA_SECRET_NAME, value: {{ include "lakehouse.dataStorageSecret" . | quote }}}
+            {{- end }}
             - {name: ENDPOINT, value: {{ include "lakehouse.preflightEndpoint" . | quote }}}
             - {name: MC_PATH, value: {{ include "lakehouse.preflightPath" . | quote }}}
             - {name: REGION, value: {{ .Values.objectStorage.region | quote }}}
