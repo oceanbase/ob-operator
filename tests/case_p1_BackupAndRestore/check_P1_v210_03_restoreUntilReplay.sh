@@ -131,7 +131,7 @@ validate() {
 	run "backup_policy_oss.yaml"
         check_backup_running
 	run "tenant_restore_until_replay.yaml"
-        if ! wait_for_oss_restore "$OBTENANT_STANDBY_OSS_REPLAY" $'1\tAlice\t20\t123 Main St\n2\tBob\t22\t456 Elm St'; then
+        if ! wait_for_oss_restore "$OBTENANT_STANDBY_OSS_REPLAY" $'1\tAlice\t20\t123 Main St\n2\tBob\t22\t456 Elm St' "$OSS_REPLOY_LOG_UNTIL"; then
             echo "case failed"
             return 1
         fi
