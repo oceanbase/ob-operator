@@ -21,6 +21,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/util/retry"
@@ -148,13 +149,79 @@ func (m *OBServerManager) setRecoveryStatus() {
 	}
 }
 
-func (m *OBServerManager) getPVCs() (*corev1.PersistentVolumeClaimList, error) {
+func (m *OBServerManager) getPVCs(pod *corev1.Pod) (*corev1.PersistentVolumeClaimList, error) {
 	pvcs := &corev1.PersistentVolumeClaimList{}
 	err := m.K8sResClient.List(m.Ctx, pvcs, client.InNamespace(m.OBServer.Namespace), client.MatchingLabels{oceanbaseconst.LabelRefUID: string(m.OBServer.UID)})
 	if err != nil {
-		return nil, errors.Wrap(err, "list pvc")
+		return nil, errors.Wrap(err, "list PVCs")
+	}
+
+	// Releases through 2.2.1 copied the observer's labels onto the PVC, so
+	// ref-uid could identify its zone. Look up missing claims by exact name.
+	byName := indexPVCs(pvcs)
+	var missing []string
+	for _, expected := range m.storageClaims(byName) {
+		if byName[expected.name] == nil {
+			missing = append(missing, expected.name)
+		}
+	}
+	if len(missing) == 0 {
+		return pvcs, nil
+	}
+	if _, annotated := m.OBServer.Annotations[oceanbaseconst.AnnotationsSinglePVC]; !annotated {
+		missing = append(missing, m.OBServer.Name)
+	}
+	for _, name := range missing {
+		pvc := &corev1.PersistentVolumeClaim{}
+		if err := m.K8sResClient.Get(m.Ctx, m.generateNamespacedName(name), pvc); err != nil {
+			if kubeerrors.IsNotFound(err) {
+				continue
+			}
+			return nil, errors.Wrapf(err, "get PVC %s", name)
+		}
+		if len(pvc.OwnerReferences) == 0 && pod == nil {
+			pod = &corev1.Pod{}
+			if err := m.K8sResClient.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), pod); client.IgnoreNotFound(err) != nil {
+				return nil, errors.Wrap(err, "get observer pod")
+			}
+		}
+		if m.isLegacyObserverClaim(pvc, pod) {
+			pvcs.Items = append(pvcs.Items, *pvc)
+		}
 	}
 	return pvcs, nil
+}
+
+func (m *OBServerManager) isObserverOwner(object metav1.Object) bool {
+	for _, owner := range object.GetOwnerReferences() {
+		if owner.Kind == "OBServer" && owner.Name == m.OBServer.Name && owner.UID == m.OBServer.UID && owner.UID != "" {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *OBServerManager) isLegacyObserverClaim(pvc *corev1.PersistentVolumeClaim, pod *corev1.Pod) bool {
+	if len(pvc.OwnerReferences) > 0 {
+		return m.isObserverOwner(pvc)
+	}
+	// Independent-lifecycle PVCs have no owner. Only use one mounted by
+	// this observer's pod and reject labels identifying a different owner.
+	if pod == nil || !m.isObserverOwner(pod) {
+		return false
+	}
+	if uid := pvc.Labels[oceanbaseconst.LabelRefUID]; uid != "" && uid != m.OBServer.Labels[oceanbaseconst.LabelRefUID] {
+		return false
+	}
+	if ref := pvc.Labels[oceanbaseconst.LabelRefOBServer]; ref != "" && ref != m.OBServer.Name {
+		return false
+	}
+	for _, volume := range pod.Spec.Volumes {
+		if volume.PersistentVolumeClaim != nil && volume.PersistentVolumeClaim.ClaimName == pvc.Name {
+			return true
+		}
+	}
+	return false
 }
 
 type storageClaim struct {

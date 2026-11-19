@@ -112,12 +112,12 @@ func (m *OBServerManager) UpdateStatus() error {
 				}
 			}
 		}
-		pvcs, err := m.getPVCs()
-		if err != nil {
-			m.Logger.Info("Get pvc failed: " + err.Error())
-		}
 		if m.OBServer.Status.Status == serverstatus.Running {
-			if pvcs != nil && m.checkIfStorageExpand(pvcs) {
+			pvcs, err := m.getPVCs(pod)
+			if err != nil {
+				return errors.Wrap(err, "get observer PVCs")
+			}
+			if m.checkIfStorageExpand(pvcs) {
 				m.OBServer.Status.Status = serverstatus.ExpandPVC
 			}
 		}

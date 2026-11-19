@@ -474,7 +474,7 @@ func WaitForPodDeleted(m *OBServerManager) tasktypes.TaskError {
 }
 
 func ExpandPVC(m *OBServerManager) tasktypes.TaskError {
-	pvcs, err := m.getPVCs()
+	pvcs, err := m.getPVCs(nil)
 	if err != nil {
 		return errors.Wrapf(err, "list PVCs for observer %s", m.OBServer.Name)
 	}
@@ -482,6 +482,14 @@ func ExpandPVC(m *OBServerManager) tasktypes.TaskError {
 	for _, target := range m.storageClaims(claims) {
 		pvc := claims[target.name]
 		if pvc == nil || pvc.DeletionTimestamp != nil {
+			// Pod recovery must be able to run even when it has taken its PVCs with it.
+			err := m.K8sResClient.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), &corev1.Pod{})
+			if kubeerrors.IsNotFound(err) {
+				return nil
+			}
+			if err != nil {
+				return err
+			}
 			return errors.Errorf("observer PVC %s is missing or being deleted", target.name)
 		}
 		if pvc.Spec.Resources.Requests.Storage().Cmp(target.storage.Size) >= 0 {
@@ -498,7 +506,17 @@ func ExpandPVC(m *OBServerManager) tasktypes.TaskError {
 func WaitForPvcResized(m *OBServerManager) tasktypes.TaskError {
 	for i := 0; i < obcfg.GetConfig().Time.DefaultStateWaitTimeout; i++ {
 		time.Sleep(time.Second)
-		pvcs, err := m.getPVCs()
+		pod := &corev1.Pod{}
+		err := m.K8sResClient.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), pod)
+		if kubeerrors.IsNotFound(err) {
+			// Node expansion may need a mounted filesystem. Finish this task so
+			// the usual pod recovery runs, then recheck capacity on reconciliation.
+			return nil
+		}
+		if err != nil {
+			return errors.Wrap(err, "get pod during PVC resize")
+		}
+		pvcs, err := m.getPVCs(pod)
 		if err != nil {
 			return errors.Wrapf(err, "list PVCs for observer %s", m.OBServer.Name)
 		}
