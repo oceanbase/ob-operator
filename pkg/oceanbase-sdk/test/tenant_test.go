@@ -14,6 +14,8 @@ package test
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/go-logr/logr"
@@ -190,6 +192,16 @@ var _ = Describe("Test Operation Manager get", Label("get-client"), func() {
 		Expect(con).NotTo(BeNil())
 		err := con.Close()
 		Expect(err).To(BeNil())
+	})
+
+	It("Read a global variable by its exact name", func() {
+		variable, err := con.GetGlobalVariable(context.Background(), "autocommit")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(variable.Name).To(Equal("autocommit"))
+		Expect(variable.Value).To(BeElementOf("0", "1"))
+
+		_, err = con.GetGlobalVariable(context.Background(), "auto_ommit")
+		Expect(errors.Is(err, sql.ErrNoRows)).To(BeTrue())
 	})
 
 	It("Get operation manager", func() {

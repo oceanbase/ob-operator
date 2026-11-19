@@ -14,7 +14,10 @@ package operation
 
 import (
 	"context"
+	"errors"
 	"fmt"
+
+	"github.com/go-sql-driver/mysql"
 
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/sql"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
@@ -28,5 +31,9 @@ func (m *OceanbaseOperationManager) SetGlobalVariable(ctx context.Context, name 
 func (m *OceanbaseOperationManager) GetGlobalVariable(ctx context.Context, name string) (*model.Variable, error) {
 	variable := &model.Variable{}
 	err := m.QueryRow(ctx, variable, sql.GetGlobalVariable, name)
+	var mysqlErr *mysql.MySQLError
+	if errors.As(err, &mysqlErr) && mysqlErr.Number == 1146 { // ER_NO_SUCH_TABLE
+		err = m.QueryRow(ctx, variable, sql.GetLegacyGlobalVariable, name)
+	}
 	return variable, err
 }
