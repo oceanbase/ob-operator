@@ -53,3 +53,18 @@ create_pass_gcs_secret() {
     kubectl create secret generic $secret_name -n $namespace --from-literal=accessId=$accessId --from-literal=accessKey=$accessKey
 }
 
+clean_nfs_test_directory() {
+    local path=${NFS_BASE_PATH:-} normalized quoted
+    if [[ -z ${USER_NAME:-} || -z ${NFS_SERVER:-} || $path != /* || $path == *[[:cntrl:]]* ]]; then
+        echo "NFS cleanup requires a user, server and absolute test directory" >&2
+        return 1
+    fi
+    normalized=$(realpath -ms -- "$path") || return 1
+    if [[ $normalized == / || /"${path#/}"/ == */../* ]]; then
+        echo "NFS cleanup requires a non-root test directory without parent traversal" >&2
+        return 1
+    fi
+    quoted=${path//\'/\'\\\'\'}
+    # Resolve symlinks on the NFS server before expanding the wildcard there.
+    ssh -- "$USER_NAME@$NFS_SERVER" "cd -P -- '$quoted' && dir=\$(pwd -P) && [ -n \"\$dir\" ] && [ \"\$dir\" != / ] && sudo rm -rf -- ./*"
+}

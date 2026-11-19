@@ -16,7 +16,7 @@ prepare() {
 # clean up delete everything by deleting the entire namespace
 cleanup() {
     kubectl delete namespace $NAMESPACE
-    ssh ${USER_NAME}@${NFS_SERVER} "sudo rm -rf ${NFS_BASE_PATH}/*"
+    clean_nfs_test_directory
     rm -rf case_p1_BackupAndRestore/env_vars.sh
 }
 
