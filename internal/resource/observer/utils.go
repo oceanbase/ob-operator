@@ -559,7 +559,10 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 		startOBServerCmd,
 	}
 
-	env := []corev1.EnvVar{{Name: "TZ", Value: "Asia/Shanghai"}}
+	var env []corev1.EnvVar
+	if isSharedStorage {
+		env = append(env, corev1.EnvVar{Name: "TZ", Value: "Asia/Shanghai"})
+	}
 	envLib := corev1.EnvVar{
 		Name:  "LD_LIBRARY_PATH",
 		Value: "/home/admin/oceanbase/lib",
