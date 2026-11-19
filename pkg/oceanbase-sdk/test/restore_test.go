@@ -14,11 +14,13 @@ package test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/go-sql-driver/mysql"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
@@ -225,10 +227,26 @@ var _ = Describe("Test Restore Operation", Serial, Label("restore"), func() {
 		By("Finish backup of primary tenant")
 	})
 
-	It("Wait for 3 mins", func() {
-		// Avoid the case that the standby tenant is created too fast
-		// ERROR 4018 (HY000): No enough log to restore
-		time.Sleep(1 * time.Minute)
+	It("Wait for the archive to cover the completed backup", func() {
+		ds := connector.NewOceanBaseDataSource(host, port, user, tenant, "", database)
+		tenantCon, err := operation.GetOceanbaseOperationManager(ds)
+		Expect(err).NotTo(HaveOccurred())
+		DeferCleanup(tenantCon.Close)
+		tenantCon.Logger = con.Logger
+
+		var minRestoreSCN int64
+		err = tenantCon.QueryRow(ctx, &minRestoreSCN,
+			"SELECT min_restore_scn FROM oceanbase.DBA_OB_BACKUP_SET_FILES WHERE path = ? AND status = 'SUCCESS' ORDER BY backup_set_id DESC LIMIT 1",
+			"file:///ob-backup/"+tenant+"/backup")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(minRestoreSCN).To(BeNumerically(">", 0))
+		Eventually(func() (int64, error) {
+			archive, err := tenantCon.GetLatestArchiveLogJob(ctx)
+			if err != nil || archive == nil {
+				return 0, err
+			}
+			return archive.CheckpointScn, nil
+		}, 10*time.Minute, 5*time.Second).Should(BeNumerically(">=", minRestoreSCN))
 	})
 
 	It("Restore standby tenant", Label("restore_standby"), func() {
@@ -271,25 +289,23 @@ var _ = Describe("Test Restore Operation", Serial, Label("restore"), func() {
 	It("Query restore progress", Label("query_restore"), func() {
 
 		By("Check restoration progress")
-		for {
-			time.Sleep(5 * time.Second)
-			restoreJob, err := con.GetLatestRestoreProgressOfTenant(ctx, standbyName)
-			Expect(err).To(BeNil())
-			printObject(restoreJob, "restoreJob")
-			if restoreJob != nil && restoreJob.Status == "SUCCESS" {
-				break
+		Eventually(func() (string, error) {
+			progress, err := con.GetLatestRestoreProgressOfTenant(ctx, standbyName)
+			if err != nil {
+				return "", err
 			}
-			if restoreJob == nil {
-				restoreHistory, err := con.GetLatestRestoreHistoryOfTenant(ctx, standbyName)
-				Expect(err).To(BeNil())
-				if restoreHistory != nil {
-					printObject(restoreHistory, "restoreHistory")
-					if restoreHistory.Status == "SUCCESS" {
-						break
-					}
-				}
+			if progress != nil {
+				return progress.Status, nil
 			}
-		}
+			history, err := con.GetLatestRestoreHistoryOfTenant(ctx, standbyName)
+			if err != nil || history == nil {
+				return "", err
+			}
+			if history.Status != "SUCCESS" {
+				return history.Status, StopTrying("Restore job finished with status " + history.Status)
+			}
+			return history.Status, nil
+		}, 15*time.Minute, 5*time.Second).Should(Equal("SUCCESS"))
 		By("Restore finished")
 	})
 
@@ -306,10 +322,17 @@ var _ = Describe("Test Restore Operation", Serial, Label("restore"), func() {
 	})
 
 	It("Activate", Label("activate"), func() {
-		// Repeatable
-		err := con.ActivateStandby(ctx, standbyName)
-		Expect(err).To(BeNil())
-		time.Sleep(3 * time.Second)
+		Eventually(func() error {
+			err := con.ActivateStandby(ctx, standbyName)
+			if err == nil {
+				return nil
+			}
+			var dbErr *mysql.MySQLError
+			if errors.As(err, &dbErr) && dbErr.Number == 4179 && strings.Contains(dbErr.Message, "not finished flashback") {
+				return err
+			}
+			return StopTrying("Standby activation failed").Wrap(err)
+		}, 5*time.Minute, 5*time.Second).Should(Succeed())
 	})
 
 	It("Delete Tenants", Label("delete_tenants"), func() {
