@@ -27,5 +27,5 @@ else:
     self.assertIn('/test/private config',args)
     if name=='kubectl':self.assertIn('--context=target',args)
    (p/'calls').write_text('');r=subprocess.run(cmd,env=dict(env,FAIL='7'),text=True,capture_output=True)
-   self.assertEqual(r.returncode,7);self.assertNotIn('Dashboard URL:',r.stdout);self.assertEqual(len((p/'calls').read_text().splitlines()),1)
+   self.assertIn('storage initialization',r.stderr);self.assertIn('app.kubernetes.io/component=storage-init',r.stderr);self.assertIn('/test/private\\ config',r.stderr);self.assertIn('--context=target',r.stderr);self.assertEqual(r.returncode,7);self.assertNotIn('Dashboard URL:',r.stdout);self.assertEqual(len((p/'calls').read_text().splitlines()),1)
 if __name__=='__main__':unittest.main()

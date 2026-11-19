@@ -66,4 +66,6 @@ jobs:
       - name: Check default Helm installation and shared images
         run: >-
           go test -count=1 ./charts/oceanbase-lakehouse
-          -run '^(TestSharedDatabaseImagesMatchCompose|TestPackagedQuickstartNeedsNoValuesOverrides|TestDefaultSizingMatchesSingleNodeProfile|TestDashboard.*|TestManualHelmNotesReflectStage|TestNative.*)$'
+          -run '^(TestSharedDatabaseImagesMatchCompose|TestPackagedQuickstartNeedsNoValuesOverrides|TestDefaultSizingMatchesSingleNodeProfile|TestDashboard.*|TestManualHelmNotesReflectStage|TestNative.*|TestStorageFailureDiagnostics|TestExternal.*|TestInitialization.*)$'
+      - name: Check Helm failure guidance and access context
+        run: python -m unittest discover -s scripts/lakehouse -p test_install_access.py -v

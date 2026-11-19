@@ -33,7 +33,17 @@ for ((i = 0; i < ${#args[@]}; i++)); do
   esac
 done
 
-helm upgrade --install "$release" "$chart" "$@"
+if helm upgrade --install "$release" "$chart" "$@"; then
+  :
+else
+  status=$?
+  echo 'Helm installation failed. Check storage initialization first; its logs identify the bucket and Secret reference if storage access failed:' >&2
+  printf '  kubectl' >&2
+  printf ' %q' "${kubectl_args[@]}" -n "$namespace" logs -l "app.kubernetes.io/instance=$release,app.kubernetes.io/component=storage-init" --all-containers=true --prefix=true --tail=50 >&2
+  printf '\n' >&2
+  echo 'If no initialization logs exist, inspect Pod events for missing Secrets, image pulls, or scheduling failures.' >&2
+  exit "$status"
+fi
 
 kubectl() { command kubectl "${kubectl_args[@]}" "$@"; }
 
