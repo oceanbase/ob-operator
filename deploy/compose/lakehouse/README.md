@@ -350,8 +350,8 @@ includes `.env`, edit that file and retain its image references. Otherwise copy
 | `LOGSERVICE_CPUS` | `2` | CPU limit of each LogService |
 | `LOGSERVICE_MEMORY_LIMIT` / `LOGSERVICE_CONTAINER_MEMORY` | `3686M` / `4g` | Each LogService memory target / container limit |
 | `OBAGENT_CPUS` / `OBAGENT_MEMORY` | `0.5` / `512m` | OBAgent container limit |
-| `OBSERVER_DATAFILE_SIZE` / `LOGSERVICE_LOG_DISK_SIZE` | `10G` / `10G` | Initial local data / each LogService log space |
-| `OBSERVER_DATAFILE_MAXSIZE` / `OBSERVER_DATAFILE_NEXT` | `47G` / `5G` | Observer local data growth ceiling / increment; reserve at least 50 GiB for this volume |
+| `OBSERVER_DATAFILE_SIZE` / `LOGSERVICE_LOG_DISK_SIZE` | `10G` / `9G` | Initial local data / each LogService log space |
+| `OBSERVER_DATAFILE_MAXSIZE` / `OBSERVER_DATAFILE_NEXT` | `38G` / `4G` | Observer local data growth ceiling / increment; reserve at least 40 GiB for this volume |
 | `COMPOSE_PROJECT_NAME` | `oceanseek` | Groups this installation's containers and volumes |
 
 These are fixed experience defaults, not automatic maximum-use sizing. Keep
@@ -485,7 +485,7 @@ docker build -f deploy/compose/lakehouse/Dockerfile.bootstrap \
   -t ghcr.io/oceanbase/lakehouse-bootstrap:0.1.0 .
 ```
 
-The `OceanSeek compose` workflow tests the bootstrap utility and validates the
+The `lakehouse compose` workflow tests the bootstrap utility and validates the
 Compose configuration. Its manual publishing action can publish a versioned
 bootstrap image to GHCR. Match `BOOTSTRAP_IMAGE` in the distributed configuration
 to the actual published or bundled image; do not give end users local build steps.

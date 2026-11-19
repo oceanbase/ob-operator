@@ -82,8 +82,8 @@ func ValidateAccount(ctx context.Context, username, password string) (*acmodel.A
 		account.Roles = roles
 	}
 
-	if account.LastLoginAt != nil && account.LastLoginAt.Unix() != 0 {
-		// The account has logged in before
+	if !account.NeedReset {
+		// A pending password reset keeps the zero timestamp until the reset succeeds.
 		enforcer.accMu.Lock()
 		defer enforcer.accMu.Unlock()
 		// Update latest login time
@@ -116,7 +116,7 @@ func ResetAccountPassword(ctx context.Context, username string, resetParam *para
 	if err != nil {
 		return nil, err
 	}
-	if account.LastLoginAt != nil && account.LastLoginAt.Unix() != 0 {
+	if !account.NeedReset {
 		bts := sha256.Sum256([]byte(resetParam.OldPassword))
 		sha256EncodedPwd := hex.EncodeToString(bts[:])
 		if account.password != sha256EncodedPwd {
@@ -356,7 +356,7 @@ func fetchAccount(credentials *v1.Secret, username string) (*account, error) {
 		tmpNow := time.Unix(creds.LastLoginAtUnix, 0)
 		lastLoginAt = &tmpNow
 	}
-	needReset := os.Getenv("REQUIRE_PASSWORD_RESET_ON_FIRST_LOGIN") == "true" && creds.LastLoginAtUnix == 0
+	needReset := os.Getenv("REQUIRE_PASSWORD_RESET_ON_FIRST_LOGIN") != "false" && creds.LastLoginAtUnix == 0
 	return &account{
 		Account: acmodel.Account{
 			Username:    username,

@@ -17,6 +17,9 @@ import (
 	"encoding/hex"
 	"slices"
 
+	acmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/ac"
+	corev1 "k8s.io/api/core/v1"
+
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -81,6 +84,21 @@ var _ = Describe("Access Control", Ordered, ContinueOnFailure, func() {
 		ok, err = enforcer.Enforce("admin2", "book/2", "read")
 		Expect(err).To(BeNil())
 		Expect(ok).To(BeTrue())
+	})
+
+	It("keeps first-login password resets unless explicitly disabled", func() {
+		creds := acmodel.AccountCreds{Nickname: "admin"}
+		for _, tc := range []struct {
+			setting   string
+			lastLogin int64
+			needReset bool
+		}{{"", 0, true}, {"invalid", 0, true}, {"true", 0, true}, {"false", 0, false}, {"true", 1, false}} {
+			GinkgoT().Setenv("REQUIRE_PASSWORD_RESET_ON_FIRST_LOGIN", tc.setting)
+			creds.LastLoginAtUnix = tc.lastLogin
+			acc, err := fetchAccount(&corev1.Secret{Data: map[string][]byte{"admin": []byte(creds.ToLine())}}, "admin")
+			Expect(err).NotTo(HaveOccurred())
+			Expect(acc.NeedReset).To(Equal(tc.needReset))
+		}
 	})
 
 	It("Validate password", func() {
