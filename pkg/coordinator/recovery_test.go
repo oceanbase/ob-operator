@@ -108,3 +108,78 @@ func TestLostTaskRecovery(t *testing.T) {
 		})
 	}
 }
+
+type statusWriteManager struct {
+	recoveryManager
+	stored   tt.OperationContext
+	pending  *tt.OperationContext
+	writeErr error
+}
+
+func (m *statusWriteManager) GetStatus() string { return "running" }
+func (m *statusWriteManager) GetTaskFlow() (*tt.TaskFlow, error) {
+	ctx := m.stored
+	return tt.NewTaskFlow(&ctx), nil
+}
+func (m *statusWriteManager) SetOperationContext(ctx *tt.OperationContext) { m.pending = ctx }
+func (m *statusWriteManager) UpdateStatus() error {
+	if m.writeErr == nil {
+		m.stored = *m.pending
+	}
+	return m.writeErr
+}
+
+func TestKeepFinishedTaskUntilStatusIsPersisted(t *testing.T) {
+	for _, terminal := range []tt.TaskStatus{taskstatus.Successful, taskstatus.Failed} {
+		t.Run(string(terminal), func(t *testing.T) {
+			id := tt.TaskID(t.Name())
+			writeErr := errors.New("status update conflict")
+			manager := &statusWriteManager{stored: tt.OperationContext{Task: "apply change", TaskId: id, TaskStatus: taskstatus.Running}, writeErr: writeErr}
+			logger := logr.Discard()
+			coordinator := NewCoordinator(manager, &logger)
+			tm := task.GetTaskManager()
+			result := &tt.TaskResult{Status: terminal}
+			ch := make(chan *tt.TaskResult, 1)
+			ch <- result
+			tm.ResultMap.Store(id, ch)
+			t.Cleanup(func() { tm.ResultMap.Delete(id); tm.TaskResultCache.Delete(id) })
+
+			if _, err := coordinator.Coordinate(); !errors.Is(err, writeErr) {
+				t.Fatalf("first reconcile: %v", err)
+			}
+			if got, err := tm.GetTaskResult(id); err != nil || got != result {
+				t.Fatalf("finished result after failed status write: got %v, err %v", got, err)
+			}
+			manager.writeErr = nil
+			if _, err := coordinator.Coordinate(); err != nil {
+				t.Fatal(err)
+			}
+			if manager.stored.TaskStatus != terminal || manager.calls.Load() != 0 {
+				t.Fatalf("persisted status=%s, resubmissions=%d", manager.stored.TaskStatus, manager.calls.Load())
+			}
+			if _, err := tm.GetTaskResult(id); !errors.Is(err, task.ErrTaskNotFound) {
+				t.Fatalf("finished result should be released after persistence: %v", err)
+			}
+		})
+	}
+}
+
+// The API may persist a terminal state even when the write response times out.
+func TestReleaseResultWhenPersistedFlowAdvances(t *testing.T) {
+	id := tt.TaskID(t.Name())
+	manager := &statusWriteManager{stored: tt.OperationContext{Task: "first", TaskId: id, TaskStatus: taskstatus.Successful, Tasks: []tt.TaskName{"first", "second"}, Idx: 1}}
+	tm := task.GetTaskManager()
+	tm.ResultMap.Store(id, make(chan *tt.TaskResult, 1))
+	t.Cleanup(func() { tm.ResultMap.Delete(id); tm.TaskResultCache.Delete(id) })
+	logger := logr.Discard()
+	c := NewCoordinator(manager, &logger)
+	if _, err := c.Coordinate(); err != nil {
+		t.Fatal(err)
+	}
+	if manager.stored.Task != "second" || manager.stored.TaskStatus != taskstatus.Pending {
+		t.Fatalf("unexpected next task: %+v", manager.stored)
+	}
+	if _, err := tm.GetTaskResult(id); !errors.Is(err, task.ErrTaskNotFound) {
+		t.Fatalf("old result was retained after flow advanced: %v", err)
+	}
+}
