@@ -10,7 +10,6 @@ source case_p0_ClusterAndTenant/env_vars.sh
 prepare() {
     kubectl create namespace $NAMESPACE
     create_pass_secret $NAMESPACE $OB_ROOT_SECRET $PASSWORD
-    echo $PASSWORD
 }
  
 # clean up delete everything by deleting the entire namespace
@@ -59,7 +58,6 @@ check_in_obcluster() {
     OBSERVER_ACTIVE='false'
     ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
     echo $ip
-    echo $PASSWORD
     while true; do
         echo 'check ob'
         counter=$((counter+1))
@@ -83,27 +81,36 @@ check_in_obcluster() {
     done
 }
  
-check_obtenant_running() {
-    counter=0
-    timeout=100  
-    OBTENANT_RUNNING='false'
-    while true; do
-        echo 'check obtenant resource'
-	counter=$((counter+1))
-	crd_obtenant=`kubectl get obtenant $OBTENANT_NAME -n $NAMESPACE| grep "$OBTENANT_NAME"|awk -F' ' '{print $2}'`
-        if [[ $crd_obtenant = "running" ]];then
-            echo "crd_obtenant is $crd_obtenant ready"
-            OBTENANT_RUNNING='true'
-	    echo "case passed"
-            break
+wait_for_zone2_pool() {
+    local active=$1 bit=0 ip observed state record until
+    [[ $OBTENANT_NAME =~ ^[[:alnum:]]+$ ]] || return 1
+    [[ $active == true ]] && bit=1
+    ip=$(kubectl -n "$NAMESPACE" get pods -l "ref-obcluster=$OBCLUSTER_NAME" -o jsonpath='{.items[0].status.podIP}') || return 1
+    until=$((SECONDS + 600))
+    while ((SECONDS < until)); do
+        observed=$(kubectl -n "$NAMESPACE" get "obtenant/$OBTENANT_NAME" -o json) || return 1
+        state=$(jq -r '.status.status' <<< "$observed")
+        if [[ $state == failed ]]; then echo "Tenant failed waiting for zone2 active=$active" >&2; return 1; fi
+        if [[ $state == running ]] && jq -e --argjson active "$active" '
+          any(.status.resourcePool[]?; .zoneList == "zone2" and .type.isActive == $active)
+        ' <<< "$observed" >/dev/null; then
+            record=$(MYSQL_PWD="$PASSWORD" mysql --batch --skip-column-names --connect-timeout=3 -h "$ip" -P2881 -uroot -Doceanbase -e "
+              SELECT T.STATUS, T.PREVIOUS_LOCALITY IS NULL, LOCATE('@zone2,', CONCAT(T.LOCALITY, ','))>0,
+                     R.RESOURCE_POOL_ID, GROUP_CONCAT(U.UNIT_ID ORDER BY U.UNIT_ID)
+              FROM DBA_OB_TENANTS T JOIN DBA_OB_RESOURCE_POOLS R ON R.TENANT_ID=T.TENANT_ID
+              JOIN DBA_OB_UNITS U ON U.RESOURCE_POOL_ID=R.RESOURCE_POOL_ID
+              WHERE T.TENANT_NAME='$OBTENANT_NAME' AND R.ZONE_LIST='zone2'
+              GROUP BY T.TENANT_ID,T.STATUS,T.PREVIOUS_LOCALITY,T.LOCALITY,R.RESOURCE_POOL_ID") || return 1
+            if [[ $record == $'NORMAL\t1\t'"$bit"$'\t'* ]]; then
+                pool_identity=$(cut -f4- <<< "$record")
+                echo "zone2 active=$active with database pool and units $pool_identity"
+                return 0
+            fi
         fi
-        if [ $counter -eq $timeout ]; then
-            echo "obtenant resource still not running"
-	    echo "case failed"
-            break
-        fi
-        sleep 3s
+        sleep 3
     done
+    echo "Timed out waiting for the existing zone2 pool and active=$active (CR $state, SQL ${record:-pending})" >&2
+    return 1
 }
 
 validate() {
@@ -125,7 +132,13 @@ validate() {
  
 run "obcluster_template_1-1-1.yaml"
 validate 
-run "obtenant_basic_1_1_1.yaml"
-check_obtenant_running
-run "obtenant_basic_1_1_1_reserve.yaml"
-check_obtenant_running
+run "obtenant_basic_1_1_1.yaml" || exit 1
+wait_for_zone2_pool true || { echo "case failed"; exit 1; }
+active_identity=$pool_identity
+run "obtenant_basic_1_1_1_reserve.yaml" || exit 1
+wait_for_zone2_pool false || { echo "case failed"; exit 1; }
+if [[ $pool_identity != "$active_identity" ]]; then
+    echo "case failed: reserved pool or unit was replaced"
+    exit 1
+fi
+echo "case passed"
