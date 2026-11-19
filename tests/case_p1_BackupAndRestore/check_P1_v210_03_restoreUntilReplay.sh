@@ -3,6 +3,7 @@
 # load all the parameters in setup.sh
 source setup.sh
 source util.sh
+source case_p1_BackupAndRestore/oss_restore_checks.sh
 source env.sh
 source case_p1_BackupAndRestore/env_210_vars.sh
  
@@ -54,7 +55,6 @@ check_in_obcluster() {
     OBSERVER_ACTIVE='false'
     ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
     echo $ip
-    echo $PASSWORD
     while true; do
         echo 'check ob'
         counter=$((counter+1))
@@ -117,85 +117,13 @@ check_backup_running() {
     done
 }
 
-check_restore_running() {
-    counter=0
-    timeout=120  
-    RESTORE_RUNNING='false'
-    ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-    while true; do
-        echo 'check restore resource'
-	counter=$((counter+1))
-        crd_primary_restore=`kubectl get obtenant -n $NAMESPACE | grep "$OBTENANT_STANDBY_OSS"|awk -F' ' '{print $2}'`
-        crd_primary_obtenant=`kubectl get obtenantrestore -n $NAMESPACE| grep "$OBTENANT_STANDBY_OSS"|awk -F' ' '{print $2}'`
-        echo "crd_primary_restore $crd_primary_restore  crd_primary_obtenant $crd_primary_obtenant"
-        if [[ $crd_primary_restore = "running" && $crd_primary_obtenant = "SUCCESSFUL" ]];then
-            RESTORE_RUNNING='true'
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "restore resource still not running"
-            break
-        fi
-        sleep 3s
-    done
-}
-
-check_restore_db_running() {
-    counter=0
-    timeout=120  
-    RESTORE_DB_RUNNING='false'
-    ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-    while true; do
-        echo 'check restore db resource'
-        counter=$((counter+1))
-        tenant_role=`mysql -h $ip -P2881 -A -uroot -p$PASSWORD -Doceanbase -e "select * from DBA_OB_TENANTS;"| grep $OBTENANT_STANDBY_OSS|awk -F' ' '{print $15}'`
-        if [[ $tenant_role = "STANDBY" ]];then
-            echo "tenant_role $tenant_role"
-            RESTORE_DB_RUNNING='true'
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "restore db resource still not running"
-            break
-        fi
-        sleep 3s
-    done
-}
-
-check_restore_data() {
-    counter=0
-    timeout=100  
-    RESTORE_DATA_SAME='false'
-    ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-    while true; do
-        echo 'check dbdata resource'
-        counter=$((counter+1))
-	mysql  -uroot@$OBTENANT_NAME -h $ip -P2881 -p$PASSWORD -Dtest -e " select * from students;" > result1.txt
-	mysql  -uroot@$OBTENANT_STANDBY_OSS -h $ip -P2881 -p$PASSWORD -Dtest -e " select * from students;" > result2.txt
-	diff result1.txt result2.txt > /dev/null
-        if [ $? -eq 0 ]; then
-	    cat result1.txt && cat result2.txt
-	    rm -rf result1.txt result2.txt
-            echo "tenant_role $tenant_role"
-            RESTORE_DATA_SAME='true'
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "backup dbdata resource still not running"
-	    cat result1.txt && cat result2.txt 
-	    rm -rf result1.txt result2.txt
-            break
-        fi
-        sleep 3s
-    done
-}
-
 validate() {
     run "obcluster_template_1-1-1.yaml"
     echo 'do validate'
     check_resource_running
     if [[ $RESOURCE_RUNNING == 'false' ]]; then
         echo "case failed"
+        return 1
     else
         check_in_obcluster
 	run "obtenant_basic_1_1_1.yaml"
@@ -203,20 +131,16 @@ validate() {
 	run "backup_policy_oss.yaml"
         check_backup_running
 	run "tenant_restore_until_replay.yaml"
-	check_restore_running
-	check_restore_db_running
-	check_restore_data
-	echo $OSS_REPLOY_LOG_UNTIL
-        if [[ $RESTORE_DATA_SAME == 'false' ]]; then
+        if ! wait_for_oss_restore "$OBTENANT_STANDBY_OSS_REPLAY" $'1\tAlice\t20\t123 Main St\n2\tBob\t22\t456 Elm St'; then
             echo "case failed"
-	    #cleanup
-	    #prepare
-        else
-            echo "case passed"
+            return 1
         fi
+        echo "case passed"
     fi
 }
 
 prepare
 validate
-cleanup
+result=$?
+cleanup || exit 1
+exit "$result"
