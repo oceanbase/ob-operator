@@ -15,6 +15,8 @@ package operation
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -33,13 +35,35 @@ func (m *OceanbaseOperationManager) SetRestorePassword(ctx context.Context, pass
 }
 
 func (m *OceanbaseOperationManager) StartRestoreWithLimit(ctx context.Context, tenantName, uri, restoreOption string, limitKey, limitValue any) error {
-	sqlStatement := fmt.Sprintf(sql.StartRestoreWithLimit, tenantName, limitKey)
-	err := m.ExecWithTimeout(ctx, managerConfig.TenantRestoreTimeout, sqlStatement, uri, limitValue, restoreOption)
+	key := strings.ToUpper(fmt.Sprint(limitKey))
+	argument, err := restoreUntilArgument(key, limitValue)
+	if err != nil {
+		return err
+	}
+	sqlStatement := fmt.Sprintf(sql.StartRestoreWithLimit, tenantName, key)
+	err = m.ExecWithTimeout(ctx, managerConfig.TenantRestoreTimeout, sqlStatement, uri, argument, restoreOption)
 	if err != nil {
 		m.Logger.Error(err, "Got exception when start restore with limit")
 		return errors.Wrap(err, "Start restore with limit")
 	}
 	return nil
+}
+
+func restoreUntilArgument(key string, value any) (any, error) {
+	switch key {
+	case "TIME":
+		return value, nil
+	case "SCN":
+		// The CRD represents an SCN as text to preserve its precision. The
+		// RESTORE grammar requires an integer literal, so bind a numeric value.
+		scn, err := strconv.ParseUint(fmt.Sprint(value), 10, 64)
+		if err != nil {
+			return nil, errors.New("restore SCN must be an unsigned decimal integer")
+		}
+		return scn, nil
+	default:
+		return nil, errors.New("restore limit must be TIME or SCN")
+	}
 }
 
 func (m *OceanbaseOperationManager) StartRestoreUnlimited(ctx context.Context, tenantName, uri, restoreOption string) error {
