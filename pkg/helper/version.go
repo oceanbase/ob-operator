@@ -52,16 +52,27 @@ func GetCurrentVersion(oceanbaseInstallPath string) (string, error) {
 // ParseVersionOutput accepts the helper's single-line version and the full
 // observer -V banner returned by older images.
 func ParseVersionOutput(output string) (string, error) {
-	output = strings.TrimSpace(output)
-	if normalizedVersion.MatchString(output) {
-		return output, nil
-	}
 	version := observerBanner.FindStringSubmatch(output)
 	revision := observerRevision.FindStringSubmatch(output)
-	if version == nil || revision == nil {
+	var reported string
+	if version != nil && revision != nil {
+		reported = version[1] + "-" + revision[1]
+	}
+	// Startup logging and the helper's version share the Kubernetes Job log.
+	for line := range strings.SplitSeq(output, "\n") {
+		line = strings.TrimSpace(line)
+		if !normalizedVersion.MatchString(line) {
+			continue
+		}
+		if reported != "" && reported != line {
+			return "", errors.New("conflicting OceanBase versions in output")
+		}
+		reported = line
+	}
+	if reported == "" {
 		return "", errors.New("observer output is missing a valid version or REVISION")
 	}
-	return version[1] + "-" + revision[1], nil
+	return reported, nil
 }
 
 func ParseOceanBaseVersion(version string) (*OceanBaseVersion, error) {

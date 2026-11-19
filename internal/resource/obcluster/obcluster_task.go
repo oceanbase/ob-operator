@@ -917,6 +917,14 @@ func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 	return nil
 }
 
+func checkMigrationVersion(source *model.OBVersion, targetOutput string) error {
+	target := strings.TrimSpace(targetOutput)
+	if source.String() != target {
+		return errors.Errorf("version mismatch source cluster: %s, target cluster: %s", source, target)
+	}
+	return nil
+}
+
 func CheckMigration(m *OBClusterManager) tasktypes.TaskError {
 	m.Logger.Info("Check before migration")
 	manager, err := m.getOceanbaseOperationManager()
@@ -939,8 +947,8 @@ func CheckMigration(m *OBClusterManager) tasktypes.TaskError {
 		return errors.Wrap(err, "get source oceanbase version")
 	}
 
-	if sourceVersion.String() != targetVersionStr {
-		return errors.Errorf("version mismatch source cluster: %s, target cluster: %s", sourceVersion.String(), targetVersionStr)
+	if err := checkMigrationVersion(sourceVersion, targetVersionStr); err != nil {
+		return err
 	}
 
 	// check obzone matches topology

@@ -63,6 +63,10 @@ func (m *OceanbaseOperationManager) GetVersion(ctx context.Context) (*model.OBVe
 		return nil, errors.Wrap(err, "Failed to List observers of cluster")
 	}
 
+	if len(observers) == 0 {
+		return nil, errors.New("no observers reported a database version")
+	}
+
 	var version *model.OBVersion
 	for _, observer := range observers {
 		v, err := model.ParseOBVersion(observer.BuildVersion)
