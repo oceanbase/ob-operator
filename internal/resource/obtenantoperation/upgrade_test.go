@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 
