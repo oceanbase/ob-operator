@@ -590,7 +590,6 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 	tenantCurrentStatus.TenantRole = tenantRoleFromDatabase(tenantCurrentStatus.TenantRole, obtenant)
 
 	poolStatusList, err := m.buildPoolStatusList(obtenant)
-
 	if err != nil {
 		return nil, err
 	}
@@ -598,7 +597,10 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 	tenantCurrentStatus.Pools = poolStatusList
 	tenantCurrentStatus.OperationContext = m.OBTenant.Status.OperationContext
 
-	tenantCurrentStatus.TenantRecordInfo = v1alpha1.TenantRecordInfo{}
+	tenantCurrentStatus.TenantRecordInfo, err = m.poolRecord(poolStatusList)
+	if err != nil {
+		return nil, err
+	}
 	tenantCurrentStatus.TenantRecordInfo.TenantID = int(obtenant.TenantID)
 
 	// TODO: get whitelist from tenant account
@@ -611,7 +613,6 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 		tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList = tenant.DefaultOBTcpInvitedNodes
 	}
 
-	tenantCurrentStatus.TenantRecordInfo.UnitNumber = poolStatusList[0].UnitNumber
 	charset, err := m.getCharset()
 	if err != nil {
 		return nil, err
@@ -619,14 +620,6 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 	tenantCurrentStatus.TenantRecordInfo.Charset = charset
 	tenantCurrentStatus.TenantRecordInfo.Locality = obtenant.Locality
 	tenantCurrentStatus.TenantRecordInfo.PrimaryZone = obtenant.PrimaryZone
-	poolList := make([]string, 0)
-	zoneList := make([]string, 0)
-	for _, pool := range tenantCurrentStatus.Pools {
-		poolList = append(poolList, m.generatePoolName(pool.ZoneList))
-		zoneList = append(zoneList, pool.ZoneList)
-	}
-	tenantCurrentStatus.TenantRecordInfo.PoolList = strings.Join(poolList, ",")
-	tenantCurrentStatus.TenantRecordInfo.ZoneList = strings.Join(zoneList, ",")
 	tenantCurrentStatus.TenantRecordInfo.Collate = m.OBTenant.Spec.Collate
 
 	// Root password changed
@@ -680,6 +673,23 @@ func (m *OBTenantManager) refreshTenantRoleFromDatabase() {
 		return
 	}
 	m.OBTenant.Status.TenantRole = tenantRoleFromDatabase(m.OBTenant.Status.TenantRole, tenantRecord)
+}
+
+func (m *OBTenantManager) poolRecord(pools []v1alpha1.ResourcePoolStatus) (v1alpha1.TenantRecordInfo, error) {
+	if len(pools) == 0 {
+		return v1alpha1.TenantRecordInfo{}, fmt.Errorf("no resource pools observed for tenant %q", m.OBTenant.Spec.TenantName)
+	}
+	poolNames := make([]string, 0, len(pools))
+	zones := make([]string, 0, len(pools))
+	for _, pool := range pools {
+		poolNames = append(poolNames, m.generatePoolName(pool.ZoneList))
+		zones = append(zones, pool.ZoneList)
+	}
+	return v1alpha1.TenantRecordInfo{
+		UnitNumber: pools[0].UnitNumber,
+		PoolList:   strings.Join(poolNames, ","),
+		ZoneList:   strings.Join(zones, ","),
+	}, nil
 }
 
 func observedPoolLocality(zone string, active map[string]v1alpha1.LocalityType, configured map[string]*v1alpha1.LocalityType) *v1alpha1.LocalityType {

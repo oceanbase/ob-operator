@@ -96,3 +96,14 @@ func TestObservedPoolLocality(t *testing.T) {
 		t.Fatal("observing the pool changed the configured target")
 	}
 }
+
+func TestTenantPoolRecord(t *testing.T) {
+	m := &OBTenantManager{OBTenant: &v1alpha1.OBTenant{Spec: v1alpha1.OBTenantSpec{TenantName: "orders"}}}
+	if _, err := m.poolRecord(nil); err == nil {
+		t.Fatal("expected a retryable status-read error before any resource pools are observed")
+	}
+	got, err := m.poolRecord([]v1alpha1.ResourcePoolStatus{{ZoneList: "z1", UnitNumber: 2}, {ZoneList: "z2", UnitNumber: 2}})
+	if err != nil || got.UnitNumber != 2 || got.PoolList != "pool_orders_z1,pool_orders_z2" || got.ZoneList != "z1,z2" {
+		t.Fatalf("pool record = %+v, error = %v", got, err)
+	}
+}
