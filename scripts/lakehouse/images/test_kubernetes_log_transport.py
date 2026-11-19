@@ -272,6 +272,16 @@ class TransportTest(unittest.TestCase):
             self.assertEqual(Path(destination).read_bytes(), b"complete archive")
             self.assertEqual(os.listdir(directory), ["archive.tar.gz"])
 
+    def test_download_timeout_identifies_observer_and_transfer_stage(self):
+        self.client._lakehouse_python = "python3"
+        with tempfile.TemporaryDirectory() as directory:
+            destination = os.path.join(directory, "archive.tar.gz")
+            with mock.patch.object(transport, "execute", side_effect=transport.TransportError("diagnostic exec timed out")):
+                with self.assertRaisesRegex(transport.TransportError,
+                        "archive transfer timed out for Observer test/test-ob"):
+                    transport.download(self.client, "/tmp/logs.tar.gz", destination)
+            self.assertEqual(os.listdir(directory), [])
+
     def test_paths_cannot_escape_or_publish_through_symlink(self):
         self.client._lakehouse_python = "python3"
         for path in ("relative", "/", "/tmp/../private", "/tmp/a\x00b"):

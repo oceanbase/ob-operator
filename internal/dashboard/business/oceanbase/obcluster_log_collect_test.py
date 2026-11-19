@@ -86,6 +86,17 @@ class CollectorTests(unittest.TestCase):
     def test_zero_exit_failed_summary_is_failure(self):
         self.assert_rejected(lambda: self.result([[self.node, "Fail", "0", "no log found"]]))
 
+    def test_transfer_timeout_preserves_safe_node_and_stage(self):
+        def producer():
+            self.result([[self.node, "Fail", "0",
+                "archive transfer timed out for Observer test/ob-pod private-secret"]])
+        with self.assertRaises(collector.CollectionError) as caught:
+            self.execute(producer)
+        self.assertEqual(str(caught.exception),
+            "Observer " + self.node + ": archive transfer timed out; no attachment published")
+        self.assertFalse(os.path.exists(self.attachment))
+        self.assertFalse(os.path.exists(self.work))
+
     def test_empty_payload_is_failure(self):
         self.assert_rejected(lambda: self.result(content=b""))
 
