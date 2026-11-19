@@ -37,8 +37,8 @@ wait_for_cluster() {
                 sleep 3
                 continue
             fi
-            current=$("${kubectl_ns[@]}" get obcluster "$OBCLUSTER_NAME" -o jsonpath='{.status.status}')
-            if [[ $current == running ]] && servers=$(MYSQL_PWD="$PASSWORD" timeout 8s mysql \
+            if current=$("${kubectl_ns[@]}" get obcluster "$OBCLUSTER_NAME" -o jsonpath='{.status.status}') &&
+                [[ $current == running ]] && servers=$(MYSQL_PWD="$PASSWORD" timeout 8s mysql \
                 --connect-timeout=3 -h "$ip" -P 2881 -uroot -Doceanbase --batch --skip-column-names \
                 -e 'SELECT ZONE, STATUS FROM DBA_OB_SERVERS ORDER BY ZONE, SVR_IP') &&
                 [[ $servers == $'zone1\tACTIVE\nzone2\tACTIVE\nzone3\tACTIVE' ]]; then
