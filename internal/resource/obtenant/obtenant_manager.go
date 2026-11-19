@@ -859,3 +859,8 @@ func (m *OBTenantManager) buildUnitStatusFromDB(zone string, tenantID int64) ([]
 	}
 	return unitList, nil
 }
+
+// CanReplayTask resumes observation of work already persisted in Kubernetes.
+func (m *OBTenantManager) CanReplayTask(name tasktypes.TaskName) bool {
+	return name == tWatchRestoreJobToFinish
+}
