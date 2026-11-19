@@ -61,10 +61,10 @@ this Helm Chart, and no Helm process runs inside a Kubernetes Job.
 
 | 用途 | 集群内 Service 端口 | 节点对外端口 |
 | --- | --- | --- |
-| OceanBase SQL | TCP 2881 | `sqlService.nodePort`，默认 0，由 Kubernetes 自动分配 |
+| OceanBase SQL | TCP 2883 | `sqlService.nodePort`，默认 0，由 Kubernetes 自动分配 |
 | Dashboard | TCP 80 | `dashboard.service.nodePort`，默认 0，由 Kubernetes 自动分配 |
 
-最新源码默认启用 OBProxy：SQL Service 对客户端仍提供 `sqlService.port`（默认 2881），转发到 OBProxy 的容器端口 2883；设置 `obproxy.enabled=false` 时才直连 Observer 的 2881。不要把后端端口当作 NodePort。
+最新源码默认启用 OBProxy：SQL Service 对客户端仍提供 `sqlService.port`（默认 2883），转发到 OBProxy 的容器端口 2883；设置 `obproxy.enabled=false` 时才直连 Observer 的 2881。不要把后端端口当作 NodePort。
 
 Helm 不沿用 Compose 的 32881/32886。默认 NodePort 从集群配置范围分配（通常为 30000–32767）；安装后查询实际端口，并仅向需要访问的客户端来源放行。集群内组件通信仍需满足现有 Kubernetes 网络策略。
 

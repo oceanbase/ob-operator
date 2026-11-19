@@ -56,6 +56,7 @@ dashboard:
   # Empty generates a random initial password. Login as admin; change it in UI.
   # For a supplied initial password use --set-file dashboard.adminPassword=FILE.
   adminPassword: ""
+  requirePasswordResetOnFirstLogin: false # The parent generates a random initial password.
   # The parent owns credentials/PVCs; keep these integration settings unchanged.
   initCredentials: false
   retainData: true

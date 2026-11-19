@@ -2,7 +2,7 @@ initCredentials: true
 # Initial admin password; existing accounts are preserved on upgrade.
 adminPassword: admin
 # Require users to change their password before their first login.
-requirePasswordResetOnFirstLogin: false
+requirePasswordResetOnFirstLogin: true
 
 # Empty uses quay.io/oceanbase/oceanbase-dashboard:<Chart appVersion>.
 image: ""
