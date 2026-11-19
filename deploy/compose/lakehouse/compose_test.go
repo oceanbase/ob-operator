@@ -32,6 +32,9 @@ type service struct {
 		Source   string `json:"source"`
 		Target   string `json:"target"`
 		ReadOnly bool   `json:"read_only"`
+		Bind     struct {
+			SELinux string `json:"selinux"`
+		} `json:"bind"`
 	} `json:"volumes"`
 	MemoryLimit json.RawMessage `json:"mem_limit"`
 	CPUs        json.RawMessage `json:"cpus"`
@@ -112,7 +115,13 @@ func TestQuickstartWithoutPreparation(t *testing.T) {
 			t.Fatalf("%s uses floating image", name)
 		}
 		for _, mount := range s.Volumes {
-			if mount.Type == "bind" && !strings.HasSuffix(mount.Source, "/scripts") &&
+			if mount.Type != "bind" {
+				continue
+			}
+			if !mount.ReadOnly || mount.Bind.SELinux != "z" {
+				t.Fatalf("%s requires a read-only bind mount shared across SELinux containers: %+v", name, mount)
+			}
+			if !strings.HasSuffix(mount.Source, "/scripts") &&
 				!strings.Contains(mount.Source, "/monitoring/") {
 				t.Fatalf("%s needs host-prepared files: %+v", name, mount)
 			}

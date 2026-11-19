@@ -48,7 +48,7 @@ services:
       HOST_ACCESS_IP: ${HOST_ACCESS_IP:-}
     volumes:
       - credentials:/run/secrets
-      - ./scripts:/opt/lakehouse:ro
+      - ./scripts:/opt/lakehouse:ro,z
     depends_on:
       credentials-init: {condition: service_completed_successfully}
     logging: *bounded-logging
@@ -62,7 +62,7 @@ services:
     volumes:
       - minio-data:/data
       - credentials:/run/secrets:ro
-      - ./scripts:/opt/lakehouse:ro
+      - ./scripts:/opt/lakehouse:ro,z
     depends_on:
       credentials-init: {condition: service_completed_successfully}
     healthcheck:
@@ -84,7 +84,7 @@ services:
       LOGSERVICE_BUCKET: ${LOGSERVICE_BUCKET:-lakehouse-logservice}
       SHARED_STORAGE_BUCKET: ${SHARED_STORAGE_BUCKET:-lakehouse-data}
     volumes:
-      - ./scripts:/opt/lakehouse:ro
+      - ./scripts:/opt/lakehouse:ro,z
       - credentials:/run/secrets:ro
     depends_on:
       minio: {condition: service_healthy}
@@ -99,7 +99,7 @@ services:
     volumes:
       - logservice-1-store:/home/admin/oblogservice/store
       - logservice-1-log:/home/admin/oblogservice/log
-      - ./scripts:/opt/lakehouse:ro
+      - ./scripts:/opt/lakehouse:ro,z
     networks:
       lakehouse:
         ipv4_address: ${LOGSERVICE_IP_1:-172.30.52.11}
@@ -112,7 +112,7 @@ services:
     volumes:
       - logservice-2-store:/home/admin/oblogservice/store
       - logservice-2-log:/home/admin/oblogservice/log
-      - ./scripts:/opt/lakehouse:ro
+      - ./scripts:/opt/lakehouse:ro,z
     networks:
       lakehouse:
         ipv4_address: ${LOGSERVICE_IP_2:-172.30.52.12}
@@ -125,7 +125,7 @@ services:
     volumes:
       - logservice-3-store:/home/admin/oblogservice/store
       - logservice-3-log:/home/admin/oblogservice/log
-      - ./scripts:/opt/lakehouse:ro
+      - ./scripts:/opt/lakehouse:ro,z
     networks:
       lakehouse:
         ipv4_address: ${LOGSERVICE_IP_3:-172.30.52.13}
@@ -148,7 +148,7 @@ services:
       ZONE_NAME_2: ${ZONE_NAME:-zone1}-2
       ZONE_NAME_3: ${ZONE_NAME:-zone1}-3
     volumes:
-      - ./scripts:/opt/lakehouse:ro
+      - ./scripts:/opt/lakehouse:ro,z
       - credentials:/run/secrets:ro
     depends_on:
       minio-init: {condition: service_completed_successfully}
@@ -185,7 +185,7 @@ services:
       - observer-data:/home/admin/data-file
       - observer-log:/home/admin/log
       - credentials:/run/secrets:ro
-      - ./scripts:/opt/lakehouse:ro
+      - ./scripts:/opt/lakehouse:ro,z
     ports:
       - "${OBSERVER_SQL_BIND_ADDRESS:-0.0.0.0}:${OBSERVER_SQL_HOST_PORT:-32881}:2881"
       - "${OBSHELL_BIND_ADDRESS:-0.0.0.0}:${OBSHELL_HOST_PORT:-32886}:2886"
@@ -224,7 +224,7 @@ services:
       ALERTMANAGER_HOST_PORT: ${ALERTMANAGER_HOST_PORT:-39093}
     volumes:
       - credentials:/run/secrets
-      - ./scripts:/opt/lakehouse:ro
+      - ./scripts:/opt/lakehouse:ro,z
     depends_on:
       observer: {condition: service_healthy}
       host-info-init: {condition: service_completed_successfully}
@@ -249,7 +249,7 @@ services:
       MONITOR_USER: monitor
     volumes:
       - credentials:/run/secrets:ro
-      - ./scripts:/opt/lakehouse:ro
+      - ./scripts:/opt/lakehouse:ro,z
     depends_on:
       observer-bootstrap: {condition: service_completed_successfully}
     healthcheck:
@@ -267,7 +267,7 @@ services:
       - --config.file=/etc/alertmanager/alertmanager.yml
       - --storage.path=/alertmanager
     volumes:
-      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro,z
       - alertmanager-data:/alertmanager
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9093/-/ready"]
@@ -285,7 +285,7 @@ services:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro,z
       - prometheus-data:/prometheus
     depends_on:
       obagent: {condition: service_healthy}
