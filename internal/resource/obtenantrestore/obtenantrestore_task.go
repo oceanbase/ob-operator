@@ -75,27 +75,37 @@ func StartRestoreJobInOB(m *ObTenantRestoreManager) tasktypes.TaskError {
 			return errors.New("restore cutoff must specify TIME or SCN")
 		}
 	}
-	if restoreSpec.BakEncryptionSecret != "" {
-		password, err := resourceutils.ReadPassword(m.Client, m.Resource.Namespace, restoreSpec.BakEncryptionSecret)
-		if err != nil {
-			m.Recorder.Event(m.Resource, v1.EventTypeWarning, "ReadRestorePasswordFailed", err.Error())
-			return err
+	var claimed bool
+	submit := func(db *operation.OceanbaseOperationManager) error {
+		var claimErr error
+		claimed, claimErr = m.claimRestoreSubmission()
+		if claimErr != nil || !claimed {
+			return claimErr
 		}
-		err = con.SetRestorePassword(m.Ctx, password)
-		if err != nil {
-			m.Recorder.Event(m.Resource, v1.EventTypeWarning, "SetRestorePasswordFailed", err.Error())
-			return err
-		}
+		return db.StartTrackedRestore(m.Ctx, m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option, key, limit, description)
 	}
-
-	claimed, err := m.claimRestoreSubmission()
-	if err != nil {
-		return err
+	if restoreSpec.BakEncryptionSecret != "" {
+		password, readErr := resourceutils.ReadBackupEncryptionPassword(m.Client, m.Resource.Namespace, restoreSpec.BakEncryptionSecret)
+		if readErr != nil {
+			m.Recorder.Event(m.Resource, v1.EventTypeWarning, "ReadRestorePasswordFailed", readErr.Error())
+			return readErr
+		}
+		err = con.WithBackupSession(m.Ctx, func(db *operation.OceanbaseOperationManager) error {
+			if setErr := db.SetRestorePassword(m.Ctx, password); setErr != nil {
+				m.Recorder.Event(m.Resource, v1.EventTypeWarning, "SetRestorePasswordFailed", setErr.Error())
+				return setErr
+			}
+			return submit(db)
+		})
+	} else {
+		err = submit(con)
 	}
 	if !claimed {
+		if err != nil {
+			return err
+		}
 		return m.awaitSubmittedRestore(con, description)
 	}
-	err = con.StartTrackedRestore(m.Ctx, m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option, key, limit, description)
 	if err != nil {
 		var sqlErr *mysql.MySQLError
 		if errors.As(err, &sqlErr) {

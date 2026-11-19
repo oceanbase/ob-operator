@@ -14,6 +14,7 @@ package obtenantbackup
 
 import (
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
@@ -29,27 +30,32 @@ func CreateBackupJobInOB(m *OBTenantBackupManager) tasktypes.TaskError {
 		m.Logger.Error(err, "failed to get ob operation client")
 		return err
 	}
-	if job.Spec.EncryptionSecret != "" {
-		password, err := resourceutils.ReadPassword(m.Client, job.Namespace, job.Spec.EncryptionSecret)
-		if err != nil {
-			m.Logger.Error(err, "failed to read backup encryption secret")
-			m.Recorder.Event(job, "Warning", "ReadBackupEncryptionSecretFailed", err.Error())
-		} else if password != "" {
-			err = con.SetBackupPassword(m.Ctx, password)
-			if err != nil {
-				m.Logger.Error(err, "failed to set backup password")
-				m.Recorder.Event(job, "Warning", "SetBackupPasswordFailed", err.Error())
-			}
-		}
+	submit := func(db *operation.OceanbaseOperationManager) error {
+		_, err := db.CreateAndReturnBackupJob(m.Ctx, string(job.Spec.Type))
+		return err
 	}
-	_, err = con.CreateAndReturnBackupJob(m.Ctx, string(job.Spec.Type))
+	if job.Spec.EncryptionSecret != "" {
+		password, readErr := resourceutils.ReadBackupEncryptionPassword(m.Client, job.Namespace, job.Spec.EncryptionSecret)
+		if readErr != nil {
+			m.Recorder.Event(job, "Warning", "ReadBackupEncryptionSecretFailed", readErr.Error())
+			return readErr
+		}
+		err = con.WithBackupSession(m.Ctx, func(db *operation.OceanbaseOperationManager) error {
+			if setErr := db.SetBackupPassword(m.Ctx, password); setErr != nil {
+				m.Recorder.Event(job, "Warning", "SetBackupPasswordFailed", setErr.Error())
+				return setErr
+			}
+			return submit(db)
+		})
+	} else {
+		err = submit(con)
+	}
 	if err != nil {
 		m.Logger.Error(err, "failed to create and return backup job")
 		m.Recorder.Event(job, "Warning", "CreateAndReturnBackupJobFailed", err.Error())
 		return err
 	}
 
-	// job.Status.BackupJob = latest
 	m.Recorder.Event(job, "Create", "", "Create backup job successfully")
 	return nil
 }
