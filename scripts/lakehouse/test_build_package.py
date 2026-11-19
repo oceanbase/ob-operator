@@ -29,7 +29,6 @@ BUILDER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(BUILDER)
 
 REFERENCES = {
-    "obproxy": "quay.io/oceanbase/obproxy-ce:4.3.3.0-5",
     "operator": "oceanbase-qa/ob-operator:96f9d3c8-20261019",
     "dashboard": "oceanbase-qa/oceanbase-dashboard:e747a05a-20261019",
     "observer": "oceanbase-qa/observer:4.6.2.0-e747a05a-20261019",

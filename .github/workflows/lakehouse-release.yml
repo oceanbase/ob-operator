@@ -5,6 +5,7 @@ on:
     paths:
       - 'charts/oceanseek/**'
       - 'charts/oceanbase-dashboard/**'
+      - 'charts/oceanbase-minio/**'
       - 'charts/ob-operator/**'
       - 'deploy/compose/lakehouse/**'
       - 'deploy/registry-mirrors/**'
@@ -19,6 +20,7 @@ on:
     paths:
       - 'charts/oceanseek/**'
       - 'charts/oceanbase-dashboard/**'
+      - 'charts/oceanbase-minio/**'
       - 'charts/ob-operator/**'
       - 'deploy/compose/lakehouse/**'
       - 'deploy/registry-mirrors/**'
@@ -56,7 +58,7 @@ jobs:
           helm version --short
           docker compose version
       - name: Build local Helm dependencies
-        run: helm dependency build charts/oceanbase-lakehouse
+        run: helm dependency build charts/oceanseek
       - name: Validate optional runtime configuration merging
         run: python -m unittest discover -s deploy/registry-mirrors/tests -v
       - name: Validate native release identity and actual package rendering

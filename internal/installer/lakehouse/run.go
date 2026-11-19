@@ -236,7 +236,8 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 		if err != nil {
 			return fmt.Errorf("cannot locate installation lock directory: %w", err)
 		}
-		cacheDir = filepath.Join(cacheDir, "oceanseek")
+		// Older installers use this same cache directory to serialize release updates.
+		cacheDir = filepath.Join(cacheDir, "oceanbase-lakehouse")
 		if err = privateDirectory(cacheDir); err != nil {
 			return err
 		}

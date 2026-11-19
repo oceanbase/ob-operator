@@ -83,10 +83,10 @@ def manifest_refs(documents, excluded, include_solver=False):
     return refs
 
 
-def one_chart(bundle, pattern):
-    matches = list(bundle.glob(pattern))
+def one_chart(bundle, *patterns):
+    matches = [path for pattern in patterns for path in bundle.glob(pattern)]
     if len(matches) != 1:
-        raise ValueError('Expected exactly one ' + pattern)
+        raise ValueError('Expected exactly one chart matching ' + ' or '.join(patterns))
     return matches[0]
 
 
@@ -225,7 +225,7 @@ def helm_image_plan(args, bundle, release, excluded):
     namespace = 'oceanseek' if namespace is None else namespace
     if len(namespace) > 63 or not re.fullmatch(r'[a-z0-9](?:[a-z0-9-]*[a-z0-9])?', namespace):
         raise ValueError('Invalid Helm namespace name')
-    chart = one_chart(bundle, 'oceanseek-*.tgz')
+    chart = one_chart(bundle, 'oceanseek-*.tgz', 'oceanbase-lakehouse-*.tgz')
     snapshots = [path.read_bytes() for path in args.values]
     endpoint, skip_operator = helm_values(snapshots)
     skip_crds = getattr(args, 'skip_crds', False) or skip_operator
@@ -262,8 +262,10 @@ def helm_image_plan(args, bundle, release, excluded):
             # solver in their lock. Older bundled self-signed setups did not.
             refs.update(manifest_refs(yaml.safe_load_all(cert_manager.read_text()), set(), include_solver=True))
         with tarfile.open(chart) as archive:
-            payload_dir = 'oceanseek/files/prerequisites/'
-            if payload_dir + 'bootstrap.py' in archive.getnames():
+            for chart_name in ('oceanseek', 'oceanbase-lakehouse'):
+                payload_dir = chart_name + '/files/prerequisites/'
+                if payload_dir + 'bootstrap.py' not in archive.getnames():
+                    continue
                 archive.getmember(payload_dir + 'prepare.sh')
                 payload = archive.extractfile(payload_dir + 'operator.yaml')
                 with payload:
@@ -503,7 +505,7 @@ def export(args, selected):
     if selected['channel'] == 'compose':
         commands = 'gzip -dc images.tar.gz | docker load\ncd deployment\ndocker compose up -d --pull never\n'
     else:
-        chart = one_chart(target, 'oceanseek-*.tgz').name
+        chart = one_chart(target, 'oceanseek-*.tgz', 'oceanbase-lakehouse-*.tgz').name
         commands = ('# Import on EVERY target K3s worker (Docker load does not populate K3s).\n'
                     'gzip -dc images.tar.gz | sudo k3s ctr images import -\n'
                     'cd deployment\n# Check the Kubernetes and storage prerequisites in USAGE.txt.\n'

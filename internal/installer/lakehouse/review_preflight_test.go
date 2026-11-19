@@ -107,7 +107,7 @@ func reviewCommandFixtures(t *testing.T) (string, string, string) {
 
 func TestReviewInstallSharesLockAcrossBundlesBeforeReadingReleaseOrState(t *testing.T) {
 	bundle, state, cache := reviewCommandFixtures(t)
-	lockDir := filepath.Join(cache, "oceanseek", "locks")
+	lockDir := filepath.Join(cache, "oceanbase-lakehouse", "locks")
 	if err := privateDirectory(lockDir); err != nil {
 		t.Fatal(err)
 	}
@@ -157,7 +157,7 @@ func TestReviewCheckDoesNotCreateLocalState(t *testing.T) {
 func TestReviewInstallationLockRemainsPrivateAndReleasedAfterFailure(t *testing.T) {
 	bundle, state, cache := reviewCommandFixtures(t)
 	cacheDirectory := func() (string, error) { return cache, nil }
-	lockDir := filepath.Join(cache, "oceanseek", "locks")
+	lockDir := filepath.Join(cache, "oceanbase-lakehouse", "locks")
 	lockPath := filepath.Join(lockDir, filepath.Base(state))
 	for attempt := 0; attempt < 2; attempt++ {
 		err := runWithCacheDirectory(context.Background(), []string{"--bundle", bundle}, io.Discard, io.Discard, cacheDirectory)
@@ -185,7 +185,7 @@ func TestReviewInstallationLockRemainsPrivateAndReleasedAfterFailure(t *testing.
 
 func TestReviewInstallationLockRejectsFileSymlink(t *testing.T) {
 	bundle, state, cache := reviewCommandFixtures(t)
-	lockDir := filepath.Join(cache, "oceanseek", "locks")
+	lockDir := filepath.Join(cache, "oceanbase-lakehouse", "locks")
 	if err := privateDirectory(lockDir); err != nil {
 		t.Fatal(err)
 	}

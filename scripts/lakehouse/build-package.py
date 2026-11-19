@@ -85,7 +85,7 @@ def source_identity(source, export=None):
             elif not item.isdir():
                 raise ValueError("Unsupported source archive member: " + str(relative))
     required = [source / n for n in ("install.sh", "INSTALL.txt", "LICENSE")]
-    for chart in ("oceanseek", "oceanbase-dashboard", "ob-operator"):
+    for chart in ("oceanseek", "oceanbase-dashboard", "oceanbase-minio", "ob-operator"):
         required.extend(p for p in (source / "charts" / chart).rglob("*") if p.is_file())
     for path in required:
         if path.relative_to(source).as_posix() not in seen:
@@ -351,7 +351,7 @@ def quickstart_profile(baseline, package, images):
     values.setdefault("observer", {}).pop("clusterId", None)
     values["logService"]["resource"]["cpu"] = "1"
     values["observer"]["resource"]["cpu"] = "2"
-    for section, role in (("dashboard", "dashboard"), ("obproxy", "obproxy"), ("logService", "logservice"),
+    for section, role in (("dashboard", "dashboard"), ("logService", "logservice"),
                           ("observer", "observer"), ("minio", "minio"), ("initialization", "mc")):
         values.setdefault(section, {})["image"] = images[role]["reference"]
     values["dashboard"]["enabled"] = True

@@ -62,10 +62,10 @@ def manifest_refs(documents, excluded):
     return refs
 
 
-def one_chart(bundle, pattern):
-    matches = list(bundle.glob(pattern))
+def one_chart(bundle, *patterns):
+    matches = [path for pattern in patterns for path in bundle.glob(pattern)]
     if len(matches) != 1:
-        raise ValueError('Expected exactly one ' + pattern)
+        raise ValueError('Expected exactly one chart matching ' + ' or '.join(patterns))
     return matches[0]
 
 
@@ -87,7 +87,7 @@ def plan(args):
             raise ValueError('Offline delivery requires prebuilt images, not Compose build directives')
         refs = {s['image'] for s in rendered['services'].values()}
     elif channel == 'helm':
-        cmd = [args.helm, 'template', 'oceanseek', one_chart(bundle, 'oceanseek-*.tgz'),
+        cmd = [args.helm, 'template', 'oceanseek', one_chart(bundle, 'oceanseek-*.tgz', 'oceanbase-lakehouse-*.tgz'),
                '--namespace', 'oceanseek']
         for path in args.values:
             cmd += ['--values', path.resolve()]
@@ -268,7 +268,7 @@ def export(args, selected):
     if selected['channel'] == 'compose':
         commands = 'gzip -dc images.tar.gz | docker load\ncd deployment\ndocker compose up -d --pull never\n'
     else:
-        chart = one_chart(target, 'oceanseek-*.tgz').name
+        chart = one_chart(target, 'oceanseek-*.tgz', 'oceanbase-lakehouse-*.tgz').name
         commands = ('# Import on EVERY target K3s worker (Docker load does not populate K3s).\n'
                     'gzip -dc images.tar.gz | sudo k3s ctr images import -\n'
                     'cd deployment\n# Check the Kubernetes and storage prerequisites in USAGE.txt.\n'
