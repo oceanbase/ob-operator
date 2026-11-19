@@ -18,17 +18,15 @@ import (
 	"encoding/hex"
 	"net"
 	"os"
-	"path/filepath"
 	"sync"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
 
 	"github.com/oceanbase/ob-operator/internal/telemetry/models"
+	k8sclient "github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
 type hostMetrics struct {
@@ -74,16 +72,11 @@ func getK8sNodes() ([]corev1.Node, error) {
 
 	if _, exist := os.LookupEnv("KUBERNETES_SERVICE_HOST"); exist {
 		config, err = rest.InClusterConfig()
-		if err != nil {
-			return nil, err
-		}
 	} else {
-		home := homedir.HomeDir()
-		configPath := filepath.Join(home, ".kube", "config")
-		config, err = clientcmd.BuildConfigFromFlags("", configPath)
-		if err != nil {
-			return nil, err
-		}
+		config, err = k8sclient.GetConfigOutsideCluster()
+	}
+	if err != nil {
+		return nil, err
 	}
 
 	k8sClient, err := kubernetes.NewForConfig(config)
