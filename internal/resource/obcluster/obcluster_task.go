@@ -854,7 +854,7 @@ outerLoop:
 func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist {
-		versionOutput, _, err := resourceutils.RunJobWithScheduling(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+		versionOutput, code, err := resourceutils.RunJobWithScheduling(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
 			m.OBCluster.Name+"-get-version",
 			m.OBCluster.Spec.OBServerTemplate.Image,
 			m.OBCluster.Spec.OBServerTemplate.PodFields,
@@ -862,8 +862,10 @@ func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 			"/home/admin/oceanbase/bin/oceanbase-helper version",
 		)
 		if err != nil {
-			// Make compatible with legacy version in which there is no `version` command
-			var code int32
+			// Legacy helpers exit 1 for the unknown version subcommand.
+			if code != int32(cmdconst.ExitCodeErr) {
+				return errors.Wrap(err, "get OceanBase version")
+			}
 			switch modeAnnoVal {
 			case oceanbaseconst.ModeStandalone:
 				_, code, err = resourceutils.RunJobWithScheduling(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
@@ -887,24 +889,13 @@ func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 			}
 			return nil
 		}
-		var version string
-		lines := strings.Split(versionOutput, "\n")
-		if len(lines) == 0 {
-			m.Logger.Info("Get version failed")
-			return nil
-		}
-		if len(lines) > 3 {
-			versionStr := strings.Split(lines[1], " ")
-			semVer := versionStr[len(versionStr)-1]
-			releaseStr := strings.Split(strings.Split(lines[3], " ")[1], "-")[0]
-			version = fmt.Sprintf("%s-%s", semVer[0:len(semVer)-1], releaseStr)
-		} else {
-			version = strings.TrimSpace(lines[0])
+		version, err := helper.ParseVersionOutput(versionOutput)
+		if err != nil {
+			return errors.Wrap(err, "read version for cluster mode check")
 		}
 		currentVersion, err := helper.ParseOceanBaseVersion(version)
 		if err != nil {
-			m.Logger.WithValues("version", version, "err", err.Error()).Info("Failed to parse current version")
-			return nil
+			return errors.Wrap(err, "parse version for cluster mode check")
 		}
 		switch modeAnnoVal {
 		case oceanbaseconst.ModeStandalone:

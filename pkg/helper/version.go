@@ -15,6 +15,7 @@ package helper
 import (
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -30,28 +31,44 @@ type OceanBaseVersion struct {
 	Build    string `json:"build"`
 }
 
+const numericVersion = `[0-9]+\.[0-9]+\.[0-9]+(?:\.[0-9]+)?`
+
+var (
+	normalizedVersion = regexp.MustCompile(`^` + numericVersion + `(?:-[0-9]+)?$`)
+	observerBanner    = regexp.MustCompile(`(?m)^[ \t]*observer[ \t]+\([^()\r\n]+[ \t]+(` + numericVersion + `)\)[ \t\r]*$`)
+	observerRevision  = regexp.MustCompile(`(?m)^[ \t]*REVISION:[ \t]*([0-9]+)(?:-[^\s]+)?[ \t\r]*$`)
+)
+
 func GetCurrentVersion(oceanbaseInstallPath string) (string, error) {
-	output, err := exec.Command("bash", "-c", fmt.Sprintf("export LD_LIBRARY_PATH=%s/lib; %s/bin/observer -V", oceanbaseInstallPath, oceanbaseInstallPath)).CombinedOutput()
+	cmd := exec.Command(filepath.Join(oceanbaseInstallPath, "bin", "observer"), "-V")
+	cmd.Env = append(cmd.Environ(), "LD_LIBRARY_PATH="+filepath.Join(oceanbaseInstallPath, "lib"))
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", errors.Wrap(err, "Failed to execute version command")
+		return "", errors.Wrap(err, "execute observer -V")
 	}
-	lines := strings.Split(string(output), "\n")
-	if len(lines) > 3 {
-		versionStr := strings.Split(lines[1], " ")
-		version := versionStr[len(versionStr)-1]
-		releaseStr := strings.Split(strings.Split(lines[3], " ")[1], "-")[0]
-		return fmt.Sprintf("%s-%s", version[0:len(version)-1], releaseStr), nil
+	return ParseVersionOutput(string(output))
+}
+
+// ParseVersionOutput accepts the helper's single-line version and the full
+// observer -V banner returned by older images.
+func ParseVersionOutput(output string) (string, error) {
+	output = strings.TrimSpace(output)
+	if normalizedVersion.MatchString(output) {
+		return output, nil
 	}
-	return "", errors.New("OB Version Format is Wrong")
+	version := observerBanner.FindStringSubmatch(output)
+	revision := observerRevision.FindStringSubmatch(output)
+	if version == nil || revision == nil {
+		return "", errors.New("observer output is missing a valid version or REVISION")
+	}
+	return version[1] + "-" + revision[1], nil
 }
 
 func ParseOceanBaseVersion(version string) (*OceanBaseVersion, error) {
 	ver := &OceanBaseVersion{}
 	var err error
-	pattern := "^[0-9]+\\.[0-9]+\\.[0-9]+(\\.[0-9]+)?(-[0-9]+)?$"
-	regex := regexp.MustCompile(pattern)
-	if !regex.MatchString(version) {
-		return nil, errors.New("version format is wrong, should be like " + pattern + " but got " + version)
+	if !normalizedVersion.MatchString(version) {
+		return nil, errors.New("version format is wrong, should be like " + normalizedVersion.String() + " but got " + version)
 	}
 
 	verStr := strings.Split(version, "-")

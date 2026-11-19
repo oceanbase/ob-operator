@@ -89,3 +89,13 @@ func TestBootstrapJobsInheritRestrictedPlacement(t *testing.T) {
 		})
 	}
 }
+
+func TestClusterModeReturnsJobCreationFailure(t *testing.T) {
+	m, c := schedulingFixture()
+	if err := CheckClusterMode(m); err == nil {
+		t.Fatal("expected error creating the version job")
+	}
+	if len(c.jobs) != 1 {
+		t.Fatalf("created %d jobs after version job creation failed, want 1", len(c.jobs))
+	}
+}
