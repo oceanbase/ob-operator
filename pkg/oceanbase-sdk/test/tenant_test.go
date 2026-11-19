@@ -27,6 +27,8 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 )
 
+const testUnitSizeBytes = 2 << 30
+
 var _ = Describe("Test Tenant Operation", func() {
 	var con *operation.OceanbaseOperationManager
 
@@ -94,9 +96,9 @@ var _ = Describe("Test Tenant Operation", Label("tenant-operation"), Serial, fun
 				UnitConfigName: "unit_test",
 				MinCPU:         2,
 				MaxCPU:         2,
-				MemorySize:     2048000000,
+				MemorySize:     testUnitSizeBytes,
 				MaxIops:        1024,
-				LogDiskSize:    2048000000,
+				LogDiskSize:    testUnitSizeBytes,
 				MinIops:        1024,
 			})
 			Expect(err).To(BeNil())
@@ -150,12 +152,15 @@ var _ = Describe("Test Tenant Operation", Label("tenant-operation"), Serial, fun
 		newPwd := "testPwd"
 		err = tenantCon.ChangeTenantUserPassword(context.TODO(), "root", newPwd)
 		Expect(err).To(BeNil())
+		Expect(tenantCon.Close()).To(Succeed())
 		newDs := connector.NewOceanBaseDataSource(host, port, user, tenant, newPwd, "")
 		newCon, err := operation.GetOceanbaseOperationManager(newDs)
 		Expect(err).To(BeNil())
 		newCon.Logger = &logger
-		_, err = newCon.ListArchiveLogSummary(context.TODO())
-		Expect(err).To(BeNil())
+		DeferCleanup(newCon.Close)
+		var authenticated int
+		Expect(newCon.QueryRow(context.TODO(), &authenticated, "SELECT 1")).To(Succeed())
+		Expect(authenticated).To(Equal(1))
 	})
 
 	It("Delete Tenants", Label("delete_tenants"), func() {

@@ -70,9 +70,9 @@ var _ = Describe("Test Restore Operation", Serial, Label("restore"), func() {
 				UnitConfigName: "unit_test",
 				MinCPU:         2,
 				MaxCPU:         2,
-				MemorySize:     2048000000,
+				MemorySize:     testUnitSizeBytes,
 				MaxIops:        1024,
-				LogDiskSize:    2048000000,
+				LogDiskSize:    testUnitSizeBytes,
 				MinIops:        1024,
 			})
 			Expect(err).To(BeNil())
@@ -365,9 +365,9 @@ var _ = Describe("Test canceling restore", Serial, Label("canceling"), func() {
 				UnitConfigName: "unit_test",
 				MinCPU:         2,
 				MaxCPU:         2,
-				MemorySize:     2147483648,
+				MemorySize:     testUnitSizeBytes,
 				MaxIops:        1024,
-				LogDiskSize:    2147483648,
+				LogDiskSize:    testUnitSizeBytes,
 				MinIops:        1024,
 			})
 			Expect(err).To(BeNil())
