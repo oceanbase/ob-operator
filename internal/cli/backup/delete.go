@@ -36,11 +36,11 @@ func NewDeleteOptions() *DeleteOptions {
 func DeleteTenantBackupPolicy(ctx context.Context, o *DeleteOptions) error {
 	nn := types.NamespacedName{Name: o.Name, Namespace: o.Namespace}
 	policy, err := clients.GetTenantBackupPolicy(ctx, nn)
-	if policy == nil {
-		return fmt.Errorf("Backup policy for %s not found", o.Name)
-	}
 	if err != nil {
 		return err
+	}
+	if policy == nil {
+		return fmt.Errorf("Backup policy for %s not found", o.Name)
 	}
 	if o.force {
 		return clients.ForceDeleteTenantBackupPolicy(ctx, types.NamespacedName{Name: policy.Name, Namespace: policy.Namespace})

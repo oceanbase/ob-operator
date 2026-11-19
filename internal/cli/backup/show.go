@@ -51,7 +51,7 @@ func ListBackupJobs(ctx context.Context, policyName string, o *ShowOptions) (*v1
 		listOption.LabelSelector = oceanbaseconst.LabelRefBackupPolicy + "=" + policyName
 	}
 	listOption.Limit = o.limit
-	jobs, err := clients.ListBackupJobs(ctx, listOption)
+	jobs, err := clients.ListBackupJobs(ctx, o.Namespace, listOption)
 	if err != nil {
 		return nil, err
 	}
