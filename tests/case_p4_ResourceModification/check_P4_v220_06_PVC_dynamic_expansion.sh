@@ -51,18 +51,36 @@ ip=$(kubectl -n "$NAMESPACE" get pod "$server" -o jsonpath='{.status.podIP}')
 sql 'CREATE DATABASE p4_resize; CREATE TABLE p4_resize.marker (id INT PRIMARY KEY); INSERT INTO p4_resize.marker VALUES (61)'
 before=$(volume_bytes)
 pvc="$server-data-file"
-[[ $(kubectl -n "$NAMESPACE" get pvc "$pvc" -o jsonpath='{.spec.resources.requests.storage}') == 60Gi ]]
+read -r pv initial_request initial_capacity < <(kubectl -n "$NAMESPACE" get pvc "$pvc" -o jsonpath='{.spec.volumeName} {.spec.resources.requests.storage} {.status.capacity.storage}{"\n"}')
+initial_pv_capacity=$(kubectl get pv "$pv" -o jsonpath='{.spec.capacity.storage}')
+[[ $initial_request == 60Gi ]]
 
 template obcluster_expanded_1-1-1.yaml | kubectl apply -f -
 required=$(numfmt --from=iec-i 61Gi)
+negative_since=-1
 deadline=$((SECONDS + 420))
 while (( SECONDS < deadline )); do
     read -r phase request capacity < <(kubectl -n "$NAMESPACE" get pvc "$pvc" -o jsonpath='{.status.phase} {.spec.resources.requests.storage} {.status.capacity.storage}{"\n"}')
-    if [[ $phase == Bound && $request == 61Gi && -n $capacity ]] && (( $(numfmt --from=auto "$capacity") >= required )); then
+    pv_capacity=$(kubectl get pv "$pv" -o jsonpath='{.spec.capacity.storage}')
+    if $owned_class; then
+        # The stock local-path driver creates a host directory and has no CSI resizer.
+        operation=$(kubectl -n "$NAMESPACE" get observer "$server" -o jsonpath='{.status.operationContext.task}/{.status.operationContext.taskStatus}')
+        if [[ $phase == Bound && $request == 61Gi && $capacity == "$initial_capacity" && $pv_capacity == "$initial_pv_capacity" && $operation == "wait for pvc resized/running" ]]; then
+            if (( negative_since < 0 )); then negative_since=$SECONDS; fi
+            if (( SECONDS - negative_since >= 20 )); then
+                [[ $(volume_bytes) == "$before" && $(sql 'SELECT id FROM p4_resize.marker') == 61 ]]
+                echo "case passed: unsupported local-path kept $pvc pending, request=$request capacity=$capacity PV=$pv_capacity filesystem=$before bytes, SQL marker retained"
+                exit 0
+            fi
+        else
+            negative_since=-1
+        fi
+    elif [[ $phase == Bound && $request == 61Gi && -n $capacity && -n $pv_capacity ]] && (( $(numfmt --from=auto "$capacity") >= required && $(numfmt --from=auto "$pv_capacity") >= required )); then
         after=$(volume_bytes)
         if (( after > before )); then
             kubectl -n "$NAMESPACE" wait "observer/$server" "obzone/$OBCLUSTER_NAME-1-zone1" "obcluster/$OBCLUSTER_NAME" --for=jsonpath='{.status.status}'=running --timeout=5m
             [[ $(sql 'SELECT id FROM p4_resize.marker') == 61 ]]
+            echo "PV $pv capacity $initial_pv_capacity->$pv_capacity, PVC capacity $initial_capacity->$capacity"
             echo "case passed: $pvc request=$request capacity=$capacity filesystem=$before->$after bytes, SQL marker retained"
             exit 0
         fi
