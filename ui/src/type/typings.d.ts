@@ -251,19 +251,15 @@ declare namespace API {
       },
     ];
     rootPassword: string;
-    topology: Array<
-      {
-        affinities?: Array<{ key: string; value: string }>;
-        nodeSelector?: Array<
-          {
-            key: string;
-            value: string;
-          }
-        >;
-        replicas: number;
-        zone: string;
-      }
-    >;
+    topology: Array<{
+      affinities?: Array<{ key: string; value: string }>;
+      nodeSelector?: Array<{
+        key: string;
+        value: string;
+      }>;
+      replicas: number;
+      zone: string;
+    }>;
   };
 
   type Metrics = {

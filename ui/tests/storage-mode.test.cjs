@@ -6,12 +6,26 @@ const ts = require('typescript');
 const vm = require('node:vm');
 
 // Use the project's installed TypeScript compiler; no additional test dependency.
-const source = fs.readFileSync(path.join(__dirname, '../src/pages/Cluster/New/storageMode.ts'), 'utf8');
-const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText;
+const source = fs.readFileSync(
+  path.join(__dirname, '../src/pages/Cluster/New/storageMode.ts'),
+  'utf8',
+);
+const compiled = ts.transpileModule(source, {
+  compilerOptions: { module: ts.ModuleKind.CommonJS },
+}).outputText;
 const context = { exports: {} };
 vm.runInNewContext(compiled, context);
 const { normalizeStorageMode } = context.exports;
-const create = (deploymentMode) => ({ deploymentMode, mode: 'SERVICE', observer: { image: 'ai:4.6.2.0', storage: { data: { size: 50 }, log: { size: 20 }, redoLog: { size: 50 } } }, sharedStorageInfo: { bucketURL: 's3://test', secretRef: { name: 'minio' } }, logServiceRef: { name: 'ls' } });
+const create = (deploymentMode) => ({
+  deploymentMode,
+  mode: 'SERVICE',
+  observer: {
+    image: 'ai:4.6.2.0',
+    storage: { data: { size: 50 }, log: { size: 20 }, redoLog: { size: 50 } },
+  },
+  sharedStorageInfo: { bucketURL: 's3://test', secretRef: { name: 'minio' } },
+  logServiceRef: { name: 'ls' },
+});
 
 test('SS retains references and omits stale redoLog without mutating the form', () => {
   const input = create('shared_storage');

@@ -31,9 +31,9 @@ import {
   validateLabelValues,
 } from '../helper';
 import ClusterSelect from './ClusterSelect';
+import LogServiceSelect from './LogServiceSelect';
 import ServerSelect from './ServerSelect';
 import TenantSelect from './TenantSelect';
-import LogServiceSelect from './LogServiceSelect';
 
 interface ShieldDrawerProps extends DrawerProps {
   id?: string;
@@ -205,7 +205,9 @@ export default function ShieldDrawerForm({
                   {
                     validator: (_, instances: Alert.InstancesType) => {
                       if (
-                        (instances.type !== 'logservice' && (!instances.obcluster || !instances.obcluster.length)) ||
+                        (instances.type !== 'logservice' &&
+                          (!instances.obcluster ||
+                            !instances.obcluster.length)) ||
                         !instances[instances.type] ||
                         !instances[instances.type]?.length
                       ) {

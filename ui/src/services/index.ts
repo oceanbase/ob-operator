@@ -1,9 +1,9 @@
 import { formatTopoData } from '@/components/TopoComponent/helper';
 import { DATE_TIME_FORMAT } from '@/constants/datetime';
 import { formatClusterData } from '@/pages/Cluster/Detail/Overview/helper';
+import { formatEventTime } from '@/utils/eventTime';
 import { floorToTwoDecimalPlaces, formatStatisticData } from '@/utils/helper';
 import { intl } from '@/utils/intl';
-import { formatEventTime } from '@/utils/eventTime';
 import { request } from '@umijs/max';
 import dayjs from 'dayjs';
 import _ from 'lodash';

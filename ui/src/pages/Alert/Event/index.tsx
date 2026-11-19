@@ -215,7 +215,11 @@ export default function Event() {
       render: (_, record) => (
         <Space>
           <Button
-            disabled={record?.status?.state !== 'active' || !access.alarmwrite || record.instance.type === 'unknown'}
+            disabled={
+              record?.status?.state !== 'active' ||
+              !access.alarmwrite ||
+              record.instance.type === 'unknown'
+            }
             // style={{ paddingLeft: 0 }}
             type="link"
             onClick={() => {
@@ -237,7 +241,11 @@ export default function Event() {
             })}
           </Button>
           <Button
-            disabled={record.instance.type === 'logservice' || record.instance.type === 'unknown' || !access.alarmwrite}
+            disabled={
+              record.instance.type === 'logservice' ||
+              record.instance.type === 'unknown' ||
+              !access.alarmwrite
+            }
             // style={{ paddingLeft: 0 }}
             type="link"
             onClick={() => {

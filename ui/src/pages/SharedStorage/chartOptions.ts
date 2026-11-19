@@ -5,9 +5,14 @@ export type MetricPoint = { time: number; value: number };
 export function buildSSChartOptions(points: MetricPoint[]): LineOptions {
   // Prometheus uses Unix seconds; G2's time scale expects milliseconds.
   const data = points
-    .filter(p => Number.isFinite(p.time) && p.time > 0 &&
-      Number.isFinite(new Date(p.time * 1000).getTime()) && Number.isFinite(p.value))
-    .map(p => ({ time: p.time * 1000, value: p.value }));
+    .filter(
+      (p) =>
+        Number.isFinite(p.time) &&
+        p.time > 0 &&
+        Number.isFinite(new Date(p.time * 1000).getTime()) &&
+        Number.isFinite(p.value),
+    )
+    .map((p) => ({ time: p.time * 1000, value: p.value }));
 
   return {
     data,
@@ -19,7 +24,8 @@ export function buildSSChartOptions(points: MetricPoint[]): LineOptions {
     tooltip: {
       title: (_text, datum) => {
         const time = datum?.time;
-        return typeof time === 'number' && Number.isFinite(new Date(time).getTime())
+        return typeof time === 'number' &&
+          Number.isFinite(new Date(time).getTime())
           ? new Date(time).toLocaleString()
           : '-';
       },

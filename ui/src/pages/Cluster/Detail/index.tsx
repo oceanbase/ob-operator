@@ -1,6 +1,7 @@
 import ClusterSelect from '@/components/ClusterSelect';
 import { STATUS_LIST } from '@/constants';
 import DetailLayout from '@/pages/Layouts/DetailLayout';
+import { L } from '@/pages/LogService/common';
 import { getClusterDetailReq } from '@/services';
 import { intl } from '@/utils/intl';
 import { ApartmentOutlined } from '@ant-design/icons';
@@ -10,7 +11,6 @@ import { useAccess, useParams } from '@umijs/max';
 import { useRequest } from 'ahooks';
 import { Badge } from 'antd';
 import styles from './index.less';
-import { L } from '@/pages/LogService/common';
 
 export default () => {
   const params = useParams();
@@ -21,7 +21,15 @@ export default () => {
     refreshDeps: [ns, name],
   });
   const menus: MenuItem[] = [
-    ...(clusterDetail?.info?.deploymentMode === 'shared_storage' ? [{ title: L('湖库配置', 'Lakehouse configuration'), key: 'lakehouse', link: `/cluster/${ns}/${name}/${clusterName}/lakehouse` }] : []),
+    ...(clusterDetail?.info?.deploymentMode === 'shared_storage'
+      ? [
+          {
+            title: L('湖库配置', 'Lakehouse configuration'),
+            key: 'lakehouse',
+            link: `/cluster/${ns}/${name}/${clusterName}/lakehouse`,
+          },
+        ]
+      : []),
     {
       title: intl.formatMessage({
         id: 'dashboard.Cluster.Detail.Overview',

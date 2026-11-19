@@ -13,7 +13,11 @@ export default [
             component: 'Layouts/BasicLayout',
             name: '概览布局',
             routes: [
-              { path: 'logservice', component: 'LogService', name: 'LogService' },
+              {
+                path: 'logservice',
+                component: 'LogService',
+                name: 'LogService',
+              },
               {
                 path: 'cluster',
                 component: 'Cluster',
@@ -100,17 +104,41 @@ export default [
             component: 'Tenant/New',
             name: '创建租户',
           },
-          { path: 'logservice/new', component: 'LogService/New', name: 'Create LogService' },
+          {
+            path: 'logservice/new',
+            component: 'LogService/New',
+            name: 'Create LogService',
+          },
           {
             path: 'logservice/:ns/:name',
             component: 'LogService/DetailLayout',
             name: 'LogService details',
             routes: [
-              { path: 'overview', component: 'LogService/Detail', name: 'LogService overview' },
-              { path: 'storage', component: 'LogService/Detail', name: 'LogService object storage' },
-              { path: 'monitor', component: 'LogService/Detail', name: 'LogService monitoring' },
-              { path: 'parameters', component: 'LogService/Detail', name: 'LogService parameters' },
-              { path: 'events', component: 'LogService/Detail', name: 'LogService events' },
+              {
+                path: 'overview',
+                component: 'LogService/Detail',
+                name: 'LogService overview',
+              },
+              {
+                path: 'storage',
+                component: 'LogService/Detail',
+                name: 'LogService object storage',
+              },
+              {
+                path: 'monitor',
+                component: 'LogService/Detail',
+                name: 'LogService monitoring',
+              },
+              {
+                path: 'parameters',
+                component: 'LogService/Detail',
+                name: 'LogService parameters',
+              },
+              {
+                path: 'events',
+                component: 'LogService/Detail',
+                name: 'LogService events',
+              },
               { path: '/logservice/:ns/:name', redirect: 'overview' },
             ],
           },
@@ -129,7 +157,11 @@ export default [
             component: 'Cluster/Detail',
             name: '集群详情',
             routes: [
-              { path: 'lakehouse', component: 'Cluster/Detail/Lakehouse', name: '湖库配置' },
+              {
+                path: 'lakehouse',
+                component: 'Cluster/Detail/Lakehouse',
+                name: '湖库配置',
+              },
               {
                 path: 'overview',
                 component: 'Cluster/Detail/Overview',

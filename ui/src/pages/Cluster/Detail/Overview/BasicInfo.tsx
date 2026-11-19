@@ -227,7 +227,17 @@ export default function BasicInfo({
         {deploymentMode === 'shared_storage' && (
           <>
             <Descriptions.Item label="LogService">
-              {logServiceRef?.name ? <a href={`#/logservice/${encodeURIComponent(namespace)}/${encodeURIComponent(logServiceRef.name)}`}>{logServiceRef.name}</a> : '-'}
+              {logServiceRef?.name ? (
+                <a
+                  href={`#/logservice/${encodeURIComponent(
+                    namespace,
+                  )}/${encodeURIComponent(logServiceRef.name)}`}
+                >
+                  {logServiceRef.name}
+                </a>
+              ) : (
+                '-'
+              )}
             </Descriptions.Item>
             <Descriptions.Item
               label={intl.formatMessage({

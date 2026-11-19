@@ -263,7 +263,10 @@ export default function Shield() {
     };
     if (observer) res.observer = [observer];
     if (obtenant) res.obtenant = [obtenant];
-    if (logservice) { res.logservice = [logservice]; res.obcluster = []; }
+    if (logservice) {
+      res.logservice = [logservice];
+      res.obcluster = [];
+    }
     return res;
   };
   const initialValues: Alert.ShieldDrawerInitialValues = {};

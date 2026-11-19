@@ -6,7 +6,9 @@ import { L } from './common';
 
 export default function LogServiceDetailLayout() {
   const { ns = '', name = '' } = useParams();
-  const base = `/logservice/${encodeURIComponent(ns)}/${encodeURIComponent(name)}`;
+  const base = `/logservice/${encodeURIComponent(ns)}/${encodeURIComponent(
+    name,
+  )}`;
   const menus: MenuItem[] = [
     { title: L('概览与拓扑', 'Overview & topology'), link: `${base}/overview` },
     { title: L('日志对象存储', 'Log object storage'), link: `${base}/storage` },

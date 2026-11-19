@@ -11,7 +11,7 @@ for (const format of ['es', 'lib']) {
     const filename = process.env.OB_UI_STYLE_FIXTURE_DIR
       ? path.join(process.env.OB_UI_STYLE_FIXTURE_DIR, format + '.js')
       : require.resolve(
-          `@oceanbase/ui/${format}/_util/genComponentStyleHook.js`
+          `@oceanbase/ui/${format}/_util/genComponentStyleHook.js`,
         );
     let source = fs.readFileSync(filename, 'utf8');
     let rendering = false;
