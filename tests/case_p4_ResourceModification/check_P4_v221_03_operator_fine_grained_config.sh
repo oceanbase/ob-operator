@@ -1,87 +1,44 @@
-#!/bin/bash
- 
-# load all the parameters in setup.sh
-source setup.sh
-source util.sh
-source env.sh
-source case_p4_ResourceModification/env_221_vars.sh
- 
-# prepare create related resources to create obcluster
-prepare() {
-    export OPERATOR_NS="oceanbase-system"
+#!/usr/bin/env bash
+set -euo pipefail
+
+namespace=${OPERATOR_NS:-oceanbase-system}
+deployment=${OPERATOR_DEPLOYMENT:-oceanbase-controller-manager}
+env_name=OB_OPERATOR_TASK_POOLSIZE
+k=(kubectl -n "$namespace")
+original=$("${k[@]}" get deployment "$deployment" -o json |
+    jq -ce --arg key "$env_name" '
+      .spec.template.spec.containers[] | select(.name == "manager") |
+      ([.env[]? | select(.name == $key)][0] // {name: $key, "$patch": "delete"})')
+
+restore_config() {
+    local rc=$? patch
+    trap - EXIT
+    # A previous valueFrom must replace the literal value installed by the test.
+    patch=$(jq -nc --argjson entry "$original" '
+      {spec: {template: {spec: {containers: [{name: "manager",
+        env: [(if $entry.valueFrom then {value: null} else {} end) + $entry]}]}}}}')
+    "${k[@]}" patch deployment "$deployment" --type=strategic -p "$patch" &&
+        "${k[@]}" rollout status "deployment/$deployment" --timeout=3m || rc=1
+    if (( rc != 0 )); then echo "case failed"; else echo "case passed"; fi
+    exit "$rc"
 }
+trap restore_config EXIT
 
-# clean up delete everything by deleting the entire namespace
-cleanup() {
-    kubectl delete namespace $OPERATOR_NS 
-}
-
-run() {
-    local template_file=$1
-    envsubst < ./config/2.2.1_test/$template_file | kubectl apply -f -
-#    envsubst < ./config/2.2.1_test/$template_file 
-}
-
-
-operate() {
-    local value=$1
-    kubectl patch -n $OPERATOR_NS deployment oceanbase-controller-manager -p '{"spec":{"template":{"spec":{"containers":[{"name":"manager","env":[{"name":"OB_OPERATOR_TASK_POOLSIZE","value":"$value"}]}]}}}}'
-}
-
-check_modify_value_running() {
-    local value=$1
-    counter=0
-    timeout=100  
-    MODIFY_VALUE_RUNNING='false'
-    while true; do
-        echo 'check modify value  resource'
-        counter=$((counter+1))
- 	if output=$(kubectl get pods -n oceanbase-system | grep 'oceanbase-controller-manager' | awk '{print $1}' | xargs -I{} kubectl logs -n oceanbase-system {} | head -n 40 | grep manager) && echo "$output" | grep -q '"Debug":false,"PoolSize":9999'; then
-            MODIFY_VALUE_RUNNING='true'
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            break
-        fi
-        sleep 3s
-    done
-}
-
-check_nodify_success(){
-    kubectl patch -n oceanbase-system deployment oceanbase-controller-manager -p '{"spec":{"template":{"spec":{"containers":[{"name":"manager","env":[{"name":"OB_OPERATOR_TASK_POOLSIZE","value":"9999"}]}]}}}}'
-    sleep 15s
-    if output=$(kubectl get pods -n oceanbase-system | grep 'oceanbase-controller-manager' | awk '{print $1}' | xargs -I{} kubectl logs -n oceanbase-system {} | head -n 40 | grep manager) && echo "$output" | grep -q '"Debug":false,"PoolSize":9999'; then
-        echo "pass"
-    else
-        echo "case-fail"
-    fi
-
-    kubectl get pods -n oceanbase-system | grep 'oceanbase-controller-manager' | awk '{print $1}' | xargs -I{} kubectl logs -n oceanbase-system {} | head -n 40 | grep manager
-    kubectl patch -n oceanbase-system deployment oceanbase-controller-manager -p '{"spec":{"template":{"spec":{"containers":[{"name":"manager","env":[{"name":"OB_OPERATOR_TASK_POOLSIZE","value":"10000"}]}]}}}}'
-    sleep 15s
-    if output=$(kubectl get pods -n oceanbase-system | grep 'oceanbase-controller-manager' | awk '{print $1}' | xargs -I{} kubectl logs -n oceanbase-system {} | head -n 40 | grep manager) && echo "$output" | grep -q '"Debug":false,"PoolSize":10000'; then
-        echo "case-pass"
-    else
-        echo "case-fail"
-fi
-    kubectl get pods -n oceanbase-system | grep 'oceanbase-controller-manager' | awk '{print $1}' | xargs -I{} kubectl logs -n oceanbase-system {} | head -n 40 | grep manager
-
-}
-
-validate() {
-    operate 9999
-    check_modify_value_running 9999
-    if [[ $MODIFY_VALUE_RUNNING == 'false' ]]; then
-	echo "case failed"
-    else
-	operate 10000
-        check_modify_value_running 10000
-        if [[ $MODIFY_VALUE_RUNNING == 'false' ]]; then
-            echo "case failed"
-        else
-            echo "case passed" 
-        fi
-    fi 
-}
-
-check_nodify_success
+for value in 9999 10000; do
+    "${k[@]}" set env "deployment/$deployment" --containers=manager "$env_name=$value"
+    "${k[@]}" rollout status "deployment/$deployment" --timeout=3m
+    # Completed rollouts may still have terminating Pods from the old revision.
+    current=$("${k[@]}" get deployment "$deployment" -o json)
+    replica_set=$("${k[@]}" get replicasets -o json | jq -er --argjson d "$current" '
+      .items[] | select(.metadata.annotations["deployment.kubernetes.io/revision"] ==
+        $d.metadata.annotations["deployment.kubernetes.io/revision"]) |
+      select(any(.metadata.ownerReferences[]?; .uid == $d.metadata.uid)) | .metadata.uid')
+    pods=$("${k[@]}" get pods -o json | jq -er --arg uid "$replica_set" '
+      .items[] | select(.metadata.deletionTimestamp == null and
+        any(.metadata.ownerReferences[]?; .uid == $uid)) | .metadata.name')
+    while IFS= read -r pod; do
+        "${k[@]}" logs "$pod" -c manager | jq -Rse --argjson value "$value" '
+          any(split("\n")[] | fromjson?; .msg == "starting manager" and .configs.Task.PoolSize == $value)'
+    done <<< "$pods"
+    echo "manager started with Task.PoolSize=$value"
+done
