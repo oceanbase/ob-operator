@@ -35,18 +35,17 @@ type K8sResourceClient[T runtimeclient.Object] interface {
 }
 
 func NewDynamicResourceClient[T runtimeclient.Object](gvr schema.GroupVersionResource, kind string) K8sResourceClient[T] {
-	client := GetClient()
-	return dynamicResourceClient[T]{
-		client: client.DynamicClient.Resource(gvr),
-		gvr:    gvr,
-		kind:   kind,
-	}
+	return dynamicResourceClient[T]{gvr: gvr, kind: kind}
 }
 
 type dynamicResourceClient[T runtimeclient.Object] struct {
-	client dynamic.NamespaceableResourceInterface
-	gvr    schema.GroupVersionResource
-	kind   string
+	gvr  schema.GroupVersionResource
+	kind string
+}
+
+// Commands that only inspect the local database binary can start without a kubeconfig.
+func (c dynamicResourceClient[T]) resource(namespace string) dynamic.ResourceInterface {
+	return GetClient().DynamicClient.Resource(c.gvr).Namespace(namespace)
 }
 
 // List lists objects with the given options, store the result in the given list object
@@ -54,7 +53,7 @@ func (c dynamicResourceClient[T]) List(ctx context.Context, namespace string, li
 	if list == nil {
 		return errors.New("target list object is nil")
 	}
-	obj, err := c.client.Namespace(namespace).List(ctx, opts)
+	obj, err := c.resource(namespace).List(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -67,7 +66,7 @@ func (c dynamicResourceClient[T]) List(ctx context.Context, namespace string, li
 
 // Get gets the object with the given namespace, name and options
 func (c dynamicResourceClient[T]) Get(ctx context.Context, namespace, name string, opts v1.GetOptions) (T, error) {
-	obj, err := c.client.Namespace(namespace).Get(ctx, name, opts)
+	obj, err := c.resource(namespace).Get(ctx, name, opts)
 	if err != nil {
 		return *new(T), err
 	}
@@ -92,7 +91,7 @@ func (c dynamicResourceClient[T]) Create(ctx context.Context, obj T, opts v1.Cre
 		Object: objMap,
 	}
 	unstructuredObj.SetGroupVersionKind(c.gvr.GroupVersion().WithKind(c.kind))
-	res, err := c.client.Namespace(obj.GetNamespace()).Create(ctx, unstructuredObj, opts)
+	res, err := c.resource(obj.GetNamespace()).Create(ctx, unstructuredObj, opts)
 	if err != nil {
 		return *new(T), err
 	}
@@ -112,7 +111,7 @@ func (c dynamicResourceClient[T]) Update(ctx context.Context, obj T, opts v1.Upd
 		return *new(T), err
 	}
 
-	res, err := c.client.Namespace(obj.GetNamespace()).Update(ctx, &unstructured.Unstructured{
+	res, err := c.resource(obj.GetNamespace()).Update(ctx, &unstructured.Unstructured{
 		Object: unstructuredObj,
 	}, opts)
 	if err != nil {
@@ -126,5 +125,5 @@ func (c dynamicResourceClient[T]) Update(ctx context.Context, obj T, opts v1.Upd
 }
 
 func (c dynamicResourceClient[T]) Delete(ctx context.Context, namespace, name string, opts v1.DeleteOptions) error {
-	return c.client.Namespace(namespace).Delete(ctx, name, opts)
+	return c.resource(namespace).Delete(ctx, name, opts)
 }
