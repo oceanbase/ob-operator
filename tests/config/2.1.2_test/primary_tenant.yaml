@@ -11,7 +11,7 @@ spec:
   connectWhiteList: '%'
   forceDelete: true
   credentials:
-    standbyRo: ${SERECT_DOES_NOT_EXIT}
+    standbyRo: ${TENANT_STANDBY_RO_SECRET}
   pools:
     - zone: zone1
       type:
