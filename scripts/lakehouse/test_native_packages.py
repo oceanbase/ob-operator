@@ -51,6 +51,18 @@ def rendering(lock):
     return compose, docs
 
 
+class HelmSourceProvenanceTests(unittest.TestCase):
+    def test_exported_source_without_git_executable(self):
+        spec = importlib.util.spec_from_file_location('helm_release', HERE / 'build-helm-release.py')
+        builder = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(builder)
+        with tempfile.TemporaryDirectory() as source, mock.patch.dict('os.environ', {'PATH': source}):
+            metadata, patch = builder.source_provenance(Path(source), {})
+        self.assertEqual(metadata, {'source_commit': None, 'source_worktree_dirty': None,
+                                    'git_metadata_available': False})
+        self.assertEqual(patch, '')
+
+
 class ReleaseContractTests(unittest.TestCase):
     def setUp(self):
         self.lock = BUILDER.load_lock(HERE / 'release-images.lock.json')

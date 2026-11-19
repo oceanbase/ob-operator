@@ -88,7 +88,10 @@ def source_snapshot(source, destination):
 def source_provenance(source, used_files):
     """The tree snapshot is authoritative even when building exported sources."""
     def git(*args):
-        p = subprocess.run(['git', *args], cwd=source, text=True, capture_output=True)
+        try:
+            p = subprocess.run(['git', *args], cwd=source, text=True, capture_output=True)
+        except FileNotFoundError:
+            return None
         return p.stdout if not p.returncode else None
     commit = git('rev-parse', 'HEAD')
     if commit is None:
