@@ -96,7 +96,7 @@ func TestReleaseManifestSSContract(t *testing.T) {
 		{"operator-chart", chartNamespace, releaseDocuments(t, rendered)},
 	} {
 		t.Run(source.name, func(t *testing.T) {
-			for _, name := range []string{"obclusters", "oblogserviceclusters", "oblogservicezones", "oblogservicenodes"} {
+			for _, name := range []string{"obclusters", "oblogserviceclusters", "oblogservicezones", "oblogservicenodes", "obtenantbackuppolicies"} {
 				t.Run(name, func(t *testing.T) {
 					base := releaseSource(t, "config/crd/bases/oceanbase.oceanbase.com_"+name+".yaml")[0]
 					actual := find(t, source.objects, "CustomResourceDefinition", name+".oceanbase.oceanbase.com")

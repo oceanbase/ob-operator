@@ -47,7 +47,7 @@ func NewListCmd() *cobra.Command {
 			}
 			tbLog.Println("NAMESPACE \t POLICYNAME \t STATUS \t TENANTNAME \t NEXTFULL \t NEXTINCREMENTAL \t FULLCRONTAB \t INCREMENTALCRONTAB \t")
 			for _, obBackupPolicy := range obBackupPolicyList.Items {
-				tbLog.Printf("%s \t %s \t %s \t %s \t %s \t %s \t %s \t %s \n", obBackupPolicy.Namespace, obBackupPolicy.Name, obBackupPolicy.Status.Status, obBackupPolicy.Spec.TenantName, obBackupPolicy.Status.NextFull, obBackupPolicy.Status.NextIncremental, obBackupPolicy.Spec.DataBackup.FullCrontab, obBackupPolicy.Spec.DataBackup.IncrementalCrontab)
+				tbLog.Printf("%s \t %s \t %s \t %s \t %s \t %s \t %s \t %s \n", obBackupPolicy.Namespace, obBackupPolicy.Name, obBackupPolicy.Status.Status, obBackupPolicy.DatabaseTenantName(), obBackupPolicy.Status.NextFull, obBackupPolicy.Status.NextIncremental, obBackupPolicy.Spec.DataBackup.FullCrontab, obBackupPolicy.Spec.DataBackup.IncrementalCrontab)
 			}
 			if err := tbw.Flush(); err != nil {
 				logger.Fatalln(err)
