@@ -31,7 +31,7 @@ import (
 var _ = Describe("Test Restore Operation", Serial, Label("restore"), func() {
 	var con *operation.OceanbaseOperationManager
 	var standbyName string
-	var ctx context.Context
+	ctx := context.Background()
 	var _ = BeforeEach(func() {
 		var err error
 		logger := logr.Discard()
@@ -339,7 +339,7 @@ var _ = Describe("Test Restore Operation", Serial, Label("restore"), func() {
 var _ = Describe("Test canceling restore", Serial, Label("canceling"), func() {
 	var con *operation.OceanbaseOperationManager
 	var standbyName string
-	var ctx context.Context
+	ctx := context.Background()
 	var _ = BeforeEach(func() {
 		var err error
 		logger := logr.Discard()

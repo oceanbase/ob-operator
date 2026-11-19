@@ -30,7 +30,7 @@ import (
 var _ = Describe("Test Backup Operation", Label("backup"), func() {
 
 	var con *operation.OceanbaseOperationManager
-	var ctx context.Context
+	ctx := context.Background()
 
 	var _ = BeforeEach(func() {
 		Expect(tenant).NotTo(BeEmpty())
@@ -204,8 +204,8 @@ var _ = Describe("Test Backup Operation", Label("backup"), func() {
 		}
 	})
 
-	It("Set Log Archive concurrency to 0", func() {
-		err := con.SetLogArchiveConcurrency(ctx, 0)
+	It("Reject negative log archive concurrency", func() {
+		err := con.SetLogArchiveConcurrency(ctx, -1)
 		Expect(err).NotTo(BeNil())
 	})
 
