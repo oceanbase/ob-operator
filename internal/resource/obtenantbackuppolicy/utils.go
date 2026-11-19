@@ -14,12 +14,10 @@ package obtenantbackuppolicy
 
 import (
 	"fmt"
-	"path"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -115,33 +113,11 @@ func (m *ObTenantBackupPolicyManager) getArchiveDestSettingValue() string {
 }
 
 func (m *ObTenantBackupPolicyManager) getDestPath(dest apitypes.BackupDestination) string {
-	if dest.Type == constants.BackupDestTypeNFS || resourceutils.IsZero(dest.Type) {
-		return "file://" + path.Join(oceanbaseconst.BackupPath, dest.Path)
-	}
-	if dest.OSSAccessSecret == "" {
-		return ""
-	}
-	secret := &v1.Secret{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{
-		Namespace: m.BackupPolicy.GetNamespace(),
-		Name:      dest.OSSAccessSecret,
-	}, secret)
+	uri, err := resourceutils.BackupDestinationPath(m.Ctx, m.Client, m.BackupPolicy.Namespace, &dest)
 	if err != nil {
 		m.PrintErrEvent(err)
-		return ""
 	}
-	destPath := strings.Join([]string{dest.Path, "access_id=" + string(secret.Data["accessId"]), "access_key=" + string(secret.Data["accessKey"])}, "&")
-	if dest.Type == constants.BackupDestTypeCOS {
-		destPath += ("&appid=" + string(secret.Data["appId"]))
-	} else if dest.Type == constants.BackupDestTypeS3 {
-		destPath += ("&s3_region=" + string(secret.Data["s3Region"]))
-	} else if dest.Type == constants.BackupDestTypeS3Compatible {
-		addressingModel, ok := secret.Data["addressingModel"]
-		if ok {
-			destPath += ("&addressing_model=" + string(addressingModel))
-		}
-	}
-	return destPath
+	return uri
 }
 
 func (m *ObTenantBackupPolicyManager) createBackupJob(jobType apitypes.BackupJobType) error {
