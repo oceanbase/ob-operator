@@ -13,10 +13,12 @@ See the Mulan PSL v2 for more details.
 package obtenant
 
 import (
+	"reflect"
 	"testing"
 
 	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 
@@ -67,5 +69,30 @@ func TestTenantRoleFromDatabaseHandlesMissingRecord(t *testing.T) {
 	got := tenantRoleFromDatabase(apiconst.TenantRolePrimary, nil)
 	if got != apiconst.TenantRolePrimary {
 		t.Fatalf("tenantRoleFromDatabase() = %q, want %q", got, apiconst.TenantRolePrimary)
+	}
+}
+
+func TestObservedPoolLocality(t *testing.T) {
+	active := map[string]v1alpha1.LocalityType{"active": {Name: "READONLY", Replica: 1, IsActive: true}}
+	configured := map[string]*v1alpha1.LocalityType{
+		"active":     {Name: "FULL", Replica: 1, IsActive: true},
+		"reserved":   {Name: "FULL", Replica: 1},
+		"activating": {Name: "READONLY", Replica: 2, IsActive: true},
+	}
+	want := map[string]*v1alpha1.LocalityType{
+		"active":     {Name: "READONLY", Replica: 1, IsActive: true},
+		"reserved":   {Name: "FULL", Replica: 1},
+		"activating": {Name: "READONLY", Replica: 2},
+		"unknown":    nil,
+	}
+	for zone, expected := range want {
+		t.Run(zone, func(t *testing.T) {
+			if got := observedPoolLocality(zone, active, configured); !reflect.DeepEqual(got, expected) {
+				t.Errorf("observed locality = %+v, want %+v", got, expected)
+			}
+		})
+	}
+	if !configured["activating"].IsActive {
+		t.Fatal("observing the pool changed the configured target")
 	}
 }

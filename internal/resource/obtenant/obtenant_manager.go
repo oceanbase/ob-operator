@@ -682,6 +682,17 @@ func (m *OBTenantManager) refreshTenantRoleFromDatabase() {
 	m.OBTenant.Status.TenantRole = tenantRoleFromDatabase(m.OBTenant.Status.TenantRole, tenantRecord)
 }
 
+func observedPoolLocality(zone string, active map[string]v1alpha1.LocalityType, configured map[string]*v1alpha1.LocalityType) *v1alpha1.LocalityType {
+	if locality, ok := active[zone]; ok {
+		return &locality
+	}
+	if locality := configured[zone]; locality != nil {
+		// A retained pool has no replica until the database locality contains its zone.
+		return &v1alpha1.LocalityType{Name: locality.Name, Replica: locality.Replica, IsActive: false}
+	}
+	return nil
+}
+
 func (m *OBTenantManager) buildPoolStatusList(obTenant *model.OBTenant) ([]v1alpha1.ResourcePoolStatus, error) {
 	var poolStatusList []v1alpha1.ResourcePoolStatus
 	var locality string
@@ -705,18 +716,9 @@ func (m *OBTenantManager) buildPoolStatusList(obTenant *model.OBTenant) ([]v1alp
 	for _, zoneList := range poolList {
 		var poolCurrentStatus v1alpha1.ResourcePoolStatus
 		poolCurrentStatus.ZoneList = zoneList
-		localityType, exist := statusTypeMap[zoneList]
-		_, specExist := statusTypeMap[zoneList]
-		if exist {
-			poolCurrentStatus.Type = &localityType
-		} else if specExist {
-			poolCurrentStatus.Type = &v1alpha1.LocalityType{
-				Name:     specTypeMap[zoneList].Name,
-				Replica:  specTypeMap[zoneList].Replica,
-				IsActive: false,
-			}
-		} else {
-			m.Logger.Error(errors.Errorf("ZoneList %s does not exists in status or spec", zoneList), "Unexpected zoneList")
+		poolCurrentStatus.Type = observedPoolLocality(zoneList, statusTypeMap, specTypeMap)
+		if poolCurrentStatus.Type == nil {
+			m.Logger.Error(errors.Errorf("ZoneList %s does not exist in status or spec", zoneList), "Unexpected zoneList")
 			continue
 		}
 		poolCurrentStatus.UnitNumber = unitNumMap[zoneList]
