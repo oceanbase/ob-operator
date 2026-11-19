@@ -11,7 +11,7 @@ To run a single test case, follow this syntax:
 Or, utilize the run.sh script to target a specific category cases:
 ./run.sh case_p0_ClusterAndTenant/
 
-For efficiency, you can execute multiple test categories concurrently using the && operator in Unix-based systems:
+Use `&&` to run the next category only after every scenario in the preceding category passes:
 ./run.sh case_p0_ClusterAndTenant/ && ./run.sh case_p1_BackupAndRestore
 
 
