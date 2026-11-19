@@ -26,7 +26,7 @@ type ClusterSSHOptions struct {
 var (
 	clusterSSHUser   = regexp.MustCompile(`^[A-Za-z0-9_][A-Za-z0-9_.-]*\$?$`)
 	clusterSSHLabel  = regexp.MustCompile(`^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$`)
-	clusterImageTemp = regexp.MustCompile(`^/tmp/oceanbase-lakehouse-images\.[A-Za-z0-9]{10}$`)
+	clusterImageTemp = regexp.MustCompile(`^/tmp/oceanseek-images\.[A-Za-z0-9]{10}$`)
 )
 
 func validateClusterSSH(ssh ClusterSSHOptions, nodes []PreflightResult) error {
@@ -320,7 +320,7 @@ func (worker *clusterImageWorker) transfer(ctx context.Context, localPath, expec
 		return "", errors.New("cannot transfer an archive absent from the verified delivery manifest")
 	}
 	if worker.tempDir == "" {
-		output, err := runImageCommand(ctx, worker.remote, worker.opts.CommandTimeout, "sh", "-c", "umask 077; mktemp -d /tmp/oceanbase-lakehouse-images.XXXXXXXXXX")
+		output, err := runImageCommand(ctx, worker.remote, worker.opts.CommandTimeout, "sh", "-c", "umask 077; mktemp -d /tmp/oceanseek-images.XXXXXXXXXX")
 		if err != nil {
 			return "", fmt.Errorf("create private remote image directory: %w", err)
 		}

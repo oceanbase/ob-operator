@@ -1,6 +1,6 @@
-# OceanBase lakehouse: Docker Compose quickstart
+# OceanBase OceanSeek: Docker Compose quickstart
 
-Use this single-machine environment to try lakehouse SQL without Kubernetes.
+Use this single-machine environment to try OceanSeek SQL without Kubernetes.
 It starts eight persistent services: one Observer with its RPM-matched obshell,
 three LogServices, MinIO, one OBAgent sidecar, Prometheus and Alertmanager.
 Five initialization containers detect the host access IP and create credentials,
@@ -103,13 +103,15 @@ For an internal offline delivery, load the matching shared image archive once
 into Docker, then start from the extracted **Compose** directory:
 
 ```bash
-docker load -i /path/to/oceanbase-lakehouse-images-<delivery-version>.tar.gz
-cd /path/to/oceanbase-lakehouse-compose-<delivery-version>
+docker load -i /path/to/oceanseek-images-<delivery-version>.tar.gz
+cd /path/to/oceanseek-compose-<delivery-version>
 docker compose up -d --pull never
 ```
 
 The matching Compose image archive includes the pinned open-source
-`minio/minio` and `minio/mc` images. No AIStor image or license is required.
+`minio` and `minio-mc` images built independently from the MinIO open-source projects.
+The internal r3 build includes source provenance and license notices; see
+http://6.12.233.107:18080/third-party/minio/20261118-r3-multiarch/SOURCE-CODE.txt. No AIStor image or license is required.
 
 The lightweight Compose and native Helm archives do not contain image layers.
 An older Helm image archive can contain different component versions and is not
@@ -172,8 +174,8 @@ release tag:
 | `LOGSERVICE_IMAGE` | `oblogservice:<release-tag>` |
 | `BOOTSTRAP_IMAGE` | `lakehouse-bootstrap:<release-tag>` |
 | `MINIO_IMAGE` | `minio:<release-tag>` |
-| `MINIO_MC_IMAGE` | `mc:<release-tag>` |
-| `OBAGENT_IMAGE` | `obagent:<release-tag>` |
+| `MINIO_MC_IMAGE` | `minio-mc:<release-tag>` |
+| `OBAGENT_IMAGE` | `quay.io/oceanbase/obagent:4.2.6-100000152026051118` |
 | `PROMETHEUS_IMAGE` | `prometheus:<release-tag>` |
 | `ALERTMANAGER_IMAGE` | `alertmanager:<release-tag>` |
 
@@ -277,7 +279,7 @@ mysql -h127.0.0.1 -P32881 -uroot@sys -p
 CREATE DATABASE IF NOT EXISTS demo;
 USE demo;
 CREATE TABLE IF NOT EXISTS hello (id BIGINT PRIMARY KEY, message VARCHAR(128));
-INSERT INTO hello VALUES (1, 'Hello, OceanBase lakehouse');
+INSERT INTO hello VALUES (1, 'Hello, OceanBase OceanSeek');
 SELECT * FROM hello;
 ```
 
@@ -483,7 +485,7 @@ docker build -f deploy/compose/lakehouse/Dockerfile.bootstrap \
   -t ghcr.io/oceanbase/lakehouse-bootstrap:0.1.0 .
 ```
 
-The `lakehouse compose` workflow tests the bootstrap utility and validates the
+The `OceanSeek compose` workflow tests the bootstrap utility and validates the
 Compose configuration. Its manual publishing action can publish a versioned
 bootstrap image to GHCR. Match `BOOTSTRAP_IMAGE` in the distributed configuration
 to the actual published or bundled image; do not give end users local build steps.

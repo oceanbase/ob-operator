@@ -66,7 +66,7 @@ func defaultValues(bundle string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	parent, err := readValues(filepath.Join(bundle, "charts/oceanbase-lakehouse/values.yaml"))
+	parent, err := readValues(filepath.Join(bundle, "charts/oceanseek/values.yaml"))
 	if err != nil {
 		return nil, err
 	}

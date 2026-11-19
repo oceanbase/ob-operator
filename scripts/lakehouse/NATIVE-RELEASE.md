@@ -1,4 +1,4 @@
-# Native lakehouse release packaging
+# Native OceanSeek release packaging
 
 This workflow prepares the **same release** for Docker Compose and native Helm.
 It does not deploy Kubernetes, start a database, pull images, or publish images.
@@ -125,8 +125,8 @@ image layer, or tested a registry pull.
 The two output archives are:
 
 ```text
-oceanbase-lakehouse-compose-YYYYMMDD-COMMIT.tar.gz
-oceanbase-lakehouse-native-helm-YYYYMMDD-COMMIT.tar.gz
+oceanseek-compose-YYYYMMDD-COMMIT.tar.gz
+oceanseek-native-helm-YYYYMMDD-COMMIT.tar.gz
 ```
 
 They are **configuration bundles, without container images**. Arrange image
@@ -164,7 +164,7 @@ those same component names and tags, provided the destination holds identical
 images. A per-image environment override is an intentional user override, not
 part of the validated default release.
 
-The Helm bundle contains the native lakehouse and Operator `.tgz` charts,
+The Helm bundle contains the native OceanSeek and Operator `.tgz` charts,
 `image-values.yaml`, `operator-values.yaml`, and single-node/three-node profiles.
 Chart defaults and the supplied image values come from the same lock. It contains
 **no `install.sh`**: install with native Helm commands described in `USAGE.txt`.
@@ -210,7 +210,7 @@ Run the local regressions:
 
 ```bash
 python3 -m unittest discover -s scripts/lakehouse -p test_native_packages.py -v
-go test -count=1 ./charts/oceanbase-lakehouse \
+go test -count=1 ./charts/oceanseek \
   -run '^TestSharedDatabaseImagesMatchCompose$'
 ```
 

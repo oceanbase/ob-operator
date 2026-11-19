@@ -1,6 +1,8 @@
 initCredentials: true
 # Initial admin password; existing accounts are preserved on upgrade.
 adminPassword: admin
+# Require users to change their password before their first login.
+requirePasswordResetOnFirstLogin: false
 
 # Empty uses quay.io/oceanbase/oceanbase-dashboard:<Chart appVersion>.
 image: ""
@@ -63,9 +65,9 @@ cleanup:
 
 inspection:
   obdiag:
-    image: "oceanbase/obdiag:latest"
+    image: "ghcr.io/oceanbase/obdiag:5.0.2-12026102116"
   oceanbaseHelper:
-    image: "oceanbase/oceanbase-helper:latest"
+    image: "reg.antgroup-inc.cn/oceanbase-test/lakebase:oceanseek-r28-helper"
 
 job:
   inspection:

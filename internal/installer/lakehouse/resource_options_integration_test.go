@@ -106,12 +106,12 @@ func newResourceRunFixture(t *testing.T) *resourceRunFixture {
 		refs = append(refs, ref)
 		f.responses["docker --host unix:///var/run/docker.sock image inspect --format {{.Id}} "+ref] = id + "\n"
 	}
-	resourceTestWrite(t, filepath.Join(f.bundle, "charts/oceanbase-lakehouse/values.yaml"), f.defaults)
+	resourceTestWrite(t, filepath.Join(f.bundle, "charts/oceanseek/values.yaml"), f.defaults)
 	resourceTestWrite(t, filepath.Join(f.bundle, "charts/oceanbase-dashboard/values.yaml"), "{}\n")
 	resourceTestWrite(t, filepath.Join(f.bundle, "values/quickstart.yaml"), f.defaults)
 	resourceTestWrite(t, filepath.Join(f.bundle, "image-lock.json"), imageLock{Images: images})
 	resourceTestWrite(t, filepath.Join(f.bundle, "images/archives.json"), archiveManifest{SchemaVersion: 1, Archives: []imageArchive{{Name: "fixture", Base: "bundle", Path: "images/fixture.tar", SHA256: strings.Repeat("a", 64), References: refs}}})
-	resourceTestWrite(t, filepath.Join(f.bundle, "charts/oceanbase-lakehouse/install.sh"), "#!/bin/sh\nset -eu\n[ \"$1\" = demo ] && [ \"$2\" = demo-ns ] && [ \"$3\" = -f ]\nprintf '%s\\n' \"$4\" > \"$RESOURCE_OPTIONS_CHART_MARKER\"\n")
+	resourceTestWrite(t, filepath.Join(f.bundle, "charts/oceanseek/install.sh"), "#!/bin/sh\nset -eu\n[ \"$1\" = demo ] && [ \"$2\" = demo-ns ] && [ \"$3\" = -f ]\nprintf '%s\\n' \"$4\" > \"$RESOURCE_OPTIONS_CHART_MARKER\"\n")
 	t.Setenv("RESOURCE_OPTIONS_CHART_MARKER", f.marker)
 	t.Setenv("PATH", f.bin+string(os.PathListSeparator)+os.Getenv("PATH"))
 	f.syncCommands(t)

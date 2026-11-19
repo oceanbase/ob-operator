@@ -3,7 +3,7 @@ distributed:
   replicas: 3
   drivesPerNode: 1
   driveSize: 100Gi
-image: reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:26b57bceed2fee9713fb335d1a71cf9d13b8b245b2f8faa07635e6420653bcbf
+image: reg.antgroup-inc.cn/oceanbase-test/minio:RELEASE.2025-10-15T17-29-55Z-r3
 imagePullPolicy: IfNotPresent
 rootExistingSecret: ''
 existingClaim: ''

@@ -53,8 +53,8 @@ fetch() {
     fi
 }
 fetch "$chart" "$chart_sha"
-tar -xzf "$work/$chart" -C "$work" oceanbase-lakehouse/files/prerequisites
-prepare="$work/oceanbase-lakehouse/files/prerequisites/prepare.sh"
+tar -xzf "$work/$chart" -C "$work" oceanseek/files/prerequisites
+prepare="$work/oceanseek/files/prerequisites/prepare.sh"
 if [ "$mode" = --verify-only ]; then
     sh "$prepare" --context "$context" --verify-only
     exit

@@ -390,7 +390,7 @@ func TestDashboardPlacementAndSeparateStorageClass(t *testing.T) {
 	pfMap(opts.Values["dashboard"])["prometheus"] = map[string]interface{}{"persistence": map[string]interface{}{"storageClassName": "monitoring"}}
 	opts.Existing = true
 	class := "monitoring"
-	claim := corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "demo-prometheus-pvc", Namespace: opts.Namespace, Labels: map[string]string{"app.kubernetes.io/instance": opts.Release, "app.kubernetes.io/name": "oceanbase-lakehouse"}}, Spec: corev1.PersistentVolumeClaimSpec{StorageClassName: &class}}
+	claim := corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "demo-prometheus-pvc", Namespace: opts.Namespace, Labels: map[string]string{"app.kubernetes.io/instance": opts.Release, "app.kubernetes.io/name": "oceanseek"}}, Spec: corev1.PersistentVolumeClaimSpec{StorageClassName: &class}}
 	if err := pfCheckCapacity(opts, []corev1.Node{pfTestNode()}, nil, []corev1.PersistentVolumeClaim{claim}, nil, &result); err != nil {
 		t.Fatalf("valid dashboard class override rejected: %v", err)
 	}

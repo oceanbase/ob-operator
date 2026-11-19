@@ -1,4 +1,4 @@
-Lakehouse QA packaging (build host only)
+OceanSeek QA packaging (build host only)
 =======================================
 
 build-package.py accepts a clean Git checkout, or an extracted original git
@@ -11,7 +11,7 @@ MinIO/mc uses images/minio-images.tar.gz. Every images/archives.json entry has
 base=bundle and is covered by the internal SHA256SUMS; no archive resolves
 beside the package or relative to the user's current directory.
 
-Hand off only the final oceanbase-lakehouse-qa-*.tar. The user extracts it with
+Hand off only the final oceanseek-qa-*.tar. The user extracts it with
 tar -xf, enters the extracted directory, and runs ./install.sh as described
 by the included README.txt. There is no separate MinIO archive or external
 checksum file to locate. build-result.json and the extracted build tree remain

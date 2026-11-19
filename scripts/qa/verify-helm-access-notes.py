@@ -30,7 +30,7 @@ def main():
         chart = Path(tmp) / 'fixture'
         (chart / 'templates').mkdir(parents=True)
         with tarfile.open(args.chart) as tar:
-            prefix = 'oceanbase-lakehouse/'
+            prefix = 'oceanseek/'
             for name in ('values.yaml', 'templates/NOTES.txt', 'templates/_helpers.tpl'):
                 (chart / name).write_bytes(tar.extractfile(prefix + name).read())
         (chart / 'Chart.yaml').write_text('apiVersion: v2\nname: notes-fixture\nversion: 0.1.0\n')

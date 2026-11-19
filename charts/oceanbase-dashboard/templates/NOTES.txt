@@ -19,7 +19,7 @@ Account initialization is managed outside this Dashboard chart.
 Use the account and current password supplied by the parent installer or the
 administrator of Secret {{ .Values.userCredentials | default (printf "%s-user-credentials" .Release.Name) }}
 in namespace {{ .Values.userNamespace | default .Release.Namespace }}.
-For the oceanbase-lakehouse parent chart, username is admin and the INITIAL
+For the oceanseek parent chart, username is admin and the INITIAL
 password is in Secret {{ .Release.Name }}-dashboard-bootstrap (key: password).
 After changing the password, use the new password instead of the bootstrap value.
 {{ end }}

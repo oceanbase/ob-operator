@@ -52,7 +52,7 @@ spec:
     {{- end }}
   {{- if .Values.monitorEnabled }}
   monitor:
-    image: oceanbase/obagent:{{ .Values.obAgentVersion }}
+    image: {{ printf "%s:%s" .Values.obAgentRepository .Values.obAgentVersion | quote }}
     resource:
       {{- toYaml .Values.monitorResource | nindent 6 }}
   {{- end }}

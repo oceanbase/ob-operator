@@ -398,10 +398,10 @@ func TestImageRegistrySelection(t *testing.T) {
 			expected := map[string]string{
 				"observer":         "oceanbase/oceanbase-ai-cloud-native:4.6.3.0-82026110121.al8-r3",
 				"logservice-1":     "oceanbase/oblogservice:1.3.3-42026110118.al8-r1",
-				"minio":            "minio/minio:RELEASE.2025-09-07T16-13-09Z",
-				"minio-init":       "minio/mc:RELEASE.2025-08-13T08-35-41Z",
+				"minio":            "reg.antgroup-inc.cn/oceanbase-test/minio:RELEASE.2025-10-15T17-29-55Z-r3",
+				"minio-init":       "reg.antgroup-inc.cn/oceanbase-test/minio-mc:RELEASE.2025-08-13T08-35-41Z-r3",
 				"credentials-init": "oceanbase/lakehouse-bootstrap:20261103-monitoring-r1",
-				"obagent":          "oceanbase/obagent:4.2.4-200000022025090416",
+				"obagent":          "quay.io/oceanbase/obagent:4.2.6-100000152026051118",
 				"prometheus":       "quay.io/prometheus/prometheus:v2.51.1",
 				"alertmanager":     "quay.io/prometheus/alertmanager:v0.27.0",
 			}

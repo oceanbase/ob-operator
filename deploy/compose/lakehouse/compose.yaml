@@ -22,6 +22,7 @@ x-logservice: &logservice
     options: {max-size: "10m", max-file: "3"}
 
 x-logservice-env: &logservice-env
+  TZ: Asia/Shanghai
   CLUSTER_ID: ${LOGSERVICE_CLUSTER_ID:-10002}
   LOG_DISK_SIZE: ${LOGSERVICE_LOG_DISK_SIZE:-9G}
   MEMORY_LIMIT: ${LOGSERVICE_MEMORY_LIMIT:-3686M}
@@ -53,7 +54,7 @@ services:
     logging: *bounded-logging
 
   minio:
-    image: ${MINIO_IMAGE:-${IMAGE_REGISTRY:-minio}/minio:RELEASE.2025-09-07T16-13-09Z}
+    image: ${MINIO_IMAGE:-${IMAGE_REGISTRY:-reg.antgroup-inc.cn/oceanbase-test}/minio:RELEASE.2025-10-15T17-29-55Z-r3}
     entrypoint: ["/opt/lakehouse/minio-entrypoint.sh"]
     user: "0:0"
     restart: unless-stopped
@@ -75,7 +76,7 @@ services:
     logging: *bounded-logging
 
   minio-init:
-    image: ${MINIO_MC_IMAGE:-${IMAGE_REGISTRY:-minio}/mc:RELEASE.2025-08-13T08-35-41Z}
+    image: ${MINIO_MC_IMAGE:-${IMAGE_REGISTRY:-reg.antgroup-inc.cn/oceanbase-test}/minio-mc:RELEASE.2025-08-13T08-35-41Z-r3}
     entrypoint: ["/opt/lakehouse/minio-init.sh"]
     user: "0:0"
     restart: "no"
@@ -137,6 +138,7 @@ services:
     restart: "no"
     environment:
       LOGSERVICE_CLUSTER_ID: ${LOGSERVICE_CLUSTER_ID:-10002}
+      TZ: Asia/Shanghai
       LOGSERVICE_IP_1: ${LOGSERVICE_IP_1:-172.30.52.11}
       LOGSERVICE_IP_2: ${LOGSERVICE_IP_2:-172.30.52.12}
       LOGSERVICE_IP_3: ${LOGSERVICE_IP_3:-172.30.52.13}
@@ -166,6 +168,7 @@ services:
     stop_grace_period: 90s
     environment:
       CLUSTER_NAME: ${CLUSTER_NAME:-lakehouse-compose}
+      TZ: Asia/Shanghai
       CLUSTER_ID: ${OBSERVER_CLUSTER_ID:-10001}
       ZONE_NAME: ${ZONE_NAME:-zone1}
       LOCAL_IP: ${OBSERVER_IP:-172.30.52.21}
@@ -231,7 +234,7 @@ services:
   # OBAgent is the Observer sidecar: a separate image sharing the Observer
   # network namespace so its fixed 127.0.0.1:2881 target reaches this node.
   obagent:
-    image: ${OBAGENT_IMAGE:-${IMAGE_REGISTRY:-oceanbase}/obagent:4.2.4-200000022025090416}
+    image: ${OBAGENT_IMAGE:-${IMAGE_REGISTRY:-quay.io/oceanbase}/obagent:4.2.6-100000152026051118}
     platform: linux/amd64
     network_mode: service:observer
     entrypoint: ["/opt/lakehouse/obagent-entrypoint.sh"]

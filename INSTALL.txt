@@ -33,8 +33,8 @@ uname -m 应为 x86_64；ARM64/aarch64 不能直接运行本 amd64 包。kubectl
 先进入本次 tar 所在的目录，再解压并进入新目录；使用包内 README.txt 中与交付版本
 对应的完整文件名，避免在旧版本的解压目录中执行安装。
 
-  tar -xf oceanbase-lakehouse-具体版本.tar
-  cd oceanbase-lakehouse-具体版本
+  tar -xf oceanseek-具体版本.tar
+  cd oceanseek-具体版本
   ./install.sh
 
 安装入口先自动核对包内 SHA256SUMS，文件缺失或损坏时在执行安装器前停止。
@@ -189,7 +189,7 @@ YAML
 高级数据库参数仍通过 -f 配置，需满足实际 Operator 的启动约束，这些规格参数不会
 自动调整 memory_limit、system_memory 等数据库参数。
 完整规格参数及简写仅适用于本 tar 根目录的 ./install.sh；不要传给
-charts/oceanbase-lakehouse/install.sh 或 helm。后两者使用 Helm values 配置。
+charts/oceanseek/install.sh 或 helm。后两者使用 Helm values 配置。
 
 湖库安装阶段失败后，处理提示原因，再执行同一条命令。如果首次安装配套
 Operator/cert-manager 中断并留下不完整组件，需要先修复该前置组件，安装器不会
@@ -332,4 +332,4 @@ SQL分析器镜像仍需另行准备。
 
 不要通过删 namespace、PVC、CR 或 helm --force/--atomic 处理安装失败。卸载默认
 保留数据库CR、凭据和存储，并不回收磁盘，也不代替备份。已有镜像/身份不兼容时
-应明确迁移，不会在后台重建数据库。更多配置见 charts/oceanbase-lakehouse/USAGE.txt。
+应明确迁移，不会在后台重建数据库。更多配置见 charts/oceanseek/USAGE.txt。

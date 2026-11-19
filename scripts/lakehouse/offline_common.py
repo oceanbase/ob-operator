@@ -175,7 +175,7 @@ def manifest_bundle(args):
     args._release_context = context
     bundle = Path(context.name)
     assets = []
-    required = [('configuration', 'compose.yaml')] if channel == 'compose' else [('chart', 'oceanbase-lakehouse-release.tgz')]
+    required = [('configuration', 'compose.yaml')] if channel == 'compose' else [('chart', 'oceanseek-release.tgz')]
     if channel == 'helm':
         required += [(key, filename) for key, filename in [('operatorChart', 'ob-operator-release.tgz'), ('operatorValues', 'operator-values.yaml')] if key in entry]
         if 'operatorValues' in entry and 'operatorChart' not in entry:
@@ -225,7 +225,7 @@ def helm_image_plan(args, bundle, release, excluded):
     namespace = 'oceanseek' if namespace is None else namespace
     if len(namespace) > 63 or not re.fullmatch(r'[a-z0-9](?:[a-z0-9-]*[a-z0-9])?', namespace):
         raise ValueError('Invalid Helm namespace name')
-    chart = one_chart(bundle, 'oceanbase-lakehouse-*.tgz')
+    chart = one_chart(bundle, 'oceanseek-*.tgz')
     snapshots = [path.read_bytes() for path in args.values]
     endpoint, skip_operator = helm_values(snapshots)
     skip_crds = getattr(args, 'skip_crds', False) or skip_operator
@@ -262,7 +262,7 @@ def helm_image_plan(args, bundle, release, excluded):
             # solver in their lock. Older bundled self-signed setups did not.
             refs.update(manifest_refs(yaml.safe_load_all(cert_manager.read_text()), set(), include_solver=True))
         with tarfile.open(chart) as archive:
-            payload_dir = 'oceanbase-lakehouse/files/prerequisites/'
+            payload_dir = 'oceanseek/files/prerequisites/'
             if payload_dir + 'bootstrap.py' in archive.getnames():
                 archive.getmember(payload_dir + 'prepare.sh')
                 payload = archive.extractfile(payload_dir + 'operator.yaml')
@@ -503,7 +503,7 @@ def export(args, selected):
     if selected['channel'] == 'compose':
         commands = 'gzip -dc images.tar.gz | docker load\ncd deployment\ndocker compose up -d --pull never\n'
     else:
-        chart = one_chart(target, 'oceanbase-lakehouse-*.tgz').name
+        chart = one_chart(target, 'oceanseek-*.tgz').name
         commands = ('# Import on EVERY target K3s worker (Docker load does not populate K3s).\n'
                     'gzip -dc images.tar.gz | sudo k3s ctr images import -\n'
                     'cd deployment\n# Check the Kubernetes and storage prerequisites in USAGE.txt.\n'
@@ -657,11 +657,11 @@ def helm_installation_text(selected, value_args):
                              'deployment/cert-manager deployment/cert-manager-cainjector '
                              'deployment/cert-manager-webhook --timeout=300s\n')
         if 'operator' in administrator:
-            instructions += ('  tar -xzf oceanbase-lakehouse-release.tgz\n'
+            instructions += ('  tar -xzf oceanseek-release.tgz\n'
                              '  sh ' + administrator['operator'] + '\n')
     else:
         instructions += '\nPrepare any administrator-managed prerequisites as described by this release.\n'
-    command = ['helm', 'upgrade', '--install', settings['release'], './oceanbase-lakehouse-release.tgz',
+    command = ['helm', 'upgrade', '--install', settings['release'], './oceanseek-release.tgz',
                '-n', settings['namespace'], '--create-namespace']
     if settings['skip_crds']:
         command.append('--skip-crds')
@@ -676,7 +676,7 @@ def archive_images(args, selected):
         version = str(selected['delivery_version'])
         if not version or any(c not in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-' for c in version):
             raise ValueError('Invalid delivery version for archive filename')
-        output = Path.cwd() / ('oceanbase-lakehouse-' + selected['channel'] + '-images-' +
+        output = Path.cwd() / ('oceanseek-' + selected['channel'] + '-images-' +
                                version + '-' + selected['platform'].replace('/', '-') + '.tar')
     else:
         output = args.tar.resolve()
@@ -854,7 +854,7 @@ def main(expected_channel=None, default_manifest=None, default_manifest_sha256=N
                         help='Include the release administrator bootstrap images and available cert-manager manifest')
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument('--output', type=Path, help='Create an offline directory; must not already exist')
-    mode.add_argument('--tar', type=Path, nargs='?', const=Path('__AUTO__'), help='Create a tar without local Docker import; defaults to oceanbase-lakehouse-CHANNEL-images-VERSION-PLATFORM.tar in the current directory (requires skopeo)')
+    mode.add_argument('--tar', type=Path, nargs='?', const=Path('__AUTO__'), help='Create a tar without local Docker import; defaults to oceanseek-CHANNEL-images-VERSION-PLATFORM.tar in the current directory (requires skopeo)')
     mode.add_argument('--list', action='store_true', help='List images without downloading')
     mode.add_argument('--check', action='store_true', help='Check local Docker image IDs without pulling')
     parser.add_argument('--pull', choices=['always', 'missing', 'never'], default='missing')

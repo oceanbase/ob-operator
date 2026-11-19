@@ -45,7 +45,7 @@ ENV_ROLES = {'OBSERVER_IMAGE': 'observer', 'LOGSERVICE_IMAGE': 'logservice',
              'OBAGENT_IMAGE': 'obagent', 'PROMETHEUS_IMAGE': 'prometheus',
              'ALERTMANAGER_IMAGE': 'alertmanager'}
 ROLE_REPOSITORIES = {'obproxy': 'obproxy-ce', 'observer': 'oceanbase-ai-cloud-native', 'logservice': 'oblogservice',
-                     'minio': 'minio', 'mc': 'mc', 'bootstrap': 'lakehouse-bootstrap',
+                     'minio': 'minio', 'mc': 'minio-mc', 'bootstrap': 'lakehouse-bootstrap',
                      'obagent': 'obagent',
                      'operator': 'ob-operator', 'dashboard': 'oceanbase-dashboard',
                      'obdiag': 'obdiag', 'oceanbase-helper': 'oceanbase-helper',
@@ -518,8 +518,8 @@ def build(args):
     timestamp = release_timestamp(os.environ.get('SOURCE_DATE_EPOCH') or
                                   run(['git', 'show', '-s', '--format=%ct', 'HEAD'], cwd=source).strip())
     output.mkdir(parents=True)
-    compose = output / ('oceanbase-lakehouse-compose-' + args.version)
-    helm = output / ('oceanbase-lakehouse-native-helm-' + args.version)
+    compose = output / ('oceanseek-compose-' + args.version)
+    helm = output / ('oceanseek-native-helm-' + args.version)
     compose.mkdir(); helm.mkdir()
     for name in ('compose.yaml', 'README.md'):
         shutil.copyfile(source / 'deploy/compose/lakehouse' / name, compose / name)
@@ -533,9 +533,9 @@ def build(args):
     write_yaml(helm / 'operator-values.yaml', operator_values)
     with tempfile.TemporaryDirectory(prefix='lakehouse-release-charts-') as temp:
         temp = Path(temp)
-        for name in ('oceanbase-dashboard', 'oceanbase-minio', 'oceanbase-lakehouse', 'ob-operator'):
+        for name in ('oceanbase-dashboard', 'oceanbase-minio', 'oceanseek', 'ob-operator'):
             copy_chart(source / 'charts' / name, temp / name)
-        parent = temp / 'oceanbase-lakehouse'
+        parent = temp / 'oceanseek'
         write_yaml(parent / 'values.yaml', merge(yaml.safe_load((parent / 'values.yaml').read_text()), values))
         op = temp / 'ob-operator'
         write_yaml(op / 'values.yaml', merge(yaml.safe_load((op / 'values.yaml').read_text()),
@@ -549,11 +549,11 @@ def build(args):
             run([args.helm, 'lint', '--strict', chart])
             run([args.helm, 'package', chart, '--destination', helm])
     for name in ('values-single-node.yaml', 'values-three-nodes.yaml', 'values-test-environment.yaml', 'USAGE.txt', 'SHARED-INFRA.md'):
-        shutil.copyfile(source / 'charts/oceanbase-lakehouse' / name, helm / name)
-    lakehouse_chart, = helm.glob('oceanbase-lakehouse-*.tgz')
+        shutil.copyfile(source / 'charts/oceanseek' / name, helm / name)
+    lakehouse_chart, = helm.glob('oceanseek-*.tgz')
     operator_chart, = helm.glob('ob-operator-*.tgz')
     (helm / 'QUICKSTART.md').write_text(
-        '# Install Lakehouse with Dashboard\n\n'
+        '# Install OceanSeek with Dashboard\n\n'
         'Use a prepared Kubernetes cluster with the matching OceanBase Operator, '
         'cert-manager, a working `local-path` StorageClass, and the release images '
         'available on its workers. See `USAGE.txt` for administrator preparation.\n\n'
@@ -596,7 +596,12 @@ def build(args):
         if channel == 'helm':
             shutil.copyfile(HERE / 'migrate-minio-values.py', directory / 'tools/migrate-minio-values.py')
         (directory / 'tools/requirements.txt').write_text('PyYAML==6.0.3\n')
-        shutil.copyfile(HERE / 'OFFLINE.md', directory / 'OFFLINE.md')
+        offline_notice = (HERE / 'OFFLINE.md').read_text()
+        if publication_evidence:
+            offline_notice = offline_notice.replace(
+                '当前测试版的部分自建镜像尚未验证仓库发布，不能保证在全新机器直接在线拉取。',
+                '本包镜像已取得目标仓库推送和拉取证据，具体身份见 image-lock.json。')
+        (directory / 'OFFLINE.md').write_text(offline_notice)
         shutil.copyfile(HERE / 'THIRD-PARTY-NOTICES.md', directory / 'THIRD-PARTY-NOTICES.md')
         if channel == 'compose':
             shutil.copyfile(directory / '.env', directory / '.env.example')

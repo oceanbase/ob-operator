@@ -115,7 +115,7 @@ func (f *clusterImageFake) run(ctx context.Context, name string, args ...string)
 		if f.tempResponse != "" {
 			return []byte(f.tempResponse), nil
 		}
-		return []byte("/tmp/oceanbase-lakehouse-images.ABC123def4\n"), nil
+		return []byte("/tmp/oceanseek-images.ABC123def4\n"), nil
 	}
 	if remote[0] == "rm" {
 		return nil, nil
@@ -216,11 +216,11 @@ func TestClusterImagesTransfersOnlyMissingArchivesAndVerifiesIDs(t *testing.T) {
 	if err := f.prepare(false); err != nil {
 		t.Fatal(err)
 	}
-	if len(f.copied) != 1 || !strings.Contains(f.copied[0], "minio-cache.tar.gz -> "+missingHost+":/tmp/oceanbase-lakehouse-images.") || len(f.imports) != 1 {
+	if len(f.copied) != 1 || !strings.Contains(f.copied[0], "minio-cache.tar.gz -> "+missingHost+":/tmp/oceanseek-images.") || len(f.imports) != 1 {
 		t.Fatalf("copied/imported cached or unexpected archives: copies=%v imports=%v", f.copied, f.imports)
 	}
 	all := strings.Join(f.commands, "\n")
-	if !strings.Contains(all, "'sha256sum' '--'") || !strings.Contains(all, "'rm' '-rf' '--' '/tmp/oceanbase-lakehouse-images.ABC123def4'") {
+	if !strings.Contains(all, "'sha256sum' '--'") || !strings.Contains(all, "'rm' '-rf' '--' '/tmp/oceanseek-images.ABC123def4'") {
 		t.Fatalf("missing checksum verification or bounded cleanup: %s", all)
 	}
 	if f.ids[missingHost]["minio/minio:1"] != f.bundle.lock.Images[2].ImageID {

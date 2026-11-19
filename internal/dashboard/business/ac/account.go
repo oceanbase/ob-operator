@@ -356,7 +356,7 @@ func fetchAccount(credentials *v1.Secret, username string) (*account, error) {
 		tmpNow := time.Unix(creds.LastLoginAtUnix, 0)
 		lastLoginAt = &tmpNow
 	}
-	needReset := creds.LastLoginAtUnix == 0
+	needReset := os.Getenv("REQUIRE_PASSWORD_RESET_ON_FIRST_LOGIN") == "true" && creds.LastLoginAtUnix == 0
 	return &account{
 		Account: acmodel.Account{
 			Username:    username,

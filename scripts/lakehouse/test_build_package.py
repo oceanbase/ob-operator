@@ -29,6 +29,7 @@ BUILDER = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(BUILDER)
 
 REFERENCES = {
+    "obproxy": "quay.io/oceanbase/obproxy-ce:4.3.3.0-5",
     "operator": "oceanbase-qa/ob-operator:96f9d3c8-20261019",
     "dashboard": "oceanbase-qa/oceanbase-dashboard:e747a05a-20261019",
     "observer": "oceanbase-qa/observer:4.6.2.0-e747a05a-20261019",
@@ -36,12 +37,12 @@ REFERENCES = {
     "prometheus": "quay.io/prometheus/prometheus:v2.51.1",
     "alertmanager": "quay.io/prometheus/alertmanager:v0.27.0",
     "busybox": "busybox:1.36.1",
-    "obagent": "oceanbase/obagent:4.2.4-200000022025090416",
+    "obagent": "quay.io/oceanbase/obagent:4.2.6-100000152026051118",
     "cert-manager-controller": "quay.io/jetstack/cert-manager-controller:v1.12.4",
     "cert-manager-cainjector": "quay.io/jetstack/cert-manager-cainjector:v1.12.4",
     "cert-manager-webhook": "quay.io/jetstack/cert-manager-webhook:v1.12.4",
-    "minio": "minio/minio:RELEASE.2025-09-07T16-13-09Z",
-    "mc": "minio/mc:RELEASE.2025-08-13T08-35-41Z",
+    "minio": "reg.antgroup-inc.cn/oceanbase-test/minio:RELEASE.2025-10-15T17-29-55Z-r3",
+    "mc": "reg.antgroup-inc.cn/oceanbase-test/minio-mc:RELEASE.2025-08-13T08-35-41Z-r3",
     "kube-rbac-proxy": "oceanbase/kube-rbac-proxy:v0.13.1",
 }
 
@@ -125,7 +126,7 @@ class BuildPackageTest(unittest.TestCase):
         source = self.root / "source"
         source.mkdir()
         if charts:
-            for name in ("oceanbase-lakehouse", "oceanbase-dashboard", "oceanbase-minio", "ob-operator"):
+            for name in ("oceanseek", "oceanbase-dashboard", "oceanbase-minio", "ob-operator"):
                 shutil.copytree(REPO / "charts" / name, source / "charts" / name)
         for name in ("install.sh", "INSTALL.txt", "LICENSE"):
             shutil.copyfile(REPO / name, source / name)
@@ -164,8 +165,8 @@ class BuildPackageTest(unittest.TestCase):
         applied = copy.deepcopy(original)
         BUILDER.apply_diagnostic_profile(applied, profile_path)
         roles = {entry["role"]: entry for entry in applied["images"]}
-        self.assertEqual(roles["observer-base"]["image_id"], self.images[2]["image_id"])
-        self.assertEqual(roles["dashboard-base"]["image_id"], self.images[1]["image_id"])
+        self.assertEqual(roles["observer-base"]["image_id"], next(image["image_id"] for image in self.images if image["role"] == "observer"))
+        self.assertEqual(roles["dashboard-base"]["image_id"], next(image["image_id"] for image in self.images if image["role"] == "dashboard"))
         self.assertEqual(roles["observer"]["reference"], "fixture/observer:diagnostics-v1")
         BUILDER.verify_archive(archive, profile["images"], profile["archive_sha256"], exact=True)
         with self.assertRaisesRegex(ValueError, "Untracked diagnostic"):
@@ -175,7 +176,7 @@ class BuildPackageTest(unittest.TestCase):
         invalid["images"][0]["base_image_id"] = "sha256:" + "0" * 64
         invalid_profiles.append((invalid, "base_image_id"))
         invalid = copy.deepcopy(profile)
-        invalid["images"][0]["reference"] = self.images[2]["reference"]
+        invalid["images"][0]["reference"] = next(image["reference"] for image in self.images if image["role"] == "observer")
         invalid_profiles.append((invalid, "distinct"))
         invalid = copy.deepcopy(profile)
         invalid["images"][2]["reference"] = "fixture/obdiag:latest"
@@ -225,7 +226,7 @@ class BuildPackageTest(unittest.TestCase):
                 "packaging": {"source_archive": "old/source.tar.gz", "source_archive_sha256": "0" * 64},
                 "images": self.images}
         BUILDER.write_json(baseline / "image-lock.json", lock)
-        values = yaml.safe_load((source / "charts/oceanbase-lakehouse/values.yaml").read_text())
+        values = yaml.safe_load((source / "charts/oceanseek/values.yaml").read_text())
         BUILDER.write_yaml(baseline / "values/single-worker.yaml", values)
         cert = {"apiVersion": "v1", "kind": "Pod", "metadata": {"name": "fixture"},
                 "spec": {"containers": [{"name": role, "image": reference} for role, reference in REFERENCES.items()
@@ -258,7 +259,7 @@ class BuildPackageTest(unittest.TestCase):
         with contextlib.redirect_stdout(io.StringIO()):
             second = BUILDER.build(args)
         self.assertEqual(first["sha256"], second["sha256"])
-        bundle = args.output / "oceanbase-lakehouse-qa-fixture-linux-amd64"
+        bundle = args.output / "oceanseek-qa-fixture-linux-amd64"
         manifest = json.loads((bundle / "images/archives.json").read_text())
         minio_entry = next(entry for entry in manifest["archives"] if entry["name"] == "minio")
         self.assertEqual(minio_entry["base"], "bundle")
@@ -286,7 +287,7 @@ class BuildPackageTest(unittest.TestCase):
         # not just that the generated upgrade YAML happens to omit its key.
         previous = self.root / "previous-values.yaml"
         BUILDER.write_yaml(previous, {"observer": {"image": "customer/observer:existing-v1"}})
-        rendered = BUILDER.run(["helm", "template", "qa", str(bundle / "charts/oceanbase-lakehouse"),
+        rendered = BUILDER.run(["helm", "template", "qa", str(bundle / "charts/oceanseek"),
                                "-f", str(bundle / "values/quickstart.yaml"), "-f", str(previous),
                                "-f", str(bundle / "values/diagnostics-upgrade.yaml"),
                                "--set", "stage=cluster", "--set-string", "storageClass=local-path"])
@@ -318,7 +319,7 @@ class BuildPackageTest(unittest.TestCase):
             self.assertEqual(BUILDER.digest(bundle / name), expected, name)
         self.assert_single_tar_delivery(second)
         # Extra chart files must not silently enter a build attributed to a commit.
-        (exported / "charts/oceanbase-lakehouse/untracked.txt").write_text("unexpected input")
+        (exported / "charts/oceanseek/untracked.txt").write_text("unexpected input")
         with self.assertRaisesRegex(ValueError, "Untracked input"):
             BUILDER.source_identity(exported, source_archive)
 
@@ -384,7 +385,7 @@ class BuildPackageTest(unittest.TestCase):
         # manifests rendered only from that freshly extracted bundle.
         rendered = []
         for chart, options in (("ob-operator", []),
-                               ("oceanbase-lakehouse", ["-f", str(bundle / "values/quickstart.yaml"),
+                               ("oceanseek", ["-f", str(bundle / "values/quickstart.yaml"),
                                   "--set", "stage=cluster", "--set-string", "storageClass=local-path"]),
                                ("oceanbase-dashboard", ["--set-string", "adminPassword=render-only-not-an-account"])):
             rendered.append(BUILDER.run(["helm", "template", "qa", str(bundle / "charts" / chart)] + options))

@@ -33,7 +33,7 @@ def build(args):
         if header[:5] != b"\x7fELF\x02" or int.from_bytes(header[18:20], "little") != 62:
             raise ValueError("Expected a Linux AMD64 ELF binary: " + str(path))
     args.output.mkdir(parents=True)
-    name = "oceanbase-lakehouse-online-%s-linux-amd64" % args.version
+    name = "oceanseek-online-%s-linux-amd64" % args.version
     bundle = args.output / name
     bundle.mkdir()
     for folder in ("charts", "values", "prerequisites"):

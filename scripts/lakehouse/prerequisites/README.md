@@ -1,4 +1,4 @@
-# Administrator preparation for Lakehouse
+# Administrator preparation for OceanSeek
 
 Prepare shared infrastructure once per cluster using the administrator's
 existing kubeconfig. Install a maintained cert-manager version that supports
@@ -15,7 +15,7 @@ For manual or offline preparation, extract the pinned application Chart and
 run the following with Python 3 and kubectl available:
 
 ```bash
-sh oceanbase-lakehouse/files/prerequisites/prepare.sh --context CONTEXT
+sh oceanseek/files/prerequisites/prepare.sh --context CONTEXT
 ```
 
 This bundle contains the matched Operator payload, its OceanBase CRDs, and
@@ -37,7 +37,7 @@ Old releases may have an abandoned preparation ClusterRoleBinding named
 and confirming the namespace and release, the administrator can revoke it:
 
 ```bash
-sh oceanbase-lakehouse/files/prerequisites/prepare.sh --context CONTEXT \
+sh oceanseek/files/prerequisites/prepare.sh --context CONTEXT \
   --revoke-legacy-binding NAMESPACE RELEASE
 ```
 

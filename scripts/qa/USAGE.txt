@@ -4,7 +4,7 @@ Requires Python >= 3.8 and PyYAML in an isolated build environment.
 
 Render all enabled components with the actual QA image overrides:
   helm template operator PACKAGE/charts/ob-operator > operator.yaml
-  helm template lakehouse PACKAGE/charts/oceanbase-lakehouse \
+  helm template lakehouse PACKAGE/charts/oceanseek \
     -f PACKAGE/values/quickstart.yaml --set stage=cluster \
     --set-string storageClass=local-path > lakehouse.yaml
   helm template dashboard PACKAGE/charts/oceanbase-dashboard \

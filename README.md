@@ -8,7 +8,7 @@
 
 For a single-machine lakehouse SQL experience without Kubernetes, use the
 [Docker Compose quickstart](./deploy/compose/lakehouse/README.md).
-For an existing Kubernetes cluster, use the [native Helm Chart](./charts/oceanbase-lakehouse/USAGE.txt),
+For an existing Kubernetes cluster, use the [native Helm Chart](./charts/oceanseek/USAGE.txt),
 with Dashboard enabled by default and single-node/three-node values examples.
 The native Chart does not ship an `install.sh`; install the matching Operator first,
 then deploy the lakehouse with Helm. Both paths require the images supplied with the release.

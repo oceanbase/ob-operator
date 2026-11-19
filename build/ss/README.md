@@ -14,6 +14,9 @@ oceanbase-helper + oblogservice-ce RPM        -> LogService 镜像
 两个业务 Dockerfile 都直接 `FROM ${HELPER_IMAGE}`，保留 helper 的运行环境，
 不再从 helper 复制一次二进制后切换到另一套基础系统。
 
+两个业务镜像统一使用 `Asia/Shanghai`（UTC+8），在 RPM 安装后设置
+`TZ` 和 `/etc/localtime`，Operator 与 Compose 也显式设置相同的 `TZ`。
+
 ## 准备 RPM
 
 本文示例对应 2026-11-15 核对的制品：

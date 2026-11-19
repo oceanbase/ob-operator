@@ -43,7 +43,16 @@ trap - EXIT`, "generate-config", directory, namespace, cluster}
 }
 
 func obClusterLogCommand(start, end, directory, attachment string) []string {
-	return []string{"python3", "-c", collectOBClusterLogScript, start, end, directory, attachment}
+	// Official obdiag RPM images expose Python as platform-python rather than
+	// python3. Keep every collector argument positional, including the script.
+	return []string{"/bin/sh", "-ec", `if command -v python3 >/dev/null 2>&1; then
+  exec python3 "$@"
+elif [ -x /usr/libexec/platform-python ]; then
+  exec /usr/libexec/platform-python "$@"
+else
+  echo 'Log collection requires a Python 3 interpreter' >&2
+  exit 127
+fi`, "collect-obcluster-log", "-c", collectOBClusterLogScript, start, end, directory, attachment}
 }
 
 func DownloadOBClusterLog(ctx context.Context, nn *param.K8sObjectIdentity, startTime, endTime string) (*jobmodel.Job, error) {

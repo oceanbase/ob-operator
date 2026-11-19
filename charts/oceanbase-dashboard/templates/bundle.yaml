@@ -81,6 +81,8 @@ spec:
               mountPath: /etc/dashboard/config.yaml
               subPath: config.yaml
           env:
+            - name: REQUIRE_PASSWORD_RESET_ON_FIRST_LOGIN
+              value: {{ .Values.requirePasswordResetOnFirstLogin | quote }}
             - name: SHARED_VOLUME_PVC_NAME
               value: {{ include "oceanbase-dashboard.sharedClaim" . | quote }}
             - name: SHARED_VOLUME_SELINUX_LEVEL

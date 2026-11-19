@@ -1,9 +1,9 @@
-name: lakehouse release consistency
+name: OceanSeek release consistency
 
 on:
   push:
     paths:
-      - 'charts/oceanbase-lakehouse/**'
+      - 'charts/oceanseek/**'
       - 'charts/oceanbase-dashboard/**'
       - 'charts/ob-operator/**'
       - 'deploy/compose/lakehouse/**'
@@ -17,7 +17,7 @@ on:
       - '.github/workflows/lakehouse-release.yml'
   pull_request:
     paths:
-      - 'charts/oceanbase-lakehouse/**'
+      - 'charts/oceanseek/**'
       - 'charts/oceanbase-dashboard/**'
       - 'charts/ob-operator/**'
       - 'deploy/compose/lakehouse/**'
@@ -65,7 +65,7 @@ jobs:
         run: python -m unittest discover -s scripts/lakehouse -p test_native_packages.py -v
       - name: Check default Helm installation and shared images
         run: >-
-          go test -count=1 ./charts/oceanbase-lakehouse
+          go test -count=1 ./charts/oceanseek
           -run '^(TestSharedDatabaseImagesMatchCompose|TestPackagedQuickstartNeedsNoValuesOverrides|TestDefaultSizingMatchesSingleNodeProfile|TestDashboard.*|TestManualHelmNotesReflectStage|TestNative.*|TestStorageFailureDiagnostics|TestExternal.*|TestInitialization.*)$'
       - name: Check Helm failure guidance and access context
         run: python -m unittest discover -s scripts/lakehouse -p test_install_access.py -v

@@ -25,14 +25,14 @@ HERE = Path(__file__).resolve().parent
 SPEC = importlib.util.spec_from_file_location('native_release', HERE / 'build-native-packages.py')
 native = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(native)
-CHART_NAME = 'oceanbase-lakehouse'
+CHART_NAME = 'oceanseek'
 OPERATOR_BOOTSTRAP_ROLES = {'operator', 'kube-rbac-proxy'}
 CERT_MANAGER_ROLES = {'cert-manager-controller', 'cert-manager-cainjector',
                       'cert-manager-webhook', 'cert-manager-acmesolver'}
 REQUIRED_ROLES = native.HELM_ROLES | CERT_MANAGER_ROLES
 PROFILE = Path('scripts/lakehouse/release-profiles/single-command.yaml')
 INPUT_PATHS = [Path('charts') / name for name in
-               ('oceanbase-lakehouse', 'oceanbase-dashboard', 'oceanbase-minio')]
+               ('oceanseek', 'oceanbase-dashboard', 'oceanbase-minio')]
 INPUT_PATHS += [Path('scripts/lakehouse/prerequisites'),
                 Path('scripts/lakehouse/images/minio-rejoin'), PROFILE]
 INPUT_PATHS += [Path('scripts/lakehouse') / name for name in

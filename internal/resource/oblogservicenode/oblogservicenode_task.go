@@ -374,6 +374,7 @@ func CreatePod(m *OBLogServiceNodeManager) tasktypes.TaskError {
 	podAnnotations := m.generateStaticIpAnnotation()
 
 	envVars := []corev1.EnvVar{
+		{Name: "TZ", Value: "Asia/Shanghai"},
 		{Name: "CLUSTER_ID", Value: fmt.Sprintf("%d", m.Resource.Spec.ClusterId)},
 		localIPEnv,
 		{Name: "RPC_PORT", Value: fmt.Sprintf("%d", rpcPort)},

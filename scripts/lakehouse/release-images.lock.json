@@ -39,27 +39,31 @@
     },
     {
       "role": "minio",
-      "reference": "minio/minio:RELEASE.2025-09-07T16-13-09Z",
-      "image_id": "sha256:69b2ec208575b69597784255eec6fa6a2985ee9e1a47f4411a51f7f5fdd193a9",
+      "reference": "reg.antgroup-inc.cn/oceanbase-test/minio:RELEASE.2025-10-15T17-29-55Z-r3",
+      "image_id": "sha256:982618ffe20c9685d35916535497b5e4e58e441e90446a16b1c9b7c707111a9b",
       "platform": "linux/amd64",
       "channels": [
         "compose",
         "helm"
       ],
-      "source_reference": "minio/minio:RELEASE.2025-09-07T16-13-09Z",
-      "publication": "not-verified"
+      "source_reference": "reg.antgroup-inc.cn/oceanbase-test/minio:RELEASE.2025-10-15T17-29-55Z-r3",
+      "publication": "verified-internal-source-build",
+      "manifest_digest": "sha256:bc98e2096072ab623b015d1a0aef80cd3f523f355a5e0e5e26a51401e07f908f",
+      "source_archive_sha256": "50a97aef0f6bdffee432334a175835ca5de1e709a49ec21a49352224771299fb"
     },
     {
       "role": "mc",
-      "reference": "minio/mc:RELEASE.2025-08-13T08-35-41Z",
-      "image_id": "sha256:c2ad77420d33bb4ad8694457d3edf7188076428582bd24e3dd4d09d6a1d52872",
+      "reference": "reg.antgroup-inc.cn/oceanbase-test/minio-mc:RELEASE.2025-08-13T08-35-41Z-r3",
+      "image_id": "sha256:d71970e6431d7ecf1ec2075d23e46e97a01135963c897a7b375302802176a9c1",
       "platform": "linux/amd64",
       "channels": [
         "compose",
         "helm"
       ],
-      "source_reference": "minio/mc:RELEASE.2025-08-13T08-35-41Z",
-      "publication": "not-verified"
+      "source_reference": "reg.antgroup-inc.cn/oceanbase-test/minio-mc:RELEASE.2025-08-13T08-35-41Z-r3",
+      "publication": "verified-internal-source-build",
+      "manifest_digest": "sha256:4d1810357a34d8e3bf8e7f2464e182c5e38e368fd2e09c8b875c14b79672eeea",
+      "source_archive_sha256": "50a97aef0f6bdffee432334a175835ca5de1e709a49ec21a49352224771299fb"
     },
     {
       "role": "bootstrap",
@@ -74,15 +78,15 @@
     },
     {
       "role": "obagent",
-      "reference": "oceanbase/obagent:4.2.4-200000022025090416",
-      "image_id": "sha256:0e1ac8c9480dd99661c3afb4380ffa988fc3d0705f0ab4140bd6410cbd096338",
-      "manifest_digest": "sha256:1e1b45663f9521d21e627ba06fe3e1df98e78076e93eab54ff214fd7981d64ea",
+      "reference": "ghcr.io/oceanbase/obagent:4.2.6-100000152026051118",
+      "image_id": "sha256:869525eddbcc0f87b1bb601f39cea7de84147f33d94c2833d1983475a03e6e05",
+      "manifest_digest": "sha256:90e22b03f29e27e06cc4815febb49d23a7c784233ef516cb48e5b26e2caf7f65",
       "platform": "linux/amd64",
       "channels": [
         "compose"
       ],
-      "source_reference": "oceanbase/obagent:4.2.4-200000022025090416",
-      "publication": "verified-public-pull"
+      "source_reference": "ghcr.io/oceanbase/obagent:4.2.6-100000152026051118",
+      "publication": "public-manifest-and-pooled-image-id-verified"
     },
     {
       "role": "operator",
@@ -97,94 +101,109 @@
     },
     {
       "role": "dashboard",
-      "reference": "oceanbase/oceanbase-dashboard:93d77619-diagnostics-20261021",
-      "image_id": "sha256:3d88461a3a5acd5cc3fa26db3ffdecdc74ec82851cf92e71d34ad09a98f4e01a",
+      "reference": "reg.antgroup-inc.cn/oceanbase-test/oceanbase-dashboard:20261118-r34-public-obdiag-amd64",
+      "image_id": "sha256:b6dbca15712434485f804b321d4b405874529a95be5203ee393a7ac65f248249",
       "platform": "linux/amd64",
       "channels": [
         "helm"
       ],
-      "source_reference": "oceanbase-qa/oceanbase-dashboard:93d77619-diagnostics-20261021",
-      "publication": "not-verified"
+      "source_reference": "reg.antgroup-inc.cn/oceanbase-test/lakebase:r34-dashboard-public-obdiag-amd64",
+      "publication": "internal Dashboard compatibility build",
+      "manifest_digest": "sha256:a0d7bf2659cc97c62fb860fe267e8c30d715dfc5f96bdd3f4e65ccdd7cbdcdbd",
+      "binary_sha256": "9c15d2ee8418040e088e574a203083c7c5b5fd7d898e3528ad372fb49a2e86c5",
+      "source_patch_sha256": "87ef5f7f479dd18fcf84fbe617c19ad42f78879f375ff930a7da6704dfbae441"
     },
     {
       "role": "obdiag",
-      "reference": "oceanbase/obdiag:5.0.1-k8s-compat-19a3b560-20261021",
-      "image_id": "sha256:0204c3d57797cb1f322a6234a301e8140d0222f900728d16fee636630d9843a1",
+      "reference": "ghcr.io/oceanbase/obdiag:5.0.2-12026102116",
+      "image_id": "sha256:82b9a00ec2015a2c9be42b8ae6de30281eb8c09a6d35bf4a401ef4093a8d2692",
       "platform": "linux/amd64",
       "channels": [
         "helm"
       ],
-      "source_reference": "oceanbase-qa/obdiag:5.0.1-k8s-compat-19a3b560-20261021",
-      "publication": "not-verified"
+      "source_reference": "ghcr.io/oceanbase/obdiag:5.0.2-12026102116",
+      "publication": "public-manifest-and-pooled-image-id-verified",
+      "manifest_digest": "sha256:48d7c4edb30fc64f043f6db4861be2ad0e6f3231d91d442c96d86ef124e3896f"
     },
     {
       "role": "oceanbase-helper",
-      "reference": "oceanbase/oceanbase-helper:93d77619-20261021",
-      "image_id": "sha256:deef30d65e610da4ee847248b1e5dfc629bcc174bdba0dc499f3b4b7437d5c9a",
+      "reference": "reg.antgroup-inc.cn/oceanbase-test/oceanbase-helper:oceanseek-r28-amd64",
+      "image_id": "sha256:ca339c52603936c1924fcd87b304120d31bae83e74e073c4888a7547f298daf4",
       "platform": "linux/amd64",
       "channels": [
         "helm"
       ],
-      "source_reference": "oceanbase-qa/oceanbase-helper:93d77619-20261021",
-      "publication": "not-verified"
+      "source_reference": "reg.antgroup-inc.cn/oceanbase-test/lakebase:oceanseek-r28-helper",
+      "publication": "verified-pooled-runtime",
+      "manifest_digest": "sha256:d9054005e0a34e139ba8256c457a247be4d6e62c1af8e79a41d3e39ddefb9d89",
+      "legacy_reference": "reg.docker.alibaba-inc.com/ob-opensource-test/lakebase:oceanbase-helper-93d77619-20261021",
+      "legacyReferences": [
+        "reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:3ba4f9158a1bc87aafe8a1d369fe8ac791a38edbbd2ff553a5d13a3f6fc9b0c8"
+      ],
+      "runtime_source_commit": "27a7c6d12539284dc28ba8a9585302a52d21af54",
+      "helper_binary_sha256": "75fd4e77ab0dfc041985e0026ca240509177919ab882b5415f49294b9a6d88d4"
     },
     {
       "role": "utility",
-      "reference": "busybox:1.36.1",
+      "reference": "docker.m.daocloud.io/library/busybox:1.36.1",
       "image_id": "sha256:b116e155074440ffd9e449559433feb4cd2341eb3554b1da1c638c976e56451d",
-      "manifest_digest": "sha256:73aaf090f3d85aa34ee199857f03fa3a95c8ede2ffd4cc2cdb5b94e566b11662",
+      "manifest_digest": "sha256:b7f3d86d6e84fc17718c48bcde1450807faa2d56704205c697b4bd5df7b9e29f",
       "platform": "linux/amd64",
       "channels": [
         "helm"
       ],
-      "source_reference": "busybox:1.36.1",
-      "publication": "verified-public-pull"
+      "source_reference": "docker.m.daocloud.io/library/busybox:1.36.1",
+      "publication": "public-manifest-and-pooled-image-id-verified"
     },
     {
       "role": "prometheus",
-      "reference": "quay.io/prometheus/prometheus:v2.51.1",
+      "reference": "quay.m.daocloud.io/prometheus/prometheus:v2.51.1",
       "image_id": "sha256:e350b167c4fa1aa73a73d9bdce67465f2b98edfff7a3d5f3b14e4bc92e7578ea",
       "platform": "linux/amd64",
       "channels": [
         "compose",
         "helm"
       ],
-      "source_reference": "quay.io/prometheus/prometheus:v2.51.1",
-      "publication": "not-verified"
+      "source_reference": "quay.m.daocloud.io/prometheus/prometheus:v2.51.1",
+      "publication": "public-manifest-and-pooled-image-id-verified",
+      "manifest_digest": "sha256:a9a1bf9db3b86dd5b0a5bea5b2626d3f471bce4e47c60e82591ce28b1f50aa5a"
     },
     {
       "role": "alertmanager",
-      "reference": "quay.io/prometheus/alertmanager:v0.27.0",
+      "reference": "quay.m.daocloud.io/prometheus/alertmanager:v0.27.0",
       "image_id": "sha256:11f11916f8cdfb17c1da74b20deb2075d778357b4d60474d82453303f8d461f5",
       "platform": "linux/amd64",
       "channels": [
         "compose",
         "helm"
       ],
-      "source_reference": "quay.io/prometheus/alertmanager:v0.27.0",
-      "publication": "not-verified"
+      "source_reference": "quay.m.daocloud.io/prometheus/alertmanager:v0.27.0",
+      "publication": "public-manifest-and-pooled-image-id-verified",
+      "manifest_digest": "sha256:45c3a586d4332d710bef92b06e90380c0b1f588968c00100d4b5e4e44c40ca5f"
     },
     {
       "role": "kube-rbac-proxy",
-      "reference": "oceanbase/kube-rbac-proxy:v0.13.1",
+      "reference": "quay.m.daocloud.io/brancz/kube-rbac-proxy:v0.13.1",
       "image_id": "sha256:eb5a02daef2feb1aba3cf562f206a9ca50c1d0d095782a645e9c4093482288c3",
       "platform": "linux/amd64",
       "channels": [
         "helm"
       ],
-      "source_reference": "oceanbase/kube-rbac-proxy:v0.13.1",
-      "publication": "not-verified"
+      "source_reference": "quay.m.daocloud.io/brancz/kube-rbac-proxy:v0.13.1",
+      "publication": "public-manifest-and-pooled-image-id-verified",
+      "manifest_digest": "sha256:18f12fc3a0085bbc303cfbd2ad1151127c1c959c4641e36027547b6b66eb4c92"
     },
     {
       "role": "obproxy",
-      "reference": "oceanbase/obproxy-ce:4.3.3.0-5",
+      "reference": "ghcr.io/oceanbase/obproxy-ce:4.3.3.0-5",
       "image_id": "sha256:c3e1000942e7869f400beb6d5b71e2bb9a3b91f2c2afa9ba45f399c9977eb0db",
       "platform": "linux/amd64",
       "channels": [
         "helm"
       ],
-      "source_reference": "oceanbase/obproxy-ce:4.3.3.0-5",
-      "publication": "not-verified"
+      "source_reference": "ghcr.io/oceanbase/obproxy-ce:4.3.3.0-5",
+      "publication": "public-manifest-and-pooled-image-id-verified",
+      "manifest_digest": "sha256:46b37ec68200a813d1f580b3d947902f40bc73af78c5fdece10109b5ecebe02c"
     }
   ]
 }

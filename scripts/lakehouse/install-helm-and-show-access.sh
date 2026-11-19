@@ -106,7 +106,10 @@ if kubectl -n "$namespace" get service "$sql_service" >/dev/null 2>&1; then
     if [[ -z $sql_port ]]; then echo 'SQL NodePort is not allocated.' >&2; exit 1; fi
     printf "SQL command: mysql -h '%s' -P %s -u 'root@sys' -p\n" "$node_host" "$sql_port"
   else
-    printf 'SQL is internal. Run: kubectl -n %s port-forward svc/%s 12881:2881\n' "$namespace" "$sql_service"
+    sql_port=$(kubectl -n "$namespace" get service "$sql_service" -o jsonpath='{.spec.ports[0].port}')
+    if [[ -z $sql_port ]]; then echo 'SQL Service port is unavailable.' >&2; exit 1; fi
+    printf 'For local SQL access, run: kubectl -n %s port-forward svc/%s 2883:%s\n' "$namespace" "$sql_service" "$sql_port"
+    printf "SQL command: mysql -h 127.0.0.1 -P 2883 -u 'root@sys' -p\n"
   fi
 else
   echo 'SQL Service is absent; check stage=cluster and the release status.'

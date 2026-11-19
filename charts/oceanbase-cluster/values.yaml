@@ -1,7 +1,8 @@
 clusterName: obcluster
 clusterId: 1
 
-obAgentVersion: 4.2.2-100000042024011120
+obAgentVersion: 4.2.6-100000152026051118
+obAgentRepository: quay.io/oceanbase/obagent
 
 annotations: 
   # "oceanbase.oceanbase.com/independent-pvc-lifecycle": "true"

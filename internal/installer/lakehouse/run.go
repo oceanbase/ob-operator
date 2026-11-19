@@ -236,7 +236,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 		if err != nil {
 			return fmt.Errorf("cannot locate installation lock directory: %w", err)
 		}
-		cacheDir = filepath.Join(cacheDir, "oceanbase-lakehouse")
+		cacheDir = filepath.Join(cacheDir, "oceanseek")
 		if err = privateDirectory(cacheDir); err != nil {
 			return err
 		}
@@ -464,7 +464,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 	}
 	installCtx, cancel := context.WithTimeout(ctx, 2*time.Hour)
 	defer cancel()
-	cmd := command(installCtx, "bash", filepath.Join(o.bundle, "charts/oceanbase-lakehouse/install.sh"), o.release, o.namespace, "-f", filepath.Join(stateDir, "values.yaml"))
+	cmd := command(installCtx, "bash", filepath.Join(o.bundle, "charts/oceanseek/install.sh"), o.release, o.namespace, "-f", filepath.Join(stateDir, "values.yaml"))
 	cmd.Env = append(cmd.Environ(), "LAKEHOUSE_MANAGED_ACCESS=1")
 	if liveProgress {
 		cmd.Env = append(cmd.Env, "LAKEHOUSE_LIVE_PROGRESS=1")

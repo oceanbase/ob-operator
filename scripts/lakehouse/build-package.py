@@ -85,7 +85,7 @@ def source_identity(source, export=None):
             elif not item.isdir():
                 raise ValueError("Unsupported source archive member: " + str(relative))
     required = [source / n for n in ("install.sh", "INSTALL.txt", "LICENSE")]
-    for chart in ("oceanbase-lakehouse", "oceanbase-dashboard", "ob-operator"):
+    for chart in ("oceanseek", "oceanbase-dashboard", "ob-operator"):
         required.extend(p for p in (source / "charts" / chart).rglob("*") if p.is_file())
     for path in required:
         if path.relative_to(source).as_posix() not in seen:
@@ -263,8 +263,12 @@ def copy_chart(source, destination):
 def patch_charts(source, package, images, timestamp):
     charts = package / "charts"
     charts.mkdir()
-    for name in ("oceanbase-lakehouse", "oceanbase-dashboard", "oceanbase-minio", "ob-operator"):
+    for name in ("oceanseek", "oceanbase-dashboard", "oceanbase-minio", "ob-operator"):
         copy_chart(source / "charts" / name, charts / name)
+    minio_values_path = charts / "oceanbase-minio/values.yaml"
+    minio_values = yaml.safe_load(minio_values_path.read_text())
+    minio_values["image"] = images["minio"]["reference"]
+    write_yaml(minio_values_path, minio_values)
     dashboard = charts / "oceanbase-dashboard"
     values = yaml.safe_load((dashboard / "values.yaml").read_text())
     values["image"] = images["dashboard"]["reference"]
@@ -280,7 +284,7 @@ def patch_charts(source, package, images, timestamp):
         credentials.write_text(original.replace(old, new))
     elif new not in original:
         raise ValueError("Dashboard credential template changed; review the QA required-password patch")
-    parent = charts / "oceanbase-lakehouse"
+    parent = charts / "oceanseek"
     values = yaml.safe_load((parent / "values.yaml").read_text())
     # This builder ships the staged installer; native Helm uses its own builder.
     values.setdefault("native", {})["enabled"] = False
@@ -320,7 +324,7 @@ def patch_charts(source, package, images, timestamp):
             raise ValueError("Dependency identity/version mismatch: " + name)
         tar_tree(child, parent / "charts" / (name + "-" + str(metadata["version"]) + ".tgz"), name, timestamp, compressed=True)
     changes = []
-    for name in ("oceanbase-lakehouse", "oceanbase-dashboard", "oceanbase-minio", "ob-operator"):
+    for name in ("oceanseek", "oceanbase-dashboard", "oceanbase-minio", "ob-operator"):
         for path in sorted((charts / name).rglob("*")):
             if not path.is_file() or path.suffix == ".tgz":
                 continue
@@ -347,7 +351,7 @@ def quickstart_profile(baseline, package, images):
     values.setdefault("observer", {}).pop("clusterId", None)
     values["logService"]["resource"]["cpu"] = "1"
     values["observer"]["resource"]["cpu"] = "2"
-    for section, role in (("dashboard", "dashboard"), ("logService", "logservice"),
+    for section, role in (("dashboard", "dashboard"), ("obproxy", "obproxy"), ("logService", "logservice"),
                           ("observer", "observer"), ("minio", "minio"), ("initialization", "mc")):
         values.setdefault(section, {})["image"] = images[role]["reference"]
     values["dashboard"]["enabled"] = True
@@ -397,7 +401,7 @@ def rendered_images(text):
 def validate_charts(package, lock):
     charts = package / "charts"
     results = []
-    for name in ("oceanbase-lakehouse", "oceanbase-dashboard", "oceanbase-minio", "ob-operator"):
+    for name in ("oceanseek", "oceanbase-dashboard", "oceanbase-minio", "ob-operator"):
         args = ["helm", "lint", "--strict", str(charts / name)]
         if name == "oceanbase-dashboard":
             args += ["--set-string", "adminPassword=render-only-not-an-account"]
@@ -406,7 +410,7 @@ def validate_charts(package, lock):
     references = set()
     for stage in ("storage", "logservice", "cluster"):
         for enabled in ("true", "false"):
-            rendered = run(["helm", "template", "qa", str(charts / "oceanbase-lakehouse"), "-n", "qa",
+            rendered = run(["helm", "template", "qa", str(charts / "oceanseek"), "-n", "qa",
                             "-f", str(package / "values/quickstart.yaml"), "--set-string", "storageClass=local-path",
                             "--set", "stage=" + stage, "--set", "dashboard.enabled=" + enabled])
             references |= rendered_images(rendered)
@@ -484,7 +488,7 @@ def build(args):
     for filename in ("core-images.tar.gz", "support-images.tar.gz"):
         if "images/" + filename not in baseline_checksums:
             raise ValueError("Baseline SHA256SUMS does not cover images/" + filename)
-    name = "oceanbase-lakehouse-qa-%s-linux-amd64" % args.version
+    name = "oceanseek-qa-%s-linux-amd64" % args.version
     minio_name = "minio-images.tar.gz"
     package = output / name
     package.mkdir(parents=True)
@@ -562,8 +566,8 @@ def build(args):
     write_json(package / "image-lock.json", lock)
     instructions = (source / "INSTALL.txt").read_text()
     (package / "INSTALL.txt").write_text(instructions)
-    instructions = instructions.replace("oceanbase-lakehouse-具体版本.tar", name + ".tar")
-    instructions = instructions.replace("oceanbase-lakehouse-具体版本", name)
+    instructions = instructions.replace("oceanseek-具体版本.tar", name + ".tar")
+    instructions = instructions.replace("oceanseek-具体版本", name)
     (package / "README.txt").write_text("交付版本：%s\n源码：%s\n所有镜像和校验清单均已包含在本 tar 内。\n\n" %
         (args.version, source_sha) + instructions)
     validation += validate_charts(package, lock)

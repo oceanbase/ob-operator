@@ -335,7 +335,7 @@ class RealPackagingTests(unittest.TestCase):
             for profile in report['rendered_roles'].values():
                 for roles in profile.values():
                     self.assertTrue(all(ref.startswith(lock['distribution_repository'] + ':') for ref in roles.values()))
-            helm = args.output / 'oceanbase-lakehouse-native-helm-fixture'
+            helm = args.output / 'oceanseek-native-helm-fixture'
             with tarfile.open(next(helm.glob('ob-operator-*.tgz'))) as archive:
                 values = yaml.safe_load(archive.extractfile('ob-operator/values.yaml'))
                 self.assertEqual(values['kubeRbacProxyImage'], proof['kube-rbac-proxy']['reference'])
@@ -368,8 +368,8 @@ class RealPackagingTests(unittest.TestCase):
             for profile, rendered in result['rendered_roles'].items():
                 for role in BUILDER.SHARED:
                     self.assertEqual(rendered['compose'][role], rendered['helm'][role], profile)
-            compose = args.output / 'oceanbase-lakehouse-compose-test'
-            helm = args.output / 'oceanbase-lakehouse-native-helm-test'
+            compose = args.output / 'oceanseek-compose-test'
+            helm = args.output / 'oceanseek-native-helm-test'
             self.assertFalse((compose / 'compose.aistor.yaml').exists())
             compose_env = (compose / '.env').read_text()
             self.assertIn('HOST_ACCESS_IP=', compose_env)
@@ -380,8 +380,8 @@ class RealPackagingTests(unittest.TestCase):
             self.assertIn('OBSERVER_SQL_BIND_ADDRESS=0.0.0.0', compose_env)
             self.assertIn('OBSHELL_BIND_ADDRESS=0.0.0.0', compose_env)
             self.assertIn('OBSHELL_HOST_PORT=32886', compose_env)
-            self.assertIn('${IMAGE_REGISTRY:-minio}/minio:', compose_env)
-            self.assertIn('${IMAGE_REGISTRY:-minio}/mc:', compose_env)
+            self.assertIn('${IMAGE_REGISTRY:-reg.antgroup-inc.cn/oceanbase-test}/minio:', compose_env)
+            self.assertIn('${IMAGE_REGISTRY:-reg.antgroup-inc.cn/oceanbase-test}/minio-mc:', compose_env)
             readme = (compose / 'README.md').read_text()
             self.assertIn('docker compose up -d && docker compose logs -f observer-bootstrap', readme)
             c = json.loads((compose / 'image-lock.json').read_text())
@@ -389,9 +389,9 @@ class RealPackagingTests(unittest.TestCase):
             self.assertEqual({i['role'] for i in c['images']}, BUILDER.COMPOSE_ROLES)
             self.assertEqual({i['role'] for i in h['images']}, BUILDER.HELM_ROLES)
             self.assertEqual((compose / 'release-images.lock.json').read_bytes(), (helm / 'release-images.lock.json').read_bytes())
-            with tarfile.open(next(helm.glob('oceanbase-lakehouse-*.tgz')), 'r:gz') as chart:
+            with tarfile.open(next(helm.glob('oceanseek-*.tgz')), 'r:gz') as chart:
                 self.assertFalse(any(p.name.endswith('install.sh') or p.name.endswith('_test.go') for p in chart))
-                values = yaml.safe_load(chart.extractfile('oceanbase-lakehouse/values.yaml'))
+                values = yaml.safe_load(chart.extractfile('oceanseek/values.yaml'))
                 refs = {i['role']: i['reference'] for i in lock['images']}
                 self.assertEqual(values['observer']['image'], refs['observer'])
                 self.assertEqual(values['logService']['image'], refs['logservice'])
@@ -400,7 +400,7 @@ class RealPackagingTests(unittest.TestCase):
                 self.assertEqual(values['logService']['resource']['cpu'], '2')
             quickstart = (helm / 'QUICKSTART.md').read_text()
             install = next(line for line in quickstart.splitlines() if line.startswith('helm upgrade'))
-            self.assertIn(next(helm.glob('oceanbase-lakehouse-*.tgz')).name, install)
+            self.assertIn(next(helm.glob('oceanseek-*.tgz')).name, install)
             self.assertIn('--wait --wait-for-jobs --timeout 35m', install)
             self.assertNotIn(' -f ', install)
             for directory in (compose, helm):
@@ -428,8 +428,8 @@ class RealPackagingTests(unittest.TestCase):
                     for name in ('README.md', 'configure-docker.py', 'docker-daemon.json', 'k3s-registries.yaml'):
                         self.assertEqual(archive.extractfile(prefix + name).read(), (mirror_root / name).read_bytes())
             # Re-read the delivered archive, including its hidden Compose .env.
-            with tarfile.open(args.output / 'oceanbase-lakehouse-compose-test.tar.gz', 'r:gz') as archive:
-                self.assertIsNotNone(archive.getmember('oceanbase-lakehouse-compose-test/.env'))
+            with tarfile.open(args.output / 'oceanseek-compose-test.tar.gz', 'r:gz') as archive:
+                self.assertIsNotNone(archive.getmember('oceanseek-compose-test/.env'))
                 self.assertEqual({item.mtime for item in archive}, {1704067200})
 
 
