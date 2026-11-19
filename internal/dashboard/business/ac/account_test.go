@@ -17,8 +17,9 @@ import (
 	"encoding/hex"
 	"slices"
 
-	acmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/ac"
 	corev1 "k8s.io/api/core/v1"
+
+	acmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/ac"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

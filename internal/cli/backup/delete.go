@@ -40,7 +40,7 @@ func DeleteTenantBackupPolicy(ctx context.Context, o *DeleteOptions) error {
 		return err
 	}
 	if policy == nil {
-		return fmt.Errorf("Backup policy for %s not found", o.Name)
+		return fmt.Errorf("backup policy %s not found", o.Name)
 	}
 	if o.force {
 		return clients.ForceDeleteTenantBackupPolicy(ctx, types.NamespacedName{Name: policy.Name, Namespace: policy.Namespace})
