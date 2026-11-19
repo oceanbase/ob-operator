@@ -191,7 +191,7 @@ func startAndWaitForLauncher(cmd *exec.Cmd, startTimeout time.Duration) (time.Ti
 // monitorDaemon polls for the oblogservice daemon process and exits if it dies.
 // It forwards SIGTERM/SIGINT and bounds shutdown with an explicit kill fallback.
 func monitorDaemon(deadline time.Time, startTimeout time.Duration) error {
-	daemonPid, err := waitForDaemon(deadline, startTimeout)
+	daemonPid, err := waitForDaemon("/proc", deadline, startTimeout)
 	if err != nil {
 		return err
 	}
@@ -218,7 +218,7 @@ func monitorDaemon(deadline time.Time, startTimeout time.Duration) error {
 	}
 }
 
-func waitForDaemon(deadline time.Time, startTimeout time.Duration) (int, error) {
+func waitForDaemon(procRoot string, deadline time.Time, startTimeout time.Duration) (int, error) {
 	remaining := time.Until(deadline)
 	if remaining <= 0 {
 		return 0, errors.Errorf("oblogservice daemon failed to start within %s", startTimeout)
@@ -229,7 +229,7 @@ func waitForDaemon(deadline time.Time, startTimeout time.Duration) (int, error) 
 	defer pollTicker.Stop()
 
 	for {
-		daemonPid, err := findLogServiceDaemon("/proc")
+		daemonPid, err := findLogServiceDaemon(procRoot)
 		if err != nil {
 			return 0, errors.Wrap(err, "inspect oblogservice processes")
 		}

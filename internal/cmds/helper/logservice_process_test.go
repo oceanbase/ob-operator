@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"syscall"
 	"testing"
 	"time"
@@ -30,7 +31,13 @@ func TestLogServiceDetectionWithoutPgrep(t *testing.T) {
 	}
 	t.Cleanup(func() { _ = cmd.Process.Kill(); _ = cmd.Wait() })
 	t.Setenv("PATH", dir)
-	pid, err := waitForDaemon(time.Now().Add(150*time.Millisecond), 150*time.Millisecond)
+	// Expose only the spawned process, including when a host already runs LogService.
+	procRoot := t.TempDir()
+	pidDir := strconv.Itoa(cmd.Process.Pid)
+	if err := os.Symlink(filepath.Join("/proc", pidDir), filepath.Join(procRoot, pidDir)); err != nil {
+		t.Fatal(err)
+	}
+	pid, err := waitForDaemon(procRoot, time.Now().Add(150*time.Millisecond), 150*time.Millisecond)
 	if err != nil || pid != cmd.Process.Pid {
 		t.Fatalf("running daemon must be detected without pgrep: pid=%d want=%d err=%v", pid, cmd.Process.Pid, err)
 	}
