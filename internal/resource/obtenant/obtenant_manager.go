@@ -603,14 +603,13 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 	}
 	tenantCurrentStatus.TenantRecordInfo.TenantID = int(obtenant.TenantID)
 
-	// TODO: get whitelist from tenant account
-	whitelist, exists := tenantWhiteListMap.Load(obtenant.TenantName)
-	if exists {
-		tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList = whitelist.(string)
-	} else {
-		// try update whitelist after the manager restart
-		tenantWhiteListMap.Store(obtenant.TenantName, tenant.DefaultOBTcpInvitedNodes)
-		tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList = tenant.DefaultOBTcpInvitedNodes
+	con, err := m.getClusterSysClient()
+	if err != nil {
+		return nil, err
+	}
+	tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList, err = con.GetTenantConnectWhiteList(m.Ctx, obtenant.TenantID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "read connection whitelist for tenant %s", tenantName)
 	}
 
 	charset, err := m.getCharset()

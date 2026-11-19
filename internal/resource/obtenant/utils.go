@@ -88,7 +88,6 @@ func (m *OBTenantManager) createTenant() tasktypes.TaskError {
 		m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "failed to create OBTenant", err.Error())
 		return err
 	}
-	tenantWhiteListMap.Store(tenantName, m.OBTenant.Spec.ConnectWhiteList)
 	// Create user or change password of root, do not return error
 	m.Recorder.Event(m.OBTenant, "Create", "", "Create OBTenant successfully")
 	return nil

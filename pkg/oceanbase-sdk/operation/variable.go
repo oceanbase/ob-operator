@@ -37,3 +37,18 @@ func (m *OceanbaseOperationManager) GetGlobalVariable(ctx context.Context, name 
 	}
 	return variable, err
 }
+
+// GetTenantConnectWhiteList reads the tenant's persisted value through the cluster's sys session.
+func (m *OceanbaseOperationManager) GetTenantConnectWhiteList(ctx context.Context, tenantID int64) (string, error) {
+	return readTenantConnectWhiteList(ctx, m.QueryRow, tenantID)
+}
+
+func readTenantConnectWhiteList(ctx context.Context, queryRow func(context.Context, any, string, ...any) error, tenantID int64) (string, error) {
+	var value string
+	err := queryRow(ctx, &value, sql.GetTenantConnectWhiteList, tenantID)
+	var mysqlErr *mysql.MySQLError
+	if errors.As(err, &mysqlErr) && mysqlErr.Number == 1146 {
+		err = queryRow(ctx, &value, sql.GetLegacyTenantConnectWhiteList, tenantID)
+	}
+	return value, err
+}

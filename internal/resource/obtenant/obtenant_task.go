@@ -333,7 +333,6 @@ func WatchRestoreJobToFinish(m *OBTenantManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrap(err, "Failed to wait for restore job to finish")
 	}
-	tenantWhiteListMap.Store(m.OBTenant.Spec.TenantName, m.OBTenant.Spec.ConnectWhiteList)
 	m.Recorder.Event(m.OBTenant, "RestoreJobFinished", "", "Restore job finished successfully")
 	return nil
 }
@@ -452,9 +451,6 @@ func CheckAndApplyWhiteList(m *OBTenantManager) tasktypes.TaskError {
 		if err != nil {
 			return err
 		}
-		// TODO: get whitelist variable by tenant account
-		// Because getting a whitelist requires specifying a tenant , temporary use .Status.TenantRecordInfo.ConnectWhiteList as value in db
-		tenantWhiteListMap.Store(tenantName, specWhiteList)
 	}
 	return nil
 }
