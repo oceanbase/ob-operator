@@ -3,8 +3,10 @@ package obtenantoperation
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -19,6 +21,7 @@ import (
 
 type tenantUpgradeClient interface {
 	ListTenantWithName(context.Context, string) ([]*model.OBTenant, error)
+	ListActiveTenantUpgradeIDs(context.Context) ([]int64, error)
 	SelectCompatibleOfTenants(context.Context) ([]*model.Parameter, error)
 	UpgradeTenantWithName(context.Context, string) error
 }
@@ -88,15 +91,43 @@ func upgradeAndWait(ctx context.Context, db tenantUpgradeClient, name string, te
 			return false, err
 		}
 		atTarget, canSubmit, err := checkUpgradeCompatibility(params, tenantID)
-		if err != nil || atTarget {
-			return atTarget, err
+		if err != nil {
+			return false, err
 		}
-		if canSubmit && !submitted {
+		if !atTarget && (!canSubmit || submitted) {
+			return false, nil
+		}
+		active, err := db.ListActiveTenantUpgradeIDs(ctx)
+		if err != nil {
+			return false, err
+		}
+		if slices.Contains(active, tenantID) {
 			submitted = true
-			// A timeout or a concurrent request can leave a real job running.
-			// Observe its outcome before reporting an ambiguous submission as failed.
-			submitErr = db.UpgradeTenantWithName(ctx, name)
+			return false, nil
 		}
+		// A cluster-wide upgrade has no single target ID.
+		if slices.Contains(active, 0) {
+			return false, nil
+		}
+		if atTarget || len(active) > 0 {
+			// OceanBase shares the upgrade executor across tenants.
+			return atTarget, nil
+		}
+		submitErr = db.UpgradeTenantWithName(ctx, name)
+		var mysqlErr *mysql.MySQLError
+		if errors.As(submitErr, &mysqlErr) {
+			if mysqlErr.Number == 4179 {
+				// OB_OP_NOT_ALLOW can race with another tenant acquiring the executor.
+				// The server rejected this request. Recheck the job table before retrying.
+				return false, nil
+			}
+			if slices.Contains([]uint16{1044, 1045, 1064, 1142, 1227}, mysqlErr.Number) {
+				return false, submitErr // Explicit SQL syntax or permission error.
+			}
+		}
+		// A transport timeout can leave a job running. Observe its result without
+		// resending a request whose outcome is unknown.
+		submitted = true
 		return false, nil
 	})
 	if err != nil && submitErr != nil {
@@ -134,10 +165,11 @@ func checkUpgradeCompatibility(rows []*model.Parameter, tenantID int64) (atTarge
 	}
 	matched := 0
 	for _, v := range targets {
-		switch cmp := v.Cmp(sys); {
-		case cmp > 0:
+		cmp := v.Cmp(sys)
+		if cmp > 0 {
 			return false, false, fmt.Errorf("target tenant compatibility %s exceeds cluster compatibility %s", v, sys)
-		case cmp == 0:
+		}
+		if cmp == 0 {
 			matched++
 		}
 	}

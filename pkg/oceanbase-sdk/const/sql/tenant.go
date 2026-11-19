@@ -60,5 +60,6 @@ const (
 )
 
 const (
-	UpgradeTenantWithName = "ALTER SYSTEM RUN UPGRADE JOB \"UPGRADE_ALL\" TENANT = %s"
+	ListActiveTenantUpgradeIDs = "SELECT DISTINCT COALESCE(tenant_id, 0) FROM DBA_OB_TENANT_JOBS WHERE job_type = 'UPGRADE_ALL' AND job_status = 'INPROGRESS'"
+	UpgradeTenantWithName      = "ALTER SYSTEM RUN UPGRADE JOB \"UPGRADE_ALL\" TENANT = %s"
 )

@@ -529,6 +529,12 @@ func (m *OceanbaseOperationManager) ListLogStats(ctx context.Context, tenantId i
 	return logStats, nil
 }
 
+func (m *OceanbaseOperationManager) ListActiveTenantUpgradeIDs(ctx context.Context) ([]int64, error) {
+	var ids []int64
+	err := m.QueryList(ctx, &ids, sql.ListActiveTenantUpgradeIDs)
+	return ids, err
+}
+
 func (m *OceanbaseOperationManager) UpgradeTenantWithName(ctx context.Context, tenantName string) error {
 	err := m.ExecWithDefaultTimeout(ctx, fmt.Sprintf(sql.UpgradeTenantWithName, tenantName))
 	if err != nil {
