@@ -59,20 +59,6 @@ run() {
 #    envsubst < ./config/2.2.1_test/$template_file 
 }
 
-delete_obcluster() {
-    local template_file=$1
-    echo $OBCLUSTER_NAME
-    envsubst < ./config/2.2.1_test/$template_file | kubectl delete -f - > obcluster_delete.log 2>&1 &
-    rm -rf obcluster_delete.log
-#    envsubst < ./config/2.2.1_test/$template_file
-}
-
-delete_annotate() {
-    local cluster_name=$1
-    local namespace=$2
-    kubectl annotate obcluster $cluster_name  oceanbase.oceanbase.com/ignore-deletion- -n $namespace
-}
-
 check_resource_running() {
     local obcluster_name=$1
     local namespace=$2
@@ -103,55 +89,34 @@ check_resource_running() {
     done
 }
 
-check_resource_not_running() {
-    local obcluster_name=$1
-    local namespace=$2
-    local cluster_id=$3
-    counter=0
-    timeout=100  
-    RESOURCE_NOT_RUNNING='false'
-    while true; do
-        echo 'check resource not running'
-        counter=$((counter+1))
-        obcluster_crd=`kubectl get obcluster $obcluster_name -n $namespace | grep -w $obcluster_name | awk '{print $2}'`
-        obzone_crd=`kubectl get obzone $obcluster_name-$cluster_id-zone1 -n $namespace | grep -w $obcluster_name-$cluster_id-zone1 | awk '{print $2}'`
-        observer_crd=`kubectl get observer  -n $namespace | grep -w $obcluster_name | awk '{print $3}'`
-	output=$(kubectl get obcluster $obcluster_name -o yaml -n $namespace | grep deletionTimestamp | tail -n 1)
-	if [[ -z "$output" && $obcluster_crd != "running" && $obzone_crd != "running" && $observer_crd != "running" ]]; then
-            RESOURCE_NOT_RUNNING='true'
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "resource still not running"
-            exit 1
-            break
-        fi
-        sleep 3s
-    done
-}
-
-
 validate() {
-    run "obcluster_ignore_deletion.yaml"
-    check_resource_running  $OBCLUSTER_DEFAULT_ONE $NS_DEFAULT $CLUSTER_ID_DEFAULT_ONE
-    if [[ $RESOURCE_RUNNING == 'false' ]]; then
-	echo "case failed"
-    else
-	delete_obcluster "obcluster_ignore_deletion.yaml"
-	check_resource_running  $OBCLUSTER_DEFAULT_ONE $NS_DEFAULT $CLUSTER_ID_DEFAULT_ONE
-	delete_annotate $OBCLUSTER_DEFAULT_ONE $NS_DEFAULT
-	check_resource_not_running $OBCLUSTER_DEFAULT_ONE $NS_DEFAULT $CLUSTER_ID_DEFAULT_ONE 
-        if [[ $RESOURCE_NOT_RUNNING == 'false' ]]; then
-            echo "case failed"
-        else
-            echo "case passed" 
-        fi
-    fi 
+    local protection=oceanbase.oceanbase.com/ignore-deletion
+    local cluster="obcluster/$OBCLUSTER_DEFAULT_ONE"
+    local selector="ref-obcluster=$OBCLUSTER_DEFAULT_ONE"
+    local rejection
+    run "obcluster_ignore_deletion.yaml" || return 1
+    check_resource_running "$OBCLUSTER_DEFAULT_ONE" "$NS_DEFAULT" "$CLUSTER_ID_DEFAULT_ONE"
+
+    if rejection=$(kubectl -n "$NS_DEFAULT" delete "$cluster" --wait=false 2>&1); then
+        echo "Deletion unexpectedly succeeded while $protection was enabled"
+        return 1
+    fi
+    if [[ "$rejection" != *"protected from deletion by annotation $protection"* ]]; then
+        echo "$rejection" >&2
+        return 1
+    fi
+    kubectl -n "$NS_DEFAULT" annotate "$cluster" "$protection-" || return 1
+    kubectl -n "$NS_DEFAULT" delete "$cluster" --timeout=5m || return 1
+    kubectl -n "$NS_DEFAULT" wait --for=delete obzone,observer,pod -l "$selector" --timeout=5m
 }
 
 date
 prepare
 export_to_file
-validate
-#cleanup
+if validate; then
+    echo "case passed"
+else
+    echo "case failed"
+    exit 1
+fi
 date
