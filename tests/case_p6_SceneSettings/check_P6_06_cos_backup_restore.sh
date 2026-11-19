@@ -28,7 +28,6 @@ prepare() {
     create_pass_secret $NAMESPACE $BACKUP_ROOT_SECRET $PASSWORD
     create_pass_secret $NAMESPACE $BACKUP_STANDBY_SECRET $PASSWORD
     create_pass_cos_secret $NAMESPACE $COS_ACCESS $COS_AK $COS_SK $COS_APPID 
-    echo $PASSWORD
 }
 
 # prepare create related resources to create obcluster
@@ -87,7 +86,6 @@ check_in_obcluster() {
     OBSERVER_ACTIVE='false'
     ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
     echo $ip
-    echo $PASSWORD
     while true; do
         echo 'check ob'
         counter=$((counter+1))
@@ -135,8 +133,9 @@ check_backup_running() {
     while true; do
         echo 'check backup resource'
         counter=$((counter+1))
-	crd_obtenantbackuppolicies_ARCHIVE=`kubectl get obtenantbackuppolicies.oceanbase.oceanbase.com -n $NAMESPACE| grep "$OBTENANT_BP_COS"|awk -F' ' '{print $2}'`
-	crd_FULL=`kubectl get obtenantbackups -n $NAMESPACE| grep "full"|awk -F' ' '{print $3}'| head -n 1`
+	crd_obtenantbackuppolicies_ARCHIVE=$(kubectl -n "$NAMESPACE" get obtbp "$OBTENANT_BP_COS" -o jsonpath='{.status.status}')
+	crd_FULL=$(kubectl -n "$NAMESPACE" get obtenantbackups -l "ref-backuppolicy=$OBTENANT_BP_COS,oceanbase.oceanbase.com/backup-type=FULL" \
+                --sort-by=.metadata.creationTimestamp -o 'jsonpath={range .items[*]}{.status.status}{"\n"}{end}' | tail -n 1)
         if [[ $crd_obtenantbackuppolicies_ARCHIVE = "RUNNING" && $crd_FULL = "SUCCESSFUL" ]];then
             echo "backup resource is $crd_obtenantbackuppolicies_ARCHIVE ready"
             BACKUP_RUNNING='true'
@@ -203,7 +202,7 @@ check_restore_db_running() {
     while true; do
         echo 'check restore db resource'
         counter=$((counter+1))
-	tenant_role=`mysql -h $ip -P2881 -A -uroot -p$PASSWORD -Doceanbase -e "select * from DBA_OB_TENANTS;"| grep $OBTENANT_RESTORE_COS|awk -F' ' '{print $17}'`
+	tenant_role=$(get_tenant_role "$ip" "$PASSWORD" "$OBTENANT_RESTORE_COS")
 	echo $tenant_role
         if [[ $tenant_role = "PRIMARY" ]];then
             echo "tenant_role $tenant_role"
@@ -225,6 +224,7 @@ validate() {
     check_resource_running
     if [[ $RESOURCE_RUNNING == 'false' ]]; then
         echo "case failed"
+        return 1
     else
         check_in_obcluster
 	run "obtenant_basic_1_1_1.yaml"
@@ -237,8 +237,10 @@ validate() {
 	catfile "obtenant-restore-cos.yaml"
 	check_restore_running
 	check_restore_db_running
-        if [[ $RESTORE_RUNNING == 'false' || $RESTORE_DB_RUNNING == 'false' ]]; then
+        if [[ $OBSERVER_ACTIVE != true || $OBTENANT_RUNNING != true || $BACKUP_RUNNING != true ||
+              $BACKUP_DB_RUNNING != true || $RESTORE_RUNNING != true || $RESTORE_DB_RUNNING != true ]]; then
             echo "case failed"
+            return 1
 	    #cleanup
 	    #prepare
         else

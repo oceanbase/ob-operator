@@ -68,3 +68,10 @@ clean_nfs_test_directory() {
     # Resolve symlinks on the NFS server before expanding the wildcard there.
     ssh -- "$USER_NAME@$NFS_SERVER" "cd -P -- '$quoted' && dir=\$(pwd -P) && [ -n \"\$dir\" ] && [ \"\$dir\" != / ] && sudo rm -rf -- ./*"
 }
+
+get_tenant_role() {
+    local host=$1 password=$2 tenant=$3
+    MYSQL_PWD="$password" mysql -h "$host" -P 2881 -uroot -Doceanbase --batch --skip-column-names \
+        -e 'SELECT TENANT_NAME, TENANT_ROLE FROM DBA_OB_TENANTS' |
+        awk -F '\t' -v tenant="$tenant" '$1 == tenant { print $2 }'
+}
