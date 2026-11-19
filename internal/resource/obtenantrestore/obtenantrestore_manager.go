@@ -14,6 +14,7 @@ package obtenantrestore
 
 import (
 	"context"
+	"errors"
 
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
@@ -111,51 +112,46 @@ func (m *ObTenantRestoreManager) checkRestoreProgress() error {
 	if err != nil {
 		return err
 	}
-	restoreJob, err := con.GetLatestRestoreProgressOfTenant(m.Ctx, m.Resource.Spec.TargetTenant)
+	var job *model.RestoreHistory
+	if description := m.Resource.Annotations[restoreSubmission]; description != "" {
+		if description != restoreDescription(m.Resource) {
+			return errors.New("restore job identity changed")
+		}
+		job, err = con.GetTrackedRestoreJob(m.Ctx, m.Resource.Spec.TargetTenant, description)
+	} else {
+		// Restores already running before job descriptions were introduced.
+		progress, readErr := con.GetLatestRestoreProgressOfTenant(m.Ctx, m.Resource.Spec.TargetTenant)
+		if readErr != nil {
+			return readErr
+		}
+		if progress != nil {
+			job = &model.RestoreHistory{RestoreProgress: *progress}
+		} else {
+			job, err = con.GetLatestRestoreHistoryOfTenant(m.Ctx, m.Resource.Spec.TargetTenant)
+		}
+	}
 	if err != nil {
 		return err
 	}
-	if restoreJob != nil {
-		m.Resource.Status.RestoreProgress = &model.RestoreHistory{RestoreProgress: *restoreJob}
-		if restoreJob.Status == "SUCCESS" {
-			m.Recorder.Event(m.Resource, corev1.EventTypeNormal, "Restore job finished", "Restore job finished")
-			if m.Resource.Spec.RestoreRole == constants.TenantRoleStandby {
-				if m.Resource.Spec.Source.ReplayEnabled {
-					// Only if replay is enabled start log replay
-					m.Resource.Status.Status = constants.RestoreJobStatusReplaying
-				} else {
-					m.Resource.Status.Status = constants.RestoreJobSuccessful
-				}
-			} else {
-				m.Resource.Status.Status = constants.RestoreJobStatusActivating
-			}
-		} else if restoreJob.Status == "FAIL" {
-			m.Recorder.Event(m.Resource, corev1.EventTypeWarning, "Restore job is failed", "Restore job is failed")
-			m.Resource.Status.Status = constants.RestoreJobFailed
-		}
-	} else {
-		restoreHistory, err := con.GetLatestRestoreHistoryOfTenant(m.Ctx, m.Resource.Spec.TargetTenant)
-		if err != nil {
-			return err
-		}
-		m.Resource.Status.RestoreProgress = restoreHistory
-		if restoreHistory != nil && restoreHistory.Status == "SUCCESS" {
-			m.Recorder.Event(m.Resource, corev1.EventTypeNormal, "Restore job finished", "Restore job finished")
-			if m.Resource.Spec.RestoreRole == constants.TenantRoleStandby {
-				if m.Resource.Spec.Source.ReplayEnabled {
-					// Only if replay is enabled start log replay
-					m.Resource.Status.Status = constants.RestoreJobStatusReplaying
-				} else {
-					m.Resource.Status.Status = constants.RestoreJobSuccessful
-				}
-			} else {
-				m.Resource.Status.Status = constants.RestoreJobStatusActivating
-			}
-		} else if restoreHistory != nil && restoreHistory.Status == "FAIL" {
-			m.Recorder.Event(m.Resource, corev1.EventTypeWarning, "Restore job is failed", "Restore job is failed")
-			m.Resource.Status.Status = constants.RestoreJobFailed
-		}
+	m.Resource.Status.RestoreProgress = job
+	if job == nil {
+		return nil
 	}
+	switch job.Status {
+	case "SUCCESS":
+		m.Recorder.Event(m.Resource, corev1.EventTypeNormal, "Restore job finished", "Restore job finished")
+		if m.Resource.Spec.RestoreRole != constants.TenantRoleStandby {
+			m.Resource.Status.Status = constants.RestoreJobStatusActivating
+		} else if m.Resource.Spec.Source.ReplayEnabled {
+			m.Resource.Status.Status = constants.RestoreJobStatusReplaying
+		} else {
+			m.Resource.Status.Status = constants.RestoreJobSuccessful
+		}
+	case "FAIL", "FAILED":
+		m.Recorder.Event(m.Resource, corev1.EventTypeWarning, "Restore job failed", "Restore job failed")
+		m.Resource.Status.Status = constants.RestoreJobFailed
+	}
+
 	return nil
 }
 
@@ -230,6 +226,9 @@ func (m *ObTenantRestoreManager) retryUpdateStatus() error {
 		}, resource)
 		if err != nil {
 			return client.IgnoreNotFound(err)
+		}
+		if resource.UID != m.Resource.UID || resource.Generation != m.Resource.Generation {
+			return errors.New("restore changed during reconciliation")
 		}
 		resource.Status = m.Resource.Status
 		return m.Client.Status().Update(m.Ctx, resource)

@@ -14,11 +14,14 @@ package obtenantrestore
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/go-sql-driver/mysql"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/param"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
@@ -43,12 +46,35 @@ func StartRestoreJobInOB(m *ObTenantRestoreManager) tasktypes.TaskError {
 	if err != nil {
 		return err
 	}
+	description := restoreDescription(m.Resource)
+	if m.Resource.Annotations[restoreSubmission] == description {
+		return m.awaitSubmittedRestore(con, description)
+	}
 	restoreSpec := m.Resource.Spec.Source
 	sourceUri, err := m.getSourceUri()
 	if err != nil {
 		return err
 	}
 
+	var key string
+	var limit any
+	if !restoreSpec.Until.Unlimited {
+		switch {
+		case restoreSpec.Until.Timestamp != nil:
+			if strings.TrimSpace(*restoreSpec.Until.Timestamp) == "" {
+				return errors.New("restore cutoff time is empty")
+			}
+			key, limit = "TIME", *restoreSpec.Until.Timestamp
+		case restoreSpec.Until.Scn != nil:
+			key = "SCN"
+			limit, err = operation.RestoreUntilArgument(key, *restoreSpec.Until.Scn)
+			if err != nil {
+				return err
+			}
+		default:
+			return errors.New("restore cutoff must specify TIME or SCN")
+		}
+	}
 	if restoreSpec.BakEncryptionSecret != "" {
 		password, err := resourceutils.ReadPassword(m.Client, m.Resource.Namespace, restoreSpec.BakEncryptionSecret)
 		if err != nil {
@@ -62,26 +88,25 @@ func StartRestoreJobInOB(m *ObTenantRestoreManager) tasktypes.TaskError {
 		}
 	}
 
-	if restoreSpec.Until.Unlimited {
-		err = con.StartRestoreUnlimited(m.Ctx, m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option)
-		if err != nil {
+	claimed, err := m.claimRestoreSubmission()
+	if err != nil {
+		return err
+	}
+	if !claimed {
+		return m.awaitSubmittedRestore(con, description)
+	}
+	err = con.StartTrackedRestore(m.Ctx, m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option, key, limit, description)
+	if err != nil {
+		var sqlErr *mysql.MySQLError
+		if errors.As(err, &sqlErr) {
 			return err
 		}
-	} else {
-		if restoreSpec.Until.Timestamp != nil {
-			err = con.StartRestoreWithLimit(m.Ctx, m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option, "TIME", *restoreSpec.Until.Timestamp)
-			if err != nil {
-				return err
-			}
-		} else if restoreSpec.Until.Scn != nil {
-			err = con.StartRestoreWithLimit(m.Ctx, m.Resource.Spec.TargetTenant, sourceUri, m.Resource.Spec.Option, "SCN", *restoreSpec.Until.Scn)
-			if err != nil {
-				return err
-			}
-		} else {
-			return errors.New("Restore until must have a limit key, scn and timestamp are both nil now")
+		// A disconnected client can miss a successful server reply.
+		if observed := m.awaitSubmittedRestore(con, description); observed != nil {
+			return errors.Wrapf(err, "no matching physical restore confirmed: %v", observed)
 		}
 	}
+
 	return nil
 }
 

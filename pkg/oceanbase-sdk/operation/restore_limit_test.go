@@ -1,6 +1,9 @@
 package operation
 
-import "testing"
+import (
+	"context"
+	"testing"
+)
 
 func TestRestoreUntilArgument(t *testing.T) {
 	for _, tc := range []struct {
@@ -19,7 +22,7 @@ func TestRestoreUntilArgument(t *testing.T) {
 		{"unrecognized limit", "OTHER", "42", nil},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := restoreUntilArgument(tc.key, tc.in)
+			got, err := RestoreUntilArgument(tc.key, tc.in)
 			if tc.want == nil {
 				if err == nil {
 					t.Fatalf("expected invalid restore limit to be rejected, got %v", got)
@@ -28,5 +31,14 @@ func TestRestoreUntilArgument(t *testing.T) {
 				t.Fatalf("restore argument = %T(%v), %v; want %T(%v)", got, got, err, tc.want, tc.want)
 			}
 		})
+	}
+}
+
+func TestLimitedRestoreRejectsMissingKey(t *testing.T) {
+	// An invalid request must be rejected before any connection is used.
+	var db *OceanbaseOperationManager
+	err := db.StartRestoreWithLimit(context.Background(), "target", "uri", "pool_list=p", "", nil)
+	if err == nil {
+		t.Fatal("limited restore must not submit an unlimited restore")
 	}
 }
