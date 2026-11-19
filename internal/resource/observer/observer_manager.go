@@ -117,7 +117,7 @@ func (m *OBServerManager) UpdateStatus() error {
 			m.Logger.Info("Get pvc failed: " + err.Error())
 		}
 		if m.OBServer.Status.Status == serverstatus.Running {
-			if pvcs != nil && len(pvcs.Items) > 0 && m.checkIfStorageExpand(pvcs) {
+			if pvcs != nil && m.checkIfStorageExpand(pvcs) {
 				m.OBServer.Status.Status = serverstatus.ExpandPVC
 			}
 		}

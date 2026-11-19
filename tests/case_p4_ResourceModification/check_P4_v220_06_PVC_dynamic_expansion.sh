@@ -1,134 +1,73 @@
 #!/bin/bash
- 
-# load all the parameters in setup.sh
+
 source setup.sh
 source util.sh
 source env.sh
 source case_p4_ResourceModification/env_vars.sh
 
-# prepare create related resources to create obcluster
-prepare() {
-    export OBCLUSTER_NAME=testexpandable$SUFFIX
-    export LOCAL_PATH_EXPANDABLE=local-path-expandable$SUFFIX
-    echo $PASSWORD
-} 
-# clean up delete everything by deleting the entire namespace
+set -euo pipefail
+export OBCLUSTER_NAME=testexpandable$SUFFIX
+export LOCAL_PATH_EXPANDABLE=${P4_EXPANDABLE_STORAGE_CLASS:-local-path-expandable$SUFFIX}
+owned_class=false
+cluster_created=false
+
 cleanup() {
-    kubectl delete namespace $NAMESPACE
-}
-
-cleanup_obcluster() {
-    kubectl delete obcluster $OBCLUSTER_NAME -n  $NAMESPACE
-}
- 
-run() {
-    local template_file=$1
-    echo $OBCLUSTER_NAME
-    envsubst < ./config/2.2.0_test/$template_file | kubectl apply -f -
-}
- 
-check_resource_running() {
-    counter=0
-    timeout=100  
-    RESOURCE_RUNNING='false'
-    while true; do
-        echo 'check resource'
-        counter=$((counter+1))
-        pod_1_zone1=`kubectl get pod -o wide -n $NAMESPACE | grep "$OBCLUSTER_NAME-1-zone1" | awk -v line="1" 'NR==line{print \$2}'`
-        ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-        crd_obcluster=`kubectl get obcluster $OBCLUSTER_NAME -n $NAMESPACE  -o yaml| grep "status: running" | tail -n 1| sed 's/ //g'`
-        if [[ $pod_1_zone1 = "1/1" && -n "$ip" && $crd_obcluster = "status:running" ]];then
-            echo "pod_1_zone1 is $pod_1_zone1 ready"
-            echo "svc is $ip ready"
-            echo "crd_obcluster $crd_obcluster"
-            RESOURCE_RUNNING='true'
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "resource still not running"
-            break
-        fi
-        sleep 3s
-    done
-}
-
-check_in_obcluster() {
-    counter=0
-    timeout=100  
-    OBSERVER_ACTIVE='false'
-    ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-    echo $ip
-    echo $PASSWORD
-    while true; do
-        echo 'check ob'
-        counter=$((counter+1))
-        server_1_zone1=`mysql -uroot -h $ip -P 2881 -Doceanbase -p$PASSWORD -e 'select * from __all_server;'|grep zone1| awk -v line="1" 'NR==line{print \$11}'`
-        if [[ $server_1_zone1 == "ACTIVE" ]]
-        then
-            echo "server_1_zone1 $server_1_zone1"
-            OBSERVER_ACTIVE='true'
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "resource still not running"
-	    echo "case failed"
-            break
-        fi
-        sleep 3s
-    done
-}
-
-check_pvc_in_obcluster() {
-    counter=0
-    timeout=100  
-    OBSERVER_PVC_ACTIVE='false'
-    ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-    echo $ip
-    echo $PASSWORD
-    while true; do
-        echo 'check ob pvc'
-        counter=$((counter+1))
-	zone_status=$(kubectl get obzone -n $NAMESPACE -l ref-obcluster="$OBCLUSTER_NAME" | grep "$OBCLUSTER_NAME-1-zone1" | awk '{print $2}')
-	observer_status=$(kubectl get observer -n $NAMESPACE -l ref-obcluster="$OBCLUSTER_NAME" | grep "$OBCLUSTER_NAME-1-zone1" | awk '{print $3}')
-	obcluster_status=$(kubectl get obcluster -n $NAMESPACE | grep "$OBCLUSTER_NAME" | awk '{print $2}')
-	pvc_storage=$(kubectl get pvc -n $NAMESPACE -l ref-obcluster="$OBCLUSTER_NAME" -o jsonpath='{.items[*].spec.resources.requests.storage}')
-	echo "zone_status $zone_status observer_status $observer_status obcluster_status $obcluster_status pvc_storage $pvc_storage"
-	if [ "$zone_status" = "running" ] && [ "$pvc_storage" = "61Gi 60Gi 20Gi" ] && [ "$observer_status" = "running" ] && [ "$obcluster_status" = "running" ]; then
-            OBSERVER_PVC_ACTIVE='true'
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "resource still not running"
-            echo "case failed"
-            break
-        fi
-        sleep 3s
-    done
-}
- 
-
-validate() {
-    run "sc_local_expandable.yaml"
-    run "obcluster_expandable_1-1-1.yaml"
-    echo 'do validate'
-    check_resource_running 
-    if [[ $RESOURCE_RUNNING == 'false' ]]; then
-        echo "case failed"
-    else
-        check_in_obcluster
-	run "obcluster_expanded_1-1-1.yaml"
-	check_pvc_in_obcluster
-        if [[ $OBSERVER_PVC_ACTIVE == 'false' ]]; then
-            echo "case failed"
-	    #cleanup
-	    #prepare
-        else
-            echo "case passed"
-        fi
+    if $cluster_created; then
+        kubectl -n "$NAMESPACE" delete obcluster "$OBCLUSTER_NAME" --ignore-not-found
+    fi
+    if $owned_class; then
+        kubectl delete storageclass "$LOCAL_PATH_EXPANDABLE" --ignore-not-found
     fi
 }
 
-prepare
-cleanup_obcluster
-validate 
-cleanup_obcluster
+template() {
+    envsubst < "./config/2.2.0_test/$1"
+}
+
+volume_bytes() {
+    kubectl exec -n "$NAMESPACE" "$server" -- df -PB1 /home/admin/data-file | awk 'NR == 2 {print $2}'
+}
+
+sql() {
+    MYSQL_PWD="$PASSWORD" mysql --batch --skip-column-names -h "$ip" -P2881 -uroot -e "$1"
+}
+
+trap cleanup EXIT
+if [[ -z ${P4_EXPANDABLE_STORAGE_CLASS:-} ]]; then
+    template sc_local_expandable.yaml | kubectl create -f -
+    owned_class=true
+fi
+if [[ $(kubectl get sc "$LOCAL_PATH_EXPANDABLE" -o jsonpath='{.allowVolumeExpansion}') != true ]]; then
+    echo "case failed: storage class $LOCAL_PATH_EXPANDABLE does not allow expansion" >&2
+    exit 1
+fi
+template obcluster_expandable_1-1-1.yaml | kubectl create -f -
+cluster_created=true
+kubectl -n "$NAMESPACE" wait "obcluster/$OBCLUSTER_NAME" --for=jsonpath='{.status.status}'=running --timeout=12m
+server=$(kubectl -n "$NAMESPACE" get observers -l "ref-obcluster=$OBCLUSTER_NAME" -o jsonpath='{.items[0].metadata.name}')
+kubectl -n "$NAMESPACE" wait "pod/$server" --for=condition=Ready --timeout=3m
+ip=$(kubectl -n "$NAMESPACE" get pod "$server" -o jsonpath='{.status.podIP}')
+[[ $(sql "SELECT COUNT(*) FROM oceanbase.__all_server WHERE zone='zone1' AND status='ACTIVE'") == 1 ]]
+sql 'CREATE DATABASE p4_resize; CREATE TABLE p4_resize.marker (id INT PRIMARY KEY); INSERT INTO p4_resize.marker VALUES (61)'
+before=$(volume_bytes)
+pvc="$server-data-file"
+[[ $(kubectl -n "$NAMESPACE" get pvc "$pvc" -o jsonpath='{.spec.resources.requests.storage}') == 60Gi ]]
+
+template obcluster_expanded_1-1-1.yaml | kubectl apply -f -
+required=$(numfmt --from=iec-i 61Gi)
+deadline=$((SECONDS + 420))
+while (( SECONDS < deadline )); do
+    read -r phase request capacity < <(kubectl -n "$NAMESPACE" get pvc "$pvc" -o jsonpath='{.status.phase} {.spec.resources.requests.storage} {.status.capacity.storage}{"\n"}')
+    if [[ $phase == Bound && $request == 61Gi && -n $capacity ]] && (( $(numfmt --from=auto "$capacity") >= required )); then
+        after=$(volume_bytes)
+        if (( after > before )); then
+            kubectl -n "$NAMESPACE" wait "observer/$server" "obzone/$OBCLUSTER_NAME-1-zone1" "obcluster/$OBCLUSTER_NAME" --for=jsonpath='{.status.status}'=running --timeout=5m
+            [[ $(sql 'SELECT id FROM p4_resize.marker') == 61 ]]
+            echo "case passed: $pvc request=$request capacity=$capacity filesystem=$before->$after bytes, SQL marker retained"
+            exit 0
+        fi
+    fi
+    sleep 3
+done
+echo "case failed: $pvc request=$request capacity=$capacity filesystem=$before->$(volume_bytes) bytes; use a resize-capable P4_EXPANDABLE_STORAGE_CLASS" >&2
+exit 1

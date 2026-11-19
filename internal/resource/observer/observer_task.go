@@ -474,95 +474,39 @@ func WaitForPodDeleted(m *OBServerManager) tasktypes.TaskError {
 }
 
 func ExpandPVC(m *OBServerManager) tasktypes.TaskError {
-	observerPVC, err := m.getPVCs()
+	pvcs, err := m.getPVCs()
 	if err != nil {
-		return errors.Wrapf(err, "Failed to get pvc list of observer %s", m.OBServer.Name)
+		return errors.Wrapf(err, "list PVCs for observer %s", m.OBServer.Name)
 	}
-
-	for _, pvc := range observerPVC.Items {
-		switch pvc.Name {
-		case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix):
-			pvc.Spec.Resources.Requests[corev1.ResourceStorage] = m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size
-			err = m.K8sResClient.Update(m.Ctx, &pvc)
-			if err != nil {
-				return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
-			}
-		case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix):
-			if m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
-				pvc.Spec.Resources.Requests[corev1.ResourceStorage] = m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size
-				err = m.K8sResClient.Update(m.Ctx, &pvc)
-				if err != nil {
-					return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
-				}
-			}
-		case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix):
-			pvc.Spec.Resources.Requests[corev1.ResourceStorage] = m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size
-			err = m.K8sResClient.Update(m.Ctx, &pvc)
-			if err != nil {
-				return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
-			}
-		case m.OBServer.Name: // single pvc
-			sum := resource.Quantity{}
-			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size)
-			if m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
-				sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
-			}
-			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size)
-			pvc.Spec.Resources.Requests[corev1.ResourceStorage] = sum
-			err = m.K8sResClient.Update(m.Ctx, &pvc)
-			if err != nil {
-				return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
-			}
+	claims := indexPVCs(pvcs)
+	for _, target := range m.storageClaims(claims) {
+		pvc := claims[target.name]
+		if pvc == nil || pvc.DeletionTimestamp != nil {
+			return errors.Errorf("observer PVC %s is missing or being deleted", target.name)
+		}
+		if pvc.Spec.Resources.Requests.Storage().Cmp(target.storage.Size) >= 0 {
+			continue
+		}
+		pvc.Spec.Resources.Requests[corev1.ResourceStorage] = target.storage.Size
+		if err := m.K8sResClient.Update(m.Ctx, pvc); err != nil {
+			return errors.Wrapf(err, "expand observer PVC %s", target.name)
 		}
 	}
 	return nil
 }
 
 func WaitForPvcResized(m *OBServerManager) tasktypes.TaskError {
-outer:
 	for i := 0; i < obcfg.GetConfig().Time.DefaultStateWaitTimeout; i++ {
 		time.Sleep(time.Second)
-
-		observerPVC, err := m.getPVCs()
+		pvcs, err := m.getPVCs()
 		if err != nil {
-			return errors.Wrapf(err, "Failed to get pvc of observer %s", m.OBServer.Name)
+			return errors.Wrapf(err, "list PVCs for observer %s", m.OBServer.Name)
 		}
-		serverStorage := m.OBServer.Spec.OBServerTemplate.Storage
-		for _, pvc := range observerPVC.Items {
-			pvcSize := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
-			switch pvc.Name {
-			case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix):
-				if serverStorage.DataStorage.Size.Cmp(pvcSize) != 0 {
-					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
-					continue outer
-				}
-			case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix):
-				if serverStorage.RedoLogStorage != nil && serverStorage.RedoLogStorage.Size.Cmp(pvcSize) != 0 {
-					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
-					continue outer
-				}
-			case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix):
-				if serverStorage.LogStorage.Size.Cmp(pvcSize) != 0 {
-					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
-					continue outer
-				}
-			case m.OBServer.Name:
-				sum := resource.Quantity{}
-				sum.Add(serverStorage.DataStorage.Size)
-				if serverStorage.RedoLogStorage != nil {
-					sum.Add(serverStorage.RedoLogStorage.Size)
-				}
-				sum.Add(serverStorage.LogStorage.Size)
-				if sum.Cmp(pvcSize) != 0 {
-					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
-					continue outer
-				}
-			}
+		if !m.checkIfStorageExpand(pvcs) {
+			return nil
 		}
-		// all pvc expanded
-		return nil
 	}
-	return errors.Errorf("Timeout to wait for pvc expanded")
+	return errors.Errorf("timed out waiting for observer %s PVC capacity", m.OBServer.Name)
 }
 
 func CreateOBServerSvc(m *OBServerManager) tasktypes.TaskError {

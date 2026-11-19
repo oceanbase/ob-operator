@@ -21,7 +21,6 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/util/retry"
@@ -158,31 +157,50 @@ func (m *OBServerManager) getPVCs() (*corev1.PersistentVolumeClaimList, error) {
 	return pvcs, nil
 }
 
+type storageClaim struct {
+	name    string
+	storage *apitypes.StorageSpec
+}
+
+func indexPVCs(pvcs *corev1.PersistentVolumeClaimList) map[string]*corev1.PersistentVolumeClaim {
+	byName := make(map[string]*corev1.PersistentVolumeClaim, len(pvcs.Items))
+	for i := range pvcs.Items {
+		pvc := &pvcs.Items[i]
+		byName[pvc.Name] = pvc
+	}
+	return byName
+}
+
+func (m *OBServerManager) storageClaims(existing map[string]*corev1.PersistentVolumeClaim) []storageClaim {
+	name := m.OBServer.Name
+	storage := m.OBServer.Spec.OBServerTemplate.Storage
+	hasRedo := storage.RedoLogStorage != nil && m.OBServer.Annotations[oceanbaseconst.AnnotationsDeploymentMode] != oceanbaseconst.DeploymentModeSharedStorage
+	single, annotated := m.OBServer.Annotations[oceanbaseconst.AnnotationsSinglePVC]
+	// Older resources can identify the single claim by the observer's own name.
+	if single == "true" || (!annotated && existing[name] != nil) {
+		combined := storage.DataStorage.DeepCopy()
+		combined.Size.Add(storage.LogStorage.Size)
+		if hasRedo {
+			combined.Size.Add(storage.RedoLogStorage.Size)
+		}
+		return []storageClaim{{name: name, storage: combined}}
+	}
+
+	claims := []storageClaim{{name: name + "-" + oceanbaseconst.DataVolumeSuffix, storage: storage.DataStorage}}
+	if hasRedo {
+		claims = append(claims, storageClaim{name: name + "-" + oceanbaseconst.ClogVolumeSuffix, storage: storage.RedoLogStorage})
+	}
+	return append(claims, storageClaim{name: name + "-" + oceanbaseconst.LogVolumeSuffix, storage: storage.LogStorage})
+}
+
 func (m *OBServerManager) checkIfStorageExpand(pvcs *corev1.PersistentVolumeClaimList) bool {
-	for _, pvc := range pvcs.Items {
-		switch {
-		case strings.HasSuffix(pvc.Name, oceanbaseconst.DataVolumeSuffix):
-			if pvc.Spec.Resources.Requests.Storage().Cmp(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size) < 0 {
-				return true
-			}
-		case strings.HasSuffix(pvc.Name, oceanbaseconst.ClogVolumeSuffix):
-			if m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil && pvc.Spec.Resources.Requests.Storage().Cmp(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0 {
-				return true
-			}
-		case strings.HasSuffix(pvc.Name, oceanbaseconst.LogVolumeSuffix):
-			if pvc.Spec.Resources.Requests.Storage().Cmp(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size) < 0 {
-				return true
-			}
-		case pvc.Name == m.OBServer.Name:
-			sum := resource.Quantity{}
-			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size)
-			if m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
-				sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
-			}
-			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size)
-			if pvc.Spec.Resources.Requests.Storage().Cmp(sum) < 0 {
-				return true
-			}
+	claims := indexPVCs(pvcs)
+	for _, target := range m.storageClaims(claims) {
+		pvc := claims[target.name]
+		if pvc == nil || pvc.DeletionTimestamp != nil || pvc.Status.Phase != corev1.ClaimBound ||
+			pvc.Spec.Resources.Requests.Storage().Cmp(target.storage.Size) < 0 ||
+			pvc.Status.Capacity.Storage().Cmp(target.storage.Size) < 0 {
+			return true
 		}
 	}
 	return false
