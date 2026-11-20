@@ -3,6 +3,7 @@ package obtenant
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -48,7 +49,7 @@ func (m *OBTenantManager) currentRemovalTenant() (*v1alpha1.OBTenant, error) {
 		return nil, err
 	}
 	if live.UID == "" || live.UID != m.OBTenant.UID || live.Generation != m.OBTenant.Generation || !live.DeletionTimestamp.IsZero() {
-		return nil, fmt.Errorf("tenant changed before pool removal")
+		return nil, errors.New("tenant changed before pool removal")
 	}
 	return &live, nil
 }

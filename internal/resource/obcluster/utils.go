@@ -283,6 +283,8 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 			waitForZone = m.waitForZoneStorage
 		case zonestatus.ModifyServerTemplate:
 			waitForZone = m.waitForZonePodTemplate
+		default:
+			// Other operations wait for their working and target states below.
 		}
 		if waitForZone != nil {
 			// Finish any previously dispatched change before issuing the next one.

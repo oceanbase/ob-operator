@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/go-logr/logr"
+
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"

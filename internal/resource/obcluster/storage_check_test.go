@@ -9,7 +9,6 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/oceanbase/ob-operator/internal/telemetry"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -22,6 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 
 	oc "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	"github.com/oceanbase/ob-operator/internal/telemetry"
 )
 
 func storageFixture(t *testing.T, objs ...client.Object) *OBClusterManager {

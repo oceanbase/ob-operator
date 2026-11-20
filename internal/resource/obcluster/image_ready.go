@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -152,7 +153,7 @@ func bootstrapProbeResult(ctx context.Context, reader client.Reader, job *batchv
 
 func (m *OBClusterManager) checkImageReady() error {
 	if m.OBCluster.UID == "" {
-		return fmt.Errorf("cannot run image check without a cluster UID")
+		return errors.New("cannot run image check without a cluster UID")
 	}
 	reader := m.APIReader
 	if reader == nil {

@@ -1,3 +1,4 @@
+// Package obcluster reconciles OceanBase clusters and their zones.
 package obcluster
 
 import (

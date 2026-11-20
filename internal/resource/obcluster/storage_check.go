@@ -28,7 +28,7 @@ const storageClaimUID = "oceanbase.oceanbase.com/storage-check-claim-uid"
 func (m *OBClusterManager) storageCheckObjects() (*corev1.PersistentVolumeClaim, *batchv1.Job, error) {
 	c := m.OBCluster
 	if c.UID == "" || c.Spec.OBServerTemplate == nil || c.Spec.OBServerTemplate.Storage == nil {
-		return nil, nil, fmt.Errorf("storage check needs an OBCluster UID and storage configuration")
+		return nil, nil, errors.New("storage check needs an OBCluster UID and storage configuration")
 	}
 	storage := c.Spec.OBServerTemplate.Storage.RedoLogStorage
 	if c.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {

@@ -15,19 +15,20 @@ package observer
 import (
 	"context"
 	"errors"
+	"testing"
+	"time"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
+	"github.com/oceanbase/ob-operator/pkg/coordinator"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
 	"github.com/oceanbase/ob-operator/pkg/task/const/strategy"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"testing"
-	"time"
-
-	"github.com/oceanbase/ob-operator/pkg/coordinator"
 	tt "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 

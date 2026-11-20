@@ -1,3 +1,4 @@
+// Package obzone reconciles OceanBase zones and their servers.
 package obzone
 
 import (
