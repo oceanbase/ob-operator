@@ -78,8 +78,8 @@ func TestNativeHelmReadinessIsReadOnlyAndRunsAfterInstallAndUpgrade(t *testing.T
 }
 func TestNativeHelmUpgradeKeepsOriginalCRURLs(t *testing.T) {
 	api, config := retainedCredentials(t)
-	lsURL := "s3://qa-logs?host=http://10.43.0.77:9000&s3_region=us-east-1"
-	obURL := "s3://qa-data?host=http://10.43.0.77:9000&s3_region=us-east-1"
+	lsURL := "s3://qa-logs?host=http://192.0.2.77:9000&s3_region=us-east-1"
+	obURL := "s3://qa-data?host=http://192.0.2.77:9000&s3_region=us-east-1"
 	api.crs = map[string]interface{}{
 		"/apis/oceanbase.oceanbase.com/v1alpha1/namespaces/qa-ns/oblogserviceclusters/qa-ls": map[string]interface{}{"apiVersion": "oceanbase.oceanbase.com/v1alpha1", "kind": "OBLogServiceCluster", "metadata": map[string]string{"name": "qa-ls", "namespace": "qa-ns"}, "spec": map[string]interface{}{"objectStoreUrl": map[string]string{"bucketURL": lsURL}}},
 		"/apis/oceanbase.oceanbase.com/v1alpha1/namespaces/qa-ns/obclusters/qa-ob":           map[string]interface{}{"apiVersion": "oceanbase.oceanbase.com/v1alpha1", "kind": "OBCluster", "metadata": map[string]string{"name": "qa-ob", "namespace": "qa-ns"}, "spec": map[string]interface{}{"sharedStorageInfo": map[string]string{"bucketURL": obURL}}},
@@ -94,7 +94,7 @@ func TestNativeHelmUpgradeKeepsOriginalCRURLs(t *testing.T) {
 }
 func TestNativeHelmNewServiceAllocationDoesNotChangeCRURL(t *testing.T) {
 	api, config := retainedCredentials(t)
-	for _, ip := range []string{"", "10.43.0.77"} {
+	for _, ip := range []string{"", "192.0.2.77"} {
 		api.serviceIP = ip
 		output, err := renderRetained(t, config, map[string]interface{}{})
 		if err != nil {

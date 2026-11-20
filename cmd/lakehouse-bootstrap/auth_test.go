@@ -10,6 +10,7 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
 	"database/sql/driver"
 	"errors"
@@ -94,6 +95,7 @@ func (c testConnector) Connect(context.Context) (driver.Conn, error) { return c.
 func (c testConnector) Driver() driver.Driver                        { return c.testDriver }
 
 func TestRootPasswordLifecycle(t *testing.T) {
+	configuredPassword := rand.Text()
 	for _, tc := range []struct {
 		name                       string
 		state                      testDatabase
@@ -104,8 +106,8 @@ func TestRootPasswordLifecycle(t *testing.T) {
 	}{
 		{name: "fresh database", mode: "bootstrap", bootstrap: 1, passwordChanges: 1},
 		{name: "initial connections accept password", state: testDatabase{acceptInitialPassword: true}, mode: "bootstrap", bootstrap: 1, passwordChanges: 1},
-		{name: "already secured", state: testDatabase{password: "test-only-password", ready: true}, mode: "bootstrap"},
-		{name: "wrong persisted password", state: testDatabase{password: "other-password", ready: true}, mode: "bootstrap", wantError: true},
+		{name: "already secured", state: testDatabase{password: configuredPassword, ready: true}, mode: "bootstrap"},
+		{name: "wrong persisted password", state: testDatabase{password: rand.Text(), ready: true}, mode: "bootstrap", wantError: true},
 		{name: "legacy requires opt in", state: testDatabase{ready: true}, mode: "bootstrap", wantError: true},
 		{name: "explicit legacy migration", state: testDatabase{ready: true}, mode: "bootstrap", legacy: true, passwordChanges: 1},
 		{name: "check never initializes", mode: "check", wantError: true},
@@ -115,13 +117,13 @@ func TestRootPasswordLifecycle(t *testing.T) {
 			dir := t.TempDir()
 			cfg := config{ObserverHost: "observer", RPCPort: 2882, Zone: "zone1", LogServiceBucketURL: "s3://logs?host=http://minio:9000", SharedStorageBucketURL: "s3://data?host=http://minio:9000", LogServiceClusterID: 1001, RetryInterval: time.Millisecond, AllowLegacyEmptyRoot: tc.legacy, AccessIDFile: filepath.Join(dir, "id"), AccessKeyFile: filepath.Join(dir, "key")}
 			for _, path := range []string{cfg.AccessIDFile, cfg.AccessKeyFile} {
-				if err := os.WriteFile(path, []byte("test-only-credential"), 0600); err != nil {
+				if err := os.WriteFile(path, []byte(rand.Text()), 0600); err != nil {
 					t.Fatal(err)
 				}
 			}
 			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
-			err := run(ctx, cfg, tc.mode, "test-only-password", func(password string) (*sql.DB, error) {
+			err := run(ctx, cfg, tc.mode, configuredPassword, func(password string) (*sql.DB, error) {
 				if password == "" {
 					tc.state.emptyOpens++
 				}
@@ -130,11 +132,11 @@ func TestRootPasswordLifecycle(t *testing.T) {
 			if (err != nil) != tc.wantError {
 				t.Fatalf("error=%v", err)
 			}
-			if err != nil && strings.Contains(err.Error(), "do-not-leak-this") {
+			if err != nil && (strings.Contains(err.Error(), "do-not-leak-this") || strings.Contains(err.Error(), configuredPassword)) {
 				t.Fatal("bootstrap secret leaked")
 			}
 			if tc.state.bootstraps != tc.bootstrap || tc.state.passwordChanges != tc.passwordChanges {
-				t.Fatalf("unexpected mutations: %+v", tc.state)
+				t.Fatalf("unexpected bootstrap or password mutation count: %d, %d", tc.state.bootstraps, tc.state.passwordChanges)
 			}
 			if tc.mode == "check" && tc.state.emptyOpens != 0 {
 				t.Fatal("check attempted empty-password fallback")
@@ -151,7 +153,7 @@ func TestAuthenticationDenied(t *testing.T) {
 
 func TestDatabaseTimeoutAndPasswordEncoding(t *testing.T) {
 	cfg := config{ObserverHost: "::1", SQLPort: 2881, Timeout: 30 * time.Minute}
-	password := "test-only:@/'\\password"
+	password := rand.Text() + "@:/\\'"
 	dbConfig := databaseConfig(cfg, password)
 	parsed, err := mysql.ParseDSN(dbConfig.FormatDSN())
 	if err != nil {

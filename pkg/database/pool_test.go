@@ -9,6 +9,7 @@ THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND.
 package database
 
 import (
+	"crypto/rand"
 	"database/sql"
 	"database/sql/driver"
 	"errors"
@@ -52,7 +53,8 @@ var rotationDriverID atomic.Uint64
 
 func TestPoolCredentialRotation(t *testing.T) {
 	d := &rotationDriver{}
-	s := &rotationSource{driver: fmt.Sprintf("rotation-%d", rotationDriverID.Add(1)), password: "fixture-first"}
+	initialPassword := rand.Text()
+	s := &rotationSource{driver: fmt.Sprintf("rotation-%d", rotationDriverID.Add(1)), password: initialPassword}
 	sql.Register(s.driver, d)
 	d.valid.Store(s.password)
 	t.Cleanup(func() { p.Cache.Remove(s.ID()) })
@@ -64,7 +66,7 @@ func TestPoolCredentialRotation(t *testing.T) {
 		t.Fatal("expected the authenticated pool to be reused")
 	}
 
-	s.password = "fixture-rejected"
+	s.password = rand.Text()
 	got, err := GetConnector(s)
 	if got != nil || err == nil {
 		t.Fatal("changed credential reused the existing pool without authenticating")
@@ -72,12 +74,12 @@ func TestPoolCredentialRotation(t *testing.T) {
 	if strings.Contains(err.Error(), s.password) {
 		t.Fatal("connection error included the supplied credential")
 	}
-	s.password = "fixture-first"
+	s.password = initialPassword
 	if same, err := GetConnector(s); err != nil || same != first || !first.IsAlive() {
 		t.Fatal("unsuccessful authentication replaced the valid pool")
 	}
 
-	s.password = "fixture-second"
+	s.password = rand.Text()
 	d.valid.Store(s.password)
 	const callers = 16
 	var wg sync.WaitGroup
@@ -86,7 +88,7 @@ func TestPoolCredentialRotation(t *testing.T) {
 		request := *s
 		valid := i%2 == 0
 		if !valid {
-			request.password = "fixture-never-valid"
+			request.password = rand.Text()
 		}
 		wg.Add(1)
 		go func() {
@@ -116,7 +118,7 @@ func TestPoolCredentialRotation(t *testing.T) {
 			t.Fatal("concurrent callers received different pools for the new credential")
 		}
 	}
-	s.password = "fixture-first"
+	s.password = initialPassword
 	if previous, err := GetConnector(s); err == nil || previous != nil {
 		t.Fatal("retired credential reused the replacement pool")
 	}

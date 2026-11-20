@@ -18,18 +18,18 @@ func TestExternalServiceEndpointMatchesDatabaseAndPreflight(t *testing.T) {
 	for _, host := range []string{"minio.storage.svc", "minio.storage.svc.cluster.local"} {
 		api, config := retainedCredentials(t)
 		api.noGuard = true
-		api.externalService = map[string]interface{}{"clusterIP": "10.43.0.88", "ports": []interface{}{map[string]interface{}{"port": 9000, "protocol": "TCP"}}}
+		api.externalService = map[string]interface{}{"clusterIP": "192.0.2.88", "ports": []interface{}{map[string]interface{}{"port": 9000, "protocol": "TCP"}}}
 		output, err := renderRetained(t, config, externalValues("http://"+host+":9000"))
 		if err != nil {
 			t.Fatalf("%v\n%s", err, output)
 		}
-		if strings.Count(output, "?host=http://10.43.0.88:9000&s3_region=") != 2 {
+		if strings.Count(output, "?host=http://192.0.2.88:9000&s3_region=") != 2 {
 			t.Fatal("database CRs did not use Service IP")
 		}
-		if !strings.Contains(output, `name: ENDPOINT, value: "http://10.43.0.88:9000"`) {
+		if !strings.Contains(output, `name: ENDPOINT, value: "http://192.0.2.88:9000"`) {
 			t.Fatal("preflight uses a different endpoint")
 		}
-		if !strings.Contains(output, `externalDatabaseEndpoint: "http://10.43.0.88:9000"`) {
+		if !strings.Contains(output, `externalDatabaseEndpoint: "http://192.0.2.88:9000"`) {
 			t.Fatal("resolved endpoint not protected")
 		}
 	}
@@ -42,8 +42,8 @@ func TestExternalServiceRejectsUnsafeResolution(t *testing.T) {
 	}{
 		{"missing", "http://minio.storage.svc:9000", nil},
 		{"headless", "http://minio.storage.svc:9000", map[string]interface{}{"clusterIP": "None"}},
-		{"wrong-port", "http://minio.storage.svc:9001", map[string]interface{}{"clusterIP": "10.43.0.88", "ports": []interface{}{map[string]interface{}{"port": 9000}}}},
-		{"tls", "https://minio.storage.svc:9000", map[string]interface{}{"clusterIP": "10.43.0.88"}},
+		{"wrong-port", "http://minio.storage.svc:9001", map[string]interface{}{"clusterIP": "192.0.2.88", "ports": []interface{}{map[string]interface{}{"port": 9000}}}},
+		{"tls", "https://minio.storage.svc:9000", map[string]interface{}{"clusterIP": "192.0.2.88"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			api, config := retainedCredentials(t)
@@ -69,7 +69,7 @@ func TestExternalPublicEndpointIsNotRewritten(t *testing.T) {
 func TestExternalEndpointRetentionAndLegacyCompatibility(t *testing.T) {
 	api, config := retainedCredentials(t)
 	api.noGuard = true
-	api.externalService = map[string]interface{}{"clusterIP": "10.43.0.88", "ports": []interface{}{map[string]interface{}{"port": 9000}}}
+	api.externalService = map[string]interface{}{"clusterIP": "192.0.2.88", "ports": []interface{}{map[string]interface{}{"port": 9000}}}
 	values := externalValues("http://minio.storage.svc:9000")
 	output, err := renderRetained(t, config, values)
 	if err != nil {
@@ -86,11 +86,11 @@ func TestExternalEndpointRetentionAndLegacyCompatibility(t *testing.T) {
 		}
 	}
 	api.noGuard = false
-	api.externalEndpoint = "http://10.43.0.88:9000"
+	api.externalEndpoint = "http://192.0.2.88:9000"
 	if output, err = renderRetained(t, config, values); err != nil {
 		t.Fatal("same endpoint resume rejected", err, output)
 	}
-	api.externalService["clusterIP"] = "10.43.0.89"
+	api.externalService["clusterIP"] = "192.0.2.89"
 	if output, err = renderRetained(t, config, values); err == nil || !strings.Contains(output, "Service address changed") {
 		t.Fatal("Service address drift accepted", err, output)
 	}

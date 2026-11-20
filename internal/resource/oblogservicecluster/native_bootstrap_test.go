@@ -29,7 +29,7 @@ func TestNativeStorageDependencyBeforeZones(t *testing.T) {
 				condition = batchv1.JobComplete
 			}
 			job := &batchv1.Job{ObjectMeta: metav1.ObjectMeta{Name: "storage-init", Namespace: "demo"}, Status: batchv1.JobStatus{Conditions: []batchv1.JobCondition{{Type: condition, Status: corev1.ConditionTrue, Reason: "Fixture"}}}}
-			svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "minio", Namespace: "demo"}, Spec: corev1.ServiceSpec{ClusterIP: "10.43.1.5"}}
+			svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "minio", Namespace: "demo"}, Spec: corev1.ServiceSpec{ClusterIP: "192.0.2.19"}}
 			c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(job, svc).Build()
 			ls := &v1alpha1.OBLogServiceCluster{ObjectMeta: metav1.ObjectMeta{Name: "ls", Namespace: "demo", Annotations: map[string]string{resourceutils.StorageInitJobAnnotation: job.Name, resourceutils.ResolveStorageServiceAnnotation: "true"}}, Spec: v1alpha1.OBLogServiceClusterSpec{LogService: &apitypes.LogServiceTemplate{Image: "ls:test"}, ObjectStoreURL: apitypes.ObjectStoreConfig{BucketURL: "s3://logs?host=http://minio.demo.svc:9000"}}}
 			// Use the actual topology field type from the API without duplicating it.
@@ -49,7 +49,7 @@ func TestNativeStorageDependencyBeforeZones(t *testing.T) {
 			if err != nil || len(zones.Items) != 1 {
 				t.Fatalf("bootstrap failed: %v, zones=%d", err, len(zones.Items))
 			}
-			if zones.Items[0].Spec.ObjectStoreURL.BucketURL != "s3://logs?host=http://10.43.1.5:9000" {
+			if zones.Items[0].Spec.ObjectStoreURL.BucketURL != "s3://logs?host=http://192.0.2.19:9000" {
 				t.Fatal("zone endpoint not resolved")
 			}
 			if !strings.Contains(ls.Spec.ObjectStoreURL.BucketURL, "minio.demo.svc") {

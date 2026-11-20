@@ -61,7 +61,7 @@ func TestConnectDatabaseExecutesMySQLDirectly(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	for _, user := range []string{"root", "root@tenant"} {
 		t.Run(user, func(t *testing.T) {
-			term := &response.OBConnection{User: user, Host: "10.0.0.1", Password: "x' & echo injected & echo '"}
+			term := &response.OBConnection{User: user, Host: "192.0.2.11", Password: terminalTestPassword(t)}
 			terminalID := "command-test-" + user
 			openTermMap.Add(terminalID, term)
 			t.Cleanup(func() { openTermMap.Remove(terminalID) })
@@ -150,11 +150,11 @@ func TestDatabaseTerminalCommandPreservesConnectionValues(t *testing.T) {
 		name string
 		term response.OBConnection
 	}{
-		{"cluster", response.OBConnection{User: "root", Host: "10.0.0.1", Password: terminalTestPassword(t)}},
-		{"tenant", response.OBConnection{User: "root@tenant", Host: "10.0.0.2", Password: terminalTestPassword(t)}},
-		{"empty-password", response.OBConnection{User: "root@tenant", Host: "10.0.0.2"}},
-		{"special-password", response.OBConnection{User: "root", Host: "10.0.0.1", Password: terminalTestPassword(t) + "' double\" ; & | $() `quote` \\ space\n中文"}},
-		{"option-like-values", response.OBConnection{User: "--help", Host: "--init-command=evil", Password: "--execute=evil"}},
+		{"cluster", response.OBConnection{User: "root", Host: "192.0.2.11", Password: terminalTestPassword(t)}},
+		{"tenant", response.OBConnection{User: "root@tenant", Host: "192.0.2.12", Password: terminalTestPassword(t)}},
+		{"empty-password", response.OBConnection{User: "root@tenant", Host: "192.0.2.12"}},
+		{"special-password", response.OBConnection{User: "root", Host: "192.0.2.11", Password: terminalTestPassword(t) + "' double\" ; & | $() `quote` \\ space\n中文"}},
+		{"option-like-values", response.OBConnection{User: "--help", Host: "--init-command=evil", Password: "--" + terminalTestPassword(t)}},
 		{"ipv6-host", response.OBConnection{User: "root", Host: "2001:db8::1", Password: terminalTestPassword(t)}},
 	}
 	for _, tc := range cases {

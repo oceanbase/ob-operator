@@ -10,16 +10,18 @@ package main
 
 import (
 	"context"
+	"crypto/rand"
 	"database/sql"
 	"reflect"
 	"testing"
 )
 
 func TestEnsureMonitorUserUsesReadOnlyGrant(t *testing.T) {
-	state := &testDatabase{password: "root-password", ready: true}
-	db := sql.OpenDB(testConnector{&testDriver{state: state, password: "root-password"}})
+	password := rand.Text()
+	state := &testDatabase{password: password, ready: true}
+	db := sql.OpenDB(testConnector{&testDriver{state: state, password: password}})
 	defer db.Close()
-	if err := ensureMonitorUser(context.Background(), db, "monitor-password"); err != nil {
+	if err := ensureMonitorUser(context.Background(), db, rand.Text()); err != nil {
 		t.Fatal(err)
 	}
 	want := []string{

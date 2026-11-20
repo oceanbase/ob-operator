@@ -11,7 +11,7 @@ import (
 
 func TestOBDiagTargetsContainOnlyNodeIdentity(t *testing.T) {
 	directory := t.TempDir()
-	if err := writeOBDiagTargets(directory, "test", []NodeConfig{{PodName: "ob-pod", IP: "10.1.2.3", KubernetesConfigFile: "private.yaml"}}); err != nil {
+	if err := writeOBDiagTargets(directory, "test", []NodeConfig{{PodName: "ob-pod", IP: "192.0.2.15", KubernetesConfigFile: "private.yaml"}}); err != nil {
 		t.Fatal(err)
 	}
 	path := filepath.Join(directory, "nodes.json")

@@ -3,6 +3,7 @@ package lakehouse_test
 import (
 	"archive/tar"
 	"compress/gzip"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
@@ -218,7 +219,7 @@ func TestDashboardStorageInheritanceAndExistingClaims(t *testing.T) {
 }
 
 func TestDashboardCustomInitialPasswordAndImage(t *testing.T) {
-	const password = "test-initial-password"
+	password := rand.Text()
 	const image = "oceanbase-qa/oceanbase-dashboard:offline-test"
 	docs, output, err := render(t, map[string]interface{}{"dashboard": map[string]interface{}{"adminPassword": password, "image": image}})
 	if err != nil {

@@ -59,7 +59,7 @@ func TestUpdateStatusObservesBootstrapPod(t *testing.T) {
 	node := &v1alpha1.OBLogServiceNode{ObjectMeta: metav1.ObjectMeta{Name: "node", Namespace: "test"}}
 	node.Status.Status = nodestatus.New
 	node.Status.PodName = "node"
-	pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "node", Namespace: "test", Annotations: map[string]string{oceanbaseconst.AnnotationCalicoValidate: "test"}}, Status: corev1.PodStatus{Phase: corev1.PodRunning, PodIP: "10.0.0.1", Conditions: []corev1.PodCondition{{Type: corev1.PodReady, Status: corev1.ConditionTrue}}}}
+	pod := &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "node", Namespace: "test", Annotations: map[string]string{oceanbaseconst.AnnotationCalicoValidate: "test"}}, Status: corev1.PodStatus{Phase: corev1.PodRunning, PodIP: "192.0.2.11", Conditions: []corev1.PodCondition{{Type: corev1.PodReady, Status: corev1.ConditionTrue}}}}
 	logger := logr.Discard()
 	m := &OBLogServiceNodeManager{Ctx: context.Background(), Resource: node.DeepCopy(), Logger: &logger, Client: fake.NewClientBuilder().WithScheme(scheme).WithStatusSubresource(node).WithObjects(node, pod).Build()}
 	if err := m.UpdateStatus(); err != nil {
@@ -69,7 +69,7 @@ func TestUpdateStatusObservesBootstrapPod(t *testing.T) {
 	if err := m.Client.Get(m.Ctx, client.ObjectKeyFromObject(node), stored); err != nil {
 		t.Fatal(err)
 	}
-	if !stored.Status.Ready || stored.Status.CNI != oceanbaseconst.CNICalico || stored.Status.PodIP != "10.0.0.1" {
+	if !stored.Status.Ready || stored.Status.CNI != oceanbaseconst.CNICalico || stored.Status.PodIP != "192.0.2.11" {
 		t.Fatalf("observations were not persisted: %+v", stored.Status)
 	}
 }

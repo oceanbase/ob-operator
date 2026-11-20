@@ -1,6 +1,8 @@
 package lakehouse_test
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"strings"
 	"testing"
 
@@ -117,11 +119,12 @@ func TestOBProxyReusesExistingAccountAndDoesNotReseed(t *testing.T) {
 		"/apis/oceanbase.oceanbase.com/v1alpha1/namespaces/qa-ns/obclusters/qa-ob": map[string]interface{}{
 			"apiVersion": "oceanbase.oceanbase.com/v1alpha1", "kind": "OBCluster",
 			"metadata": map[string]string{"name": "qa-ob", "namespace": "qa-ns"},
-			"spec":     map[string]interface{}{"userSecrets": map[string]string{"proxyro": "operator-proxyro"}, "sharedStorageInfo": map[string]string{"bucketURL": "s3://qa-data?host=http://10.43.0.77:9000&s3_region=us-east-1"}},
+			"spec":     map[string]interface{}{"userSecrets": map[string]string{"proxyro": "operator-proxyro"}, "sharedStorageInfo": map[string]string{"bucketURL": "s3://qa-data?host=http://192.0.2.77:9000&s3_region=us-east-1"}},
 		},
 	}
-	api.secrets["operator-proxyro"] = map[string]string{"password": "cmV0YWluZWQ="}
-	api.secrets["qa-proxysys"] = map[string]string{"password": "cmV0YWluZWQ="}
+	encodedPassword := base64.StdEncoding.EncodeToString([]byte(rand.Text()))
+	api.secrets["operator-proxyro"] = map[string]string{"password": encodedPassword}
+	api.secrets["qa-proxysys"] = map[string]string{"password": encodedPassword}
 	for _, enabled := range []bool{true, false, true} {
 		output, err := renderRetained(t, config, map[string]interface{}{"obproxy": map[string]interface{}{"enabled": enabled}, "dashboard": map[string]interface{}{"enabled": false}})
 		if err != nil {

@@ -131,7 +131,7 @@ func (api *retentionAPI) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // resolve bucket.service.namespace.svc in ordinary Kubernetes DNS. The installer
 // creates storage first; subsequent stages must use its stable Service IP.
 func TestBundledDatabaseUsesRetainedServiceIP(t *testing.T) {
-	for _, tc := range []struct{ ip, host string }{{"10.43.0.99", "10.43.0.99"}, {"fd00::99", "[fd00::99]"}} {
+	for _, tc := range []struct{ ip, host string }{{"192.0.2.99", "192.0.2.99"}, {"fd00::99", "[fd00::99]"}} {
 		t.Run(tc.ip, func(t *testing.T) {
 			api, kubeconfig := retainedCredentials(t)
 			api.mu.Lock()

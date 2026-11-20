@@ -3,6 +3,7 @@ package readiness
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -125,8 +126,11 @@ func TestWaitDoesNotRequireDisabledDashboard(t *testing.T) {
 	}
 }
 func TestAPIClientOnlyGetsAndRefreshesToken(t *testing.T) {
+	firstToken, secondToken := rand.Text(), rand.Text()
 	token := filepath.Join(t.TempDir(), "token")
-	os.WriteFile(token, []byte("first"), 0600)
+	if err := os.WriteFile(token, []byte(firstToken), 0600); err != nil {
+		t.Fatal(err)
+	}
 	seen := []string{}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "GET" {
@@ -141,12 +145,14 @@ func TestAPIClientOnlyGetsAndRefreshesToken(t *testing.T) {
 	if err := c.Get(context.Background(), "/api/v1/pods", &value); err != nil {
 		t.Fatal(err)
 	}
-	os.WriteFile(token, []byte("second"), 0600)
+	if err := os.WriteFile(token, []byte(secondToken), 0600); err != nil {
+		t.Fatal(err)
+	}
 	if err := c.Get(context.Background(), "/api/v1/pods", &value); err != nil {
 		t.Fatal(err)
 	}
-	if strings.Join(seen, ",") != "Bearer first,Bearer second" {
-		t.Fatal(seen)
+	if strings.Join(seen, ",") != "Bearer "+firstToken+","+"Bearer "+secondToken {
+		t.Fatal("client did not reload the bearer token")
 	}
 }
 func TestResponseSizeIsBounded(t *testing.T) {

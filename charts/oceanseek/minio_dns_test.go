@@ -26,7 +26,7 @@ func TestDistributedMinioWaitsForOwnDNSBeforeStarting(t *testing.T) {
 			scripts := map[string]string{
 				"timeout": "#!/bin/sh\nshift\nexec \"$@\"\n",
 				"sleep":   "#!/bin/sh\nexit 0\n",
-				"getent":  "#!/bin/sh\nif [ -f \"$DNS_STATE\" ] && [ \"$RESOLVE\" = yes ]; then echo '10.0.0.2 STREAM peer'; else touch \"$DNS_STATE\"; echo '10.0.0.1 STREAM stale'; fi\n",
+				"getent":  "#!/bin/sh\nif [ -f \"$DNS_STATE\" ] && [ \"$RESOLVE\" = yes ]; then echo '192.0.2.2 STREAM peer'; else touch \"$DNS_STATE\"; echo '192.0.2.1 STREAM stale'; fi\n",
 				"minio":   "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$STARTED\"\n",
 			}
 			for name, script := range scripts {
@@ -40,7 +40,7 @@ func TestDistributedMinioWaitsForOwnDNSBeforeStarting(t *testing.T) {
 			if resolve {
 				yes = "yes"
 			}
-			cmd.Env = append(os.Environ(), "PATH="+dir+":"+os.Getenv("PATH"), "DNS_STATE="+filepath.Join(dir, "dns"), "STARTED="+started, "RESOLVE="+yes, "LAKEHOUSE_POD_IP=10.0.0.2", "LAKEHOUSE_PEER_HOST=qa-minio-0.qa-minio-peer.qa.svc", "LAKEHOUSE_ENDPOINTS=http://qa-minio-{0...2}.qa-minio-peer.qa.svc:9000/data")
+			cmd.Env = append(os.Environ(), "PATH="+dir+":"+os.Getenv("PATH"), "DNS_STATE="+filepath.Join(dir, "dns"), "STARTED="+started, "RESOLVE="+yes, "LAKEHOUSE_POD_IP=192.0.2.2", "LAKEHOUSE_PEER_HOST=qa-minio-0.qa-minio-peer.qa.svc", "LAKEHOUSE_ENDPOINTS=http://qa-minio-{0...2}.qa-minio-peer.qa.svc:9000/data")
 			out, err := cmd.CombinedOutput()
 			if resolve {
 				data, readErr := os.ReadFile(started)

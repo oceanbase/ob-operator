@@ -36,10 +36,10 @@ func TestLogServiceMembershipJobsInheritZonePlacement(t *testing.T) {
 			scheme := runtime.NewScheme()
 			_ = v1alpha1.AddToScheme(scheme)
 			zone := &v1alpha1.OBLogServiceZone{ObjectMeta: metav1.ObjectMeta{Name: "ls-z1", Namespace: "qa"}, Spec: v1alpha1.OBLogServiceZoneSpec{ClusterName: "ls", Image: "ls:test", ServiceAccount: "ls-workload", Topology: apitypes.LogServiceZoneTopology{Zone: "z1", Replica: 1, NodeSelector: map[string]string{"pool": "authorized"}, Affinity: &corev1.Affinity{NodeAffinity: &corev1.NodeAffinity{}}, Tolerations: []corev1.Toleration{{Key: "pool", Value: "authorized", Operator: corev1.TolerationOpEqual, Effect: corev1.TaintEffectNoSchedule}}}}}
-			a := &v1alpha1.OBLogServiceNode{ObjectMeta: metav1.ObjectMeta{Name: "a", Namespace: "qa", Labels: map[string]string{oc.LabelRefOBLogServiceCluster: "ls", oc.LabelRefOBLogServiceZone: zone.Name}, Annotations: map[string]string{oc.AnnotationsLogServiceNodeRegistered: "true"}}, Spec: v1alpha1.OBLogServiceNodeSpec{Zone: "z1"}, Status: v1alpha1.OBLogServiceNodeStatus{Status: "running", PodIP: "10.42.1.1"}}
+			a := &v1alpha1.OBLogServiceNode{ObjectMeta: metav1.ObjectMeta{Name: "a", Namespace: "qa", Labels: map[string]string{oc.LabelRefOBLogServiceCluster: "ls", oc.LabelRefOBLogServiceZone: zone.Name}, Annotations: map[string]string{oc.AnnotationsLogServiceNodeRegistered: "true"}}, Spec: v1alpha1.OBLogServiceNodeSpec{Zone: "z1"}, Status: v1alpha1.OBLogServiceNodeStatus{Status: "running", PodIP: "192.0.2.16"}}
 			b := a.DeepCopy()
 			b.Name = "b"
-			b.Status.PodIP = "10.42.1.2"
+			b.Status.PodIP = "192.0.2.17"
 			if tc.name == "register" {
 				b.Annotations = nil
 			}

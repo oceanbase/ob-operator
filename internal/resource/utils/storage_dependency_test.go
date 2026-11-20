@@ -23,17 +23,17 @@ func storageTestClient(objects ...client.Object) client.Client {
 }
 func TestResolveStorageServiceURL(t *testing.T) {
 	obj := &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Namespace: "demo", Annotations: map[string]string{ResolveStorageServiceAnnotation: "true"}}}
-	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "store", Namespace: "demo"}, Spec: corev1.ServiceSpec{ClusterIP: "10.43.2.3"}}
+	svc := &corev1.Service{ObjectMeta: metav1.ObjectMeta{Name: "store", Namespace: "demo"}, Spec: corev1.ServiceSpec{ClusterIP: "192.0.2.20"}}
 	for _, tc := range []struct {
 		name, input, want string
 		bad               bool
 	}{
-		{"short", "s3://data?host=http://store.demo.svc:9000&s3_region=us-east-1", "s3://data?host=http://10.43.2.3:9000&s3_region=us-east-1", false},
-		{"fqdn", "s3://data?host=http://store.demo.svc.cluster.local:9000&s3_region=us-east-1", "s3://data?host=http://10.43.2.3:9000&s3_region=us-east-1", false},
-		{"encoded", "s3://data?s3_region=a&host=http%3A%2F%2Fstore.demo.svc%3A9000&other=a%2Bb", "s3://data?s3_region=a&host=http://10.43.2.3:9000&other=a%2Bb", false},
+		{"short", "s3://data?host=http://store.demo.svc:9000&s3_region=us-east-1", "s3://data?host=http://192.0.2.20:9000&s3_region=us-east-1", false},
+		{"fqdn", "s3://data?host=http://store.demo.svc.cluster.local:9000&s3_region=us-east-1", "s3://data?host=http://192.0.2.20:9000&s3_region=us-east-1", false},
+		{"encoded", "s3://data?s3_region=a&host=http%3A%2F%2Fstore.demo.svc%3A9000&other=a%2Bb", "s3://data?s3_region=a&host=http://192.0.2.20:9000&other=a%2Bb", false},
 		{"external", "s3://data?host=http://storage.example.com:9000", "s3://data?host=http://storage.example.com:9000", false},
 		{"tls", "s3://data?host=https://store.demo.svc:9000", "s3://data?host=https://store.demo.svc:9000", false},
-		{"ip", "s3://data?host=http://10.0.0.1:9000", "s3://data?host=http://10.0.0.1:9000", false},
+		{"ip", "s3://data?host=http://192.0.2.11:9000", "s3://data?host=http://192.0.2.11:9000", false},
 		{"cross-namespace", "s3://data?host=http://store.other.svc:9000", "", true},
 		{"missing", "s3://data?host=http://absent.demo.svc:9000", "", true},
 		{"duplicate", "s3://data?host=http://store.demo.svc&host=http://other", "", true},

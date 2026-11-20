@@ -10,6 +10,7 @@ package obtenantrestore
 
 import (
 	"context"
+	"crypto/rand"
 	"testing"
 
 	corev1 "k8s.io/api/core/v1"
@@ -23,7 +24,8 @@ import (
 
 func TestRestoreSourceStorageOptions(t *testing.T) {
 	const namespace = "backup-test"
-	const credentials = "&access_id=test-id&access_key=test-key"
+	accessID, secretKey := rand.Text(), rand.Text()
+	credentials := "&access_id=" + accessID + "&access_key=" + secretKey + ""
 	for _, tt := range []struct {
 		name                                                                    string
 		provider                                                                apitypes.BackupDestType
@@ -37,7 +39,7 @@ func TestRestoreSourceStorageOptions(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			secret := func(name, option string) *corev1.Secret {
-				data := map[string][]byte{"accessId": []byte("test-id"), "accessKey": []byte("test-key")}
+				data := map[string][]byte{"accessId": []byte(accessID), "accessKey": []byte(secretKey)}
 				if tt.secretKey != "" {
 					data[tt.secretKey] = []byte(option)
 				}
@@ -55,7 +57,7 @@ func TestRestoreSourceStorageOptions(t *testing.T) {
 			want := source.BakDataSource.Path + credentials + tt.dataSuffix + "," + source.ArchiveSource.Path + credentials + tt.archiveSuffix
 			got, err := manager.getSourceUri()
 			if err != nil || got != want {
-				t.Fatalf("restore source = %q, error = %v; want %q", got, err, want)
+				t.Fatal("unexpected restore source URI or provider options")
 			}
 		})
 	}

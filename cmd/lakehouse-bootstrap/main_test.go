@@ -20,7 +20,7 @@ import (
 
 func TestBuildBootstrapSQL(t *testing.T) {
 	cfg := config{
-		ObserverHost:           "172.30.52.12",
+		ObserverHost:           "192.0.2.21",
 		RPCPort:                2882,
 		Zone:                   "zone1",
 		LogServiceBucketURL:    "s3://lakehouse-logservice?host=http://minio:9000&s3_region=us-east-1",
@@ -32,7 +32,7 @@ func TestBuildBootstrapSQL(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, expected := range []string{
-		"ZONE 'zone1' SERVER '172.30.52.12:2882'",
+		"ZONE 'zone1' SERVER '192.0.2.21:2882'",
 		"s3://lakehouse-logservice?host=http://minio:9000&s3_region=us-east-1&access_id=access-id&access_key=access-key&logservice_cluster_id=1001",
 		"s3://lakehouse-data?host=http://minio:9000&s3_region=us-east-1&access_id=access-id&access_key=access-key",
 	} {

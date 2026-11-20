@@ -12,10 +12,10 @@ import (
 func TestProxySeedsUseAdvertisedServicesNotLoadBalancer(t *testing.T) {
 	r := &fakeReader{values: map[string]string{
 		"/api/v1/namespaces/qa/services?labelSelector=ref-obcluster%3Dob-ob%2Cref-observer": `{"items":[
-  {"metadata":{"labels":{"ref-obcluster":"ob-ob","ref-observer":"a"}},"spec":{"clusterIP":"10.0.0.3","ports":[{"name":"sql","port":2881}]}},
-  {"metadata":{"labels":{"ref-obcluster":"ob-ob","ref-observer":"b"}},"spec":{"clusterIP":"10.0.0.2","ports":[{"name":"sql","port":2881}]}},
-  {"metadata":{"labels":{"ref-obcluster":"ob-ob"}},"spec":{"clusterIP":"10.0.0.1","ports":[{"name":"sql","port":2881}]}},
-  {"metadata":{"labels":{"ref-obcluster":"other","ref-observer":"c"}},"spec":{"clusterIP":"10.0.0.4","ports":[{"name":"sql","port":2881}]}}
+  {"metadata":{"labels":{"ref-obcluster":"ob-ob","ref-observer":"a"}},"spec":{"clusterIP":"192.0.2.13","ports":[{"name":"sql","port":2881}]}},
+  {"metadata":{"labels":{"ref-obcluster":"ob-ob","ref-observer":"b"}},"spec":{"clusterIP":"192.0.2.12","ports":[{"name":"sql","port":2881}]}},
+  {"metadata":{"labels":{"ref-obcluster":"ob-ob"}},"spec":{"clusterIP":"192.0.2.11","ports":[{"name":"sql","port":2881}]}},
+  {"metadata":{"labels":{"ref-obcluster":"other","ref-observer":"c"}},"spec":{"clusterIP":"192.0.2.14","ports":[{"name":"sql","port":2881}]}}
   ]}`}}
 	o := options()
 	o.ObserverReplicas = 2
@@ -24,7 +24,7 @@ func TestProxySeedsUseAdvertisedServicesNotLoadBalancer(t *testing.T) {
 		t.Fatal(err)
 	}
 	data, err := os.ReadFile(p)
-	if err != nil || string(data) != "10.0.0.2:2881;10.0.0.3:2881\n" {
+	if err != nil || string(data) != "192.0.2.12:2881;192.0.2.13:2881\n" {
 		t.Fatalf("%q %v", data, err)
 	}
 }
