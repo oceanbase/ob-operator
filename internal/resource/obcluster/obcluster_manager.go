@@ -330,5 +330,5 @@ func (m *OBClusterManager) ArchiveResource() {
 
 // CanReplayTask covers identity-checked Jobs, readiness checks and resumable replacements.
 func (m *OBClusterManager) CanReplayTask(name tasktypes.TaskName) bool {
-	return name == tCheckImageReady || name == tCheckEnvironment || name == tWaitOBZoneBootstrapReady || name == tModifyServerTemplate || name == tWaitOBZoneRunning || name == tRollingUpdateOBZones
+	return name == tDispatchClassicBootstrap || name == tCheckImageReady || name == tCheckEnvironment || name == tWaitOBZoneBootstrapReady || name == tModifyServerTemplate || name == tWaitOBZoneRunning || name == tRollingUpdateOBZones
 }

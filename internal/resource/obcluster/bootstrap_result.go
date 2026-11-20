@@ -3,10 +3,8 @@ package obcluster
 import (
 	"context"
 	"strconv"
-	"time"
 
 	"github.com/pkg/errors"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -29,7 +27,7 @@ func (m *OBClusterManager) ObserveLostTask(name tasktypes.TaskName) tasktypes.Ta
 		return nil
 	}
 	return func() tasktypes.TaskError {
-		err := wait.PollUntilContextTimeout(m.Ctx, 5*time.Second, dbconfig.BootstrapTimeout, true, m.bootstrapResultReady)
+		err := m.waitForBootstrapResult()
 		return errors.Wrap(err, "could not verify the original database bootstrap")
 	}
 }
@@ -46,6 +44,10 @@ func (m *OBClusterManager) bootstrapResultReady(ctx context.Context) (bool, erro
 	if current.UID != m.OBCluster.UID || current.DeletionTimestamp != nil || current.Generation != m.OBCluster.Generation {
 		return false, errors.New("cluster identity or desired state changed during bootstrap")
 	}
+	return m.verifyBootstrapDatabase(ctx, current)
+}
+
+func (m *OBClusterManager) verifyBootstrapDatabase(ctx context.Context, current *v1alpha1.OBCluster) (bool, error) {
 	zones, err := m.readyBootstrapZones(ctx, serverstatus.BootstrapReady)
 	if err != nil || len(zones) == 0 {
 		return false, err

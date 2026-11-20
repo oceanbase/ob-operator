@@ -26,6 +26,7 @@ const (
 	AnnotationsSourceClusterAddress    = "oceanbase.oceanbase.com/source-cluster-address"
 	AnnotationsIgnoreDeletion          = "oceanbase.oceanbase.com/ignore-deletion"
 	AnnotationsPauseReconciling        = "oceanbase.oceanbase.com/pause-reconciling"
+	AnnotationsClassicBootstrapClaim   = "oceanbase.oceanbase.com/classic-bootstrap-claim"
 	AnnotationsMonitorRevision         = "oceanbase.oceanbase.com/monitor-revision"
 	AnnotationsSupportStaticIP         = "oceanbase.oceanbase.com/support-static-ip"
 	AnnotationsDeletionPriority        = "oceanbase.oceanbase.com/deletion-priority"

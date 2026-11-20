@@ -47,7 +47,6 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/helper/converter"
 	helpermodel "github.com/oceanbase/ob-operator/pkg/helper/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/param"
 	obutil "github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/util"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
@@ -267,40 +266,12 @@ func waitForLogServiceReady(ctx context.Context, kubeClient client.Client, key t
 	return nil
 }
 
+// Bootstrap remains registered for previously persisted flows and shared storage.
 func Bootstrap(m *OBClusterManager) tasktypes.TaskError {
-	zones, err := m.readyBootstrapZones(m.Ctx, serverstatus.BootstrapReady)
+	manager, bootstrapServers, err := m.prepareBootstrap()
 	if err != nil {
-		return errors.Wrap(err, "read bootstrap zones")
+		return err
 	}
-	if len(zones) == 0 {
-		return errors.New("cluster no longer has a complete set of bootstrap servers")
-	}
-	var manager *operation.OceanbaseOperationManager
-	for attempt := 0; attempt < obcfg.GetConfig().Time.GetConnectionMaxRetries && manager == nil; attempt++ {
-		for _, zone := range zones {
-			for _, server := range zone.Status.OBServerStatus {
-				manager, err = m.bootstrapClient(server.GetConnectAddr())
-				if err == nil && manager != nil {
-					break
-				}
-			}
-			if manager != nil {
-				break
-			}
-		}
-		if manager == nil {
-			select {
-			case <-m.Ctx.Done():
-				return m.Ctx.Err()
-			case <-time.After(time.Duration(obcfg.GetConfig().Time.CheckConnectionInterval) * time.Second):
-			}
-		}
-	}
-	if manager == nil {
-		return errors.New("cannot connect to any of the cluster's bootstrap servers")
-	}
-	standalone := m.OBCluster.Annotations[oceanbaseconst.AnnotationsMode] == oceanbaseconst.ModeStandalone
-	bootstrapServers := bootstrapSeeds(zones, manager.Connector.DataSource().GetAddress(), standalone)
 
 	if m.OBCluster.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
 		logServiceAccessPoint, buildErr := m.buildLogServiceAccessPoint()
@@ -318,6 +289,20 @@ func Bootstrap(m *OBClusterManager) tasktypes.TaskError {
 	if err != nil {
 		m.Logger.Error(err, "bootstrap failed")
 	} else {
+		m.Recorder.Event(m.OBCluster, "Bootstrap", "", "Bootstrap successfully")
+	}
+	return err
+}
+
+func DispatchClassicBootstrap(m *OBClusterManager) tasktypes.TaskError {
+	err := m.dispatchClassicBootstrap(func() (func() error, error) {
+		manager, seeds, err := m.prepareBootstrap()
+		if err != nil {
+			return nil, err
+		}
+		return func() error { return manager.Bootstrap(m.Ctx, seeds) }, nil
+	}, m.waitForDispatchedBootstrapResult)
+	if err == nil {
 		m.Recorder.Event(m.OBCluster, "Bootstrap", "", "Bootstrap successfully")
 	}
 	return err

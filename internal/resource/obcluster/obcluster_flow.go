@@ -56,10 +56,12 @@ func genBootstrapOBClusterFlow(m *OBClusterManager) *tasktypes.TaskFlow {
 		tCheckAndCreateUserSecrets,
 		tCreateOBZone,
 		tWaitOBZoneBootstrapReady,
-		tBootstrap,
 	}
 	if m.OBCluster.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
 		tasks = append([]tasktypes.TaskName{tWaitLogServiceReady}, tasks...)
+		tasks = append(tasks, tBootstrap)
+	} else {
+		tasks = append(tasks, tDispatchClassicBootstrap)
 	}
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
