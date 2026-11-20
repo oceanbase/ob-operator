@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package obtenant
 
 import (
+	"database/sql"
 	"reflect"
 	"testing"
 
@@ -87,7 +88,7 @@ func TestObservedPoolLocality(t *testing.T) {
 	}
 	for zone, expected := range want {
 		t.Run(zone, func(t *testing.T) {
-			if got := observedPoolLocality(zone, active, configured); !reflect.DeepEqual(got, expected) {
+			if got := observedPoolLocality(zone, active, configured, zone != "unknown"); !reflect.DeepEqual(got, expected) {
 				t.Errorf("observed locality = %+v, want %+v", got, expected)
 			}
 		})
@@ -105,5 +106,63 @@ func TestTenantPoolRecord(t *testing.T) {
 	got, err := m.poolRecord([]v1alpha1.ResourcePoolStatus{{ZoneList: "z1", UnitNumber: 2}, {ZoneList: "z2", UnitNumber: 2}})
 	if err != nil || got.UnitNumber != 2 || got.PoolList != "pool_orders_z1,pool_orders_z2" || got.ZoneList != "z1,z2" {
 		t.Fatalf("pool record = %+v, error = %v", got, err)
+	}
+}
+
+func TestInterruptedPoolRemoval(t *testing.T) {
+	m := &OBTenantManager{OBTenant: &v1alpha1.OBTenant{Spec: v1alpha1.OBTenantSpec{TenantName: "orders"}}}
+	owner := sql.NullInt64{Int64: 1002, Valid: true}
+	pools := []model.Pool{
+		{ResourcePoolID: 1, Name: "pool_orders_zone1", ZoneList: "zone1", TenantID: owner, UnitNum: 1},
+		{ResourcePoolID: 2, Name: "pool_orders_zone3", ZoneList: "zone3", TenantID: owner, UnitNum: 1},
+		{ResourcePoolID: 3, Name: "manual", ZoneList: "zone2, zone3", TenantID: owner, UnitNum: 2},
+		{ResourcePoolID: 4, Name: "pool_other_zone3", ZoneList: "zone3", TenantID: sql.NullInt64{Int64: 1004, Valid: true}, UnitNum: 1},
+		{ResourcePoolID: 5, Name: "pool_orders_zone4", ZoneList: "zone4", UnitNum: 1},
+	}
+	units := m.managedPoolUnits(1002, pools)
+	if !reflect.DeepEqual(units, map[string]int{"zone1": 1, "zone3": 1}) {
+		t.Fatalf("unexpected managed pool units %v", units)
+	}
+	for _, zone := range []string{"zone1", "zone3", "zone4"} {
+		_, managed := units[zone]
+		configured := map[string]*v1alpha1.LocalityType{"zone1": {Name: "FULL", Replica: 1}}
+		locality := observedPoolLocality(zone, nil, configured, managed)
+		if zone == "zone4" {
+			if locality != nil {
+				t.Fatalf("unassigned pool should be ignored, got %+v", locality)
+			}
+			continue
+		}
+		m.OBTenant.Status.Pools = append(m.OBTenant.Status.Pools, v1alpha1.ResourcePoolStatus{ZoneList: zone, Type: locality})
+	}
+	m.OBTenant.Spec.Pools = []v1alpha1.ResourcePoolSpec{{Zone: "zone1", Type: &v1alpha1.LocalityType{Name: "FULL", Replica: 1}}}
+	toRemove := m.getPoolsForDelete()
+	if len(toRemove) != 1 || toRemove[0].ZoneList != "zone3" || toRemove[0].Type == nil || toRemove[0].Type.IsActive {
+		t.Fatalf("expected only the interrupted removal, got %+v", toRemove)
+	}
+	plan := planPoolRemoval(pools, 1002, "pool_orders_zone3", "zone3")
+	if plan.target.ResourcePoolID != 2 || !plan.sharedZone || !reflect.DeepEqual(plan.remaining, []string{"pool_orders_zone1", "manual"}) {
+		t.Fatalf("unexpected removal plan %+v", plan)
+	}
+	for _, target := range pools[3:] {
+		if planPoolRemoval(pools, 1002, target.Name, target.ZoneList).target.ResourcePoolID != 0 {
+			t.Fatalf("claimed foreign or detached pool %s", target.Name)
+		}
+	}
+	// After the canonical pool is gone an external pool still serves zone3.
+	// The surviving database locality must not schedule another removal.
+	remaining := append([]model.Pool{pools[0]}, pools[2:]...)
+	remainingUnits := m.managedPoolUnits(1002, remaining)
+	_, managed := remainingUnits["zone3"]
+	active := map[string]v1alpha1.LocalityType{"zone3": {Name: "FULL", Replica: 1, IsActive: true}}
+	if got := observedPoolLocality("zone3", active, nil, managed); got != nil {
+		t.Fatalf("external-only locality still scheduled a removal: %+v", got)
+	}
+	configs := []model.UnitConfigV4{{UnitConfigID: 1003, Name: "unit_orders_zone3"}}
+	if !removableUnitConfig(1003, "unit_orders_zone3", configs, nil) ||
+		removableUnitConfig(1003, "unit_orders_zone3", configs, []model.Pool{{UnitConfigID: 1003}}) ||
+		removableUnitConfig(1004, "unit_orders_zone3", configs, nil) ||
+		removableUnitConfig(1003, "unit_other_zone3", configs, nil) {
+		t.Fatal("unit configuration ownership or sharing check failed")
 	}
 }

@@ -289,25 +289,26 @@ func (m *OBTenantManager) generateStatusLocalityMap(pools []v1alpha1.ResourcePoo
 	return localityMap
 }
 
-func (m *OBTenantManager) generateStatusUnitNumMap(zones []v1alpha1.ResourcePoolSpec) (map[string]int, error) {
-	unitNumMap := make(map[string]int, 0)
-	oceanbaseOperationManager, err := m.getClusterSysClient()
+func (m *OBTenantManager) generateStatusUnitNumMap(tenantID int64) (map[string]int, error) {
+	con, err := m.getClusterSysClient()
 	if err != nil {
-		return unitNumMap, errors.Wrap(err, "Failed to get sql operator error when building resource unit from db")
+		return nil, err
 	}
-	poolList, err := oceanbaseOperationManager.GetPoolList(m.Ctx)
+	pools, err := con.GetPoolList(m.Ctx)
 	if err != nil {
-		return unitNumMap, errors.Wrap(err, "Get sql error when get pool list")
+		return nil, err
 	}
-	for _, zone := range zones {
-		poolName := m.generatePoolName(zone.Zone)
-		for _, pool := range poolList {
-			if pool.Name == poolName {
-				unitNumMap[zone.Zone] = int(pool.UnitNum)
-			}
+	return m.managedPoolUnits(tenantID, pools), nil
+}
+
+func (m *OBTenantManager) managedPoolUnits(tenantID int64, pools []model.Pool) map[string]int {
+	units := make(map[string]int)
+	for _, pool := range pools {
+		if pool.TenantID.Valid && pool.TenantID.Int64 == tenantID && pool.Name == m.generatePoolName(pool.ZoneList) {
+			units[pool.ZoneList] = int(pool.UnitNum)
 		}
 	}
-	return unitNumMap, nil
+	return units
 }
 
 func (m *OBTenantManager) generateLocalityList(localityMap map[string]*v1alpha1.LocalityType) []string {
@@ -690,85 +691,136 @@ func FormatUnitConfigV4(unit *model.UnitConfigV4) string {
 		unit.MaxCPU, unit.MinCPU, unit.MemorySize, unit.MaxIops, unit.MinIops, unit.IopsWeight, unit.LogDiskSize)
 }
 
+type poolRemoval struct {
+	target     model.Pool
+	remaining  []string
+	sharedZone bool
+}
+
+// Keep all other live assignments, including pools provisioned outside the
+// operator. Ownership requires the actual tenant, zone and managed pool name.
+func planPoolRemoval(pools []model.Pool, tenantID int64, targetName, targetZone string) poolRemoval {
+	var plan poolRemoval
+	for _, pool := range pools {
+		if !pool.TenantID.Valid || pool.TenantID.Int64 != tenantID {
+			continue
+		}
+		if pool.Name == targetName && pool.ZoneList == targetZone {
+			plan.target = pool
+			continue
+		}
+		plan.remaining = append(plan.remaining, pool.Name)
+		for _, zone := range strings.FieldsFunc(pool.ZoneList, func(r rune) bool { return r == ';' || r == ',' }) {
+			if strings.TrimSpace(zone) == targetZone {
+				plan.sharedZone = true
+			}
+		}
+	}
+	return plan
+}
+
+func removableUnitConfig(id int64, name string, configs []model.UnitConfigV4, pools []model.Pool) bool {
+	for _, pool := range pools {
+		if pool.UnitConfigID == id {
+			return false
+		}
+	}
+	for _, config := range configs {
+		if config.UnitConfigID == id && config.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
 func (m *OBTenantManager) TenantDeletePool(poolDelete v1alpha1.ResourcePoolStatus) error {
 	tenantName := m.OBTenant.Spec.TenantName
 	poolName := m.generatePoolName(poolDelete.ZoneList)
 	unitName := m.generateUnitName(poolDelete.ZoneList)
-
 	oceanbaseOperationManager, err := m.getClusterSysClient()
 	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to get sql operator when processing tenant '%s' -- delete pool ", tenantName))
-	}
-	var zoneList []v1alpha1.ResourcePoolStatus
-	for _, zone := range m.OBTenant.Status.Pools {
-		if zone.ZoneList != poolDelete.ZoneList {
-			zoneList = append(zoneList, zone)
-		}
-	}
-
-	statusLocalityMap := m.generateStatusLocalityMap(zoneList)
-	localityList := m.generateLocalityList(statusLocalityMap)
-	poolList := m.generateStatusPoolList(zoneList)
-	specPrimaryZone := m.generateSpecPrimaryZone(m.OBTenant.Spec.Pools)
-
-	// step 1.1: update locality
-	// note：this operator is async in oceanbase, polling until update locality task success
-	tenantSQLParam := model.TenantSQLParam{
-		TenantName: tenantName,
-		Locality:   strings.Join(localityList, ","),
-	}
-	err = oceanbaseOperationManager.SetTenant(m.Ctx, tenantSQLParam)
-	if err != nil {
-		m.Logger.Error(err, "Modify Tenant, update locality", "tenantName", tenantName)
 		return err
 	}
-
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Wait for tenant 'ALTER_TENANT' job for deleting pool", "tenantName", tenantName)
-	check := func() (bool, error) {
-		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.Ctx, m.OBTenant.Status.TenantRecordInfo.TenantID)
+	tenantRow, err := m.getTenantByName(tenantName)
+	if err != nil {
+		return err
+	}
+	assigned := func() (poolRemoval, error) {
+		pools, err := oceanbaseOperationManager.GetPoolList(m.Ctx)
 		if err != nil {
-			return false, errors.Wrap(err, fmt.Sprintf("Failed to get rs job of tenant %s", tenantName))
+			return poolRemoval{}, err
 		}
-		return !exist, nil
+		return planPoolRemoval(pools, tenantRow.TenantID, poolName, poolDelete.ZoneList), nil
 	}
-	err = resourceutils.CheckJobWithTimeout(check)
-	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to wait for tenant 'ALTER_TENANT' job for deleting pool of tenant %s", tenantName))
-	}
-
-	// step 1.2: update resource pool list
-	tenantSQLParam = model.TenantSQLParam{
-		TenantName:  tenantName,
-		PoolList:    poolList,
-		PrimaryZone: specPrimaryZone,
-	}
-	err = oceanbaseOperationManager.SetTenant(m.Ctx, tenantSQLParam)
-	if err != nil {
-		m.Logger.Error(err, "Modify tenant, update pool list", "tenantName", tenantName)
+	initial, err := assigned()
+	if err != nil || initial.target.ResourcePoolID == 0 {
 		return err
 	}
-	// step 2: delete resource pool
-	poolExist, err := m.poolExist(poolName)
-	if err != nil {
-		m.Logger.Error(err, "Failed to check whether resource pool exists", "poolName", poolName)
-		return err
+	// Preserve unrelated live localities. A previous attempt may already have
+	// removed this zone before failing to detach the underlying physical pool.
+	var locality []string
+	removed := false
+	for _, entry := range strings.Split(tenantRow.Locality, ",") {
+		entry = strings.TrimSpace(entry)
+		if !initial.sharedZone && strings.HasSuffix(entry, "@"+poolDelete.ZoneList) {
+			removed = true
+		} else {
+			locality = append(locality, entry)
+		}
 	}
-	if poolExist {
-		err = oceanbaseOperationManager.DeletePool(m.Ctx, poolName)
+	if removed {
+		err = oceanbaseOperationManager.SetTenant(m.Ctx, model.TenantSQLParam{
+			TenantName: tenantName, Locality: strings.Join(locality, ","),
+		})
 		if err != nil {
 			return err
 		}
 	}
-
-	// step 3: delete unit
-	unitExist, err := m.unitConfigV4Exist(unitName)
+	err = resourceutils.CheckJobWithTimeout(func() (bool, error) {
+		exists, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.Ctx, int(tenantRow.TenantID))
+		return !exists, err
+	})
 	if err != nil {
-		m.Logger.Error(err, "Check existence of UnitConfigV4", "unitName", unitName)
+		return errors.Wrap(err, "wait for locality change before detaching pool")
+	}
+	current, err := assigned()
+	if err != nil {
 		return err
 	}
-	if unitExist {
-		err = oceanbaseOperationManager.DeleteUnitConfig(m.Ctx, unitName)
-		if err != nil {
+	if current.target.ResourcePoolID != initial.target.ResourcePoolID {
+		return errors.Errorf("resource pool %s changed while removing it from tenant %s", poolName, tenantName)
+	}
+	if len(current.remaining) == 0 {
+		return errors.Errorf("cannot detach the last pool from tenant %s", tenantName)
+	}
+	err = oceanbaseOperationManager.SetTenant(m.Ctx, model.TenantSQLParam{
+		TenantName: tenantName, PoolList: current.remaining, PrimaryZone: m.generateSpecPrimaryZone(m.OBTenant.Spec.Pools),
+	})
+	if err != nil {
+		return err
+	}
+	detached, err := oceanbaseOperationManager.GetPoolByName(m.Ctx, poolName)
+	if err != nil {
+		return err
+	}
+	if detached.ResourcePoolID != current.target.ResourcePoolID || detached.TenantID.Valid {
+		return errors.Errorf("resource pool %s is no longer the detached pool", poolName)
+	}
+	if err := oceanbaseOperationManager.DeletePool(m.Ctx, poolName); err != nil {
+		return err
+	}
+
+	// Only the unit configuration used by this pool and no remaining pool is ours to drop.
+	configs, err := oceanbaseOperationManager.GetUnitConfigV4List(m.Ctx)
+	if err != nil {
+		return err
+	}
+	pools, err := oceanbaseOperationManager.GetPoolList(m.Ctx)
+	if err != nil {
+		return err
+	}
+	if removableUnitConfig(current.target.UnitConfigID, unitName, configs, pools) {
+		if err := oceanbaseOperationManager.DeleteUnitConfig(m.Ctx, unitName); err != nil {
 			return err
 		}
 	}

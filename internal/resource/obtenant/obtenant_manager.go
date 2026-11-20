@@ -691,7 +691,10 @@ func (m *OBTenantManager) poolRecord(pools []v1alpha1.ResourcePoolStatus) (v1alp
 	}, nil
 }
 
-func observedPoolLocality(zone string, active map[string]v1alpha1.LocalityType, configured map[string]*v1alpha1.LocalityType) *v1alpha1.LocalityType {
+func observedPoolLocality(zone string, active map[string]v1alpha1.LocalityType, configured map[string]*v1alpha1.LocalityType, managed bool) *v1alpha1.LocalityType {
+	if !managed && configured[zone] == nil {
+		return nil
+	}
 	if locality, ok := active[zone]; ok {
 		return &locality
 	}
@@ -699,7 +702,9 @@ func observedPoolLocality(zone string, active map[string]v1alpha1.LocalityType, 
 		// A retained pool has no replica until the database locality contains its zone.
 		return &v1alpha1.LocalityType{Name: locality.Name, Replica: locality.Replica, IsActive: false}
 	}
-	return nil
+	// Locality removal precedes detaching the pool. Keep an assigned, managed
+	// pool visible after a failed or interrupted deletion so it can be retried.
+	return &v1alpha1.LocalityType{}
 }
 
 func (m *OBTenantManager) buildPoolStatusList(obTenant *model.OBTenant) ([]v1alpha1.ResourcePoolStatus, error) {
@@ -714,7 +719,7 @@ func (m *OBTenantManager) buildPoolStatusList(obTenant *model.OBTenant) ([]v1alp
 
 	tenantID := obTenant.TenantID
 	priorityMap := m.generateStatusPriorityMap(primaryZone)
-	unitNumMap, err := m.generateStatusUnitNumMap(m.OBTenant.Spec.Pools)
+	unitNumMap, err := m.generateStatusUnitNumMap(tenantID)
 	if err != nil {
 		return poolStatusList, err
 	}
@@ -725,12 +730,12 @@ func (m *OBTenantManager) buildPoolStatusList(obTenant *model.OBTenant) ([]v1alp
 	for _, zoneList := range poolList {
 		var poolCurrentStatus v1alpha1.ResourcePoolStatus
 		poolCurrentStatus.ZoneList = zoneList
-		poolCurrentStatus.Type = observedPoolLocality(zoneList, statusTypeMap, specTypeMap)
+		unitCount, managed := unitNumMap[zoneList]
+		poolCurrentStatus.Type = observedPoolLocality(zoneList, statusTypeMap, specTypeMap, managed)
 		if poolCurrentStatus.Type == nil {
-			m.Logger.Error(errors.Errorf("ZoneList %s does not exist in status or spec", zoneList), "Unexpected zoneList")
 			continue
 		}
-		poolCurrentStatus.UnitNumber = unitNumMap[zoneList]
+		poolCurrentStatus.UnitNumber = unitCount
 		poolCurrentStatus.Priority = priorityMap[zoneList]
 		poolCurrentStatus.UnitConfig, err = m.buildUnitConfigV4FromDB(zoneList, tenantID)
 		if err != nil {
