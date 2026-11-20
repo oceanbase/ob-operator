@@ -1,0 +1,8 @@
+export PASSWORD="dwIFJ3"
+export SUFFIX="uecxex"
+export NAMESPACE="oceanbase-uecxex"
+export OBCLUSTER_NAME="testuecxex"
+export OB_ROOT_SECRET="sc-root-uecxex"
+export OBTENANT_NAME="tenantuecxex"
+export LOCAL_PATH_NEW="local-path-newuecxex"
+export LOCAL_PATH_NEW="local-path-newuecxex"
