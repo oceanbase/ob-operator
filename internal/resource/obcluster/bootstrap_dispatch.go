@@ -21,11 +21,16 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 )
 
+type bootstrapStatement interface {
+	Exec(context.Context) error
+	Close()
+}
+
 // Only the worker that atomically records the claim may invoke bootstrap SQL.
 // If it disappears before the claim, a new worker can repeat the preparation.
-// A crash between claiming and sending (including during SQL session setup)
+// A crash between claiming and sending
 // is indistinguishable from a lost response. Subsequent workers only observe.
-func (m *OBClusterManager) dispatchClassicBootstrap(prepare func() (func() error, error), observe func() error) error {
+func (m *OBClusterManager) dispatchClassicBootstrap(prepare func() (bootstrapStatement, error), observe func() error) error {
 	_, claimed, err := m.currentClassicBootstrap(m.Ctx)
 	if err != nil {
 		return err
@@ -33,12 +38,25 @@ func (m *OBClusterManager) dispatchClassicBootstrap(prepare func() (func() error
 	if claimed {
 		return observe()
 	}
-	send, err := prepare()
+	statement, err := prepare()
 	if err != nil {
 		return err
 	}
+	verify, sendErr := m.dispatchPreparedBootstrap(statement)
+	if verify {
+		if err := observe(); err != nil {
+			return errors.Join(sendErr, err)
+		}
+		return nil
+	}
+	return sendErr
+}
+
+// Release the reserved session before any observer starts a physical check.
+func (m *OBClusterManager) dispatchPreparedBootstrap(statement bootstrapStatement) (bool, error) {
+	defer statement.Close()
 	var won bool
-	err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 		cluster, claimed, err := m.currentClassicBootstrap(m.Ctx)
 		if err != nil || claimed {
 			return err
@@ -53,18 +71,13 @@ func (m *OBClusterManager) dispatchClassicBootstrap(prepare func() (func() error
 		return err
 	})
 	if err != nil {
-		return err
+		return false, err
 	}
 	if !won {
-		return observe()
+		return true, nil
 	}
-	if err := send(); err != nil {
-		// Preserve the SQL failure if the database does not prove completion.
-		if checkErr := observe(); checkErr != nil {
-			return errors.Join(err, checkErr)
-		}
-	}
-	return nil
+	err = statement.Exec(m.Ctx)
+	return err != nil, err
 }
 
 func (m *OBClusterManager) currentClassicBootstrap(ctx context.Context) (*v1alpha1.OBCluster, bool, error) {

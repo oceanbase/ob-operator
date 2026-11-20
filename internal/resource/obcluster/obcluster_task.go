@@ -295,12 +295,12 @@ func Bootstrap(m *OBClusterManager) tasktypes.TaskError {
 }
 
 func DispatchClassicBootstrap(m *OBClusterManager) tasktypes.TaskError {
-	err := m.dispatchClassicBootstrap(func() (func() error, error) {
+	err := m.dispatchClassicBootstrap(func() (bootstrapStatement, error) {
 		manager, seeds, err := m.prepareBootstrap()
 		if err != nil {
 			return nil, err
 		}
-		return func() error { return manager.Bootstrap(m.Ctx, seeds) }, nil
+		return manager.PrepareClassicBootstrap(m.Ctx, seeds)
 	}, m.waitForDispatchedBootstrapResult)
 	if err == nil {
 		m.Recorder.Event(m.OBCluster, "Bootstrap", "", "Bootstrap successfully")

@@ -24,13 +24,16 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 
-func (m *OceanbaseOperationManager) Bootstrap(ctx context.Context, bootstrapServerList []model.BootstrapServerInfo) error {
-	serverInfoList := make([]string, 0, len(bootstrapServerList))
-	for _, bootstrapServer := range bootstrapServerList {
-		serverInfoList = append(serverInfoList, fmt.Sprintf(sql.BootstrapServer, bootstrapServer.Zone, bootstrapServer.Server.Ip, bootstrapServer.Server.Port))
+func bootstrapServerListSQL(servers []model.BootstrapServerInfo) string {
+	items := make([]string, 0, len(servers))
+	for _, server := range servers {
+		items = append(items, fmt.Sprintf(sql.BootstrapServer, server.Zone, server.Server.Ip, server.Server.Port))
 	}
-	bootstrapInfo := strings.Join(serverInfoList, ", ")
-	bootstrapSql := fmt.Sprintf(sql.Bootstrap, bootstrapInfo)
+	return strings.Join(items, ", ")
+}
+
+func (m *OceanbaseOperationManager) Bootstrap(ctx context.Context, bootstrapServerList []model.BootstrapServerInfo) error {
+	bootstrapSql := fmt.Sprintf(sql.Bootstrap, bootstrapServerListSQL(bootstrapServerList))
 	m.Logger.Info("Execute bootstrap sql", "sql", bootstrapSql, "datasource", m.Connector.DataSource().String())
 	err := m.ExecWithTimeout(ctx, config.BootstrapTimeout, bootstrapSql)
 	if err != nil {
@@ -41,11 +44,7 @@ func (m *OceanbaseOperationManager) Bootstrap(ctx context.Context, bootstrapServ
 }
 
 func (m *OceanbaseOperationManager) BootstrapSharedStorage(ctx context.Context, bootstrapServerList []model.BootstrapServerInfo, logServiceAccessPoint string, sharedStorageInfo string) error {
-	serverInfoList := make([]string, 0, len(bootstrapServerList))
-	for _, bootstrapServer := range bootstrapServerList {
-		serverInfoList = append(serverInfoList, fmt.Sprintf(sql.BootstrapServer, bootstrapServer.Zone, bootstrapServer.Server.Ip, bootstrapServer.Server.Port))
-	}
-	bootstrapInfo := strings.Join(serverInfoList, ", ")
+	bootstrapInfo := bootstrapServerListSQL(bootstrapServerList)
 	bootstrapSql := fmt.Sprintf(sql.BootstrapWithLogService, bootstrapInfo, logServiceAccessPoint, sharedStorageInfo)
 	m.Logger.Info("Execute shared storage bootstrap sql", "servers", bootstrapInfo, "datasource", m.Connector.DataSource().String())
 	err := m.ExecWithTimeout(ctx, config.BootstrapTimeout, bootstrapSql)
