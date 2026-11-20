@@ -1,10 +1,11 @@
 package utils
 
 import (
+	"testing"
+
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oc "github.com/oceanbase/ob-operator/internal/const/oceanbase"
-	"testing"
 )
 
 func TestEffectiveZoneStorageClasses(t *testing.T) {

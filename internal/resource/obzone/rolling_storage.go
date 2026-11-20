@@ -13,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
 )
@@ -68,14 +68,14 @@ func (m *OBZoneManager) getRollingReplacement(old *v1alpha1.OBServer) (*v1alpha1
 		if s.Annotations[replacementFor] != "" || m.checkIfStorageClassChanged(s) {
 			continue
 		}
-		if s.Status.Status != serverstatus.Running {
-			legacyWaiting++
-		}
 		// Legacy releases created an unmarked spare. Prefer any that is still
 		// starting, otherwise choose the newest matching, same-zone server.
-		if s.Status.Status != serverstatus.Running || legacy == nil {
+		if s.Status.Status != serverstatus.Running {
+			legacyWaiting++
 			legacy = s
-		} else if legacy.Status.Status == serverstatus.Running && s.CreationTimestamp.After(legacy.CreationTimestamp.Time) {
+			continue
+		}
+		if legacy == nil || (legacy.Status.Status == serverstatus.Running && s.CreationTimestamp.After(legacy.CreationTimestamp.Time)) {
 			legacy = s
 		}
 	}
@@ -89,12 +89,12 @@ func (m *OBZoneManager) getRollingReplacement(old *v1alpha1.OBServer) (*v1alpha1
 		if surplus != 1 || legacy == nil || legacyWaiting > 1 {
 			return nil, errors.Errorf("cannot identify a single replacement for observer %s in zone %s", old.Name, m.OBZone.Name)
 		}
-		copy := legacy.DeepCopy()
+		original := legacy.DeepCopy()
 		if legacy.Annotations == nil {
 			legacy.Annotations = make(map[string]string)
 		}
 		legacy.Annotations[replacementFor] = string(old.UID)
-		err = m.Client.Patch(m.Ctx, legacy, client.MergeFromWithOptions(copy, client.MergeFromWithOptimisticLock{}))
+		err = m.Client.Patch(m.Ctx, legacy, client.MergeFromWithOptions(original, client.MergeFromWithOptimisticLock{}))
 		return legacy, errors.Wrapf(err, "record legacy replacement %s for %s", legacy.Name, old.Name)
 	}
 	// Keep the DNS label length within 63 even for a long zone name. The
