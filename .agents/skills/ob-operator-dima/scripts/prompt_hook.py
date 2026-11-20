@@ -19,7 +19,7 @@ def main():
         return
 
     has_reference = re.search(
-        r"(?<![a-z0-9])dima(?![a-z0-9])|openworkitemid|project\.alipay\.com",
+        r"(?<![a-z0-9])dima(?![a-z0-9])|openworkitemid|/workitem(?:/|[?])",
         prompt,
         re.IGNORECASE,
     )

@@ -194,4 +194,4 @@ T0 定义为正式测试包、稳定接口说明、可用环境、三方开发�
 - obshell：`ob/agent/executor/ob/shared_storage_cluster.go`、`shared_storage_key.go`、`ob/agent/api/agent_route.go`、`ob/agent/api/obcluster_handler.go`、`ob/agent/repository/model/oceanbase/shared_storage_stats.go`、`ob/param/shared_storage.go`。
 - 已查询公开代码：[ob-operator OceanBase AI 支持提交](https://github.com/oceanbase/ob-operator/commit/fd0f936232a683a4d842accd7802c546153ec3ef)、[当前测试分支](https://github.com/oceanbase/ob-operator/tree/codex/ss-lakehouse-qa-20260921)。
 
-目标存放位置：[obopensrc/obd 知识库](https://yuque.antfin.com/obopensrc/obd) 的 4.8.0 分组。当前语雀 CLI 钥匙串访问被拒绝，应用内浏览器连接超时；尚未读取该分组现有规划。恢复访问后应先核对既有 4.8.0 计划，调整重复项与已确定排期，再写入并回读确认。
+合入前请核对已有的 4.8.0 计划，更新重复事项和已确定的排期。

@@ -234,7 +234,7 @@ zone1、zone2、zone3；安装器会读取实际 hostname 标签，不要求它�
 自定义连接示例（按实际账号、地址和密钥修改）：
   ./install.sh --nodes worker-1,worker-2,worker-3 \
     --ssh-user deploy --ssh-identity /secure/path/id_ed25519 \
-    --ssh-host worker-2=10.0.0.12 --ssh-host worker-3=10.0.0.13
+    --ssh-host worker-2=192.0.2.1 --ssh-host worker-3=192.0.2.2
 
 --ssh-port 可设置统一 SSH 端口。--ssh-host 可重复，只覆盖传输地址，不改变
 Kubernetes 节点或数据库拓扑；安装器仍核验远端 UUID/接口 IP 是否匹配目标节点。

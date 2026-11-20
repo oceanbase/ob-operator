@@ -18,7 +18,7 @@ dima workitem comments list "$workitem_id" -o json
 没有直接工具时可使用既有 utoo-proxy；以下端点和调用方法来自 OBD 的语雀接入配置：
 
 ```bash
-skylark_endpoint='https://mcpgwoffice-prod.alipay.com/mcpgw/v1/shttpproxy/message/MAIN_CHAIR_mcp.ant.faas.skylarkmcpserver.skylarkmcpserver'
+skylark_endpoint="${YUQUE_MCP_ENDPOINT:?Set the endpoint supplied by your workspace}"
 "$HOME/.utoo-proxy/utoo-proxy" cli --mcp "$skylark_endpoint" --transport streamable --schema skylark_resolve_url
 "$HOME/.utoo-proxy/utoo-proxy" cli --mcp "$skylark_endpoint" --transport streamable skylark_resolve_url --url "$yuque_url"
 "$HOME/.utoo-proxy/utoo-proxy" cli --mcp "$skylark_endpoint" --transport streamable --schema skylark_doc_detail

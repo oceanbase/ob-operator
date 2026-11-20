@@ -4,7 +4,7 @@
 
 When asked to handle a DIMA work item, use
 [ob-operator-dima](.agents/skills/ob-operator-dima/SKILL.md). This includes a
-`project.alipay.com` work-item URL, `openWorkItemId`, or an ID identified by the
+DIMA work-item URL, `openWorkItemId`, or an ID identified by the
 user as a DIMA item. Respect requests for analysis only, no submission, or other
 scope limits. Discussing or editing the workflow itself does not start a bugfix.
 

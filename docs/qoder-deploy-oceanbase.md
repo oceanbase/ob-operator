@@ -50,7 +50,7 @@ kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/stable/
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/stable/deploy/operator.yaml
 
 # 3. 创建密码 Secret
-kubectl create secret generic root-password --from-literal=password='root_password'
+openssl rand -hex 24 | tr -d '\n' | kubectl create secret generic root-password --from-file=password=/dev/stdin
 
 # 4. 部署 OceanBase 集群
 kubectl apply -f https://raw.githubusercontent.com/oceanbase/ob-operator/stable/example/quickstart/obcluster.yaml
@@ -116,7 +116,7 @@ ob-operator 已验证以下存储方案的兼容性：
 
 #### 实战案例：一句话部署 OceanBase CE 4.5.0.0
 
-对 Qoder 说：**"帮我在 root@11.124.9.67 部署一下 oceanbase"**
+对 Qoder 说：**"帮我在 root@198.51.100.10 部署一下 oceanbase"**
 
 Qoder 自动完成的全流程：
 
@@ -145,7 +145,7 @@ Qoder 根据 OS 版本自动选择兼容的 RPM 包：
 oceanbase-ce:
   servers:
   - name: server1
-    ip: 11.124.9.67
+    ip: 198.51.100.10
   global:
     devname: eth0
     mysql_port: 2881        # MySQL 连接端口
@@ -163,14 +163,18 @@ oceanbase-ce:
     production_mode: false
     zone: zone1
     cluster_id: 1
-    root_password: root123
+    root_password: "${ROOT_PASSWORD}"
     appname: ob_cluster
 ```
 
 **第四步：自动部署与启动**
 
 ```bash
-# 部署集群
+# 将上面的模板保存为 /root/ob_deploy.yaml.in，替换示例地址后生成配置
+umask 077
+export ROOT_PASSWORD="$(openssl rand -hex 24)"
+envsubst '${ROOT_PASSWORD}' < /root/ob_deploy.yaml.in > /root/ob_deploy.yaml
+unset ROOT_PASSWORD
 obd cluster deploy ob_cluster -c /root/ob_deploy.yaml -f
 
 # 启动集群
@@ -215,8 +219,8 @@ WantedBy=multi-user.target
 | 集群名称 | ob_cluster |
 | MySQL 端口 | 2881 |
 | RPC 端口 | 2882 |
-| Web 控制台 | http://11.124.9.67:2886 |
-| root 密码 | root123 |
+| Web 控制台 | http://198.51.100.10:2886 |
+| root 密码 | 部署时随机生成，保存在受限配置文件中 |
 | 数据目录 | /data/1/oceanbase-ce（1.8T 数据盘） |
 | 内存限制 | 30G |
 | CPU | 6 核 |
@@ -229,7 +233,7 @@ WantedBy=multi-user.target
 
 无需记忆复杂的命令行参数和配置文件格式。只需用自然语言描述需求：
 
-> "帮我在 root@192.168.1.100 部署一个 OceanBase 集群，内存限制 16G，3 个 zone"
+> "帮我在 root@192.0.2.3 部署一个 OceanBase 集群，内存限制 16G，3 个 zone"
 
 Qoder 自动完成从环境检查到集群启动的全流程。
 
