@@ -28,11 +28,11 @@ func TestDashboardHostPriorityAndValidation(t *testing.T) {
 		{name: "saved", saved: "dashboard.example.com\n", external: "1.1.1.1", internal: "1.0.0.1", discovered: "8.8.4.4", want: "dashboard.example.com", source: "saved --dashboard-host"},
 		{name: "external", external: "1.1.1.1", internal: "1.0.0.1", discovered: "8.8.4.4", want: "1.1.1.1", source: "Kubernetes Node ExternalIP"},
 		{name: "public-internal", external: "10.0.0.2", internal: "1.0.0.1", discovered: "8.8.4.4", want: "1.0.0.1", source: "public Kubernetes node address"},
-		{name: "metadata", external: "192.168.0.2", internal: "172.16.177.227", discovered: "8.8.4.4", want: "8.8.4.4", source: "test metadata", calls: 1},
-		{name: "unavailable", internal: "172.16.177.227", calls: 1},
-		{name: "private-discovery", internal: "172.16.177.227", discovered: "10.0.0.2", calls: 1},
-		{name: "invalid-discovery", internal: "172.16.177.227", discovered: "not-an-ip", calls: 1},
-		{name: "reserved-external", external: "192.0.2.1", internal: "172.16.177.227", discovered: "8.8.4.4", want: "8.8.4.4", source: "test metadata", calls: 1},
+		{name: "metadata", external: "192.168.0.2", internal: "192.0.2.10", discovered: "8.8.4.4", want: "8.8.4.4", source: "test metadata", calls: 1},
+		{name: "unavailable", internal: "192.0.2.10", calls: 1},
+		{name: "private-discovery", internal: "192.0.2.10", discovered: "10.0.0.2", calls: 1},
+		{name: "invalid-discovery", internal: "192.0.2.10", discovered: "not-an-ip", calls: 1},
+		{name: "reserved-external", external: "192.0.2.1", internal: "192.0.2.10", discovered: "8.8.4.4", want: "8.8.4.4", source: "test metadata", calls: 1},
 		{name: "invalid-saved", saved: "http://bad.example/path", wantError: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
