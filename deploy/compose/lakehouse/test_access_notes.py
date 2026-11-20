@@ -61,7 +61,7 @@ class AccessNotesTests(unittest.TestCase):
     def test_minio_credentials_and_tunnel(self):
         root, result = self.render()
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("ssh -o ExitOnForwardFailure=yes -N -L '39001:172.30.52.10:9001'", result.stdout)
+        self.assertIn("ssh -o ExitOnForwardFailure=yes -N -L '39001:198.18.52.10:9001'", result.stdout)
         self.assertIn('http://127.0.0.1:39001/', result.stdout)
         for name in ('minio_access_id', 'minio_access_key'):
             self.assertIn('0123456789ab:' + str(root / 'secrets' / name), result.stdout)

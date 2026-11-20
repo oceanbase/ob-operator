@@ -14,6 +14,7 @@ import json
 import os
 from pathlib import Path
 import re
+import secrets
 import shutil
 import socket
 import subprocess
@@ -404,7 +405,7 @@ def validate_charts(package, lock):
     for name in ("oceanseek", "oceanbase-dashboard", "oceanbase-minio", "ob-operator"):
         args = ["helm", "lint", "--strict", str(charts / name)]
         if name == "oceanbase-dashboard":
-            args += ["--set-string", "adminPassword=render-only-not-an-account"]
+            args += ["--set-string", "adminPassword=" + secrets.token_hex(24)]
         run(args)
         results.append("PASS strict lint " + name)
     references = set()
@@ -417,7 +418,7 @@ def validate_charts(package, lock):
             results.append("PASS render stage=%s dashboard=%s" % (stage, enabled))
     references |= rendered_images(run(["helm", "template", "qa", str(charts / "ob-operator")]))
     references |= rendered_images(run(["helm", "template", "qa", str(charts / "oceanbase-dashboard"),
-                                       "--set-string", "adminPassword=render-only-not-an-account"]))
+                                       "--set-string", "adminPassword=" + secrets.token_hex(24)]))
     references |= rendered_images((package / "prerequisites/cert-manager-v1.12.4.yaml").read_text())
     locked = {item["reference"] for item in lock["images"]}
     missing = references - locked

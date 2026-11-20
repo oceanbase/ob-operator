@@ -510,7 +510,7 @@ spec:
         env:
         - name: TELEMETRY_REPORTER
           value: ob-operator
-        image: reg.docker.alibaba-inc.com/ob-opensource-test/lakebase:ob-operator-native-44337ae7540b
+        image: localhost/oceanseek/ob-operator:native-44337ae7540b
         livenessProbe:
           httpGet:
             path: /healthz
@@ -549,7 +549,7 @@ spec:
         - --upstream=http://127.0.0.1:8080/
         - --logtostderr=true
         - --v=0
-        image: reg.docker.alibaba-inc.com/ob-opensource-test/lakebase:kube-rbac-proxy-v0.13.1
+        image: quay.m.daocloud.io/brancz/kube-rbac-proxy:v0.13.1
         name: kube-rbac-proxy
         ports:
         - containerPort: 8443

@@ -375,8 +375,8 @@ func TestImageRegistrySelection(t *testing.T) {
 	const registry = "registry.example.invalid:5000/team/lakehouse"
 	const digest = "private.example.invalid/custom/observer@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 	releaseEnv := strings.Replace(string(example),
-		"${IMAGE_REGISTRY:-oceanbase}/lakehouse-bootstrap:20261103-monitoring-r1",
-		"${IMAGE_REGISTRY:-oceanbase}/lakehouse-bootstrap:native-e43fab5cc687", 1)
+		"${IMAGE_REGISTRY:-localhost/oceanseek}/lakehouse-bootstrap:20261103-monitoring-r1",
+		"${IMAGE_REGISTRY:-localhost/oceanseek}/lakehouse-bootstrap:native-e43fab5cc687", 1)
 	if releaseEnv == string(example) {
 		t.Fatal("release fixture must replace the bootstrap reference")
 	}
@@ -398,18 +398,18 @@ func TestImageRegistrySelection(t *testing.T) {
 		{name: "explicit env file", file: strings.Replace(string(example), "IMAGE_REGISTRY=", "IMAGE_REGISTRY="+registry, 1), explicit: true, prefix: registry},
 		{name: "shell overrides file registry", file: strings.Replace(string(example), "IMAGE_REGISTRY=", "IMAGE_REGISTRY=ignored.example.invalid/old", 1), env: map[string]string{"IMAGE_REGISTRY": registry}, explicit: true, prefix: registry},
 		{name: "full digest override", file: string(example), env: map[string]string{"IMAGE_REGISTRY": registry, "OBSERVER_IMAGE": digest}, prefix: registry, override: true},
-		{name: "release defaults", file: releaseEnv, bootstrap: "oceanbase/lakehouse-bootstrap:native-e43fab5cc687"},
+		{name: "release defaults", file: releaseEnv, bootstrap: "localhost/oceanseek/lakehouse-bootstrap:native-e43fab5cc687"},
 		{name: "release registry", file: releaseEnv, env: map[string]string{"IMAGE_REGISTRY": registry}, prefix: registry, bootstrap: registry + "/lakehouse-bootstrap:native-e43fab5cc687"},
 		{name: "release custom env file", file: strings.Replace(releaseEnv, "IMAGE_REGISTRY=", "IMAGE_REGISTRY="+registry, 1), explicit: true, prefix: registry, bootstrap: registry + "/lakehouse-bootstrap:native-e43fab5cc687"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			services := renderComposeEnvironment(t, tc.env, tc.file, tc.explicit)
 			expected := map[string]string{
-				"observer":         "oceanbase/oceanbase-ai-cloud-native:4.6.3.0-82026110121.al8-r3",
-				"logservice-1":     "oceanbase/oblogservice:1.3.3-42026110118.al8-r1",
-				"minio":            "reg.antgroup-inc.cn/oceanbase-test/minio:RELEASE.2025-10-15T17-29-55Z-r3",
-				"minio-init":       "reg.antgroup-inc.cn/oceanbase-test/minio-mc:RELEASE.2025-08-13T08-35-41Z-r3",
-				"credentials-init": "oceanbase/lakehouse-bootstrap:20261103-monitoring-r1",
+				"observer":         "localhost/oceanseek/oceanbase-ai-cloud-native:4.6.3.0-82026110121.al8-r3",
+				"logservice-1":     "localhost/oceanseek/oblogservice:1.3.3-42026110118.al8-r1",
+				"minio":            "localhost/oceanseek/minio:RELEASE.2025-10-15T17-29-55Z-r3",
+				"minio-init":       "localhost/oceanseek/minio-mc:RELEASE.2025-08-13T08-35-41Z-r3",
+				"credentials-init": "localhost/oceanseek/lakehouse-bootstrap:20261103-monitoring-r1",
 				"obagent":          "quay.io/oceanbase/obagent:4.2.6-100000152026051118",
 				"prometheus":       "quay.io/prometheus/prometheus:v2.51.1",
 				"alertmanager":     "quay.io/prometheus/alertmanager:v0.27.0",

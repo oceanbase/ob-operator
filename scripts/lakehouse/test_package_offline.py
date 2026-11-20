@@ -2,6 +2,7 @@
 import argparse
 import importlib.util
 import json
+import os
 import hashlib
 from pathlib import Path
 import subprocess
@@ -82,6 +83,8 @@ networks:
             (bundle / 'compose.yaml').write_text('services:\n  smoke:\n    image: busybox:1.36.1\n'
                                                 '    command: ["echo", "$$HOME"]\n')
             (bundle / '.env').write_text('')
+            (bundle / 'secrets').mkdir()
+            (bundle / 'secrets/generated').write_bytes(os.urandom(32))
             item = {'role': 'fixture', 'reference': 'busybox:1.36.1', 'image_id': config_id}
             (bundle / 'image-lock.json').write_text(json.dumps({
                 'delivery_channel': 'compose', 'delivery_version': 'fixture',
@@ -89,6 +92,8 @@ networks:
             args = argparse.Namespace(bundle=bundle, values=[], docker='docker',
                                       output=root / 'offline', pull='never')
             OFFLINE.export(args, OFFLINE.plan(args))
+            self.assertFalse((args.output / 'deployment/secrets').exists())
+            self.assertFalse((args.output / 'deployment/.env').exists())
             with tarfile.open(args.output / 'images.tar.gz') as archive:
                 manifest = json.load(archive.extractfile('manifest.json'))
                 self.assertEqual(manifest[0]['RepoTags'], ['busybox:1.36.1'])

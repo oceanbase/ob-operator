@@ -9,29 +9,22 @@ historical installer bundles; they are not the native release entry point.
 
 The current source chart installs OBProxy by default. Use the current
 `release-images.lock.json`, which includes the Helm-only `obproxy` image role.
-Historical distribution locks (including the Alibaba r1 lock) remain unchanged
-and cannot package this chart until their maintainer supplies a matching OBProxy
-entry and registry publication evidence. Do not invent an internal mirror tag
-or reuse a historical publication report for the new component.
 
-## One component, one image identity
+## Offline tags and registry publication
 
-The Alibaba online test inventory is `release-images.alibaba-test.lock.json`.
-It uses the single repository `reg.docker.alibaba-inc.com/ob-opensource-test/lakebase`
-with `<component>-<original-tag>` tags. `upstream_reference` preserves the original
-component tag, while config IDs remain unchanged. Use `--lock` to select this
-inventory; do not apply an IMAGE_REGISTRY prefix to the old multi-repository tags.
-When building this distribution, pass the actual per-role push/pull report using
-`--publication-report` and actual Docker inspection evidence. The builder rejects
-mismatched references, config IDs, platforms or manifest digests. Operator's
-`kubeRbacProxyImage` is also overridden so this dependency uses the same registry.
+Load the delivery archive into Docker or into containerd on every eligible
+Kubernetes node. Tags under `localhost/oceanseek` identify locally imported
+images. To deploy via a registry, publish the images to a repository you
+control and pass its exact references, config IDs and manifest digests in
+`--lock`. For online bundles, supply per-role push/pull evidence using
+`--publication-report`.
 
 [`release-images.lock.json`](release-images.lock.json) is the release input.
 Every component has one role, canonical image reference (including a fixed tag),
 full Docker config image ID, and platform. Both delivery formats use that record.
 A role cannot select a different Observer build simply because it runs in Helm.
 
-The current internal release contains 15 roles:
+The release contains 15 roles:
 
 | Delivery | Roles |
 | --- | --- |
@@ -40,8 +33,8 @@ The current internal release contains 15 roles:
 | Helm only | `operator`, `dashboard`, `obproxy`, `obdiag`, `oceanbase-helper`, `utility`, `kube-rbac-proxy` |
 
 The shared Observer is
-`oceanbase/oceanbase-ai-cloud-native:4.6.3.0-82026110121.al8-r3`;
-LogService uses `oceanbase/oblogservice:1.3.3-42026110118.al8-r1`. Exact config IDs and the MinIO/mc
+`localhost/oceanseek/oceanbase-ai-cloud-native:4.6.3.0-82026110121.al8-r3`;
+LogService uses `localhost/oceanseek/oblogservice:1.3.3-42026110118.al8-r1`. Exact config IDs and the MinIO/mc
 versions belong in the lock rather than a second manually maintained list.
 The Operator image also supplies the native readiness executable.
 

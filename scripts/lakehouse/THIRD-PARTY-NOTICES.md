@@ -79,4 +79,4 @@ Third-party components retain their own licenses. The AGPL image label describes
 第三方组件保留各自的许可协议。镜像的 AGPL 标签描述的是主程序，不会改变镜像内其他组件的许可协议。再分发时应保留适用的声明。本说明不免除分发者应承担的义务，也不对接收者依据适用开源许可享有的权利附加限制。版权归各自作者所有；软件及封装按其适用许可条款提供，不附带担保。
 
 Source and build materials / 源码和构建资料：
-http://6.12.233.107:18080/third-party/minio/20261118-r3-multiarch/SOURCE-CODE.txt
+Obtain the matching SOURCE-CODE.txt and source archive from your image distributor.

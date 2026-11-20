@@ -3,7 +3,7 @@ distributed:
   replicas: 3
   drivesPerNode: 1
   driveSize: 100Gi
-image: reg.antgroup-inc.cn/oceanbase-test/minio:RELEASE.2025-10-15T17-29-55Z-r3
+image: localhost/oceanseek/minio:RELEASE.2025-10-15T17-29-55Z-r3
 imagePullPolicy: IfNotPresent
 rootExistingSecret: ''
 existingClaim: ''

@@ -2,6 +2,7 @@
 
 import copy
 import os
+import secrets
 from pathlib import Path
 import subprocess
 import tempfile
@@ -24,7 +25,7 @@ LAKEHOUSE = {
     "sharedStorage": {
         "bucketURL": "s3://data?host=http://minio:9000&s3_region=us-east-1",
     },
-    "credentials": {"accessId": "test-id", "accessKey": "test-key"},
+    "credentials": {"accessId": secrets.token_hex(8), "accessKey": secrets.token_hex(24)},
 }
 
 
@@ -96,7 +97,8 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(len(secrets), 2)
         for config in (spec["sharedStorageInfo"], logservice["spec"]["objectStoreUrl"]):
             secret = secrets[config["secretRef"]["name"]]
-            self.assertEqual(secret["stringData"], {"access_id": "test-id", "access_key": "test-key"})
+            self.assertEqual(secret["stringData"], {"access_id": LAKEHOUSE["credentials"]["accessId"],
+                                                    "access_key": LAKEHOUSE["credentials"]["accessKey"]})
 
     def test_existing_and_mixed_secrets(self):
         for log_existing, shared_existing in ((True, True), (True, False), (False, True)):

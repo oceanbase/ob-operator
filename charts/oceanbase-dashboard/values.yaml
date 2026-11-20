@@ -67,7 +67,7 @@ inspection:
   obdiag:
     image: "ghcr.io/oceanbase/obdiag:5.0.2-12026102116"
   oceanbaseHelper:
-    image: "reg.antgroup-inc.cn/oceanbase-test/lakebase:oceanseek-r28-helper"
+    image: "localhost/oceanseek/oceanbase-helper:oceanseek-r28-amd64"
 
 job:
   inspection:

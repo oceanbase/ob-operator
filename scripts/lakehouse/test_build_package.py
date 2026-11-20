@@ -12,6 +12,7 @@ import importlib.util
 import io
 import json
 from pathlib import Path
+import secrets
 import shutil
 import subprocess
 import sys
@@ -40,8 +41,8 @@ REFERENCES = {
     "cert-manager-controller": "quay.io/jetstack/cert-manager-controller:v1.12.4",
     "cert-manager-cainjector": "quay.io/jetstack/cert-manager-cainjector:v1.12.4",
     "cert-manager-webhook": "quay.io/jetstack/cert-manager-webhook:v1.12.4",
-    "minio": "reg.antgroup-inc.cn/oceanbase-test/minio:RELEASE.2025-10-15T17-29-55Z-r3",
-    "mc": "reg.antgroup-inc.cn/oceanbase-test/minio-mc:RELEASE.2025-08-13T08-35-41Z-r3",
+    "minio": "localhost/oceanseek/minio:RELEASE.2025-10-15T17-29-55Z-r3",
+    "mc": "localhost/oceanseek/minio-mc:RELEASE.2025-08-13T08-35-41Z-r3",
     "kube-rbac-proxy": "oceanbase/kube-rbac-proxy:v0.13.1",
 }
 
@@ -386,7 +387,7 @@ class BuildPackageTest(unittest.TestCase):
         for chart, options in (("ob-operator", []),
                                ("oceanseek", ["-f", str(bundle / "values/quickstart.yaml"),
                                   "--set", "stage=cluster", "--set-string", "storageClass=local-path"]),
-                               ("oceanbase-dashboard", ["--set-string", "adminPassword=render-only-not-an-account"])):
+                               ("oceanbase-dashboard", ["--set-string", "adminPassword=" + secrets.token_hex(24)])):
             rendered.append(BUILDER.run(["helm", "template", "qa", str(bundle / "charts" / chart)] + options))
         rendered.append((bundle / "prerequisites/cert-manager-v1.12.4.yaml").read_text())
         manifests = self.root / "single-tar-qa-rendered.yaml"

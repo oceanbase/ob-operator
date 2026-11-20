@@ -205,7 +205,6 @@ pull the configured images or have the exact images preloaded by an admin.
 
 Minimum sizing reference (test defaults, production planning)
 -------------------------------------------------------------
-Source: https://yuque.antfin.com/ob/ai-storage/xs9go7b0xfobq5fv (draft).
                     Nodes  Host CPU/RAM   Local disk    Component CPU/RAM
 Test ODP + Observer   >=1   4C / 16G      SSD 50GB      ODP 1C/2G, OB 3C/10G
 Test LogService       >=3   2C / 4G       20GB          LS 2C/4G each

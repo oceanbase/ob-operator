@@ -7,6 +7,8 @@ if [[ $# != 1 ]]; then
 fi
 
 tag=$1
+: "${BASE_IMAGE:?Set BASE_IMAGE to the immutable digest or local image ID of your verified MinIO runtime}"
+[[ $BASE_IMAGE =~ (^|@)sha256:[a-f0-9]{64}$ ]] || { echo "BASE_IMAGE must use an immutable sha256 digest" >&2; exit 2; }
 recipe="$(cd "$(dirname "$0")" && pwd)"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
@@ -31,4 +33,4 @@ flags+=" -X github.com/minio/minio/cmd.ReleaseTag=RELEASE.$release"
 flags+=" -X github.com/minio/minio/cmd.CommitID=$commit"
 flags+=" -X github.com/minio/minio/cmd.ShortCommitID=${commit:0:12}"
 CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -buildvcs=false -ldflags "$flags" -o "$tmp/image/minio" .
-docker build --platform linux/amd64 -f "$recipe/Dockerfile" -t "$tag" "$tmp/image"
+docker build --build-arg "BASE_IMAGE=$BASE_IMAGE" --platform linux/amd64 -f "$recipe/Dockerfile" -t "$tag" "$tmp/image"

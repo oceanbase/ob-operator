@@ -13678,7 +13678,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: cert-manager-cainjector
-          image: "reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:165691f631d61931a27e4fbbb82bbed8205431d0446b3c14d170081aeff75f0a"
+          image: "localhost/oceanseek/cert-manager-cainjector@sha256:165691f631d61931a27e4fbbb82bbed8205431d0446b3c14d170081aeff75f0a"
           imagePullPolicy: IfNotPresent
           args:
           - --v=2
@@ -13742,13 +13742,13 @@ spec:
           type: RuntimeDefault
       containers:
         - name: cert-manager-controller
-          image: "reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:9b262e9493ab3e0daebc2c9cfbddc6df68b9ac91afc036a759584f3d49d607e5"
+          image: "localhost/oceanseek/cert-manager-controller@sha256:9b262e9493ab3e0daebc2c9cfbddc6df68b9ac91afc036a759584f3d49d607e5"
           imagePullPolicy: IfNotPresent
           args:
           - --v=2
           - --cluster-resource-namespace=$(POD_NAMESPACE)
           - --leader-election-namespace=kube-system
-          - --acme-http01-solver-image=reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:5d9c98380d108c34fba252ce675857a9b63e00271ecb64ecfa7f58626723dac0
+          - --acme-http01-solver-image=localhost/oceanseek/cert-manager-acmesolver@sha256:5d9c98380d108c34fba252ce675857a9b63e00271ecb64ecfa7f58626723dac0
           - --max-concurrent-challenges=60
           ports:
           - containerPort: 9402
@@ -13825,7 +13825,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: cert-manager-webhook
-          image: "reg.antgroup-inc.cn/oceanbase-test/lakebase@sha256:fc2845cc042ab57c8b98c5ff62462d50dcd5d8d3302f9e6875cd05042ce1020b"
+          image: "localhost/oceanseek/cert-manager-webhook@sha256:fc2845cc042ab57c8b98c5ff62462d50dcd5d8d3302f9e6875cd05042ce1020b"
           imagePullPolicy: IfNotPresent
           args:
           - --v=2

@@ -228,11 +228,12 @@ def export(args, selected):
         # An existing but wrong image is an error, never a fallback to latest.
         actual = inspect_image(args.docker, item, selected['platform'])
         metadata.append({'reference': ref, 'image_id': actual['Id'],
-                         'repo_digests': actual.get('RepoDigests', [])})
+                         'repo_digests': [d for d in (actual.get('RepoDigests') or [])
+                                          if ref == d or ref.startswith(d.split('@', 1)[0] + ':')]})
     references = offline_references(selected)
     tag_verified_images(args, selected, references)
     target = output / 'deployment'
-    shutil.copytree(bundle, target, ignore=shutil.ignore_patterns('__pycache__', '*.pyc'))
+    shutil.copytree(bundle, target, ignore=shutil.ignore_patterns('__pycache__', '*.pyc', '.git', '.env', 'secrets'))
     if selected['channel'] == 'compose':
         # Freeze interpolated configuration while retaining relative bind mounts.
         # Compose config already escapes literal dollar signs for round trips.

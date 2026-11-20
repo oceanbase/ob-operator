@@ -111,7 +111,7 @@ docker compose up -d --pull never
 The matching Compose image archive includes the pinned open-source
 `minio` and `minio-mc` images built independently from the MinIO open-source projects.
 The internal r3 build includes source provenance and license notices; see
-http://6.12.233.107:18080/third-party/minio/20261118-r3-multiarch/SOURCE-CODE.txt. No AIStor image or license is required.
+http://192.0.2.10:18080/third-party/minio/20261118-r3-multiarch/SOURCE-CODE.txt. No AIStor image or license is required.
 
 The lightweight Compose and native Helm archives do not contain image layers.
 An older Helm image archive can contain different component versions and is not
@@ -359,7 +359,7 @@ container memory above the corresponding application memory target. Initial
 datafile and log sizes do not cap total Docker disk use; MinIO data and logs
 also consume space.
 
-The test component allocations follow [the minimum deployment draft](https://yuque.antfin.com/ob/ai-storage/xs9go7b0xfobq5fv):
+The test deployment uses these component allocations:
 Observer 3 CPU/10 GiB, and three LogServices at 2 CPU/4 GiB each. Compose
 intentionally omits ODP and connects directly to Observer. Program memory is
 about 90% of each container allocation, matching Helm's default memory policy.
@@ -404,7 +404,11 @@ verify the test data on a new SQL connection and check its objects in MinIO.
 
 Cluster IDs, bucket names and static container addresses are persisted in the
 database. Configure these before first use. To avoid a subnet collision, change
-`COMPOSE_SUBNET` and all five `*_IP` values together. Changing `.env` resource
+`COMPOSE_SUBNET` and all five `*_IP` values together. Existing installations must keep the subnet and service addresses from their
+current network. Before replacing a Compose file that used implicit defaults,
+record the subnet with `docker network inspect NETWORK` and each service IP
+with `docker inspect CONTAINER`, then set those six values in `.env`.
+The new-install baseline uses an isolated benchmarking subnet. Changing `.env` resource
 values on an existing deployment does not necessarily reconfigure persisted
 database settings; use this version's defaults for the first experience.
 

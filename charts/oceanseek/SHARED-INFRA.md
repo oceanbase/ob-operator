@@ -136,6 +136,8 @@ layouts. The distributed mode uses per-Pod claims and cannot use
 `minio.existingClaim`. Switch layouts by deploying a new release and performing
 an explicit data migration. The distributed profile requires the OceanSeek
 MinIO image built with `scripts/lakehouse/images/minio-rejoin/build.sh`.
+Set `BASE_IMAGE` to the verified MinIO runtime digest or local image ID
+and pass the desired output tag to that script.
 If overriding `minio.image`, use an image with the same
 `/minio/health/lakehouse-ready` contract. Each new process checks all three
 disk connections before accepting client traffic. Previously admitted processes

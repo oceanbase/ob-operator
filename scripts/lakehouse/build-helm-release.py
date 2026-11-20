@@ -266,7 +266,8 @@ def build_release(source, lock, output, release_version=None, allow_existing_out
         files[pinned.relative_to(snapshot).as_posix()] = {'sha256': native.sha256(pinned), 'mode': pinned.stat().st_mode & 0o777}
         tree_digest = hashlib.sha256(json.dumps(files, sort_keys=True).encode()).hexdigest()
     metadata, patch = source_provenance(source, files)
-    (provenance / 'source.patch').write_text(patch)
+    patch_digest = hashlib.sha256(patch.encode()).hexdigest()
+    (provenance / 'source.patch.sha256').write_text(patch_digest + '\n')
     native.write_json(provenance / 'source-tree.json', files)
     native.write_json(provenance / 'input-image-lock.json', lock)
     with tempfile.TemporaryDirectory(prefix='lakehouse-source-chart-') as tmp:
@@ -274,7 +275,11 @@ def build_release(source, lock, output, release_version=None, allow_existing_out
         meta, overlay = assemble_chart(snapshot, lock, chart)
         native.run(['helm', 'lint', '--strict', chart])
         rendered = native.run(['helm', 'template', 'oceanseek', chart, '-n', 'oceanseek', '--include-crds'])
-        (output / 'rendered-validation.yaml').write_text(rendered)
+        # Validation renders generate throwaway credentials. Persist the resource
+        # inventory for release verification, without serializing Secret values.
+        inventory = [{'kind': doc['kind'], 'name': doc['metadata']['name']}
+                     for doc in yaml.safe_load_all(rendered) if doc]
+        native.write_json(output / 'rendered-resource-inventory.json', inventory)
         profiles = ('values-three-nodes.yaml', 'values-minio-ha.yaml')
         profile_flags = [arg for name in profiles for arg in ('-f', chart / name)]
         native.run(['helm', 'template', 'oceanseek', chart, '-n', 'oceanseek', *profile_flags])
@@ -299,7 +304,7 @@ def build_release(source, lock, output, release_version=None, allow_existing_out
               'app_version': meta.get('appVersion'), 'dependencies': meta.get('dependencies', []),
               'profile': PROFILE.as_posix(), 'source_tree_sha256': tree_digest,
               'source_snapshot_sha256': native.sha256(provenance / 'source-inputs.tar.gz'),
-              'source_patch_sha256': native.sha256(provenance / 'source.patch'),
+              'source_patch_sha256': patch_digest,
               'input_lock_sha256': native.sha256(provenance / 'input-image-lock.json'),
               'release_defaults_sha256': native.sha256(output / 'release-defaults.yaml'),
               'chart_sha256': native.sha256(target),
