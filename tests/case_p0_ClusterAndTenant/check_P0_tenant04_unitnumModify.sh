@@ -43,7 +43,7 @@ wait_units() {
 tenant_sql() {
     local host
     host=$(sql "SELECT U.SVR_IP FROM DBA_OB_UNITS U JOIN DBA_OB_RESOURCE_POOLS P USING (RESOURCE_POOL_ID)
-        JOIN DBA_OB_TENANTS T USING (TENANT_ID) WHERE T.TENANT_NAME='$OBTENANT_NAME' AND U.STATUS='ACTIVE'
+        JOIN DBA_OB_TENANTS T ON T.TENANT_ID=P.TENANT_ID WHERE T.TENANT_NAME='$OBTENANT_NAME' AND U.STATUS='ACTIVE'
         ORDER BY U.ZONE,U.UNIT_ID LIMIT 1")
     [[ -n $host ]]
     MYSQL_PWD= mysql --connect-timeout=3 --batch --skip-column-names -h "$host" -P2881 -u "root@$OBTENANT_NAME" -e "$1"
