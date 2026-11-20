@@ -231,12 +231,10 @@ services:
     networks: [lakehouse]
     logging: *bounded-logging
 
-  # OBAgent is the Observer sidecar: a separate image sharing the Observer
-  # network namespace so its fixed 127.0.0.1:2881 target reaches this node.
   obagent:
     image: ${OBAGENT_IMAGE:-${IMAGE_REGISTRY:-quay.io/oceanbase}/obagent:4.2.6-100000152026051118}
     platform: linux/amd64
-    network_mode: service:observer
+    networks: [lakehouse]
     entrypoint: ["/opt/lakehouse/obagent-entrypoint.sh"]
     restart: unless-stopped
     cpus: ${OBAGENT_CPUS:-0.5}
@@ -253,10 +251,19 @@ services:
     depends_on:
       observer-bootstrap: {condition: service_completed_successfully}
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8088/metrics/stat"]
+      test:
+        - CMD
+        - bash
+        - -eo
+        - pipefail
+        - -c
+        - |
+          exec 3<>/dev/tcp/observer/2881
+          curl -fsS http://obagent:8088/metrics/ob/basic | grep '^ob_sysstat{' >/dev/null
       interval: 5s
       timeout: 3s
-      retries: 60
+      start_period: 5m
+      retries: 3
     logging: *bounded-logging
 
   alertmanager:
@@ -288,7 +295,7 @@ services:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro,z
       - prometheus-data:/prometheus
     depends_on:
-      obagent: {condition: service_healthy}
+      obagent: {condition: service_healthy, restart: true}
       alertmanager: {condition: service_healthy}
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:9090/-/ready"]

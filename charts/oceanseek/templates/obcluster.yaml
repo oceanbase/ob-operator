@@ -28,6 +28,11 @@ spec:
     {{- if or .Values.obproxy.enabled (dig "spec" "userSecrets" "proxyro" "" $existing) }}
     proxyro: {{ include "oceanseek.proxyROSecret" . }}
     {{- end }}
+  {{- if (.Values.monitor | default dict).enabled }}
+  monitor:
+    image: {{ .Values.monitor.image | quote }}
+    resource: {{ toYaml .Values.monitor.resource | nindent 6 }}
+  {{- end }}
   observer:
     image: {{ .Values.observer.image | quote }}
     resource: {{ toYaml .Values.observer.resource | nindent 6 }}

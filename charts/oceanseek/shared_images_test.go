@@ -39,6 +39,7 @@ func TestSharedDatabaseImagesMatchCompose(t *testing.T) {
 	}
 	for _, tc := range []struct{ kind, name, section, service string }{
 		{"OBCluster", "qa-ob", "observer", "observer"},
+		{"OBCluster", "qa-ob", "monitor", "obagent"},
 		{"OBLogServiceCluster", "qa-ls", "logService", "logservice-1"},
 	} {
 		actual := field(find(t, docs, tc.kind, tc.name), "spec", tc.section, "image")

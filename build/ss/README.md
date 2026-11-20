@@ -115,12 +115,11 @@ RPM 本身包含的空目录可能仍会存在；实际数据目录在部署时�
 Observer 使用同一个业务镜像和同一个 RPM 版本。构建会检查该文件存在，Compose
 启动 Observer 后同时启动 obshell agent；无需再构建一个 obshell 镜像。
 
-OBAgent 保持为独立镜像。它的 OceanBase 采集配置连接 `127.0.0.1:2881`，所以
-Compose 让 OBAgent 与 Observer 共用网络命名空间，效果与 Operator 在同一个 Pod
-中增加 OBAgent sidecar 一致。这样能访问本机 Observer，同时保留独立升级、资源限制
-和健康检查能力。不要把 OBAgent RPM 安装进 Observer 镜像。
+Helm 将 OBAgent 作为 Observer Pod 的 sidecar，通过 `127.0.0.1:2881` 采集。
+Compose 中 OBAgent 通过服务名 `observer:2881` 连接数据库，Prometheus 通过
+`obagent:8088` 抓取指标。两个容器可以独立重启。
 
-Compose 固定使用 `oceanbase/obagent:4.2.4-200000022025090416`、
+Compose 默认使用 `quay.io/oceanbase/obagent:4.2.6-100000152026051118`、
 `quay.io/prometheus/prometheus:v2.51.1` 和
 `quay.io/prometheus/alertmanager:v0.27.0`。Prometheus 和 Alertmanager 的版本不与
 OceanBase RPM 共用版本号；交付版本锁固定实际验证的组合，避免使用浮动 tag。

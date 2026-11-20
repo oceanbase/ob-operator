@@ -23,8 +23,8 @@ import time
 import yaml
 
 HERE = Path(__file__).resolve().parent
-SHARED = {'observer', 'logservice', 'minio', 'mc', 'prometheus', 'alertmanager'}
-COMPOSE_ROLES = SHARED | {'bootstrap', 'obagent'}
+SHARED = {'observer', 'logservice', 'minio', 'mc', 'prometheus', 'alertmanager', 'obagent'}
+COMPOSE_ROLES = SHARED | {'bootstrap'}
 HELM_ROLES = SHARED | {'operator', 'dashboard', 'obdiag', 'oceanbase-helper',
                        'utility', 'prometheus', 'alertmanager', 'kube-rbac-proxy', 'obproxy'}
 CHANNELS = {'compose': COMPOSE_ROLES, 'helm': HELM_ROLES}
@@ -244,9 +244,10 @@ def validate_rendered(lock, compose_json, helm_yaml):
         spec = document.get('spec', {})
         if kind == 'OBCluster':
             check('helm', 'observer', spec.get('observer', {}).get('image'))
-            if spec.get('monitor') or any(zone.get('monitor') for zone in spec.get('topology', [])):
-                raise ValueError('Unvalidated optional obagent monitor is enabled')
+            check('helm', 'obagent', (spec.get('monitor') or {}).get('image'))
             for zone in spec.get('topology', []):
+                if zone.get('monitor'):
+                    check('helm', 'obagent', zone['monitor'].get('image'))
                 if (zone.get('observer') or {}).get('image'):
                     check('helm', 'observer', zone['observer']['image'])
         elif kind == 'OBLogServiceCluster':
@@ -294,7 +295,7 @@ def image_values(lock):
 def image_values_from_refs(r):
     """Apply one explicit role-to-values mapping in every Helm delivery builder."""
     return {'native': {'enabled': True, 'readiness': {'image': r['operator']}},
-            'obproxy': {'image': r['obproxy']},
+            'obproxy': {'image': r['obproxy']}, 'monitor': {'image': r['obagent']},
             'observer': {'image': r['observer']}, 'logService': {'image': r['logservice']},
             'minio': {'image': r['minio']}, 'initialization': {'image': r['mc']},
             'dashboard': {'image': r['dashboard'], 'utilityImage': r['utility'],

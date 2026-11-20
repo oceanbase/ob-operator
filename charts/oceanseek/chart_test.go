@@ -322,3 +322,33 @@ func TestDashboardSharedVolumeSELinux(t *testing.T) {
 		})
 	}
 }
+
+func TestDatabaseMonitor(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		values map[string]interface{}
+		image  string
+	}{
+		{"default", map[string]interface{}{}, "quay.io/oceanbase/obagent:4.2.6-100000152026051118"},
+		{"override", map[string]interface{}{"monitor": map[string]interface{}{"image": "mirror/obagent:qa"}}, "mirror/obagent:qa"},
+		{"disabled", map[string]interface{}{"monitor": map[string]interface{}{"enabled": false}}, ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			docs, output, err := render(t, tc.values)
+			if err != nil {
+				t.Fatalf("render: %v\n%s", err, output)
+			}
+			cluster := find(t, docs, "OBCluster", "qa-ob")
+			if tc.image == "" {
+				if field(cluster, "spec", "monitor") != nil {
+					t.Fatal("disabled monitor is present")
+				}
+				return
+			}
+			if field(cluster, "spec", "monitor", "image") != tc.image ||
+				field(cluster, "spec", "monitor", "resource", "memory") != "512Mi" {
+				t.Fatalf("unexpected monitor: %v", field(cluster, "spec", "monitor"))
+			}
+		})
+	}
+}

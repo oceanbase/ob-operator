@@ -41,7 +41,7 @@ def metadata(lock):
 def rendering(lock):
     refs = {i['role']: i['reference'] for i in lock['images']}
     compose = {'services': {name: {'image': refs[role]} for name, role in BUILDER.SERVICE_ROLES.items()}}
-    docs = [{'kind': 'OBCluster', 'spec': {'observer': {'image': refs['observer']}}},
+    docs = [{'kind': 'OBCluster', 'spec': {'observer': {'image': refs['observer']}, 'monitor': {'image': refs['obagent']}}},
             {'kind': 'OBLogServiceCluster', 'spec': {'logService': {'image': refs['logservice']}}}]
     containers = [{'name': name, 'image': refs[role]} for name, role in BUILDER.CONTAINER_ROLES.items()]
     docs.append({'kind': 'Deployment', 'spec': {'template': {'spec': {'containers': containers}}}})
@@ -188,9 +188,9 @@ class ReleaseContractTests(unittest.TestCase):
 
     def test_optional_images_cannot_hide_live_pod_or_monitor_dependencies(self):
         self.helm[0]['spec']['monitor'] = {'image': 'oceanbase/obagent:4.2.4'}
-        with self.assertRaisesRegex(ValueError, 'optional obagent'):
+        with self.assertRaisesRegex(ValueError, 'helm role obagent image mismatch'):
             BUILDER.validate_rendered(self.lock, self.compose, self.helm)
-        del self.helm[0]['spec']['monitor']
+        self.helm[0]['spec']['monitor']['image'] = BUILDER.validate_lock(self.lock)['obagent']['reference']
         self.helm.append({'kind': 'Pod', 'spec': {'containers': [
             {'name': 'sql-analyzer', 'image': self.lock['excluded_optional']['sql-analyzer']['reference']}]}})
         with self.assertRaisesRegex(ValueError, 'Unclassified runtime container'):
