@@ -18,14 +18,21 @@ prepare() {
     export TOP_MODIFY_POOLS=top-modify-pools-$SUFFIX
     export TOP_SET_CONNECT_WHITE_LIST=top-set-connect-white-list-$SUFFIX
     export TOP_SET_UNIT_NUMBER=top-set-unit-number-$SUFFIX
-    kubectl create namespace $NAMESPACE
-    create_pass_secret $NAMESPACE $OB_ROOT_SECRET $PASSWORD
-    echo $PASSWORD
+    kubectl create namespace "$NAMESPACE" || return 1
+    trap finish EXIT
+    create_pass_secret "$NAMESPACE" "$OB_ROOT_SECRET" "$PASSWORD"
 }
 
 # clean up delete everything by deleting the entire namespace
 cleanup() {
-    kubectl delete namespace $NAMESPACE
+    kubectl delete namespace "$NAMESPACE"
+}
+
+finish() {
+    local rc=$?
+    trap - EXIT
+    cleanup || rc=1
+    exit "$rc"
 }
  
 run() {
@@ -52,19 +59,17 @@ check_resource_running() {
         pod_1_zone2=`kubectl get pod -o wide -n $NAMESPACE | grep "$OBCLUSTER_NAME-1-zone2" | awk -v line="1" 'NR==line{print \$2}'`
         pod_1_zone3=`kubectl get pod -o wide -n $NAMESPACE | grep "$OBCLUSTER_NAME-1-zone3" | awk -v line="1" 'NR==line{print \$2}'`
         ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-        crd_obcluster=`kubectl get obcluster $OBCLUSTER_NAME -n $NAMESPACE  -o yaml| grep "status: running" | tail -n 1| sed 's/ //g'`
-        if [[ $pod_1_zone1 = "1/1" && $pod_1_zone2 = "1/1" && $pod_1_zone3 = "1/1" && -n "$ip" && $crd_obcluster = "status:running" ]];then
+        if [[ $pod_1_zone1 = "1/1" && $pod_1_zone2 = "1/1" && $pod_1_zone3 = "1/1" && -n "$ip" ]];then
             echo "pod_1_zone1 is $pod_1_zone1 ready"
             echo "pod_1_zone2 is $pod_1_zone2 ready"
             echo "pod_1_zone3 is $pod_1_zone3 ready"
             echo "svc is $ip ready"
-            echo "crd_obcluster $crd_obcluster"
             RESOURCE_RUNNING='true'
             break
         fi
         if [ $counter -eq $timeout ]; then
             echo "resource still not running"
-            break
+            return 1
         fi
         sleep 3s
     done
@@ -76,7 +81,6 @@ check_in_obcluster() {
     OBSERVER_ACTIVE='false'
     ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
     echo $ip
-    echo $PASSWORD
     while true; do
         echo 'check ob'
         counter=$((counter+1))
@@ -94,7 +98,7 @@ check_in_obcluster() {
         if [ $counter -eq $timeout ]; then
             echo "resource still not running"
 	    echo "case failed"
-            break
+            return 1
         fi
         sleep 3s
     done
@@ -117,7 +121,7 @@ check_obtenant_running() {
         if [ $counter -eq $timeout ]; then
             echo "obtenant resource still not running"
 	    echo "case failed"
-            break
+            return 1
         fi
         sleep 3s
     done
@@ -143,7 +147,7 @@ check_operation() {
         if [ $counter -eq $timeout ]; then
             echo "resource still not running"
             echo "case failed"
-            break
+            return 1
         fi
         sleep 3s
     done
@@ -164,29 +168,24 @@ EOF
 
 
 validate() {
-    echo 'do validate'
-    check_resource_running 
-    if [[ $RESOURCE_RUNNING == 'false' ]]; then
-        echo "case failed"
-    else
-        check_in_obcluster 
-        if [[ $OBSERVER_ACTIVE == 'false' ]]; then
-            echo "case failed"
-	    cleanup
-	    prepare
-        else
-            echo "case passed"
-        fi
+    # The same six-Observer topology is used by the P0 unit-count scenario.
+    if ! kubectl -n "$NAMESPACE" wait --for=jsonpath='{.status.status}'=running "obcluster/$OBCLUSTER_NAME" --timeout=15m; then
+        echo "case failed waiting for cluster $OBCLUSTER_NAME to reach running" >&2
+        return 1
     fi
+    if ! check_resource_running; then
+        echo "case failed waiting for ready Observer Pods" >&2
+        return 1
+    fi
+    check_in_obcluster || return 1
+    echo "case passed"
 }
 
-#cleanup 
-prepare
-run "obcluster_template_2-2-2.yaml"
-validate 
-run "obtenant_basic_2_2_2.yaml"
-check_obtenant_running
-create "top-set-unit-number.yaml"
-check_obtenant_running
-check_operation $TOP_SET_UNIT_NUMBER
-cleanup
+prepare || exit 1
+run "obcluster_template_2-2-2.yaml" || exit 1
+validate || exit 1
+run "obtenant_basic_2_2_2.yaml" || exit 1
+check_obtenant_running || exit 1
+create "top-set-unit-number.yaml" || exit 1
+check_obtenant_running || exit 1
+check_operation "$TOP_SET_UNIT_NUMBER" || exit 1
