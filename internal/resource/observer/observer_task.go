@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package observer
 
 import (
+	"context"
 	"fmt"
 	"maps"
 	"time"
@@ -24,6 +25,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
@@ -89,18 +91,18 @@ func AddServer(m *OBServerManager) tasktypes.TaskError {
 }
 
 func WaitOBClusterBootstrapped(m *OBServerManager) tasktypes.TaskError {
-	for i := 0; i < obcfg.GetConfig().Time.BootstrapTimeoutSeconds; i++ {
-		obcluster, err := m.getOBCluster()
-		if err != nil {
-			return errors.Wrap(err, "Get obcluster from K8s")
+	timeout := time.Duration(obcfg.GetConfig().Time.BootstrapTimeoutSeconds) * time.Second
+	key := m.generateNamespacedName(m.OBServer.Labels[oceanbaseconst.LabelRefOBCluster])
+	return wait.PollUntilContextTimeout(m.Ctx, time.Second, timeout, true, func(ctx context.Context) (bool, error) {
+		cluster := &v1alpha1.OBCluster{}
+		if err := m.Client.Get(ctx, key, cluster); err != nil {
+			return false, errors.Wrap(err, "get parent OBCluster while waiting for bootstrap")
 		}
-		if obcluster.Status.Status == clusterstatus.Bootstrapped {
-			m.Logger.Info("OBCluster bootstrapped")
-			return nil
+		if cluster.DeletionTimestamp != nil {
+			return false, fmt.Errorf("parent OBCluster %s is being deleted", cluster.Name)
 		}
-		time.Sleep(time.Second)
-	}
-	return errors.New("Timeout to wait obcluster bootstrapped")
+		return cluster.Status.Status == clusterstatus.Bootstrapped || cluster.Status.Status == clusterstatus.Running, nil
+	})
 }
 
 func CreateOBServerPod(m *OBServerManager) tasktypes.TaskError {
