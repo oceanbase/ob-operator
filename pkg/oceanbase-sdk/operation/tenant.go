@@ -223,7 +223,7 @@ func (m *OceanbaseOperationManager) CreateTenantWithOwner(ctx context.Context, t
 	}
 	statement, args := preparedSQLForAddTenant(tenantSQLParam, owner)
 	sent := false
-	err := m.withDedicatedSession(ctx, func(session *OceanbaseOperationManager) error {
+	err := m.WithDedicatedSession(ctx, func(session *OceanbaseOperationManager) error {
 		if err := check(session); err != nil {
 			return err
 		}

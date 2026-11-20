@@ -35,6 +35,8 @@ func confirmTenantCreate(sent bool, createErr error, observe func() error) error
 		switch serverErr.Number {
 		case 2006, 2013, 4012, 4638, 5156: // lost connection, timeout, root service changed or duplicate tenant
 			ambiguous = true
+		default:
+			// Other server codes preserve the transport error classification above.
 		}
 	}
 	if !ambiguous {
@@ -167,7 +169,7 @@ func (m *OBTenantManager) waitForCreatedTenant() error {
 		rows, err := createdRows(ctx, db, live.Status.Creation)
 		lastReadErr = err
 		if err != nil {
-			return false, nil
+			return false, nil //nolint:nilerr // Retry transient reads and report the saved error if polling times out.
 		}
 		manager := *m
 		manager.OBTenant = live

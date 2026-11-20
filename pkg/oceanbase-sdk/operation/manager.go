@@ -157,10 +157,12 @@ func (m *OceanbaseOperationManager) sqlClient() operationSQLClient {
 // WithBackupSession keeps session-local encryption or decryption settings on the
 // same physical connection as the backup or restore that consumes them.
 func (m *OceanbaseOperationManager) WithBackupSession(ctx context.Context, run func(*OceanbaseOperationManager) error) error {
-	return m.withDedicatedSession(ctx, run)
+	return m.WithDedicatedSession(ctx, run)
 }
 
-func (m *OceanbaseOperationManager) withDedicatedSession(ctx context.Context, run func(*OceanbaseOperationManager) error) error {
+// WithDedicatedSession pins identity checks and subsequent statements to one
+// physical SQL connection. The connection is discarded before returning.
+func (m *OceanbaseOperationManager) WithDedicatedSession(ctx context.Context, run func(*OceanbaseOperationManager) error) error {
 	acquire, cancel := context.WithTimeout(ctx, managerConfig.DefaultSqlTimeout)
 	conn, err := m.Connector.GetClient().Connx(acquire)
 	cancel()

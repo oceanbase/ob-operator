@@ -30,6 +30,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
@@ -158,32 +159,27 @@ func (m *OBClusterManager) getOceanbaseOperationManager() (*operation.OceanbaseO
 
 func (m *OBClusterManager) createUser(userName, secretName, privilege string) error {
 	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Begin to create user", "username", userName)
-	password, err := resourceutils.ReadPassword(m.Client, m.OBCluster.Namespace, secretName)
-	if err != nil {
-		return errors.Wrapf(err, "Get password from secret %s failed", secretName)
-	}
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
-	if err != nil {
-		m.Logger.Error(err, "Get oceanbase operation manager")
-		return errors.Wrap(err, "Get oceanbase operation manager")
-	}
-	err = oceanbaseOperationManager.CreateUser(m.Ctx, userName)
-	if err != nil {
-		m.Logger.Error(err, "Create user")
-		return errors.Wrapf(err, "Create user %s", userName)
-	}
-	err = oceanbaseOperationManager.SetUserPassword(m.Ctx, userName, password)
-	if err != nil {
-		m.Logger.Error(err, "Set user password")
-		return errors.Wrapf(err, "Set password for user %s", userName)
-	}
-	object := "*.*"
-	err = oceanbaseOperationManager.GrantPrivilege(m.Ctx, privilege, object, userName)
-	if err != nil {
-		m.Logger.Error(err, "Grant privilege")
-		return errors.Wrapf(err, "Grant privilege for user %s", userName)
-	}
-	return nil
+	return m.withInitializationClient(tCreateUsers, func(db *operation.OceanbaseOperationManager, rootPassword string) error {
+		password := rootPassword
+		if secretName != m.OBCluster.Spec.UserSecrets.Root {
+			var err error
+			password, err = m.initializationPassword(secretName)
+			if err != nil {
+				return err
+			}
+		}
+		if err := db.CreateUser(m.Ctx, userName); err != nil {
+			return errors.Wrapf(err, "Create user %s", userName)
+		}
+		// A previous attempt may already have set root's password. Its fresh
+		// authenticated connection proves that no further change is necessary.
+		if m.OBCluster.Status.Status != clusterstatus.Bootstrapped || userName != oceanbaseconst.RootUser || db.Connector.DataSource().GetPassword() != password {
+			if err := db.SetUserPassword(m.Ctx, userName, password); err != nil {
+				return errors.Wrapf(err, "Set password for user %s", userName)
+			}
+		}
+		return errors.Wrapf(db.GrantPrivilege(m.Ctx, privilege, "*.*", userName), "Grant privilege for user %s", userName)
+	})
 }
 
 type obzoneChanger func(*v1alpha1.OBZone)

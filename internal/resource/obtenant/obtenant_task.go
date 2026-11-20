@@ -168,7 +168,6 @@ func DeleteTenant(m *OBTenantManager) tasktypes.TaskError {
 	// ownership evidence for name-based cleanup.
 	if m.OBTenant.Spec.Source == nil || (m.OBTenant.Spec.Source.Tenant == nil && m.OBTenant.Spec.Source.Restore == nil) {
 		return m.finalizeLegacyOrdinaryTenant()
-
 	}
 	var err error
 	tenantName := m.OBTenant.Spec.TenantName

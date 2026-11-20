@@ -79,6 +79,13 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	if m.OBCluster.Status.OperationContext != nil {
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow from obcluster status")
 		op := m.OBCluster.Status.OperationContext
+		// Older initializers discarded the remaining tasks and reported Running on failure.
+		if m.OBCluster.Status.Status == clusterstatus.Bootstrapped && op.Name == postBootstrapFlow &&
+			op.TargetStatus == clusterstatus.Running && (op.OnFailure.Strategy == "" || op.OnFailure.Strategy == strategy.StartOver) &&
+			(op.OnFailure.NextTryStatus == "" || op.OnFailure.NextTryStatus == clusterstatus.Running) {
+			op.OnFailure.Strategy = strategy.RetryFromCurrent
+			op.OnFailure.NextTryStatus = ""
+		}
 		if m.OBCluster.Status.Status == clusterstatus.RollingUpdateOBServers && len(op.Tasks) == 1 && op.Tasks[0] == tRollingUpdateOBZones && (op.OnFailure.Strategy == "" || op.OnFailure.Strategy == strategy.StartOver) {
 			op.OnFailure.Strategy = strategy.RetryFromCurrent
 		}

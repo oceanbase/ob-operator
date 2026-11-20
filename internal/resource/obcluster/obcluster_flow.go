@@ -75,10 +75,13 @@ func genBootstrapOBClusterFlow(m *OBClusterManager) *tasktypes.TaskFlow {
 	}
 }
 
+const postBootstrapFlow tasktypes.FlowName = "maintain obcluster after bootstrap"
+
 func genMaintainOBClusterAfterBootstrapFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: "maintain obcluster after bootstrap",
+			Name:      postBootstrapFlow,
+			OnFailure: tasktypes.FailureRule{Strategy: strategy.RetryFromCurrent},
 			Tasks: []tasktypes.TaskName{
 				tWaitOBZoneRunning,
 				tCreateUsers,

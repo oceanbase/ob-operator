@@ -115,14 +115,17 @@ func bootstrapSeeds(zones []v1alpha1.OBZone, connected string, standalone bool) 
 	return seeds
 }
 
-func bootstrapDatabaseReady(ctx context.Context, manager *operation.OceanbaseOperationManager, cluster *v1alpha1.OBCluster, byZone map[string]map[string]bool) bool {
+func bootstrapDatabaseMatches(ctx context.Context, manager *operation.OceanbaseOperationManager, cluster *v1alpha1.OBCluster) bool {
 	var identity int
-	// A fresh connection intentionally has no default database or password.
-	// Confirm the identity and system tenant before trusting server records.
 	const identitySQL = `SELECT COUNT(DISTINCT name) FROM oceanbase.__all_virtual_sys_parameter_stat
 WHERE ((name='cluster' AND value=?) OR (name='cluster_id' AND value=?))
 AND EXISTS (SELECT 1 FROM oceanbase.__all_tenant WHERE tenant_id=1 AND tenant_name='sys')`
-	if err := manager.QueryRow(ctx, &identity, identitySQL, cluster.Spec.ClusterName, strconv.FormatInt(cluster.Spec.ClusterId, 10)); err != nil || identity != 2 {
+	err := manager.QueryRow(ctx, &identity, identitySQL, cluster.Spec.ClusterName, strconv.FormatInt(cluster.Spec.ClusterId, 10))
+	return err == nil && identity == 2
+}
+
+func bootstrapDatabaseReady(ctx context.Context, manager *operation.OceanbaseOperationManager, cluster *v1alpha1.OBCluster, byZone map[string]map[string]bool) bool {
+	if !bootstrapDatabaseMatches(ctx, manager, cluster) {
 		return false
 	}
 	var members []model.OBServer

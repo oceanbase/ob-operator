@@ -47,6 +47,7 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/helper/converter"
 	helpermodel "github.com/oceanbase/ob-operator/pkg/helper/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/param"
 	obutil "github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/util"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
@@ -683,13 +684,13 @@ func CheckAndCreateUserSecrets(m *OBClusterManager) tasktypes.TaskError {
 func CreateOBClusterService(m *OBClusterManager) tasktypes.TaskError {
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone {
-		err := m.Client.Create(m.Ctx, &corev1.Service{
+		svc := &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      m.OBCluster.GetName() + "-standalone-svc",
 				Namespace: m.OBCluster.GetNamespace(),
 				OwnerReferences: []metav1.OwnerReference{{
-					APIVersion: m.OBCluster.APIVersion,
-					Kind:       m.OBCluster.Kind,
+					APIVersion: v1alpha1.GroupVersion.String(),
+					Kind:       "OBCluster",
 					Name:       m.OBCluster.GetName(),
 					UID:        m.OBCluster.GetUID(),
 				}},
@@ -708,7 +709,26 @@ func CreateOBClusterService(m *OBClusterManager) tasktypes.TaskError {
 				},
 				Type: corev1.ServiceTypeNodePort,
 			},
-		})
+		}
+		err := m.Client.Create(m.Ctx, svc)
+		if kubeerrors.IsAlreadyExists(err) {
+			// A controller may restart after the API created the Service but
+			// before its task result was persisted.
+			existing := &corev1.Service{}
+			reader := m.APIReader
+			if reader == nil {
+				reader = m.Client
+			}
+			if getErr := reader.Get(m.Ctx, client.ObjectKeyFromObject(svc), existing); getErr != nil {
+				return getErr
+			}
+			if resourceutils.IsLiveChild(existing, m.OBCluster, "OBCluster") && existing.Spec.Type == corev1.ServiceTypeNodePort &&
+				len(existing.Spec.Selector) == 1 && existing.Spec.Selector[oceanbaseconst.LabelRefOBCluster] == m.OBCluster.Name &&
+				len(existing.Spec.Ports) == 1 && existing.Spec.Ports[0].Port == 2881 && existing.Spec.Ports[0].TargetPort == intstr.FromInt(2881) &&
+				(existing.Spec.Ports[0].Protocol == corev1.ProtocolTCP || existing.Spec.Ports[0].Protocol == "") {
+				return nil
+			}
+		}
 		if err != nil {
 			m.Recorder.Event(m.OBCluster, "Warning", "Create standalone service failed", err.Error())
 			return errors.Wrap(err, "Create service")
@@ -974,18 +994,18 @@ func OptimizeClusterByScenario(m *OBClusterManager) tasktypes.TaskError {
 		if err != nil {
 			m.Logger.Error(err, "Failed to parse optimization config")
 		}
-		conn, err := m.getOceanbaseOperationManager()
-		if err != nil {
-			m.Logger.Error(err, "Get operation manager failed")
+		if len(optimizeConfig.Parameters) == 0 {
+			return nil
 		}
-		// obcluster only need to set parameters
-		for _, parameter := range optimizeConfig.Parameters {
-			m.Logger.Info("Set parameter %s to %s", parameter.Name, converter.ConvertFloat(parameter.Value))
-			err := conn.SetParameter(m.Ctx, parameter.Name, converter.ConvertFloat(parameter.Value), nil)
-			if err != nil {
-				m.Logger.Error(err, "Failed to set parameter")
+		return m.withInitializationClient(tOptimizeClusterByScenario, func(conn *operation.OceanbaseOperationManager, _ string) error {
+			for _, parameter := range optimizeConfig.Parameters {
+				m.Logger.Info("Set parameter %s to %s", parameter.Name, converter.ConvertFloat(parameter.Value))
+				if err := conn.SetParameter(m.Ctx, parameter.Name, converter.ConvertFloat(parameter.Value), nil); err != nil {
+					m.Logger.Error(err, "Failed to set parameter")
+				}
 			}
-		}
+			return nil
+		})
 	}
 	return nil
 }
