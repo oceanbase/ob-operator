@@ -6,15 +6,15 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strings"
 	"sync/atomic"
+	"testing"
 
 	"github.com/go-logr/logr"
+
 	"github.com/oceanbase/ob-operator/pkg/database"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/config"
-	"strings"
-	"testing"
-
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 )
 

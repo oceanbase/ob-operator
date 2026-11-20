@@ -6,21 +6,22 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strings"
 	"testing"
 
 	"github.com/go-sql-driver/mysql"
-	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
-	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
-	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
-	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
-	"strings"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	"github.com/oceanbase/ob-operator/internal/const/status/tenantstatus"
+	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
+	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
+	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
 func TestCreateTenantResultPreservesDefinitiveErrorsAndVerifiesLostWrites(t *testing.T) {
@@ -381,6 +382,8 @@ func TestLegacyDeletionRecordsAllocationAcrossCoordinatorConflict(t *testing.T) 
 				if err := c.Status().Update(ctx, &current); err != nil {
 					return err
 				}
+				// The fake status writer does not enforce the API server's merge-patch resource version check.
+				return kubeerrors.NewConflict(v1alpha1.GroupVersion.WithResource("obtenants").GroupResource(), cr.Name, errors.New("coordinator advanced status"))
 			}
 			return c.SubResource(sub).Patch(ctx, obj, patch, opts...)
 		},
