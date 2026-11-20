@@ -41,12 +41,20 @@ import (
 // ---------- action function ----------
 
 func (m *OBTenantManager) createTenant() tasktypes.TaskError {
+	if !m.OBTenant.DeletionTimestamp.IsZero() {
+		return errors.New("tenant is being deleted")
+	}
 	tenantName := m.OBTenant.Spec.TenantName
 	pools := m.OBTenant.Spec.Pools
 	m.Logger.Info("Create Tenant", "tenantName", tenantName)
-	oceanbaseOperationManager, err := m.getClusterSysClient()
+	if m.OBTenant.Status.Creation == nil {
+		if err := m.bindPreparedLegacyAllocation(); err != nil {
+			return err
+		}
+	}
+	live, db, err := m.creationDB(m.Ctx)
 	if err != nil {
-		return errors.Wrap(err, "Failed to get sql operator error when creating tenant")
+		return err
 	}
 
 	variableList := make([]string, 0)
@@ -83,7 +91,12 @@ func (m *OBTenantManager) createTenant() tasktypes.TaskError {
 		tenantSQLParam.Charset = tenant.Charset
 	}
 
-	err = oceanbaseOperationManager.AddTenant(m.Ctx, tenantSQLParam)
+	sent, createErr := db.CreateTenantWithOwner(m.Ctx, tenantSQLParam, createOwner(live.Status.Creation), m.checkCreateAllocation)
+	if errors.Is(createErr, errAllocationAssigned) {
+		err = m.waitForCreatedTenant()
+	} else {
+		err = confirmTenantCreate(sent, createErr, m.waitForCreatedTenant)
+	}
 	if err != nil {
 		m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "failed to create OBTenant", err.Error())
 		return err
@@ -579,6 +592,9 @@ func (m *OBTenantManager) createPool(poolName, unitName string, pool v1alpha1.Re
 }
 
 func (m *OBTenantManager) createUnitAndPoolV4(pool v1alpha1.ResourcePoolSpec) error {
+	if m.OBTenant.Status.Creation != nil {
+		return m.createOwnedResources(pool)
+	}
 	tenantName := m.OBTenant.Spec.TenantName
 	unitName := m.generateUnitName(pool.Zone)
 	poolName := m.generatePoolName(pool.Zone)
@@ -766,16 +782,8 @@ func (m *OBTenantManager) CheckAndApplyUnitConfigV4() tasktypes.TaskError {
 }
 
 func CreateResourcePoolAndConfigTaskWithClear(m *OBTenantManager) error {
-	err := CreateResourcePoolAndConfig(m)
-	// clean created resource, restore to the initial state
-	if err != nil {
-		err := DeleteTenant(m)
-		if err != nil {
-			err = errors.Wrapf(err, "delete tenant when creating tenant")
-			return err
-		}
-	}
-	return err
+	// Provisioning reuses resources by name, so failure does not prove ownership.
+	return CreateResourcePoolAndConfig(m)
 }
 
 func CreateTenantTask(m *OBTenantManager) error {

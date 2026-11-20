@@ -50,11 +50,13 @@ import (
 var _ opresource.ResourceManager = &OBTenantManager{}
 
 type OBTenantManager struct {
-	OBTenant *v1alpha1.OBTenant
-	Ctx      context.Context
-	Client   client.Client
-	Recorder telemetry.Recorder
-	Logger   *logr.Logger
+	OBTenant     *v1alpha1.OBTenant
+	Ctx          context.Context
+	Client       client.Client
+	APIReader    client.Reader
+	StatusAtRead v1alpha1.OBTenantStatus
+	Recorder     telemetry.Recorder
+	Logger       *logr.Logger
 }
 
 func tenantRoleFromDatabase(current apitypes.TenantRole, tenant *model.OBTenant) apitypes.TenantRole {
@@ -96,7 +98,8 @@ func (m *OBTenantManager) GetStatus() string {
 
 func (m *OBTenantManager) InitStatus() {
 	m.OBTenant.Status = v1alpha1.OBTenantStatus{
-		Pools: make([]v1alpha1.ResourcePoolStatus, 0, len(m.OBTenant.Spec.Pools)),
+		Creation: m.OBTenant.Status.Creation,
+		Pools:    make([]v1alpha1.ResourcePoolStatus, 0, len(m.OBTenant.Spec.Pools)),
 	}
 	m.OBTenant.Status.Credentials = m.OBTenant.Spec.Credentials
 	m.OBTenant.Status.TenantRole = m.OBTenant.Spec.TenantRole
@@ -162,7 +165,19 @@ func (m *OBTenantManager) retryUpdateStatus() error {
 		if err != nil {
 			return client.IgnoreNotFound(err)
 		}
+		if m.OBTenant.UID != obtenant.UID || m.OBTenant.Generation != obtenant.Generation ||
+			!m.OBTenant.DeletionTimestamp.Equal(obtenant.DeletionTimestamp) {
+			return errors.New("tenant changed before status update")
+		}
+		// Resource IDs are written by the task worker. Preserve them across status updates.
+		creation := obtenant.Status.Creation
+		observed, current := m.StatusAtRead, obtenant.Status
+		observed.Creation, current.Creation = nil, nil
+		if !reflect.DeepEqual(observed, current) {
+			return errors.New("tenant status advanced before update")
+		}
 		m.OBTenant.Status.DeepCopyInto(&obtenant.Status)
+		obtenant.Status.Creation = creation
 		return m.Client.Status().Update(m.Ctx, obtenant)
 	})
 }
@@ -584,6 +599,7 @@ func (m *OBTenantManager) hasModifiedCharset() bool {
 func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) {
 	tenantName := m.OBTenant.Spec.TenantName
 	tenantCurrentStatus := &v1alpha1.OBTenantStatus{
+		Creation:    m.OBTenant.Status.Creation,
 		Credentials: m.OBTenant.Status.Credentials,
 		TenantRole:  m.OBTenant.Status.TenantRole,
 		Source:      m.OBTenant.Status.Source,
@@ -891,5 +907,10 @@ func (m *OBTenantManager) buildUnitStatusFromDB(zone string, tenantID int64) ([]
 
 // CanReplayTask resumes work with durable Kubernetes or database identity.
 func (m *OBTenantManager) CanReplayTask(name tasktypes.TaskName) bool {
+	if name == tCreateResourcePoolAndConfig && m.OBTenant != nil {
+		// A legacy provisioning task finishes IF NOT EXISTS setup, before the
+		// CREATE worker validates its detached, borrowed pool and unit IDs.
+		return m.OBTenant.Status.Status == tenantstatus.CreatingTenant && m.OBTenant.Status.Creation == nil
+	}
 	return name == tWatchRestoreJobToFinish || name == tDeletePool
 }

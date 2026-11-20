@@ -56,6 +56,9 @@ func CheckTenant(m *OBTenantManager) tasktypes.TaskError {
 		return err
 	}
 	if tenantExist {
+		if m.OBTenant.Status.Creation != nil {
+			return m.waitForCreatedTenant()
+		}
 		err = errors.New("tenant has exist")
 		m.Logger.Error(err, "tenant has exist", "tenantName", tenantName)
 		return err
@@ -111,16 +114,7 @@ func CheckPoolAndConfig(m *OBTenantManager) tasktypes.TaskError {
 }
 
 func CreateTenantWithClear(m *OBTenantManager) tasktypes.TaskError {
-	err := CreateTenantTask(m)
-	// clean created resource, restore to the initial state
-	if err != nil {
-		err := DeleteTenant(m)
-		if err != nil {
-			err = errors.Wrapf(err, "delete tenant when creating tenant")
-			return err
-		}
-	}
-	return err
+	return CreateTenantTask(m)
 }
 
 func CreateResourcePoolAndConfig(m *OBTenantManager) tasktypes.TaskError {
@@ -167,6 +161,15 @@ func MaintainUnitConfig(m *OBTenantManager) tasktypes.TaskError {
 }
 
 func DeleteTenant(m *OBTenantManager) tasktypes.TaskError {
+	if m.OBTenant.Status.Creation != nil {
+		return m.deleteCreatedTenant()
+	}
+	// A legacy ordinary creation that never observed its SQL tenant has no
+	// ownership evidence for name-based cleanup.
+	if m.OBTenant.Spec.Source == nil || (m.OBTenant.Spec.Source.Tenant == nil && m.OBTenant.Spec.Source.Restore == nil) {
+		return m.finalizeLegacyOrdinaryTenant()
+
+	}
 	var err error
 	tenantName := m.OBTenant.Spec.TenantName
 	err = m.deleteTenant()

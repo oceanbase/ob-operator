@@ -24,13 +24,14 @@ func (m *OBTenantManager) poolRemovalKey() string {
 // Capture the physical identities while the database still identifies the owner.
 // A detached pool no longer contains its tenant ID.
 type poolRemovalIntent struct {
-	TenantUID    types.UID `json:"tenantUID"`
-	ClusterUID   types.UID `json:"clusterUID"`
-	TenantID     int64     `json:"tenantID"`
-	TenantName   string    `json:"tenantName"`
-	Zone         string    `json:"zone"`
-	PoolID       int64     `json:"poolID"`
-	UnitConfigID int64     `json:"unitConfigID"`
+	KeepResources bool      `json:"keepResources,omitempty"`
+	TenantUID     types.UID `json:"tenantUID"`
+	ClusterUID    types.UID `json:"clusterUID"`
+	TenantID      int64     `json:"tenantID"`
+	TenantName    string    `json:"tenantName"`
+	Zone          string    `json:"zone"`
+	PoolID        int64     `json:"poolID"`
+	UnitConfigID  int64     `json:"unitConfigID"`
 }
 
 type poolRemovalDatabase interface {
@@ -109,6 +110,10 @@ func (m *OBTenantManager) removePool(live *v1alpha1.OBTenant, cluster *v1alpha1.
 			intent = poolRemovalIntent{
 				TenantUID: live.UID, ClusterUID: cluster.UID, TenantID: tenant.TenantID,
 				TenantName: tenant.TenantName, Zone: zone, PoolID: plan.target.ResourcePoolID, UnitConfigID: plan.target.UnitConfigID,
+			}
+			if live.Status.Creation != nil {
+				ids := live.Status.Creation.Resources[zone]
+				intent.KeepResources = ids.Borrowed || ids.PoolID != intent.PoolID || ids.UnitConfigID != intent.UnitConfigID
 			}
 			data, err := json.Marshal(intent)
 			if err != nil {
@@ -195,6 +200,9 @@ func (m *OBTenantManager) advancePoolRemoval(db poolRemovalDatabase, tenant *mod
 			return true, nil
 		}
 		if !pool.TenantID.Valid {
+			if intent.KeepResources {
+				return true, nil
+			}
 			return false, db.DeletePool(m.Ctx, poolName)
 		}
 		if pool.TenantID.Int64 != intent.TenantID {
@@ -207,6 +215,9 @@ func (m *OBTenantManager) advancePoolRemoval(db poolRemovalDatabase, tenant *mod
 		return false, m.detachOwnedPool(db, tenant, plan, intent)
 	}
 
+	if intent.KeepResources {
+		return true, nil
+	}
 	configs, err := db.GetUnitConfigV4List(m.Ctx)
 	if err != nil {
 		return false, err

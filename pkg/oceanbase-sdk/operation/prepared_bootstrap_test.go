@@ -21,6 +21,7 @@ type bootstrapDriver struct {
 	closed      int
 	queries     []string
 	connections []int
+	timeout     time.Duration
 	failSetup   bool
 	failSend    bool
 }
@@ -49,7 +50,11 @@ func (c *bootstrapConn) ExecContext(ctx context.Context, query string, args []dr
 	c.db.queries = append(c.db.queries, query)
 	c.db.connections = append(c.db.connections, c.id)
 	if strings.HasPrefix(query, "set ") {
-		if len(args) != 1 || args[0].Value != int64(config.BootstrapTimeout/time.Microsecond) {
+		timeout := c.db.timeout
+		if timeout == 0 {
+			timeout = config.BootstrapTimeout
+		}
+		if len(args) != 1 || args[0].Value != int64(timeout/time.Microsecond) {
 			return nil, errors.New("wrong timeout")
 		}
 		if c.db.failSetup {

@@ -208,12 +208,46 @@ func (m *OceanbaseOperationManager) CheckRsJobExistByTenantID(ctx context.Contex
 // ------------ add ------------
 
 func (m *OceanbaseOperationManager) AddTenant(ctx context.Context, tenantSQLParam model.TenantSQLParam) error {
-	preparedSQL, params := preparedSQLForAddTenant(tenantSQLParam)
+	preparedSQL, params := preparedSQLForAddTenant(tenantSQLParam, "")
 	err := m.ExecWithTimeout(ctx, managerConfig.TenantSqlTimeout, preparedSQL, params...)
 	if err != nil {
 		return errors.Wrap(err, "Add Tenant")
 	}
 	return nil
+}
+
+// CreateTenantWithOwner requires a new tenant and records its owner in the same DDL.
+func (m *OceanbaseOperationManager) CreateTenantWithOwner(ctx context.Context, tenantSQLParam model.TenantSQLParam, owner string, check func(*OceanbaseOperationManager) error) (bool, error) {
+	if owner == "" || check == nil {
+		return false, errors.New("tenant creation requires an owner and a preflight check")
+	}
+	statement, args := preparedSQLForAddTenant(tenantSQLParam, owner)
+	sent := false
+	err := m.withDedicatedSession(ctx, func(session *OceanbaseOperationManager) error {
+		if err := check(session); err != nil {
+			return err
+		}
+		dispatch, cancel := context.WithTimeout(ctx, managerConfig.TenantSqlTimeout)
+		defer cancel()
+		if err := session.setQueryTimeoutVariable(dispatch, managerConfig.TenantSqlTimeout); err != nil {
+			return err
+		}
+		sent = true
+		return session.executeStatement(dispatch, statement, args...)
+	})
+	return sent, err
+}
+
+// Strict resource creation makes a successful result proof that this call allocated
+// the object. The existing Add operations retain their IF NOT EXISTS semantics.
+func (m *OceanbaseOperationManager) CreateUnitConfig(ctx context.Context, unit *model.UnitConfigV4SQLParam) error {
+	statement, args := preparedSQLForAddUnitConfigV4(unit)
+	return m.ExecWithDefaultTimeout(ctx, strings.Replace(statement, " IF NOT EXISTS ", " ", 1), args...)
+}
+
+func (m *OceanbaseOperationManager) CreatePool(ctx context.Context, pool model.PoolSQLParam) error {
+	statement, args := preparedSQLForAddPool(pool)
+	return m.ExecWithDefaultTimeout(ctx, strings.Replace(statement, " IF NOT EXISTS ", " ", 1), args...)
 }
 
 func (m *OceanbaseOperationManager) AddPool(ctx context.Context, pool model.PoolSQLParam) error {
@@ -328,7 +362,7 @@ func preparedSQLForAddPool(poolSQLParam model.PoolSQLParam) (string, []any) {
 	return fmt.Sprintf(sql.AddPool, poolSQLParam.PoolName), params
 }
 
-func preparedSQLForAddTenant(tenantSQLParam model.TenantSQLParam) (string, []any) {
+func preparedSQLForAddTenant(tenantSQLParam model.TenantSQLParam, owner string) (string, []any) {
 	var option string
 	var variableList string
 	params := make([]any, 0)
@@ -347,8 +381,14 @@ func preparedSQLForAddTenant(tenantSQLParam model.TenantSQLParam) (string, []any
 		option = fmt.Sprint(option, ", COLLATE = ?")
 		params = append(params, tenantSQLParam.Collate)
 	}
+	statement := sql.AddTenant
+	if owner != "" {
+		statement = sql.CreateOwnedTenant
+		option += ", COMMENT = ?"
+		params = append(params, owner)
+	}
 	variableList = fmt.Sprintf("SET VARIABLES %s", tenantSQLParam.VariableList)
-	return fmt.Sprintf(sql.AddTenant, tenantSQLParam.TenantName, strings.Join(symbols, ", "), option, variableList), params
+	return fmt.Sprintf(statement, tenantSQLParam.TenantName, strings.Join(symbols, ", "), option, variableList), params
 }
 
 func preparedSQLForSetTenant(tenantSQLParam model.TenantSQLParam) (string, []any) {

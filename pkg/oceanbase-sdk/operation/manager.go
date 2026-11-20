@@ -157,6 +157,10 @@ func (m *OceanbaseOperationManager) sqlClient() operationSQLClient {
 // WithBackupSession keeps session-local encryption or decryption settings on the
 // same physical connection as the backup or restore that consumes them.
 func (m *OceanbaseOperationManager) WithBackupSession(ctx context.Context, run func(*OceanbaseOperationManager) error) error {
+	return m.withDedicatedSession(ctx, run)
+}
+
+func (m *OceanbaseOperationManager) withDedicatedSession(ctx context.Context, run func(*OceanbaseOperationManager) error) error {
 	acquire, cancel := context.WithTimeout(ctx, managerConfig.DefaultSqlTimeout)
 	conn, err := m.Connector.GetClient().Connx(acquire)
 	cancel()
@@ -164,7 +168,7 @@ func (m *OceanbaseOperationManager) WithBackupSession(ctx context.Context, run f
 		return err
 	}
 	defer func() {
-		// These sessions contain backup credentials. Do not return them to the pool.
+		// Discard session-local credentials and timeout settings.
 		_ = conn.Raw(func(any) error { return driver.ErrBadConn })
 		_ = conn.Close()
 	}()
@@ -186,11 +190,15 @@ func (m *OceanbaseOperationManager) ExecWithTimeout(ctx context.Context, timeout
 	if err != nil {
 		return errors.Wrap(err, "Failed to set timeout variable")
 	}
+	return m.executeStatement(c, sql, params...)
+}
+
+func (m *OceanbaseOperationManager) executeStatement(ctx context.Context, sql string, params ...any) error {
 	redactedSQL, sqlContainsCredentials := redactSQLForLog(sql)
 	redactedParams, paramsContainCredentials := redactParamsForLogWithPolicy(params, sqlContainsCredentials)
 	containsSensitiveCredentials := sqlContainsCredentials || paramsContainCredentials
 	m.Logger.V(1).Info(fmt.Sprintf("Execute sql %s with param %s", redactedSQL, redactedParams))
-	_, err = m.sqlClient().ExecContext(c, sql, params...)
+	_, err := m.sqlClient().ExecContext(ctx, sql, params...)
 	if err != nil {
 		if containsSensitiveCredentials {
 			// Drivers may echo an interpolated SQL statement in their error. Do not

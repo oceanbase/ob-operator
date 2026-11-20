@@ -653,6 +653,59 @@ spec:
                   status:
                     description: OBTenantStatus defines the observed state of OBTenant
                     properties:
+                      creation:
+                        description: Creation binds ordinary tenant provisioning and
+                          cleanup to its original resources.
+                        properties:
+                          clusterName:
+                            type: string
+                          clusterUID:
+                            description: |-
+                              UID is a type that holds unique ID values, including UUIDs.  Because we
+                              don't ONLY use UUIDs, this is an alias to string.  Being a type captures
+                              intent and helps make sure that UIDs and names do not get conflated.
+                            type: string
+                          databaseCluster:
+                            type: string
+                          databaseID:
+                            format: int64
+                            type: integer
+                          legacyTenantID:
+                            description: LegacyTenantID is recorded before finalizing
+                              a previously managed, unmarked tenant.
+                            format: int64
+                            type: integer
+                          resources:
+                            additionalProperties:
+                              properties:
+                                borrowed:
+                                  description: Borrowed resources predate ownership
+                                    tracking and must not be dropped.
+                                  type: boolean
+                                poolID:
+                                  format: int64
+                                  type: integer
+                                unitConfigID:
+                                  format: int64
+                                  type: integer
+                              type: object
+                            type: object
+                          tenantName:
+                            type: string
+                          tenantUID:
+                            description: |-
+                              UID is a type that holds unique ID values, including UUIDs.  Because we
+                              don't ONLY use UUIDs, this is an alias to string.  Being a type captures
+                              intent and helps make sure that UIDs and names do not get conflated.
+                            type: string
+                        required:
+                        - clusterName
+                        - clusterUID
+                        - databaseCluster
+                        - databaseID
+                        - tenantName
+                        - tenantUID
+                        type: object
                       credentials:
                         properties:
                           root:
