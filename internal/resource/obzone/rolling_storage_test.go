@@ -185,3 +185,26 @@ func TestRollingStorageFlowRetriesCurrentTask(t *testing.T) {
 		t.Fatalf("persisted previous-version storage flow: %+v, %v", f, err)
 	}
 }
+
+func TestConcurrentRollingStorageReservesOneSpare(t *testing.T) {
+	manager, created := rollingFixture(t, []string{"old"}, false, false)
+	start := make(chan struct{})
+	result := make(chan error, 2)
+	for i := 0; i < 2; i++ {
+		go func() {
+			<-start
+			copy := *manager
+			result <- RollingReplaceOBServers(&copy)
+		}()
+	}
+	close(start)
+	for i := 0; i < 2; i++ {
+		if err := <-result; err == nil {
+			t.Fatal("unready replacement reported successful")
+		}
+	}
+	servers, err := manager.listOBServers()
+	if err != nil || len(servers.Items) != 2 || *created != 1 {
+		t.Fatalf("concurrent migration ought to retain one original and one spare, got %+v, %d creates, error %v", servers, *created, err)
+	}
+}
