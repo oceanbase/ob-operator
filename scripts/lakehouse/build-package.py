@@ -334,7 +334,8 @@ def patch_charts(source, package, images, timestamp):
             if before.is_file() and before.read_bytes() != path.read_bytes():
                 changes.extend(difflib.unified_diff(before.read_text().splitlines(True), path.read_text().splitlines(True),
                                fromfile="source/charts/" + str(relative), tofile="delivery/charts/" + str(relative)))
-    (package / "provenance/qa-packaging.patch").write_text("".join(changes))
+    (package / "provenance/qa-packaging.patch.sha256").write_text(
+        hashlib.sha256("".join(changes).encode()).hexdigest() + "\n")
     return {"lakehouse": str(parent_meta["version"]), "dashboard": str(child_meta["version"]),
             "operator": str(yaml.safe_load((charts / "ob-operator/Chart.yaml").read_text())["version"])}
 
@@ -518,11 +519,8 @@ def build(args):
     write_json(package / "images/archives.json", {"schemaVersion": 1, "archives": archive_entries})
     if diagnostic_profile:
         write_json(package / "provenance/diagnostics-lock.json", diagnostic_profile)
-    # Preserve reviewed history away from runnable user entrypoints.
-    if (baseline / "source").is_dir():
-        shutil.copytree(baseline / "source", package / "provenance/baseline", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
-    if (baseline / "evidence").is_dir():
-        shutil.copytree(baseline / "evidence", package / "provenance/baseline-evidence")
+    # baseline_source_sha records the source identity. Raw acceptance logs
+    # and old checkout snapshots may contain operator-specific addresses or credentials.
     shutil.copyfile(Path(__file__).resolve(), package / "provenance/build-package.py")
     source_tar = package / "provenance/current-source.tar"
     if source_export is None:

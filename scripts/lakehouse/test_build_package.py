@@ -238,6 +238,9 @@ class BuildPackageTest(unittest.TestCase):
                             ("support", REFERENCES.keys() - BUILDER.CORE_ROLES - BUILDER.MINIO_ROLES)):
             docker_save(baseline / "images" / (name + "-images.tar.gz"),
                         [image for image in self.images if image["role"] in roles], self.configs)
+        for directory in ("evidence", "source"):
+            (baseline / directory).mkdir(exist_ok=True)
+            (baseline / directory / "private-acceptance").write_bytes(secrets.token_bytes(32))
         (baseline / "SHA256SUMS").write_text("".join(BUILDER.digest(path) + "  " +
             path.relative_to(baseline).as_posix() + "\n" for path in sorted(baseline.rglob("*")) if path.is_file()))
         minio_cache = self.root / "fixture-minio.tar.gz"
@@ -250,6 +253,7 @@ class BuildPackageTest(unittest.TestCase):
                                   diagnostics_archive=diagnostics_archive, diagnostics_lock=diagnostics_lock)
         with contextlib.redirect_stdout(io.StringIO()):
             first = BUILDER.build(args)
+        self.assertFalse(list(args.output.rglob("private-acceptance")))
         # The remote builder receives an exported source tree, not a Git checkout.
         source_archive = self.root / "source.tar"
         BUILDER.run(["git", "archive", "--format=tar", "--output=" + str(source_archive), "HEAD"], cwd=source)
