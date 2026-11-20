@@ -207,7 +207,7 @@ func TestPoolRemovalReservationConflictsBeforeSQL(t *testing.T) {
 func TestPoolRemovalReservationClearedByTenantFinalizer(t *testing.T) {
 	m, _ := newPoolRemovalTest(t)
 	cluster := readRemovalCluster(t, m)
-	if err := m.writePoolRemoval(cluster, "obsolete"); err != nil {
+	if err := m.writePoolRemoval(cluster, `{"tenantUID":"replaced"}`); err != nil {
 		t.Fatal(err)
 	}
 	if err := m.Client.Delete(m.Ctx, m.OBTenant); err != nil {
@@ -225,5 +225,36 @@ func TestPoolRemovalReservationClearedByTenantFinalizer(t *testing.T) {
 	annotations := readRemovalCluster(t, m).Annotations
 	if annotations[m.poolRemovalKey()] != "" || annotations["oceanbase.oceanbase.com/pool-removal-other"] != "another tenant" {
 		t.Fatalf("unexpected annotations after deleting tenant: %v", annotations)
+	}
+}
+
+func TestTenantDeletionFinishesInterruptedPhysicalRemoval(t *testing.T) {
+	m, db := newPoolRemovalTest(t)
+	cluster := readRemovalCluster(t, m)
+	intent := poolRemovalIntent{TenantUID: m.OBTenant.UID, ClusterUID: cluster.UID, TenantID: 1002, TenantName: "orders", Zone: "zone3", PoolID: 1003, UnitConfigID: 1007}
+	record, err := json.Marshal(intent)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := m.writePoolRemoval(cluster, string(record)); err != nil {
+		t.Fatal(err)
+	}
+	// The tenant DDL may not have released the pool yet. Never issue another
+	// ALTER against a tenant that is already deleting.
+	if err := m.finishDetachedPool(db, readRemovalCluster(t, m), intent); err == nil || len(db.actions) != 0 {
+		t.Fatalf("attached pool was modified: %v %v", err, db.actions)
+	}
+	db.pools[1].TenantID = sql.NullInt64{}
+	if err := m.finishDetachedPool(db, readRemovalCluster(t, m), intent); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("expected lost DROP acknowledgment: %v", err)
+	}
+	if len(readRemovalCluster(t, m).Annotations[m.poolRemovalKey()]) == 0 {
+		t.Fatal("finalizer lost deletion record")
+	}
+	if err := m.finishDetachedPool(db, readRemovalCluster(t, m), intent); err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(db.actions, []string{"drop pool_orders_zone3", "drop unitconfig_orders_zone3"}) || readRemovalCluster(t, m).Annotations[m.poolRemovalKey()] != "" {
+		t.Fatalf("finalizer did not finish exactly the detached objects: %v", db.actions)
 	}
 }

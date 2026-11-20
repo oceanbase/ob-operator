@@ -229,7 +229,7 @@ func (m *OBTenantManager) CheckAndUpdateFinalizers() error {
 	}
 	if finalizerFinished {
 		if obcluster != nil && obcluster.DeletionTimestamp.IsZero() && obcluster.Annotations[m.poolRemovalKey()] != "" {
-			if err := m.writePoolRemoval(obcluster, ""); err != nil {
+			if err := m.finalizePoolRemoval(obcluster); err != nil {
 				return err
 			}
 		}

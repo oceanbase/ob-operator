@@ -69,6 +69,11 @@ func (m *OBTenantManager) reconcilePoolRemoval() error {
 	return m.removePool(live, cluster, db)
 }
 
+func (i poolRemovalIntent) appliesTo(live *v1alpha1.OBTenant, cluster *v1alpha1.OBCluster) bool {
+	return i.TenantUID == live.UID && i.ClusterUID == cluster.UID && i.TenantName == live.Spec.TenantName &&
+		i.Zone != "" && i.TenantID > 0 && i.PoolID > 0 && i.UnitConfigID > 0
+}
+
 func (m *OBTenantManager) removePool(live *v1alpha1.OBTenant, cluster *v1alpha1.OBCluster, db poolRemovalDatabase) error {
 	var intent poolRemovalIntent
 	raw := cluster.Annotations[m.poolRemovalKey()]
@@ -76,8 +81,7 @@ func (m *OBTenantManager) removePool(live *v1alpha1.OBTenant, cluster *v1alpha1.
 		if err := json.Unmarshal([]byte(raw), &intent); err != nil {
 			return fmt.Errorf("invalid pending pool removal: %w", err)
 		}
-		if intent.TenantUID != live.UID || intent.ClusterUID != cluster.UID || intent.TenantName != live.Spec.TenantName ||
-			intent.Zone == "" || intent.TenantID <= 0 || intent.PoolID <= 0 || intent.UnitConfigID <= 0 {
+		if !intent.appliesTo(live, cluster) {
 			return m.writePoolRemoval(cluster, "")
 		}
 		for _, desired := range live.Spec.Pools {
@@ -127,6 +131,43 @@ func (m *OBTenantManager) removePool(live *v1alpha1.OBTenant, cluster *v1alpha1.
 	return m.writePoolRemoval(cluster, "")
 }
 
+// The normal tenant deletion loop only visits zones still present in spec.
+// If deletion crossed an in-flight pool removal, finish its proven detached
+// objects before allowing the tenant finalizer to disappear.
+func (m *OBTenantManager) finalizePoolRemoval(cluster *v1alpha1.OBCluster) error {
+	var intent poolRemovalIntent
+	if err := json.Unmarshal([]byte(cluster.Annotations[m.poolRemovalKey()]), &intent); err != nil {
+		return fmt.Errorf("invalid pending pool removal: %w", err)
+	}
+	if !intent.appliesTo(m.OBTenant, cluster) {
+		return m.writePoolRemoval(cluster, "")
+	}
+	db, err := resourceutils.GetSysOperationClient(m.Client, m.Logger, cluster)
+	if err != nil {
+		return err
+	}
+	return m.finishDetachedPool(db, cluster, intent)
+}
+
+func (m *OBTenantManager) finishDetachedPool(db poolRemovalDatabase, cluster *v1alpha1.OBCluster, intent poolRemovalIntent) error {
+	// There are at most two remaining stages after deleting the tenant:
+	// release its detached pool, then remove its unused unit configuration.
+	for range 2 {
+		pools, err := db.GetPoolList(m.Ctx)
+		if err != nil {
+			return err
+		}
+		done, err := m.advancePoolRemoval(db, nil, pools, intent)
+		if err != nil {
+			return err
+		}
+		if done {
+			return m.writePoolRemoval(cluster, "")
+		}
+	}
+	return fmt.Errorf("waiting for detached pool %s cleanup", m.generatePoolName(intent.Zone))
+}
+
 func (m *OBTenantManager) writePoolRemoval(cluster *v1alpha1.OBCluster, value string) error {
 	base := cluster.DeepCopy()
 	key := m.poolRemovalKey()
@@ -157,6 +198,9 @@ func (m *OBTenantManager) advancePoolRemoval(db poolRemovalDatabase, tenant *mod
 		}
 		if pool.TenantID.Int64 != intent.TenantID {
 			return true, nil
+		}
+		if tenant == nil {
+			return false, fmt.Errorf("waiting for pool %s to detach from deleted tenant %d", poolName, intent.TenantID)
 		}
 		plan := planPoolRemoval(pools, intent.TenantID, poolName, intent.Zone)
 		return false, m.detachOwnedPool(db, tenant, plan, intent)
