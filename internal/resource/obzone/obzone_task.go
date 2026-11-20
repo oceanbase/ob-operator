@@ -153,7 +153,7 @@ func CreateOBServer(m *OBZoneManager) tasktypes.TaskError {
 	}
 	for i := currentReplica; i < m.OBZone.Spec.Topology.Replica; i++ {
 		serverName := m.generateServerName()
-		_, err := m.createOneOBServer(serverName)
+		_, err := m.createOneOBServer(serverName, "")
 		if err != nil {
 			return errors.Wrapf(err, "Create observer %s", serverName)
 		}
@@ -505,46 +505,38 @@ func RollingReplaceOBServers(m *OBZoneManager) tasktypes.TaskError {
 		return errors.Wrap(err, "List observers")
 	}
 	// A finalizer may still be draining a server from the preceding attempt.
-	// Wait for that deletion before starting another replacement in this zone.
 	for _, server := range servers.Items {
+		if !m.ownsRollingServer(&server) {
+			return errors.Errorf("observer %s does not belong to zone UID %s", server.Name, m.OBZone.UID)
+		}
 		if server.DeletionTimestamp != nil {
 			if err := m.waitForRollingServerDeletion(server.Name); err != nil {
 				return err
 			}
 		}
 	}
+	prioritizePendingReplacements(servers.Items)
 	for _, server := range servers.Items {
 		if server.DeletionTimestamp != nil || !m.checkIfStorageClassChanged(&server) {
 			continue
 		}
-		m.Logger.Info(fmt.Sprintf("Replacing observer %s", server.Name))
-		newServerName := m.generateServerName()
-		newServer, err := m.createOneOBServer(newServerName)
+		target, err := m.getRollingReplacement(&server)
 		if err != nil {
-			return errors.Wrap(err, "Create new observer to replace old one")
+			return err
 		}
-		for i := 0; i < obcfg.GetConfig().Time.DefaultStateWaitTimeout; i++ {
-			time.Sleep(time.Second)
-			err = m.Client.Get(m.Ctx, m.generateNamespacedName(newServerName), newServer)
-			if err != nil {
-				return errors.Wrap(err, "Get new observer")
-			}
-			if newServer.Status.Status == serverstatus.Running {
-				break
-			}
+		if target == nil {
+			continue
 		}
-		if newServer.Status.Status != serverstatus.Running {
-			return errors.New("Wait for new observer get running status, timeout")
+		if err := m.waitForRollingReplacement(target, server.UID); err != nil {
+			return err
 		}
-		m.Logger.Info(fmt.Sprintf("New observer %s created", newServer.Name))
-		err = m.Client.Delete(m.Ctx, &server)
-		if err != nil {
-			return errors.Wrap(err, "Delete old observer")
+		err = m.Client.Delete(m.Ctx, &server, client.Preconditions{UID: &server.UID})
+		if client.IgnoreNotFound(err) != nil {
+			return errors.Wrapf(err, "delete replaced observer %s", server.Name)
 		}
 		if err := m.waitForRollingServerDeletion(server.Name); err != nil {
 			return err
 		}
-		m.Logger.Info(fmt.Sprintf("Old observer %s deleted", server.Name))
 	}
 	return nil
 }

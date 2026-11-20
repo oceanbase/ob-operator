@@ -158,6 +158,7 @@ func genRollingReplaceServersFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
 			Name:         "rolling update observers",
+			OnFailure:    tasktypes.FailureRule{Strategy: strategy.RetryFromCurrent},
 			Tasks:        []tasktypes.TaskName{tRollingReplaceOBServers},
 			TargetStatus: zonestatus.Running,
 		},

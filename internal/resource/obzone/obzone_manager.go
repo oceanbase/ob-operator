@@ -77,7 +77,13 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBZone.Status.OperationContext != nil {
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow from obzone status")
-		return tasktypes.NewTaskFlow(m.OBZone.Status.OperationContext), nil
+		op := m.OBZone.Status.OperationContext
+		if m.OBZone.Status.Status == zonestatus.RollingUpdateServers && len(op.Tasks) == 1 && op.Tasks[0] == tRollingReplaceOBServers && (op.OnFailure.Strategy == "" || op.OnFailure.Strategy == strategy.StartOver) {
+			// Older flows reset to running; normal replica reconciliation would
+			// then mistake a temporary replacement for an unwanted extra server.
+			op.OnFailure.Strategy = strategy.RetryFromCurrent
+		}
+		return tasktypes.NewTaskFlow(op), nil
 	}
 	// newly created zone
 	var taskFlow *tasktypes.TaskFlow
@@ -304,8 +310,7 @@ func (m *OBZoneManager) PrintErrEvent(err error) {
 	m.Recorder.Event(m.OBZone, corev1.EventTypeWarning, "Task failed", err.Error())
 }
 
-// CanReplayTask allows only the read-only bootstrap readiness wait to resume
-// after an Operator restart. Database mutations must not be replayed blindly.
+// Rolling replacement records its source UID on the child before waiting.
 func (m *OBZoneManager) CanReplayTask(name tasktypes.TaskName) bool {
-	return name == tWaitOBServerBootstrapReady
+	return name == tWaitOBServerBootstrapReady || name == tRollingReplaceOBServers
 }

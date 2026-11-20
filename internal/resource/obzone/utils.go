@@ -162,7 +162,7 @@ func (m *OBZoneManager) generateWaitOBServerStatusFunc(status string, timeoutSec
 	return f
 }
 
-func (m *OBZoneManager) createOneOBServer(serverName string) (*v1alpha1.OBServer, error) {
+func (m *OBZoneManager) createOneOBServer(serverName string, replaces types.UID) (*v1alpha1.OBServer, error) {
 	blockOwnerDeletion := true
 	ownerReferenceList := make([]metav1.OwnerReference, 0)
 	ownerReference := metav1.OwnerReference{
@@ -215,6 +215,9 @@ func (m *OBZoneManager) createOneOBServer(serverName string) (*v1alpha1.OBServer
 		observer.Spec.MonitorTemplate = zoneTopo.MonitorTemplate
 	}
 	observer.Annotations = make(map[string]string)
+	if replaces != "" {
+		observer.Annotations[replacementFor] = string(replaces)
+	}
 	if independentVolumeAnnoExist {
 		observer.Annotations[oceanbaseconst.AnnotationsIndependentPVCLifecycle] = independentVolumeAnnoVal
 	}
