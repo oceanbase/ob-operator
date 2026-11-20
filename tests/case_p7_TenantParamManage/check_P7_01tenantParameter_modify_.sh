@@ -1,240 +1,41 @@
 #!/bin/bash
- 
-# load all the parameters in setup.sh
+set -euo pipefail
 source setup.sh
 source util.sh
-source env.sh
-#source case_p6/env_vars.sh
 
-# prepare create related resources to create obcluster
-prepare() {
-    export PASSWORD=$(generate_random_str)
-    export SUFFIX=$(generate_random_str | tr '[:upper:]' '[:lower:]')
-    export NAMESPACE=$NAMESPACE_PREFIX-$SUFFIX
-    export OBCLUSTER_NAME=test$SUFFIX
-    export OB_ROOT_SECRET=sc-root-$SUFFIX
-    export OBTENANT_NAME=tenant$SUFFIX
-    kubectl create namespace $NAMESPACE
-    create_pass_secret $NAMESPACE $OB_ROOT_SECRET $PASSWORD
-    echo $PASSWORD
-}
+source case_p7_TenantParamManage/tenant_settings_fixture.sh
+prepare_p7_fixture
+start_p7_tenant
 
- 
-# clean up delete everything by deleting the entire namespace
-cleanup() {
-    kubectl delete namespace $NAMESPACE
+# Keep the vector test on releases offering it, and exercise a dynamic tenant parameter on older releases.
+parameter=$(tenant_sql "SELECT DISTINCT NAME FROM GV\$OB_PARAMETERS WHERE NAME IN ('ob_vector_memory_limit_percentage', 'log_archive_concurrency') ORDER BY NAME DESC LIMIT 1")
+case $parameter in
+    ob_vector_memory_limit_percentage) values=(20 30) ;;
+    log_archive_concurrency) values=(2 3) ;;
+    *) echo "No supported dynamic tenant parameter" >&2; exit 1 ;;
+esac
+children() {
+    kubectl -n "$NAMESPACE" get obparameter -o json | jq -c --arg tenant "$OBTENANT_NAME" --arg parameter "$parameter" '
+      [.items[] | select(.spec.tenantName == $tenant and .spec.parameter.name == $parameter)]'
 }
- 
-run() {
-    local template_file=$1
-    echo $OBCLUSTER_NAME
-    envsubst < ./config/tenantManage/$template_file | kubectl apply -f -
-}
- 
-check_resource_running() {
-    counter=0
-    timeout=100  
-    RESOURCE_RUNNING='false'
-    while true; do
-        echo 'check resource'
-        counter=$((counter+1))
-        pod_1_zone1=`kubectl get pod -o wide -n $NAMESPACE | grep "$OBCLUSTER_NAME-1-zone1" | awk -v line="1" 'NR==line{print \$2}'`
-        pod_1_zone2=`kubectl get pod -o wide -n $NAMESPACE | grep "$OBCLUSTER_NAME-1-zone2" | awk -v line="1" 'NR==line{print \$2}'`
-        pod_1_zone3=`kubectl get pod -o wide -n $NAMESPACE | grep "$OBCLUSTER_NAME-1-zone3" | awk -v line="1" 'NR==line{print \$2}'`
-        ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-        crd_obcluster=`kubectl get obcluster $OBCLUSTER_NAME -n $NAMESPACE  -o yaml| grep "status: running" | tail -n 1| sed 's/ //g'`
-        if [[ $pod_1_zone1 = "1/1" && $pod_1_zone2 = "1/1" && $pod_1_zone3 = "1/1" && -n "$ip" && $crd_obcluster = "status:running" ]];then
-            echo "pod_1_zone1 is $pod_1_zone1 ready"
-            echo "pod_1_zone2 is $pod_1_zone2 ready"
-            echo "pod_1_zone3 is $pod_1_zone3 ready"
-            echo "svc is $ip ready"
-            echo "crd_obcluster $crd_obcluster"
-            RESOURCE_RUNNING='true'
-            break
+for value in "${values[@]}"; do
+    patch=$(jq -cn --arg name "$parameter" --arg value "$value" '{spec:{parameters:[{name:$name,value:$value}]}}')
+    kubectl -n "$NAMESPACE" patch "obtenant/$OBTENANT_NAME" --type=merge -p "$patch"
+    for ((attempt=0; attempt<100; attempt++)); do
+        if jq -e --arg value "$value" 'length == 1 and .[0].status.status == "matched" and .[0].spec.parameter.value == $value' <<< "$(children)" >/dev/null; then
+            actual=$(tenant_sql "SELECT DISTINCT VALUE FROM GV\$OB_PARAMETERS WHERE NAME='$parameter'")
+            [[ $actual == "$value" ]] && break
         fi
-        if [ $counter -eq $timeout ]; then
-            echo "resource still not running"
-            break
-        fi
-        sleep 3s
+        sleep 3
     done
-}
-
-check_in_obcluster() {
-    counter=0
-    timeout=100  
-    OBSERVER_ACTIVE='false'
-    ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-    echo $ip
-    echo $PASSWORD
-    while true; do
-        echo 'check ob'
-        counter=$((counter+1))
-        server_1_zone1=`mysql -uroot -h $ip -P 2881 -Doceanbase -p$PASSWORD -e 'select * from __all_server;'|grep zone1| awk -v line="1" 'NR==line{print \$11}'`
-        server_1_zone2=`mysql -uroot -h $ip -P 2881 -Doceanbase -p$PASSWORD -e 'select * from __all_server;'|grep zone2| awk -v line="1" 'NR==line{print \$11}'`
-        server_1_zone3=`mysql -uroot -h $ip -P 2881 -Doceanbase -p$PASSWORD -e 'select * from __all_server;'|grep zone3| awk -v line="1" 'NR==line{print \$11}'`
-        if [[ $server_1_zone1 == "ACTIVE" && $server_1_zone2 == "ACTIVE" && $server_1_zone3 == "ACTIVE"  ]]
-        then
-            echo "server_1_zone1 $server_1_zone1"
-            echo "server_1_zone2 $server_1_zone2"
-            echo "server_1_zone3 $server_1_zone3"
-            OBSERVER_ACTIVE='true'
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "resource still not running"
-	    echo "case failed"
-            break
-        fi
-        sleep 3s
-    done
-}
- 
-check_obtenant_running() {
-    counter=0
-    timeout=100  
-    OBTENANT_RUNNING='false'
-    while true; do
-        echo 'check obtenant resource'
-	counter=$((counter+1))
-	crd_obtenant=`kubectl get obtenant $OBTENANT_NAME -n $NAMESPACE| grep "$OBTENANT_NAME"|awk -F' ' '{print $2}'`
-        if [[ $crd_obtenant = "running" ]];then
-            echo "crd_obtenant is $crd_obtenant ready"
-            OBTENANT_RUNNING='true'
-	    echo "case passed"
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "obtenant resource still not running"
-	    echo "case failed"
-            break
-        fi
-        sleep 3s
-    done
-}
-
-validate() {
-    echo 'do validate'
-    check_resource_running 
-    if [[ $RESOURCE_RUNNING == 'false' ]]; then
-        echo "case failed"
-    else
-        check_in_obcluster 
-        if [[ $OBSERVER_ACTIVE == 'false' ]]; then
-            echo "case failed"
-	    cleanup
-	    prepare
-        else
-            echo "case passed"
-        fi
-    fi
-}
-
-modifyparameters() {
-    local value="$1"
-    kubectl patch obtenant $OBTENANT_NAME -n $NAMESPACE --type json -p "[{"op": "add", "path": "/spec/parameters", "value": [{"name": "ob_vector_memory_limit_percentage", "value": \"$value\"}]}]"
-}
-
-removeparameters() {
-    local value="$1"
-    kubectl patch obtenant $OBTENANT_NAME -n $NAMESPACE --type json -p "[{"op": "remove", "path": "/spec/parameters", "value": [{"name": \"$value\"}]}]"
-}
-
-
-check_crd_obparameter_running() {
-    local expected_value="$1"
-    counter=0
-    timeout=10
-    RESOURCE_RUNNING='false'
-    while true; do
-        echo 'check resource'
-	counter=$((counter+1))
-        crd_obparameter=`kubectl get obparameter -A | grep ob_vector_memory_limit_percentage |awk -F' ' '{print $7}'| awk 'NR==1'`
-        if [[ $crd_obparameter = "$expected_value" ]];then
-            RESOURCE_RUNNING='true'
-	    echo "ob_vector_memory_limit_percentage"
-	    echo $crd_obparameter
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "resource still not running"
-            break
-        fi
-        sleep 3s
-    done
-}
-
-check_crd_obparameter_empty() {
-    counter=0
-    timeout=10
-    RESOURCE_RUNNING='false'
-    while true; do
-        echo 'check resource'
-	counter=$((counter+1))
-        crd_obparameter=`kubectl get obparameter -A | grep ob_vector_memory_limit_percentage |awk -F' ' '{print $7}'| awk 'NR==1'`
-        if [[ $crd_obparameter = "" ]];then
-            RESOURCE_RUNNING='true'
-            echo "ob_vector_memory_limit_percentage"
-            echo $crd_obparameter
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "resource still not running"
-            break
-        fi
-        sleep 3s
-    done
-}
-
-validate_obparameter() {
-    echo 'do validate'
-    local expected_value="$1" 
-    check_crd_obparameter_running $expected_value
-    if [[ $RESOURCE_RUNNING == 'false' ]]; then
-        echo "case failed"
-	cleanup
-	prepare
-    else
-	echo "case passed"
-    fi
-}
-
-validate_obparameter_empty() {
-    echo 'do validate'
-    check_crd_obparameter_empty
-    if [[ $RESOURCE_RUNNING == 'false' ]]; then
-        echo "case failed"
-        cleanup
-        prepare
-    else
-        echo "case passed"
-    fi
-}
-
-export_to_file() {
-    local output_file="case_p7_TenantParamManage/env_vars.sh"
-    cat <<EOF > "$output_file"
-export PASSWORD="$PASSWORD"
-export SUFFIX="$SUFFIX"
-export NAMESPACE="$NAMESPACE"
-export OBCLUSTER_NAME="$OBCLUSTER_NAME"
-export OB_ROOT_SECRET="$OB_ROOT_SECRET"
-export OBTENANT_NAME="$OBTENANT_NAME"
-EOF
-    echo "Environment variables have been exported to $output_file"
-}
-
-#cleanup 
-prepare
-export_to_file
-run "obcluster_template_1-1-1.yaml"
-validate 
-run "obtenant_basic_1_1_1.yaml"
-check_obtenant_running
-modifyparameters 20
-validate_obparameter 20
-modifyparameters 30
-validate_obparameter 30
-removeparameters "ob_vector_memory_limit_percentage"
-validate_obparameter_empty
-cleanup
+    ((attempt < 100))
+    echo "$OBTENANT_NAME $parameter=$value in the tenant database and matched OBParameter"
+done
+kubectl -n "$NAMESPACE" patch "obtenant/$OBTENANT_NAME" --type=json -p '[{"op":"remove","path":"/spec/parameters"}]'
+for ((attempt=0; attempt<100; attempt++)); do
+    if [[ $(children) == '[]' ]]; then break; fi
+    sleep 3
+done
+((attempt < 100))
+echo "$OBTENANT_NAME $parameter OBParameter removed"
+echo "case passed"
