@@ -137,9 +137,19 @@ func (m *OBClusterManager) storageCheckStep(ctx context.Context, reader client.R
 		}
 		return false, nil
 	}
-	if !matchesBootstrapProbe(wantJob, job) || job.Annotations[storageClaimUID] == "" ||
+	// A previous failed attempt may still be terminating. Validate even a deleting
+	// Job before waiting for its name to become available for the next attempt.
+	match := job
+	if job.DeletionTimestamp != nil {
+		match = job.DeepCopy()
+		match.DeletionTimestamp = nil
+	}
+	if !matchesBootstrapProbe(wantJob, match) || job.UID == "" || job.Annotations[storageClaimUID] == "" ||
 		(claimErr == nil && types.UID(job.Annotations[storageClaimUID]) != claim.UID) {
 		return false, fmt.Errorf("storage check Job %s does not match its owner, probe or PVC UID", key)
+	}
+	if job.DeletionTimestamp != nil {
+		return false, nil
 	}
 	done, resultErr := bootstrapProbeResult(ctx, reader, job)
 	if !done && resultErr == nil {
@@ -147,7 +157,18 @@ func (m *OBClusterManager) storageCheckStep(ctx context.Context, reader client.R
 		// Re-read on the next poll. Never create a substitute claim for a running Job.
 		return false, nil
 	}
-	// Result is on the Job until TTL. If the manager stops between deletion and checkpoint,
+	if resultErr != nil {
+		// OBResourceRescue can reset the same generation. Keep this attempt's UID
+		// and cause in its Warning and returned error, then release the failed Job name.
+		resultErr = fmt.Errorf("filesystem probe Job %s (UID %s): %w", key, job.UID, resultErr)
+		if m.Recorder != nil {
+			m.Recorder.Event(m.OBCluster, corev1.EventTypeWarning, "FilesystemProbeFailed", resultErr.Error())
+		}
+		if err = m.Client.Delete(ctx, job, client.Preconditions{UID: &job.UID}, client.PropagationPolicy(metav1.DeletePropagationBackground)); client.IgnoreNotFound(err) != nil {
+			return false, errors.Join(resultErr, err)
+		}
+	}
+	// A successful result stays on the Job until TTL. If the manager stops between deletion and checkpoint,
 	// another manager may consume the same result even after the original claim is gone.
 	if claimErr == nil && claim.DeletionTimestamp == nil {
 		if err = m.Client.Delete(ctx, claim, client.Preconditions{UID: &claim.UID}); client.IgnoreNotFound(err) != nil {

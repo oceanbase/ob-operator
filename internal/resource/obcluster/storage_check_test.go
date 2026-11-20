@@ -9,12 +9,14 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/oceanbase/ob-operator/internal/telemetry"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
@@ -225,5 +227,46 @@ func TestStorageProbeConcurrentCreateAndTimeoutCleanup(t *testing.T) {
 	}
 	if err = m.Client.Get(ctx, client.ObjectKeyFromObject(pvc), &corev1.PersistentVolumeClaim{}); !apierrors.IsNotFound(err) {
 		t.Fatalf("timed out PVC survived: %v", err)
+	}
+}
+
+func TestFailedFilesystemProbeReturnsItsErrorAndAllowsSameGenerationRetry(t *testing.T) {
+	m := storageFixture(t)
+	ctx := context.Background()
+	claim, job, err := m.storageCheckObjects()
+	if err != nil {
+		t.Fatal(err)
+	}
+	previous := job.DeepCopy()
+	previous.UID = "previous-failed-job"
+	previous.Annotations = map[string]string{storageClaimUID: "previous-claim"}
+	previous.Status.Conditions = []batchv1.JobCondition{{Type: batchv1.JobFailed, Status: corev1.ConditionTrue, Message: "filesystem rejects fallocate"}}
+	failedClaim := claim.DeepCopy()
+	failedClaim.UID = "previous-claim"
+	m = storageFixture(t, previous, failedClaim)
+	rec := record.NewFakeRecorder(2)
+	m.Recorder = telemetry.NewRecorder(ctx, rec)
+	defer m.Recorder.Done()
+	done, err := m.storageCheckStep(ctx, m.Client, claim, job)
+	if done || err == nil || !strings.Contains(err.Error(), string(previous.UID)) || !strings.Contains(err.Error(), "filesystem rejects fallocate") {
+		t.Fatalf("lost original failure: %v %v", done, err)
+	}
+	select {
+	case event := <-rec.Events:
+		if !strings.Contains(event, "FilesystemProbeFailed") || !strings.Contains(event, string(previous.UID)) {
+			t.Fatalf("incorrect event: %s", event)
+		}
+	default:
+		t.Fatal("missing Warning for failed attempt")
+	}
+	if done, err = m.storageCheckStep(ctx, m.Client, claim, job); done || err != nil {
+		t.Fatalf("retry: %v %v", done, err)
+	}
+	replacement := &batchv1.Job{}
+	if err = m.Client.Get(ctx, client.ObjectKeyFromObject(job), replacement); err != nil {
+		t.Fatal(err)
+	}
+	if replacement.UID == previous.UID || replacement.Annotations[storageClaimUID] == string(failedClaim.UID) {
+		t.Fatalf("reused failed attempt: %+v", replacement.ObjectMeta)
 	}
 }
