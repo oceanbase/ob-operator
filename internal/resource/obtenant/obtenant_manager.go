@@ -228,6 +228,11 @@ func (m *OBTenantManager) CheckAndUpdateFinalizers() error {
 		finalizerFinished = m.OBTenant.Status.Status == tenantstatus.FinalizerFinished
 	}
 	if finalizerFinished {
+		if obcluster != nil && obcluster.DeletionTimestamp.IsZero() && obcluster.Annotations[m.poolRemovalKey()] != "" {
+			if err := m.writePoolRemoval(obcluster, ""); err != nil {
+				return err
+			}
+		}
 		m.Logger.Info("Obtenant Finalizer finished")
 		m.OBTenant.ObjectMeta.Finalizers = make([]string, 0)
 		err := m.Client.Update(m.Ctx, m.OBTenant)
@@ -358,6 +363,14 @@ func (m *OBTenantManager) getObTenant() (*v1alpha1.OBTenant, error) {
 func (m *OBTenantManager) NextStatus() (string, error) {
 	tenantName := m.OBTenant.Spec.TenantName
 
+	// Finish or cancel the recorded removal before evaluating the remaining spec.
+	cluster, err := m.getOBCluster()
+	if err != nil {
+		return "", err
+	}
+	if cluster.Annotations[m.poolRemovalKey()] != "" {
+		return tenantstatus.DeletingResourcePool, nil
+	}
 	// note: change order of state check functions may cause bugs
 	hasModifiedResourcePool := m.hasToAddPool()
 	if hasModifiedResourcePool {
@@ -876,7 +889,7 @@ func (m *OBTenantManager) buildUnitStatusFromDB(zone string, tenantID int64) ([]
 	return unitList, nil
 }
 
-// CanReplayTask resumes observation of work already persisted in Kubernetes.
+// CanReplayTask resumes work with durable Kubernetes or database identity.
 func (m *OBTenantManager) CanReplayTask(name tasktypes.TaskName) bool {
-	return name == tWatchRestoreJobToFinish
+	return name == tWatchRestoreJobToFinish || name == tDeletePool
 }

@@ -149,15 +149,7 @@ func AddPool(m *OBTenantManager) tasktypes.TaskError {
 }
 
 func DeletePool(m *OBTenantManager) tasktypes.TaskError {
-	// handle delete pool
-	poolStatuses := m.getPoolsForDelete()
-	for _, poolStatus := range poolStatuses {
-		err := m.TenantDeletePool(poolStatus)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return m.reconcilePoolRemoval()
 }
 
 func MaintainUnitConfig(m *OBTenantManager) tasktypes.TaskError {
