@@ -35,6 +35,9 @@ func (c *capturePreflightClient) List(context.Context, client.ObjectList, ...cli
 }
 
 func (c *capturePreflightClient) Create(_ context.Context, obj client.Object, _ ...client.CreateOption) error {
+	if pvc, ok := obj.(*corev1.PersistentVolumeClaim); ok {
+		pvc.UID = "captured-claim"
+	}
 	if job, ok := obj.(*batchv1.Job); ok {
 		c.jobs = append(c.jobs, job.DeepCopy())
 		return errors.New("stop after capturing Job")

@@ -25,35 +25,38 @@ import (
 const imageJobPrefix = "image-pull-ready-"
 
 func (m *OBClusterManager) imageCheckJob() *batchv1.Job {
+	return m.bootstrapProbeJob(imageJobPrefix, 120, corev1.Container{
+		Name: "helper-check-image-pull-ready", Image: m.OBCluster.Spec.OBServerTemplate.Image, ImagePullPolicy: corev1.PullIfNotPresent,
+		Command: []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper help"},
+	})
+}
+
+func (m *OBClusterManager) bootstrapProbeJob(prefix string, ttl int32, container corev1.Container) *batchv1.Job {
 	cluster := m.OBCluster
-	image := cluster.Spec.OBServerTemplate.Image
-	identity := sha256.Sum256([]byte(fmt.Sprintf("%s/%d/%s", cluster.UID, cluster.Generation, image)))
+	identity := sha256.Sum256([]byte(fmt.Sprintf("%s/%d/%s", cluster.UID, cluster.Generation, container.Image)))
 	pod := corev1.PodSpec{
-		Containers: []corev1.Container{{
-			Name: "helper-check-image-pull-ready", Image: image, ImagePullPolicy: corev1.PullIfNotPresent,
-			Command: []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper help"},
-		}},
+		Containers:    []corev1.Container{container},
 		RestartPolicy: corev1.RestartPolicyNever,
 		SchedulerName: resourceutils.GetSchedulerName(cluster.Spec.OBServerTemplate.PodFields),
 	}
 	resourceutils.ApplyJobScheduling(&pod, resourceutils.BootstrapJobScheduling(cluster))
 	return &batchv1.Job{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: fmt.Sprintf("%s%x", imageJobPrefix, identity[:12]), Namespace: cluster.Namespace,
+			Name: fmt.Sprintf("%s%x", prefix, identity[:12]), Namespace: cluster.Namespace,
 			OwnerReferences: []metav1.OwnerReference{{
 				APIVersion: v1alpha1.GroupVersion.String(), Kind: "OBCluster", Name: cluster.Name, UID: cluster.UID,
 			}},
 		},
 		Spec: batchv1.JobSpec{
 			Template:                corev1.PodTemplateSpec{Spec: pod},
-			TTLSecondsAfterFinished: ptr.To[int32](120), BackoffLimit: ptr.To[int32](0),
+			TTLSecondsAfterFinished: ptr.To(ttl), BackoffLimit: ptr.To[int32](0),
 		},
 	}
 }
 
-// Compare the command, image identity and scheduling that make this an image check.
+// Compare the command, image identity, volumes and scheduling that define each bootstrap probe.
 // Job metadata, TTL, and API defaults on unrelated Pod fields do not affect the result.
-func imageProbeSpec(pod corev1.PodSpec) corev1.PodSpec {
+func bootstrapProbeSpec(pod corev1.PodSpec) corev1.PodSpec {
 	container := pod.Containers[0]
 	return corev1.PodSpec{
 		Containers: []corev1.Container{{
@@ -61,13 +64,13 @@ func imageProbeSpec(pod corev1.PodSpec) corev1.PodSpec {
 			Command: container.Command, Args: container.Args, WorkingDir: container.WorkingDir,
 			Env: container.Env, EnvFrom: container.EnvFrom, VolumeMounts: container.VolumeMounts,
 		}},
-		RestartPolicy: pod.RestartPolicy, ServiceAccountName: cmp.Or(pod.ServiceAccountName, "default"),
+		Volumes: pod.Volumes, RestartPolicy: pod.RestartPolicy, ServiceAccountName: cmp.Or(pod.ServiceAccountName, "default"),
 		SchedulerName: cmp.Or(pod.SchedulerName, corev1.DefaultSchedulerName),
 		NodeName:      pod.NodeName, NodeSelector: pod.NodeSelector, Affinity: pod.Affinity, Tolerations: pod.Tolerations,
 	}
 }
 
-func matchesImageCheckJob(want, got *batchv1.Job) bool {
+func matchesBootstrapProbe(want, got *batchv1.Job) bool {
 	if got.Namespace != want.Namespace || got.DeletionTimestamp != nil ||
 		!equality.Semantic.DeepEqual(want.OwnerReferences, got.OwnerReferences) {
 		return false
@@ -76,7 +79,7 @@ func matchesImageCheckJob(want, got *batchv1.Job) bool {
 		return false
 	}
 	pod := got.Spec.Template.Spec
-	return len(pod.Containers) == 1 && len(pod.InitContainers) == 0 && equality.Semantic.DeepEqual(imageProbeSpec(want.Spec.Template.Spec), imageProbeSpec(pod))
+	return len(pod.Containers) == 1 && len(pod.InitContainers) == 0 && equality.Semantic.DeepEqual(bootstrapProbeSpec(want.Spec.Template.Spec), bootstrapProbeSpec(pod))
 }
 
 func (m *OBClusterManager) findOrCreateImageCheck(ctx context.Context, reader client.Reader, want *batchv1.Job) (*batchv1.Job, error) {
@@ -93,7 +96,7 @@ func (m *OBClusterManager) findOrCreateImageCheck(ctx context.Context, reader cl
 		for i := range list.Items {
 			candidate := &list.Items[i]
 			if len(candidate.Name) == len(imageJobPrefix)+8 && strings.HasPrefix(candidate.Name, imageJobPrefix) &&
-				matchesImageCheckJob(want, candidate) && (previous == nil || previous.CreationTimestamp.Before(&candidate.CreationTimestamp)) {
+				matchesBootstrapProbe(want, candidate) && (previous == nil || previous.CreationTimestamp.Before(&candidate.CreationTimestamp)) {
 				previous = candidate
 			}
 		}
@@ -109,24 +112,24 @@ func (m *OBClusterManager) findOrCreateImageCheck(ctx context.Context, reader cl
 	if err != nil {
 		return nil, err
 	}
-	if !matchesImageCheckJob(want, job) {
+	if !matchesBootstrapProbe(want, job) {
 		return nil, fmt.Errorf("image check Job %s does not match the cluster owner, image, command or placement", key)
 	}
 	return job, nil
 }
 
 // Older Jobs permit 32 retries. Surface their failed helper Pod without waiting for all retries.
-func imageCheckResult(ctx context.Context, reader client.Reader, job *batchv1.Job) (bool, error) {
+func bootstrapProbeResult(ctx context.Context, reader client.Reader, job *batchv1.Job) (bool, error) {
 	for _, condition := range job.Status.Conditions {
 		if condition.Status != corev1.ConditionTrue {
 			continue
 		}
 		switch condition.Type {
 		case batchv1.JobFailed, batchv1.JobFailureTarget:
-			return false, fmt.Errorf("image check Job %s failed: %s", job.Name, condition.Message)
+			return false, fmt.Errorf("probe Job %s failed: %s", job.Name, condition.Message)
 		case batchv1.JobComplete:
 			if job.Status.Succeeded == 0 {
-				return false, fmt.Errorf("image check Job %s completed without a successful Pod", job.Name)
+				return false, fmt.Errorf("probe Job %s completed without a successful Pod", job.Name)
 			}
 			return true, nil
 		}
@@ -141,7 +144,7 @@ func imageCheckResult(ctx context.Context, reader client.Reader, job *batchv1.Jo
 	for _, pod := range pods.Items {
 		owner := metav1.GetControllerOf(&pod)
 		if owner != nil && owner.Kind == "Job" && owner.Name == job.Name && owner.UID == job.UID && pod.Status.Phase == corev1.PodFailed {
-			return false, fmt.Errorf("image check Job %s failed in Pod %s: %s", job.Name, pod.Name, pod.Status.Message)
+			return false, fmt.Errorf("probe Job %s failed in Pod %s: %s", job.Name, pod.Name, pod.Status.Message)
 		}
 	}
 	return false, nil
@@ -171,13 +174,13 @@ func (m *OBClusterManager) checkImageReady() error {
 				current = nil
 				return false, nil
 			}
-			if err == nil && (current.UID != uid || !matchesImageCheckJob(want, current)) {
+			if err == nil && (current.UID != uid || !matchesBootstrapProbe(want, current)) {
 				return false, fmt.Errorf("image check Job %s changed identity", key)
 			}
 		}
 		if err != nil {
 			return false, err
 		}
-		return imageCheckResult(ctx, reader, current)
+		return bootstrapProbeResult(ctx, reader, current)
 	})
 }

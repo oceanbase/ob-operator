@@ -53,7 +53,7 @@ func TestImageCheckRecoversOnlyItsOwnProbe(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			m, _ := schedulingFixture()
-			if !m.CanReplayTask(tCheckImageReady) || m.CanReplayTask(tCheckEnvironment) || m.CanReplayTask(tBootstrap) {
+			if !m.CanReplayTask(tCheckImageReady) || !m.CanReplayTask(tCheckEnvironment) || m.CanReplayTask(tBootstrap) {
 				t.Fatal("unexpected bootstrap replay policy")
 			}
 			existing := m.imageCheckJob()
@@ -93,12 +93,12 @@ func TestImageCheckRejectsDeletionAndAcceptsAPIDefaults(t *testing.T) {
 	got := want.DeepCopy()
 	got.Spec.Template.Spec.ServiceAccountName = "default"
 	got.Spec.Template.Spec.SchedulerName = corev1.DefaultSchedulerName
-	if !matchesImageCheckJob(want, got) {
+	if !matchesBootstrapProbe(want, got) {
 		t.Fatal("API defaults do not change the desired probe")
 	}
 	now := metav1.Now()
 	got.DeletionTimestamp = &now
-	if matchesImageCheckJob(want, got) {
+	if matchesBootstrapProbe(want, got) {
 		t.Fatal("accepted deleting Job")
 	}
 }
@@ -122,12 +122,12 @@ func TestImageCheckLegacyFailedPodBelongsToTheJob(t *testing.T) {
 		Status: corev1.PodStatus{Phase: corev1.PodFailed, Message: "exit status 1"},
 	}
 	cl := fake.NewClientBuilder().WithScheme(scheme).WithObjects(pod).Build()
-	if done, err := imageCheckResult(context.Background(), cl, job); done || err != nil {
+	if done, err := bootstrapProbeResult(context.Background(), cl, job); done || err != nil {
 		t.Fatalf("used another Job's Pod: %v %v", done, err)
 	}
 	pod.OwnerReferences[0].UID = job.UID
 	cl = fake.NewClientBuilder().WithScheme(scheme).WithObjects(pod).Build()
-	if done, err := imageCheckResult(context.Background(), cl, job); done || err == nil || !strings.Contains(err.Error(), "exit status 1") {
+	if done, err := bootstrapProbeResult(context.Background(), cl, job); done || err == nil || !strings.Contains(err.Error(), "exit status 1") {
 		t.Fatalf("failed Job did not report its failed Pod: %v %v", done, err)
 	}
 }
