@@ -52,3 +52,6 @@ rbac_policy*.csv
 # Local lakehouse installer credentials, state and compiled delivery binary
 .lakehouse-install/
 /bin/lakehouse-installer
+
+# Per-scenario identities and passwords are generated on the test machine.
+/tests/case_p*/env_vars.sh
