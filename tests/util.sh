@@ -75,3 +75,33 @@ get_tenant_role() {
         -e 'SELECT TENANT_NAME, TENANT_ROLE FROM DBA_OB_TENANTS' |
         awk -F '\t' -v tenant="$tenant" '$1 == tenant { print $2 }'
 }
+
+check_obagent_metrics() {
+    local ns=$1 cluster=$2 mode=$3 count=$4 entry pod ip expected url metrics matched attempt
+    local -a pods
+    for ((attempt=0; attempt<60; attempt++)); do
+        mapfile -t pods < <(kubectl -n "$ns" get pods -l "ref-obcluster=$cluster" -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.podIP}{"\n"}{end}')
+        matched=0
+        for entry in "${pods[@]}"; do
+            read -r pod ip <<< "$entry"
+            [[ -n $pod && -n $ip ]] || continue
+            expected=127.0.0.1
+            if [[ $mode == service ]]; then
+                expected=$(kubectl -n "$ns" get service "$pod" -o jsonpath='{.spec.clusterIP}') || continue
+                [[ -n $expected ]] || continue
+            fi
+            url=$ip
+            [[ $ip == *:* ]] && url="[$ip]"
+            metrics=$(curl -fsS --max-time 5 "http://$url:8088/metrics/ob/basic") || continue
+            if grep '^ob_active_session_num{' <<< "$metrics" | grep -F "svr_ip=\"$expected\"" >/dev/null; then
+                ((matched+=1))
+            fi
+        done
+        if (( matched == count && ${#pods[@]} == count )); then
+            echo "$matched OBAgent endpoints reported the expected observer IPs"
+            return 0
+        fi
+        sleep 3
+    done
+    return 1
+}
