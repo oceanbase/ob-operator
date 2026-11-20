@@ -124,28 +124,29 @@ check_resource_running() {
 }
  
 check_obtenant_running() {
-    local obtenant_name=$1
-    local namespace=$2
-
-    counter=0
-    timeout=100  
-    OBTENANT_RUNNING='false'
-    while true; do
-        echo 'check obtenant resource'
-        counter=$((counter+1))
-        crd_obtenant=`kubectl get obtenant $obtenant_name -n $namespace| grep "$obtenant_name"|awk -F' ' '{print $2}'`
-        if [[ $crd_obtenant = "running" ]];then
-            echo "crd_obtenant is $crd_obtenant ready"
-            OBTENANT_RUNNING='true'
-            break
+    local tenant=$1 namespace=$2 expected_role=$3
+    local limit=300 observed
+    # CREATE STANDBY TENANT has a ten-minute SQL deadline on the operator.
+    if [[ $expected_role == STANDBY ]]; then
+        limit=600
+    fi
+    local deadline=$((SECONDS + limit))
+    while (( SECONDS < deadline )); do
+        if observed=$(kubectl -n "$namespace" get "obtenant/$tenant" \
+                -o jsonpath='{.status.status}/{.status.tenantRole}'); then
+            if [[ $observed == "running/$expected_role" ]]; then
+                echo "$tenant ready as $expected_role"
+                return 0
+            fi
+            if [[ $observed == failed/* ]]; then
+                echo "$namespace/$tenant failed: $observed" >&2
+                return 1
+            fi
         fi
-        if [ $counter -eq $timeout ]; then
-            echo "obtenant resource still not running"
-            break
-        fi
-        sleep 3s
+        sleep 3
     done
-    [[ $OBTENANT_RUNNING == true ]]
+    echo "$namespace/$tenant did not become running/$expected_role within ${limit}s (last state: ${observed:-unavailable})" >&2
+    return 1
 }
 
 check_backup_policy_running() {
@@ -214,12 +215,12 @@ validate() {
     check_resource_running "$OBCLUSTER_DEFAULT_ONE" "$NS_DEFAULT" "$CLUSTER_ID_DEFAULT_ONE" || return 1
     check_resource_running "$OBCLUSTER_DEFAULT_TWO" "$NS_DEFAULT" "$CLUSTER_ID_DEFAULT_TWO" || return 1
     run "tenant_ns_default.yaml" || return 1
-    check_obtenant_running "$TENANT_DEFAULT_ONE" "$NS_DEFAULT" || return 1
+    check_obtenant_running "$TENANT_DEFAULT_ONE" "$NS_DEFAULT" PRIMARY || return 1
     run "tenant_ns_default_2.yaml" || return 1
     run "tenant_ns_test_empty.yaml" || return 1
     run "tenant_default_backup_policy.yaml" || return 1
-    check_obtenant_running "$TENANT_DEFAULT_TWO" "$NS_DEFAULT" || return 1
-    check_obtenant_running "$TENANT_OCEANBASE_EMPTY" "$NS_OCEANBASE_TEST" || return 1
+    check_obtenant_running "$TENANT_DEFAULT_TWO" "$NS_DEFAULT" STANDBY || return 1
+    check_obtenant_running "$TENANT_OCEANBASE_EMPTY" "$NS_OCEANBASE_TEST" STANDBY || return 1
     check_backup_policy_running "$OBTENANT_DEFAULT_BACK_POLICY" "$NS_DEFAULT" || return 1
     wait_for_recoverable_backup || return 1
     run "tenant_ns_test_restore.yaml" || return 1
