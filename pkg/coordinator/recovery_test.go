@@ -183,3 +183,36 @@ func TestReleaseResultWhenPersistedFlowAdvances(t *testing.T) {
 		t.Fatalf("old result was retained after flow advanced: %v", err)
 	}
 }
+
+type bootstrapVerifier struct {
+	recoveryManager
+	checks atomic.Int32
+}
+
+func (m *bootstrapVerifier) ObserveLostTask(name tt.TaskName) tt.TaskFunc {
+	if name != "bootstrap" {
+		return nil
+	}
+	return func() tt.TaskError { m.checks.Add(1); return nil }
+}
+
+func TestLostWriteVerifiesWithoutRepeatingMutation(t *testing.T) {
+	m := &bootstrapVerifier{}
+	logger := logr.Discard()
+	c := NewCoordinator(m, &logger)
+	op := &tt.OperationContext{Task: "bootstrap", TaskId: tt.TaskID(t.Name()), TaskStatus: taskstatus.Running}
+	f := tt.NewTaskFlow(op)
+	c.executeTaskFlow(f)
+	if op.TaskId == tt.TaskID(t.Name()) || op.TaskStatus != taskstatus.Running {
+		t.Fatalf("verification was not submitted, status=%s", op.TaskStatus)
+	}
+	t.Cleanup(func() { _ = task.GetTaskManager().CleanTaskResult(op.TaskId) })
+	deadline := time.Now().Add(3 * time.Second)
+	for op.TaskStatus == taskstatus.Running && time.Now().Before(deadline) {
+		c.executeTaskFlow(f)
+		time.Sleep(time.Millisecond)
+	}
+	if op.TaskStatus != taskstatus.Successful || m.calls.Load() != 0 || m.checks.Load() != 1 {
+		t.Fatalf("status=%s writes=%d checks=%d", op.TaskStatus, m.calls.Load(), m.checks.Load())
+	}
+}

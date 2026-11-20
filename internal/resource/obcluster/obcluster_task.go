@@ -38,7 +38,9 @@ import (
 	cmdconst "github.com/oceanbase/ob-operator/internal/const/cmd"
 	obagentconst "github.com/oceanbase/ob-operator/internal/const/obagent"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	logserviceclusterstatus "github.com/oceanbase/ob-operator/internal/const/status/oblogservicecluster"
+	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/helper"
@@ -266,63 +268,39 @@ func waitForLogServiceReady(ctx context.Context, kubeClient client.Client, key t
 }
 
 func Bootstrap(m *OBClusterManager) tasktypes.TaskError {
-	obzoneList, err := m.listOBZones()
+	zones, err := m.readyBootstrapZones(m.Ctx, serverstatus.BootstrapReady)
 	if err != nil {
-		m.Logger.Error(err, "list obzones failed")
-		return errors.Wrap(err, "list obzones")
+		return errors.Wrap(err, "read bootstrap zones")
 	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Successfully get obzone list", "obzone list", obzoneList)
-	if len(obzoneList.Items) == 0 {
-		return errors.Wrap(err, "no obzone belongs to this cluster")
+	if len(zones) == 0 {
+		return errors.New("cluster no longer has a complete set of bootstrap servers")
 	}
 	var manager *operation.OceanbaseOperationManager
-	for i := 0; i < obcfg.GetConfig().Time.GetConnectionMaxRetries; i++ {
-		manager, err = m.getOceanbaseOperationManager()
-		if err != nil || manager == nil {
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Get oceanbase operation manager failed")
-			time.Sleep(time.Second * time.Duration(obcfg.GetConfig().Time.CheckConnectionInterval))
-		} else {
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Successfully got oceanbase operation manager")
-			break
-		}
-	}
-	if err != nil {
-		m.Logger.Error(err, "get oceanbase operation manager failed")
-		return errors.Wrap(err, "get oceanbase operation manager")
-	}
-
-	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
-
-	bootstrapServers := make([]model.BootstrapServerInfo, 0, len(m.OBCluster.Spec.Topology))
-	if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone {
-		m.Logger.Info("Bootstrap as standalone mode")
-		bootstrapServers = append(bootstrapServers, model.BootstrapServerInfo{
-			Zone: m.OBCluster.Spec.Topology[0].Zone,
-			Server: &model.ServerInfo{
-				Ip:   "127.0.0.1",
-				Port: oceanbaseconst.RpcPort,
-			},
-		})
-	} else {
-		connectAddress := manager.Connector.DataSource().GetAddress()
-		for _, zone := range obzoneList.Items {
-			serverIp := zone.Status.OBServerStatus[0].GetConnectAddr()
-			// Notes: If the addr of the db connector is in this obzone, use it as the bootstrap server instead of the first one
-			for _, serverInfo := range zone.Status.OBServerStatus {
-				if serverInfo.Server == connectAddress || serverInfo.ServiceIP == connectAddress {
-					serverIp = serverInfo.GetConnectAddr()
+	for attempt := 0; attempt < obcfg.GetConfig().Time.GetConnectionMaxRetries && manager == nil; attempt++ {
+		for _, zone := range zones {
+			for _, server := range zone.Status.OBServerStatus {
+				manager, err = m.bootstrapClient(server.GetConnectAddr())
+				if err == nil && manager != nil {
+					break
 				}
 			}
-			serverInfo := &model.ServerInfo{
-				Ip:   serverIp,
-				Port: oceanbaseconst.RpcPort,
+			if manager != nil {
+				break
 			}
-			bootstrapServers = append(bootstrapServers, model.BootstrapServerInfo{
-				Zone:   zone.Spec.Topology.Zone,
-				Server: serverInfo,
-			})
+		}
+		if manager == nil {
+			select {
+			case <-m.Ctx.Done():
+				return m.Ctx.Err()
+			case <-time.After(time.Duration(obcfg.GetConfig().Time.CheckConnectionInterval) * time.Second):
+			}
 		}
 	}
+	if manager == nil {
+		return errors.New("cannot connect to any of the cluster's bootstrap servers")
+	}
+	standalone := m.OBCluster.Annotations[oceanbaseconst.AnnotationsMode] == oceanbaseconst.ModeStandalone
+	bootstrapServers := bootstrapSeeds(zones, manager.Connector.DataSource().GetAddress(), standalone)
 
 	if m.OBCluster.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
 		logServiceAccessPoint, buildErr := m.buildLogServiceAccessPoint()
@@ -922,10 +900,13 @@ func ModifyServerTemplate(m *OBClusterManager) tasktypes.TaskError {
 }
 
 func WaitOBZoneBootstrapReady(m *OBClusterManager) tasktypes.TaskError {
-	return m.generateWaitOBZoneStatusFunc(zonestatus.BootstrapReady, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
+	return m.waitForBootstrapZones(serverstatus.BootstrapReady)
 }
 
 func WaitOBZoneRunning(m *OBClusterManager) tasktypes.TaskError {
+	if m.OBCluster.Status.Status == clusterstatus.Bootstrapped {
+		return m.waitForBootstrapZones(serverstatus.Running)
+	}
 	return m.generateWaitOBZoneStatusFunc(zonestatus.Running, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 

@@ -147,6 +147,7 @@ func genFlowExpandPVC(_ *OBZoneManager) *tasktypes.TaskFlow {
 func genModifyServerTemplateFlow(_ *OBZoneManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
+			OnFailure:    tasktypes.FailureRule{Strategy: strategy.RetryFromCurrent},
 			Name:         "modify server template",
 			Tasks:        []tasktypes.TaskName{tModifyPodTemplate, tWaitForOBServerTemplateModifying, tWaitOBServerRunning},
 			TargetStatus: zonestatus.Running,

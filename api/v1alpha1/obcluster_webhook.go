@@ -250,10 +250,11 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 			err = errors.New("forbid to add/remove backup volume to non-static-ip cluster")
 		}
 	}
-	if (r.Spec.MonitorTemplate == nil) != (oldCluster.Spec.MonitorTemplate == nil) {
-		if !oldCluster.SupportStaticIP() {
-			err = errors.New("forbid to add/remove monitor container to non-static-ip cluster")
+	if !oldCluster.SupportStaticIP() && changedMonitorSettings(oldCluster, r) {
+		if (r.Spec.MonitorTemplate == nil) != (oldCluster.Spec.MonitorTemplate == nil) {
+			return nil, errors.New("forbid to add/remove monitor container to non-static-ip cluster")
 		}
+		return nil, errors.New("forbid to update monitor settings of an existing non-static-ip cluster")
 	}
 
 	newStorage := r.Spec.OBServerTemplate.Storage
@@ -285,6 +286,18 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 	}
 
 	return nil, r.validateMutation()
+}
+
+// Newly added zones may choose their own monitor at creation.
+func changedMonitorSettings(old, next *OBCluster) bool {
+	for _, before := range old.Spec.Topology {
+		for _, after := range next.Spec.Topology {
+			if before.Zone == after.Zone && !before.EffectiveMonitor(old.Spec.MonitorTemplate).Equal(after.EffectiveMonitor(next.Spec.MonitorTemplate)) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type

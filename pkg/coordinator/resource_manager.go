@@ -48,3 +48,9 @@ type ResourceUpdater interface {
 type TaskReplayPolicy interface {
 	CanReplayTask(tasktypes.TaskName) bool
 }
+
+// LostTaskObserver can verify a completed external operation after a leader
+// change. Its function must only observe state and must be safe to repeat.
+type LostTaskObserver interface {
+	ObserveLostTask(tasktypes.TaskName) tasktypes.TaskFunc
+}

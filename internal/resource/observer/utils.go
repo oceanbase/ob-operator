@@ -289,32 +289,11 @@ func (m *OBServerManager) checkIfResourceChanged(pod *corev1.Pod) bool {
 }
 
 func (m *OBServerManager) checkIfBackupVolumeMutated(pod *corev1.Pod) bool {
-	addingVolume := m.OBServer.Spec.BackupVolume != nil
-	volumeExist := false
-
-	for _, container := range pod.Spec.Containers {
-		if container.Name == oceanbaseconst.ContainerName {
-			for _, volumeMount := range container.VolumeMounts {
-				if volumeMount.MountPath == oceanbaseconst.BackupPath {
-					volumeExist = true
-					break
-				}
-			}
-		}
-	}
-
-	return addingVolume != volumeExist
+	return (m.OBServer.Spec.BackupVolume != nil) != resourceutils.PodHasBackupVolume(pod)
 }
 
 func (m *OBServerManager) checkIfMonitorMutated(pod *corev1.Pod) bool {
-	addingMonitor := m.OBServer.Spec.MonitorTemplate != nil
-	monitorExist := false
-	for _, container := range pod.Spec.Containers {
-		if container.Name == obagentconst.ContainerName {
-			monitorExist = true
-		}
-	}
-	return addingMonitor != monitorExist
+	return !resourceutils.MonitorMatchesPod(m.OBServer, pod)
 }
 
 func (m *OBServerManager) generatePVCSpec(storageSpec *apitypes.StorageSpec) corev1.PersistentVolumeClaimSpec {

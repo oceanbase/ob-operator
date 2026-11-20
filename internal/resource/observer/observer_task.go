@@ -154,6 +154,10 @@ func CreateOBServerPod(m *OBServerManager) tasktypes.TaskError {
 		}
 	}
 
+	if revision := m.OBServer.Annotations[oceanbaseconst.AnnotationsMonitorRevision]; revision != "" {
+		annotations[oceanbaseconst.AnnotationsMonitorRevision] = revision
+	}
+
 	// create pod
 	observerPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{

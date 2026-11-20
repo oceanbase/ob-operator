@@ -32,6 +32,7 @@ import (
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
+	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
@@ -405,38 +406,29 @@ func ModifyPodTemplate(m *OBZoneManager) tasktypes.TaskError {
 		return err
 	}
 	for _, observer := range observerList.Items {
-		observerCopied := observer.DeepCopy()
-		if observer.Spec.BackupVolume == nil && m.OBZone.Spec.BackupVolume != nil {
-			m.Logger.Info("Add backup volume", "observer", observer.Name)
+		if !m.ownsRollingServer(&observer) || observer.DeletionTimestamp != nil {
+			return errors.Errorf("observer %s is deleting or has a different owner", observer.Name)
+		}
+		backupChanged := m.checkIfBackupVolumeMutated(&observer)
+		monitorChanged := m.checkIfMonitorMutated(&observer)
+		if !backupChanged && !monitorChanged {
+			continue
+		}
+		original := observer.DeepCopy()
+		if backupChanged {
 			observer.Spec.BackupVolume = m.OBZone.Spec.BackupVolume
-			err = m.Client.Patch(m.Ctx, &observer, client.MergeFrom(observerCopied))
-			if err != nil {
-				return errors.Wrapf(err, "Add backup volume %s failed", observer.Name)
-			}
 		}
-		if observer.Spec.MonitorTemplate == nil && m.OBZone.Spec.MonitorTemplate != nil {
-			m.Logger.Info("Add monitor template", "observer", observer.Name)
-			observer.Spec.MonitorTemplate = m.OBZone.Spec.MonitorTemplate
-			err = m.Client.Patch(m.Ctx, &observer, client.MergeFrom(observerCopied))
-			if err != nil {
-				return errors.Wrapf(err, "Add monitor template %s failed", observer.Name)
+		if monitorChanged {
+			observer.Spec.MonitorTemplate = m.OBZone.Spec.Topology.EffectiveMonitor(m.OBZone.Spec.MonitorTemplate)
+			if observer.Annotations == nil {
+				observer.Annotations = make(map[string]string)
 			}
+			// Record the edit together with the spec. This also distinguishes an
+			// intentional CPU limit removal from a limit injected by admission.
+			observer.Annotations[oceanbaseconst.AnnotationsMonitorRevision] = original.ResourceVersion
 		}
-		if observer.Spec.BackupVolume != nil && m.OBZone.Spec.BackupVolume == nil {
-			m.Logger.Info("Remove backup volume", "observer", observer.Name)
-			observer.Spec.BackupVolume = nil
-			err = m.Client.Patch(m.Ctx, &observer, client.MergeFrom(observerCopied))
-			if err != nil {
-				return errors.Wrapf(err, "Remove backup volume %s failed", observer.Name)
-			}
-		}
-		if observer.Spec.MonitorTemplate != nil && m.OBZone.Spec.MonitorTemplate == nil {
-			m.Logger.Info("Remove monitor template", "observer", observer.Name)
-			observer.Spec.MonitorTemplate = nil
-			err = m.Client.Patch(m.Ctx, &observer, client.MergeFrom(observerCopied))
-			if err != nil {
-				return errors.Wrapf(err, "Remove monitor template %s failed", observer.Name)
-			}
+		if err := m.Client.Patch(m.Ctx, &observer, client.MergeFromWithOptions(original, client.MergeFromWithOptimisticLock{})); err != nil {
+			return errors.Wrapf(err, "update pod template for observer %s", observer.Name)
 		}
 	}
 	return nil
@@ -480,10 +472,13 @@ func DeleteLegacyOBServers(m *OBZoneManager) tasktypes.TaskError {
 }
 
 func WaitOBServerBootstrapReady(m *OBZoneManager) tasktypes.TaskError {
-	return m.generateWaitOBServerStatusFunc(serverstatus.BootstrapReady, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
+	return m.waitForBootstrapReplicas(serverstatus.BootstrapReady)
 }
 
 func WaitOBServerRunning(m *OBZoneManager) tasktypes.TaskError {
+	if m.OBZone.Status.Status == zonestatus.BootstrapReady {
+		return m.waitForBootstrapReplicas(serverstatus.Running)
+	}
 	return m.generateWaitOBServerStatusFunc(serverstatus.Running, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
@@ -496,7 +491,10 @@ func WaitForOBServerExpandingPVC(m *OBZoneManager) tasktypes.TaskError {
 }
 
 func WaitForOBServerTemplateModifying(m *OBZoneManager) tasktypes.TaskError {
-	return m.generateWaitOBServerStatusFunc(serverstatus.ModifyingPodTemplate, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
+	timeout := time.Duration(obcfg.GetConfig().Time.DefaultStateWaitTimeout) * time.Second
+	return wait.PollUntilContextTimeout(m.Ctx, time.Second, timeout, true, func(ctx context.Context) (bool, error) {
+		return resourceutils.ZonePodTemplatesReady(ctx, m.Client, m.OBZone)
+	})
 }
 
 func RollingReplaceOBServers(m *OBZoneManager) tasktypes.TaskError {

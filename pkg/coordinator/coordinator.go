@@ -154,6 +154,13 @@ func (c *Coordinator) executeTaskFlow(f *tasktypes.TaskFlow) {
 					f.OperationContext.TaskStatus = taskstatus.Pending
 					return
 				}
+				if observer, ok := c.Manager.(LostTaskObserver); ok && errors.Is(err, task.ErrTaskNotFound) {
+					if verify := observer.ObserveLostTask(f.OperationContext.Task); verify != nil {
+						c.Logger.Info("Checking external state after losing a task result", loggingPairs...)
+						f.OperationContext.TaskId = task.GetTaskManager().Submit(verify)
+						return
+					}
+				}
 				c.Logger.Error(err, "Get task result got error", loggingPairs...)
 				c.Manager.PrintErrEvent(err)
 				f.OperationContext.TaskStatus = taskstatus.Failed

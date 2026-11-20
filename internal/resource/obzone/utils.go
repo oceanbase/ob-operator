@@ -72,7 +72,7 @@ func (m *OBZoneManager) checkIfBackupVolumeMutated(observer *v1alpha1.OBServer) 
 }
 
 func (m *OBZoneManager) checkIfMonitorMutated(observer *v1alpha1.OBServer) bool {
-	return (observer.Spec.MonitorTemplate == nil) != (m.OBZone.Spec.MonitorTemplate == nil)
+	return !observer.Spec.MonitorTemplate.Equal(m.OBZone.Spec.Topology.EffectiveMonitor(m.OBZone.Spec.MonitorTemplate))
 }
 
 func (m *OBZoneManager) retryUpdateStatus() error {
@@ -190,15 +190,11 @@ func (m *OBZoneManager) createOneOBServer(serverName string, replaces types.UID)
 			Affinity:         m.OBZone.Spec.Topology.Affinity,
 			Tolerations:      m.OBZone.Spec.Topology.Tolerations,
 			OBServerTemplate: resourceutils.EffectiveZoneTemplate(m.OBZone),
-			MonitorTemplate:  m.OBZone.Spec.MonitorTemplate,
+			MonitorTemplate:  m.OBZone.Spec.Topology.EffectiveMonitor(m.OBZone.Spec.MonitorTemplate),
 			BackupVolume:     m.OBZone.Spec.BackupVolume,
 			ServiceAccount:   m.OBZone.Spec.ServiceAccount,
 			K8sCluster:       m.OBZone.Spec.Topology.K8sCluster,
 		},
-	}
-	zoneTopo := m.OBZone.Spec.Topology
-	if zoneTopo.MonitorTemplate != nil {
-		observer.Spec.MonitorTemplate = zoneTopo.MonitorTemplate
 	}
 	observer.Annotations = make(map[string]string)
 	if replaces != "" {

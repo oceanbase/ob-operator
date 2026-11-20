@@ -82,6 +82,9 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 		if m.OBCluster.Status.Status == clusterstatus.RollingUpdateOBServers && len(op.Tasks) == 1 && op.Tasks[0] == tRollingUpdateOBZones && (op.OnFailure.Strategy == "" || op.OnFailure.Strategy == strategy.StartOver) {
 			op.OnFailure.Strategy = strategy.RetryFromCurrent
 		}
+		if m.OBCluster.Status.Status == clusterstatus.ModifyServerTemplate && len(op.Tasks) > 0 && op.Tasks[0] == tModifyServerTemplate && (op.OnFailure.Strategy == "" || op.OnFailure.Strategy == strategy.StartOver) {
+			op.OnFailure.Strategy = strategy.RetryFromCurrent
+		}
 		return tasktypes.NewTaskFlow(op), nil
 	}
 	// return task flow depends on status
@@ -327,5 +330,5 @@ func (m *OBClusterManager) ArchiveResource() {
 
 // CanReplayTask covers identity-checked Jobs, readiness checks and resumable replacements.
 func (m *OBClusterManager) CanReplayTask(name tasktypes.TaskName) bool {
-	return name == tCheckImageReady || name == tCheckEnvironment || name == tWaitOBZoneBootstrapReady || name == tRollingUpdateOBZones
+	return name == tCheckImageReady || name == tCheckEnvironment || name == tWaitOBZoneBootstrapReady || name == tModifyServerTemplate || name == tWaitOBZoneRunning || name == tRollingUpdateOBZones
 }

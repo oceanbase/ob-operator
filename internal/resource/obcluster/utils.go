@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package obcluster
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -21,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -59,7 +61,17 @@ func (m *OBClusterManager) checkIfBackupVolumeMutated(obzone *v1alpha1.OBZone) b
 }
 
 func (m *OBClusterManager) checkIfMonitorMutated(obzone *v1alpha1.OBZone) bool {
-	return (obzone.Spec.MonitorTemplate == nil) != (m.OBCluster.Spec.MonitorTemplate == nil)
+	return !obzone.Spec.MonitorTemplate.Equal(m.OBCluster.Spec.MonitorTemplate) ||
+		!obzone.Spec.Topology.MonitorTemplate.Equal(m.desiredZoneTopology(obzone).MonitorTemplate)
+}
+
+func (m *OBClusterManager) desiredZoneTopology(obzone *v1alpha1.OBZone) *apitypes.OBZoneTopology {
+	for i := range m.OBCluster.Spec.Topology {
+		if m.OBCluster.Spec.Topology[i].Zone == obzone.Spec.Topology.Zone {
+			return &m.OBCluster.Spec.Topology[i]
+		}
+	}
+	return &obzone.Spec.Topology
 }
 
 func (m *OBClusterManager) retryUpdateStatus() error {
@@ -195,6 +207,7 @@ func (m *OBClusterManager) changeZonesWhenUpdatingOBServers(obzone *v1alpha1.OBZ
 
 func (m *OBClusterManager) changeZonesWhenModifyingServerTemplate(obzone *v1alpha1.OBZone) {
 	obzone.Spec.BackupVolume = m.OBCluster.Spec.BackupVolume
+	obzone.Spec.Topology.MonitorTemplate = m.desiredZoneTopology(obzone).MonitorTemplate
 	obzone.Spec.MonitorTemplate = m.OBCluster.Spec.MonitorTemplate
 }
 
@@ -238,18 +251,43 @@ func (m *OBClusterManager) modifyOBZonesAndCheckStatus(changer obzoneChanger, st
 	}
 }
 
+func (m *OBClusterManager) waitForZonePodTemplate(zone *v1alpha1.OBZone, timeout time.Duration) error {
+	return wait.PollUntilContextTimeout(m.Ctx, time.Second, timeout, true, func(ctx context.Context) (bool, error) {
+		current := &v1alpha1.OBZone{}
+		if err := m.Client.Get(ctx, client.ObjectKeyFromObject(zone), current); err != nil {
+			return false, err
+		}
+		if current.UID != zone.UID || !resourceutils.IsLiveChild(current, m.OBCluster, "OBCluster") {
+			return false, errors.Errorf("zone %s was replaced or is deleting", zone.Name)
+		}
+		if current.Generation < zone.Generation || current.Status.Status != zonestatus.Running ||
+			current.Spec.Topology.Replica != zone.Spec.Topology.Replica ||
+			!current.Spec.MonitorTemplate.Equal(zone.Spec.MonitorTemplate) ||
+			!current.Spec.Topology.MonitorTemplate.Equal(zone.Spec.Topology.MonitorTemplate) ||
+			(current.Spec.BackupVolume == nil) != (zone.Spec.BackupVolume == nil) {
+			return false, nil
+		}
+		return resourceutils.ZonePodTemplatesReady(ctx, m.Client, current)
+	})
+}
+
 func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStatus, targetStatus string, timeoutSeconds int) tasktypes.TaskFunc {
 	return func() tasktypes.TaskError {
 		obzoneList, err := m.listOBZones()
 		if err != nil {
 			return errors.Wrap(err, "list obzones")
 		}
-		storageRoll := workingStatus == zonestatus.RollingUpdateServers
-		if storageRoll {
-			// Finish a previously dispatched class change before publishing a new
-			// target, even if the user changed the cluster spec again during a restart.
+		var waitForZone func(*v1alpha1.OBZone, time.Duration) error
+		switch workingStatus {
+		case zonestatus.RollingUpdateServers:
+			waitForZone = m.waitForZoneStorage
+		case zonestatus.ModifyServerTemplate:
+			waitForZone = m.waitForZonePodTemplate
+		}
+		if waitForZone != nil {
+			// Finish any previously dispatched change before issuing the next one.
 			for i := range obzoneList.Items {
-				if err := m.waitForZoneStorage(&obzoneList.Items[i], time.Duration(timeoutSeconds)*time.Second); err != nil {
+				if err := waitForZone(&obzoneList.Items[i], time.Duration(timeoutSeconds)*time.Second); err != nil {
 					return err
 				}
 			}
@@ -270,8 +308,11 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 				if err != nil {
 					return errors.Wrap(err, "get obzone")
 				}
-				if storageRoll && targetZone.UID != obzone.UID {
-					return errors.Errorf("zone %s was recreated during storage migration", obzone.Name)
+				if waitForZone != nil && targetZone.UID != obzone.UID {
+					return errors.Errorf("zone %s was recreated during rolling update", obzone.Name)
+				}
+				if workingStatus == zonestatus.ModifyServerTemplate && !resourceutils.IsLiveChild(&targetZone, m.OBCluster, "OBCluster") {
+					return errors.Errorf("zone %s is deleting or has a different owner", targetZone.Name)
 				}
 				originalZone := targetZone.DeepCopy()
 				changer(&targetZone)
@@ -286,8 +327,8 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 			if err != nil {
 				return errors.Wrap(err, "update obzone")
 			}
-			if storageRoll {
-				if err := m.waitForZoneStorage(dispatched, time.Duration(timeoutSeconds)*time.Second); err != nil {
+			if waitForZone != nil {
+				if err := waitForZone(dispatched, time.Duration(timeoutSeconds)*time.Second); err != nil {
 					return err
 				}
 				continue

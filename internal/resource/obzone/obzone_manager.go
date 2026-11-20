@@ -78,9 +78,20 @@ func (m *OBZoneManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	if m.OBZone.Status.OperationContext != nil {
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow from obzone status")
 		op := m.OBZone.Status.OperationContext
+		// Old flows reset a zone to Running on a failed read-only bootstrap wait.
+		// Resume the same wait so a timeout cannot report replicas as available.
+		bootstrapWait := (m.OBZone.Status.Status == zonestatus.New && op.Task == tWaitOBServerBootstrapReady) ||
+			(m.OBZone.Status.Status == zonestatus.BootstrapReady && op.Task == tWaitOBServerRunning)
+		if bootstrapWait && (op.OnFailure.Strategy == "" || op.OnFailure.Strategy == strategy.StartOver) {
+			op.OnFailure.Strategy = strategy.RetryFromCurrent
+		}
+
 		if m.OBZone.Status.Status == zonestatus.RollingUpdateServers && len(op.Tasks) == 1 && op.Tasks[0] == tRollingReplaceOBServers && (op.OnFailure.Strategy == "" || op.OnFailure.Strategy == strategy.StartOver) {
 			// Older flows reset to running; normal replica reconciliation would
 			// then mistake a temporary replacement for an unwanted extra server.
+			op.OnFailure.Strategy = strategy.RetryFromCurrent
+		}
+		if m.OBZone.Status.Status == zonestatus.ModifyServerTemplate && len(op.Tasks) > 0 && op.Tasks[0] == tModifyPodTemplate && (op.OnFailure.Strategy == "" || op.OnFailure.Strategy == strategy.StartOver) {
 			op.OnFailure.Strategy = strategy.RetryFromCurrent
 		}
 		return tasktypes.NewTaskFlow(op), nil
@@ -312,5 +323,5 @@ func (m *OBZoneManager) PrintErrEvent(err error) {
 
 // Rolling replacement records its source UID on the child before waiting.
 func (m *OBZoneManager) CanReplayTask(name tasktypes.TaskName) bool {
-	return name == tWaitOBServerBootstrapReady || name == tRollingReplaceOBServers
+	return name == tWaitOBServerBootstrapReady || name == tWaitOBServerRunning || name == tModifyPodTemplate || name == tWaitForOBServerTemplateModifying || name == tRollingReplaceOBServers
 }
