@@ -105,26 +105,21 @@ check_in_obcluster() {
 }
  
 check_obtenant_running() {
-    counter=0
-    timeout=100  
-    OBTENANT_RUNNING='false'
-    while true; do
-        echo 'check obtenant resource'
-	counter=$((counter+1))
-	crd_obtenant=`kubectl get obtenant $OBTENANT_NAME -n $NAMESPACE| grep "$OBTENANT_NAME"|awk -F' ' '{print $2}'`
-        if [[ $crd_obtenant = "running" ]];then
-            echo "crd_obtenant is $crd_obtenant ready"
-            OBTENANT_RUNNING='true'
-	    echo "case passed"
-            break
+    # The P0 unit-count scenario allows 12 minutes for a tenant on this topology.
+    local deadline=$((SECONDS + 720)) state=''
+    while ((SECONDS < deadline)); do
+        state=$(kubectl -n "$NAMESPACE" get "obtenant/$OBTENANT_NAME" \
+            --request-timeout=5s -o jsonpath='{.status.status}') || state=unavailable
+        if [[ $state == running ]]; then
+            echo "crd_obtenant is $state ready"
+            echo "case passed"
+            return 0
         fi
-        if [ $counter -eq $timeout ]; then
-            echo "obtenant resource still not running"
-	    echo "case failed"
-            return 1
-        fi
-        sleep 3s
+        [[ ${state,,} != failed ]] || break
+        sleep 3
     done
+    echo "case failed waiting for tenant $OBTENANT_NAME to reach running (last state $state)" >&2
+    return 1
 }
 
 check_operation() {
