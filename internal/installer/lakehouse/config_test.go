@@ -61,7 +61,7 @@ func TestOptionsRejectAmbiguousAndUnsafeInput(t *testing.T) {
 			t.Fatalf("accepted %v", args)
 		}
 	}
-	o, err := parseOptions([]string{"--dashboard-host", "8.147.71.250", "-f", "a", "-f", "b"}, &strings.Builder{})
+	o, err := parseOptions([]string{"--dashboard-host", "192.0.2.10", "-f", "a", "-f", "b"}, &strings.Builder{})
 	if err != nil {
 		t.Fatal(err)
 	}
