@@ -12,8 +12,10 @@ import (
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -22,6 +24,14 @@ import (
 type capturePreflightClient struct {
 	client.Client
 	jobs []*batchv1.Job
+}
+
+func (c *capturePreflightClient) Get(_ context.Context, key client.ObjectKey, _ client.Object, _ ...client.GetOption) error {
+	return apierrors.NewNotFound(schema.GroupResource{Group: "batch", Resource: "jobs"}, key.Name)
+}
+
+func (c *capturePreflightClient) List(context.Context, client.ObjectList, ...client.ListOption) error {
+	return nil
 }
 
 func (c *capturePreflightClient) Create(_ context.Context, obj client.Object, _ ...client.CreateOption) error {
@@ -42,7 +52,7 @@ func schedulingFixture() (*OBClusterManager, *capturePreflightClient) {
 	storage := &apitypes.StorageSpec{StorageClass: "local-path", Size: resource.MustParse("1Gi")}
 	cluster := &v1alpha1.OBCluster{
 		TypeMeta:   metav1.TypeMeta{Kind: "OBCluster", APIVersion: "oceanbase.oceanbase.com/v1alpha1"},
-		ObjectMeta: metav1.ObjectMeta{Name: "qa", Namespace: "qa-ns", Annotations: map[string]string{oceanbaseconst.AnnotationsMode: oceanbaseconst.ModeService}},
+		ObjectMeta: metav1.ObjectMeta{Name: "qa", Namespace: "qa-ns", UID: "test-cluster", Annotations: map[string]string{oceanbaseconst.AnnotationsMode: oceanbaseconst.ModeService}},
 		Spec: v1alpha1.OBClusterSpec{
 			ServiceAccount:   "qa-workload",
 			OBServerTemplate: &apitypes.OBServerTemplate{Image: "registry.example/observer:test", Storage: &apitypes.OceanbaseStorageSpec{DataStorage: storage, RedoLogStorage: storage}},

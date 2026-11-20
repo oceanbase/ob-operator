@@ -41,6 +41,7 @@ type OBClusterManager struct {
 	Ctx       context.Context
 	OBCluster *v1alpha1.OBCluster
 	Client    client.Client
+	APIReader client.Reader
 	Recorder  telemetry.Recorder
 	Logger    *logr.Logger
 }
@@ -324,8 +325,7 @@ func (m *OBClusterManager) ArchiveResource() {
 	m.OBCluster.Status.OperationContext = nil
 }
 
-// CanReplayTask allows only the read-only bootstrap readiness wait to resume
-// after an Operator restart. Database mutations must not be replayed blindly.
+// CanReplayTask covers identity-checked Jobs, readiness checks and resumable replacements.
 func (m *OBClusterManager) CanReplayTask(name tasktypes.TaskName) bool {
-	return name == tWaitOBZoneBootstrapReady || name == tRollingUpdateOBZones
+	return name == tCheckImageReady || name == tWaitOBZoneBootstrapReady || name == tRollingUpdateOBZones
 }

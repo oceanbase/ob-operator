@@ -21,11 +21,9 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/rand"
@@ -757,98 +755,7 @@ func CreateOBClusterService(m *OBClusterManager) tasktypes.TaskError {
 }
 
 func CheckImageReady(m *OBClusterManager) tasktypes.TaskError {
-	jobName := "image-pull-ready-" + rand.String(8)
-	var ttl int32 = 120
-	var backoffLimit int32 = 32
-	checkImagePullJob := &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      jobName,
-			Namespace: m.OBCluster.Namespace,
-			OwnerReferences: []metav1.OwnerReference{{
-				Kind:       m.OBCluster.Kind,
-				APIVersion: m.OBCluster.APIVersion,
-				Name:       m.OBCluster.Name,
-				UID:        m.OBCluster.UID,
-			}},
-		},
-		Spec: batchv1.JobSpec{
-			Template: corev1.PodTemplateSpec{
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{{
-						Name:            "helper-check-image-pull-ready",
-						ImagePullPolicy: corev1.PullIfNotPresent,
-						Image:           m.OBCluster.Spec.OBServerTemplate.Image,
-						Command:         []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper help"},
-					}},
-					RestartPolicy: corev1.RestartPolicyNever,
-					SchedulerName: resourceutils.GetSchedulerName(m.OBCluster.Spec.OBServerTemplate.PodFields),
-				},
-			},
-			TTLSecondsAfterFinished: &ttl,
-			BackoffLimit:            &backoffLimit,
-		},
-	}
-	resourceutils.ApplyJobScheduling(&checkImagePullJob.Spec.Template.Spec, resourceutils.BootstrapJobScheduling(m.OBCluster))
-	err := m.Client.Create(m.Ctx, checkImagePullJob)
-	if err != nil {
-		return errors.Wrap(err, "Create check image pull job")
-	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Create check image pull job", "job", jobName)
-
-	imagePullReady := false
-	var checkImagePullReadyMaxTimes = 8000
-	labelSelector := metav1.FormatLabelSelector(checkImagePullJob.Spec.Selector)
-	selector, err := labels.Parse(labelSelector)
-	if err != nil {
-		return errors.Wrap(err, "Parse label selector")
-	}
-outerLoop:
-	for i := 0; i < checkImagePullReadyMaxTimes; i++ {
-		podList := &corev1.PodList{}
-		err = m.Client.List(m.Ctx, podList, &client.ListOptions{
-			LabelSelector: selector,
-		})
-		if err != nil {
-			return errors.Wrap(err, "List pods")
-		}
-		if len(podList.Items) == 0 {
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("No pod found for check image pull job")
-			time.Sleep(time.Second * time.Duration(obcfg.GetConfig().Time.CheckJobInterval))
-			continue
-		}
-		pod := podList.Items[0]
-		switch pod.Status.Phase {
-		case corev1.PodFailed:
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Check image pull job failed")
-			return errors.New("Check image pull job failed")
-		case corev1.PodSucceeded, corev1.PodRunning:
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Check image pull job finished")
-			imagePullReady = true
-			break outerLoop
-		case corev1.PodPending, corev1.PodUnknown:
-			// if every container has pulled its image, break outer loop
-			for _, containerStatus := range pod.Status.ContainerStatuses {
-				if containerStatus.State.Waiting != nil {
-					switch containerStatus.State.Waiting.Reason {
-					case "ErrImagePull", "ImagePullBackOff":
-						m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Wait to pull image", "reason", containerStatus.State.Waiting.Reason, "message", containerStatus.State.Waiting.Message)
-					default:
-						m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Container is waiting", "reason", containerStatus.State.Waiting.Reason, "message", containerStatus.State.Waiting.Message)
-					}
-					time.Sleep(time.Second * time.Duration(obcfg.GetConfig().Time.CheckJobInterval))
-					continue outerLoop
-				} else if containerStatus.State.Running != nil || containerStatus.State.Terminated != nil {
-					m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Container is running or terminated")
-				}
-			}
-			imagePullReady = true
-			break outerLoop
-		}
-	}
-	if !imagePullReady {
-		return errors.New("Image pull not ready")
-	}
-	return nil
+	return m.checkImageReady()
 }
 
 func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
