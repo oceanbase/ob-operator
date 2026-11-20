@@ -51,21 +51,59 @@ func TestRollingStorageFinishesPriorTargetBeforePatchingAnotherZone(t *testing.T
 		s.Spec.OBServerTemplate = template("old")
 		objs = append(objs, zone, s)
 	}
-	patches := 0
-	cl := fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).WithInterceptorFuncs(interceptor.Funcs{Update: func(ctx context.Context, cl client.WithWatch, obj client.Object, opts ...client.UpdateOption) error {
-		if zone, ok := obj.(*v1alpha1.OBZone); ok {
-			patches++
-			s := &v1alpha1.OBServer{}
-			if err := cl.Get(ctx, client.ObjectKeyFromObject(zone), s); err != nil {
+	patches, staleReads, prematureWrites := 0, 0, 0
+	var staleZone *v1alpha1.OBZone
+	var staleChild *v1alpha1.OBServer
+	cacheBehind := false
+	cl := fake.NewClientBuilder().WithScheme(scheme).WithObjects(objs...).WithInterceptorFuncs(interceptor.Funcs{
+		Get: func(ctx context.Context, cl client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+			if target, ok := obj.(*v1alpha1.OBZone); ok && staleZone != nil && key.Name == staleZone.Name {
+				cacheBehind = staleReads < 2
+				if cacheBehind {
+					staleReads++
+					staleZone.DeepCopyInto(target)
+					return nil
+				}
+			}
+			return cl.Get(ctx, key, obj, opts...)
+		},
+		List: func(ctx context.Context, cl client.WithWatch, list client.ObjectList, opts ...client.ListOption) error {
+			if err := cl.List(ctx, list, opts...); err != nil {
 				return err
 			}
-			s.Spec.OBServerTemplate = zone.Spec.OBServerTemplate.DeepCopy()
-			if err := cl.Update(ctx, s); err != nil {
-				return err
+			if servers, ok := list.(*v1alpha1.OBServerList); ok && cacheBehind {
+				for i := range servers.Items {
+					if servers.Items[i].Name == staleChild.Name {
+						staleChild.DeepCopyInto(&servers.Items[i])
+						break
+					}
+				}
 			}
-		}
-		return cl.Update(ctx, obj, opts...)
-	}}).Build()
+			return nil
+		},
+		Update: func(ctx context.Context, cl client.WithWatch, obj client.Object, opts ...client.UpdateOption) error {
+			if zone, ok := obj.(*v1alpha1.OBZone); ok {
+				patches++
+				s := &v1alpha1.OBServer{}
+				if err := cl.Get(ctx, client.ObjectKeyFromObject(zone), s); err != nil {
+					return err
+				}
+				if zone.Name == "a-idle" {
+					staleZone = &v1alpha1.OBZone{}
+					if err := cl.Get(ctx, client.ObjectKeyFromObject(zone), staleZone); err != nil {
+						return err
+					}
+					staleChild = s.DeepCopy()
+				} else if staleZone != nil && staleReads < 2 {
+					prematureWrites++
+				}
+				s.Spec.OBServerTemplate = zone.Spec.OBServerTemplate.DeepCopy()
+				if err := cl.Update(ctx, s); err != nil {
+					return err
+				}
+			}
+			return cl.Update(ctx, obj, opts...)
+		}}).Build()
 	ctx := context.Background()
 	l := logr.Discard()
 	m := &OBClusterManager{Ctx: ctx, OBCluster: cluster, Client: cl, Logger: &l, Recorder: telemetry.NewRecorder(ctx, record.NewFakeRecorder(20))}
@@ -80,8 +118,12 @@ func TestRollingStorageFinishesPriorTargetBeforePatchingAnotherZone(t *testing.T
 	if err := cl.Update(ctx, s); err != nil {
 		t.Fatal(err)
 	}
+	cfg.Time.ServerDeleteTimeoutSeconds = 5
 	if err := RollingUpdateOBZones(m); err != nil || patches != 2 {
 		t.Fatalf("completed second class: got %v, issued %d zone updates", err, patches)
+	}
+	if staleReads != 2 || prematureWrites != 0 {
+		t.Fatalf("consumed %d stale cache snapshots and updated %d later zones prematurely", staleReads, prematureWrites)
 	}
 	if !m.CanReplayTask(tRollingUpdateOBZones) {
 		t.Fatal("persisted rolling stage must resume after a manager restart")

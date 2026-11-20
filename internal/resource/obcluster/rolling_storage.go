@@ -18,6 +18,7 @@ import (
 // A zone's spec may already be updated while its running Pods still use the
 // old class. Verify every child before permitting another zone to allocate a spare.
 func (m *OBClusterManager) waitForZoneStorage(zone *v1alpha1.OBZone, timeout time.Duration) error {
+	expected := resourceutils.EffectiveZoneTemplate(zone)
 	err := wait.PollUntilContextTimeout(m.Ctx, time.Second, timeout, true, func(ctx context.Context) (bool, error) {
 		current := &v1alpha1.OBZone{}
 		if err := m.Client.Get(ctx, client.ObjectKeyFromObject(zone), current); err != nil {
@@ -26,14 +27,17 @@ func (m *OBClusterManager) waitForZoneStorage(zone *v1alpha1.OBZone, timeout tim
 		if current.UID == "" || current.UID != zone.UID {
 			return false, errors.Errorf("zone %s identity changed", zone.Name)
 		}
-		if current.Status.Status != zonestatus.Running {
+		if current.Status.Status != zonestatus.Running || current.Generation < zone.Generation ||
+			current.Spec.Topology.Replica != zone.Spec.Topology.Replica ||
+			!resourceutils.SameObserverStorageClasses(current.Spec.OBServerTemplate, zone.Spec.OBServerTemplate, zone.Annotations) ||
+			!resourceutils.SameObserverStorageClasses(resourceutils.EffectiveZoneTemplate(current), expected, zone.Annotations) {
 			return false, nil
 		}
 		servers := &v1alpha1.OBServerList{}
 		if err := m.Client.List(ctx, servers, client.InNamespace(zone.Namespace), client.MatchingLabels{oceanbaseconst.LabelRefOBZone: zone.Name}); err != nil {
 			return false, err
 		}
-		if len(servers.Items) != current.Spec.Topology.Replica {
+		if len(servers.Items) != zone.Spec.Topology.Replica {
 			return false, nil
 		}
 		for _, s := range servers.Items {
@@ -44,7 +48,7 @@ func (m *OBClusterManager) waitForZoneStorage(zone *v1alpha1.OBZone, timeout tim
 					break
 				}
 			}
-			if !owned || s.DeletionTimestamp != nil || s.Status.Status != serverstatus.Running || !resourceutils.SameObserverStorageClasses(s.Spec.OBServerTemplate, resourceutils.EffectiveZoneTemplate(current), current.Annotations) {
+			if !owned || s.DeletionTimestamp != nil || s.Status.Status != serverstatus.Running || !resourceutils.SameObserverStorageClasses(s.Spec.OBServerTemplate, expected, zone.Annotations) {
 				return false, nil
 			}
 		}

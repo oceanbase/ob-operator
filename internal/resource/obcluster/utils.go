@@ -259,6 +259,7 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 			defer tk.Stop()
 			m.Logger.Info(fmt.Sprintf("Update obzone %s", obzone.Name))
 			var specChanged bool
+			var dispatched *v1alpha1.OBZone
 			m.Recorder.Event(m.OBCluster, "Normal", "RollingUpdateOBZone", "Rolling update OBZone "+obzone.Name)
 			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 				targetZone := v1alpha1.OBZone{}
@@ -274,6 +275,7 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 				}
 				originalZone := targetZone.DeepCopy()
 				changer(&targetZone)
+				dispatched = &targetZone // Update populates the API server's committed generation.
 				if reflect.DeepEqual(originalZone.Spec, targetZone.Spec) {
 					specChanged = false
 					return nil
@@ -285,7 +287,7 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 				return errors.Wrap(err, "update obzone")
 			}
 			if storageRoll {
-				if err := m.waitForZoneStorage(&obzone, time.Duration(timeoutSeconds)*time.Second); err != nil {
+				if err := m.waitForZoneStorage(dispatched, time.Duration(timeoutSeconds)*time.Second); err != nil {
 					return err
 				}
 				continue
