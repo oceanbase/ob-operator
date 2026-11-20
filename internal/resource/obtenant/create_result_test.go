@@ -17,6 +17,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 	"strings"
 
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -197,6 +198,9 @@ func TestFailedCreationCleanupRequiresRecordedPhysicalIDs(t *testing.T) {
 		t.Fatalf("touched replaced allocation: %v %v", db.actions, err)
 	}
 	db.pools[1].ResourcePoolID = initial.PoolID
+	if err := m.cleanupCreatedResources(db, b, createdTenantRow{}); !errors.Is(err, context.DeadlineExceeded) || len(db.actions) != 1 {
+		t.Fatalf("lost pool DROP acknowledgment: %v %v", db.actions, err)
+	}
 	if err := m.cleanupCreatedResources(db, b, createdTenantRow{}); err != nil || len(db.actions) != 2 {
 		t.Fatalf("did not finish owned cleanup: %v %v", db.actions, err)
 	}
@@ -341,10 +345,65 @@ func TestUnmarkedLegacyFinalizerRequiresOneIdentifiedClusterOwner(t *testing.T) 
 			cr.Status.TenantRecordInfo.TenantID = 1002
 			cr.OwnerReferences = tc.refs
 			m.Client = fake.NewClientBuilder().WithScheme(m.Client.Scheme()).WithObjects(cluster, cr.DeepCopy()).Build()
-			m.OBTenant = cr
+			m.OBTenant = &v1alpha1.OBTenant{}
+			if err := m.Client.Get(m.Ctx, client.ObjectKeyFromObject(cr), m.OBTenant); err != nil {
+				t.Fatal(err)
+			}
 			if err := m.finalizeLegacyOrdinaryTenant(); !errors.Is(err, tc.want) {
 				t.Fatalf("finalizer returned %v, want %v", err, tc.want)
 			}
 		})
+	}
+}
+
+func TestLegacyDeletionRecordsAllocationAcrossCoordinatorConflict(t *testing.T) {
+	m, _ := newPoolRemovalTest(t)
+	cluster, err := m.getOBCluster()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cr := m.OBTenant.DeepCopy()
+	stamp := metav1.Now()
+	cr.DeletionTimestamp = &stamp
+	cr.Status.Status = tenantstatus.DeletingTenant
+	cr.Status.TenantRecordInfo.TenantID = 1002
+	cr.OwnerReferences = []metav1.OwnerReference{{APIVersion: v1alpha1.GroupVersion.String(), Kind: "OBCluster", Name: cluster.Name, UID: cluster.UID}}
+	writes := 0
+	m.Client = fake.NewClientBuilder().WithScheme(m.Client.Scheme()).WithStatusSubresource(cr).WithObjects(cluster, cr.DeepCopy()).WithInterceptorFuncs(interceptor.Funcs{
+		SubResourcePatch: func(ctx context.Context, c client.Client, sub string, obj client.Object, patch client.Patch, opts ...client.SubResourcePatchOption) error {
+			writes++
+			if writes == 1 {
+				var current v1alpha1.OBTenant
+				if err := c.Get(ctx, client.ObjectKeyFromObject(cr), &current); err != nil {
+					return err
+				}
+				current.Status.OperationContext = &tasktypes.OperationContext{Task: tDeleteTenant, TaskStatus: taskstatus.Running}
+				if err := c.Status().Update(ctx, &current); err != nil {
+					return err
+				}
+			}
+			return c.SubResource(sub).Patch(ctx, obj, patch, opts...)
+		},
+	}).Build()
+	key := client.ObjectKeyFromObject(cr)
+	m.OBTenant = &v1alpha1.OBTenant{}
+	if err := m.Client.Get(m.Ctx, key, m.OBTenant); err != nil {
+		t.Fatal(err)
+	}
+	b := &v1alpha1.TenantCreation{TenantUID: cr.UID, ClusterUID: cluster.UID, ClusterName: cluster.Name, DatabaseCluster: cluster.Spec.ClusterName, DatabaseID: cluster.Spec.ClusterId,
+		TenantName: cr.Spec.TenantName, LegacyTenantID: 1002, Resources: map[string]v1alpha1.TenantCreationResources{"zone1": {UnitConfigID: 101, PoolID: 201}}}
+	if err := m.persistLegacyDeletion(b); err != nil {
+		t.Fatal(err)
+	}
+	if writes != 2 {
+		t.Fatalf("expected a resource version conflict and one retry; observed %d writes", writes)
+	}
+	var live v1alpha1.OBTenant
+	if err := m.Client.Get(m.Ctx, key, &live); err != nil {
+		t.Fatal(err)
+	}
+	if live.Status.OperationContext == nil || live.Status.OperationContext.TaskStatus != taskstatus.Running ||
+		live.Status.Creation == nil || live.Status.Creation.LegacyTenantID != 1002 || live.Status.Creation.Resources["zone1"] != b.Resources["zone1"] {
+		t.Fatalf("lost coordinator status or verified allocation: %+v", live.Status)
 	}
 }

@@ -136,12 +136,16 @@ func (m *OBTenantManager) persistCreation(before, live *v1alpha1.OBTenant) error
 	if actual == nil {
 		return errors.New("API server did not persist status.creation; install the matching OBTenant CRD")
 	}
-	wantResources, gotResources := expected.Resources, actual.Resources
-	expected.Resources, actual.Resources = nil, nil
-	if !reflect.DeepEqual(expected, actual) || !maps.Equal(wantResources, gotResources) {
+	if !sameCreationSnapshot(*expected, *actual) {
 		return errors.New("API server did not preserve the tenant creation identities; check the OBTenant CRD and concurrent writes")
 	}
 	return nil
+}
+
+func sameCreationSnapshot(expected, actual v1alpha1.TenantCreation) bool {
+	resourcesMatch := maps.Equal(expected.Resources, actual.Resources)
+	expected.Resources, actual.Resources = nil, nil
+	return resourcesMatch && reflect.DeepEqual(expected, actual)
 }
 
 func (m *OBTenantManager) currentCreation(ctx context.Context) (*v1alpha1.OBTenant, *v1alpha1.OBCluster, error) {
@@ -422,12 +426,37 @@ func (m *OBTenantManager) finalizeLegacyOrdinaryTenant() error {
 			}
 		}
 	}
-	before := live.DeepCopy()
-	live.Status.Creation = b
-	if err := m.persistCreation(before, live); err != nil {
+	if err := m.persistLegacyDeletion(b); err != nil {
 		return err
 	}
 	return m.deleteCreatedTenant()
+}
+
+// The allocation query can span coordinator status writes. Take a new resource
+// version on every retry and patch only the ownership snapshot. The delete step
+// rechecks both the tenant and allocation IDs against the database.
+func (m *OBTenantManager) persistLegacyDeletion(snapshot *v1alpha1.TenantCreation) error {
+	return retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		live, cluster, err := m.readCreationObjects(m.Ctx)
+		if err != nil {
+			return err
+		}
+		if live.DeletionTimestamp.IsZero() || live.UID != snapshot.TenantUID || cluster.UID != snapshot.ClusterUID ||
+			live.Spec.TenantName != snapshot.TenantName || cluster.Name != snapshot.ClusterName ||
+			cluster.Spec.ClusterName != snapshot.DatabaseCluster || cluster.Spec.ClusterId != snapshot.DatabaseID ||
+			int64(live.Status.TenantRecordInfo.TenantID) != snapshot.LegacyTenantID {
+			return errStaleTenant
+		}
+		if live.Status.Creation != nil {
+			if !sameCreationSnapshot(*live.Status.Creation, *snapshot) {
+				return errCreationBindingChanged
+			}
+			return nil
+		}
+		before := live.DeepCopy()
+		live.Status.Creation = snapshot.DeepCopy()
+		return m.persistCreation(before, live)
+	})
 }
 
 // Only a worker dispatched from a persisted legacy Pending CREATE can enter
