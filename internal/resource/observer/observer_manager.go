@@ -45,6 +45,7 @@ type OBServerManager struct {
 	Logger   *logr.Logger
 
 	K8sResClient client.Client
+	K8sReader    client.Reader
 }
 
 func (m *OBServerManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
@@ -302,8 +303,7 @@ func (m *OBServerManager) ArchiveResource() {
 	m.OBServer.Status.OperationContext = nil
 }
 
-// CanReplayTask allows only the read-only bootstrap readiness wait to resume
-// after an Operator restart. Database mutations must not be replayed blindly.
+// CanReplayTask permits bootstrap steps that can safely resume after a leader change.
 func (m *OBServerManager) CanReplayTask(name tasktypes.TaskName) bool {
-	return name == tWaitOBServerReady
+	return name == tWaitOBServerReady || name == tCreateOBServerPVC
 }

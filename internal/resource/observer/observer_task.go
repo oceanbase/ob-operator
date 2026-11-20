@@ -14,17 +14,18 @@ package observer
 
 import (
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
-	apitypes "github.com/oceanbase/ob-operator/api/types"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	podconst "github.com/oceanbase/ob-operator/internal/const/pod"
@@ -172,99 +173,85 @@ func CreateOBServerPod(m *OBServerManager) tasktypes.TaskError {
 }
 
 func CreateOBServerPVC(m *OBServerManager) tasktypes.TaskError {
-	ownerReferenceList := make([]metav1.OwnerReference, 0)
-	sepVolumeAnnoVal, sepVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
-	if !sepVolumeAnnoExist || sepVolumeAnnoVal != "true" {
-		ownerReference := metav1.OwnerReference{
-			APIVersion: m.OBServer.APIVersion,
-			Kind:       m.OBServer.Kind,
-			Name:       m.OBServer.Name,
-			UID:        m.OBServer.GetUID(),
-		}
-		ownerReferenceList = append(ownerReferenceList, ownerReference)
+	server := m.OBServer
+	if server.UID == "" {
+		return errors.New("cannot create observer claims without an observer UID")
 	}
-	singlePvcAnnoVal, singlePvcExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSinglePVC)
-	pvcLabels := m.OBServer.Labels
-	pvcLabels[oceanbaseconst.LabelRefUID] = string(m.OBServer.UID)
-	pvcLabels[oceanbaseconst.LabelRefOBServer] = string(m.OBServer.Name)
-
-	deployModeAnnoVal, _ := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsDeploymentMode)
-	isSharedStorage := deployModeAnnoVal == oceanbaseconst.DeploymentModeSharedStorage
-
-	if singlePvcExist && singlePvcAnnoVal == "true" {
-		sumQuantity := resource.Quantity{}
-		sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size)
-		if !isSharedStorage && m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
-			sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
+	labels := map[string]string{}
+	maps.Copy(labels, server.Labels)
+	labels[oceanbaseconst.LabelRefUID] = string(server.UID)
+	labels[oceanbaseconst.LabelRefOBServer] = server.Name
+	var owners []metav1.OwnerReference
+	if server.Annotations[oceanbaseconst.AnnotationsIndependentPVCLifecycle] != "true" {
+		owners = []metav1.OwnerReference{{APIVersion: v1alpha1.GroupVersion.String(), Kind: "OBServer", Name: server.Name, UID: server.UID}}
+	}
+	for _, target := range m.storageClaims(nil) {
+		want := &corev1.PersistentVolumeClaim{
+			ObjectMeta: metav1.ObjectMeta{Name: target.name, Namespace: server.Namespace, OwnerReferences: owners, Labels: labels},
+			Spec:       m.generatePVCSpec(target.storage),
 		}
-		sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size)
-		storageSpec := &apitypes.StorageSpec{
-			StorageClass: m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.StorageClass,
-			Size:         sumQuantity,
+		err := m.K8sResClient.Create(m.Ctx, want)
+		if kubeerrors.IsAlreadyExists(err) {
+			err = m.verifyBootstrapClaim(want)
 		}
-		pvc := &corev1.PersistentVolumeClaim{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:            m.OBServer.Name,
-				Namespace:       m.OBServer.Namespace,
-				OwnerReferences: ownerReferenceList,
-				Labels:          pvcLabels,
-			},
-			Spec: m.generatePVCSpec(storageSpec),
-		}
-		err := m.K8sResClient.Create(m.Ctx, pvc)
 		if err != nil {
-			return errors.Wrap(err, "Create single pvc of observer")
-		}
-	} else {
-		objectMeta := metav1.ObjectMeta{
-			Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix),
-			Namespace:       m.OBServer.Namespace,
-			OwnerReferences: ownerReferenceList,
-			Labels:          pvcLabels,
-		}
-		pvc := &corev1.PersistentVolumeClaim{
-			ObjectMeta: objectMeta,
-			Spec:       m.generatePVCSpec(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage),
-		}
-		err := m.K8sResClient.Create(m.Ctx, pvc)
-		if err != nil {
-			return errors.Wrap(err, "Create pvc of data file")
-		}
-
-		if !isSharedStorage && m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
-			objectMeta = metav1.ObjectMeta{
-				Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix),
-				Namespace:       m.OBServer.Namespace,
-				OwnerReferences: ownerReferenceList,
-				Labels:          pvcLabels,
-			}
-			pvc = &corev1.PersistentVolumeClaim{
-				ObjectMeta: objectMeta,
-				Spec:       m.generatePVCSpec(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage),
-			}
-			err = m.K8sResClient.Create(m.Ctx, pvc)
-			if err != nil {
-				return errors.Wrap(err, "Create pvc of data log")
-			}
-		}
-
-		objectMeta = metav1.ObjectMeta{
-			Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix),
-			Namespace:       m.OBServer.Namespace,
-			OwnerReferences: ownerReferenceList,
-			Labels:          pvcLabels,
-		}
-		pvc = &corev1.PersistentVolumeClaim{
-			ObjectMeta: objectMeta,
-			Spec:       m.generatePVCSpec(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage),
-		}
-		err = m.K8sResClient.Create(m.Ctx, pvc)
-		if err != nil {
-			return errors.Wrap(err, "Create pvc of log")
+			return errors.Wrapf(err, "create or verify observer PVC %s", target.name)
 		}
 	}
-
 	return nil
+}
+
+func (m *OBServerManager) verifyBootstrapClaim(want *corev1.PersistentVolumeClaim) error {
+	reader := m.K8sReader
+	if reader == nil {
+		reader = m.K8sResClient
+	}
+	existing := &corev1.PersistentVolumeClaim{}
+	if err := reader.Get(m.Ctx, m.generateNamespacedName(want.Name), existing); err != nil {
+		return err
+	}
+	if !matchesBootstrapClaim(want, existing, m.OBServer.Labels[oceanbaseconst.LabelRefUID]) {
+		return errors.Errorf("existing PVC does not match observer %s ownership or storage", m.OBServer.UID)
+	}
+	if existing.Spec.VolumeName == "" {
+		return nil
+	}
+
+	// A volume name may also be set by prebinding. Check the PV's side of the
+	// binding before allowing the observer to mount it.
+	pv := &corev1.PersistentVolume{}
+	if err := reader.Get(m.Ctx, types.NamespacedName{Name: existing.Spec.VolumeName}, pv); err != nil {
+		return err
+	}
+	ref := pv.Spec.ClaimRef
+	if ref == nil || existing.UID == "" || ref.UID != existing.UID || ref.Namespace != existing.Namespace || ref.Name != existing.Name {
+		return errors.Errorf("PV %s does not reference PVC %s/%s with UID %s", pv.Name, existing.Namespace, existing.Name, existing.UID)
+	}
+	return nil
+}
+
+func matchesBootstrapClaim(want, existing *corev1.PersistentVolumeClaim, zoneUID string) bool {
+	if existing.DeletionTimestamp != nil || existing.Status.Phase == corev1.ClaimLost ||
+		!equality.Semantic.DeepEqual(want.OwnerReferences, existing.OwnerReferences) {
+		return false
+	}
+	uid := existing.Labels[oceanbaseconst.LabelRefUID]
+	name := existing.Labels[oceanbaseconst.LabelRefOBServer]
+	if uid != want.Labels[oceanbaseconst.LabelRefUID] || name != want.Labels[oceanbaseconst.LabelRefOBServer] {
+		// Older operators copied the Zone labels to the PVC. Its Observer owner
+		// must independently prove identity before accepting the old label layout.
+		if len(want.OwnerReferences) != 1 || name != "" || (uid != "" && uid != zoneUID) {
+			return false
+		}
+	}
+
+	// Binding fills in the PV name and the API defaults omitted volume mode to Filesystem.
+	spec := existing.Spec.DeepCopy()
+	spec.VolumeName = ""
+	if spec.VolumeMode != nil && *spec.VolumeMode == corev1.PersistentVolumeFilesystem {
+		spec.VolumeMode = nil
+	}
+	return equality.Semantic.DeepEqual(want.Spec, *spec)
 }
 
 func DeleteOBServerInCluster(m *OBServerManager) tasktypes.TaskError {
