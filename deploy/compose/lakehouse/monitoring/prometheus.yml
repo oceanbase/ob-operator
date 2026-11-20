@@ -8,11 +8,14 @@ alerting:
         - targets: ["alertmanager:9093"]
 
 scrape_configs:
+  # Keep the Observer instance label across upgrades to the dedicated scrape endpoint.
   - job_name: obagent-monitor-basic
     metrics_path: /metrics/ob/basic
     static_configs:
-      - targets: ["observer:8088"]
+      - targets: ["obagent:8088"]
+        labels: {instance: "observer:8088"}
   - job_name: obagent-monitor-extra
     metrics_path: /metrics/ob/extra
     static_configs:
-      - targets: ["observer:8088"]
+      - targets: ["obagent:8088"]
+        labels: {instance: "observer:8088"}

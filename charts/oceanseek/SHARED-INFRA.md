@@ -39,8 +39,9 @@ Functional acceptance with cached images does not establish cold-download perfor
 On a fresh cluster, the published Chart registers CRDs before rendering the
 OceanSeek resources. Its pre-install hooks create missing shared components and
 wait for admission webhooks. Shared resources persist after application uninstall.
-SS-specific monitoring supports shared namespace discovery. Traditional OBAgent
-monitoring needs separate configuration.
+SS-specific monitoring supports shared namespace discovery. Each Observer gets an OBAgent sidecar for database performance metrics by default.
+Set `monitor.enabled=false` to opt out. Enabling the sidecar on an existing
+release requires an Observer Pod rollout; schedule the upgrade accordingly.
 
 ## Slow initial downloads
 

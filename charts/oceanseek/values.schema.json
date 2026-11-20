@@ -564,6 +564,26 @@
         }
       }
     },
+    "monitor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "image",
+        "resource"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "$ref": "#/definitions/image"
+        },
+        "resource": {
+          "$ref": "#/definitions/resource"
+        }
+      }
+    },
     "observer": {
       "type": "object",
       "additionalProperties": false,

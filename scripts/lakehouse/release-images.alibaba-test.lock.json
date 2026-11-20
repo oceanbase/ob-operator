@@ -89,7 +89,8 @@
       "manifest_digest": "sha256:c71cdcddd91492a6bb91067c450fdccce7a16e1f10509d88c98604362da96d82",
       "platform": "linux/amd64",
       "channels": [
-        "compose"
+        "compose",
+        "helm"
       ],
       "source_reference": "oceanbase/obagent:4.2.4-200000022025090416",
       "publication": "verified-registry-pull",

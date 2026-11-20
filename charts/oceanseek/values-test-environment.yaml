@@ -1,5 +1,5 @@
 # Replace all four hostname labels before installing. Use SSD-backed StorageClasses.
-# Compute worker: >=4 CPU/16Gi plus system and optional infrastructure overhead.
+# Compute worker: >=4.5 CPU/16Gi plus system and optional infrastructure overhead.
 # Each LogService worker: 2 CPU/4Gi allocatable for the process, plus host overhead.
 scheduling:
   nodeSelector: {kubernetes.io/hostname: worker-compute}

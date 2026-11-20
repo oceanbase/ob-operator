@@ -322,9 +322,8 @@ The loopback overlay does not add authentication. Keep it on loopback or place
 an authenticated proxy in front of any remote monitoring access.
 
 The obshell process is the binary shipped by the exact Observer RPM. Each
-OBAgent monitors one Observer through `127.0.0.1:2881`; Compose therefore runs
-it as a separate container sharing the Observer network namespace, matching the
-Operator sidecar model. MinIO and LogService management ports remain internal.
+OBAgent connects to `observer:2881` on the Compose network. Prometheus
+scrapes `obagent:8088`, which keeps its own endpoint across Observer restarts. MinIO and LogService management ports remain internal.
 
 ## Optional configuration
 

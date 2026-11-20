@@ -176,6 +176,12 @@ logService:
   parameters:
     - {name: log_level, value: INFO}
 
+# One SQL metrics exporter per Observer.
+monitor:
+  enabled: true
+  image: quay.io/oceanbase/obagent:4.2.6-100000152026051118
+  resource: {cpu: "500m", memory: 512Mi}
+
 observer:
   clusterId: 1002
   image: oceanbase/oceanbase-ai-cloud-native:4.6.3.0-82026110121.al8-r3

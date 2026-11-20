@@ -42,7 +42,8 @@ type service struct {
 		HostIP    string `json:"host_ip"`
 		Published string `json:"published"`
 	} `json:"ports"`
-	NetworkMode string `json:"network_mode"`
+	NetworkMode string                     `json:"network_mode"`
+	Networks    map[string]json.RawMessage `json:"networks"`
 }
 
 func renderCompose(t *testing.T) map[string]service {
@@ -146,8 +147,8 @@ func TestQuickstartWithoutPreparation(t *testing.T) {
 			t.Fatalf("%s must wait for %s (%s)", tc.service, tc.dependency, tc.condition)
 		}
 	}
-	if services["obagent"].NetworkMode != "service:observer" {
-		t.Fatalf("OBAgent must share the Observer network namespace, got %q", services["obagent"].NetworkMode)
+	if _, ok := services["obagent"].Networks["lakehouse"]; !ok || services["obagent"].NetworkMode != "" {
+		t.Fatal("OBAgent needs its own endpoint on the Observer network to survive Observer restarts")
 	}
 	if services["host-info-init"].NetworkMode != "host" {
 		t.Fatalf("host-info-init must inspect the host network namespace, got %q", services["host-info-init"].NetworkMode)

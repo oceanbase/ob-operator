@@ -83,7 +83,8 @@
       "manifest_digest": "sha256:90e22b03f29e27e06cc4815febb49d23a7c784233ef516cb48e5b26e2caf7f65",
       "platform": "linux/amd64",
       "channels": [
-        "compose"
+        "compose",
+        "helm"
       ],
       "source_reference": "ghcr.io/oceanbase/obagent:4.2.6-100000152026051118",
       "publication": "public-manifest-and-pooled-image-id-verified"

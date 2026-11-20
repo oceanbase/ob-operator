@@ -58,19 +58,23 @@ check_monitoring() {
       return 1
     }
   done
-  local targets up_count deadline
-  deadline=$((SECONDS + timeout_seconds))
-  while true; do
-    targets="$(docker compose exec -T prometheus wget -qO- http://127.0.0.1:9090/api/v1/targets)"
-    up_count="$( { grep -o '"health":"up"' <<<"${targets}" || true; } | wc -l | tr -d ' ')"
-    (( up_count >= 2 )) && break
-    if (( SECONDS >= deadline )); then
-      echo "Prometheus has fewer than two UP OBAgent scrape targets" >&2
-      echo "${targets}" >&2
-      return 1
+  wait_for_scrapes 0
+}
+
+wait_for_scrapes() {
+  local since="$1" deadline=$((SECONDS + timeout_seconds)) result
+  # Require a successful scrape of both named jobs after the restart.
+  local targets='up{job=~"obagent-monitor-basic|obagent-monitor-extra"}'
+  local query="count(count by (job) ((timestamp(${targets}) > ${since}) and (${targets} == 1))) == 2"
+  while (( SECONDS < deadline )); do
+    result="$(docker compose exec -T prometheus wget -qO- --post-data="query=${query}" http://127.0.0.1:9090/api/v1/query)" || result=""
+    if grep -Fq '"result":[{' <<<"${result}"; then
+      return 0
     fi
     sleep 2
   done
+  echo "Prometheus did not scrape both OBAgent jobs successfully after ${since}" >&2
+  return 1
 }
 
 wait_obshell_active() {
@@ -144,11 +148,13 @@ if docker compose run --rm --no-deps -e ROOT_PASSWORD_FILE=/run/secrets/minio_ac
   echo "Wrong database password was accepted" >&2
   exit 1
 fi
-docker compose restart logservice-1 logservice-2 logservice-3 observer
+docker compose restart logservice-1 logservice-2 logservice-3
 wait_healthy logservice-1
 wait_healthy logservice-2
 wait_healthy logservice-3
+docker restart --time 90 "$(docker compose ps -q observer)"
 wait_healthy observer
+wait_for_scrapes "$(date +%s)"
 wait_healthy obagent
 wait_obshell_active
 wait_smoke smoke-read

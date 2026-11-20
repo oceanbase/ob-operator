@@ -290,6 +290,9 @@ def patch_charts(source, package, images, timestamp):
     values.setdefault("native", {})["enabled"] = False
     # Historical staged packages do not deliver an OBProxy image.
     values.setdefault("obproxy", {})["enabled"] = False
+    values["monitor"] = dict(values.get("monitor", {}), enabled="obagent" in images)
+    if "obagent" in images:
+        values["monitor"]["image"] = images["obagent"]["reference"]
     for section, role in (("dashboard", "dashboard"), ("logService", "logservice"),
                           ("observer", "observer"), ("minio", "minio"), ("initialization", "mc")):
         values[section]["image"] = images[role]["reference"]
@@ -346,6 +349,9 @@ def quickstart_profile(baseline, package, images):
     values.setdefault("native", {})["enabled"] = False
     # Historical staged packages do not deliver an OBProxy image.
     values.setdefault("obproxy", {})["enabled"] = False
+    values["monitor"] = dict(values.get("monitor", {}), enabled="obagent" in images)
+    if "obagent" in images:
+        values["monitor"]["image"] = images["obagent"]["reference"]
     values["storageClass"] = ""  # the Go preflight selects the sole default class
     values.setdefault("logService", {}).pop("clusterId", None)
     values.setdefault("observer", {}).pop("clusterId", None)

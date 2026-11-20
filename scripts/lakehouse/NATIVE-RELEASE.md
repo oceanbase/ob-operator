@@ -35,8 +35,8 @@ The current internal release contains 15 roles:
 
 | Delivery | Roles |
 | --- | --- |
-| Shared by Compose and Helm | `observer`, `logservice`, `minio`, `mc`, `prometheus`, `alertmanager` |
-| Compose only | `bootstrap`, `obagent` |
+| Shared by Compose and Helm | `obagent`, `observer`, `logservice`, `minio`, `mc`, `prometheus`, `alertmanager` |
+| Compose only | `bootstrap` |
 | Helm only | `operator`, `dashboard`, `obproxy`, `obdiag`, `oceanbase-helper`, `utility`, `kube-rbac-proxy` |
 
 The shared Observer is
@@ -196,11 +196,9 @@ Before creating the delivery archives, the builder:
 5. Includes Dashboard diagnostic-job images and Operator kube-rbac-proxy.
    Unknown rendered runtime images are rejected.
 
-The Helm shared-storage release does not configure an OBAgent monitor; the
-Operator only creates that container when a MonitorTemplate is configured.
-Enabling an unlocked Helm monitor, including a topology override, fails this
-release gate. The Compose bundle separately locks OBAgent, Prometheus and
-Alertmanager and runs OBAgent with the Observer network namespace.
+Helm and Compose lock the OBAgent image used for database performance metrics.
+Helm runs one sidecar per Observer. Compose connects OBAgent to the Observer
+by service name and scrapes its independent endpoint.
 The Dashboard SQL analyzer is an optional inactive ConfigMap default, explicitly
 excluded from this release's validated features; this exception does not allow
 an unlocked runtime Pod. Kubernetes, StorageClass, and cert-manager are separately
