@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package obzone
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -22,6 +23,7 @@ import (
 	"github.com/pkg/errors"
 	pq "github.com/ugurcsen/gods-generic/queues/priorityqueue"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -502,7 +504,19 @@ func RollingReplaceOBServers(m *OBZoneManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrap(err, "List observers")
 	}
+	// A finalizer may still be draining a server from the preceding attempt.
+	// Wait for that deletion before starting another replacement in this zone.
 	for _, server := range servers.Items {
+		if server.DeletionTimestamp != nil {
+			if err := m.waitForRollingServerDeletion(server.Name); err != nil {
+				return err
+			}
+		}
+	}
+	for _, server := range servers.Items {
+		if server.DeletionTimestamp != nil || !m.checkIfStorageClassChanged(&server) {
+			continue
+		}
 		m.Logger.Info(fmt.Sprintf("Replacing observer %s", server.Name))
 		newServerName := m.generateServerName()
 		newServer, err := m.createOneOBServer(newServerName)
@@ -527,23 +541,22 @@ func RollingReplaceOBServers(m *OBZoneManager) tasktypes.TaskError {
 		if err != nil {
 			return errors.Wrap(err, "Delete old observer")
 		}
-		var deleted bool
-		for i := 0; i < obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds; i++ {
-			time.Sleep(time.Second)
-			oldServer := &v1alpha1.OBServer{}
-			err = m.Client.Get(m.Ctx, m.generateNamespacedName(server.Name), oldServer)
-			if err != nil {
-				if kubeerrors.IsNotFound(err) {
-					deleted = true
-					break
-				}
-				return errors.Wrap(err, "Get old observer")
-			}
-		}
-		if !deleted {
-			m.Logger.Error(errors.New("Delete old observer timeout"), "observer", server.Name)
+		if err := m.waitForRollingServerDeletion(server.Name); err != nil {
+			return err
 		}
 		m.Logger.Info(fmt.Sprintf("Old observer %s deleted", server.Name))
 	}
 	return nil
+}
+
+func (m *OBZoneManager) waitForRollingServerDeletion(name string) error {
+	timeout := time.Duration(obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds) * time.Second
+	err := wait.PollUntilContextTimeout(m.Ctx, time.Second, timeout, true, func(ctx context.Context) (bool, error) {
+		err := m.Client.Get(ctx, m.generateNamespacedName(name), &v1alpha1.OBServer{})
+		if kubeerrors.IsNotFound(err) {
+			return true, nil
+		}
+		return false, err
+	})
+	return errors.Wrapf(err, "wait for deletion of observer %s", name)
 }
