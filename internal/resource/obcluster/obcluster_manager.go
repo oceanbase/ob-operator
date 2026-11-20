@@ -77,7 +77,11 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBCluster.Status.OperationContext != nil {
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow from obcluster status")
-		return tasktypes.NewTaskFlow(m.OBCluster.Status.OperationContext), nil
+		op := m.OBCluster.Status.OperationContext
+		if m.OBCluster.Status.Status == clusterstatus.RollingUpdateOBServers && len(op.Tasks) == 1 && op.Tasks[0] == tRollingUpdateOBZones && (op.OnFailure.Strategy == "" || op.OnFailure.Strategy == strategy.StartOver) {
+			op.OnFailure.Strategy = strategy.RetryFromCurrent
+		}
+		return tasktypes.NewTaskFlow(op), nil
 	}
 	// return task flow depends on status
 
@@ -323,5 +327,5 @@ func (m *OBClusterManager) ArchiveResource() {
 // CanReplayTask allows only the read-only bootstrap readiness wait to resume
 // after an Operator restart. Database mutations must not be replayed blindly.
 func (m *OBClusterManager) CanReplayTask(name tasktypes.TaskName) bool {
-	return name == tWaitOBZoneBootstrapReady
+	return name == tWaitOBZoneBootstrapReady || name == tRollingUpdateOBZones
 }

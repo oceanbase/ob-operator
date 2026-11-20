@@ -209,7 +209,8 @@ func genModifyServerTemplateFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genRollingUpdateOBZonesFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: "rolling update observers",
+			Name:      "rolling update observers",
+			OnFailure: tasktypes.FailureRule{Strategy: strategy.RetryFromCurrent},
 			Tasks: []tasktypes.TaskName{
 				tRollingUpdateOBZones,
 			},

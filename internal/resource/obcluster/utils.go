@@ -46,14 +46,7 @@ func (m *OBClusterManager) checkIfStorageSizeExpand(obzone *v1alpha1.OBZone) boo
 }
 
 func (m *OBClusterManager) checkIfStorageClassChange(obzone *v1alpha1.OBZone) bool {
-	newStorage := m.OBCluster.Spec.OBServerTemplate.Storage
-	oldStorage := obzone.Spec.OBServerTemplate.Storage
-	changed := oldStorage.DataStorage.StorageClass != newStorage.DataStorage.StorageClass ||
-		oldStorage.LogStorage.StorageClass != newStorage.LogStorage.StorageClass
-	if oldStorage.RedoLogStorage != nil && newStorage.RedoLogStorage != nil {
-		changed = changed || oldStorage.RedoLogStorage.StorageClass != newStorage.RedoLogStorage.StorageClass
-	}
-	return changed
+	return !resourceutils.SameObserverStorageClasses(obzone.Spec.OBServerTemplate, m.OBCluster.Spec.OBServerTemplate, obzone.Annotations)
 }
 
 func (m *OBClusterManager) checkIfCalcResourceChange(obzone *v1alpha1.OBZone) bool {
@@ -251,6 +244,16 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 		if err != nil {
 			return errors.Wrap(err, "list obzones")
 		}
+		storageRoll := workingStatus == zonestatus.RollingUpdateServers
+		if storageRoll {
+			// Finish a previously dispatched class change before publishing a new
+			// target, even if the user changed the cluster spec again during a restart.
+			for i := range obzoneList.Items {
+				if err := m.waitForZoneStorage(&obzoneList.Items[i], time.Duration(timeoutSeconds)*time.Second); err != nil {
+					return err
+				}
+			}
+		}
 		for _, obzone := range obzoneList.Items {
 			tk := time.NewTicker(time.Duration(timeoutSeconds) * time.Second)
 			defer tk.Stop()
@@ -266,6 +269,9 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 				if err != nil {
 					return errors.Wrap(err, "get obzone")
 				}
+				if storageRoll && targetZone.UID != obzone.UID {
+					return errors.Errorf("zone %s was recreated during storage migration", obzone.Name)
+				}
 				originalZone := targetZone.DeepCopy()
 				changer(&targetZone)
 				if reflect.DeepEqual(originalZone.Spec, targetZone.Spec) {
@@ -277,6 +283,12 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 			})
 			if err != nil {
 				return errors.Wrap(err, "update obzone")
+			}
+			if storageRoll {
+				if err := m.waitForZoneStorage(&obzone, time.Duration(timeoutSeconds)*time.Second); err != nil {
+					return err
+				}
+				continue
 			}
 			if !specChanged {
 				m.Logger.Info("OBZone not changed, skip checking this zone", "obzone", obzone.Name)

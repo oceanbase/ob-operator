@@ -59,18 +59,7 @@ func (m *OBZoneManager) checkIfStorageSizeExpand(observer *v1alpha1.OBServer) bo
 }
 
 func (m *OBZoneManager) checkIfStorageClassChanged(observer *v1alpha1.OBServer) bool {
-	changed := observer.Spec.OBServerTemplate.Storage.DataStorage.StorageClass != m.OBZone.Spec.OBServerTemplate.Storage.DataStorage.StorageClass ||
-		observer.Spec.OBServerTemplate.Storage.LogStorage.StorageClass != m.OBZone.Spec.OBServerTemplate.Storage.LogStorage.StorageClass
-	observerRedo := observer.Spec.OBServerTemplate.Storage.RedoLogStorage
-	zoneRedo := m.OBZone.Spec.OBServerTemplate.Storage.RedoLogStorage
-	if (observerRedo == nil) != (zoneRedo == nil) {
-		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("RedoLogStorage nil mismatch between observer and zone",
-			"observer", observer.Name, "observerHasRedo", observerRedo != nil, "zoneHasRedo", zoneRedo != nil)
-	}
-	if observerRedo != nil && zoneRedo != nil {
-		changed = changed || observerRedo.StorageClass != zoneRedo.StorageClass
-	}
-	return changed
+	return !resourceutils.SameObserverStorageClasses(observer.Spec.OBServerTemplate, resourceutils.EffectiveZoneTemplate(m.OBZone), m.OBZone.Annotations)
 }
 
 func (m *OBZoneManager) checkIfCalcResourceChange(observer *v1alpha1.OBServer) bool {
@@ -200,7 +189,7 @@ func (m *OBZoneManager) createOneOBServer(serverName string, replaces types.UID)
 			NodeSelector:     m.OBZone.Spec.Topology.NodeSelector,
 			Affinity:         m.OBZone.Spec.Topology.Affinity,
 			Tolerations:      m.OBZone.Spec.Topology.Tolerations,
-			OBServerTemplate: m.OBZone.Spec.OBServerTemplate,
+			OBServerTemplate: resourceutils.EffectiveZoneTemplate(m.OBZone),
 			MonitorTemplate:  m.OBZone.Spec.MonitorTemplate,
 			BackupVolume:     m.OBZone.Spec.BackupVolume,
 			ServiceAccount:   m.OBZone.Spec.ServiceAccount,
@@ -208,9 +197,6 @@ func (m *OBZoneManager) createOneOBServer(serverName string, replaces types.UID)
 		},
 	}
 	zoneTopo := m.OBZone.Spec.Topology
-	if zoneTopo.OBServerTemplate != nil {
-		observer.Spec.OBServerTemplate = zoneTopo.OBServerTemplate
-	}
 	if zoneTopo.MonitorTemplate != nil {
 		observer.Spec.MonitorTemplate = zoneTopo.MonitorTemplate
 	}
