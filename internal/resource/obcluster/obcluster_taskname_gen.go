@@ -11,6 +11,7 @@ const (
 	tCreateOBZone               ttypes.TaskName = "create obzone"
 	tWaitLogServiceReady        ttypes.TaskName = "wait log service ready"
 	tBootstrap                  ttypes.TaskName = "bootstrap"
+	tDispatchClassicBootstrap   ttypes.TaskName = "dispatch classic bootstrap"
 	tCreateUsers                ttypes.TaskName = "create users"
 	tMaintainOBParameter        ttypes.TaskName = "maintain obparameter"
 	tValidateUpgradeInfo        ttypes.TaskName = "validate upgrade info"

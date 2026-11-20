@@ -85,8 +85,9 @@ var _ = Describe("Test OBClsuter usage", func() {
 		Expect(zoneMapping).To(HaveLen(2))
 		Expect(zoneMapping).To(HaveKey("zone1"))
 		Expect(zoneMapping).To(HaveKey("zone2"))
-		Expect(zoneMapping["zone1"].AvailableCPU).To(Equal(int64(6)))
-		Expect(zoneMapping["zone1"].AvailableMemory).To(Equal(int64(4)))
+		// Zone summaries report the maximum available resource across servers.
+		Expect(zoneMapping["zone1"].AvailableCPU).To(Equal(int64(13)))
+		Expect(zoneMapping["zone1"].AvailableMemory).To(Equal(int64(13)))
 		Expect(zoneMapping["zone1"].AvailableDataDisk).To(Equal(int64(40)))
 		Expect(zoneMapping["zone1"].AvailableLogDisk).To(Equal(int64(60)))
 		Expect(zoneMapping["zone2"].AvailableCPU).To(Equal(int64(13)))

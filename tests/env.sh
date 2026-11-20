@@ -3,7 +3,7 @@ export USER_NAME=${USER_NAME:-}
 
 # setup variables for nfs
 export NFS_SERVER=${NFS_SERVER:-}
-export NFS_BASE_PATH=${NFS_BASE_PATH:}
+export NFS_BASE_PATH=${NFS_BASE_PATH:-}
 
 # setup variables for oss
 export OSS_AK=${OSS_AK:-}

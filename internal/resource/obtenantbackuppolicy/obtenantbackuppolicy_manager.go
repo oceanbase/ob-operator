@@ -119,7 +119,7 @@ func (m *ObTenantBackupPolicyManager) InitStatus() {
 }
 
 func (m *ObTenantBackupPolicyManager) syncTenantInformation() error {
-	if m.BackupPolicy.Spec.TenantCRName != "" {
+	if m.BackupPolicy.Spec.TenantName == "" && m.BackupPolicy.Spec.TenantCRName != "" {
 		tenant := &v1alpha1.OBTenant{}
 		err := m.Client.Get(m.Ctx, types.NamespacedName{
 			Namespace: m.BackupPolicy.Namespace,
@@ -154,6 +154,7 @@ func (m *ObTenantBackupPolicyManager) FinishTask() {
 }
 
 func (m *ObTenantBackupPolicyManager) UpdateStatus() error {
+	m.BackupPolicy.Status.TenantName = m.BackupPolicy.DatabaseTenantName()
 	if m.BackupPolicy.Spec.Suspend && m.BackupPolicy.Status.Status == constants.BackupPolicyStatusRunning {
 		m.BackupPolicy.Status.Status = constants.BackupPolicyStatusPausing
 		m.BackupPolicy.Status.OperationContext = nil

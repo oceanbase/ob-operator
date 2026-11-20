@@ -112,7 +112,8 @@ func genExpandPVCFlow(_ *OBServerManager) *tasktypes.TaskFlow {
 			Tasks:        []tasktypes.TaskName{tExpandPVC, tWaitForPvcResized},
 			TargetStatus: serverstatus.Running,
 			OnFailure: tasktypes.FailureRule{
-				Strategy: strategy.StartOver,
+				Strategy:      strategy.StartOver,
+				NextTryStatus: serverstatus.ExpandPVC,
 			},
 		},
 	}

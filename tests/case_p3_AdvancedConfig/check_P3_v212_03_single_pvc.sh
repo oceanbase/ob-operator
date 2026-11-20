@@ -22,7 +22,7 @@ prepare() {
 }
 
 export_to_file() {
-    local output_file="case_p4/env_vars.sh"
+    local output_file="case_p3_AdvancedConfig/env_vars.sh"
     cat <<EOF > "$output_file"
 export PASSWORD="$PASSWORD"
 export SUFFIX="$SUFFIX"

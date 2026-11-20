@@ -1,0 +1,18 @@
+apiVersion: v2
+name: oceanseek
+description: OceanSeek with Dashboard and optional bundled MinIO
+type: application
+version: 0.6.0-dev.20261116.4
+appVersion: 4.6.3.1
+kubeVersion: '>=1.27.0-0'
+dependencies:
+- name: oceanbase-dashboard
+  alias: dashboard
+  version: 0.6.6-dev.20261116.1
+  repository: file://../oceanbase-dashboard
+  condition: dashboard.enabled
+- name: oceanbase-minio
+  alias: minio
+  version: 0.2.1
+  repository: file://../oceanbase-minio
+  condition: minio.enabled

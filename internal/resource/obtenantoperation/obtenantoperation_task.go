@@ -267,52 +267,7 @@ func SetTenantLogRestoreSource(m *ObTenantOperationManager) tasktypes.TaskError 
 }
 
 func UpgradeTenant(m *ObTenantOperationManager) tasktypes.TaskError {
-	targetTenant := m.Resource.Status.PrimaryTenant
-	con, err := m.getClusterSysClient(targetTenant.Spec.ClusterName)
-	if err != nil {
-		return err
-	}
-	var sysCompatible string
-	var restoredCompatible string
-
-	compatibles, err := con.SelectCompatibleOfTenants(m.Ctx)
-	if err != nil {
-		return err
-	}
-	for _, p := range compatibles {
-		if p.TenantID == 1 {
-			sysCompatible = p.Value
-		}
-		if p.TenantID == int64(targetTenant.Status.TenantRecordInfo.TenantID) {
-			restoredCompatible = p.Value
-		}
-	}
-
-	if sysCompatible >= "4.1.0.0" && restoredCompatible < sysCompatible {
-		err := con.UpgradeTenantWithName(m.Ctx, targetTenant.Spec.TenantName)
-		if err != nil {
-			return err
-		}
-		maxWait5secTimes := obcfg.GetConfig().Time.DefaultStateWaitTimeout/5 + 1
-	outer:
-		for i := 0; i < maxWait5secTimes; i++ {
-			time.Sleep(5 * time.Second)
-			params, err := con.ListParametersWithTenantID(m.Ctx, int64(targetTenant.Status.TenantRecordInfo.TenantID))
-			if err != nil {
-				return err
-			}
-			for _, p := range params {
-				if p.Name == "compatible" && p.Value == sysCompatible {
-					break outer
-				}
-			}
-		}
-	} else if sysCompatible < "4.1.0.0" {
-		return errors.New("The cluster is of version less than 4.1.0.0, which does not support tenant upgrade")
-	} else if restoredCompatible >= sysCompatible {
-		return errors.New("The version of target tenant is greater than the cluster")
-	}
-	return nil
+	return m.upgradePrimaryTenant()
 }
 
 func ReplayLogOfStandby(m *ObTenantOperationManager) tasktypes.TaskError {

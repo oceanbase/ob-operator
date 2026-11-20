@@ -41,6 +41,7 @@ type OBClusterManager struct {
 	Ctx       context.Context
 	OBCluster *v1alpha1.OBCluster
 	Client    client.Client
+	APIReader client.Reader
 	Recorder  telemetry.Recorder
 	Logger    *logr.Logger
 }
@@ -77,7 +78,21 @@ func (m *OBClusterManager) GetTaskFlow() (*tasktypes.TaskFlow, error) {
 	// exists unfinished task flow, return the last task flow
 	if m.OBCluster.Status.OperationContext != nil {
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Get task flow from obcluster status")
-		return tasktypes.NewTaskFlow(m.OBCluster.Status.OperationContext), nil
+		op := m.OBCluster.Status.OperationContext
+		// Older initializers discarded the remaining tasks and reported Running on failure.
+		if m.OBCluster.Status.Status == clusterstatus.Bootstrapped && op.Name == postBootstrapFlow &&
+			op.TargetStatus == clusterstatus.Running && (op.OnFailure.Strategy == "" || op.OnFailure.Strategy == strategy.StartOver) &&
+			(op.OnFailure.NextTryStatus == "" || op.OnFailure.NextTryStatus == clusterstatus.Running) {
+			op.OnFailure.Strategy = strategy.RetryFromCurrent
+			op.OnFailure.NextTryStatus = ""
+		}
+		if m.OBCluster.Status.Status == clusterstatus.RollingUpdateOBServers && len(op.Tasks) == 1 && op.Tasks[0] == tRollingUpdateOBZones && (op.OnFailure.Strategy == "" || op.OnFailure.Strategy == strategy.StartOver) {
+			op.OnFailure.Strategy = strategy.RetryFromCurrent
+		}
+		if m.OBCluster.Status.Status == clusterstatus.ModifyServerTemplate && len(op.Tasks) > 0 && op.Tasks[0] == tModifyServerTemplate && (op.OnFailure.Strategy == "" || op.OnFailure.Strategy == strategy.StartOver) {
+			op.OnFailure.Strategy = strategy.RetryFromCurrent
+		}
+		return tasktypes.NewTaskFlow(op), nil
 	}
 	// return task flow depends on status
 
@@ -318,4 +333,9 @@ func (m *OBClusterManager) ArchiveResource() {
 	m.Recorder.Event(m.OBCluster, "Archive", "", "Archive obcluster")
 	m.OBCluster.Status.Status = "Failed"
 	m.OBCluster.Status.OperationContext = nil
+}
+
+// CanReplayTask covers identity-checked Jobs, readiness checks and resumable replacements.
+func (m *OBClusterManager) CanReplayTask(name tasktypes.TaskName) bool {
+	return name == tDispatchClassicBootstrap || name == tCheckImageReady || name == tCheckEnvironment || name == tWaitOBZoneBootstrapReady || name == tModifyServerTemplate || name == tWaitOBZoneRunning || name == tRollingUpdateOBZones
 }

@@ -196,6 +196,17 @@ declare namespace API {
   };
 
   type CreateClusterData = {
+    proxyroPassword?: string;
+    deletionProtection?: boolean;
+    pvcIndependent?: boolean;
+    deploymentMode?: 'normal' | 'shared_storage';
+    sharedStorageInfo?: {
+      bucketURL: string;
+      secretRef: { name: string };
+      maxIOPS?: string;
+      maxBandwidth?: string;
+    };
+    logServiceRef?: { name: string };
     backupVolume?: {
       address: string;
       path: string;
@@ -227,7 +238,7 @@ declare namespace API {
           size: number;
           storageClass: string;
         };
-        redoLog: {
+        redoLog?: {
           size: number;
           storageClass: string;
         };
@@ -240,18 +251,15 @@ declare namespace API {
       },
     ];
     rootPassword: string;
-    topology: [
-      {
-        nodeSelector: [
-          {
-            key: string;
-            value: string;
-          },
-        ];
-        replicas: number;
-        zone: string;
-      },
-    ];
+    topology: Array<{
+      affinities?: Array<{ key: string; value: string }>;
+      nodeSelector?: Array<{
+        key: string;
+        value: string;
+      }>;
+      replicas: number;
+      zone: string;
+    }>;
   };
 
   type Metrics = {
@@ -278,6 +286,14 @@ declare namespace API {
   };
 
   type ClusterInfo = {
+    deploymentMode?: 'normal' | 'shared_storage';
+    sharedStorageInfo?: {
+      bucketURL: string;
+      secretRef: { name: string };
+      maxIOPS?: string;
+      maxBandwidth?: string;
+    };
+    logServiceRef?: { name: string };
     name: string;
     namespace: string;
     clusterName: string;
@@ -637,6 +653,7 @@ declare namespace API {
     availableCPU: number;
     availableDataDisk: number;
     availableLogDisk: number;
+    logDiskUnlimited?: boolean;
     availableMemory: number;
     obServerIP: string;
     obZone: string;
@@ -646,6 +663,7 @@ declare namespace API {
     availableCPU: number;
     availableDataDisk: number;
     availableLogDisk: number;
+    logDiskUnlimited?: boolean;
     availableMemory: number;
     obZone: string;
   };

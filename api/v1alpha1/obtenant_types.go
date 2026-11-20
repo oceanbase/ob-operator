@@ -19,6 +19,7 @@ package v1alpha1
 import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
@@ -96,6 +97,8 @@ type UnitConfig struct {
 // +kubebuilder:object:generate=false
 // OBTenantStatus defines the observed state of OBTenant
 type OBTenantStatus struct {
+	// Creation binds ordinary tenant provisioning and cleanup to its original resources.
+	Creation *TenantCreation `json:"creation,omitempty"`
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 	Status           string                      `json:"status"`
@@ -110,6 +113,25 @@ type OBTenantStatus struct {
 	Variables   []apitypes.Variable  `json:"variables,omitempty"`
 }
 
+type TenantCreation struct {
+	// LegacyTenantID is recorded before finalizing a previously managed, unmarked tenant.
+	LegacyTenantID  int64                              `json:"legacyTenantID,omitempty"`
+	ClusterUID      types.UID                          `json:"clusterUID"`
+	TenantUID       types.UID                          `json:"tenantUID"`
+	ClusterName     string                             `json:"clusterName"`
+	DatabaseCluster string                             `json:"databaseCluster"`
+	DatabaseID      int64                              `json:"databaseID"`
+	TenantName      string                             `json:"tenantName"`
+	Resources       map[string]TenantCreationResources `json:"resources,omitempty"`
+}
+
+type TenantCreationResources struct {
+	// Borrowed resources predate ownership tracking and must not be dropped.
+	Borrowed     bool  `json:"borrowed,omitempty"`
+	UnitConfigID int64 `json:"unitConfigID,omitempty"`
+	PoolID       int64 `json:"poolID,omitempty"`
+}
+
 type TenantSourceStatus struct {
 	Tenant  *string                `json:"tenant,omitempty"`
 	Restore *OBTenantRestoreStatus `json:"restore,omitempty"`
@@ -117,6 +139,7 @@ type TenantSourceStatus struct {
 
 func (in *OBTenantStatus) DeepCopyInto(out *OBTenantStatus) {
 	*out = *in
+	out.Creation = in.Creation.DeepCopy()
 	if in.Pools != nil {
 		in, out := &in.Pools, &out.Pools
 		*out = make([]ResourcePoolStatus, len(*in))

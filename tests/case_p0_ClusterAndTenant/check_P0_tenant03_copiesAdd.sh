@@ -1,133 +1,46 @@
 #!/bin/bash
- 
-# load all the parameters in setup.sh
+set -euo pipefail
 source setup.sh
-source util.sh
-source env.sh
 source case_p0_ClusterAndTenant/env_vars.sh
 
-# prepare create related resources to create obcluster
-prepare() {
-    kubectl create namespace $NAMESPACE
-    create_pass_secret $NAMESPACE $OB_ROOT_SECRET $PASSWORD
-    echo $PASSWORD
+[[ $OBTENANT_NAME =~ ^[[:alnum:]]+$ ]]
+apply_template() {
+    envsubst < "config/tenantManage/$1" | kubectl apply -f -
 }
- 
-# clean up delete everything by deleting the entire namespace
-cleanup() {
-    kubectl delete namespace $NAMESPACE
+apply_template obcluster_template_1-1-1.yaml
+kubectl -n "$NAMESPACE" wait --for=jsonpath='{.status.status}'=running "obcluster/$OBCLUSTER_NAME" --timeout=8m
+ip=$(kubectl -n "$NAMESPACE" get pods -l "ref-obcluster=$OBCLUSTER_NAME" -o jsonpath='{.items[0].status.podIP}')
+sql() {
+    MYSQL_PWD="$PASSWORD" mysql --batch --skip-column-names --connect-timeout=3 -h "$ip" -P2881 -uroot -Doceanbase -e "$1"
 }
- 
-run() {
-    local template_file=$1
-    echo $OBCLUSTER_NAME
-    envsubst < ./config/tenantManage/$template_file | kubectl apply -f -
-}
- 
-check_resource_running() {
-    counter=0
-    timeout=100  
-    RESOURCE_RUNNING='false'
-    while true; do
-        echo 'check resource'
-        counter=$((counter+1))
-        pod_1_zone1=`kubectl get pod -o wide -n $NAMESPACE | grep "$OBCLUSTER_NAME-1-zone1" | awk -v line="1" 'NR==line{print \$2}'`
-        pod_1_zone2=`kubectl get pod -o wide -n $NAMESPACE | grep "$OBCLUSTER_NAME-1-zone2" | awk -v line="1" 'NR==line{print \$2}'`
-        pod_1_zone3=`kubectl get pod -o wide -n $NAMESPACE | grep "$OBCLUSTER_NAME-1-zone3" | awk -v line="1" 'NR==line{print \$2}'`
-        ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-        crd_obcluster=`kubectl get obcluster $OBCLUSTER_NAME -n $NAMESPACE  -o yaml| grep "status: running" | tail -n 1| sed 's/ //g'`
-        if [[ $pod_1_zone1 = "1/1" && $pod_1_zone2 = "1/1" && $pod_1_zone3 = "1/1" && -n "$ip" && $crd_obcluster = "status:running" ]];then
-            echo "pod_1_zone1 is $pod_1_zone1 ready"
-            echo "pod_1_zone2 is $pod_1_zone2 ready"
-            echo "pod_1_zone3 is $pod_1_zone3 ready"
-            echo "svc is $ip ready"
-            echo "crd_obcluster $crd_obcluster"
-            RESOURCE_RUNNING='true'
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "resource still not running"
-            break
-        fi
-        sleep 3s
-    done
-}
+[[ $(sql "SELECT ZONE FROM DBA_OB_SERVERS WHERE STATUS='ACTIVE' ORDER BY ZONE") == $'zone1\nzone2\nzone3' ]]
 
-check_in_obcluster() {
-    counter=0
-    timeout=100  
-    OBSERVER_ACTIVE='false'
-    ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-    echo $ip
-    echo $PASSWORD
-    while true; do
-        echo 'check ob'
-        counter=$((counter+1))
-        server_1_zone1=`mysql -uroot -h $ip -P 2881 -Doceanbase -p$PASSWORD -e 'select * from __all_server;'|grep zone1| awk -v line="1" 'NR==line{print \$11}'`
-        server_1_zone2=`mysql -uroot -h $ip -P 2881 -Doceanbase -p$PASSWORD -e 'select * from __all_server;'|grep zone2| awk -v line="1" 'NR==line{print \$11}'`
-        server_1_zone3=`mysql -uroot -h $ip -P 2881 -Doceanbase -p$PASSWORD -e 'select * from __all_server;'|grep zone3| awk -v line="1" 'NR==line{print \$11}'`
-        if [[ $server_1_zone1 == "ACTIVE" && $server_1_zone2 == "ACTIVE" && $server_1_zone3 == "ACTIVE"  ]]
-        then
-            echo "server_1_zone1 $server_1_zone1"
-            echo "server_1_zone2 $server_1_zone2"
-            echo "server_1_zone3 $server_1_zone3"
-            OBSERVER_ACTIVE='true'
-            break
+apply_and_wait() {
+    local template=$1 expected=$2 state job rows prior until
+    local jobs="FROM DBA_OB_TENANT_JOBS WHERE JOB_TYPE='ALTER_TENANT_LOCALITY' AND TENANT_ID=(SELECT TENANT_ID FROM DBA_OB_TENANTS WHERE TENANT_NAME='$OBTENANT_NAME')"
+    prior=$(sql "SELECT COALESCE(MAX(JOB_ID), 0) $jobs")
+    apply_template "$template"
+    until=$((SECONDS + 600))
+    while ((SECONDS < until)); do
+        state=$(kubectl -n "$NAMESPACE" get "obtenant/$OBTENANT_NAME" -o jsonpath='{.status.status}')
+        job=$(sql "SELECT JOB_ID, JOB_STATUS, RESULT_CODE $jobs AND JOB_ID>$prior ORDER BY JOB_ID DESC LIMIT 1")
+        if [[ $state == failed || $job == *$'\tFAILED\t'* || $job == *$'\tCANCELED\t'* ]]; then
+            echo "Tenant locality failed for $expected (CR $state, SQL job $job)" >&2
+            return 1
         fi
-        if [ $counter -eq $timeout ]; then
-            echo "resource still not running"
-	    echo "case failed"
-            break
+        rows=$(sql "SELECT T.STATUS, T.PREVIOUS_LOCALITY IS NULL, GROUP_CONCAT(P.ZONE_LIST ORDER BY P.ZONE_LIST)
+          FROM DBA_OB_TENANTS T JOIN DBA_OB_RESOURCE_POOLS P ON T.TENANT_ID=P.TENANT_ID
+          WHERE T.TENANT_NAME='$OBTENANT_NAME' GROUP BY T.TENANT_ID,T.STATUS,T.PREVIOUS_LOCALITY")
+        if [[ $state == running && $rows == $'NORMAL\t1\t'"$expected" && ( -z $job || $job == *$'\tSUCCESS\t0' ) ]]; then
+            echo "$OBTENANT_NAME pools $expected, CR $state, SQL job ${job:-already converged}"
+            return 0
         fi
-        sleep 3s
+        sleep 3
     done
+    echo "Timed out waiting for $expected (CR $state, SQL pools $rows, SQL job $job)" >&2
+    return 1
 }
- 
-check_obtenant_running() {
-    counter=0
-    timeout=100  
-    OBTENANT_RUNNING='false'
-    while true; do
-        echo 'check obtenant resource'
-	counter=$((counter+1))
-	crd_obtenant=`kubectl get obtenant $OBTENANT_NAME -n $NAMESPACE| grep "$OBTENANT_NAME"|awk -F' ' '{print $2}'`
-        if [[ $crd_obtenant = "running" ]];then
-            echo "crd_obtenant is $crd_obtenant ready"
-            OBTENANT_RUNNING='true'
-	    echo "case passed"
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "obtenant resource still not running"
-	    echo "case failed"
-            break
-        fi
-        sleep 3s
-    done
-}
-
-validate() {
-    echo 'do validate'
-    check_resource_running 
-    if [[ $RESOURCE_RUNNING == 'false' ]]; then
-        echo "case failed"
-    else
-        check_in_obcluster 
-        if [[ $OBSERVER_ACTIVE == 'false' ]]; then
-            echo "case failed"
-	    cleanup
-	    prepare
-        else
-            echo "case passed"
-        fi
-    fi
-}
- 
-run "obcluster_template_1-1-1.yaml"
-validate 
-run "obtenant_basic_1_1_1.yaml"
-check_obtenant_running
-run "obtenant_basic_1_1.yaml"
-check_obtenant_running
-run "obtenant_basic_1_1_1.yaml"
-check_obtenant_running
+apply_and_wait obtenant_basic_1_1_1.yaml zone1,zone2,zone3
+apply_and_wait obtenant_basic_1_1.yaml zone1,zone2
+apply_and_wait obtenant_basic_1_1_1.yaml zone1,zone2,zone3
+echo "case passed"

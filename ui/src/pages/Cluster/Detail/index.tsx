@@ -1,6 +1,7 @@
 import ClusterSelect from '@/components/ClusterSelect';
 import { STATUS_LIST } from '@/constants';
 import DetailLayout from '@/pages/Layouts/DetailLayout';
+import { L } from '@/pages/LogService/common';
 import { getClusterDetailReq } from '@/services';
 import { intl } from '@/utils/intl';
 import { ApartmentOutlined } from '@ant-design/icons';
@@ -15,7 +16,20 @@ export default () => {
   const params = useParams();
   const { ns, name, clusterName } = params;
   const access = useAccess();
+  const { data: clusterDetail } = useRequest(getClusterDetailReq, {
+    defaultParams: [{ ns: ns!, name: name! }],
+    refreshDeps: [ns, name],
+  });
   const menus: MenuItem[] = [
+    ...(clusterDetail?.info?.deploymentMode === 'shared_storage'
+      ? [
+          {
+            title: L('湖库配置', 'Lakehouse configuration'),
+            key: 'lakehouse',
+            link: `/cluster/${ns}/${name}/${clusterName}/lakehouse`,
+          },
+        ]
+      : []),
     {
       title: intl.formatMessage({
         id: 'dashboard.Cluster.Detail.Overview',
@@ -65,10 +79,6 @@ export default () => {
       accessible: access.obclusterwrite,
     },
   ];
-  const { data: clusterDetail } = useRequest(getClusterDetailReq, {
-    defaultParams: [{ ns: ns!, name: name! }],
-  });
-
   const statusDetailItem = findByValue(STATUS_LIST, clusterDetail?.status);
 
   return (

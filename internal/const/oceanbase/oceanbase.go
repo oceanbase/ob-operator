@@ -135,6 +135,8 @@ const (
 )
 
 const (
-	CmdVersion                 = "rpm -q --queryformat '%{VERSION}-%{RELEASE}' oceanbase-ce | sed 's/\\.[^.]*$//'"
+	// Query the installed Observer's owner, independent of distribution package branding.
+	// Preserve RPM failures instead of hiding them behind a successful sed pipeline.
+	CmdVersion                 = `version=$(rpm -qf --queryformat '%{VERSION}-%{RELEASE}' /home/admin/oceanbase/bin/observer) && printf '%s\n' "${version%.*}"`
 	CmdUpgradeValidateTemplate = "/home/admin/oceanbase/bin/oceanbase-helper upgrade validate -s %s"
 )

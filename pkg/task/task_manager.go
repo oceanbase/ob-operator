@@ -29,6 +29,9 @@ import (
 	tasktypes "github.com/oceanbase/ob-operator/pkg/task/types"
 )
 
+// ErrTaskNotFound means the in-memory task was lost, for example after a restart.
+var ErrTaskNotFound = errors.New("task not found")
+
 var taskManager *TaskManager
 var taskManagerOnce sync.Once
 
@@ -131,7 +134,7 @@ func (m *TaskManager) GetTaskResult(taskId tasktypes.TaskID) (*tasktypes.TaskRes
 	if !exists {
 		retChAny, exists := m.ResultMap.Load(taskId)
 		if !exists {
-			return nil, errors.Errorf("Task %s not exists", taskId)
+			return nil, errors.Wrapf(ErrTaskNotFound, "Task %s not exists", taskId)
 		}
 		retCh, ok := retChAny.(chan *tasktypes.TaskResult)
 		if !ok {

@@ -2,6 +2,7 @@ import { K8sClusterApi } from '@/api';
 import EventsTable from '@/components/EventsTable';
 import { DATE_TIME_FORMAT } from '@/constants/datetime';
 import NodesTable from '@/pages/Overview/NodesTable';
+import { formatEventTime } from '@/utils/eventTime';
 import { intl } from '@/utils/intl';
 import { PageContainer } from '@ant-design/pro-components';
 import { formatTime } from '@oceanbase/util';
@@ -56,12 +57,8 @@ const K8sClusterOverview: React.FC = () => {
           r.data.sort((pre, next) => next.lastSeen - pre.lastSeen);
           for (const event of r.data) {
             event.id = ++count;
-            event.firstOccur = dayjs
-              .unix(event.firstOccur)
-              .format(DATE_TIME_FORMAT);
-            event.lastSeen = dayjs
-              .unix(event.lastSeen)
-              .format(DATE_TIME_FORMAT);
+            event.firstOccur = formatEventTime(event.firstOccur);
+            event.lastSeen = formatEventTime(event.lastSeen);
           }
         }
         return r.data;

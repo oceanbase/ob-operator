@@ -8,13 +8,14 @@ declare namespace Alert {
     matchers?: AlarmMatcher;
     rules?: string[];
   };
-  type InstancesKey = 'obcluster' | 'observer' | 'obtenant';
+  type InstancesKey = 'obcluster' | 'observer' | 'obtenant' | 'logservice';
   type AlarmLevel = 'critical' | 'warning' | 'caution' | 'info';
   type InstancesType = {
     type: InstancesKey;
     obcluster: string[];
     observer?: string[];
     obtenant?: string[];
+    logservice?: string[];
   };
   type ShieldDrawerForm = {
     instances: InstancesType;
@@ -45,6 +46,7 @@ declare namespace Alert {
     observer?: string;
     obtenant?: string;
     obcluster?: string;
+    logservice?: string;
   };
 
   type LabelsType = {

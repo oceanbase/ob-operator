@@ -14,6 +14,7 @@ package oceanbase
 
 import (
 	"context"
+	"math"
 	"sort"
 
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -103,12 +104,20 @@ func getServerUsages(gvservers []model.GVOBServer) ([]response.OBServerAvailable
 	zoneMapping := make(map[string]*response.OBZoneAvailableResource)
 	serverUsages := make([]response.OBServerAvailableResource, 0, len(gvservers))
 	for _, gvserver := range gvservers {
+		// OceanBase's ObServerLogBlockMgr reports INT64_MAX - 1 when
+		// enable_logservice is set. This is not a local disk capacity.
+		logDiskUnlimited := gvserver.LogDiskCapacity == math.MaxInt64-1
+		availableLogDisk := int64(0)
+		if !logDiskUnlimited {
+			availableLogDisk = max(gvserver.LogDiskCapacity-gvserver.LogDiskAssigned, 0)
+		}
 		zoneResource := &response.OBZoneAvailableResource{
 			ServerCount:       1,
 			OBZone:            gvserver.Zone,
 			AvailableCPU:      max(gvserver.CPUCapacity-gvserver.CPUAssigned, 0),
 			AvailableMemory:   max(gvserver.MemCapacity-gvserver.MemAssigned, 0),
-			AvailableLogDisk:  max(gvserver.LogDiskCapacity-gvserver.LogDiskAssigned, 0),
+			AvailableLogDisk:  availableLogDisk,
+			LogDiskUnlimited:  logDiskUnlimited,
 			AvailableDataDisk: max(gvserver.DataDiskCapacity-gvserver.DataDiskAllocated, 0),
 		}
 		serverUsage := response.OBServerAvailableResource{
@@ -125,7 +134,10 @@ func getServerUsages(gvservers []model.GVOBServer) ([]response.OBServerAvailable
 			if zoneMapping[gvserver.Zone].AvailableMemory < serverUsage.AvailableMemory {
 				zoneMapping[gvserver.Zone].AvailableMemory = serverUsage.AvailableMemory
 			}
-			if zoneMapping[gvserver.Zone].AvailableLogDisk < serverUsage.AvailableLogDisk {
+			if serverUsage.LogDiskUnlimited {
+				zoneMapping[gvserver.Zone].LogDiskUnlimited = true
+				zoneMapping[gvserver.Zone].AvailableLogDisk = 0
+			} else if !zoneMapping[gvserver.Zone].LogDiskUnlimited && zoneMapping[gvserver.Zone].AvailableLogDisk < serverUsage.AvailableLogDisk {
 				zoneMapping[gvserver.Zone].AvailableLogDisk = serverUsage.AvailableLogDisk
 			}
 			if zoneMapping[gvserver.Zone].AvailableDataDisk < serverUsage.AvailableDataDisk {

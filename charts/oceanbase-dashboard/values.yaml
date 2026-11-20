@@ -1,25 +1,58 @@
 initCredentials: true
-# admin's password. If not set, the chart will generate it randomly
+# Initial admin password; existing accounts are preserved on upgrade.
 adminPassword: admin
+# Require users to change their password before their first login.
+requirePasswordResetOnFirstLogin: true
+
+# Empty uses quay.io/oceanbase/oceanbase-dashboard:<Chart appVersion>.
+image: ""
+# Shared utility image for volume initialization and report cleanup.
+utilityImage: busybox:1.36.1
+# Keep account, authorization and volume data when removing the dashboard.
+retainData: false
+rbac:
+  createPolicy: true
+  # Avoid cluster-scoped name collisions between equal releases in namespaces.
+  includeNamespace: false
+serviceAccount:
+  # Embedded charts can create the same <release>-sa with inherited pull secrets.
+  create: true
 
 userCredentials: 
 userNamespace: 
 configNamespace: 
 
+nodeSelector: {}
+tolerations: []
+
 service:
+  # Empty lets Kubernetes allocate an available port.
+  nodePort: null
   type: NodePort
   port: 80
 
 prometheus:
+  image: quay.io/prometheus/prometheus:v2.51.1
   persistence:
     enabled: true
+    create: true
+    existingClaim: ""
     storageClassName: ""
     accessMode: ReadWriteOnce
     storage: 8Gi
 
+alertmanager:
+  image: quay.io/prometheus/alertmanager:v0.27.0
+
 sharedVolume:
+  # All consumers must use the same label on SELinux hosts. s0 is a shared
+  # container label; set a site-assigned MCS level for stricter isolation.
+  # Set empty only when the cluster admission policy supplies matching labels.
+  seLinuxLevel: s0
   persistence:
     enabled: true
+    create: true
+    existingClaim: ""
     storageClassName: ""
     accessMode: ReadWriteOnce
     storage: 10Gi
@@ -32,9 +65,9 @@ cleanup:
 
 inspection:
   obdiag:
-    image: "oceanbase/obdiag:latest"
+    image: "ghcr.io/oceanbase/obdiag:5.0.2-12026102116"
   oceanbaseHelper:
-    image: "oceanbase/oceanbase-helper:latest"
+    image: "localhost/oceanseek/oceanbase-helper:oceanseek-r28-amd64"
 
 job:
   inspection:

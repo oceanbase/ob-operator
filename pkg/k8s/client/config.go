@@ -13,12 +13,8 @@ See the Mulan PSL v2 for more details.
 package client
 
 import (
-	"os"
-	"path/filepath"
-
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
 )
 
 func GetConfigFromBytes(kubeconfig []byte) (*rest.Config, error) {
@@ -37,16 +33,13 @@ func MustGetConfigInCluster() *rest.Config {
 	return config
 }
 
+func GetConfigOutsideCluster() (*rest.Config, error) {
+	rules := clientcmd.NewDefaultClientConfigLoadingRules()
+	return clientcmd.NewNonInteractiveDeferredLoadingClientConfig(rules, &clientcmd.ConfigOverrides{}).ClientConfig()
+}
+
 func MustGetConfigOutsideCluster() *rest.Config {
-	var configPath string
-	configPathEnv, exist := os.LookupEnv("KUBECONFIG")
-	if exist && configPathEnv != "" {
-		configPath = configPathEnv
-	} else {
-		home := homedir.HomeDir()
-		configPath = filepath.Join(home, ".kube", "config")
-	}
-	config, err := clientcmd.BuildConfigFromFlags("", configPath)
+	config, err := GetConfigOutsideCluster()
 	if err != nil {
 		panic(err.Error())
 	}

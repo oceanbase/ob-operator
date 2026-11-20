@@ -1,8 +1,9 @@
 import { MODE_MAP, STATUS_LIST } from '@/constants';
+import { L } from '@/pages/LogService/common';
 import { intl } from '@/utils/intl';
 import { findByValue } from '@oceanbase/util';
-import { Link, useAccess } from '@umijs/max';
-import { Button, Card, Table, Tag, Typography } from 'antd';
+import { Link, history, useAccess } from '@umijs/max';
+import { Button, Card, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 
 interface DataType {
@@ -16,6 +17,7 @@ interface DataType {
   memoryPercent: string;
   diskPercent: string;
   clusterName: string;
+  deploymentMode?: string;
 }
 
 interface ClusterListProps {
@@ -27,6 +29,51 @@ interface ClusterListProps {
 const { Text } = Typography;
 
 const columns: ColumnsType<DataType> = [
+  {
+    title: L('存储架构', 'Storage architecture'),
+    dataIndex: 'deploymentMode',
+    width: 210,
+    filters: [
+      { text: L('湖库 SS', 'Lakehouse SS'), value: 'shared_storage' },
+      { text: L('存算一体', 'Shared nothing'), value: 'normal' },
+    ],
+    onFilter: (value, row) => (row.deploymentMode || 'normal') === value,
+    render: (value, row) => {
+      const shared = value === 'shared_storage';
+      const label = shared
+        ? L('湖库 SS · 配置', 'Lakehouse SS · settings')
+        : L('存算一体', 'Shared nothing');
+      const tag = (
+        <Tag
+          color={shared ? 'blue' : undefined}
+          title={label}
+          style={{
+            maxWidth: '100%',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            verticalAlign: 'middle',
+            marginInlineEnd: 0,
+          }}
+        >
+          {label}
+        </Tag>
+      );
+      return shared ? (
+        <Link
+          style={{ display: 'block', minWidth: 0 }}
+          to={`/cluster/${encodeURIComponent(
+            row.namespace,
+          )}/${encodeURIComponent(row.name)}/${encodeURIComponent(
+            row.clusterName,
+          )}/lakehouse`}
+        >
+          {tag}
+        </Link>
+      ) : (
+        tag
+      );
+    },
+  },
   {
     title: intl.formatMessage({
       id: 'Dashboard.pages.Cluster.ClusterList.ResourceName',
@@ -156,12 +203,21 @@ export default function ClusterList({
       }
       extra={
         access.obclusterwrite ? (
-          <Button onClick={handleAddCluster} type="primary">
-            {intl.formatMessage({
-              id: 'OBDashboard.pages.Cluster.ClusterList.CreateACluster',
-              defaultMessage: '创建集群',
-            })}
-          </Button>
+          <Space>
+            <Button
+              onClick={() =>
+                history.push('/cluster/new?deploymentMode=shared_storage')
+              }
+            >
+              {L('创建湖库集群', 'Create lakehouse cluster')}
+            </Button>
+            <Button onClick={handleAddCluster} type="primary">
+              {intl.formatMessage({
+                id: 'OBDashboard.pages.Cluster.ClusterList.CreateACluster',
+                defaultMessage: '创建集群',
+              })}
+            </Button>
+          </Space>
         ) : null
       }
     >

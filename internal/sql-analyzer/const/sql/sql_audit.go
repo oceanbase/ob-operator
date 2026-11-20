@@ -153,7 +153,7 @@ const (
 			sum(plan_type_local_count),
 			sum(plan_type_remote_count),
 			sum(plan_type_distributed_count)
-		FROM read_parquet('%s/*.parquet')
+		FROM read_parquet('%s/*.parquet', union_by_name = true)
 		WHERE
 			sql_id = ?
 			AND max_request_time >= ?
@@ -165,7 +165,7 @@ const (
 			SELECT
 				CAST(epoch(time_bucket(INTERVAL %d SECOND, CAST(to_timestamp(CAST(max_request_time / 1000000 AS BIGINT)) AS TIMESTAMP))) AS BIGINT) AS time_bucket,
 				%s
-			FROM read_parquet('%s/*.parquet')
+			FROM read_parquet('%s/*.parquet', union_by_name = true)
 			WHERE
 				sql_id = ?
 				AND max_request_time >= ?
@@ -173,15 +173,18 @@ const (
 			GROUP BY time_bucket
 			ORDER BY time_bucket`
 
+	// Legacy Parquet rows may have no SQL text. Prefer a row that has it,
+	// and return no rows when the selected history contains no text.
 	QuerySqlById = `
 		SELECT
 			query_sql
 		FROM
-			read_parquet('%s/*.parquet')
+			read_parquet('%s/*.parquet', union_by_name = true)
 		WHERE
 			sql_id = ?
 			AND max_request_time >= ?
 			AND max_request_time <= ?
+			AND query_sql IS NOT NULL
 		LIMIT 1`
 
 	GetTenantIDByName = "SELECT tenant_id FROM __all_tenant WHERE tenant_name = ?"

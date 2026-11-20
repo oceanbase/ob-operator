@@ -260,3 +260,9 @@ func (m *ObTenantOperationManager) appendOwnerTenantReference(tenant *v1alpha1.O
 	})
 	m.Resource.SetOwnerReferences(owners)
 }
+
+// Upgrade re-reads the current tenant identity and database compatibility before
+// issuing UPGRADE_ALL. A completed upgrade can be acknowledged after a restart.
+func (m *ObTenantOperationManager) CanReplayTask(name tasktypes.TaskName) bool {
+	return name == tUpgradeTenant
+}

@@ -17,6 +17,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -82,10 +83,45 @@ func GetTenantBackupPolicy(ctx context.Context, nn types.NamespacedName) (*v1alp
 	if err != nil {
 		return nil, errors.Wrap(err, "Get tenant backup policy")
 	}
-	if len(p.Items) == 0 {
+	if len(p.Items) > 0 {
+		return &p.Items[0], nil
+	}
+	// Policies created with a database tenant name and a secret do not have
+	// the tenant CR label. Resolve both database names from the tenant CR.
+	tenant, err := GetOBTenant(ctx, nn)
+	if kubeerrors.IsNotFound(err) {
 		return nil, nil
 	}
-	return &p.Items[0], nil
+	if err != nil {
+		return nil, err
+	}
+	policies, err := ListAllTenantBackupPolicies(ctx, nn.Namespace, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+	return findUnlabelledBackupPolicy(tenant, policies.Items)
+}
+
+func findUnlabelledBackupPolicy(tenant *v1alpha1.OBTenant, policies []v1alpha1.OBTenantBackupPolicy) (*v1alpha1.OBTenantBackupPolicy, error) {
+	var found *v1alpha1.OBTenantBackupPolicy
+	for i := range policies {
+		policy := &policies[i]
+		if policy.Labels[oceanbaseconst.LabelTenantName] != "" || policy.Spec.ObClusterName != tenant.Spec.ClusterName {
+			continue
+		}
+		matchesTenant := policy.Spec.TenantCRName == tenant.Name
+		if policy.Spec.TenantCRName == "" {
+			matchesTenant = policy.Spec.TenantName == tenant.Spec.TenantName
+		}
+		if !matchesTenant {
+			continue
+		}
+		if found != nil {
+			return nil, fmt.Errorf("multiple backup policies match tenant %s/%s: %s, %s", tenant.Namespace, tenant.Name, found.Name, policy.Name)
+		}
+		found = policy
+	}
+	return found, nil
 }
 
 func CreateTenantBackupPolicy(ctx context.Context, policy *v1alpha1.OBTenantBackupPolicy) (*v1alpha1.OBTenantBackupPolicy, error) {
@@ -124,9 +160,9 @@ func ForceDeleteTenantBackupPolicy(ctx context.Context, nn types.NamespacedName)
 	return err
 }
 
-func ListBackupJobs(ctx context.Context, listOption metav1.ListOptions) (*v1alpha1.OBTenantBackupList, error) {
+func ListBackupJobs(ctx context.Context, namespace string, listOption metav1.ListOptions) (*v1alpha1.OBTenantBackupList, error) {
 	list := &v1alpha1.OBTenantBackupList{}
-	err := BackupJobClient.List(ctx, "", list, listOption)
+	err := BackupJobClient.List(ctx, namespace, list, listOption)
 	if err != nil {
 		return nil, errors.Wrap(err, "List backup jobs")
 	}

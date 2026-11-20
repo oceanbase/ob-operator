@@ -23,33 +23,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var fixedDimensions = map[string]any{
-	"tenant_name": struct{}{},
-	"user_name":   struct{}{},
-	"db_name":     struct{}{},
-	"sql_id":      struct{}{},
-	"plan_id":     struct{}{},
-}
-
-var dimensions = map[string]any{
-	"svr_ip":              struct{}{},
-	"svr_port":            struct{}{},
-	"tenant_id":           struct{}{},
-	"user_id":             struct{}{},
-	"db_id":               struct{}{},
-	"query_sql":           struct{}{},
-	"client_ip":           struct{}{},
-	"event":               struct{}{},
-	"effective_tenant_id": struct{}{},
-	"trace_id":            struct{}{},
-	"sid":                 struct{}{},
-	"user_client_ip":      struct{}{},
-	"tx_id":               struct{}{},
-	"sub_plan_count":      struct{}{},
-	"last_fail_info":      struct{}{},
-	"cause_type":          struct{}{},
-}
-
 type SqlStatsService struct {
 	Store  *store.SqlAuditStore
 	Config *config.Config
@@ -65,13 +38,16 @@ func NewSqlStatsService(store *store.SqlAuditStore, conf *config.Config, logger 
 }
 
 func (s *SqlStatsService) QuerySqlStats(req *apimodel.QuerySqlStatsRequest) (*apimodel.SqlStatsResponse, error) {
+	if err := common.ValidateSortColumn(req.SortByColumn); err != nil {
+		return nil, err
+	}
 	filters := s.buildFilters(req)
 	s.Logger.Infof("QuerySqlStats filters: %+v", filters)
 
 	selectExpressions, groupByColumns := s.buildQueryParts(req.OutputColumns)
 
 	// Ensure all fixed dimensions are in the SELECT and GROUP BY clauses
-	for dim := range fixedDimensions {
+	for dim := range common.FixedDimensions {
 		if !contains(groupByColumns, dim) {
 			groupByColumns = append(groupByColumns, dim)
 		}
@@ -123,11 +99,11 @@ func (s *SqlStatsService) buildQueryParts(outputColumns []string) (selectExpress
 	for _, col := range outputColumns {
 		if expr := common.BuildMetricExpression(col); expr != "" {
 			selectExpressions = append(selectExpressions, fmt.Sprintf("%s as %s", expr, col))
-		} else if _, isFixedDimension := fixedDimensions[col]; isFixedDimension {
+		} else if _, isFixedDimension := common.FixedDimensions[col]; isFixedDimension {
 			// It's a dimension
 			selectExpressions = append(selectExpressions, col)
 			groupByColumns = append(groupByColumns, col)
-		} else if _, isDimension := dimensions[col]; isDimension {
+		} else if _, isDimension := common.Dimensions[col]; isDimension {
 			selectExpressions = append(selectExpressions, fmt.Sprintf("MAX(%s) as %s", col, col))
 		} else {
 			// do nothing for unknown columns

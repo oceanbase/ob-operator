@@ -4,7 +4,6 @@
 source setup.sh
 source util.sh
 source env.sh
-#source case_p3_AdvancedConfig/env_vars.sh
  
 # prepare create related resources to create obcluster
 prepare() {
@@ -14,9 +13,9 @@ prepare() {
     export OBCLUSTER_NAME=test$SUFFIX
     export OB_ROOT_SECRET=sc-root-$SUFFIX
     export OBTENANT_NAME=tenant$SUFFIX
-    kubectl create namespace $NAMESPACE
+    kubectl create namespace "$NAMESPACE" || return 1
+    trap 'cleanup || exit 1' EXIT
     create_pass_secret $NAMESPACE $OB_ROOT_SECRET $PASSWORD
-    echo $PASSWORD
 }
  
 # clean up delete everything by deleting the entire namespace
@@ -56,64 +55,25 @@ check_resource_running() {
 }
  
 check_in_obcluster() {
-    counter=0
-    timeout=100  
-    OBSERVER_ACTIVE='false'
-    ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-    echo $ip
-    echo $PASSWORD
-    while true; do
-        echo 'check ob'
-        counter=$((counter+1))
-        server_1_zone1=`mysql -uroot -h $ip -P 2881 -Doceanbase -p$PASSWORD -e 'select * from __all_server;'|grep zone1|awk -F' ' '{print $11}'| awk 'NR==1'`
-	oceanbase_DBA_OB_SERVERS_ip=`mysql -uroot -h $ip -P 2881 -p$PASSWORD  -Doceanbase  -e 'SELECT * FROM oceanbase.DBA_OB_SERVERS;'|grep 127.0.0.1|awk -F' ' '{print $1}'| awk 'NR==1'` 
-        echo $server_1_zone1
-	echo $oceanbase_DBA_OB_SERVERS_ip
-        if [[ $server_1_zone1 == "ACTIVE"  && $oceanbase_DBA_OB_SERVERS_ip = "127.0.0.1" ]]
-        then
-            echo "server_1_zone1 $server_1_zone1"
-            OBSERVER_ACTIVE='true'
-            break
+    local ip zones attempt
+    OBSERVER_ACTIVE=false
+    for ((attempt=0; attempt<100; attempt++)); do
+        ip=$(kubectl -n "$NAMESPACE" get pods -l "ref-obcluster=$OBCLUSTER_NAME" -o jsonpath='{.items[0].status.podIP}') || return 1
+        zones=$(MYSQL_PWD="$PASSWORD" mysql --connect-timeout=3 --batch --skip-column-names -h "$ip" -P2881 -uroot -Doceanbase \
+            -e "SELECT CONCAT(ZONE,'@',SVR_IP) FROM DBA_OB_SERVERS WHERE STATUS='ACTIVE' ORDER BY ZONE") || zones=''
+        if [[ $zones == zone1@127.0.0.1 ]]; then
+            OBSERVER_ACTIVE=true
+            printf 'ACTIVE SQL zones: %s\n' "${zones//$'\n'/,}"
+            return 0
         fi
-        if [ $counter -eq $timeout ]; then
-            echo "resource still not running"
-	    echo "case failed"
-            break
-        fi
-        sleep 3s
+        sleep 3
     done
+    return 1
 }
  
-check_standalone_agent() {
-    counter=0
-    timeout=100
-    STANDALONE_AGENT='false'
-    while true; do
-        echo 'check resource'
-        counter=$((counter+1))
-        obagent_ip=`kubectl get svc -n $NAMESPACE | grep svc-monitor-$OBCLUSTER_NAME |awk -F' ' '{print $3}'| awk 'NR==1'`
-        obagent_svr_ip=$(curl -L "http://$obagent_ip:8088/metrics/ob/basic" 2>/dev/null | grep 'ob_active_session_num' | awk -F'svr_ip="' '{print $2}' | awk -F'"' '{print $1}')
-        # 清理变量中的不可见字符
-        obagent_svr_ip=$(echo "$obagent_svr_ip" | tr -d '[:space:]')
-        echo "obagent_ip" $obagent_ip
-        echo "obagent_svr_ip" $obagent_svr_ip
-
-        if [[ "$obagent_svr_ip" == "127.0.0.1"  ]]; then
-            STANDALONE_AGENT='true'
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "obagent_svr_ip not in pod_svc"
-            break
-        fi
-        sleep 3s
-    done
-}
-
 export_to_file() {
     local output_file="case_p7_TenantParamManage/env_vars.sh"
     cat <<EOF > "$output_file"
-export PASSWORD="$PASSWORD"
 export SUFFIX="$SUFFIX"
 export NAMESPACE="$NAMESPACE"
 export OBCLUSTER_NAME="$OBCLUSTER_NAME"
@@ -124,23 +84,15 @@ EOF
 }
 
 validate() {
-    echo 'do validate'
     check_resource_running
-    if [[ $RESOURCE_RUNNING == 'false' ]]; then
+    if [[ $RESOURCE_RUNNING != true ]] || ! check_in_obcluster || ! check_obagent_metrics "$NAMESPACE" "$OBCLUSTER_NAME" standalone 1; then
         echo "case failed"
-    else
-        check_in_obcluster
-	check_standalone_agent
-        if [[ $STANDALONE_AGENT == 'false' ]]; then
-            echo "case failed"
-            #cleanup
-        else
-            echo "case passed"
-        fi
+        return 1
     fi
+    echo "case passed"
 }
-prepare
+
+prepare || exit 1
 export_to_file
-run "cluster_standalone.yaml" 
+run "cluster_standalone.yaml" || exit 1
 validate
-cleanup

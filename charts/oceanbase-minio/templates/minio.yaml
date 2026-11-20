@@ -1,0 +1,211 @@
+{{- $distributed := eq .Values.mode "distributed" -}}
+{{- $peerService := printf "%s-minio-peer" .Release.Name -}}
+{{- if and (not $distributed) (not .Values.existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}-minio-data
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+  labels:
+    {{- include "obminio.labels" . | nindent 4 }}
+spec:
+  accessModes: [ReadWriteOnce]
+  storageClassName: {{ .Values.storageClass | quote }}
+  resources:
+    requests:
+      storage: {{ .Values.size }}
+---
+{{- end }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-minio
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+  labels:
+    {{- include "obminio.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: minio
+  ports:
+    - {name: s3, port: 9000, targetPort: s3}
+---
+{{- if $distributed }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $peerService }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+  labels:
+    {{- include "obminio.labels" . | nindent 4 }}
+spec:
+  clusterIP: None
+  publishNotReadyAddresses: true
+  selector:
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: minio
+  ports:
+    - {name: s3, port: 9000, targetPort: s3}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ .Release.Name }}-minio
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+  labels:
+    {{- include "obminio.labels" . | nindent 4 }}
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: minio
+---
+{{- end }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Release.Name }}-minio
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+  labels:
+    {{- include "obminio.labels" . | nindent 4 }}
+spec:
+  {{- if $distributed }}
+  serviceName: {{ $peerService }}
+  replicas: {{ .Values.distributed.replicas }}
+  podManagementPolicy: Parallel
+  persistentVolumeClaimRetentionPolicy: {whenDeleted: Retain, whenScaled: Retain}
+  {{- else }}
+  serviceName: {{ .Release.Name }}-minio
+  replicas: 1
+  {{- end }}
+  # Image updates require an explicit, planned Pod restart.
+  updateStrategy: {type: OnDelete}
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: minio
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: minio
+    spec:
+      {{- include "obminio.scheduling" . | nindent 6 }}
+      {{- if $distributed }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/instance: {{ .Release.Name }}
+                  app.kubernetes.io/component: minio
+      {{- end }}
+      automountServiceAccountToken: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets: {{ toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: {{ .Values.runAsUser }}
+        runAsGroup: {{ .Values.runAsGroup }}
+        fsGroup: {{ .Values.fsGroup }}
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: minio
+          image: {{ .Values.image | quote }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          {{- if $distributed }}
+          command: [/bin/sh, -ec]
+          args:
+            - |
+              # A recreated Pod can temporarily resolve its previous IP from DNS.
+              # Wait for this Pod's advertised identity before MinIO builds its grid.
+              attempt=0
+              while [ "$attempt" -lt 60 ]; do
+                set -- $(timeout 2 getent ahostsv4 "$LAKEHOUSE_PEER_HOST" || true)
+                if [ "${1:-}" = "$LAKEHOUSE_POD_IP" ]; then
+                  exec minio server --console-address :9001 "$LAKEHOUSE_ENDPOINTS"
+                fi
+                attempt=$((attempt + 1))
+                sleep 2
+              done
+              echo 'MinIO peer DNS did not converge to this Pod IP within the startup budget' >&2
+              exit 1
+          {{- else }}
+          args: [server, /data, --console-address, ":9001"]
+          {{- end }}
+          env:
+            {{- if $distributed }}
+            - name: LAKEHOUSE_POD_NAME
+              valueFrom: {fieldRef: {fieldPath: metadata.name}}
+            - name: LAKEHOUSE_POD_IP
+              valueFrom: {fieldRef: {fieldPath: status.podIP}}
+            - name: LAKEHOUSE_PEER_HOST
+              value: {{ printf "$(LAKEHOUSE_POD_NAME).%s.%s.svc" $peerService .Release.Namespace | quote }}
+            - name: LAKEHOUSE_ENDPOINTS
+              value: {{ printf "http://%s-minio-{0...%d}.%s.%s.svc:9000/data" .Release.Name (sub (int .Values.distributed.replicas) 1) $peerService .Release.Namespace | quote }}
+            {{- end }}
+            - {name: HOME, value: /tmp}
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef: {name: {{ include "obminio.secret" . }}, key: rootUser}
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: {{ include "obminio.secret" . }}, key: rootPassword}
+            - name: MINIO_REGION_NAME
+              value: {{ .Values.region | quote }}
+          ports:
+            - {name: s3, containerPort: 9000}
+          {{- if $distributed }}
+          startupProbe:
+            httpGet: {path: /minio/health/live, port: s3}
+            periodSeconds: 2
+            failureThreshold: 150
+          {{- end }}
+          readinessProbe:
+            httpGet: {path: {{ ternary "/minio/health/cluster" "/minio/health/ready" $distributed }}, port: s3}
+            periodSeconds: 5
+            {{- if $distributed }}
+            timeoutSeconds: 5
+            {{- end }}
+          livenessProbe:
+            httpGet: {path: /minio/health/live, port: s3}
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
+          resources: {{ toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - {name: data, mountPath: /data}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        {{- if not $distributed }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ default (printf "%s-minio-data" .Release.Name) .Values.existingClaim }}
+        {{- end }}
+        - name: tmp
+          emptyDir: {}
+  {{- if $distributed }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: {{ .Values.storageClass | quote }}
+        resources:
+          requests:
+            storage: {{ .Values.distributed.driveSize }}
+  {{- end }}

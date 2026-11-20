@@ -37,8 +37,9 @@ import (
 // OBTenantReconciler reconciles a OBTenant object
 type OBTenantReconciler struct {
 	client.Client
-	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	APIReader client.Reader
+	Scheme    *runtime.Scheme
+	Recorder  record.EventRecorder
 }
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
@@ -77,11 +78,17 @@ func (r *OBTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	// create observer manager
 	obtenantManager := &resobtenant.OBTenantManager{
-		Ctx:      ctx,
-		OBTenant: obtenant,
-		Client:   r.Client,
-		Logger:   &logger,
-		Recorder: telemetry.NewRecorder(ctx, r.Recorder),
+		Ctx:          ctx,
+		OBTenant:     obtenant,
+		Client:       r.Client,
+		APIReader:    r.APIReader,
+		StatusAtRead: obtenant.DeepCopy().Status,
+		Logger:       &logger,
+		Recorder:     telemetry.NewRecorder(ctx, r.Recorder),
+	}
+
+	if bound, err := obtenantManager.BindOrdinaryCreation(); err != nil || bound {
+		return ctrl.Result{Requeue: bound}, err
 	}
 
 	coordinator := coordinator.NewCoordinator(obtenantManager, &logger)
@@ -90,6 +97,7 @@ func (r *OBTenantReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *OBTenantReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.APIReader = mgr.GetAPIReader()
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.OBTenant{}).
 		WithEventFilter(preds).

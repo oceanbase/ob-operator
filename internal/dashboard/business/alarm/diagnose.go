@@ -102,7 +102,8 @@ func DiagnoseAlert(ctx context.Context, param *alert.AnalyzeParam) (*jobmodel.Jo
 				Labels: labels,
 			},
 			Spec: corev1.PodSpec{
-				ServiceAccountName: bizconst.SERVICE_ACCOUNT_NAME,
+				ServiceAccountName: bizconst.ServiceAccountName(),
+				SecurityContext:    bizconst.SharedVolumeSecurityContext(),
 				RestartPolicy:      corev1.RestartPolicyNever,
 				InitContainers: []corev1.Container{
 					{

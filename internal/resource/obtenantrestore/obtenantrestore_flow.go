@@ -20,7 +20,7 @@ import (
 func genStartRestoreJobFlow(_ *ObTenantRestoreManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name:         "start restore",
+			Name:         trackedRestoreFlow,
 			Tasks:        []tasktypes.TaskName{tStartRestoreJobInOB},
 			TargetStatus: string(constants.RestoreJobRunning),
 			OnFailure: tasktypes.FailureRule{

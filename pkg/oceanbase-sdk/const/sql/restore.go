@@ -18,6 +18,7 @@ const (
 )
 
 const (
+	GetActivationState = "SELECT tenant_role, status, switchover_status FROM oceanbase.DBA_OB_TENANTS WHERE tenant_name = ? AND tenant_type = 'USER'"
 	SetRestorePassword = "SET DECRYPTION IDENTIFIED BY ?"
 	// tenant_name, uri, Time/SCN, restore_option
 	StartRestoreWithLimit = "ALTER SYSTEM RESTORE %s FROM ? UNTIL %s=? WITH ?"

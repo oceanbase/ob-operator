@@ -13,20 +13,26 @@ See the Mulan PSL v2 for more details.
 package obzone
 
 import (
+	"context"
 	"fmt"
+	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 	pq "github.com/ugurcsen/gods-generic/queues/priorityqueue"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
+	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/task/builder"
@@ -71,15 +77,24 @@ func AddSharedStorageDest(m *OBZoneManager) tasktypes.TaskError {
 		return errors.New("access_key is required in shared storage secret")
 	}
 
+	// Use the same runtime endpoint as bootstrap, without changing the CR spec.
+	bucketURL, err := resourceutils.ResolveStorageServiceURL(m.Ctx, m.Client, obcluster, obcluster.Spec.SharedStorageInfo.BucketURL)
+	if err != nil {
+		return errors.Wrap(err, "Resolve shared storage endpoint")
+	}
+
 	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return errors.Wrap(err, "Get oceanbase operation manager")
 	}
 	accessInfo := fmt.Sprintf("access_id=%s&access_key=%s", accessID, accessKey)
-	attribute := buildSharedStorageAttribute(obcluster.Spec.SharedStorageInfo.MaxIOPS, obcluster.Spec.SharedStorageInfo.MaxBandwidth)
+	attribute, err := sharedStorageAttributeFromSpec(obcluster.Spec.SharedStorageInfo)
+	if err != nil {
+		return err
+	}
 	return oceanbaseOperationManager.AddSharedStorageDest(
 		m.Ctx,
-		obcluster.Spec.SharedStorageInfo.BucketURL,
+		bucketURL,
 		accessInfo,
 		attribute,
 		m.OBZone.Spec.Topology.Zone,
@@ -87,14 +102,37 @@ func AddSharedStorageDest(m *OBZoneManager) tasktypes.TaskError {
 }
 
 func buildSharedStorageAttribute(maxIOPS, maxBandwidth string) string {
-	attributes := make([]string, 0, 2)
-	if maxIOPS != "" {
-		attributes = append(attributes, "max_iops="+maxIOPS)
+	maxIOPS, maxBandwidth = strings.TrimSpace(maxIOPS), strings.TrimSpace(maxBandwidth)
+	if maxIOPS == "" {
+		maxIOPS = "0"
 	}
-	if maxBandwidth != "" {
-		attributes = append(attributes, "max_bandwidth="+maxBandwidth)
+	if maxBandwidth == "" {
+		maxBandwidth = "0B"
+	} else if _, err := strconv.ParseUint(maxBandwidth, 10, 64); err == nil {
+		maxBandwidth += "B"
 	}
-	return strings.Join(attributes, "&")
+	return "max_iops=" + maxIOPS + "&max_bandwidth=" + maxBandwidth
+}
+
+func sharedStorageAttributeFromSpec(storage *apitypes.SharedStorageSpec) (string, error) {
+	// Preserve limits embedded in bucketURL, as accepted by BOOTSTRAP. Explicit
+	// fields take precedence. Do not log the URL: it may contain credentials.
+	parsed, err := url.Parse(storage.BucketURL)
+	if err != nil {
+		return "", errors.New("invalid shared storage bucket URL")
+	}
+	query, err := url.ParseQuery(parsed.RawQuery)
+	if err != nil {
+		return "", errors.New("invalid shared storage bucket URL query")
+	}
+	maxIOPS, maxBandwidth := storage.MaxIOPS, storage.MaxBandwidth
+	if strings.TrimSpace(maxIOPS) == "" {
+		maxIOPS = query.Get("max_iops")
+	}
+	if strings.TrimSpace(maxBandwidth) == "" {
+		maxBandwidth = query.Get("max_bandwidth")
+	}
+	return buildSharedStorageAttribute(maxIOPS, maxBandwidth), nil
 }
 
 func StartOBZone(m *OBZoneManager) tasktypes.TaskError {
@@ -116,7 +154,7 @@ func CreateOBServer(m *OBZoneManager) tasktypes.TaskError {
 	}
 	for i := currentReplica; i < m.OBZone.Spec.Topology.Replica; i++ {
 		serverName := m.generateServerName()
-		_, err := m.createOneOBServer(serverName)
+		_, err := m.createOneOBServer(serverName, "")
 		if err != nil {
 			return errors.Wrapf(err, "Create observer %s", serverName)
 		}
@@ -290,9 +328,18 @@ func WaitOBServerUpgraded(m *OBZoneManager) tasktypes.TaskError {
 }
 
 func DeleteOBZoneInCluster(m *OBZoneManager) tasktypes.TaskError {
+	cluster, err := m.getOBCluster()
+	if err != nil {
+		return errors.Wrap(err, "Get obcluster before deleting zone")
+	}
 	operationManager, err := m.getOceanbaseOperationManager()
 	if err != nil {
 		return errors.Wrapf(err, "OBZone %s get oceanbase operation manager", m.OBZone.Name)
+	}
+	if cluster.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
+		if err := operationManager.DropZoneSharedStorage(m.Ctx, m.OBZone.Spec.Topology.Zone); err != nil {
+			return errors.Wrap(err, "Drop shared storage before deleting zone")
+		}
 	}
 	err = operationManager.DeleteZone(m.Ctx, m.OBZone.Spec.Topology.Zone)
 	if err != nil {
@@ -359,38 +406,29 @@ func ModifyPodTemplate(m *OBZoneManager) tasktypes.TaskError {
 		return err
 	}
 	for _, observer := range observerList.Items {
-		observerCopied := observer.DeepCopy()
-		if observer.Spec.BackupVolume == nil && m.OBZone.Spec.BackupVolume != nil {
-			m.Logger.Info("Add backup volume", "observer", observer.Name)
+		if !m.ownsRollingServer(&observer) || observer.DeletionTimestamp != nil {
+			return errors.Errorf("observer %s is deleting or has a different owner", observer.Name)
+		}
+		backupChanged := m.checkIfBackupVolumeMutated(&observer)
+		monitorChanged := m.checkIfMonitorMutated(&observer)
+		if !backupChanged && !monitorChanged {
+			continue
+		}
+		original := observer.DeepCopy()
+		if backupChanged {
 			observer.Spec.BackupVolume = m.OBZone.Spec.BackupVolume
-			err = m.Client.Patch(m.Ctx, &observer, client.MergeFrom(observerCopied))
-			if err != nil {
-				return errors.Wrapf(err, "Add backup volume %s failed", observer.Name)
-			}
 		}
-		if observer.Spec.MonitorTemplate == nil && m.OBZone.Spec.MonitorTemplate != nil {
-			m.Logger.Info("Add monitor template", "observer", observer.Name)
-			observer.Spec.MonitorTemplate = m.OBZone.Spec.MonitorTemplate
-			err = m.Client.Patch(m.Ctx, &observer, client.MergeFrom(observerCopied))
-			if err != nil {
-				return errors.Wrapf(err, "Add monitor template %s failed", observer.Name)
+		if monitorChanged {
+			observer.Spec.MonitorTemplate = m.OBZone.Spec.Topology.EffectiveMonitor(m.OBZone.Spec.MonitorTemplate)
+			if observer.Annotations == nil {
+				observer.Annotations = make(map[string]string)
 			}
+			// Record the edit together with the spec. This also distinguishes an
+			// intentional CPU limit removal from a limit injected by admission.
+			observer.Annotations[oceanbaseconst.AnnotationsMonitorRevision] = original.ResourceVersion
 		}
-		if observer.Spec.BackupVolume != nil && m.OBZone.Spec.BackupVolume == nil {
-			m.Logger.Info("Remove backup volume", "observer", observer.Name)
-			observer.Spec.BackupVolume = nil
-			err = m.Client.Patch(m.Ctx, &observer, client.MergeFrom(observerCopied))
-			if err != nil {
-				return errors.Wrapf(err, "Remove backup volume %s failed", observer.Name)
-			}
-		}
-		if observer.Spec.MonitorTemplate != nil && m.OBZone.Spec.MonitorTemplate == nil {
-			m.Logger.Info("Remove monitor template", "observer", observer.Name)
-			observer.Spec.MonitorTemplate = nil
-			err = m.Client.Patch(m.Ctx, &observer, client.MergeFrom(observerCopied))
-			if err != nil {
-				return errors.Wrapf(err, "Remove monitor template %s failed", observer.Name)
-			}
+		if err := m.Client.Patch(m.Ctx, &observer, client.MergeFromWithOptions(original, client.MergeFromWithOptimisticLock{})); err != nil {
+			return errors.Wrapf(err, "update pod template for observer %s", observer.Name)
 		}
 	}
 	return nil
@@ -434,10 +472,13 @@ func DeleteLegacyOBServers(m *OBZoneManager) tasktypes.TaskError {
 }
 
 func WaitOBServerBootstrapReady(m *OBZoneManager) tasktypes.TaskError {
-	return m.generateWaitOBServerStatusFunc(serverstatus.BootstrapReady, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
+	return m.waitForBootstrapReplicas(serverstatus.BootstrapReady)
 }
 
 func WaitOBServerRunning(m *OBZoneManager) tasktypes.TaskError {
+	if m.OBZone.Status.Status == zonestatus.BootstrapReady {
+		return m.waitForBootstrapReplicas(serverstatus.Running)
+	}
 	return m.generateWaitOBServerStatusFunc(serverstatus.Running, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
@@ -450,7 +491,10 @@ func WaitForOBServerExpandingPVC(m *OBZoneManager) tasktypes.TaskError {
 }
 
 func WaitForOBServerTemplateModifying(m *OBZoneManager) tasktypes.TaskError {
-	return m.generateWaitOBServerStatusFunc(serverstatus.ModifyingPodTemplate, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
+	timeout := time.Duration(obcfg.GetConfig().Time.DefaultStateWaitTimeout) * time.Second
+	return wait.PollUntilContextTimeout(m.Ctx, time.Second, timeout, true, func(ctx context.Context) (bool, error) {
+		return resourceutils.ZonePodTemplatesReady(ctx, m.Client, m.OBZone)
+	})
 }
 
 func RollingReplaceOBServers(m *OBZoneManager) tasktypes.TaskError {
@@ -458,48 +502,51 @@ func RollingReplaceOBServers(m *OBZoneManager) tasktypes.TaskError {
 	if err != nil {
 		return errors.Wrap(err, "List observers")
 	}
+	// A finalizer may still be draining a server from the preceding attempt.
 	for _, server := range servers.Items {
-		m.Logger.Info(fmt.Sprintf("Replacing observer %s", server.Name))
-		newServerName := m.generateServerName()
-		newServer, err := m.createOneOBServer(newServerName)
+		if !m.ownsRollingServer(&server) {
+			return errors.Errorf("observer %s does not belong to zone UID %s", server.Name, m.OBZone.UID)
+		}
+		if server.DeletionTimestamp != nil {
+			if err := m.waitForRollingServerDeletion(server.Name); err != nil {
+				return err
+			}
+		}
+	}
+	prioritizePendingReplacements(servers.Items)
+	for _, server := range servers.Items {
+		if server.DeletionTimestamp != nil || !m.checkIfStorageClassChanged(&server) {
+			continue
+		}
+		target, err := m.getRollingReplacement(&server)
 		if err != nil {
-			return errors.Wrap(err, "Create new observer to replace old one")
+			return err
 		}
-		for i := 0; i < obcfg.GetConfig().Time.DefaultStateWaitTimeout; i++ {
-			time.Sleep(time.Second)
-			err = m.Client.Get(m.Ctx, m.generateNamespacedName(newServerName), newServer)
-			if err != nil {
-				return errors.Wrap(err, "Get new observer")
-			}
-			if newServer.Status.Status == serverstatus.Running {
-				break
-			}
+		if target == nil {
+			continue
 		}
-		if newServer.Status.Status != serverstatus.Running {
-			return errors.New("Wait for new observer get running status, timeout")
+		if err := m.waitForRollingReplacement(target, server.UID); err != nil {
+			return err
 		}
-		m.Logger.Info(fmt.Sprintf("New observer %s created", newServer.Name))
-		err = m.Client.Delete(m.Ctx, &server)
-		if err != nil {
-			return errors.Wrap(err, "Delete old observer")
+		err = m.Client.Delete(m.Ctx, &server, client.Preconditions{UID: &server.UID})
+		if client.IgnoreNotFound(err) != nil {
+			return errors.Wrapf(err, "delete replaced observer %s", server.Name)
 		}
-		var deleted bool
-		for i := 0; i < obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds; i++ {
-			time.Sleep(time.Second)
-			oldServer := &v1alpha1.OBServer{}
-			err = m.Client.Get(m.Ctx, m.generateNamespacedName(server.Name), oldServer)
-			if err != nil {
-				if kubeerrors.IsNotFound(err) {
-					deleted = true
-					break
-				}
-				return errors.Wrap(err, "Get old observer")
-			}
+		if err := m.waitForRollingServerDeletion(server.Name); err != nil {
+			return err
 		}
-		if !deleted {
-			m.Logger.Error(errors.New("Delete old observer timeout"), "observer", server.Name)
-		}
-		m.Logger.Info(fmt.Sprintf("Old observer %s deleted", server.Name))
 	}
 	return nil
+}
+
+func (m *OBZoneManager) waitForRollingServerDeletion(name string) error {
+	timeout := time.Duration(obcfg.GetConfig().Time.ServerDeleteTimeoutSeconds) * time.Second
+	err := wait.PollUntilContextTimeout(m.Ctx, time.Second, timeout, true, func(ctx context.Context) (bool, error) {
+		err := m.Client.Get(ctx, m.generateNamespacedName(name), &v1alpha1.OBServer{})
+		if kubeerrors.IsNotFound(err) {
+			return true, nil
+		}
+		return false, err
+	})
+	return errors.Wrapf(err, "wait for deletion of observer %s", name)
 }

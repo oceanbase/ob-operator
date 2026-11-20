@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package obcluster
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"strings"
@@ -21,6 +22,7 @@ import (
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -28,6 +30,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
@@ -46,14 +49,7 @@ func (m *OBClusterManager) checkIfStorageSizeExpand(obzone *v1alpha1.OBZone) boo
 }
 
 func (m *OBClusterManager) checkIfStorageClassChange(obzone *v1alpha1.OBZone) bool {
-	newStorage := m.OBCluster.Spec.OBServerTemplate.Storage
-	oldStorage := obzone.Spec.OBServerTemplate.Storage
-	changed := oldStorage.DataStorage.StorageClass != newStorage.DataStorage.StorageClass ||
-		oldStorage.LogStorage.StorageClass != newStorage.LogStorage.StorageClass
-	if oldStorage.RedoLogStorage != nil && newStorage.RedoLogStorage != nil {
-		changed = changed || oldStorage.RedoLogStorage.StorageClass != newStorage.RedoLogStorage.StorageClass
-	}
-	return changed
+	return !resourceutils.SameObserverStorageClasses(obzone.Spec.OBServerTemplate, m.OBCluster.Spec.OBServerTemplate, obzone.Annotations)
 }
 
 func (m *OBClusterManager) checkIfCalcResourceChange(obzone *v1alpha1.OBZone) bool {
@@ -66,7 +62,17 @@ func (m *OBClusterManager) checkIfBackupVolumeMutated(obzone *v1alpha1.OBZone) b
 }
 
 func (m *OBClusterManager) checkIfMonitorMutated(obzone *v1alpha1.OBZone) bool {
-	return (obzone.Spec.MonitorTemplate == nil) != (m.OBCluster.Spec.MonitorTemplate == nil)
+	return !obzone.Spec.MonitorTemplate.Equal(m.OBCluster.Spec.MonitorTemplate) ||
+		!obzone.Spec.Topology.MonitorTemplate.Equal(m.desiredZoneTopology(obzone).MonitorTemplate)
+}
+
+func (m *OBClusterManager) desiredZoneTopology(obzone *v1alpha1.OBZone) *apitypes.OBZoneTopology {
+	for i := range m.OBCluster.Spec.Topology {
+		if m.OBCluster.Spec.Topology[i].Zone == obzone.Spec.Topology.Zone {
+			return &m.OBCluster.Spec.Topology[i]
+		}
+	}
+	return &obzone.Spec.Topology
 }
 
 func (m *OBClusterManager) retryUpdateStatus() error {
@@ -153,32 +159,27 @@ func (m *OBClusterManager) getOceanbaseOperationManager() (*operation.OceanbaseO
 
 func (m *OBClusterManager) createUser(userName, secretName, privilege string) error {
 	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Begin to create user", "username", userName)
-	password, err := resourceutils.ReadPassword(m.Client, m.OBCluster.Namespace, secretName)
-	if err != nil {
-		return errors.Wrapf(err, "Get password from secret %s failed", secretName)
-	}
-	oceanbaseOperationManager, err := m.getOceanbaseOperationManager()
-	if err != nil {
-		m.Logger.Error(err, "Get oceanbase operation manager")
-		return errors.Wrap(err, "Get oceanbase operation manager")
-	}
-	err = oceanbaseOperationManager.CreateUser(m.Ctx, userName)
-	if err != nil {
-		m.Logger.Error(err, "Create user")
-		return errors.Wrapf(err, "Create user %s", userName)
-	}
-	err = oceanbaseOperationManager.SetUserPassword(m.Ctx, userName, password)
-	if err != nil {
-		m.Logger.Error(err, "Set user password")
-		return errors.Wrapf(err, "Set password for user %s", userName)
-	}
-	object := "*.*"
-	err = oceanbaseOperationManager.GrantPrivilege(m.Ctx, privilege, object, userName)
-	if err != nil {
-		m.Logger.Error(err, "Grant privilege")
-		return errors.Wrapf(err, "Grant privilege for user %s", userName)
-	}
-	return nil
+	return m.withInitializationClient(tCreateUsers, func(db *operation.OceanbaseOperationManager, rootPassword string) error {
+		password := rootPassword
+		if secretName != m.OBCluster.Spec.UserSecrets.Root {
+			var err error
+			password, err = m.initializationPassword(secretName)
+			if err != nil {
+				return err
+			}
+		}
+		if err := db.CreateUser(m.Ctx, userName); err != nil {
+			return errors.Wrapf(err, "Create user %s", userName)
+		}
+		// A previous attempt may already have set root's password. Its fresh
+		// authenticated connection proves that no further change is necessary.
+		if m.OBCluster.Status.Status != clusterstatus.Bootstrapped || userName != oceanbaseconst.RootUser || db.Connector.DataSource().GetPassword() != password {
+			if err := db.SetUserPassword(m.Ctx, userName, password); err != nil {
+				return errors.Wrapf(err, "Set password for user %s", userName)
+			}
+		}
+		return errors.Wrapf(db.GrantPrivilege(m.Ctx, privilege, "*.*", userName), "Grant privilege for user %s", userName)
+	})
 }
 
 type obzoneChanger func(*v1alpha1.OBZone)
@@ -202,6 +203,7 @@ func (m *OBClusterManager) changeZonesWhenUpdatingOBServers(obzone *v1alpha1.OBZ
 
 func (m *OBClusterManager) changeZonesWhenModifyingServerTemplate(obzone *v1alpha1.OBZone) {
 	obzone.Spec.BackupVolume = m.OBCluster.Spec.BackupVolume
+	obzone.Spec.Topology.MonitorTemplate = m.desiredZoneTopology(obzone).MonitorTemplate
 	obzone.Spec.MonitorTemplate = m.OBCluster.Spec.MonitorTemplate
 }
 
@@ -245,17 +247,55 @@ func (m *OBClusterManager) modifyOBZonesAndCheckStatus(changer obzoneChanger, st
 	}
 }
 
+func (m *OBClusterManager) waitForZonePodTemplate(zone *v1alpha1.OBZone, timeout time.Duration) error {
+	return wait.PollUntilContextTimeout(m.Ctx, time.Second, timeout, true, func(ctx context.Context) (bool, error) {
+		current := &v1alpha1.OBZone{}
+		if err := m.Client.Get(ctx, client.ObjectKeyFromObject(zone), current); err != nil {
+			return false, err
+		}
+		if current.UID != zone.UID || !resourceutils.IsLiveChild(current, m.OBCluster, "OBCluster") {
+			return false, errors.Errorf("zone %s was replaced or is deleting", zone.Name)
+		}
+		if current.Generation < zone.Generation || current.Status.Status != zonestatus.Running ||
+			current.Spec.Topology.Replica != zone.Spec.Topology.Replica ||
+			!current.Spec.MonitorTemplate.Equal(zone.Spec.MonitorTemplate) ||
+			!current.Spec.Topology.MonitorTemplate.Equal(zone.Spec.Topology.MonitorTemplate) ||
+			(current.Spec.BackupVolume == nil) != (zone.Spec.BackupVolume == nil) {
+			return false, nil
+		}
+		return resourceutils.ZonePodTemplatesReady(ctx, m.Client, current)
+	})
+}
+
 func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStatus, targetStatus string, timeoutSeconds int) tasktypes.TaskFunc {
 	return func() tasktypes.TaskError {
 		obzoneList, err := m.listOBZones()
 		if err != nil {
 			return errors.Wrap(err, "list obzones")
 		}
+		var waitForZone func(*v1alpha1.OBZone, time.Duration) error
+		switch workingStatus {
+		case zonestatus.RollingUpdateServers:
+			waitForZone = m.waitForZoneStorage
+		case zonestatus.ModifyServerTemplate:
+			waitForZone = m.waitForZonePodTemplate
+		default:
+			// Other operations wait for their working and target states below.
+		}
+		if waitForZone != nil {
+			// Finish any previously dispatched change before issuing the next one.
+			for i := range obzoneList.Items {
+				if err := waitForZone(&obzoneList.Items[i], time.Duration(timeoutSeconds)*time.Second); err != nil {
+					return err
+				}
+			}
+		}
 		for _, obzone := range obzoneList.Items {
 			tk := time.NewTicker(time.Duration(timeoutSeconds) * time.Second)
 			defer tk.Stop()
 			m.Logger.Info(fmt.Sprintf("Update obzone %s", obzone.Name))
 			var specChanged bool
+			var dispatched *v1alpha1.OBZone
 			m.Recorder.Event(m.OBCluster, "Normal", "RollingUpdateOBZone", "Rolling update OBZone "+obzone.Name)
 			err = retry.RetryOnConflict(retry.DefaultRetry, func() error {
 				targetZone := v1alpha1.OBZone{}
@@ -266,8 +306,15 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 				if err != nil {
 					return errors.Wrap(err, "get obzone")
 				}
+				if waitForZone != nil && targetZone.UID != obzone.UID {
+					return errors.Errorf("zone %s was recreated during rolling update", obzone.Name)
+				}
+				if workingStatus == zonestatus.ModifyServerTemplate && !resourceutils.IsLiveChild(&targetZone, m.OBCluster, "OBCluster") {
+					return errors.Errorf("zone %s is deleting or has a different owner", targetZone.Name)
+				}
 				originalZone := targetZone.DeepCopy()
 				changer(&targetZone)
+				dispatched = &targetZone // Update populates the API server's committed generation.
 				if reflect.DeepEqual(originalZone.Spec, targetZone.Spec) {
 					specChanged = false
 					return nil
@@ -277,6 +324,12 @@ func (m *OBClusterManager) rollingUpdateZones(changer obzoneChanger, workingStat
 			})
 			if err != nil {
 				return errors.Wrap(err, "update obzone")
+			}
+			if waitForZone != nil {
+				if err := waitForZone(dispatched, time.Duration(timeoutSeconds)*time.Second); err != nil {
+					return err
+				}
+				continue
 			}
 			if !specChanged {
 				m.Logger.Info("OBZone not changed, skip checking this zone", "obzone", obzone.Name)
@@ -444,8 +497,12 @@ func (m *OBClusterManager) buildLogServiceAccessPoint() (string, error) {
 	accessId := string(secret.Data["access_id"])
 	accessKey := string(secret.Data["access_key"])
 
+	bucketURL, err := resourceutils.ResolveStorageServiceURL(m.Ctx, m.Client, lsCluster, lsCluster.Spec.ObjectStoreURL.BucketURL)
+	if err != nil {
+		return "", err
+	}
 	accessPoint := fmt.Sprintf("%s&access_id=%s&access_key=%s&logservice_cluster_id=%d",
-		lsCluster.Spec.ObjectStoreURL.BucketURL, accessId, accessKey, lsCluster.Spec.ClusterId)
+		bucketURL, accessId, accessKey, lsCluster.Spec.ClusterId)
 	return accessPoint, nil
 }
 
@@ -460,8 +517,12 @@ func (m *OBClusterManager) buildSharedStorageInfo() (string, error) {
 	accessId := string(secret.Data["access_id"])
 	accessKey := string(secret.Data["access_key"])
 
+	bucketURL, err := resourceutils.ResolveStorageServiceURL(m.Ctx, m.Client, m.OBCluster, m.OBCluster.Spec.SharedStorageInfo.BucketURL)
+	if err != nil {
+		return "", err
+	}
 	info := fmt.Sprintf("%s&access_id=%s&access_key=%s",
-		m.OBCluster.Spec.SharedStorageInfo.BucketURL, accessId, accessKey)
+		bucketURL, accessId, accessKey)
 	if m.OBCluster.Spec.SharedStorageInfo.MaxIOPS != "" {
 		info += "&max_iops=" + m.OBCluster.Spec.SharedStorageInfo.MaxIOPS
 	}

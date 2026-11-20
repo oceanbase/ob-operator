@@ -13,18 +13,21 @@ See the Mulan PSL v2 for more details.
 package observer
 
 import (
+	"context"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/apimachinery/pkg/util/wait"
 
-	apitypes "github.com/oceanbase/ob-operator/api/types"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	obcfg "github.com/oceanbase/ob-operator/internal/config/operator"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	podconst "github.com/oceanbase/ob-operator/internal/const/pod"
@@ -88,18 +91,18 @@ func AddServer(m *OBServerManager) tasktypes.TaskError {
 }
 
 func WaitOBClusterBootstrapped(m *OBServerManager) tasktypes.TaskError {
-	for i := 0; i < obcfg.GetConfig().Time.BootstrapTimeoutSeconds; i++ {
-		obcluster, err := m.getOBCluster()
-		if err != nil {
-			return errors.Wrap(err, "Get obcluster from K8s")
+	timeout := time.Duration(obcfg.GetConfig().Time.BootstrapTimeoutSeconds) * time.Second
+	key := m.generateNamespacedName(m.OBServer.Labels[oceanbaseconst.LabelRefOBCluster])
+	return wait.PollUntilContextTimeout(m.Ctx, time.Second, timeout, true, func(ctx context.Context) (bool, error) {
+		cluster := &v1alpha1.OBCluster{}
+		if err := m.Client.Get(ctx, key, cluster); err != nil {
+			return false, errors.Wrap(err, "get parent OBCluster while waiting for bootstrap")
 		}
-		if obcluster.Status.Status == clusterstatus.Bootstrapped {
-			m.Logger.Info("OBCluster bootstrapped")
-			return nil
+		if cluster.DeletionTimestamp != nil {
+			return false, fmt.Errorf("parent OBCluster %s is being deleted", cluster.Name)
 		}
-		time.Sleep(time.Second)
-	}
-	return errors.New("Timeout to wait obcluster bootstrapped")
+		return cluster.Status.Status == clusterstatus.Bootstrapped || cluster.Status.Status == clusterstatus.Running, nil
+	})
 }
 
 func CreateOBServerPod(m *OBServerManager) tasktypes.TaskError {
@@ -151,6 +154,10 @@ func CreateOBServerPod(m *OBServerManager) tasktypes.TaskError {
 		}
 	}
 
+	if revision := m.OBServer.Annotations[oceanbaseconst.AnnotationsMonitorRevision]; revision != "" {
+		annotations[oceanbaseconst.AnnotationsMonitorRevision] = revision
+	}
+
 	// create pod
 	observerPod := &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -172,99 +179,85 @@ func CreateOBServerPod(m *OBServerManager) tasktypes.TaskError {
 }
 
 func CreateOBServerPVC(m *OBServerManager) tasktypes.TaskError {
-	ownerReferenceList := make([]metav1.OwnerReference, 0)
-	sepVolumeAnnoVal, sepVolumeAnnoExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsIndependentPVCLifecycle)
-	if !sepVolumeAnnoExist || sepVolumeAnnoVal != "true" {
-		ownerReference := metav1.OwnerReference{
-			APIVersion: m.OBServer.APIVersion,
-			Kind:       m.OBServer.Kind,
-			Name:       m.OBServer.Name,
-			UID:        m.OBServer.GetUID(),
-		}
-		ownerReferenceList = append(ownerReferenceList, ownerReference)
+	server := m.OBServer
+	if server.UID == "" {
+		return errors.New("cannot create observer claims without an observer UID")
 	}
-	singlePvcAnnoVal, singlePvcExist := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsSinglePVC)
-	pvcLabels := m.OBServer.Labels
-	pvcLabels[oceanbaseconst.LabelRefUID] = string(m.OBServer.UID)
-	pvcLabels[oceanbaseconst.LabelRefOBServer] = string(m.OBServer.Name)
-
-	deployModeAnnoVal, _ := resourceutils.GetAnnotationField(m.OBServer, oceanbaseconst.AnnotationsDeploymentMode)
-	isSharedStorage := deployModeAnnoVal == oceanbaseconst.DeploymentModeSharedStorage
-
-	if singlePvcExist && singlePvcAnnoVal == "true" {
-		sumQuantity := resource.Quantity{}
-		sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size)
-		if !isSharedStorage && m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
-			sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
+	labels := map[string]string{}
+	maps.Copy(labels, server.Labels)
+	labels[oceanbaseconst.LabelRefUID] = string(server.UID)
+	labels[oceanbaseconst.LabelRefOBServer] = server.Name
+	var owners []metav1.OwnerReference
+	if server.Annotations[oceanbaseconst.AnnotationsIndependentPVCLifecycle] != "true" {
+		owners = []metav1.OwnerReference{{APIVersion: v1alpha1.GroupVersion.String(), Kind: "OBServer", Name: server.Name, UID: server.UID}}
+	}
+	for _, target := range m.storageClaims(nil) {
+		want := &corev1.PersistentVolumeClaim{
+			ObjectMeta: metav1.ObjectMeta{Name: target.name, Namespace: server.Namespace, OwnerReferences: owners, Labels: labels},
+			Spec:       m.generatePVCSpec(target.storage),
 		}
-		sumQuantity.Add(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size)
-		storageSpec := &apitypes.StorageSpec{
-			StorageClass: m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.StorageClass,
-			Size:         sumQuantity,
+		err := m.K8sResClient.Create(m.Ctx, want)
+		if kubeerrors.IsAlreadyExists(err) {
+			err = m.verifyBootstrapClaim(want)
 		}
-		pvc := &corev1.PersistentVolumeClaim{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:            m.OBServer.Name,
-				Namespace:       m.OBServer.Namespace,
-				OwnerReferences: ownerReferenceList,
-				Labels:          pvcLabels,
-			},
-			Spec: m.generatePVCSpec(storageSpec),
-		}
-		err := m.K8sResClient.Create(m.Ctx, pvc)
 		if err != nil {
-			return errors.Wrap(err, "Create single pvc of observer")
-		}
-	} else {
-		objectMeta := metav1.ObjectMeta{
-			Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix),
-			Namespace:       m.OBServer.Namespace,
-			OwnerReferences: ownerReferenceList,
-			Labels:          pvcLabels,
-		}
-		pvc := &corev1.PersistentVolumeClaim{
-			ObjectMeta: objectMeta,
-			Spec:       m.generatePVCSpec(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage),
-		}
-		err := m.K8sResClient.Create(m.Ctx, pvc)
-		if err != nil {
-			return errors.Wrap(err, "Create pvc of data file")
-		}
-
-		if !isSharedStorage && m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
-			objectMeta = metav1.ObjectMeta{
-				Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix),
-				Namespace:       m.OBServer.Namespace,
-				OwnerReferences: ownerReferenceList,
-				Labels:          pvcLabels,
-			}
-			pvc = &corev1.PersistentVolumeClaim{
-				ObjectMeta: objectMeta,
-				Spec:       m.generatePVCSpec(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage),
-			}
-			err = m.K8sResClient.Create(m.Ctx, pvc)
-			if err != nil {
-				return errors.Wrap(err, "Create pvc of data log")
-			}
-		}
-
-		objectMeta = metav1.ObjectMeta{
-			Name:            fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix),
-			Namespace:       m.OBServer.Namespace,
-			OwnerReferences: ownerReferenceList,
-			Labels:          pvcLabels,
-		}
-		pvc = &corev1.PersistentVolumeClaim{
-			ObjectMeta: objectMeta,
-			Spec:       m.generatePVCSpec(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage),
-		}
-		err = m.K8sResClient.Create(m.Ctx, pvc)
-		if err != nil {
-			return errors.Wrap(err, "Create pvc of log")
+			return errors.Wrapf(err, "create or verify observer PVC %s", target.name)
 		}
 	}
-
 	return nil
+}
+
+func (m *OBServerManager) verifyBootstrapClaim(want *corev1.PersistentVolumeClaim) error {
+	reader := m.K8sReader
+	if reader == nil {
+		reader = m.K8sResClient
+	}
+	existing := &corev1.PersistentVolumeClaim{}
+	if err := reader.Get(m.Ctx, m.generateNamespacedName(want.Name), existing); err != nil {
+		return err
+	}
+	if !matchesBootstrapClaim(want, existing, m.OBServer.Labels[oceanbaseconst.LabelRefUID]) {
+		return errors.Errorf("existing PVC does not match observer %s ownership or storage", m.OBServer.UID)
+	}
+	if existing.Spec.VolumeName == "" {
+		return nil
+	}
+
+	// A volume name may also be set by prebinding. Check the PV's side of the
+	// binding before allowing the observer to mount it.
+	pv := &corev1.PersistentVolume{}
+	if err := reader.Get(m.Ctx, types.NamespacedName{Name: existing.Spec.VolumeName}, pv); err != nil {
+		return err
+	}
+	ref := pv.Spec.ClaimRef
+	if ref == nil || existing.UID == "" || ref.UID != existing.UID || ref.Namespace != existing.Namespace || ref.Name != existing.Name {
+		return errors.Errorf("PV %s does not reference PVC %s/%s with UID %s", pv.Name, existing.Namespace, existing.Name, existing.UID)
+	}
+	return nil
+}
+
+func matchesBootstrapClaim(want, existing *corev1.PersistentVolumeClaim, zoneUID string) bool {
+	if existing.DeletionTimestamp != nil || existing.Status.Phase == corev1.ClaimLost ||
+		!equality.Semantic.DeepEqual(want.OwnerReferences, existing.OwnerReferences) {
+		return false
+	}
+	uid := existing.Labels[oceanbaseconst.LabelRefUID]
+	name := existing.Labels[oceanbaseconst.LabelRefOBServer]
+	if uid != want.Labels[oceanbaseconst.LabelRefUID] || name != want.Labels[oceanbaseconst.LabelRefOBServer] {
+		// Older operators copied the Zone labels to the PVC. Its Observer owner
+		// must independently prove identity before accepting the old label layout.
+		if len(want.OwnerReferences) != 1 || name != "" || (uid != "" && uid != zoneUID) {
+			return false
+		}
+	}
+
+	// Binding fills in the PV name and the API defaults omitted volume mode to Filesystem.
+	spec := existing.Spec.DeepCopy()
+	spec.VolumeName = ""
+	if spec.VolumeMode != nil && *spec.VolumeMode == corev1.PersistentVolumeFilesystem {
+		spec.VolumeMode = nil
+	}
+	return equality.Semantic.DeepEqual(want.Spec, *spec)
 }
 
 func DeleteOBServerInCluster(m *OBServerManager) tasktypes.TaskError {
@@ -474,95 +467,57 @@ func WaitForPodDeleted(m *OBServerManager) tasktypes.TaskError {
 }
 
 func ExpandPVC(m *OBServerManager) tasktypes.TaskError {
-	observerPVC, err := m.getPVCs()
+	pvcs, err := m.getPVCs(nil)
 	if err != nil {
-		return errors.Wrapf(err, "Failed to get pvc list of observer %s", m.OBServer.Name)
+		return errors.Wrapf(err, "list PVCs for observer %s", m.OBServer.Name)
 	}
-
-	for _, pvc := range observerPVC.Items {
-		switch pvc.Name {
-		case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix):
-			pvc.Spec.Resources.Requests[corev1.ResourceStorage] = m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size
-			err = m.K8sResClient.Update(m.Ctx, &pvc)
+	claims := indexPVCs(pvcs)
+	for _, target := range m.storageClaims(claims) {
+		pvc := claims[target.name]
+		if pvc == nil || pvc.DeletionTimestamp != nil {
+			// Pod recovery must be able to run even when it has taken its PVCs with it.
+			err := m.K8sResClient.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), &corev1.Pod{})
+			if kubeerrors.IsNotFound(err) {
+				return nil
+			}
 			if err != nil {
-				return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
+				return err
 			}
-		case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix):
-			if m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
-				pvc.Spec.Resources.Requests[corev1.ResourceStorage] = m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size
-				err = m.K8sResClient.Update(m.Ctx, &pvc)
-				if err != nil {
-					return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
-				}
-			}
-		case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix):
-			pvc.Spec.Resources.Requests[corev1.ResourceStorage] = m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size
-			err = m.K8sResClient.Update(m.Ctx, &pvc)
-			if err != nil {
-				return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
-			}
-		case m.OBServer.Name: // single pvc
-			sum := resource.Quantity{}
-			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size)
-			if m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
-				sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
-			}
-			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size)
-			pvc.Spec.Resources.Requests[corev1.ResourceStorage] = sum
-			err = m.K8sResClient.Update(m.Ctx, &pvc)
-			if err != nil {
-				return errors.Wrapf(err, "Failed to update pvc of observer %s", m.OBServer.Name)
-			}
+			return errors.Errorf("observer PVC %s is missing or being deleted", target.name)
+		}
+		if pvc.Spec.Resources.Requests.Storage().Cmp(target.storage.Size) >= 0 {
+			continue
+		}
+		pvc.Spec.Resources.Requests[corev1.ResourceStorage] = target.storage.Size
+		if err := m.K8sResClient.Update(m.Ctx, pvc); err != nil {
+			return errors.Wrapf(err, "expand observer PVC %s", target.name)
 		}
 	}
 	return nil
 }
 
 func WaitForPvcResized(m *OBServerManager) tasktypes.TaskError {
-outer:
 	for i := 0; i < obcfg.GetConfig().Time.DefaultStateWaitTimeout; i++ {
 		time.Sleep(time.Second)
-
-		observerPVC, err := m.getPVCs()
+		pod := &corev1.Pod{}
+		err := m.K8sResClient.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), pod)
+		if kubeerrors.IsNotFound(err) {
+			// Node expansion may need a mounted filesystem. Finish this task so
+			// the usual pod recovery runs, then recheck capacity on reconciliation.
+			return nil
+		}
 		if err != nil {
-			return errors.Wrapf(err, "Failed to get pvc of observer %s", m.OBServer.Name)
+			return errors.Wrap(err, "get pod during PVC resize")
 		}
-		serverStorage := m.OBServer.Spec.OBServerTemplate.Storage
-		for _, pvc := range observerPVC.Items {
-			pvcSize := pvc.Spec.Resources.Requests[corev1.ResourceStorage]
-			switch pvc.Name {
-			case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.DataVolumeSuffix):
-				if serverStorage.DataStorage.Size.Cmp(pvcSize) != 0 {
-					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
-					continue outer
-				}
-			case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.ClogVolumeSuffix):
-				if serverStorage.RedoLogStorage != nil && serverStorage.RedoLogStorage.Size.Cmp(pvcSize) != 0 {
-					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
-					continue outer
-				}
-			case fmt.Sprintf("%s-%s", m.OBServer.Name, oceanbaseconst.LogVolumeSuffix):
-				if serverStorage.LogStorage.Size.Cmp(pvcSize) != 0 {
-					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
-					continue outer
-				}
-			case m.OBServer.Name:
-				sum := resource.Quantity{}
-				sum.Add(serverStorage.DataStorage.Size)
-				if serverStorage.RedoLogStorage != nil {
-					sum.Add(serverStorage.RedoLogStorage.Size)
-				}
-				sum.Add(serverStorage.LogStorage.Size)
-				if sum.Cmp(pvcSize) != 0 {
-					m.Logger.V(oceanbaseconst.LogLevelTrace).Info("Data pvc not expanded", "pvc", pvc.Name)
-					continue outer
-				}
-			}
+		pvcs, err := m.getPVCs(pod)
+		if err != nil {
+			return errors.Wrapf(err, "list PVCs for observer %s", m.OBServer.Name)
 		}
-		// all pvc expanded
-		return nil
+		if !m.checkIfStorageExpand(pvcs) {
+			return nil
+		}
 	}
-	return errors.Errorf("Timeout to wait for pvc expanded")
+	return errors.Errorf("timed out waiting for observer %s PVC capacity", m.OBServer.Name)
 }
 
 func CreateOBServerSvc(m *OBServerManager) tasktypes.TaskError {

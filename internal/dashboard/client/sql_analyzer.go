@@ -25,6 +25,7 @@ import (
 
 	apimodel "github.com/oceanbase/ob-operator/internal/sql-analyzer/api/model"
 	analyticmodel "github.com/oceanbase/ob-operator/internal/sql-analyzer/model"
+	httperr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
 type SqlAnalyzerClient struct {
@@ -76,6 +77,9 @@ func (c *SqlAnalyzerClient) QuerySqlStats(tenantName string, req apimodel.QueryS
 
 	if resp.StatusCode != http.StatusOK {
 		logger.Errorf("sql-analyzer returned non-200 status: %d, body: %s", resp.StatusCode, string(respBody))
+		if resp.StatusCode == http.StatusBadRequest {
+			return nil, httperr.NewBadRequest("invalid SQL statistics request")
+		}
 		return &apimodel.SqlStatsResponse{Items: []apimodel.SqlStatsItem{}, TotalCount: 0}, nil
 	}
 
@@ -90,7 +94,8 @@ func (c *SqlAnalyzerClient) QuerySqlStats(tenantName string, req apimodel.QueryS
 	}
 
 	if !apiResp.Successful {
-		return nil, fmt.Errorf("sql-analyzer returned error: %s", apiResp.Message)
+		logger.Errorf("sql-analyzer SQL statistics returned error: %s", apiResp.Message)
+		return nil, httperr.NewInternal("failed to query SQL statistics")
 	}
 
 	return apiResp.Data, nil
@@ -167,7 +172,11 @@ func (c *SqlAnalyzerClient) QuerySqlHistory(tenantName string, req apimodel.SqlH
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("sql-analyzer returned non-200 status: %d, body: %s", resp.StatusCode, string(respBody))
+		logger.Errorf("sql-analyzer SQL history returned status %d: %s", resp.StatusCode, string(respBody))
+		if resp.StatusCode == http.StatusBadRequest {
+			return nil, httperr.NewBadRequest("invalid SQL history request")
+		}
+		return nil, httperr.NewInternal("failed to query SQL history")
 	}
 
 	var apiResp struct {
@@ -180,7 +189,8 @@ func (c *SqlAnalyzerClient) QuerySqlHistory(tenantName string, req apimodel.SqlH
 	}
 
 	if !apiResp.Successful {
-		return nil, fmt.Errorf("sql-analyzer returned error: %s", apiResp.Message)
+		logger.Errorf("sql-analyzer SQL history returned error: %s", apiResp.Message)
+		return nil, httperr.NewInternal("failed to query SQL history")
 	}
 
 	return apiResp.Data, nil

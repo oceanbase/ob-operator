@@ -15,6 +15,7 @@ package operation
 import (
 	"context"
 	stdsql "database/sql"
+	"database/sql/driver"
 	"fmt"
 	"regexp"
 	"sync"
@@ -22,11 +23,13 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 	"github.com/pkg/errors"
 
 	"github.com/oceanbase/ob-operator/pkg/database"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/connector"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/config"
+	obsql "github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/const/sql"
 )
 
 const (
@@ -41,7 +44,7 @@ func containsCredentials(value string) bool {
 }
 
 func redactSQLForLog(statement string) (string, bool) {
-	if containsCredentials(statement) {
+	if statement == obsql.SetBackupPassword || statement == obsql.SetRestorePassword || containsCredentials(statement) {
 		return redactedSQL, true
 	}
 	return statement, false
@@ -118,7 +121,14 @@ func SetManagerConfig(cfg *ManagerConfig) {
 	})
 }
 
+type operationSQLClient interface {
+	ExecContext(context.Context, string, ...any) (stdsql.Result, error)
+	GetContext(context.Context, any, string, ...any) error
+	SelectContext(context.Context, any, string, ...any) error
+}
+
 type OceanbaseOperationManager struct {
+	session   *sqlx.Conn
 	Connector *database.Connector
 	Logger    *logr.Logger
 }
@@ -137,9 +147,41 @@ func GetOceanbaseOperationManager(p *connector.OceanBaseDataSource) (*OceanbaseO
 	return NewOceanbaseOperationManager(connector), nil
 }
 
+func (m *OceanbaseOperationManager) sqlClient() operationSQLClient {
+	if m.session != nil {
+		return m.session
+	}
+	return m.Connector.GetClient()
+}
+
+// WithBackupSession keeps session-local encryption or decryption settings on the
+// same physical connection as the backup or restore that consumes them.
+func (m *OceanbaseOperationManager) WithBackupSession(ctx context.Context, run func(*OceanbaseOperationManager) error) error {
+	return m.WithDedicatedSession(ctx, run)
+}
+
+// WithDedicatedSession pins identity checks and subsequent statements to one
+// physical SQL connection. The connection is discarded before returning.
+func (m *OceanbaseOperationManager) WithDedicatedSession(ctx context.Context, run func(*OceanbaseOperationManager) error) error {
+	acquire, cancel := context.WithTimeout(ctx, managerConfig.DefaultSqlTimeout)
+	conn, err := m.Connector.GetClient().Connx(acquire)
+	cancel()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		// Discard session-local credentials and timeout settings.
+		_ = conn.Raw(func(any) error { return driver.ErrBadConn })
+		_ = conn.Close()
+	}()
+	session := *m
+	session.session = conn
+	return run(&session)
+}
+
 func (m *OceanbaseOperationManager) setQueryTimeoutVariable(ctx context.Context, timeout time.Duration) error {
 	m.Logger.V(1).Info(fmt.Sprintf("set timeout to %d seconds", int64(timeout/time.Second)))
-	_, err := m.Connector.GetClient().ExecContext(ctx, "set ob_query_timeout=?", int64(timeout/time.Microsecond))
+	_, err := m.sqlClient().ExecContext(ctx, "set ob_query_timeout=?", int64(timeout/time.Microsecond))
 	return err
 }
 
@@ -150,11 +192,15 @@ func (m *OceanbaseOperationManager) ExecWithTimeout(ctx context.Context, timeout
 	if err != nil {
 		return errors.Wrap(err, "Failed to set timeout variable")
 	}
+	return m.executeStatement(c, sql, params...)
+}
+
+func (m *OceanbaseOperationManager) executeStatement(ctx context.Context, sql string, params ...any) error {
 	redactedSQL, sqlContainsCredentials := redactSQLForLog(sql)
 	redactedParams, paramsContainCredentials := redactParamsForLogWithPolicy(params, sqlContainsCredentials)
 	containsSensitiveCredentials := sqlContainsCredentials || paramsContainCredentials
 	m.Logger.V(1).Info(fmt.Sprintf("Execute sql %s with param %s", redactedSQL, redactedParams))
-	_, err = m.Connector.GetClient().ExecContext(c, sql, params...)
+	_, err := m.sqlClient().ExecContext(ctx, sql, params...)
 	if err != nil {
 		if containsSensitiveCredentials {
 			// Drivers may echo an interpolated SQL statement in their error. Do not
@@ -180,7 +226,7 @@ func (m *OceanbaseOperationManager) QueryRowWithTimeout(ctx context.Context, tim
 	if err != nil {
 		return errors.Wrap(err, "Failed to set timeout variable")
 	}
-	err = m.Connector.GetClient().GetContext(c, ret, sql, params...)
+	err = m.sqlClient().GetContext(c, ret, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "Query row, sql %s, param %v", sql, params)
 	}
@@ -198,7 +244,7 @@ func (m *OceanbaseOperationManager) QueryListWithTimeout(ctx context.Context, ti
 	if err != nil {
 		return errors.Wrap(err, "Failed to set timeout variable")
 	}
-	err = m.Connector.GetClient().SelectContext(c, ret, sql, params...)
+	err = m.sqlClient().SelectContext(c, ret, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "Query list failed, sql %s, param %v", sql, params)
 		m.Logger.Error(err, "Query list failed")
@@ -213,7 +259,7 @@ func (m *OceanbaseOperationManager) QueryList(ctx context.Context, ret any, sql 
 func (m *OceanbaseOperationManager) QueryCount(ctx context.Context, count *int, sql string, params ...any) error {
 	c, cancel := context.WithTimeout(ctx, managerConfig.DefaultSqlTimeout)
 	defer cancel()
-	err := m.Connector.GetClient().GetContext(c, count, sql, params...)
+	err := m.sqlClient().GetContext(c, count, sql, params...)
 	if err != nil {
 		err = errors.Wrapf(err, "Query count failed, sql %s, param %v", sql, params)
 		m.Logger.Error(err, "Query count failed")

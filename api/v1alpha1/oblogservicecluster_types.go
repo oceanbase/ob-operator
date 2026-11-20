@@ -20,8 +20,9 @@ import (
 )
 
 type OBLogServiceClusterSpec struct {
-	ClusterId      int64                             `json:"clusterId"`
-	LogService     *apitypes.LogServiceTemplate      `json:"logService"`
+	ClusterId  int64                        `json:"clusterId"`
+	LogService *apitypes.LogServiceTemplate `json:"logService"`
+	// +kubebuilder:validation:MinItems=1
 	Topology       []apitypes.LogServiceZoneTopology `json:"topology"`
 	ObjectStoreURL apitypes.ObjectStoreConfig        `json:"objectStoreUrl"`
 	Parameters     []apitypes.Parameter              `json:"parameters,omitempty"`

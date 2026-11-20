@@ -1,0 +1,144 @@
+{{- $host := "" -}}
+{{- if or (and .Values.dashboard.enabled (eq .Values.dashboard.service.type "NodePort")) (eq .Values.sqlService.type "NodePort") -}}
+{{- $host = include "oceanseek.accessHost" . -}}
+{{- end -}}
+OceanSeek deployment access
+  Helm release: {{ .Release.Name }}
+  Namespace: {{ .Release.Namespace }}
+
+{{ if .Values.dashboard.enabled }}
+OceanBase Operator Dashboard
+  Username: admin
+  This account is separate from the database root@sys account below.
+Retrieve the INITIAL password in a trusted terminal; do not share its output.
+After changing it in Dashboard, use the new password instead:
+  kubectl -n {{ .Release.Namespace }} get secret {{ .Release.Name }}-dashboard-bootstrap -o jsonpath='{.data.password}' | base64 --decode; echo
+{{ if eq .Values.dashboard.service.type "NodePort" }}
+{{- $dashboardPort := int (include "oceanseek.dashboardNodePort" .) -}}
+{{ if and $host (gt $dashboardPort 0) }}
+  Dashboard URL: http://{{ include "oceanseek.urlHost" $host }}:{{ $dashboardPort }}/
+{{ else }}
+The Dashboard address or allocated NodePort is not available while Helm renders
+these notes. After installation, run the following with kubectl access:
+{{ if $host }}  NODE_HOST={{ printf "'%s'" (replace "'" "'\"'\"'" $host) }}
+{{ else }}  NODE_HOST="$(kubectl get nodes -o wide --no-headers | awk '$2 ~ /^Ready/ {print $6; exit}')"
+{{ end }}
+  DASHBOARD_PORT="$(kubectl -n {{ .Release.Namespace }} get svc oceanbase-dashboard-{{ .Release.Name }} -o jsonpath='{.spec.ports[0].nodePort}')"
+  case "$NODE_HOST" in *:*) NODE_URL_HOST="[$NODE_HOST]" ;; *) NODE_URL_HOST="$NODE_HOST" ;; esac
+  test -n "$NODE_HOST" && test -n "$DASHBOARD_PORT" && printf 'Dashboard URL: http://%s:%s/\n' "$NODE_URL_HOST" "$DASHBOARD_PORT"
+If the printed node address is not reachable from your browser, replace
+NODE_HOST with a reachable node IP or DNS name, then repeat the case and printf commands.
+{{ end }}
+NodePort remains stable while its Service is retained; deleting and recreating
+the Service may allocate a different port. No port-forward process is needed.
+{{ if $host }}The displayed address must be reachable from your client; override with --set access.host=<reachable-IP>.{{ end }}
+{{ else if eq .Values.dashboard.service.type "LoadBalancer" }}
+Wait for an external IP/hostname from your cluster's load balancer:
+  kubectl -n {{ .Release.Namespace }} get svc oceanbase-dashboard-{{ .Release.Name }} --watch
+Open http://<EXTERNAL-IP-or-hostname>:{{ .Values.dashboard.service.port }}.
+If EXTERNAL-IP stays pending, check the cluster's load balancer provisioning.
+{{ else }}
+Keep this command running on a computer with access to this Kubernetes cluster:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/oceanbase-dashboard-{{ .Release.Name }} 8080:{{ .Values.dashboard.service.port }}
+Open http://127.0.0.1:8080 on that computer. If kubectl runs on a remote server,
+also run this on the computer with your browser, then open the same URL:
+  ssh -N -L 8080:127.0.0.1:8080 <user>@<remote-server>
+{{ end }}
+{{ else }}
+Dashboard is disabled (dashboard.enabled=false); its monitoring stack is not installed.
+Use your existing Dashboard URL. Its administrator must grant visibility to namespace
+{{ .Release.Namespace }} and verify monitoring discovery for this database.
+{{ end }}
+
+Database SQL access
+{{ if .Values.obproxy.enabled }}SQL traffic goes through OBProxy ({{ .Values.obproxy.replicas }} replicas).
+Disable it with --set obproxy.enabled=false to connect directly to Observer.
+Changing this switch changes the SQL Service backend; reconnect clients afterwards.
+{{ else }}SQL traffic connects directly to Observer (obproxy.enabled=false).
+{{ end }}Retrieve the root@sys password in a trusted terminal; do not share its output:
+  kubectl -n {{ .Release.Namespace }} get secret {{ if .Values.observer.rootExistingSecret }}{{ .Values.observer.rootExistingSecret }}{{ else }}{{ .Release.Name }}-db-root{{ end }} -o jsonpath='{.data.password}' | base64 --decode; echo
+{{ if eq .Values.stage "cluster" }}
+{{ if eq .Values.sqlService.type "NodePort" }}
+{{ if and $host (gt (int (include "oceanseek.sqlNodePort" .)) 0) }}
+Connect using a MySQL-compatible client:
+  mysql -h {{ $host }} -P {{ include "oceanseek.sqlNodePort" . }} -u 'root@sys' -p
+{{ else }}
+Kubernetes assigns the SQL NodePort after Helm renders these notes. Run:
+{{ if $host }}  NODE_HOST={{ printf "'%s'" (replace "'" "'\"'\"'" $host) }}
+{{ else }}  NODE_HOST="$(kubectl get nodes -o wide --no-headers | awk '$2 ~ /^Ready/ {print $6; exit}')"
+{{ end }}
+  SQL_PORT="$(kubectl -n {{ .Release.Namespace }} get svc {{ .Release.Name }}-sql -o jsonpath='{.spec.ports[0].nodePort}')"
+  test -n "$NODE_HOST" && test -n "$SQL_PORT" && printf "mysql -h %s -P %s -u 'root@sys' -p\n" "$NODE_HOST" "$SQL_PORT"
+If the printed node address is not reachable from your SQL client, replace
+NODE_HOST with a reachable node IP or DNS name and repeat the printf command.
+{{ end }}
+{{ else }}
+SQL is available inside Kubernetes at {{ .Release.Name }}-sql.{{ .Release.Namespace }}.svc:{{ .Values.sqlService.port }}.
+For local access, keep this command running:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }}-sql 2883:{{ .Values.sqlService.port }}
+  mysql -h 127.0.0.1 -P 2883 -u 'root@sys' -p
+{{ end }}
+{{ else }}
+SQL access becomes available after stage=cluster.
+{{ end }}
+Direct ALTER USER changes do not synchronize the Kubernetes Secret.
+
+Object storage access
+{{ if .Values.minio.enabled }}
+Bundled MinIO console (separate from the database and Dashboard accounts).
+{{ if .Values.objectStorage.endpoint }}The database uses external object storage; this MinIO is deployed separately.
+{{ end }}Keep this command running on a computer with kubectl access:
+  kubectl -n {{ .Release.Namespace }} port-forward statefulset/{{ .Release.Name }}-minio 39001:9001
+Open http://127.0.0.1:39001/ on that computer.
+If kubectl runs on a remote server, also run this on your browser computer:
+  ssh -o ExitOnForwardFailure=yes -N -L 39001:127.0.0.1:39001 <user>@<remote-server>
+Use your usual SSH MACHINE account/key, not the MinIO web credentials below.
+Successful ssh -N normally has no output and does not open a shell; keep it running.
+Do not press Ctrl+C until you have finished using the console.
+Then open http://127.0.0.1:39001/ in your browser. Keep both commands running.
+Retrieve the MinIO username in a trusted terminal:
+  kubectl -n {{ .Release.Namespace }} get secret {{ if .Values.minio.rootExistingSecret }}{{ .Values.minio.rootExistingSecret }}{{ else }}{{ .Release.Name }}-minio-root{{ end }} -o jsonpath='{.data.rootUser}' | base64 --decode; echo
+Retrieve the MinIO password (do not share its output):
+  kubectl -n {{ .Release.Namespace }} get secret {{ if .Values.minio.rootExistingSecret }}{{ .Values.minio.rootExistingSecret }}{{ else }}{{ .Release.Name }}-minio-root{{ end }} -o jsonpath='{.data.rootPassword}' | base64 --decode; echo
+The S3 API uses port 9000; the browser console uses port 9001.
+{{ else }}No bundled MinIO is deployed. Use your external object storage provider's
+console and login credentials; S3 access keys are not necessarily console credentials.
+{{ end }}
+
+{{ if and .Values.native.enabled (eq .Values.stage "cluster") }}
+Installation verification
+Helm completed after checking storage initialization, LogService/OceanBase,
+database Pods{{ if .Values.dashboard.enabled }} and Dashboard{{ end }}. Confirm the current state with:
+  helm -n {{ .Release.Namespace }} status {{ .Release.Name }}
+  kubectl -n {{ .Release.Namespace }} get pods,jobs,oblogserviceclusters,obclusters
+
+During installation, or after a failed readiness check, inspect its log with:
+  kubectl -n {{ .Release.Namespace }} logs -f job/{{ .Release.Name }}-readiness
+A successful readiness Job is removed automatically, so NotFound is expected
+after Helm reports STATUS: deployed.
+{{ else }}
+Legacy partial/manual Helm deployment (stage={{ .Values.stage }}).
+Verify runtime readiness before use; Helm deployed status alone is insufficient.
+  kubectl -n {{ .Release.Namespace }} get pods,jobs,oblogserviceclusters,obclusters
+{{ end }}
+
+Retry and recovery
+After fixing image access, capacity, storage initialization or credentials,
+retry with the SAME release, namespace and values using helm upgrade --install.
+If OBCluster or OBLogServiceCluster has status failed, a Helm retry does not
+reset it. Inspect events and follow the Operator recovery procedure in USAGE.txt:
+  kubectl -n {{ .Release.Namespace }} get events --sort-by=.lastTimestamp
+
+DATA PROTECTION: uninstall intentionally retains database CRs, credentials and
+bundled MinIO StatefulSet/Service/PVC, plus Dashboard accounts and data PVCs.
+Namespace deletion or explicit Kubernetes deletion is NOT protected. Keep backups.
+Reinstall with the SAME release, namespace and values to reconnect retained data.
+External storage and user-provided Secrets/PVCs are never owned by this chart.
+
+{{ if .Values.objectStorage.endpoint }}{{ if .Values.minio.enabled }}External object storage is configured and used. The separately enabled MinIO server
+and the mc initialization client are distributed under AGPL-3.0.
+{{ else }}External object storage is configured; no bundled MinIO server is deployed.
+The storage initialization Job uses mc (AGPL-3.0) to verify buckets and, when enabled, create them.
+{{ end }}
+{{ else }}Bundled object storage uses MinIO and mc, distributed under AGPL-3.0.
+{{ end }}See USAGE.txt for recovery, storage identities, image delivery and licensing.

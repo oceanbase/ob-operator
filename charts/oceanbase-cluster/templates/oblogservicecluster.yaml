@@ -1,0 +1,31 @@
+{{- if .Values.lakehouse.enabled }}
+apiVersion: oceanbase.oceanbase.com/v1alpha1
+kind: OBLogServiceCluster
+metadata:
+  name: {{ include "oceanbase-cluster.logServiceName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+  {{- include "oceanbase-cluster.labels" . | nindent 4 }}
+  annotations:
+  {{- toYaml .Values.annotations | nindent 4 }}
+spec:
+  clusterId: {{ .Values.lakehouse.logService.clusterId }}
+  logService:
+    image: {{ .Values.lakehouse.logService.image | quote }}
+    resource:
+      cpu: {{ .Values.lakehouse.logService.resource.cpu }}
+      memory: {{ .Values.lakehouse.logService.resource.memory }}
+    storage:
+      storeStorage:
+        storageClass: {{ .Values.lakehouse.logService.storageClass }}
+        size: {{ .Values.lakehouse.logService.storeStorageSize }}
+      logStorage:
+        storageClass: {{ .Values.lakehouse.logService.storageClass }}
+        size: {{ .Values.lakehouse.logService.logStorageSize }}
+  topology:
+  {{- toYaml .Values.lakehouse.logService.topology | nindent 4 }}
+  objectStoreUrl:
+    bucketURL: {{ .Values.lakehouse.logService.bucketURL | quote }}
+    secretRef:
+      name: {{ include "oceanbase-cluster.logServiceSecretName" . }}
+{{- end }}

@@ -181,3 +181,8 @@ func (m *OBClusterOperationManager) retryUpdateStatus() error {
 		return m.Client.Status().Update(m.Ctx, m.Resource)
 	})
 }
+
+// CanReplayTask resumes observation of work already persisted in Kubernetes.
+func (m *OBClusterOperationManager) CanReplayTask(name tasktypes.TaskName) bool {
+	return name == tWaitForClusterReturnRunning
+}

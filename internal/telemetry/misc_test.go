@@ -13,7 +13,9 @@ See the Mulan PSL v2 for more details.
 package telemetry
 
 import (
+	"context"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"sync"
 	"time"
@@ -51,27 +53,33 @@ var _ = Describe("Telemetry", Label("misc"), func() {
 		Expect(u.String()).Should(Equal(urlStr))
 	})
 
-	It("Test head request", func() {
-		_, err := http.DefaultClient.Head("https://www.baidu.com")
+	DescribeTable("HEAD succeeds with HTTP and HTTPS", func(newServer func(http.Handler) *httptest.Server) {
+		server := newServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNoContent)
+		}))
+		DeferCleanup(server.Close)
+		resp, err := server.Client().Head(server.URL)
 		Expect(err).ShouldNot(HaveOccurred())
-	})
+		DeferCleanup(resp.Body.Close)
+		Expect(resp.StatusCode).To(Equal(http.StatusNoContent))
+	},
+		Entry("HTTP", httptest.NewServer),
+		Entry("HTTPS", httptest.NewTLSServer),
+	)
 
-	It("Test head request 2", func() {
-		_, err := http.DefaultClient.Head("http://www.baidu.com")
-		Expect(err).ShouldNot(HaveOccurred())
-	})
-
-	It("Test head request 3", func() {
+	It("rejects a HEAD URL without a scheme", func() {
 		_, err := http.DefaultClient.Head("www.baidu.com")
 		Expect(err).Should(HaveOccurred())
 	})
 
-	It("Test head a not exist url with timeout 1s", func() {
-		clt := http.Client{
-			Timeout: time.Second,
-		}
-		_, err := clt.Head("https://www.baidx.com/abc")
-		Expect(err).Should(HaveOccurred())
+	It("returns a timeout when the HEAD endpoint does not respond", func() {
+		server := httptest.NewServer(http.HandlerFunc(func(_ http.ResponseWriter, r *http.Request) {
+			<-r.Context().Done()
+		}))
+		DeferCleanup(server.Close)
+		client := &http.Client{Timeout: time.Second}
+		_, err := client.Head(server.URL)
+		Expect(err).To(MatchError(context.DeadlineExceeded))
 	})
 
 	It("Test concurrent map writes with sync.Map, 1000 times", Label("panic"), func() {

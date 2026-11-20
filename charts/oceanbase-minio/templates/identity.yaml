@@ -1,0 +1,27 @@
+{{- if gt (len .Release.Name) 40 }}{{ fail "release name must be at most 40 characters" }}{{ end -}}
+{{- $settings := dict "secret" (include "obminio.secret" .) "claim" .Values.existingClaim "size" .Values.size "storageClass" .Values.storageClass -}}
+{{- $distributed := eq .Values.mode "distributed" -}}
+{{- if $distributed -}}
+  {{- if .Values.existingClaim }}{{ fail "minio.existingClaim is only supported in standalone mode" }}{{ end -}}
+  {{- if hasKey .Values.nodeSelector "kubernetes.io/hostname" }}{{ fail "distributed MinIO requires three eligible hosts; remove minio.nodeSelector.kubernetes.io/hostname" }}{{ end -}}
+  {{- $_ := unset $settings "size" -}}
+  {{- $_ := set $settings "distributed" .Values.distributed -}}
+{{- end -}}
+{{- $identity := $settings | toJson | sha256sum -}}
+{{- $guard := lookup "v1" "ConfigMap" .Release.Namespace (printf "%s-minio-identity" .Release.Name) -}}
+{{- if and $guard (ne (index $guard.data "identity") $identity) }}{{ fail "MinIO storage identity is immutable; use an explicit data migration" }}{{ end }}
+{{- if and $distributed (not $guard) -}}
+  {{- $name := printf "%s-minio" .Release.Name -}}
+  {{- if or (lookup "apps/v1" "StatefulSet" .Release.Namespace $name) (lookup "v1" "PersistentVolumeClaim" .Release.Namespace (printf "%s-data" $name)) -}}
+    {{- fail "retained MinIO resources have no distributed storage identity; use a new release and an explicit data migration" -}}
+  {{- end -}}
+{{- end }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-minio-identity
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    helm.sh/resource-policy: keep
+data:
+  identity: {{ $identity | quote }}

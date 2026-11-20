@@ -1,0 +1,16 @@
+# Versioned profile for installing the application and its shared prerequisites.
+schemaVersion: 1
+name: single-command
+values:
+  native:
+    enabled: true
+  prerequisites:
+    enabled: true
+    timeoutSeconds: 1800
+  skip-operator: false
+  sqlService:
+    nodePort: 0
+  dashboard:
+    enabled: true
+    service:
+      nodePort: 0

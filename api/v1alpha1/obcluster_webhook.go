@@ -103,14 +103,7 @@ func (r *OBCluster) Default() {
 		Value: fmt.Sprintf("%d", maxSysLogFileCount),
 	}
 
-	for _, parameter := range r.Spec.Parameters {
-		parameterMap[parameter.Name] = parameter
-	}
-	parameters := make([]apitypes.Parameter, 0)
-	for _, v := range parameterMap {
-		parameters = append(parameters, v)
-	}
-	r.Spec.Parameters = parameters
+	r.Spec.Parameters = applyParameterDefaults(r.Spec.Parameters, parameterMap)
 
 	if r.Spec.UserSecrets.Monitor == "" {
 		r.Spec.UserSecrets.Monitor = "monitor-user-" + rand.String(6)
@@ -165,6 +158,29 @@ func (r *OBCluster) Default() {
 	}
 }
 
+// Preserve the order of persisted parameters so metadata-only patches do not
+// accidentally advance generation. Repeated names retain their last value.
+func applyParameterDefaults(existing []apitypes.Parameter, defaults map[string]apitypes.Parameter) []apitypes.Parameter {
+	parameters := make([]apitypes.Parameter, 0, len(existing)+len(defaults))
+	positions := make(map[string]int, len(existing))
+	for _, p := range existing {
+		if i, seen := positions[p.Name]; seen {
+			parameters[i] = p
+		} else {
+			positions[p.Name] = len(parameters)
+			parameters = append(parameters, p)
+		}
+		delete(defaults, p.Name)
+	}
+	missing := len(parameters)
+	for _, p := range defaults {
+		parameters = append(parameters, p)
+	}
+	ordered := parameters[missing:]
+	sort.Slice(ordered, func(i, j int) bool { return ordered[i].Name < ordered[j].Name })
+	return parameters
+}
+
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 //+kubebuilder:webhook:path=/validate-oceanbase-oceanbase-com-v1alpha1-obcluster,mutating=false,failurePolicy=fail,sideEffects=None,groups=oceanbase.oceanbase.com,resources=obclusters,verbs=create;update;delete,versions=v1alpha1,name=vobcluster.kb.io,admissionReviewVersions=v1
 
@@ -172,6 +188,9 @@ var _ webhook.Validator = &OBCluster{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *OBCluster) ValidateCreate() (admission.Warnings, error) {
+	if _, claimed := r.Annotations[oceanbaseconst.AnnotationsClassicBootstrapClaim]; claimed {
+		return nil, errors.New("a new cluster cannot carry a bootstrap dispatch claim")
+	}
 	return nil, r.validateMutation()
 }
 
@@ -180,6 +199,9 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 	oldCluster, ok := old.(*OBCluster)
 	if !ok {
 		return nil, errors.New("failed to convert old object to OBCluster")
+	}
+	if err := r.validateBootstrapClaimUpdate(oldCluster); err != nil {
+		return nil, err
 	}
 	oldMode, existOld := oldCluster.GetAnnotations()[oceanbaseconst.AnnotationsMode]
 	mode, exist := r.GetAnnotations()[oceanbaseconst.AnnotationsMode]
@@ -250,10 +272,11 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 			err = errors.New("forbid to add/remove backup volume to non-static-ip cluster")
 		}
 	}
-	if (r.Spec.MonitorTemplate == nil) != (oldCluster.Spec.MonitorTemplate == nil) {
-		if !oldCluster.SupportStaticIP() {
-			err = errors.New("forbid to add/remove monitor container to non-static-ip cluster")
+	if !oldCluster.SupportStaticIP() && changedMonitorSettings(oldCluster, r) {
+		if (r.Spec.MonitorTemplate == nil) != (oldCluster.Spec.MonitorTemplate == nil) {
+			return nil, errors.New("forbid to add/remove monitor container to non-static-ip cluster")
 		}
+		return nil, errors.New("forbid to update monitor settings of an existing non-static-ip cluster")
 	}
 
 	newStorage := r.Spec.OBServerTemplate.Storage
@@ -285,6 +308,18 @@ func (r *OBCluster) ValidateUpdate(old runtime.Object) (admission.Warnings, erro
 	}
 
 	return nil, r.validateMutation()
+}
+
+// Newly added zones may choose their own monitor at creation.
+func changedMonitorSettings(old, next *OBCluster) bool {
+	for _, before := range old.Spec.Topology {
+		for _, after := range next.Spec.Topology {
+			if before.Zone == after.Zone && !before.EffectiveMonitor(old.Spec.MonitorTemplate).Equal(after.EffectiveMonitor(next.Spec.MonitorTemplate)) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
@@ -365,6 +400,8 @@ func (r *OBCluster) validateMutation() error {
 	if r.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
 		if r.Spec.SharedStorageInfo == nil {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("sharedStorageInfo"), "sharedStorageInfo is required for shared_storage mode"))
+		} else if err := apitypes.ValidateSharedStorageBucketURL(r.Spec.SharedStorageInfo.BucketURL); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "sharedStorageInfo", "bucketURL"), "<redacted>", err.Error()))
 		}
 		if r.Spec.LogServiceRef == nil {
 			allErrs = append(allErrs, field.Required(field.NewPath("spec").Child("logServiceRef"), "logServiceRef is required for shared_storage mode"))

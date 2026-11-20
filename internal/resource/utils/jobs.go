@@ -56,6 +56,20 @@ type JobContainerVolumes struct {
 func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace string,
 	jobName string, image string, podFields *apitypes.PodFieldsSpec,
 	cmd string, volumeConfigs ...JobContainerVolumes) (output string, exitCode int32, err error) {
+	return runJob(ctx, c, logger, namespace, jobName, image, podFields, nil, cmd, volumeConfigs...)
+}
+
+// RunJobWithScheduling opts cluster bootstrap checks into workload placement.
+// Existing upgrade/other RunJob callers retain their previous behavior.
+func RunJobWithScheduling(ctx context.Context, c client.Client, logger *logr.Logger, namespace string,
+	jobName string, image string, podFields *apitypes.PodFieldsSpec, scheduling *JobScheduling,
+	cmd string, volumeConfigs ...JobContainerVolumes) (output string, exitCode int32, err error) {
+	return runJob(ctx, c, logger, namespace, jobName, image, podFields, scheduling, cmd, volumeConfigs...)
+}
+
+func runJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace string,
+	jobName string, image string, podFields *apitypes.PodFieldsSpec, scheduling *JobScheduling,
+	cmd string, volumeConfigs ...JobContainerVolumes) (output string, exitCode int32, err error) {
 	fullJobName := fmt.Sprintf("%s-%s", jobName, rand.String(6))
 	var backoffLimit int32
 	var ttl int32 = 300
@@ -93,6 +107,7 @@ func RunJob(ctx context.Context, c client.Client, logger *logr.Logger, namespace
 			TTLSecondsAfterFinished: &ttl,
 		},
 	}
+	ApplyJobScheduling(&job.Spec.Template.Spec, scheduling)
 
 	err = c.Create(ctx, &job)
 	if err != nil {

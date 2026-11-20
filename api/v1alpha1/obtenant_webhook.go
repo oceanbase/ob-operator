@@ -68,12 +68,19 @@ func (r *OBTenant) Default() {
 		tenantlog.Error(err, "Failed to get cluster")
 	} else {
 		clusterMeta := cluster.GetObjectMeta()
-		r.SetOwnerReferences([]metav1.OwnerReference{{
-			APIVersion: cluster.APIVersion,
-			Kind:       cluster.Kind,
-			Name:       clusterMeta.GetName(),
-			UID:        clusterMeta.GetUID(),
-		}})
+		// A replacement cluster with the same name must not inherit an existing tenant.
+		hasClusterOwner := false
+		for _, ref := range r.OwnerReferences {
+			if ref.Kind == "OBCluster" && ref.APIVersion == GroupVersion.String() {
+				hasClusterOwner = true
+				break
+			}
+		}
+		if !hasClusterOwner {
+			r.OwnerReferences = append(r.OwnerReferences, metav1.OwnerReference{
+				APIVersion: GroupVersion.String(), Kind: "OBCluster", Name: cluster.Name, UID: cluster.UID,
+			})
+		}
 		labels := r.GetLabels()
 		if labels == nil {
 			labels = make(map[string]string)
@@ -114,7 +121,7 @@ func (r *OBTenant) ValidateUpdate(old runtime.Object) (admission.Warnings, error
 	if !ok {
 		return nil, apierrors.NewBadRequest("Invalid old object")
 	}
-	if r.Status.Status == tenantstatus.Running {
+	if oldTenant.Status.Creation != nil || r.Status.Status == tenantstatus.Running {
 		switch {
 		case r.Spec.ClusterName != oldTenant.Spec.ClusterName:
 			return nil, apierrors.NewBadRequest("Cannot change clusterName when tenant is running")

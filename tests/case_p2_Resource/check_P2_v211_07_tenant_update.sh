@@ -39,7 +39,6 @@ prepare() {
     create_pass_secret $NAMESPACE $OBTENANT_STANDBY_OSS_SECRET $PASSWORD
     create_pass_secret $NAMESPACE $BACK_ENCRYPTION_SERECT $PASSWORD_ENCRYPTION
     create_pass_oss_secret $NAMESPACE $OSS_ACCESS $OSS_AK $OSS_SK
-    echo $PASSWORD
 }
 
 
@@ -83,6 +82,7 @@ check_resource_running() {
         fi
         sleep 3s
     done
+    [[ $RESOURCE_RUNNING == true ]]
 }
  
 check_obtenant_running() {
@@ -106,6 +106,7 @@ check_obtenant_running() {
         fi
         sleep 3s
     done
+    [[ $OBTENANT_RUNNING == true ]]
 }
 
 check_backup_running() {
@@ -128,50 +129,27 @@ check_backup_running() {
         fi
         sleep 3s
     done
+    [[ $BACKUP_RUNNING == true ]]
 }
 
 check_restore_running() {
-    counter=0
-    timeout=120  
-    RESTORE_RUNNING='false'
-    while true; do
-        echo 'check restore resource'
-	counter=$((counter+1))
-        crd_primary_restore=`kubectl get obtenant -n $NAMESPACE | grep "$OBTENANT_STANDBY_OSS"|awk -F' ' '{print $2}'`
-        crd_primary_obtenant=`kubectl get obtenantrestore -n $NAMESPACE| grep "$OBTENANT_STANDBY_OSS"|awk -F' ' '{print $2}'`
-        echo "crd_primary_restore $crd_primary_restore  crd_primary_obtenant $crd_primary_obtenant"
-        if [[ $crd_primary_restore = "running" && $crd_primary_obtenant = "SUCCESSFUL" ]];then
-            RESTORE_RUNNING='true'
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "backup db resource still not running"
-            break
-        fi
-        sleep 3s
-    done
+    # Older Observer versions can spend more than six minutes restoring the data
+    # and activating the tenant. Check both resources before submitting UPGRADE.
+    kubectl wait -n "$NAMESPACE" "obtenant/$OBTENANT_STANDBY_OSS" \
+        --for=jsonpath='{.status.status}'=running --timeout=15m &&
+        kubectl wait -n "$NAMESPACE" "obtenantrestore/$OBTENANT_STANDBY_OSS-restore" \
+            --for=jsonpath='{.status.status}'=SUCCESSFUL --timeout=1m
 }
 
 check_operation() {
-    counter=0
-    timeout=100  
-    OPERATION_RUNNING='false'
-    ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME_TWO-$CLUSTER_ID_TWO-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-    while true; do
-        echo 'check operation resource'
-	counter=$((counter+1))
-	op_upgrade_tenant=`kubectl get obtenantoperation -n $NAMESPACE |grep $OP_UPGRADE_TENANT |awk -F' ' '{print $3}'| awk 'NR==1'`
-	tenant421version=`mysql -uroot -h $ip -P 2881 -Doceanbase -p$PASSWORD -e 'SELECT * FROM oceanbase.DBA_OB_TENANTS;'|grep $OBTENANT_STANDBY_OSS|awk -F' ' '{print $25}'| awk 'NR==1'`
-	echo $op_upgrade_tenant $tenant421version
-	if [[ $op_upgrade_tenant = "SUCCESSFUL" && $tenant421version = "4.2.1.1" ]];then
-	    OPERATION_RUNNING='true'
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            break
-        fi
-        sleep 3s
-    done
+    local ip compatible
+    kubectl wait -n "$NAMESPACE" "obtenantoperation/$OP_UPGRADE_TENANT" \
+        --for=jsonpath='{.status.status}'=SUCCESSFUL --timeout=10m || return 1
+    ip=$(kubectl get pods -n "$NAMESPACE" -l "ref-obcluster=$OBCLUSTER_NAME_TWO" \
+        --field-selector=status.phase=Running -o jsonpath='{.items[0].status.podIP}') || return 1
+    compatible=$(MYSQL_PWD="$PASSWORD" mysql -u root -h "$ip" -P 2881 -Doceanbase -N -B \
+        -e "SELECT COMPATIBLE FROM DBA_OB_TENANTS WHERE TENANT_NAME='$OBTENANT_STANDBY_OSS'") || return 1
+    [[ $compatible == 4.2.1.1 ]]
 }
 
 export_to_file() {
@@ -206,36 +184,29 @@ EOF
 }
 
 validate() {
-    run "case3_cluster_420.yaml"
-    run "case3_cluster_421.yaml"
-    check_resource_running $OBCLUSTER_NAME $NAMESPACE $CLUSTER_ID_ONE 
-    check_resource_running $OBCLUSTER_NAME_TWO $NAMESPACE $CLUSTER_ID_TWO
-    sleep 20s
-    echo 'do validate'
-    if [[ $RESOURCE_RUNNING == 'false' ]]; then
-        echo "case failed"
-    else
-	run "case3_tenant_420.yaml"
-	check_obtenant_running $OBTENANT_NAME $NAMESPACE
-	run "case3_policy_420.yaml"
-        check_backup_running
-	sleep 60s
-	run "case3_restore_tenant_421.yaml"
-	check_restore_running
-	run "case3_op_upgrade_tenant.yaml"
-	check_operation
-        if [[ $OPERATION_RUNNING == 'false' ]]; then
-            echo "case failed"
-	    #cleanup
-	    #prepare
-        else
-            echo "case passed"
-        fi
-    fi
+    run "case3_cluster_420.yaml" || return 1
+    run "case3_cluster_421.yaml" || return 1
+    check_resource_running "$OBCLUSTER_NAME" "$NAMESPACE" "$CLUSTER_ID_ONE" || return 1
+    check_resource_running "$OBCLUSTER_NAME_TWO" "$NAMESPACE" "$CLUSTER_ID_TWO" || return 1
+    run "case3_tenant_420.yaml" || return 1
+    check_obtenant_running "$OBTENANT_NAME" "$NAMESPACE" || return 1
+    run "case3_policy_420.yaml" || return 1
+    check_backup_running || return 1
+    sleep 60s
+    run "case3_restore_tenant_421.yaml" || return 1
+    check_restore_running || return 1
+    run "case3_op_upgrade_tenant.yaml" || return 1
+    check_operation
 }
 
 prepare
 export_to_file
-validate
+if validate; then
+    echo "case passed"
+    result=0
+else
+    echo "case failed"
+    result=1
+fi
 cleanup
-date
+exit "$result"

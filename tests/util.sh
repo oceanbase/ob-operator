@@ -53,3 +53,55 @@ create_pass_gcs_secret() {
     kubectl create secret generic $secret_name -n $namespace --from-literal=accessId=$accessId --from-literal=accessKey=$accessKey
 }
 
+clean_nfs_test_directory() {
+    local path=${NFS_BASE_PATH:-} normalized quoted
+    if [[ -z ${USER_NAME:-} || -z ${NFS_SERVER:-} || $path != /* || $path == *[[:cntrl:]]* ]]; then
+        echo "NFS cleanup requires a user, server and absolute test directory" >&2
+        return 1
+    fi
+    normalized=$(realpath -ms -- "$path") || return 1
+    if [[ $normalized == / || /"${path#/}"/ == */../* ]]; then
+        echo "NFS cleanup requires a non-root test directory without parent traversal" >&2
+        return 1
+    fi
+    quoted=${path//\'/\'\\\'\'}
+    # Resolve symlinks on the NFS server before expanding the wildcard there.
+    ssh -- "$USER_NAME@$NFS_SERVER" "cd -P -- '$quoted' && dir=\$(pwd -P) && [ -n \"\$dir\" ] && [ \"\$dir\" != / ] && sudo rm -rf -- ./*"
+}
+
+get_tenant_role() {
+    local host=$1 password=$2 tenant=$3
+    MYSQL_PWD="$password" mysql -h "$host" -P 2881 -uroot -Doceanbase --batch --skip-column-names \
+        -e 'SELECT TENANT_NAME, TENANT_ROLE FROM DBA_OB_TENANTS' |
+        awk -F '\t' -v tenant="$tenant" '$1 == tenant { print $2 }'
+}
+
+check_obagent_metrics() {
+    local ns=$1 cluster=$2 mode=$3 count=$4 entry pod ip expected url metrics matched attempt
+    local -a pods
+    for ((attempt=0; attempt<60; attempt++)); do
+        mapfile -t pods < <(kubectl -n "$ns" get pods -l "ref-obcluster=$cluster" -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.status.podIP}{"\n"}{end}')
+        matched=0
+        for entry in "${pods[@]}"; do
+            read -r pod ip <<< "$entry"
+            [[ -n $pod && -n $ip ]] || continue
+            expected=127.0.0.1
+            if [[ $mode == service ]]; then
+                expected=$(kubectl -n "$ns" get service "$pod" -o jsonpath='{.spec.clusterIP}') || continue
+                [[ -n $expected ]] || continue
+            fi
+            url=$ip
+            [[ $ip == *:* ]] && url="[$ip]"
+            metrics=$(curl -fsS --max-time 5 "http://$url:8088/metrics/ob/basic") || continue
+            if grep '^ob_active_session_num{' <<< "$metrics" | grep -F "svr_ip=\"$expected\"" >/dev/null; then
+                ((matched+=1))
+            fi
+        done
+        if (( matched == count && ${#pods[@]} == count )); then
+            echo "$matched OBAgent endpoints reported the expected observer IPs"
+            return 0
+        fi
+        sleep 3
+    done
+    return 1
+}

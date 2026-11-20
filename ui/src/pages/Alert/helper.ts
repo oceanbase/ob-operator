@@ -199,7 +199,10 @@ export const getInstancesFromRes = (
     type: 'obcluster',
   };
   const types = resInstances.map((item) => item.type);
-  if (types.includes('observer')) {
+  if (types.includes('logservice')) {
+    res.type = 'logservice';
+    res.logservice = getInstanceValues('logservice');
+  } else if (types.includes('observer')) {
     res.type = 'observer';
     res.observer = getInstanceValues('observer');
     res.obcluster = [resInstances[0].obcluster!];

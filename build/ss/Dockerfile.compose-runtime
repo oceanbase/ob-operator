@@ -1,0 +1,6 @@
+# Supply an immutable registry reference: repository@sha256:<digest>.
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+ARG BASE_IMAGE
+RUN case "${BASE_IMAGE}" in *@sha256:*) ;; *) echo 'BASE_IMAGE must use a digest' >&2; exit 1;; esac
+COPY lakehouse/ /opt/lakehouse/

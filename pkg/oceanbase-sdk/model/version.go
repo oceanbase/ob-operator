@@ -68,22 +68,22 @@ func ParseOBVersion(buildVersionStr string) (*OBVersion, error) {
 	version = versionParts[0]
 	parts := strings.Split(version, ".")
 	if len(parts) < 3 {
-		return nil, errors.Wrapf(err, "Failed to parse version %s", release)
+		return nil, errors.Errorf("invalid observer build version %q", buildVersionStr)
 	}
-	major, err = strconv.ParseInt(parts[0], 10, 0)
+	major, err = strconv.ParseInt(parts[0], 10, 64)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to parse major version %s", parts[0])
 	}
-	minor, err = strconv.ParseInt(parts[0], 10, 0)
+	minor, err = strconv.ParseInt(parts[1], 10, 64)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to parse minor version %s", parts[1])
 	}
-	patch, err = strconv.ParseInt(parts[0], 10, 0)
+	patch, err = strconv.ParseInt(parts[2], 10, 64)
 	if err != nil {
 		return nil, errors.Wrapf(err, "Failed to parse patch version %s", parts[2])
 	}
 	if len(parts) >= 4 {
-		incr, err = strconv.ParseInt(parts[0], 10, 0)
+		incr, err = strconv.ParseInt(parts[3], 10, 64)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Failed to parse incr version %s", parts[3])
 		}
@@ -91,7 +91,7 @@ func ParseOBVersion(buildVersionStr string) (*OBVersion, error) {
 
 	if len(versionParts) >= 2 {
 		release = versionParts[1]
-		buildNum, err = strconv.ParseInt(release, 10, 0)
+		buildNum, err = strconv.ParseInt(release, 10, 64)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Failed to parse build number %s", release)
 		}

@@ -25,3 +25,11 @@ type OBZoneTopology struct {
 	OBServerTemplate *OBServerTemplate `json:"observer,omitempty"`
 	MonitorTemplate  *MonitorTemplate  `json:"monitor,omitempty"`
 }
+
+// EffectiveMonitor returns the monitor that applies to Observers in this zone.
+func (z *OBZoneTopology) EffectiveMonitor(clusterDefault *MonitorTemplate) *MonitorTemplate {
+	if z.MonitorTemplate != nil {
+		return z.MonitorTemplate
+	}
+	return clusterDefault
+}

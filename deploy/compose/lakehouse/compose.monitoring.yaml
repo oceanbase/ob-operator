@@ -1,0 +1,9 @@
+# Opt-in monitoring access on the Docker host. Use this file with every command
+# for this project: docker compose -f compose.yaml -f compose.monitoring.yaml ...
+services:
+  prometheus:
+    ports:
+      - "${MONITORING_BIND_ADDRESS:-127.0.0.1}:${PROMETHEUS_HOST_PORT:-39090}:9090"
+  alertmanager:
+    ports:
+      - "${MONITORING_BIND_ADDRESS:-127.0.0.1}:${ALERTMANAGER_HOST_PORT:-39093}:9093"

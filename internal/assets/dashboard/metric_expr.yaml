@@ -199,7 +199,7 @@ sql_insert_rt: sum(rate(ob_sysstat{stat_id="40003",@LABELS}[@INTERVAL])) by (@GB
 sql_insert_rt_max: max(max(rate(ob_sysstat{stat_id="40003",@LABELS}[@INTERVAL])) by (svr_ip,@GBLABELS) / max(rate(ob_sysstat{stat_id="40002",@LABELS}[@INTERVAL])) by (svr_ip,@GBLABELS)) by (@GBLABELS)
 sql_local_count: sum(rate(ob_sysstat{stat_id="40010",@LABELS}[@INTERVAL])) by (@GBLABELS)
 sql_other_count: sum(rate(ob_sysstat{stat_id="40018",@LABELS}[@INTERVAL])) by (@GBLABELS)
-sql_other_rt: sum(rate(ob_sysstat{stat_id="40019",@LABELS}[@INTERVAL])) by (@GBLABELS) / sum(rate(ob_sysstat{stat_id="40000",@LABELS}[@INTERVAL])) by (@GBLABELS)
+sql_other_rt: sum(rate(ob_sysstat{stat_id="40019",@LABELS}[@INTERVAL])) by (@GBLABELS) / sum(rate(ob_sysstat{stat_id="40018",@LABELS}[@INTERVAL])) by (@GBLABELS)
 sql_remote_count: sum(rate(ob_sysstat{stat_id="40011",@LABELS}[@INTERVAL])) by (@GBLABELS)
 sql_replace_count: sum(rate(ob_sysstat{stat_id="40004",@LABELS}[@INTERVAL])) by (@GBLABELS)
 sql_replace_rt: sum(rate(ob_sysstat{stat_id="40005",@LABELS}[@INTERVAL])) by (@GBLABELS) / sum(rate(ob_sysstat{stat_id="40004",@LABELS}[@INTERVAL])) by (@GBLABELS)

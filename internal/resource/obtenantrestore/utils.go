@@ -13,17 +13,13 @@ See the Mulan PSL v2 for more details.
 package obtenantrestore
 
 import (
-	"path"
 	"strings"
 
 	"github.com/pkg/errors"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
-	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 )
@@ -61,26 +57,9 @@ func (m *ObTenantRestoreManager) getSourceUri() (string, error) {
 }
 
 func (m *ObTenantRestoreManager) getDestPath(dest *apitypes.BackupDestination) string {
-	if dest.Type == constants.BackupDestTypeNFS || resourceutils.IsZero(dest.Type) {
-		return "file://" + path.Join(oceanbaseconst.BackupPath, dest.Path)
-	}
-	if dest.OSSAccessSecret == "" {
-		return ""
-	}
-	secret := &v1.Secret{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{
-		Namespace: m.Resource.GetNamespace(),
-		Name:      dest.OSSAccessSecret,
-	}, secret)
+	uri, err := resourceutils.BackupDestinationPath(m.Ctx, m.Client, m.Resource.Namespace, dest)
 	if err != nil {
 		m.PrintErrEvent(err)
-		return ""
 	}
-	destPath := strings.Join([]string{dest.Path, "access_id=" + string(secret.Data["accessId"]), "access_key=" + string(secret.Data["accessKey"])}, "&")
-	if dest.Type == constants.BackupDestTypeCOS {
-		destPath += ("&appid=" + string(secret.Data["appId"]))
-	} else if dest.Type == constants.BackupDestTypeS3 {
-		destPath += ("&s3_region=" + string(secret.Data["s3Region"]))
-	}
-	return destPath
+	return uri
 }

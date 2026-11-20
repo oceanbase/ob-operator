@@ -1,0 +1,28 @@
+# Optional public-image mirrors. Merge with existing registries.yaml;
+# retain existing mirrors, authentication, TLS settings and rewrites.
+# Keep release image names and tags unchanged. Availability is not guaranteed.
+mirrors:
+  docker.io:
+    endpoint:
+      - "https://mirror.ccs.tencentyun.com"
+      - "https://registry.docker-cn.com"
+      - "https://docker.mirrors.ustc.edu.cn"
+      - "https://hub-mirror.c.163.com"
+      - "https://docker.1panel.live"
+      - "https://docker.1ms.run"
+      - "https://dytt.online"
+      - "https://lispy.org"
+      - "https://docker.xiaogenban1993.com"
+      - "https://docker.yomansunter.com"
+      - "https://666860.xyz"
+      - "https://a.ussh.net"
+      - "https://hub.rat.dev"
+      - "https://docker.m.daocloud.io"
+  quay.io:
+    endpoint:
+      - "https://quay.m.daocloud.io"
+# Enable this additional mapping only if this release uses public GHCR images
+# that the mirror permits and you have verified the exact release tags.
+#  ghcr.io:
+#    endpoint:
+#      - "https://ghcr.m.daocloud.io"

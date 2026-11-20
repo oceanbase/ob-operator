@@ -18,11 +18,11 @@ spec:
     restore:
       bakDataSource:
         type: "OSS"
-        path: "s3://${OSS_BUCKET_NAME}/${OSS_BACPUP_PATH}?host=${OSS_HOST}"
+        path: "oss://${OSS_BUCKET_NAME}/${OSS_BACPUP_PATH}?host=${OSS_HOST}"
         ossAccessSecret: "${OSS_ACCESS}"
       archiveSource:
         type: "OSS"
-        path: "s3://${OSS_BUCKET_NAME}/${OSS_ARCHIVE_PATH}?host=${OSS_HOST}"
+        path: "oss://${OSS_BUCKET_NAME}/${OSS_ARCHIVE_PATH}?host=${OSS_HOST}"
         ossAccessSecret: "${OSS_ACCESS}"
       bakEncryptionSecret: "${BACK_ENCRYPTION_SERECT}"
       until:

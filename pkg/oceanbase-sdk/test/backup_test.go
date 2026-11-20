@@ -14,6 +14,7 @@ package test
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -30,7 +31,7 @@ import (
 var _ = Describe("Test Backup Operation", Label("backup"), func() {
 
 	var con *operation.OceanbaseOperationManager
-	var ctx context.Context
+	ctx := context.Background()
 
 	var _ = BeforeEach(func() {
 		Expect(tenant).NotTo(BeEmpty())
@@ -47,6 +48,36 @@ var _ = Describe("Test Backup Operation", Label("backup"), func() {
 		Expect(con).NotTo(BeNil())
 		err := con.Close()
 		Expect(err).To(BeNil())
+	})
+
+	It("keeps backup settings on one connection and discards them after use", func() {
+		var backupID, concurrentID, followingID uint64
+		var marker sql.NullInt64
+		err := con.WithBackupSession(ctx, func(session *operation.OceanbaseOperationManager) error {
+			Expect(session.QueryRow(ctx, &backupID, "SELECT CONNECTION_ID()")).To(Succeed())
+			Expect(session.ExecWithDefaultTimeout(ctx, "SET @ob_operator_session_test = 17")).To(Succeed())
+
+			// Keep this other connection checked out through the first ordinary query below.
+			other, err := con.Connector.GetClient().Connx(ctx)
+			Expect(err).NotTo(HaveOccurred())
+			DeferCleanup(other.Close)
+			Expect(other.GetContext(ctx, &concurrentID, "SELECT CONNECTION_ID()")).To(Succeed())
+			Expect(concurrentID).NotTo(Equal(backupID))
+			Expect(other.GetContext(ctx, &marker, "SELECT @ob_operator_session_test")).To(Succeed())
+			Expect(marker.Valid).To(BeFalse())
+
+			var sameID uint64
+			Expect(session.QueryRow(ctx, &sameID, "SELECT CONNECTION_ID()")).To(Succeed())
+			Expect(sameID).To(Equal(backupID))
+			Expect(session.QueryRow(ctx, &marker, "SELECT @ob_operator_session_test")).To(Succeed())
+			Expect(marker).To(Equal(sql.NullInt64{Int64: 17, Valid: true}))
+			return nil
+		})
+		Expect(err).NotTo(HaveOccurred())
+		Expect(con.QueryRow(ctx, &followingID, "SELECT CONNECTION_ID()")).To(Succeed())
+		Expect(followingID).NotTo(Equal(backupID))
+		Expect(con.QueryRow(ctx, &marker, "SELECT @ob_operator_session_test")).To(Succeed())
+		Expect(marker.Valid).To(BeFalse())
 	})
 
 	It("Query Log Archive Parameters", Label("check-params"), func() {
@@ -204,8 +235,8 @@ var _ = Describe("Test Backup Operation", Label("backup"), func() {
 		}
 	})
 
-	It("Set Log Archive concurrency to 0", func() {
-		err := con.SetLogArchiveConcurrency(ctx, 0)
+	It("Reject negative log archive concurrency", func() {
+		err := con.SetLogArchiveConcurrency(ctx, -1)
 		Expect(err).NotTo(BeNil())
 	})
 

@@ -3,6 +3,7 @@
 # load all the parameters in setup.sh
 source setup.sh
 source util.sh
+source case_p1_BackupAndRestore/oss_restore_checks.sh
 source env.sh
 #source case_p1_BackupAndRestore/env_210_vars.sh
  
@@ -35,7 +36,6 @@ prepare() {
     create_pass_secret $NAMESPACE $OBTENANT_STANDBY_OSS_SECRET $PASSWORD
     create_pass_secret $NAMESPACE $BACK_ENCRYPTION_SERECT $PASSWORD_ENCRYPTION
     create_pass_oss_secret $NAMESPACE $OSS_ACCESS $OSS_AK $OSS_SK 
-    echo $PASSWORD
 }
 
 # clean up delete everything by deleting the entire namespace
@@ -81,7 +81,6 @@ check_in_obcluster() {
     OBSERVER_ACTIVE='false'
     ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
     echo $ip
-    echo $PASSWORD
     while true; do
         echo 'check ob'
         counter=$((counter+1))
@@ -144,80 +143,6 @@ check_backup_running() {
     done
 }
 
-check_restore_running() {
-    counter=0
-    timeout=150  
-    RESTORE_RUNNING='false'
-    ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-    while true; do
-        echo 'check restore resource'
-	counter=$((counter+1))
-        crd_primary_restore=`kubectl get obtenant -n $NAMESPACE | grep "$OBTENANT_STANDBY_OSS"|awk -F' ' '{print $2}'`
-        crd_primary_obtenant=`kubectl get obtenantrestore -n $NAMESPACE| grep "$OBTENANT_STANDBY_OSS"|awk -F' ' '{print $2}'`
-        echo "crd_primary_restore $crd_primary_restore  crd_primary_obtenant $crd_primary_obtenant"
-        if [[ $crd_primary_restore = "running" && $crd_primary_obtenant = "SUCCESSFUL" ]];then
-            RESTORE_RUNNING='true'
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "restore resource still not running"
-            break
-        fi
-        sleep 3s
-    done
-}
-
-check_restore_db_running() {
-    counter=0
-    timeout=150  
-    RESTORE_DB_RUNNING='false'
-    ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-    while true; do
-        echo 'check restore db resource'
-        counter=$((counter+1))
-        tenant_role=`mysql -h $ip -P2881 -A -uroot -p$PASSWORD -Doceanbase -e "select * from DBA_OB_TENANTS;"| grep $OBTENANT_STANDBY_OSS|awk -F' ' '{print $15}'`
-        if [[ $tenant_role = "STANDBY" ]];then
-            echo "tenant_role $tenant_role"
-            RESTORE_DB_RUNNING='true'
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "restore db resource still not running"
-            break
-        fi
-        sleep 3s
-    done
-}
-
-check_restore_data() {
-    counter=0
-    timeout=150  
-    RESTORE_DATA_SAME='false'
-    ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-    while true; do
-        echo 'check dbdata resource'
-        counter=$((counter+1))
-	mysql  -uroot@$OBTENANT_NAME -h $ip -P2881 -p$PASSWORD -Dtest -e " select * from students;" > result1.txt
-	mysql  -uroot@$OBTENANT_STANDBY_OSS -h $ip -P2881 -p$PASSWORD -Dtest -e " select * from students;" > result2.txt
-	diff result1.txt result2.txt > /dev/null
-        if [ $? -ne 0 ]; then
-	    cat result1.txt && cat result2.txt
-	    rm -rf result1.txt result2.txt
-            echo "tenant_role $tenant_role"
-            RESTORE_DATA_SAME='true'
-            break
-        fi
-        if [ $counter -eq $timeout ]; then
-            echo "backup dbdata resource still not running"
-	    cat result1.txt && cat result2.txt 
-	    rm -rf result1.txt result2.txt
-            break
-        fi
-        sleep 3s
-    done
-}
-
-
 export_to_file() {
     local output_file="case_p1_BackupAndRestore/env_210_vars.sh"
     cat <<EOF > "$output_file"
@@ -259,14 +184,6 @@ insert_data_second() {
    mysql  -uroot@$OBTENANT_NAME -h$ip -P2881 -p$PASSWORD -Dtest -e " INSERT INTO students (id, name, age, address) VALUES (2, 'Bob', 22, '456 Elm St');"
 }
 
-export_localtime() {
-    local template_var=\$1
-    local datetime=$(date "+%Y-%m-%d %H:%M:%S")
-    eval "export $template_var=\"$datetime\""
-}
-
-
-
 validate() {
     run "obcluster_template_1-1-1.yaml"
     echo 'do validate'
@@ -274,6 +191,7 @@ validate() {
     sleep 20s
     if [[ $RESOURCE_RUNNING == 'false' ]]; then
         echo "case failed"
+        return 1
     else
         check_in_obcluster
 	run "obtenant_basic_1_1_1.yaml"
@@ -281,30 +199,26 @@ validate() {
 	run "backup_policy_oss.yaml"
         check_backup_running
 	sleep 100s
-	insert_data
+	insert_data || return 1
 	sleep 30s
-	export_localtime "OSS_UNTIL_TIMESTAMP"
+        OSS_UNTIL_TIMESTAMP=$(oss_test_sql sys "SELECT NOW()") || return 1
+        export OSS_UNTIL_TIMESTAMP
 	echo $OSS_UNTIL_TIMESTAMP
 	sleep 30s
-	insert_data_second
+	insert_data_second || return 1
 	sleep 100s
 	run "tenant_restore_until.yaml"
-	check_restore_running
-	check_restore_db_running
-	check_restore_data
-	export_localtime "OSS_REPLOY_LOG_UNTIL"
-	echo $OSS_REPLOY_LOG_UNTIL
-        if [[ $RESTORE_DATA_SAME == 'false' ]]; then
+        if ! wait_for_oss_restore "$OBTENANT_STANDBY_OSS" $'1\tAlice\t20\t123 Main St'; then
             echo "case failed"
-	    #cleanup
-	    #prepare
-        else
-            echo "case passed"
+            return 1
         fi
+        OSS_REPLOY_LOG_UNTIL=$(oss_test_sql sys "SELECT NOW()") || return 1
+        export OSS_REPLOY_LOG_UNTIL
+        echo "case passed"
     fi
 }
 
 prepare
 export_to_file
-validate
+validate || exit 1
 export_to_file
