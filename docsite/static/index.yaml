@@ -135,6 +135,16 @@ entries:
   oceanbase-cluster:
   - apiVersion: v2
     appVersion: 4.3.5.3-103000092025080818
+    created: "2026-11-22T11:58:05.314711395Z"
+    description: A Helm chart for Kubernetes to deploy OceanBase cluster
+    digest: cfac323f9ab592150ab6bd4879a57ad0013aa3138edc36a6a5b9a0edff0ae8c9
+    name: oceanbase-cluster
+    type: application
+    urls:
+    - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-cluster-4.3.5-sp.5-103000092025080818/oceanbase-cluster-4.3.5-sp.5-103000092025080818.tgz
+    version: 4.3.5-sp.5-103000092025080818
+  - apiVersion: v2
+    appVersion: 4.3.5.3-103000092025080818
     created: "2025-09-04T09:28:25.359076304Z"
     description: A Helm chart for Kubernetes to deploy OceanBase cluster
     digest: 5b3e50bc0f54f31e6189e11d8e2c5a901b0291c123ee991abdf9b8cc006e8b17
@@ -224,6 +234,16 @@ entries:
     - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-cluster-4.2.1-sp.1-101010012023111012/oceanbase-cluster-4.2.1-sp.1-101010012023111012.tgz
     version: 4.2.1-sp.1-101010012023111012
   oceanbase-dashboard:
+  - apiVersion: v2
+    appVersion: 0.6.1
+    created: "2026-11-22T11:58:05.450150664Z"
+    description: A Helm chart for OceanBase dashboard
+    digest: 4952ca0eddda08d8ff0ac19491999da1188e8435d5a2cbfde6c2e49dfc6a83e4
+    name: oceanbase-dashboard
+    type: application
+    urls:
+    - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-dashboard-0.6.6-dev.20261122.1/oceanbase-dashboard-0.6.6-dev.20261122.1.tgz
+    version: 0.6.6-dev.20261122.1
   - apiVersion: v2
     appVersion: 0.6.0
     created: "2026-01-30T08:47:09.384176356Z"
@@ -324,4 +344,38 @@ entries:
     urls:
     - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-dashboard-0.1.0/oceanbase-dashboard-0.1.0.tgz
     version: 0.1.0
-generated: "2026-01-30T08:47:09.384309112Z"
+  oceanbase-minio:
+  - apiVersion: v2
+    appVersion: RELEASE.2025-10-15T17-29-55Z
+    created: "2026-11-22T11:58:05.647570905Z"
+    description: Optional standalone or distributed MinIO storage for OceanSeek
+    digest: de60e6c68e3ce564110381fdb7d47cfa6274032889ed4a3fd50823c669bb871d
+    name: oceanbase-minio
+    type: application
+    urls:
+    - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-minio-0.2.3/oceanbase-minio-0.2.3.tgz
+    version: 0.2.3
+  oceanseek:
+  - apiVersion: v2
+    appVersion: 4.6.3.0
+    created: "2026-11-22T11:58:05.782502842Z"
+    dependencies:
+    - alias: dashboard
+      condition: dashboard.enabled
+      name: oceanbase-dashboard
+      repository: file://../oceanbase-dashboard
+      version: 0.6.6-dev.20261122.1
+    - alias: minio
+      condition: minio.enabled
+      name: oceanbase-minio
+      repository: file://../oceanbase-minio
+      version: 0.2.3
+    description: OceanSeek with Dashboard and optional bundled MinIO
+    digest: a142ddf9402ed0190d3b53a210d2fcf497bdc310144e7adde0237d85e709b148
+    kubeVersion: '>=1.27.0-0'
+    name: oceanseek
+    type: application
+    urls:
+    - https://github.com/oceanbase/ob-operator/releases/download/oceanseek-0.6.0-dev.20261122.1/oceanseek-0.6.0-dev.20261122.1.tgz
+    version: 0.6.0-dev.20261122.1
+generated: "2026-11-22T11:58:05.782585325Z"
