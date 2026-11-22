@@ -1,6 +1,6 @@
 initCredentials: true
-# Initial admin password; existing accounts are preserved on upgrade.
-adminPassword: admin
+# Set with --set-file or leave empty to generate an initial password.
+adminPassword: ""
 # Require users to change their password before their first login.
 requirePasswordResetOnFirstLogin: true
 
@@ -67,7 +67,8 @@ inspection:
   obdiag:
     image: "ghcr.io/oceanbase/obdiag:5.0.2-12026102116"
   oceanbaseHelper:
-    image: "localhost/oceanseek/oceanbase-helper:oceanseek-r28-amd64"
+    # OceanSeek release packages supply their versioned helper image here.
+    image: "quay.io/oceanbase/oceanbase-helper:latest"
 
 job:
   inspection:

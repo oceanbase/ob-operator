@@ -208,7 +208,7 @@ async function run() {
           failures.push({ width, table: box });
         assert(
           (await page.locator('tbody a').first().getAttribute('href')).endsWith(
-            '/lakehouse',
+            '/oceanseek',
           ),
         );
         await page.screenshot({

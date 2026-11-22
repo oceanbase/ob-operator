@@ -62,16 +62,16 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
-Names of the Lakehouse resources.
+Names of the OceanSeek resources.
 */}}
 {{- define "oceanbase-cluster.logServiceName" -}}
-{{- default (printf "%s-logservice" .Release.Name) .Values.lakehouse.logService.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- default (printf "%s-logservice" .Release.Name) .Values.oceanseek.logService.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{- define "oceanbase-cluster.logServiceSecretName" -}}
-{{- default (printf "%s-logservice-s3" .Release.Name) .Values.lakehouse.logService.existingSecretName }}
+{{- default (printf "%s-logservice-s3" .Release.Name) .Values.oceanseek.logService.existingSecretName }}
 {{- end }}
 
 {{- define "oceanbase-cluster.sharedStorageSecretName" -}}
-{{- default (printf "%s-shared-storage-s3" .Release.Name) .Values.lakehouse.sharedStorage.existingSecretName }}
+{{- default (printf "%s-shared-storage-s3" .Release.Name) .Values.oceanseek.sharedStorage.existingSecretName }}
 {{- end }}

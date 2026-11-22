@@ -20,6 +20,7 @@ func TestValidateStorageMode(t *testing.T) {
 		{"empty logservice name", func(p *CreateOBClusterParam) { p.LogServiceRef.Name = " " }, false},
 		{"missing storage", func(p *CreateOBClusterParam) { p.SharedStorageInfo = nil }, false},
 		{"missing bucket", func(p *CreateOBClusterParam) { p.SharedStorageInfo.BucketURL = "" }, false},
+		{"inline credential", func(p *CreateOBClusterParam) { p.SharedStorageInfo.BucketURL = "s3://bucket?access_key=example" }, false},
 		{"missing secret", func(p *CreateOBClusterParam) { p.SharedStorageInfo.SecretRef.Name = "" }, false},
 		{"SS with redo", func(p *CreateOBClusterParam) { p.OBServer.Storage.RedoLog = &common.StorageSpec{} }, false},
 		{"duplicate zones", func(p *CreateOBClusterParam) { p.Topology = append(p.Topology, p.Topology[0]) }, false},

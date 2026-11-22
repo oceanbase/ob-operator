@@ -11,24 +11,6 @@ import tempfile
 from urllib.parse import urlsplit
 
 
-DEFAULT_MIRRORS = [
-    "https://mirror.ccs.tencentyun.com",
-    "https://registry.docker-cn.com",
-    "https://docker.mirrors.ustc.edu.cn",
-    "https://hub-mirror.c.163.com",
-    "https://docker.1panel.live",
-    "https://docker.1ms.run",
-    "https://dytt.online",
-    "https://lispy.org",
-    "https://docker.xiaogenban1993.com",
-    "https://docker.yomansunter.com",
-    "https://666860.xyz",
-    "https://a.ussh.net",
-    "https://hub.rat.dev",
-    "https://docker.m.daocloud.io",
-]
-
-
 def unique_keys(pairs):
     result = {}
     for key, value in pairs:
@@ -114,14 +96,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path, default=Path("/etc/docker/daemon.json"),
                         help="Docker daemon configuration path")
-    parser.add_argument("--mirror", action="append", dest="mirrors",
-                        help="HTTPS Docker Hub mirror; repeat to replace the default 14-address list")
+    parser.add_argument("--mirror", action="append", dest="mirrors", required=True,
+                        help="HTTPS Docker Hub mirror to add; repeat for multiple mirrors")
     parser.add_argument("--apply", action="store_true",
                         help="write the merged config with a backup; never reloads Docker")
     args = parser.parse_args()
     try:
         original, metadata, config = read_config(args.config)
-        merged = merge_config(config, args.mirrors or DEFAULT_MIRRORS)
+        merged = merge_config(config, args.mirrors)
         content = (json.dumps(merged, indent=2) + "\n").encode("utf-8")
         if not args.apply:
             sys.stdout.write(content.decode("utf-8"))

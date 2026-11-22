@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	modelcommon "github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/param"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
@@ -44,5 +45,19 @@ func TestGenerateSharedStorageCluster(t *testing.T) {
 	normal := generateOBClusterInstance(p)
 	if normal.Spec.DeploymentMode != "" || normal.Spec.SharedStorageInfo != nil || normal.Spec.LogServiceRef != nil || normal.Spec.OBServerTemplate.Storage.RedoLogStorage == nil {
 		t.Fatal("Legacy normal create changed")
+	}
+}
+
+func TestSharedStorageDetailExcludesInlineCredentials(t *testing.T) {
+	for _, tc := range []struct{ raw, want string }{
+		{"s3://bucket/log?host=http://minio:9000&s3_region=local&max_iops=100", "s3://bucket/log?host=http://minio:9000&s3_region=local&max_iops=100"},
+		{"s3://user:example@bucket/log?host=minio&access_key=example#private", "s3://bucket/log?host=minio"},
+		{"oss://bucket?host=https://store.test%3Fsignature%3Dexample", "oss://bucket"},
+		{"s3://bucket?host=minio%26access_key%3Dexample", "s3://bucket"},
+	} {
+		got := modelcommon.SharedStorageFromAPI(&apitypes.SharedStorageSpec{BucketURL: tc.raw})
+		if got.BucketURL != tc.want {
+			t.Fatal("storage detail returned an unexpected public location")
+		}
 	}
 }

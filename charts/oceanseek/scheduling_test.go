@@ -1,4 +1,4 @@
-package lakehouse_test
+package oceanseek_test
 
 import (
 	"bytes"
@@ -94,13 +94,13 @@ func TestSchedulingDefaultDoesNotRestrictPlacement(t *testing.T) {
 func TestSchedulingPropagatesToEveryPodAndZone(t *testing.T) {
 	selector := map[string]string{
 		"kubernetes.io/hostname":     "seekdb-worker-01",
-		"oceanbase.example.com/pool": "lakehouse",
+		"oceanbase.example.com/pool": "oceanseek",
 		"example.com/string-label":   "true",
 		"example.com/numeric-label":  "01",
 	}
 	seconds := int64(600)
 	tolerations := []corev1.Toleration{
-		{Key: "example.com/dedicated", Operator: corev1.TolerationOpEqual, Value: "lakehouse", Effect: corev1.TaintEffectNoSchedule},
+		{Key: "example.com/dedicated", Operator: corev1.TolerationOpEqual, Value: "oceanseek", Effect: corev1.TaintEffectNoSchedule},
 		{Key: "node.kubernetes.io/not-ready", Operator: corev1.TolerationOpExists, Effect: corev1.TaintEffectNoExecute, TolerationSeconds: &seconds},
 		{Operator: corev1.TolerationOpExists, Effect: corev1.TaintEffectPreferNoSchedule},
 	}
@@ -143,10 +143,10 @@ func TestSchedulingPropagatesToEveryPodAndZone(t *testing.T) {
 
 func TestSchedulingRejectsInvalidTolerations(t *testing.T) {
 	for name, toleration := range map[string]map[string]interface{}{
-		"unknown-operator":     {"key": "dedicated", "operator": "NotEqual", "value": "lakehouse", "effect": "NoSchedule"},
+		"unknown-operator":     {"key": "dedicated", "operator": "NotEqual", "value": "oceanseek", "effect": "NoSchedule"},
 		"unknown-effect":       {"key": "dedicated", "operator": "Exists", "effect": "Never"},
-		"exists-with-value":    {"key": "dedicated", "operator": "Exists", "value": "lakehouse", "effect": "NoSchedule"},
-		"empty-key-equal":      {"key": "", "operator": "Equal", "value": "lakehouse", "effect": "NoSchedule"},
+		"exists-with-value":    {"key": "dedicated", "operator": "Exists", "value": "oceanseek", "effect": "NoSchedule"},
+		"empty-key-equal":      {"key": "", "operator": "Equal", "value": "oceanseek", "effect": "NoSchedule"},
 		"string-seconds":       {"key": "dedicated", "operator": "Exists", "effect": "NoExecute", "tolerationSeconds": "600"},
 		"negative-seconds":     {"key": "dedicated", "operator": "Exists", "effect": "NoExecute", "tolerationSeconds": -1},
 		"seconds-wrong-effect": {"key": "dedicated", "operator": "Exists", "effect": "NoSchedule", "tolerationSeconds": 600},

@@ -48,7 +48,7 @@ export function StorageArchitecture() {
             },
             {
               value: 'shared_storage',
-              label: L('湖库共享存储（SS）', 'Lakehouse shared storage (SS)'),
+              label: L('湖库共享存储（SS）', 'OceanSeek shared storage (SS)'),
             },
           ]}
         />

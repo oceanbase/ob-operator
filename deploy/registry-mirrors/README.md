@@ -21,14 +21,9 @@ kubectl get nodes -o custom-columns=NAME:.metadata.name,RUNTIME:.status.nodeInfo
 other containerd distributions may use different paths and configuration formats.
 Helm itself does not choose or configure the runtime.
 
-The Docker Hub configuration retains all 14 requested mirror addresses in their
-original order, in both the Docker example and the K3s `docker.io` mapping. The
-merge helper adds the complete list by default. No address is filtered out based
-on a reachability check. Existing mirrors keep their order when merging.
-
-These are optional third-party endpoints; including an address does not verify
-availability of every release image. The separate Quay and optional GHCR mappings
-use [DaoCloud's registry-specific endpoints](https://github.com/DaoCloud/public-image-mirror).
+Use a mirror URL supplied by your registry administrator for each upstream registry.
+The bundled templates contain no active mirror endpoints. Keep the image references
+and platform digests from the release lock when using a mirror.
 
 A mirror does not publish private or missing release images or grant upstream
 repository access. A public release must first publish every image in its
@@ -41,34 +36,30 @@ replace `registry-mirrors/` with `deploy/registry-mirrors/`.
 
 ## Docker Engine / Compose
 
-`docker-daemon.json` contains the requested settings: all 14 Docker Hub mirrors,
-ten concurrent layer downloads and five concurrent uploads. Docker's
-`registry-mirrors` does not cover `quay.io`, `ghcr.io` or arbitrary private
-registries. See [Docker's mirror documentation](https://docs.docker.com/docker-hub/image-library/mirror/).
+`docker-daemon.json` includes an empty Docker Hub mirror list, ten concurrent layer
+downloads and five concurrent uploads. [Docker mirror documentation](https://docs.docker.com/docker-hub/image-library/mirror/)
 
 The Python 3 standard-library helper merges settings without replacing other
 daemon options. Existing mirrors retain their order, and existing concurrency
 settings take precedence. It only adds the sample values where absent.
 
-Preview the merged configuration; this does not write files:
+Set `DOCKER_HUB_MIRROR` to the HTTPS URL for your Docker Hub mirror, then preview the configuration:
 
 ```bash
-sudo python3 registry-mirrors/configure-docker.py
+sudo python3 registry-mirrors/configure-docker.py --mirror "$DOCKER_HUB_MIRROR"
 ```
 
 Apply the previewed settings explicitly:
 
 ```bash
-sudo python3 registry-mirrors/configure-docker.py --apply
+sudo python3 registry-mirrors/configure-docker.py --mirror "$DOCKER_HUB_MIRROR" --apply
 ```
 
 The helper backs up an existing file alongside it, preserves its mode and owner,
 then replaces it atomically. Repeating the command does not add duplicates. An
 invalid JSON file or a symbolic-link config is rejected. It never reloads Docker
 or changes containers. If `/etc/docker` does not yet exist, create it first with
-`sudo install -d -m 755 /etc/docker`. To add your organization's Docker Hub mirror
-instead, pass `--mirror https://YOUR_MIRROR`; repeat the option for multiple
-known mirrors. Use `--config PATH` when the daemon uses another config file.
+`sudo install -d -m 755 /etc/docker`. Repeat `--mirror` for multiple endpoints in preference order. Use `--config PATH` when the daemon uses another config file.
 
 On a Linux host with the standard systemd Docker service, validate and reload:
 
@@ -105,17 +96,16 @@ On **each node that pulls images**, including schedulable server nodes, merge
 `mirrors`, `configs`, authentication, TLS settings and rewrites. Back up an
 existing file before editing it; do not replace it with this example.
 
-For a node with **no existing file**, install the example:
+For a node with **no existing file**, copy the template to a working file,
+fill in the HTTPS endpoints for the upstream registries you use, then install it:
 
 ```bash
+cp registry-mirrors/k3s-registries.yaml registries.yaml
+"${EDITOR:-vi}" registries.yaml
 sudo install -d -m 755 /etc/rancher/k3s
 sudo test ! -e /etc/rancher/k3s/registries.yaml && \
-  sudo install -m 600 registry-mirrors/k3s-registries.yaml /etc/rancher/k3s/registries.yaml
+  sudo install -m 600 registries.yaml /etc/rancher/k3s/registries.yaml
 ```
-
-The `docker.io` and `quay.io` mappings preserve original image names. The
-commented GHCR mapping is available for releases whose public GHCR images have
-also been checked against the mirror's allowlist. Enable it only when needed.
 
 Apply the configuration on each node by restarting its K3s service. Use the
 appropriate command for that node's role, and handle existing clusters one node

@@ -12,7 +12,7 @@ import { createClusterReportWrap } from '@/services/reportRequest/clusterReportR
 import { strTrim } from '@/utils/helper';
 import BackUp from './BackUp';
 import BasicInfo from './BasicInfo';
-import LakehouseReview from './LakehouseReview';
+import OceanSeekReview from './OceanSeekReview';
 import Monitor from './Monitor';
 import Observer from './Observer';
 import Parameters from './Parameters';
@@ -206,7 +206,7 @@ export default function New() {
           {isSS
             ? step < 3
               ? L('下一步', 'Next')
-              : L('确认创建湖库集群', 'Create lakehouse cluster')
+              : L('确认创建湖库集群', 'Create oceanseek cluster')
             : intl.formatMessage({
                 id: 'dashboard.Cluster.New.Submit',
                 defaultMessage: '提交',
@@ -308,7 +308,7 @@ export default function New() {
         </div>
         {isSS && (
           <div style={{ display: step === 3 ? 'block' : 'none' }}>
-            <LakehouseReview form={form} />
+            <OceanSeekReview form={form} />
           </div>
         )}
       </Form>

@@ -1,4 +1,4 @@
-package lakehouse_test
+package oceanseek_test
 
 import (
 	"context"
@@ -38,9 +38,9 @@ func TestInstallerSequencingResumeAndFailures(t *testing.T) {
 		env          []string
 	}{
 		{"fresh", "storage,logservice,cluster", 0, []string{"MOCK_NAMESPACE=absent"}},
-		{"storage-slow", "storage,logservice,cluster", 0, []string{"MOCK_SLOW_UPGRADE=storage", "LAKEHOUSE_PROGRESS_INTERVAL=1"}},
-		{"packaged-entry", "storage,logservice,cluster", 0, []string{"LAKEHOUSE_MANAGED_ACCESS=1"}},
-		{"dashboard-packaged-entry-failure", "storage,logservice,cluster", 36, []string{"LAKEHOUSE_MANAGED_ACCESS=1", "MOCK_FAIL_DASHBOARD=true"}},
+		{"storage-slow", "storage,logservice,cluster", 0, []string{"MOCK_SLOW_UPGRADE=storage", "OCEANSEEK_PROGRESS_INTERVAL=1"}},
+		{"packaged-entry", "storage,logservice,cluster", 0, []string{"OCEANSEEK_MANAGED_ACCESS=1"}},
+		{"dashboard-packaged-entry-failure", "storage,logservice,cluster", 36, []string{"OCEANSEEK_MANAGED_ACCESS=1", "MOCK_FAIL_DASHBOARD=true"}},
 		{"dashboard-disabled", "storage,logservice,cluster", 0, []string{"MOCK_DASHBOARD=false"}},
 		{"dashboard-failure", "storage,logservice,cluster", 36, []string{"MOCK_FAIL_DASHBOARD=true"}},
 		{"dashboard-missing-values", "storage,logservice,cluster", 1, []string{"MOCK_DASHBOARD=null"}},
@@ -147,7 +147,7 @@ esac
 				timeout = "1"
 			}
 			cmd := exec.Command("bash", "install.sh", "qa", "qa-ns", "-f", "/tmp/values with spaces.yaml", "--set-string", "objectStorage.region=us-east-1")
-			cmd.Env = append(os.Environ(), "LC_ALL=C", "PATH="+dir+string(os.PathListSeparator)+os.Getenv("PATH"), "CASE_LOG="+log, "LAKEHOUSE_TIMEOUT="+timeout, "TMPDIR="+dir)
+			cmd.Env = append(os.Environ(), "LC_ALL=C", "PATH="+dir+string(os.PathListSeparator)+os.Getenv("PATH"), "CASE_LOG="+log, "OCEANSEEK_TIMEOUT="+timeout, "TMPDIR="+dir)
 			cmd.Env = append(cmd.Env, tc.env...)
 			output, err := cmd.CombinedOutput()
 			if got := exitCode(err); got != tc.code {
@@ -437,7 +437,7 @@ esac
 			defer cancel()
 			cmd := exec.CommandContext(ctx, "bash", "install.sh", "qa", "qa-ns")
 			cmd.Env = append(os.Environ(), "PATH="+dir+string(os.PathListSeparator)+os.Getenv("PATH"), "TMPDIR="+dir,
-				"SCENARIO="+scenario, "LAKEHOUSE_TIMEOUT=2", "LAKEHOUSE_REQUEST_TIMEOUT=1", "LAKEHOUSE_DIAGNOSTIC_TIMEOUT=1", "LAKEHOUSE_PROGRESS_INTERVAL=1")
+				"SCENARIO="+scenario, "OCEANSEEK_TIMEOUT=2", "OCEANSEEK_REQUEST_TIMEOUT=1", "OCEANSEEK_DIAGNOSTIC_TIMEOUT=1", "OCEANSEEK_PROGRESS_INTERVAL=1")
 			out, err := cmd.CombinedOutput()
 			if ctx.Err() != nil {
 				t.Fatal("unbounded command or diagnostic", string(out))

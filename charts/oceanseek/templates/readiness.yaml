@@ -88,9 +88,9 @@ spec:
         seccompProfile: {type: RuntimeDefault}
       containers:
         - name: readiness
-          image: {{ .Values.native.readiness.image | quote }}
+          image: {{ required "Set native.readiness.image to the released Operator or readiness image (see USAGE.txt)" .Values.native.readiness.image | quote }}
           imagePullPolicy: {{ .Values.native.readiness.imagePullPolicy }}
-          command: [/lakehouse-readiness]
+          command: [{{ .Values.native.readiness.executable | quote }}]
           args:
             - --namespace={{ .Release.Namespace }}
             - --release={{ .Release.Name }}

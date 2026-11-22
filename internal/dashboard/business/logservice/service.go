@@ -112,26 +112,7 @@ func decode(u *unstructured.Unstructured) (*v1alpha1.OBLogServiceCluster, error)
 func publicItem(r *v1alpha1.OBLogServiceCluster) Item {
 	// Never expose embedded URL credentials from objects created outside Dashboard.
 	spec := r.DeepCopy().Spec
-	if u, err := url.Parse(spec.ObjectStoreURL.BucketURL); err == nil {
-		u.User = nil
-		// OceanBase's storage URL grammar expects raw http:// in host. Do not
-		// round-trip safe URLs through url.Values.Encode (which changes them).
-		safe := []string{}
-		for _, part := range strings.Split(u.RawQuery, "&") {
-			key, value, _ := strings.Cut(part, "=")
-			decoded, _ := url.QueryUnescape(value)
-			if strings.Contains(decoded, "@") {
-				continue
-			} // endpoint userinfo is a credential, too
-			if key == "host" || key == "s3_region" || key == "endpoint" {
-				safe = append(safe, part)
-			}
-		}
-		u.RawQuery = strings.Join(safe, "&")
-		spec.ObjectStoreURL.BucketURL = u.String()
-	} else {
-		spec.ObjectStoreURL.BucketURL = "<invalid URL>"
-	}
+	spec.ObjectStoreURL.BucketURL, _ = common.PublicBucketURL(spec.ObjectStoreURL.BucketURL)
 	for i, p := range spec.Parameters {
 		n := strings.ToLower(p.Name)
 		if strings.Contains(n, "password") || strings.Contains(n, "secret") || strings.Contains(n, "access_key") || strings.Contains(n, "access_id") {
@@ -281,12 +262,12 @@ func ValidateCreate(p *CreateRequest) error {
 	if err != nil || u.Scheme != "s3" || u.Host == "" || u.User != nil || u.Fragment != "" {
 		return bad("Object store URL must be an s3:// bucket URL without inline credentials")
 	}
+	if _, safe := common.PublicBucketURL(v.ObjectStoreURL.BucketURL); !safe {
+		return bad("Object store URL must use a Secret for credentials")
+	}
 	for k := range u.Query() {
 		if k != "host" && k != "s3_region" && k != "endpoint" {
 			return bad("Object store URL supports only host, endpoint and s3_region; use a Secret for credentials")
-		}
-		if strings.Contains(u.Query().Get(k), "@") || strings.ContainsAny(u.Query().Get(k), "\r\n") {
-			return bad("Object store endpoints must not contain inline credentials or line breaks")
 		}
 	}
 	if len(validation.IsDNS1123Subdomain(v.ObjectStoreURL.SecretRef.Name)) > 0 {

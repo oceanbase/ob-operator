@@ -135,15 +135,9 @@ The S3 Service remains `<release>-minio:9000`. The separate headless Service
 is used for peer discovery. External endpoint precedence is the same in both
 layouts. The distributed mode uses per-Pod claims and cannot use
 `minio.existingClaim`. Switch layouts by deploying a new release and performing
-an explicit data migration. The distributed profile requires the OceanSeek
-MinIO image built with `scripts/lakehouse/images/minio-rejoin/build.sh`.
-Set `BASE_IMAGE` to the verified MinIO runtime digest or local image ID
-and pass the desired output tag to that script.
-If overriding `minio.image`, use an image with the same
-`/minio/health/lakehouse-ready` contract. Each new process checks all three
-disk connections before accepting client traffic. Previously admitted processes
-continue serving when they have write quorum. If every process restarts
-while a peer is unavailable, the S3 Service waits for all three peers.
+an explicit data migration. The distributed profile uses the MinIO write-quorum
+probe at `/minio/health/cluster` for readiness and `/minio/health/live` for
+liveness and startup.
 
 Keep the existing layout and claim configuration
 when upgrading, reinstalling retained resources, or rolling back a release.

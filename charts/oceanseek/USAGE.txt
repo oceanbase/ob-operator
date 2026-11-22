@@ -1,3 +1,20 @@
+Source checkout and public registries
+------------------------------------
+Install a compatible Operator with the cluster's usual configuration first.
+Set OPERATOR_VERSION, DASHBOARD_VERSION and HELPER_VERSION to the three published
+component versions. From the repository root, with Python 3, PyYAML and Helm:
+
+  python3 scripts/oceanseek/public-image-values.py --operator-version "$OPERATOR_VERSION" --dashboard-version "$DASHBOARD_VERSION" --helper-version "$HELPER_VERSION" | helm upgrade --install oceanseek ./charts/oceanseek -n oceanseek --create-namespace -f - --wait --wait-for-jobs --timeout 35m
+
+This selects quay.io/oceanbase for the OceanBase images. Pass --registry ghcr.io
+or --registry docker.io to select another publication channel. If the component
+workflows publish to a different organization, add --component-namespace ORG.
+The selector covers Observer, LogService, MinIO, mc, OBAgent, readiness,
+Dashboard and Helper. OBProxy, obdiag and third-party images retain their chart
+settings. Override obproxy.image or dashboard.inspection.obdiag.image separately. Use native.readiness.image to
+supply a separately published readiness image for a platform when needed.
+Versioned distribution charts already embed their image lock in values.yaml.
+
 OBProxy SQL entry point (0.6.0 development chart)
 ================================================
 The cluster stage installs one OBProxy replica by default. The <release>-sql
@@ -48,11 +65,11 @@ verify the application tenant and credentials before accepting traffic.
 Release packaging must include the selected OBProxy image in the Helm image
 lock and offline inventory; it is not a Compose dependency.
 
-OceanBase OceanSeek: native Helm deployment
+OceanSeek: native Helm deployment
 ==========================================
 Use Docker Compose for a quick database/SQL experience on one machine. Use this
 Chart when you already have Kubernetes. Dashboard is enabled by default and is
-installed in the SAME Helm release as the lakehouse. No install.sh is shipped in
+installed in the SAME Helm release as the oceanseek. No install.sh is shipped in
 this Helm Chart, and no Helm process runs inside a Kubernetes Job.
 
 部署前：端口清单与冲突处理
@@ -81,7 +98,7 @@ kubectl get svc -A -o wide
 Quick install: database and Dashboard
 -------------------------------------
 On an empty Kubernetes cluster, the published Chart registers the CRDs and
-installs cert-manager and the Operator before it starts the lakehouse.
+installs cert-manager and the Operator before it starts the oceanseek.
 Run with cluster-level install permissions. All workers need access to the
 locked images. Install from the Helm repository or the exact Chart archive:
 
@@ -142,11 +159,11 @@ Prerequisites
 - Workers can pull all configured images (or have the exact images preloaded).
 - An existing Operator must serve the OceanSeek CRDs and support native storage
   initialization and service resolution. The readiness hook uses the matched
-  /lakehouse-readiness image shipped with the Chart.
+  /oceanseek-readiness image shipped with the Chart.
 - Reusing an existing shared Operator does NOT upgrade its image. A successful
   API/webhook check is not proof that its binary matches this release. Have the
   cluster owner validate and upgrade it separately, or use a fresh test cluster.
-  Do not change a shared Operator just to install another Lakehouse release.
+  Do not change a shared Operator just to install another OceanSeek release.
 
 Check the current context before deployment:
   kubectl config current-context
@@ -193,10 +210,7 @@ object storage. For distributed bundled storage on a fresh release, append
 for disk and placement requirements and for per-volume StorageClass overrides.
 For external storage, set objectStorage.endpoint and minio.enabled=false.
 
-Distributed MinIO requires the lakehouse-ready health endpoint supplied by the
-image pinned in this chart. Older r19 bundled images do not provide that endpoint
-and can leave distributed Pods Running but not Ready. Use a complete compatible
-release for a fresh installation; do not override its image with an upstream tag.
+Distributed MinIO uses the write-quorum probe at /minio/health/cluster.
 The r20 custom-deployment checks cover three nodes and replacement of one MinIO
 Pod, not complete host loss, quorum loss, or capacity/stress certification.
 
@@ -294,23 +308,16 @@ recreates storage initialization; it is not a general database recovery command.
 
 Dashboard and SQL access
 ------------------------
-Kubernetes allocates Dashboard and SQL NodePorts when the default values are 0.
-Find the real allocated ports with kubectl -n oceanseek get svc. Use a reachable
-node address with those ports. Dashboard's default account is admin.
-Use the password retrieval commands printed by Helm. The two accounts are
-independent. Direct ALTER USER changes do not update the Kubernetes Secret.
+For Dashboard login, run the kubectl port-forward command printed by Helm on
+the computer with your browser, then open http://127.0.0.1:8080. You can also
+use the HTTPS address provided by your administrator. The default account is
+admin. Helm prints the command to retrieve its initial password.
 
-No port-forward process is needed for default access. The client must reach the
-node and these TCP ports. Set --set access.host=YOUR-IP-OR-DNS for NAT or multiple
-NICs, or when Helm cannot list Nodes. This changes printed addresses only; it
-does not configure NAT/firewall rules or assign an address to the node.
-On upgrade, Helm reads the existing Service NodePorts and prints direct URLs
-when a node address is available. On first install the Services do not exist yet:
-access.host supplies the address but cannot supply a port that Kubernetes has
-not allocated. Run the post-install commands in NOTES to obtain the actual URL.
-Those commands retain access.host when supplied and bracket IPv6 Dashboard hosts.
-helm get notes returns the saved installation notes; it does not rerun discovery.
-Offline helm template cannot discover node addresses and prints discovery steps.
+Kubernetes allocates Dashboard and SQL NodePorts when their configured values
+are 0. The SQL client can connect to a reachable node on the allocated SQL
+port. Use kubectl -n oceanseek get svc to inspect both Services. For NAT or
+multiple network interfaces, set access.host to the advertised node IP or DNS
+name. On upgrade, Helm can read the ports from the existing Services.
 
 Override ports with --set dashboard.service.nodePort=31184 and
 --set sqlService.nodePort=30882. Use free ports within your cluster's NodePort
@@ -352,7 +359,7 @@ backups of the current authentication resources, Helm history and values.
 For Helm's default Secret storage driver:
 
   umask 077
-  backup=$(mktemp -d ./lakehouse-auth-backup.XXXXXXXX)
+  backup=$(mktemp -d ./oceanseek-auth-backup.XXXXXXXX)
   kubectl -n oceanseek get secret -l owner=helm,name=oceanseek -o json > "$backup/helm-history.json"
   kubectl -n oceanseek get secret oceanseek-user-credentials oceanseek-dashboard-bootstrap -o json > "$backup/dashboard-secrets.json"
   kubectl -n oceanseek get configmap oceanseek-rbac-policy -o json > "$backup/dashboard-policy.json"
@@ -524,6 +531,6 @@ pulls, or scheduling errors. Bucket access can also fail because of DNS, TLS,
 connectivity, or a missing bucket; a failure does not prove the key is wrong.
 
 Helm itself does not include Job logs in its timeout error. The optional
-scripts/lakehouse/install-helm-and-show-access.sh wrapper prints a storage-log
+scripts/oceanseek/install-helm-and-show-access.sh wrapper prints a storage-log
 command on failure, preserving the namespace, kubeconfig, context and Helm exit
 code. Direct Helm users should run the commands above with their install context.

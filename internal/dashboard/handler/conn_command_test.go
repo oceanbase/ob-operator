@@ -23,6 +23,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -98,15 +99,57 @@ func TestConnectDatabaseExecutesMySQLDirectly(t *testing.T) {
 			defer cancel()
 			select {
 			case command := <-requests:
-				want := []string{"mysql", "--user=" + user, "--host=" + term.Host, "--port=2881", "-A", "--password=" + term.Password}
-				if !reflect.DeepEqual(command, want) {
-					t.Fatal("WebSocket terminal did not send intact mysql argv to pods/exec")
+				wantOptions := []string{"--user=" + user, "--host=" + term.Host, "--port=2881", "-A"}
+				if len(command) != 6 || command[0] != "mysql" || !strings.HasPrefix(command[1], "--defaults-extra-file=/proc/") ||
+					strings.Contains(strings.Join(command, " "), term.Password) || !reflect.DeepEqual(command[2:], wantOptions) {
+					t.Fatal("WebSocket terminal sent incorrect or sensitive mysql arguments to pods/exec")
 				}
 			case <-ctx.Done():
 				t.Fatal("terminal did not issue a Kubernetes exec request")
 			}
 		})
 	}
+}
+
+// Verify the authentication option independently of mysql's public argv.
+func terminalCommandForTest(t *testing.T, term *response.OBConnection) (command, args []string) {
+	t.Helper()
+	command, file, err := databaseTerminalCommand(term)
+	if err != nil {
+		t.Fatal(err)
+	}
+	args = []string{"--user=" + term.User, "--host=" + term.Host, "--port=2881", "-A"}
+	if term.Password == "" {
+		if file != nil {
+			t.Fatal("empty password unexpectedly created a credential file")
+		}
+		return command, args
+	}
+	if file == nil || len(command) < 2 {
+		t.Fatal("missing client option file")
+	}
+	t.Cleanup(func() { file.Close() })
+	if _, err := os.Stat(file.Name()); !os.IsNotExist(err) {
+		t.Fatal("credential file still has a directory entry")
+	}
+	info, err := file.Stat()
+	if err != nil || info.Mode().Perm() != 0600 {
+		t.Fatal("credential file must only be readable by its owner")
+	}
+	path, ok := strings.CutPrefix(command[1], "--defaults-extra-file=")
+	if !ok {
+		t.Fatal("client option file must be the first argument")
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	quoted, ok := strings.CutPrefix(strings.TrimSuffix(string(data), "\n"), "[client]\npassword=")
+	password, err := strconv.Unquote(quoted)
+	if !ok || err != nil || password != term.Password || strings.Contains(strings.Join(command, " "), term.Password) {
+		t.Fatal("client password lost or exposed in mysql arguments")
+	}
+	return command, append([]string{command[1]}, args...)
 }
 
 func TestDatabaseTerminalCommandDoesNotExecuteCredentials(t *testing.T) {
@@ -127,7 +170,7 @@ func TestDatabaseTerminalCommandDoesNotExecuteCredentials(t *testing.T) {
 			case "host":
 				term.Host = fmt.Sprintf("127.0.0.1; printf injected > '%s'; #", marker)
 			}
-			command := databaseTerminalCommand(term)
+			command, want := terminalCommandForTest(t, term)
 			output, err := exec.Command(command[0], command[1:]...).CombinedOutput()
 			if err != nil {
 				t.Fatalf("execute mysql stub: %v", err)
@@ -135,7 +178,6 @@ func TestDatabaseTerminalCommandDoesNotExecuteCredentials(t *testing.T) {
 			if _, err := os.Stat(marker); !os.IsNotExist(err) {
 				t.Fatal("connection credentials executed a shell command")
 			}
-			want := []string{"--user=" + term.User, "--host=" + term.Host, "--port=2881", "-A", "--password=" + term.Password}
 			got := strings.Split(strings.TrimSuffix(string(output), "\x00"), "\x00")
 			if !reflect.DeepEqual(got, want) {
 				t.Fatal("mysql did not receive connection values as intact arguments")
@@ -159,14 +201,10 @@ func TestDatabaseTerminalCommandPreservesConnectionValues(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			command := databaseTerminalCommand(&tc.term)
+			command, want := terminalCommandForTest(t, &tc.term)
 			output, err := exec.Command(command[0], command[1:]...).CombinedOutput()
 			if err != nil {
 				t.Fatalf("execute mysql stub: %v", err)
-			}
-			want := []string{"--user=" + tc.term.User, "--host=" + tc.term.Host, "--port=2881", "-A"}
-			if tc.term.Password != "" {
-				want = append(want, "--password="+tc.term.Password)
 			}
 			got := strings.Split(strings.TrimSuffix(string(output), "\x00"), "\x00")
 			if !reflect.DeepEqual(got, want) {

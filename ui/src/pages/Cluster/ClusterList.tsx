@@ -34,14 +34,14 @@ const columns: ColumnsType<DataType> = [
     dataIndex: 'deploymentMode',
     width: 210,
     filters: [
-      { text: L('湖库 SS', 'Lakehouse SS'), value: 'shared_storage' },
+      { text: L('湖库 SS', 'OceanSeek SS'), value: 'shared_storage' },
       { text: L('存算一体', 'Shared nothing'), value: 'normal' },
     ],
     onFilter: (value, row) => (row.deploymentMode || 'normal') === value,
     render: (value, row) => {
       const shared = value === 'shared_storage';
       const label = shared
-        ? L('湖库 SS · 配置', 'Lakehouse SS · settings')
+        ? L('湖库 SS · 配置', 'OceanSeek SS · settings')
         : L('存算一体', 'Shared nothing');
       const tag = (
         <Tag
@@ -65,7 +65,7 @@ const columns: ColumnsType<DataType> = [
             row.namespace,
           )}/${encodeURIComponent(row.name)}/${encodeURIComponent(
             row.clusterName,
-          )}/lakehouse`}
+          )}/oceanseek`}
         >
           {tag}
         </Link>
@@ -209,7 +209,7 @@ export default function ClusterList({
                 history.push('/cluster/new?deploymentMode=shared_storage')
               }
             >
-              {L('创建湖库集群', 'Create lakehouse cluster')}
+              {L('创建湖库集群', 'Create oceanseek cluster')}
             </Button>
             <Button onClick={handleAddCluster} type="primary">
               {intl.formatMessage({

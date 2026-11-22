@@ -22,10 +22,10 @@ while (( $# )); do
     *) echo "Unsupported option: $1. Only values flags are accepted; atomic/force/cleanup are intentionally disallowed." >&2; exit 2 ;;
   esac
 done
-timeout=${LAKEHOUSE_TIMEOUT:-1800}
-request_timeout=${LAKEHOUSE_REQUEST_TIMEOUT:-30}
-diagnostic_timeout=${LAKEHOUSE_DIAGNOSTIC_TIMEOUT:-10}
-progress_interval=${LAKEHOUSE_PROGRESS_INTERVAL:-30}
+timeout=${OCEANSEEK_TIMEOUT:-1800}
+request_timeout=${OCEANSEEK_REQUEST_TIMEOUT:-30}
+diagnostic_timeout=${OCEANSEEK_DIAGNOSTIC_TIMEOUT:-10}
+progress_interval=${OCEANSEEK_PROGRESS_INTERVAL:-30}
 for setting in timeout request_timeout diagnostic_timeout progress_interval; do
   [[ ${!setting} =~ ^[1-9][0-9]{0,4}$ ]] || { echo "$setting must be 1-99999 seconds." >&2; exit 2; }
 done
@@ -123,7 +123,7 @@ trap 'exit 143' TERM
 phase_label() {
   # The package entry point already numbers its five overall steps. Keep the
   # six detailed phases named, rather than starting a competing progress count.
-  if [[ ${LAKEHOUSE_MANAGED_ACCESS:-0} == 1 ]]; then
+  if [[ ${OCEANSEEK_MANAGED_ACCESS:-0} == 1 ]]; then
     printf '%s' "${1#*] }"
   else
     printf '%s' "$1"
@@ -140,7 +140,7 @@ completed() {
 skipped() {
   echo "[skip] $(phase_label "$1")"
 }
-announce '[1/6] Preflight: checking lakehouse support and existing installation'
+announce '[1/6] Preflight: checking oceanseek support and existing installation'
 for crd in obclusters oblogserviceclusters oblogservicezones oblogservicenodes; do
   run_bounded "$request_timeout" "read CRD $crd" kubectl get "crd/$crd.oceanbase.oceanbase.com" --request-timeout="${request_timeout}s" >>"$log_file"
   run_bounded "$request_timeout" "wait for CRD $crd" kubectl wait "crd/$crd.oceanbase.oceanbase.com" --for=condition=Established --timeout="${request_timeout}s" --request-timeout="${request_timeout}s" >>"$log_file"
@@ -318,7 +318,7 @@ wait_running() {
     snapshot="status=$status; $pod_summary"
     [[ -z $event_summary ]] || snapshot+="; $event_summary"
     report_wait_warning "$1" "$snapshot"
-    if [[ $snapshot != "$previous" || ${LAKEHOUSE_LIVE_PROGRESS:-0} == 1 ]] || (( SECONDS >= next_progress )); then
+    if [[ $snapshot != "$previous" || ${OCEANSEEK_LIVE_PROGRESS:-0} == 1 ]] || (( SECONDS >= next_progress )); then
       # Do not echo arbitrary API text. Known status values aid progress; unknown
       # values stay in the API and are summarized without exposing their content.
       snapshot_age=''
@@ -378,7 +378,7 @@ esac
 echo "OceanSeek ready: namespace=$namespace LogService=$release-ls OBCluster=$release-ob (total elapsed=$((SECONDS - started))s)"
 # The package entry point verifies HTTP access and prints one combined summary.
 # Only suppress expert access instructions after every readiness gate has passed.
-if [[ ${LAKEHOUSE_MANAGED_ACCESS:-0} == 1 ]]; then
+if [[ ${OCEANSEEK_MANAGED_ACCESS:-0} == 1 ]]; then
   exit 0
 fi
 echo 'Database root password is in the configured Secret (default: RELEASE-db-root, key: password).'

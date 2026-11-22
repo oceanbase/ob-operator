@@ -10,8 +10,11 @@ The Service also uses NodePort. Inspect the allocated port with:
 {{ end }}
 {{ if .Values.initCredentials }}
 Initial username: admin.
-On first installation, the password is the configured adminPassword value
-(the standalone chart default is "admin"). Change it on first login.
+On first installation, use the password supplied through adminPassword. When
+left empty, Helm generates a password in Secret {{ .Release.Name }}-dashboard-bootstrap
+in namespace {{ .Release.Namespace }}. Retrieve it with
+  kubectl -n {{ .Release.Namespace }} get secret {{ .Release.Name }}-dashboard-bootstrap -o jsonpath='{.data.password}' | base64 --decode
+Change it on first login.
 For an existing installation with retained credentials, use the current password;
 changing Helm values does not reset a retained account.
 {{ else }}

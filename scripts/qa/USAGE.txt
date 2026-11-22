@@ -4,15 +4,15 @@ Requires Python >= 3.8 and PyYAML in an isolated build environment.
 
 Render all enabled components with the actual QA image overrides:
   helm template operator PACKAGE/charts/ob-operator > operator.yaml
-  helm template lakehouse PACKAGE/charts/oceanseek \
+  helm template oceanseek PACKAGE/charts/oceanseek \
     -f PACKAGE/values/quickstart.yaml --set stage=cluster \
-    --set-string storageClass=local-path > lakehouse.yaml
+    --set-string storageClass=local-path > oceanseek.yaml
   helm template dashboard PACKAGE/charts/oceanbase-dashboard \
     --set-string adminPassword=render-only-not-an-account > dashboard.yaml
 
 Then verify the actual fresh extraction of the single-tar delivery:
   python3 scripts/qa/verify-image-closure.py PACKAGE/image-lock.json \
-    operator.yaml lakehouse.yaml dashboard.yaml \
+    operator.yaml oceanseek.yaml dashboard.yaml \
     PACKAGE/prerequisites/cert-manager-v1.12.4.yaml --bundle PACKAGE
 
 --bundle verifies the internal SHA256SUMS and images/archives.json, requires

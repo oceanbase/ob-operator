@@ -24,9 +24,9 @@ export default () => {
     ...(clusterDetail?.info?.deploymentMode === 'shared_storage'
       ? [
           {
-            title: L('湖库配置', 'Lakehouse configuration'),
-            key: 'lakehouse',
-            link: `/cluster/${ns}/${name}/${clusterName}/lakehouse`,
+            title: L('湖库配置', 'OceanSeek configuration'),
+            key: 'oceanseek',
+            link: `/cluster/${ns}/${name}/${clusterName}/oceanseek`,
           },
         ]
       : []),

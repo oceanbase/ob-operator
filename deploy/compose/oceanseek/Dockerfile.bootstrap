@@ -1,0 +1,12 @@
+FROM --platform=$BUILDPLATFORM golang:1.25-bookworm AS builder
+
+ARG TARGETOS
+ARG TARGETARCH
+WORKDIR /workspace
+COPY go.mod go.sum ./
+COPY cmd/oceanseek-bootstrap ./cmd/oceanseek-bootstrap
+RUN --mount=type=cache,target=/go/pkg/mod CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -trimpath -ldflags="-s -w" -o /out/oceanseek-bootstrap ./cmd/oceanseek-bootstrap
+
+FROM busybox:1.36.1
+COPY --from=builder /out/oceanseek-bootstrap /usr/local/bin/oceanseek-bootstrap
+ENTRYPOINT ["/usr/local/bin/oceanseek-bootstrap"]

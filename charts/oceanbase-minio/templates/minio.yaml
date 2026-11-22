@@ -135,9 +135,9 @@ spec:
               # Wait for this Pod's advertised identity before MinIO builds its grid.
               attempt=0
               while [ "$attempt" -lt 60 ]; do
-                set -- $(timeout 2 getent ahostsv4 "$LAKEHOUSE_PEER_HOST" || true)
-                if [ "${1:-}" = "$LAKEHOUSE_POD_IP" ]; then
-                  exec minio server --console-address :9001 "$LAKEHOUSE_ENDPOINTS"
+                set -- $(timeout 2 getent ahostsv4 "$OCEANSEEK_PEER_HOST" || true)
+                if [ "${1:-}" = "$OCEANSEEK_POD_IP" ]; then
+                  exec minio server --console-address :9001 "$OCEANSEEK_ENDPOINTS"
                 fi
                 attempt=$((attempt + 1))
                 sleep 2
@@ -149,13 +149,13 @@ spec:
           {{- end }}
           env:
             {{- if $distributed }}
-            - name: LAKEHOUSE_POD_NAME
+            - name: OCEANSEEK_POD_NAME
               valueFrom: {fieldRef: {fieldPath: metadata.name}}
-            - name: LAKEHOUSE_POD_IP
+            - name: OCEANSEEK_POD_IP
               valueFrom: {fieldRef: {fieldPath: status.podIP}}
-            - name: LAKEHOUSE_PEER_HOST
-              value: {{ printf "$(LAKEHOUSE_POD_NAME).%s.%s.svc" $peerService .Release.Namespace | quote }}
-            - name: LAKEHOUSE_ENDPOINTS
+            - name: OCEANSEEK_PEER_HOST
+              value: {{ printf "$(OCEANSEEK_POD_NAME).%s.%s.svc" $peerService .Release.Namespace | quote }}
+            - name: OCEANSEEK_ENDPOINTS
               value: {{ printf "http://%s-minio-{0...%d}.%s.%s.svc:9000/data" .Release.Name (sub (int .Values.distributed.replicas) 1) $peerService .Release.Namespace | quote }}
             {{- end }}
             - {name: HOME, value: /tmp}

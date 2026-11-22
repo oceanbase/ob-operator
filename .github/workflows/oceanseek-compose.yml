@@ -1,0 +1,109 @@
+name: oceanseek compose
+
+on:
+  push:
+    branches: ['**']
+    tags: ['oceanseek-bootstrap-[0-9]+.[0-9]+.[0-9]+']
+    paths:
+      - 'cmd/oceanseek-bootstrap/**'
+      - 'deploy/compose/oceanseek/**'
+      - '.github/workflows/oceanseek-compose.yml'
+  pull_request:
+    paths:
+      - 'cmd/oceanseek-bootstrap/**'
+      - 'deploy/compose/oceanseek/**'
+      - '.github/workflows/oceanseek-compose.yml'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Bootstrap image version
+        required: true
+        default: '0.1.0'
+      publish:
+        description: Publish the bootstrap image to Quay, GHCR and Docker Hub
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: go test -race -count=1 ./cmd/oceanseek-bootstrap ./deploy/compose/oceanseek
+      - run: shellcheck deploy/compose/oceanseek/scripts/*.sh
+      - name: Test Compose shell behavior
+        working-directory: deploy/compose/oceanseek
+        run: python3 -m unittest -v test_access_notes test_host_info test_logservice_entrypoint test_observer_limits
+      - name: Validate zero-preparation Compose configuration
+        working-directory: deploy/compose/oceanseek
+        run: |
+          docker compose --env-file /dev/null -f compose.yaml config --quiet
+          docker compose --env-file /dev/null -f compose.yaml -f compose.build.yaml config --quiet
+
+  bootstrap-image:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/oceanseek-bootstrap-'))
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve bootstrap release
+        id: release
+        env:
+          DISPATCH_VERSION: ${{ inputs.version }}
+          DISPATCH_PUBLISH: ${{ inputs.publish }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == push ]]; then
+            version=${GITHUB_REF_NAME#oceanseek-bootstrap-}
+            publish=true
+          else
+            version=$DISPATCH_VERSION
+            publish=$DISPATCH_PUBLISH
+          fi
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          printf 'version=%s\npublish=%s\n' "$version" "$publish" >> "$GITHUB_OUTPUT"
+      - name: Check publishing namespaces
+        if: steps.release.outputs.publish == 'true'
+        env:
+          QUAY_NAMESPACE: ${{ vars.QUAY_IO_PUSH_BASE }}
+          DOCKER_NAMESPACE: ${{ vars.DOCKER_PUSH_BASE }}
+        run: 'test -n "$QUAY_NAMESPACE" && test -n "$DOCKER_NAMESPACE"'
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: Log in to Quay
+        if: steps.release.outputs.publish == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_IO_USERNAME }}
+          password: ${{ secrets.QUAY_IO_PASSWORD }}
+      - name: Log in to Docker Hub
+        if: steps.release.outputs.publish == 'true'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      - uses: docker/login-action@v3
+        if: steps.release.outputs.publish == 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/compose/oceanseek/Dockerfile.bootstrap
+          platforms: linux/amd64,linux/arm64
+          push: ${{ steps.release.outputs.publish == 'true' }}
+          tags: |
+            quay.io/${{ vars.QUAY_IO_PUSH_BASE || github.repository_owner }}/oceanseek-bootstrap:${{ steps.release.outputs.version }}
+            ghcr.io/${{ github.repository_owner }}/oceanseek-bootstrap:${{ steps.release.outputs.version }}
+            ${{ vars.DOCKER_PUSH_BASE || github.repository_owner }}/oceanseek-bootstrap:${{ steps.release.outputs.version }}

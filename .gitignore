@@ -49,6 +49,7 @@ node_modules/
 ui/dist/
 rbac_policy*.csv
 
-# Local lakehouse installer credentials, state and compiled delivery binary
+# Local oceanseek installer credentials, state and compiled delivery binary
+.oceanseek-install/
 .lakehouse-install/
-/bin/lakehouse-installer
+/bin/oceanseek-installer

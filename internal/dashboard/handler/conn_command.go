@@ -12,14 +12,41 @@ See the Mulan PSL v2 for more details.
 
 package handler
 
-import "github.com/oceanbase/ob-operator/internal/dashboard/model/response"
+import (
+	"errors"
+	"fmt"
+	"os"
+	"strings"
 
-func databaseTerminalCommand(term *response.OBConnection) []string {
-	// Execute mysql directly: connection values must never become shell syntax.
-	// Attach each value to its option so even a value starting with '-' stays data.
-	cmdArgs := []string{"mysql", "--user=" + term.User, "--host=" + term.Host, "--port=2881", "-A"}
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
+)
+
+// The client runs in the same dashboard container. Keep its password out of
+// Kubernetes exec request URLs, audit logs, and process arguments. Unlink the
+// private file before writing it so even a crashed session leaves no pathname.
+func databaseTerminalCommand(term *response.OBConnection) ([]string, *os.File, error) {
+	command := []string{"mysql"}
+	var options *os.File
 	if term.Password != "" {
-		cmdArgs = append(cmdArgs, "--password="+term.Password)
+		if strings.ContainsRune(term.Password, 0) {
+			return nil, nil, errors.New("invalid database password")
+		}
+		file, err := os.CreateTemp("", "mysql-client-*")
+		if err != nil {
+			return nil, nil, err
+		}
+		if err := os.Remove(file.Name()); err != nil {
+			file.Close()
+			return nil, nil, err
+		}
+		escape := strings.NewReplacer(`\`, `\\`, `"`, `\"`, "\n", `\n`, "\r", `\r`, "\t", `\t`, "\b", `\b`)
+		if _, err := fmt.Fprintf(file, "[client]\npassword=\"%s\"\n", escape.Replace(term.Password)); err != nil {
+			file.Close()
+			return nil, nil, err
+		}
+		options = file
+		command = append(command, fmt.Sprintf("--defaults-extra-file=/proc/%d/fd/%d", os.Getpid(), file.Fd()))
 	}
-	return cmdArgs
+	command = append(command, "--user="+term.User, "--host="+term.Host, "--port=2881", "-A")
+	return command, options, nil
 }

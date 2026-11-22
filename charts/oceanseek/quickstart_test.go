@@ -1,4 +1,4 @@
-package lakehouse_test
+package oceanseek_test
 
 import (
 	"os"
@@ -12,9 +12,9 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
-// Exercise the shipped chart without any -f or --set arguments, as in the
-// public quickstart. Defaults must include the full stack and wait for it.
-func TestPackagedQuickstartNeedsNoValuesOverrides(t *testing.T) {
+// Exercise a packaged source chart with the three external release image inputs.
+// Native distribution bundles embed these inputs in packaged values.yaml.
+func TestPackagedSourceQuickstartWithReleaseImages(t *testing.T) {
 	helm := os.Getenv("HELM_BINARY")
 	if helm == "" {
 		helm = "helm"
@@ -27,7 +27,7 @@ func TestPackagedQuickstartNeedsNoValuesOverrides(t *testing.T) {
 	if err != nil || len(archives) != 1 {
 		t.Fatalf("expected one packaged chart: %v, %v", archives, err)
 	}
-	output, err := exec.Command(helm, "template", "qa", archives[0], "-n", "qa-ns").CombinedOutput()
+	output, err := exec.Command(helm, "template", "qa", archives[0], "-n", "qa-ns", "-f", "testdata/release-images.yaml").CombinedOutput()
 	if err != nil {
 		t.Fatalf("default package render: %v\n%s", err, output)
 	}

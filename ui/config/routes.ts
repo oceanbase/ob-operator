@@ -158,8 +158,8 @@ export default [
             name: '集群详情',
             routes: [
               {
-                path: 'lakehouse',
-                component: 'Cluster/Detail/Lakehouse',
+                path: 'oceanseek',
+                component: 'Cluster/Detail/OceanSeek',
                 name: '湖库配置',
               },
               {

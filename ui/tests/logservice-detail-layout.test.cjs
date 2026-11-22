@@ -43,7 +43,7 @@ for (const section of [
   'events',
 ]) {
   test(`LogService ${section} deep link retains the same shell and resource identity`, () => {
-    const matched = matches(`/logservice/test/ls/${section}?from=lakehouse`);
+    const matched = matches(`/logservice/test/ls/${section}?from=oceanseek`);
     assert(
       matched.some((m) => m.route.component === 'LogService/DetailLayout'),
     );

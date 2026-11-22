@@ -1,5 +1,5 @@
 # The same resulting image is used by Operator and Compose.
-ARG HELPER_IMAGE=oceanbase-helper:lakehouse-ce
+ARG HELPER_IMAGE=oceanbase-helper:oceanseek-ce
 FROM ${HELPER_IMAGE}
 USER root
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]

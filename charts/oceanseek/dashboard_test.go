@@ -1,4 +1,4 @@
-package lakehouse_test
+package oceanseek_test
 
 import (
 	"archive/tar"
@@ -262,7 +262,7 @@ func TestDashboardUsesOceanSeekImagePullSecrets(t *testing.T) {
 			var account corev1.ServiceAccount
 			decodeScheduledObject(t, find(t, docs, "ServiceAccount", deployment.Spec.Template.Spec.ServiceAccountName), &account)
 			if account.Name != "qa-sa" || account.Namespace != "qa-ns" || !reflect.DeepEqual(account.ImagePullSecrets, want) {
-				t.Fatal("Dashboard ServiceAccount must inherit the lakehouse registry credentials in every stage")
+				t.Fatal("Dashboard ServiceAccount must inherit the oceanseek registry credentials in every stage")
 			}
 		})
 	}
@@ -400,7 +400,7 @@ func TestExistingOceanSeekCanAddDashboardWithoutChangingDatabaseCredentials(t *t
 	api, config := retainedCredentials(t)
 	output, err := renderRetained(t, config, map[string]interface{}{})
 	if err != nil {
-		t.Fatalf("existing lakehouse should permit first Dashboard installation: %v\n%s", err, output)
+		t.Fatalf("existing oceanseek should permit first Dashboard installation: %v\n%s", err, output)
 	}
 	docs := releaseDocuments(t, []byte(output))
 	find(t, docs, "Deployment", "oceanbase-dashboard-qa")
@@ -415,7 +415,7 @@ func TestExistingOceanSeekCanAddDashboardWithoutChangingDatabaseCredentials(t *t
 		}
 	}
 	if field(find(t, docs, "ConfigMap", "qa-storage-identity"), "data", "identity") != api.identity {
-		t.Fatal("adding Dashboard must not change the retained lakehouse storage identity")
+		t.Fatal("adding Dashboard must not change the retained oceanseek storage identity")
 	}
 }
 
@@ -445,7 +445,7 @@ func TestOceanSeekPackageContainsDashboardDependency(t *testing.T) {
 	}
 	archives, err := filepath.Glob(filepath.Join(destination, "oceanseek-*.tgz"))
 	if err != nil || len(archives) != 1 {
-		t.Fatal("expected one packaged lakehouse chart")
+		t.Fatal("expected one packaged oceanseek chart")
 	}
 	file, err := os.Open(archives[0])
 	if err != nil {
@@ -480,7 +480,11 @@ func TestOceanSeekPackageContainsDashboardDependency(t *testing.T) {
 	}
 	// Render from an empty working directory so sibling source charts, lock
 	// files, cached repositories, or local values cannot mask an incomplete tgz.
-	command := exec.Command(helm, "template", "qa", archives[0], "-n", "qa-ns", "--set", "stage=cluster")
+	images, err := filepath.Abs("testdata/release-images.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	command := exec.Command(helm, "template", "qa", archives[0], "-f", images, "-n", "qa-ns", "--set", "stage=cluster")
 	command.Dir = t.TempDir()
 	output, err = command.CombinedOutput()
 	if err != nil {
