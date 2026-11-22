@@ -1,23 +1,5 @@
 # ob-operator agent instructions
 
-## DIMA workflow
-
-When asked to handle a DIMA work item, use
-[ob-operator-dima](.agents/skills/ob-operator-dima/SKILL.md). This includes a
-DIMA work-item URL, `openWorkItemId`, or an ID identified by the
-user as a DIMA item. Respect requests for analysis only, no submission, or other
-scope limits. Discussing or editing the workflow itself does not start a bugfix.
-
-The workflow covers reading the item and linked documents, RED/GREEN regression
-coverage, three independent subagents that each execute tests and review the fix,
-submission within the user's scope, and verified DIMA traceability. After the
-three test passes and authorized submission are verified, set the work item to
-Fixed and read back its status. This is standing user authorization; do not ask
-again. Explicit analysis-only, no-write, or other scope limits still take priority.
-If the user requests a direct push without a PR/MR, honor that scope; a missing
-PR/MR is not a blocker for the three tests or the Fixed transition.
-Use the skill for the precise gates and completion criteria.
-
 ## Repository facts
 
 - Go version: read `go.mod`; build and test recipes: `Makefile`, `make/`.
@@ -47,10 +29,3 @@ Use the skill for the precise gates and completion criteria.
   exit codes: `tests/run.sh` does not aggregate failures reliably.
 - Generated manifests/code and `make fmt` can change tracked files. Review the
   resulting diff and include only changes needed by the task.
-
-## Hook configuration
-
-`.codex/hooks.json` and `.claude/settings.json` route DIMA prompts to the same
-skill. The hook only supplies context; it neither runs tests nor writes to DIMA.
-Keep hook configuration and user trust settings intact unless the task concerns
-them. Do not automatically change global trust or bypass hook trust checks.
