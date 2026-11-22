@@ -41,12 +41,20 @@ import (
 // ---------- action function ----------
 
 func (m *OBTenantManager) createTenant() tasktypes.TaskError {
+	if !m.OBTenant.DeletionTimestamp.IsZero() {
+		return errors.New("tenant is being deleted")
+	}
 	tenantName := m.OBTenant.Spec.TenantName
 	pools := m.OBTenant.Spec.Pools
 	m.Logger.Info("Create Tenant", "tenantName", tenantName)
-	oceanbaseOperationManager, err := m.getClusterSysClient()
+	if m.OBTenant.Status.Creation == nil {
+		if err := m.bindPreparedLegacyAllocation(); err != nil {
+			return err
+		}
+	}
+	live, db, err := m.creationDB(m.Ctx)
 	if err != nil {
-		return errors.Wrap(err, "Failed to get sql operator error when creating tenant")
+		return err
 	}
 
 	variableList := make([]string, 0)
@@ -83,12 +91,16 @@ func (m *OBTenantManager) createTenant() tasktypes.TaskError {
 		tenantSQLParam.Charset = tenant.Charset
 	}
 
-	err = oceanbaseOperationManager.AddTenant(m.Ctx, tenantSQLParam)
+	sent, createErr := db.CreateTenantWithOwner(m.Ctx, tenantSQLParam, createOwner(live.Status.Creation), m.checkCreateAllocation)
+	if errors.Is(createErr, errAllocationAssigned) {
+		err = m.waitForCreatedTenant()
+	} else {
+		err = confirmTenantCreate(sent, createErr, m.waitForCreatedTenant)
+	}
 	if err != nil {
 		m.Recorder.Event(m.OBTenant, corev1.EventTypeWarning, "failed to create OBTenant", err.Error())
 		return err
 	}
-	tenantWhiteListMap.Store(tenantName, m.OBTenant.Spec.ConnectWhiteList)
 	// Create user or change password of root, do not return error
 	m.Recorder.Event(m.OBTenant, "Create", "", "Create OBTenant successfully")
 	return nil
@@ -290,25 +302,26 @@ func (m *OBTenantManager) generateStatusLocalityMap(pools []v1alpha1.ResourcePoo
 	return localityMap
 }
 
-func (m *OBTenantManager) generateStatusUnitNumMap(zones []v1alpha1.ResourcePoolSpec) (map[string]int, error) {
-	unitNumMap := make(map[string]int, 0)
-	oceanbaseOperationManager, err := m.getClusterSysClient()
+func (m *OBTenantManager) generateStatusUnitNumMap(tenantID int64) (map[string]int, error) {
+	con, err := m.getClusterSysClient()
 	if err != nil {
-		return unitNumMap, errors.Wrap(err, "Failed to get sql operator error when building resource unit from db")
+		return nil, err
 	}
-	poolList, err := oceanbaseOperationManager.GetPoolList(m.Ctx)
+	pools, err := con.GetPoolList(m.Ctx)
 	if err != nil {
-		return unitNumMap, errors.Wrap(err, "Get sql error when get pool list")
+		return nil, err
 	}
-	for _, zone := range zones {
-		poolName := m.generatePoolName(zone.Zone)
-		for _, pool := range poolList {
-			if pool.Name == poolName {
-				unitNumMap[zone.Zone] = int(pool.UnitNum)
-			}
+	return m.managedPoolUnits(tenantID, pools), nil
+}
+
+func (m *OBTenantManager) managedPoolUnits(tenantID int64, pools []model.Pool) map[string]int {
+	units := make(map[string]int)
+	for _, pool := range pools {
+		if pool.TenantID.Valid && pool.TenantID.Int64 == tenantID && pool.Name == m.generatePoolName(pool.ZoneList) {
+			units[pool.ZoneList] = int(pool.UnitNum)
 		}
 	}
-	return unitNumMap, nil
+	return units
 }
 
 func (m *OBTenantManager) generateLocalityList(localityMap map[string]*v1alpha1.LocalityType) []string {
@@ -579,6 +592,9 @@ func (m *OBTenantManager) createPool(poolName, unitName string, pool v1alpha1.Re
 }
 
 func (m *OBTenantManager) createUnitAndPoolV4(pool v1alpha1.ResourcePoolSpec) error {
+	if m.OBTenant.Status.Creation != nil {
+		return m.createOwnedResources(pool)
+	}
 	tenantName := m.OBTenant.Spec.TenantName
 	unitName := m.generateUnitName(pool.Zone)
 	poolName := m.generatePoolName(pool.Zone)
@@ -691,90 +707,46 @@ func FormatUnitConfigV4(unit *model.UnitConfigV4) string {
 		unit.MaxCPU, unit.MinCPU, unit.MemorySize, unit.MaxIops, unit.MinIops, unit.IopsWeight, unit.LogDiskSize)
 }
 
-func (m *OBTenantManager) TenantDeletePool(poolDelete v1alpha1.ResourcePoolStatus) error {
-	tenantName := m.OBTenant.Spec.TenantName
-	poolName := m.generatePoolName(poolDelete.ZoneList)
-	unitName := m.generateUnitName(poolDelete.ZoneList)
+type poolRemoval struct {
+	target     model.Pool
+	remaining  []string
+	sharedZone bool
+}
 
-	oceanbaseOperationManager, err := m.getClusterSysClient()
-	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to get sql operator when processing tenant '%s' -- delete pool ", tenantName))
-	}
-	var zoneList []v1alpha1.ResourcePoolStatus
-	for _, zone := range m.OBTenant.Status.Pools {
-		if zone.ZoneList != poolDelete.ZoneList {
-			zoneList = append(zoneList, zone)
+// Keep all other live assignments, including pools provisioned outside the
+// operator. Ownership requires the actual tenant, zone and managed pool name.
+func planPoolRemoval(pools []model.Pool, tenantID int64, targetName, targetZone string) poolRemoval {
+	var plan poolRemoval
+	for _, pool := range pools {
+		if !pool.TenantID.Valid || pool.TenantID.Int64 != tenantID {
+			continue
+		}
+		if pool.Name == targetName && pool.ZoneList == targetZone {
+			plan.target = pool
+			continue
+		}
+		plan.remaining = append(plan.remaining, pool.Name)
+		for _, zone := range strings.FieldsFunc(pool.ZoneList, func(r rune) bool { return r == ';' || r == ',' }) {
+			if strings.TrimSpace(zone) == targetZone {
+				plan.sharedZone = true
+			}
 		}
 	}
+	return plan
+}
 
-	statusLocalityMap := m.generateStatusLocalityMap(zoneList)
-	localityList := m.generateLocalityList(statusLocalityMap)
-	poolList := m.generateStatusPoolList(zoneList)
-	specPrimaryZone := m.generateSpecPrimaryZone(m.OBTenant.Spec.Pools)
-
-	// step 1.1: update locality
-	// note：this operator is async in oceanbase, polling until update locality task success
-	tenantSQLParam := model.TenantSQLParam{
-		TenantName: tenantName,
-		Locality:   strings.Join(localityList, ","),
-	}
-	err = oceanbaseOperationManager.SetTenant(m.Ctx, tenantSQLParam)
-	if err != nil {
-		m.Logger.Error(err, "Modify Tenant, update locality", "tenantName", tenantName)
-		return err
-	}
-
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Wait for tenant 'ALTER_TENANT' job for deleting pool", "tenantName", tenantName)
-	check := func() (bool, error) {
-		exist, err := oceanbaseOperationManager.CheckRsJobExistByTenantID(m.Ctx, m.OBTenant.Status.TenantRecordInfo.TenantID)
-		if err != nil {
-			return false, errors.Wrap(err, fmt.Sprintf("Failed to get rs job of tenant %s", tenantName))
-		}
-		return !exist, nil
-	}
-	err = resourceutils.CheckJobWithTimeout(check)
-	if err != nil {
-		return errors.Wrap(err, fmt.Sprintf("Failed to wait for tenant 'ALTER_TENANT' job for deleting pool of tenant %s", tenantName))
-	}
-
-	// step 1.2: update resource pool list
-	tenantSQLParam = model.TenantSQLParam{
-		TenantName:  tenantName,
-		PoolList:    poolList,
-		PrimaryZone: specPrimaryZone,
-	}
-	err = oceanbaseOperationManager.SetTenant(m.Ctx, tenantSQLParam)
-	if err != nil {
-		m.Logger.Error(err, "Modify tenant, update pool list", "tenantName", tenantName)
-		return err
-	}
-	// step 2: delete resource pool
-	poolExist, err := m.poolExist(poolName)
-	if err != nil {
-		m.Logger.Error(err, "Failed to check whether resource pool exists", "poolName", poolName)
-		return err
-	}
-	if poolExist {
-		err = oceanbaseOperationManager.DeletePool(m.Ctx, poolName)
-		if err != nil {
-			return err
+func removableUnitConfig(id int64, name string, configs []model.UnitConfigV4, pools []model.Pool) bool {
+	for _, pool := range pools {
+		if pool.UnitConfigID == id {
+			return false
 		}
 	}
-
-	// step 3: delete unit
-	unitExist, err := m.unitConfigV4Exist(unitName)
-	if err != nil {
-		m.Logger.Error(err, "Check existence of UnitConfigV4", "unitName", unitName)
-		return err
-	}
-	if unitExist {
-		err = oceanbaseOperationManager.DeleteUnitConfig(m.Ctx, unitName)
-		if err != nil {
-			return err
+	for _, config := range configs {
+		if config.UnitConfigID == id && config.Name == name {
+			return true
 		}
 	}
-	m.Logger.Info("Delete pool successfully", "deleted pool name", poolDelete.ZoneList)
-	return nil
+	return false
 }
 
 func (m *OBTenantManager) CheckAndApplyUnitConfigV4() tasktypes.TaskError {
@@ -810,16 +782,8 @@ func (m *OBTenantManager) CheckAndApplyUnitConfigV4() tasktypes.TaskError {
 }
 
 func CreateResourcePoolAndConfigTaskWithClear(m *OBTenantManager) error {
-	err := CreateResourcePoolAndConfig(m)
-	// clean created resource, restore to the initial state
-	if err != nil {
-		err := DeleteTenant(m)
-		if err != nil {
-			err = errors.Wrapf(err, "delete tenant when creating tenant")
-			return err
-		}
-	}
-	return err
+	// Provisioning reuses resources by name, so failure does not prove ownership.
+	return CreateResourcePoolAndConfig(m)
 }
 
 func CreateTenantTask(m *OBTenantManager) error {

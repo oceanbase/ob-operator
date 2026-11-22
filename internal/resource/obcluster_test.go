@@ -29,6 +29,7 @@ import (
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
+	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
 )
 
 const (
@@ -41,6 +42,7 @@ var _ = Describe("OBCluster controller", func() {
 		applyWait           = 5
 		commonTimeout       = 30
 		waitRunningTimeout  = 600
+		waitRecoveryTimeout = 300
 		waitUpgradeTimeout  = 1800
 		waitDeletingTimeout = 1800
 		interval            = 1
@@ -87,6 +89,11 @@ var _ = Describe("OBCluster controller", func() {
 			By("Create test obcluster")
 			ctx := context.Background()
 			obcluster := newOBCluster(TestOBClusterName, 3, 1)
+			// Let OceanBase retire an unreachable server within the recovery test window.
+			obcluster.Spec.Parameters = []apitypes.Parameter{
+				{Name: "server_permanent_offline_time", Value: "1m"},
+				{Name: "balancer_idle_time", Value: "10s"},
+			}
 			Expect(k8sClient.Create(ctx, obcluster)).Should(Succeed())
 
 			obclusterLookupKey := types.NamespacedName{Name: TestOBClusterName, Namespace: DefaultNamespace}
@@ -116,58 +123,38 @@ var _ = Describe("OBCluster controller", func() {
 			By("List pods and delete one of them")
 			ctx := context.Background()
 			podList := &v1.PodList{}
-			k8sClient.List(ctx, podList, client.MatchingLabels{
-				oceanbaseconst.LabelRefOBCluster: TestOBClusterName,
-			})
-			deleteTarget := rand.Intn(3)
-			Expect(len(podList.Items)).Should(Equal(3))
-			Expect(k8sClient.Delete(ctx, &podList.Items[deleteTarget])).Should(Succeed())
-			Eventually(func() bool {
-				err := k8sClient.Get(ctx, types.NamespacedName{
-					Namespace: DefaultNamespace,
-					Name:      podList.Items[deleteTarget].GetName(),
-				}, &v1.Pod{})
-				return err != nil && kubeerrors.IsNotFound(err)
-			}, 100, 1).Should(BeTrue())
+			clusterLabels := client.MatchingLabels{oceanbaseconst.LabelRefOBCluster: TestOBClusterName}
+			Expect(k8sClient.List(ctx, podList, client.InNamespace(DefaultNamespace), clusterLabels)).To(Succeed())
+			Expect(podList.Items).To(HaveLen(3))
+			target := podList.Items[rand.Intn(len(podList.Items))]
+			Expect(k8sClient.Delete(ctx, &target)).To(Succeed())
 
-			By("Check # of pods to be 3")
-			Eventually(func() bool {
-				k8sClient.List(ctx, podList, client.MatchingLabels{
-					oceanbaseconst.LabelRefOBCluster: TestOBClusterName,
-				})
-				return len(podList.Items) == 3
-			}, 300, 1).Should(BeTrue())
+			By("Wait for a ready replacement in the deleted pod's zone")
+			zoneLabels := client.MatchingLabels{oceanbaseconst.LabelRefOBZone: target.Labels[oceanbaseconst.LabelRefOBZone]}
+			Eventually(func(g Gomega) {
+				replacements := &v1.PodList{}
+				g.Expect(k8sClient.List(ctx, replacements, client.InNamespace(DefaultNamespace), zoneLabels)).To(Succeed())
+				g.Expect(replacements.Items).To(HaveLen(1))
+				pod := replacements.Items[0]
+				g.Expect(pod.UID).NotTo(Equal(target.UID))
+				g.Expect(pod.Status.Conditions).To(ContainElement(And(
+					HaveField("Type", v1.PodReady),
+					HaveField("Status", v1.ConditionTrue),
+				)))
+			}, waitRecoveryTimeout, interval).Should(Succeed())
 
-			By("Wait for pod to recover")
-			Eventually(func() bool {
-				err := k8sClient.Get(ctx, types.NamespacedName{
-					Namespace: DefaultNamespace,
-					Name:      podList.Items[deleteTarget].GetName(),
-				}, &v1.Pod{})
-				return err == nil
-			}, 300, 1).Should(BeTrue())
-
-			By("Wait for obcluster to get running")
-			Eventually(func() bool {
-				obcluster := &v1alpha1.OBCluster{}
-				err := k8sClient.Get(ctx, types.NamespacedName{
-					Namespace: DefaultNamespace,
-					Name:      TestOBClusterName,
-				}, obcluster)
-				if err != nil {
-					return false
+			By("Wait for the cluster and its three observers to be running")
+			Eventually(func(g Gomega) {
+				cluster := &v1alpha1.OBCluster{}
+				g.Expect(k8sClient.Get(ctx, client.ObjectKey{Namespace: DefaultNamespace, Name: TestOBClusterName}, cluster)).To(Succeed())
+				g.Expect(cluster.Status.Status).To(Equal(clusterstatus.Running))
+				observers := &v1alpha1.OBServerList{}
+				g.Expect(k8sClient.List(ctx, observers, client.InNamespace(DefaultNamespace), clusterLabels)).To(Succeed())
+				g.Expect(observers.Items).To(HaveLen(3))
+				for _, observer := range observers.Items {
+					g.Expect(observer.Status.Status).To(Equal(serverstatus.Running))
 				}
-				return obcluster.Status.Status == clusterstatus.Running
-			}, 300, 1).Should(BeTrue())
-
-			By("Wait for # observers to be 3")
-			Eventually(func() bool {
-				observerList := &v1alpha1.OBServerList{}
-				k8sClient.List(ctx, observerList, client.MatchingLabels{
-					oceanbaseconst.LabelRefOBCluster: TestOBClusterName,
-				})
-				return len(observerList.Items) == 3
-			}).Should(BeTrue())
+			}, waitRecoveryTimeout, interval).Should(Succeed())
 		})
 
 		It("Scale out zones of OBCluster instance and ends with status running successfully", func() {

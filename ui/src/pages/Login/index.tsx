@@ -21,19 +21,15 @@ const Login: React.FC = () => {
     try {
       const res = await user.login(values);
       if (res.successful) {
-        // Set a timer to wait for permissions to update
-        setTimeout(() => {
-          if (res.data.needReset) {
-            navigate('/reset');
-          } else {
-            navigate('/overview');
-          }
-          setLoading(false);
-        }, 500);
-        refresh();
+        // Navigation must wait for account information and permissions, even
+        // when the network takes longer than a fixed delay.
+        await refresh();
+        navigate(res.data.needReset ? '/reset' : '/overview');
         localStorage.setItem('user', values.username);
       }
     } catch (e) {
+      // Request errors are reported by the global request handler.
+    } finally {
       setLoading(false);
     }
   };

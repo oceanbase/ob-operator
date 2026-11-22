@@ -1,0 +1,903 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "native",
+    "stage",
+    "storageClass",
+    "objectStorage",
+    "minio",
+    "initialization",
+    "logService",
+    "observer",
+    "imagePullSecrets"
+  ],
+  "properties": {
+    "obproxy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "image",
+        "imagePullPolicy",
+        "replicas",
+        "resources",
+        "nodeSelector",
+        "tolerations",
+        "memoryLimit"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "type": "string",
+          "minLength": 1
+        },
+        "imagePullPolicy": {
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
+        },
+        "replicas": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "resources": {
+          "type": "object"
+        },
+        "nodeSelector": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "tolerations": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "memoryLimit": {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*[MG]$"
+        }
+      }
+    },
+    "access": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "host"
+      ],
+      "properties": {
+        "host": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9.:-]*$"
+        }
+      }
+    },
+    "sqlService": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "port",
+        "nodePort"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "NodePort",
+            "ClusterIP"
+          ]
+        },
+        "port": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "nodePort": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535
+        }
+      }
+    },
+    "native": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "readiness"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "readiness": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "image",
+            "imagePullPolicy",
+            "timeoutSeconds",
+            "resources"
+          ],
+          "properties": {
+            "executable": {
+              "type": "string",
+              "pattern": "^/[^\\s]+$"
+            },
+            "image": {
+              "oneOf": [{"const": ""}, {"$ref": "#/definitions/image"}]
+            },
+            "imagePullPolicy": {
+              "$ref": "#/definitions/pullPolicy"
+            },
+            "timeoutSeconds": {
+              "type": "integer",
+              "minimum": 60,
+              "maximum": 7200
+            },
+            "resources": {
+              "$ref": "#/definitions/resources"
+            }
+          }
+        }
+      }
+    },
+    "stage": {
+      "enum": [
+        "storage",
+        "logservice",
+        "cluster"
+      ]
+    },
+    "storageClass": {
+      "$ref": "#/definitions/name"
+    },
+    "imagePullSecrets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "$ref": "#/definitions/name"
+          }
+        }
+      }
+    },
+    "dashboard": {
+      "type": "object",
+      "required": [
+        "enabled",
+        "initCredentials",
+        "retainData",
+        "rbac",
+        "prometheus",
+        "sharedVolume"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "oneOf": [{"const": ""}, {"$ref": "#/definitions/image"}]
+        },
+        "utilityImage": {
+          "$ref": "#/definitions/image"
+        },
+        "alertmanager": {
+          "type": "object",
+          "properties": {
+            "image": {
+              "$ref": "#/definitions/image"
+            }
+          }
+        },
+        "adminPassword": {
+          "type": "string",
+          "anyOf": [
+            {
+              "maxLength": 0
+            },
+            {
+              "minLength": 12
+            }
+          ]
+        },
+        "initCredentials": {
+          "const": false
+        },
+        "retainData": {
+          "const": true
+        },
+        "userCredentials": {
+          "const": ""
+        },
+        "userNamespace": {
+          "const": ""
+        },
+        "configNamespace": {
+          "const": ""
+        },
+        "rbac": {
+          "type": "object",
+          "required": [
+            "includeNamespace",
+            "createPolicy"
+          ],
+          "properties": {
+            "includeNamespace": {
+              "const": true
+            },
+            "createPolicy": {
+              "const": false
+            }
+          }
+        },
+        "serviceAccount": {
+          "type": "object",
+          "required": [
+            "create"
+          ],
+          "properties": {
+            "create": {
+              "const": false
+            }
+          }
+        },
+        "service": {
+          "type": "object",
+          "required": [
+            "type",
+            "port"
+          ],
+          "properties": {
+            "type": {
+              "enum": [
+                "ClusterIP",
+                "NodePort",
+                "LoadBalancer"
+              ]
+            },
+            "port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          }
+        },
+        "prometheus": {
+          "type": "object",
+          "required": [
+            "persistence"
+          ],
+          "properties": {
+            "image": {
+              "$ref": "#/definitions/image"
+            },
+            "persistence": {
+              "$ref": "#/definitions/dashboardPersistence"
+            }
+          }
+        },
+        "sharedVolume": {
+          "type": "object",
+          "required": [
+            "persistence"
+          ],
+          "properties": {
+            "persistence": {
+              "$ref": "#/definitions/dashboardPersistence"
+            }
+          }
+        }
+      }
+    },
+    "scheduling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nodeSelector",
+        "tolerations"
+      ],
+      "properties": {
+        "nodeSelector": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "tolerations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/toleration"
+          }
+        }
+      }
+    },
+    "objectStorage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "endpoint",
+        "region",
+        "logBucket",
+        "dataBucket",
+        "existingSecret",
+        "createBuckets"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "bundled",
+            "external"
+          ]
+        },
+        "endpoint": {
+          "type": "string",
+          "pattern": "^(|https?://[A-Za-z0-9][A-Za-z0-9.-]*(:[0-9]{1,5})?)$"
+        },
+        "region": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9-]{1,64}$"
+        },
+        "logBucket": {
+          "$ref": "#/definitions/bucket"
+        },
+        "dataBucket": {
+          "$ref": "#/definitions/bucket"
+        },
+        "existingSecret": {
+          "$ref": "#/definitions/optionalName"
+        },
+        "logExistingSecret": {
+          "$ref": "#/definitions/optionalName"
+        },
+        "dataExistingSecret": {
+          "$ref": "#/definitions/optionalName"
+        },
+        "createBuckets": {
+          "type": "boolean"
+        }
+      }
+    },
+    "minio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "image",
+        "imagePullPolicy",
+        "rootExistingSecret",
+        "existingClaim",
+        "runAsUser",
+        "runAsGroup",
+        "fsGroup",
+        "size",
+        "resources",
+        "enabled",
+        "storageClass",
+        "region",
+        "nodeSelector",
+        "tolerations",
+        "imagePullSecrets"
+      ],
+      "properties": {
+        "image": {
+          "$ref": "#/definitions/image"
+        },
+        "imagePullPolicy": {
+          "$ref": "#/definitions/pullPolicy"
+        },
+        "rootExistingSecret": {
+          "$ref": "#/definitions/optionalName"
+        },
+        "mode": {
+          "enum": ["standalone", "distributed"]
+        },
+        "distributed": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["replicas", "drivesPerNode", "driveSize"],
+          "properties": {
+            "replicas": {"const": 3},
+            "drivesPerNode": {"const": 1},
+            "driveSize": {"$ref": "#/definitions/size"}
+          }
+        },
+        "existingClaim": {
+          "$ref": "#/definitions/optionalName"
+        },
+        "runAsUser": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "runAsGroup": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "fsGroup": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "size": {
+          "$ref": "#/definitions/size"
+        },
+        "resources": {
+          "$ref": "#/definitions/resources"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "storageClass": {
+          "$ref": "#/definitions/name"
+        },
+        "region": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9-]{1,64}$"
+        },
+        "nodeSelector": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "tolerations": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/toleration"
+          }
+        },
+        "imagePullSecrets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name"
+            ],
+            "properties": {
+              "name": {
+                "$ref": "#/definitions/name"
+              }
+            }
+          }
+        },
+        "global": {
+          "type": "object"
+        }
+      }
+    },
+    "initialization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "image",
+        "imagePullPolicy",
+        "runAsUser",
+        "runAsGroup",
+        "fsGroup",
+        "deadlineSeconds",
+        "resources"
+      ],
+      "properties": {
+        "image": {
+          "$ref": "#/definitions/image"
+        },
+        "imagePullPolicy": {
+          "$ref": "#/definitions/pullPolicy"
+        },
+        "runAsUser": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "runAsGroup": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "fsGroup": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "deadlineSeconds": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 3600
+        },
+        "resources": {
+          "$ref": "#/definitions/resources"
+        }
+      }
+    },
+    "logService": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "clusterId",
+        "image",
+        "resource",
+        "storeSize",
+        "logSize",
+        "topology",
+        "parameters"
+      ],
+      "properties": {
+        "clusterId": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "image": {
+          "$ref": "#/definitions/image"
+        },
+        "resource": {
+          "$ref": "#/definitions/resource"
+        },
+        "storeStorageClass": {
+          "$ref": "#/definitions/optionalName"
+        },
+        "logStorageClass": {
+          "$ref": "#/definitions/optionalName"
+        },
+        "storeSize": {
+          "$ref": "#/definitions/size"
+        },
+        "logSize": {
+          "$ref": "#/definitions/size"
+        },
+        "topology": {
+          "$ref": "#/definitions/topology"
+        },
+        "parameters": {
+          "$ref": "#/definitions/parameters"
+        }
+      }
+    },
+    "monitor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "image",
+        "resource"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "$ref": "#/definitions/image"
+        },
+        "resource": {
+          "$ref": "#/definitions/resource"
+        }
+      }
+    },
+    "observer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "clusterId",
+        "image",
+        "resource",
+        "dataSize",
+        "logSize",
+        "rootExistingSecret",
+        "topology",
+        "parameters"
+      ],
+      "properties": {
+        "clusterId": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "image": {
+          "$ref": "#/definitions/image"
+        },
+        "resource": {
+          "$ref": "#/definitions/resource"
+        },
+        "dataStorageClass": {
+          "$ref": "#/definitions/optionalName"
+        },
+        "logStorageClass": {
+          "$ref": "#/definitions/optionalName"
+        },
+        "dataSize": {
+          "$ref": "#/definitions/size"
+        },
+        "logSize": {
+          "$ref": "#/definitions/size"
+        },
+        "rootExistingSecret": {
+          "$ref": "#/definitions/optionalName"
+        },
+        "topology": {
+          "$ref": "#/definitions/topology"
+        },
+        "parameters": {
+          "$ref": "#/definitions/parameters"
+        }
+      }
+    },
+    "prerequisites": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "image": {
+          "type": "string"
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "minimum": 60,
+          "maximum": 1800
+        }
+      }
+    },
+    "skip-operator": {
+      "type": "boolean"
+    }
+  },
+  "definitions": {
+    "dashboardPersistence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled",
+        "create",
+        "existingClaim",
+        "storageClassName",
+        "accessMode",
+        "storage"
+      ],
+      "properties": {
+        "enabled": {
+          "const": true
+        },
+        "create": {
+          "const": false
+        },
+        "existingClaim": {
+          "$ref": "#/definitions/optionalName"
+        },
+        "storageClassName": {
+          "$ref": "#/definitions/optionalName"
+        },
+        "accessMode": {
+          "enum": [
+            "ReadWriteOnce",
+            "ReadWriteMany"
+          ]
+        },
+        "storage": {
+          "$ref": "#/definitions/size"
+        }
+      }
+    },
+    "toleration": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "operator": {
+          "enum": [
+            "Equal",
+            "Exists"
+          ]
+        },
+        "value": {
+          "type": "string"
+        },
+        "effect": {
+          "enum": [
+            "",
+            "NoSchedule",
+            "PreferNoSchedule",
+            "NoExecute"
+          ]
+        },
+        "tolerationSeconds": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": [
+              "operator"
+            ],
+            "properties": {
+              "operator": {
+                "const": "Exists"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "const": ""
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "required": [
+                "key"
+              ],
+              "properties": {
+                "key": {
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "operator"
+            ],
+            "properties": {
+              "operator": {
+                "const": "Exists"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "tolerationSeconds"
+            ]
+          },
+          "then": {
+            "required": [
+              "effect"
+            ],
+            "properties": {
+              "effect": {
+                "const": "NoExecute"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 63,
+      "pattern": "^[a-z0-9]([a-z0-9-]*[a-z0-9])?$"
+    },
+    "optionalName": {
+      "type": "string",
+      "maxLength": 63,
+      "pattern": "^([a-z0-9]([a-z0-9-]*[a-z0-9])?)?$"
+    },
+    "bucket": {
+      "type": "string",
+      "maxLength": 63,
+      "pattern": "^(|[a-z0-9][a-z0-9-]{1,61}[a-z0-9])$"
+    },
+    "size": {
+      "type": "string",
+      "pattern": "^[1-9][0-9]*(Mi|Gi|Ti)$"
+    },
+    "image": {
+      "type": "string",
+      "pattern": "^[^\\s]+(:[^/\\s]+|@sha256:[a-f0-9]{64})$",
+      "not": {
+        "pattern": ":latest$"
+      }
+    },
+    "pullPolicy": {
+      "enum": [
+        "IfNotPresent",
+        "Always"
+      ]
+    },
+    "resource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cpu",
+        "memory"
+      ],
+      "properties": {
+        "cpu": {
+          "type": "string",
+          "pattern": "^([1-9][0-9]*m?|0\\.[0-9]*[1-9][0-9]*)$"
+        },
+        "memory": {
+          "$ref": "#/definitions/size"
+        }
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requests",
+        "limits"
+      ],
+      "properties": {
+        "requests": {
+          "$ref": "#/definitions/resource"
+        },
+        "limits": {
+          "$ref": "#/definitions/resource"
+        }
+      }
+    },
+    "topology": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "zone",
+          "replica"
+        ],
+        "properties": {
+          "zone": {
+            "$ref": "#/definitions/name"
+          },
+          "replica": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "nodeSelector": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "value"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "value": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

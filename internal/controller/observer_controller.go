@@ -41,8 +41,9 @@ import (
 // OBServerReconciler reconciles a OBServer object
 type OBServerReconciler struct {
 	client.Client
-	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	APIReader client.Reader
+	Scheme    *runtime.Scheme
+	Recorder  record.EventRecorder
 }
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
@@ -75,6 +76,7 @@ func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 		Logger:       &logger,
 		Recorder:     telemetry.NewRecorder(ctx, r.Recorder),
 		K8sResClient: r.Client,
+		K8sReader:    r.APIReader,
 	}
 
 	if observer.Spec.K8sCluster != "" {
@@ -84,6 +86,7 @@ func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			return ctrl.Result{}, err
 		}
 		observerManager.K8sResClient = resClient
+		observerManager.K8sReader = resClient
 	}
 
 	// execute finalizers
@@ -117,6 +120,7 @@ func (r *OBServerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *OBServerReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.APIReader = mgr.GetAPIReader()
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.OBServer{}).
 		Owns(&corev1.Pod{}).

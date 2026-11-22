@@ -45,6 +45,7 @@ type OBServerManager struct {
 	Logger   *logr.Logger
 
 	K8sResClient client.Client
+	K8sReader    client.Reader
 }
 
 func (m *OBServerManager) GetTaskFunc(name tasktypes.TaskName) (tasktypes.TaskFunc, error) {
@@ -112,12 +113,12 @@ func (m *OBServerManager) UpdateStatus() error {
 				}
 			}
 		}
-		pvcs, err := m.getPVCs()
-		if err != nil {
-			m.Logger.Info("Get pvc failed: " + err.Error())
-		}
 		if m.OBServer.Status.Status == serverstatus.Running {
-			if pvcs != nil && len(pvcs.Items) > 0 && m.checkIfStorageExpand(pvcs) {
+			pvcs, err := m.getPVCs(pod)
+			if err != nil {
+				return errors.Wrap(err, "get observer PVCs")
+			}
+			if m.checkIfStorageExpand(pvcs) {
 				m.OBServer.Status.Status = serverstatus.ExpandPVC
 			}
 		}
@@ -275,6 +276,13 @@ func (m *OBServerManager) HandleFailure() {
 		failureRule := operationContext.OnFailure
 		switch failureRule.Strategy {
 		case strategy.StartOver:
+			// The historical bootstrap flow defaults to resuming from Running.
+			// A failed parent wait has not registered this server in the database.
+			if operationContext.Task == tWaitOBClusterBootstrapped && m.OBServer.Status.Status == serverstatus.BootstrapReady {
+				operationContext.TaskStatus = taskstatus.Pending
+				operationContext.TaskId = ""
+				return
+			}
 			if m.OBServer.Status.Status != failureRule.NextTryStatus {
 				m.OBServer.Status.Status = failureRule.NextTryStatus
 				m.OBServer.Status.OperationContext = nil
@@ -300,4 +308,9 @@ func (m *OBServerManager) ArchiveResource() {
 	m.Recorder.Event(m.OBServer, "Archive", "", "Archive observer")
 	m.OBServer.Status.Status = "Failed"
 	m.OBServer.Status.OperationContext = nil
+}
+
+// CanReplayTask permits bootstrap steps that can safely resume after a leader change.
+func (m *OBServerManager) CanReplayTask(name tasktypes.TaskName) bool {
+	return name == tWaitOBServerReady || name == tCreateOBServerPVC || name == tWaitOBClusterBootstrapped
 }

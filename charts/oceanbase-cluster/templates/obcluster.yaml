@@ -10,6 +10,21 @@ metadata:
 spec:
   clusterName: {{ .Values.clusterName | default .Release.Name | quote }}
   clusterId: {{ .Values.clusterId | default (nospace (cat "1" (randNumeric 7))) }}
+  {{- if .Values.oceanseek.enabled }}
+  deploymentMode: shared_storage
+  logServiceRef:
+    name: {{ include "oceanbase-cluster.logServiceName" . }}
+  sharedStorageInfo:
+    bucketURL: {{ .Values.oceanseek.sharedStorage.bucketURL | quote }}
+    secretRef:
+      name: {{ include "oceanbase-cluster.sharedStorageSecretName" . }}
+    {{- with .Values.oceanseek.sharedStorage.maxIOPS }}
+    maxIOPS: {{ . | quote }}
+    {{- end }}
+    {{- with .Values.oceanseek.sharedStorage.maxBandwidth }}
+    maxBandwidth: {{ . | quote }}
+    {{- end }}
+  {{- end }}
   serviceAccount: {{ .Values.serviceAccount | default "default" | quote }}
   userSecrets:
   {{- range $key, $value := .Values.userSecrets }}
@@ -18,20 +33,26 @@ spec:
   topology: 
     {{- toYaml .Values.topology | nindent 4 }}
   observer:
-    image: oceanbase/oceanbase-cloud-native:{{ .Chart.AppVersion }}
+    {{- if .Values.oceanseek.enabled }}
+    image: {{ .Values.oceanseek.observerImage | quote }}
+    {{- else }}
+    image: {{ .Values.observerImage | default (printf "oceanbase/oceanbase-cloud-native:%s" .Chart.AppVersion) | quote }}
+    {{- end }}
     {{- with .Values.observerConfig }}
     resource:
       {{- toYaml .resource | nindent 6 }}
     storage:
-     {{- range $key, $size := .storages }} 
+     {{- range $key, $size := .storages }}
+     {{- if and $.Values.oceanseek.enabled (eq $key "redoLogStorage") }}{{- else }}
       {{ $key }}:
         storageClass: {{ $.Values.storageClass }}
         size: {{ $size }}
      {{- end }}
+     {{- end }}
     {{- end }}
   {{- if .Values.monitorEnabled }}
   monitor:
-    image: oceanbase/obagent:{{ .Values.obAgentVersion }}
+    image: {{ printf "%s:%s" .Values.obAgentRepository .Values.obAgentVersion | quote }}
     resource:
       {{- toYaml .Values.monitorResource | nindent 6 }}
   {{- end }}

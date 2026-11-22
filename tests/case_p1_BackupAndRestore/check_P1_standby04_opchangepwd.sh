@@ -22,7 +22,7 @@ prepare() {
 # clean up delete everything by deleting the entire namespace
 cleanup() {
     kubectl delete namespace $NAMESPACE
-    ssh ${USER_NAME}@${NFS_SERVER} "sudo rm -rf ${NFS_BASE_PATH}/*"
+    clean_nfs_test_directory
 }
 
 cleanrestore() {
@@ -135,14 +135,15 @@ check_backup_running() {
 
 check_obtenantoperation_running() {
     counter=0
-    timeout=10  
+    timeout=100
     OPERATION_RUNNING='false'
     ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-1-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
     while true; do
         echo 'check obtenantoperation resource'
         counter=$((counter+1))
-	crd_obtenantoperation=`kubectl get obtenantoperation -n $NAMESPACE | grep "$OP_CHG_PWD"|awk -F' ' '{print $3}'`
-	db_obtenantoperation=`mysql -h $ip -P2881 -A -uroot@$OBTENANT_NAME -p$PASSWORD_NEW -Doceanbase -e "select * from DBA_OB_TENANTS;"| grep $OBTENANT_NAME|awk -F' ' '{print $18}'`
+        crd_obtenantoperation=$(kubectl get obtenantoperation "$OP_CHG_PWD" -n "$NAMESPACE" -o jsonpath='{.status.status}')
+        db_obtenantoperation=$(MYSQL_PWD="$PASSWORD_NEW" mysql -h "$ip" -P2881 -u "root@$OBTENANT_NAME" -D oceanbase -Ns \
+            -e 'SELECT TENANT_NAME, STATUS FROM DBA_OB_TENANTS' | awk -v tenant="$OBTENANT_NAME" '$1 == tenant {print $2}')
         if [[ $crd_obtenantoperation = "SUCCESSFUL" && $db_obtenantoperation = "NORMAL" ]];then
             echo "crd_obtenantoperation $crd_obtenantoperation db_obtenantoperation $db_obtenantoperation"
             OPERATION_RUNNING='true'
@@ -170,6 +171,7 @@ validate() {
     check_resource_running
     if [[ $RESOURCE_RUNNING == 'false' ]]; then
         echo "case failed"
+        return 1
     else
         check_in_obcluster
 	run "obtenant_basic_1_1_1.yaml"
@@ -179,10 +181,9 @@ validate() {
 	run "tenant_op_changepwd.yaml"
 	check_obtenantoperation_running
 	cleanoperation
-        if [[ $RESTORE_RUNNING == 'false' || $RESTORE_DB_RUNNING == 'false' ]]; then
+        if [[ $OBSERVER_ACTIVE != true || $OBTENANT_RUNNING != true || $BACKUP_RUNNING != true || $OPERATION_RUNNING != true ]]; then
             echo "case failed"
-	    #cleanup
-	    #prepare
+            return 1
         else
             echo "case passed"
         fi
@@ -190,5 +191,5 @@ validate() {
 }
 
 prepare
-validate
+validate || exit 1
 export_to_file

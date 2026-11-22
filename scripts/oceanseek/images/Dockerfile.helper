@@ -1,0 +1,7 @@
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+ARG SOURCE_REVISION
+LABEL org.opencontainers.image.source="https://github.com/oceanbase/ob-operator" \
+      org.opencontainers.image.revision="${SOURCE_REVISION}"
+COPY oceanbase-helper /home/admin/oceanbase/bin/oceanbase-helper
+RUN chmod 0755 /home/admin/oceanbase/bin/oceanbase-helper

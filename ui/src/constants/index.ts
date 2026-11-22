@@ -68,6 +68,9 @@ const RESULT_STATUS = ['running', 'failed'];
 const BACKUP_RESULT_STATUS = ['RUNNING', 'FAILED', 'PAUSED'];
 
 const CLUSTER_INFO_CONFIG = [
+  'deploymentMode',
+  'sharedStorageInfo',
+  'logServiceRef',
   'name',
   'clusterName',
   'namespace',
@@ -89,6 +92,9 @@ const CLUSTER_INFO_CONFIG = [
 ];
 
 const TOPO_INFO_CONFIG = [
+  'deploymentMode',
+  'sharedStorageInfo',
+  'logServiceRef',
   'name',
   'clusterName',
   'namespace',
@@ -253,6 +259,7 @@ const SHILED_STATUS_MAP = {
 };
 
 const OBJECT_OPTIONS_ALARM: DefaultOptionType[] = [
+  { label: 'LogService', value: 'logservice' },
   {
     label: intl.formatMessage({
       id: 'src.constants.5D9B444A',

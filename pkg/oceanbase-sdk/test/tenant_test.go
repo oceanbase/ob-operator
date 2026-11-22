@@ -14,6 +14,8 @@ package test
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/go-logr/logr"
@@ -24,6 +26,8 @@ import (
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/model"
 	"github.com/oceanbase/ob-operator/pkg/oceanbase-sdk/operation"
 )
+
+const testUnitSizeBytes = 2 << 30
 
 var _ = Describe("Test Tenant Operation", func() {
 	var con *operation.OceanbaseOperationManager
@@ -92,9 +96,9 @@ var _ = Describe("Test Tenant Operation", Label("tenant-operation"), Serial, fun
 				UnitConfigName: "unit_test",
 				MinCPU:         2,
 				MaxCPU:         2,
-				MemorySize:     2048000000,
+				MemorySize:     testUnitSizeBytes,
 				MaxIops:        1024,
-				LogDiskSize:    2048000000,
+				LogDiskSize:    testUnitSizeBytes,
 				MinIops:        1024,
 			})
 			Expect(err).To(BeNil())
@@ -148,12 +152,15 @@ var _ = Describe("Test Tenant Operation", Label("tenant-operation"), Serial, fun
 		newPwd := "testPwd"
 		err = tenantCon.ChangeTenantUserPassword(context.TODO(), "root", newPwd)
 		Expect(err).To(BeNil())
+		Expect(tenantCon.Close()).To(Succeed())
 		newDs := connector.NewOceanBaseDataSource(host, port, user, tenant, newPwd, "")
 		newCon, err := operation.GetOceanbaseOperationManager(newDs)
 		Expect(err).To(BeNil())
 		newCon.Logger = &logger
-		_, err = newCon.ListArchiveLogSummary(context.TODO())
-		Expect(err).To(BeNil())
+		DeferCleanup(newCon.Close)
+		var authenticated int
+		Expect(newCon.QueryRow(context.TODO(), &authenticated, "SELECT 1")).To(Succeed())
+		Expect(authenticated).To(Equal(1))
 	})
 
 	It("Delete Tenants", Label("delete_tenants"), func() {
@@ -190,6 +197,16 @@ var _ = Describe("Test Operation Manager get", Label("get-client"), func() {
 		Expect(con).NotTo(BeNil())
 		err := con.Close()
 		Expect(err).To(BeNil())
+	})
+
+	It("Read a global variable by its exact name", func() {
+		variable, err := con.GetGlobalVariable(context.Background(), "autocommit")
+		Expect(err).NotTo(HaveOccurred())
+		Expect(variable.Name).To(Equal("autocommit"))
+		Expect(variable.Value).To(BeElementOf("0", "1"))
+
+		_, err = con.GetGlobalVariable(context.Background(), "auto_ommit")
+		Expect(errors.Is(err, sql.ErrNoRows)).To(BeTrue())
 	})
 
 	It("Get operation manager", func() {

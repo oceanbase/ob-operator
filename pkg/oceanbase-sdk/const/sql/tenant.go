@@ -13,9 +13,9 @@ See the Mulan PSL v2 for more details.
 package sql
 
 const (
-	GetTenantByName       = "SELECT tenant_id, tenant_name, primary_zone, locality, COALESCE(previous_locality, '') as previous_locality, status FROM oceanbase.DBA_OB_TENANTS WHERE tenant_name = ?;"
+	GetTenantByName       = "SELECT tenant_id, tenant_name, primary_zone, locality, COALESCE(previous_locality, '') as previous_locality, status, tenant_role FROM oceanbase.DBA_OB_TENANTS WHERE tenant_name = ?;"
 	GetPoolByName         = "SELECT resource_pool_id, name, unit_count, unit_config_id, zone_list, tenant_id FROM oceanbase.DBA_OB_RESOURCE_POOLS WHERE name = ?;"
-	GetUnitConfigV4ByName = "SELECT max_cpu, min_cpu, memory_size, log_disk_size, max_iops, min_iops, iops_weight FROM oceanbase.DBA_OB_UNIT_CONFIGS WHERE name = ?;"
+	GetUnitConfigV4ByName = "SELECT unit_config_id, name, max_cpu, min_cpu, memory_size, log_disk_size, max_iops, min_iops, iops_weight FROM oceanbase.DBA_OB_UNIT_CONFIGS WHERE name = ?;"
 	GetPoolList           = "SELECT resource_pool_id, name, unit_count, unit_config_id, zone_list, tenant_id FROM oceanbase.DBA_OB_RESOURCE_POOLS;"
 	GetUnitList           = "SELECT unit_id, resource_pool_id, zone, svr_ip, svr_port, migrate_from_svr_ip, migrate_from_svr_port, status FROM oceanbase.DBA_OB_UNITS;"
 	GetUnitConfigV4List   = "SELECT unit_config_id, name, max_cpu, min_cpu, memory_size, max_iops, min_iops, log_disk_size, iops_weight FROM oceanbase.DBA_OB_UNIT_CONFIGS;"
@@ -30,10 +30,12 @@ const (
 	GetRsJob         = "select job_id, job_type, job_status, tenant_id from DBA_OB_TENANT_JOBS where tenant_name=? and job_status ='INPROGRESS' and job_type='ALTER_TENANT_LOCALITY'"
 	GetObVersion     = "SELECT ob_version() as version;"
 
-	AddUnitConfigV4 = "CREATE RESOURCE UNIT IF NOT EXISTS %s max_cpu ?, memory_size ? %s;"
-	AddPool         = "CREATE RESOURCE POOL IF NOT EXISTS %s UNIT=?, UNIT_NUM=?, ZONE_LIST=(?);"
-	AlterPool       = "ALTER RESOURCE POOL %s UNIT=?, UNIT_NUM=?, ZONE_LIST=(?);"
-	AddTenant       = "CREATE TENANT IF NOT EXISTS %s CHARSET=?, PRIMARY_ZONE=?, RESOURCE_POOL_LIST=(%s) %s %s;"
+	AddUnitConfigV4   = "CREATE RESOURCE UNIT IF NOT EXISTS %s max_cpu ?, memory_size ? %s;"
+	AddPool           = "CREATE RESOURCE POOL IF NOT EXISTS %s UNIT=?, UNIT_NUM=?, ZONE_LIST=(?);"
+	AlterPool         = "ALTER RESOURCE POOL %s UNIT=?, UNIT_NUM=?, ZONE_LIST=(?);"
+	tenantOptions     = "%s CHARSET=?, PRIMARY_ZONE=?, RESOURCE_POOL_LIST=(%s) %s %s;"
+	AddTenant         = "CREATE TENANT IF NOT EXISTS " + tenantOptions
+	CreateOwnedTenant = "CREATE TENANT " + tenantOptions
 
 	SetTenantVariable = "ALTER TENANT %s VARIABLES %s;"
 	SetUnitConfigV4   = "ALTER RESOURCE UNIT %s %s;"
@@ -60,5 +62,6 @@ const (
 )
 
 const (
-	UpgradeTenantWithName = "ALTER SYSTEM RUN UPGRADE JOB \"UPGRADE_ALL\" TENANT = %s"
+	ListActiveTenantUpgradeIDs = "SELECT DISTINCT COALESCE(tenant_id, 0) FROM DBA_OB_TENANT_JOBS WHERE job_type = 'UPGRADE_ALL' AND job_status = 'INPROGRESS'"
+	UpgradeTenantWithName      = "ALTER SYSTEM RUN UPGRADE JOB \"UPGRADE_ALL\" TENANT = %s"
 )

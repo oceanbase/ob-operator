@@ -104,7 +104,7 @@ func (in *OBTenantBackupPolicyStatus) DeepCopy() *OBTenantBackupPolicyStatus {
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
 //+kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
-//+kubebuilder:printcolumn:name="TenantName",type=string,JSONPath=`.spec.tenantName`
+//+kubebuilder:printcolumn:name="TenantName",type=string,JSONPath=`.status.tenantName`
 //+kubebuilder:printcolumn:name="NextFull",type=string,JSONPath=`.status.nextFull`
 //+kubebuilder:printcolumn:name="NextIncremental",type=string,JSONPath=`.status.nextIncremental`
 //+kubebuilder:printcolumn:name="FullCrontab",type=string,JSONPath=`.spec.dataBackup.fullCrontab`
@@ -121,6 +121,24 @@ type OBTenantBackupPolicy struct {
 
 	Spec   OBTenantBackupPolicySpec   `json:"spec,omitempty"`
 	Status OBTenantBackupPolicyStatus `json:"status,omitempty"`
+}
+
+// DatabaseTenantName returns the database name used by backup jobs, including
+// names retained in status by earlier Operator versions.
+func (r *OBTenantBackupPolicy) DatabaseTenantName() string {
+	if r.Spec.TenantName != "" {
+		return r.Spec.TenantName
+	}
+	if r.Status.TenantName != "" {
+		return r.Status.TenantName
+	}
+	if r.Status.TenantCR != nil && r.Status.TenantCR.Spec.TenantName != "" {
+		return r.Status.TenantCR.Spec.TenantName
+	}
+	if r.Status.TenantInfo != nil {
+		return r.Status.TenantInfo.TenantName
+	}
+	return ""
 }
 
 //+kubebuilder:object:root=true

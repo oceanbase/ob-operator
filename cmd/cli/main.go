@@ -14,10 +14,14 @@ See the Mulan PSL v2 for more details.
 package main
 
 import (
+	"os"
+
 	cli "github.com/oceanbase/ob-operator/internal/cli"
 )
 
 func main() {
 	rootCmd := cli.NewCliCmd()
-	_ = rootCmd.Execute()
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(1)
+	}
 }

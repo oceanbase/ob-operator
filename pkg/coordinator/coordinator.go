@@ -48,8 +48,7 @@ func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 	result := ctrl.Result{
 		RequeueAfter: cfg.ExecutionRequeueDuration,
 	}
-	var f *tasktypes.TaskFlow
-	var err error
+	var resultToRelease tasktypes.TaskID
 	beforeStatus := c.Manager.GetStatus()
 	meta := c.Manager.GetMeta()
 	if c.Manager.GetStatus() == "" {
@@ -59,7 +58,7 @@ func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 		result.RequeueAfter = cfg.PausedRequeueDuration
 		return result, nil
 	} else {
-		f, err = c.Manager.GetTaskFlow()
+		f, err := c.Manager.GetTaskFlow()
 		if err != nil {
 			return result, errors.Wrap(err, "Get task flow")
 		} else if f == nil {
@@ -68,8 +67,12 @@ func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 		} else {
 			c.Logger.V(1).Info("Set operation context", "operation context", f.OperationContext)
 			c.Manager.SetOperationContext(f.OperationContext)
+			previousID := f.OperationContext.TaskId
 			// execution errors reflects by task status
 			c.executeTaskFlow(f)
+			if f.OperationContext.TaskStatus != taskstatus.Running || f.OperationContext.TaskId != previousID {
+				resultToRelease = previousID
+			}
 			// if task status is `failed`, requeue after 2 ^ min(retryCount, threshold) * 500ms.
 			// maximum backoff time is about 2 hrs with 14 as threshold.
 			if f.OperationContext.OnFailure.RetryCount > 0 && f.OperationContext.TaskStatus == taskstatus.Failed {
@@ -89,13 +92,14 @@ func (c *Coordinator) Coordinate() (ctrl.Result, error) {
 			result.RequeueAfter = cfg.ExecutionRequeueDuration
 		}
 	}
-	err = c.cleanTaskResultMap(f)
-	if err != nil {
-		return result, errors.Wrap(err, "Clean task result map")
-	}
-	err = c.Manager.UpdateStatus()
+	err := c.Manager.UpdateStatus()
 	if err != nil {
 		c.Logger.Error(err, "Failed to update status")
+	} else if resultToRelease != "" {
+		// The persisted flow no longer polls this task ID.
+		if err := task.GetTaskManager().CleanTaskResult(resultToRelease); err != nil {
+			return result, errors.Wrap(err, "Clean task result map")
+		}
 	}
 	// When status changes(e.g. from running to other status), set a shorter `requeue after` to speed up processing.
 	if c.Manager.GetStatus() != beforeStatus {
@@ -144,6 +148,19 @@ func (c *Coordinator) executeTaskFlow(f *tasktypes.TaskFlow) {
 				"resourceName", resName,
 			}
 			if err != nil {
+				if policy, ok := c.Manager.(TaskReplayPolicy); ok && errors.Is(err, task.ErrTaskNotFound) && policy.CanReplayTask(f.OperationContext.Task) {
+					c.Logger.Info("Resubmitting replayable task after losing its result", loggingPairs...)
+					f.OperationContext.TaskId = ""
+					f.OperationContext.TaskStatus = taskstatus.Pending
+					return
+				}
+				if observer, ok := c.Manager.(LostTaskObserver); ok && errors.Is(err, task.ErrTaskNotFound) {
+					if verify := observer.ObserveLostTask(f.OperationContext.Task); verify != nil {
+						c.Logger.Info("Checking external state after losing a task result", loggingPairs...)
+						f.OperationContext.TaskId = task.GetTaskManager().Submit(verify)
+						return
+					}
+				}
 				c.Logger.Error(err, "Get task result got error", loggingPairs...)
 				c.Manager.PrintErrEvent(err)
 				f.OperationContext.TaskStatus = taskstatus.Failed
@@ -184,17 +201,4 @@ func (c *Coordinator) executeTaskFlow(f *tasktypes.TaskFlow) {
 		}
 	}
 	// Coordinate finished
-}
-
-func (c *Coordinator) cleanTaskResultMap(f *tasktypes.TaskFlow) error {
-	if f == nil || f.OperationContext == nil {
-		return nil
-	}
-	if f.OperationContext.TaskStatus == taskstatus.Successful || f.OperationContext.TaskStatus == taskstatus.Failed {
-		err := task.GetTaskManager().CleanTaskResult(f.OperationContext.TaskId)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }

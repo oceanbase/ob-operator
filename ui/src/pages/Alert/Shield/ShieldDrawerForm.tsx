@@ -31,6 +31,7 @@ import {
   validateLabelValues,
 } from '../helper';
 import ClusterSelect from './ClusterSelect';
+import LogServiceSelect from './LogServiceSelect';
 import ServerSelect from './ServerSelect';
 import TenantSelect from './TenantSelect';
 
@@ -168,6 +169,7 @@ export default function ShieldDrawerForm({
                   obcluster: undefined,
                   obtenant: undefined,
                   observer: undefined,
+                  logservice: undefined,
                 },
               });
             }}
@@ -185,6 +187,7 @@ export default function ShieldDrawerForm({
               })}
             </Radio>
             <Radio value="observer"> OBServer </Radio>
+            <Radio value="logservice"> LogService </Radio>
           </Radio.Group>
         </Form.Item>
         <Form.Item noStyle dependencies={['instances', 'type']}>
@@ -202,8 +205,9 @@ export default function ShieldDrawerForm({
                   {
                     validator: (_, instances: Alert.InstancesType) => {
                       if (
-                        !instances.obcluster ||
-                        !instances.obcluster.length ||
+                        (instances.type !== 'logservice' &&
+                          (!instances.obcluster ||
+                            !instances.obcluster.length)) ||
                         !instances[instances.type] ||
                         !instances[instances.type]?.length
                       ) {
@@ -224,6 +228,7 @@ export default function ShieldDrawerForm({
                 {type === 'obcluster' && <ClusterSelect />}
                 {type === 'obtenant' && <TenantSelect />}
                 {type === 'observer' && <ServerSelect />}
+                {type === 'logservice' && <LogServiceSelect />}
               </Form.Item>
             );
           }}

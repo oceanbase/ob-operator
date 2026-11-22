@@ -15,6 +15,9 @@ package operation
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 
@@ -32,22 +35,60 @@ func (m *OceanbaseOperationManager) SetRestorePassword(ctx context.Context, pass
 }
 
 func (m *OceanbaseOperationManager) StartRestoreWithLimit(ctx context.Context, tenantName, uri, restoreOption string, limitKey, limitValue any) error {
-	sqlStatement := fmt.Sprintf(sql.StartRestoreWithLimit, tenantName, limitKey)
-	err := m.ExecWithTimeout(ctx, managerConfig.TenantRestoreTimeout, sqlStatement, uri, limitValue, restoreOption)
-	if err != nil {
-		m.Logger.Error(err, "Got exception when start restore with limit")
-		return errors.Wrap(err, "Start restore with limit")
+	key := strings.ToUpper(fmt.Sprint(limitKey))
+	if key == "" {
+		return errors.New("restore limit must be TIME or SCN")
 	}
-	return nil
+	return m.startRestore(ctx, tenantName, uri, restoreOption, key, limitValue, "")
+}
+
+// StartTrackedRestore includes the Kubernetes restore identity in the physical job.
+func (m *OceanbaseOperationManager) StartTrackedRestore(ctx context.Context, tenantName, uri, restoreOption, limitKey string, limitValue any, description string) error {
+	if description == "" {
+		return errors.New("restore job description is required")
+	}
+	return m.startRestore(ctx, tenantName, uri, restoreOption, limitKey, limitValue, description)
+}
+
+func (m *OceanbaseOperationManager) startRestore(ctx context.Context, tenantName, uri, option, key string, limit any, description string) error {
+	statement := fmt.Sprintf(sql.StartRestoreUnlimited, tenantName)
+	args := []any{uri}
+	if key != "" {
+		argument, err := RestoreUntilArgument(key, limit)
+		if err != nil {
+			return err
+		}
+		statement = fmt.Sprintf(sql.StartRestoreWithLimit, tenantName, key)
+		args = append(args, argument)
+	}
+	args = append(args, option)
+	if description != "" {
+		statement += " DESCRIPTION ?"
+		args = append(args, description)
+	}
+	return errors.Wrap(m.ExecWithTimeout(ctx, managerConfig.TenantRestoreTimeout, statement, args...), "start physical restore")
+}
+
+// RestoreUntilArgument validates a restore limit and returns its SQL argument.
+func RestoreUntilArgument(key string, value any) (any, error) {
+	switch key {
+	case "TIME":
+		return value, nil
+	case "SCN":
+		// The CRD represents an SCN as text to preserve its precision. The
+		// RESTORE grammar requires an integer literal, so bind a numeric value.
+		scn, err := strconv.ParseUint(fmt.Sprint(value), 10, 64)
+		if err != nil {
+			return nil, errors.New("restore SCN must be an unsigned decimal integer")
+		}
+		return scn, nil
+	default:
+		return nil, errors.New("restore limit must be TIME or SCN")
+	}
 }
 
 func (m *OceanbaseOperationManager) StartRestoreUnlimited(ctx context.Context, tenantName, uri, restoreOption string) error {
-	err := m.ExecWithTimeout(ctx, managerConfig.TenantRestoreTimeout, fmt.Sprintf(sql.StartRestoreUnlimited, tenantName), uri, restoreOption)
-	if err != nil {
-		m.Logger.Error(err, "Got exception when start restore unlimited")
-		return errors.Wrap(err, "Start restore unlimited")
-	}
-	return nil
+	return m.startRestore(ctx, tenantName, uri, restoreOption, "", nil, "")
 }
 
 func (m *OceanbaseOperationManager) CancelRestoreOfTenant(ctx context.Context, tenantName string) error {
@@ -69,13 +110,37 @@ func (m *OceanbaseOperationManager) ReplayStandbyLog(ctx context.Context, tenant
 	return nil
 }
 
+type tenantActivationOperations interface {
+	QueryRow(context.Context, any, string, ...any) error
+	ExecWithTimeout(context.Context, time.Duration, string, ...any) error
+}
+
 func (m *OceanbaseOperationManager) ActivateStandby(ctx context.Context, tenantName string) error {
-	err := m.ExecWithDefaultTimeout(ctx, sql.ActivateStandby, tenantName)
-	if err != nil {
-		m.Logger.Error(err, "Got exception when activate standby")
-		return errors.Wrap(err, "Activate standby")
+	return activateStandby(ctx, m, tenantName)
+}
+
+func activateStandby(ctx context.Context, op tenantActivationOperations, tenantName string) error {
+	var tenant model.OBTenant
+	if err := op.QueryRow(ctx, &tenant, sql.GetActivationState, tenantName); err != nil {
+		return errors.Wrap(err, "Read tenant before standby activation")
 	}
-	return nil
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if tenant.Status != "NORMAL" {
+		return errors.Errorf("Tenant %s is not ready (status %s)", tenantName, tenant.Status)
+	}
+	if tenant.TenantRole == "PRIMARY" {
+		if tenant.SwitchoverStatus != "NORMAL" {
+			return errors.Errorf("Primary tenant %s is still switching (%s)", tenantName, tenant.SwitchoverStatus)
+		}
+		return nil
+	}
+	if tenant.TenantRole != "STANDBY" {
+		return errors.Errorf("Cannot activate tenant %s with role %s", tenantName, tenant.TenantRole)
+	}
+	err := op.ExecWithTimeout(ctx, managerConfig.TenantSqlTimeout, sql.ActivateStandby, tenantName)
+	return errors.Wrap(err, "Activate standby")
 }
 
 func (m *OceanbaseOperationManager) ListRestoreProgress(ctx context.Context) ([]*model.RestoreProgress, error) {
@@ -122,4 +187,25 @@ func (m *OceanbaseOperationManager) GetLatestRestoreHistoryOfTenant(ctx context.
 		return nil, nil
 	}
 	return latest[0], nil
+}
+
+// GetTrackedRestoreJob reads the system tenant's record, including jobs that
+// finished before the controller could persist the STARTING transition.
+func (m *OceanbaseOperationManager) GetTrackedRestoreJob(ctx context.Context, tenant, description string) (*model.RestoreHistory, error) {
+	const filter = " WHERE tenant_id=1 AND restore_tenant_name=? AND description=? ORDER BY job_id DESC LIMIT 1"
+	var progress []*model.RestoreProgress
+	if err := m.QueryList(ctx, &progress, sql.QueryRestoreProgress+filter, tenant, description); err != nil {
+		return nil, err
+	}
+	if len(progress) > 0 {
+		return &model.RestoreHistory{RestoreProgress: *progress[0]}, nil
+	}
+	var history []*model.RestoreHistory
+	if err := m.QueryList(ctx, &history, sql.QueryRestoreHistory+filter, tenant, description); err != nil {
+		return nil, err
+	}
+	if len(history) > 0 {
+		return history[0], nil
+	}
+	return nil, nil
 }

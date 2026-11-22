@@ -4,8 +4,12 @@
 build: operator ## Build manager binary.
 
 .PHONY: operator
-operator: manifests generate fmt vet ## Build manager binary.
+operator: manifests generate fmt vet oceanseek-readiness ## Build manager binary.
 	CGO_ENABLED=0 GOOS=linux go build -p $(PROCESSOR) -o bin/manager cmd/operator/main.go
+
+.PHONY: oceanseek-readiness
+oceanseek-readiness: ## Build the read-only Helm readiness hook binary.
+	CGO_ENABLED=0 GOOS=linux go build -p $(PROCESSOR) -o bin/oceanseek-readiness ./cmd/oceanseek-readiness
 
 # If you wish built the manager image targeting other platforms you can use the --platform flag.
 # (i.e. docker build --platform linux/arm64 ). However, you must enable docker buildKit for it.

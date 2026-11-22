@@ -46,3 +46,13 @@ func ReadPassword(c client.Client, namespace, secretName string) (string, error)
 	}
 	return string(secret.Data[secretconst.PasswordKeyName]), err
 }
+
+// ReadBackupEncryptionPassword requires a nonempty password whenever a backup
+// or restore explicitly references an encryption Secret.
+func ReadBackupEncryptionPassword(c client.Client, namespace, secretName string) (string, error) {
+	password, err := ReadPassword(c, namespace, secretName)
+	if err == nil && password == "" {
+		return "", errors.Errorf("backup encryption Secret %s/%s has no nonempty password", namespace, secretName)
+	}
+	return password, err
+}

@@ -1,0 +1,40 @@
+# Replace worker-1/2/3 with the Kubernetes hostname LABEL values from:
+# kubectl get nodes -L kubernetes.io/hostname
+# All three workers must be in the SAME Kubernetes cluster, have reachable
+# images and a working StorageClass. A single MinIO remains a shared dependency;
+# this example places database processes across nodes. Add values-minio-ha.yaml
+# on a fresh native Helm install to opt into distributed object storage.
+storageClass: local-path
+scheduling:
+  nodeSelector: {kubernetes.io/hostname: worker-1}
+dashboard:
+  nodeSelector: {kubernetes.io/hostname: worker-1}
+logService:
+  resource: {cpu: "2", memory: 4Gi}
+  topology:
+    - zone: zone1
+      replica: 1
+      nodeSelector: {kubernetes.io/hostname: worker-1}
+    - zone: zone2
+      replica: 1
+      nodeSelector: {kubernetes.io/hostname: worker-2}
+    - zone: zone3
+      replica: 1
+      nodeSelector: {kubernetes.io/hostname: worker-3}
+observer:
+  resource: {cpu: "3", memory: 10Gi}
+  topology:
+    - zone: zone1
+      replica: 1
+      nodeSelector: {kubernetes.io/hostname: worker-1}
+    - zone: zone2
+      replica: 1
+      nodeSelector: {kubernetes.io/hostname: worker-2}
+    - zone: zone3
+      replica: 1
+      nodeSelector: {kubernetes.io/hostname: worker-3}
+
+# Optional MinIO is independently scheduled/configured as a subchart:
+# minio:
+#   storageClass: local-path
+#   nodeSelector: {kubernetes.io/hostname: worker-1}

@@ -56,10 +56,12 @@ func genBootstrapOBClusterFlow(m *OBClusterManager) *tasktypes.TaskFlow {
 		tCheckAndCreateUserSecrets,
 		tCreateOBZone,
 		tWaitOBZoneBootstrapReady,
-		tBootstrap,
 	}
 	if m.OBCluster.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
 		tasks = append([]tasktypes.TaskName{tWaitLogServiceReady}, tasks...)
+		tasks = append(tasks, tBootstrap)
+	} else {
+		tasks = append(tasks, tDispatchClassicBootstrap)
 	}
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
@@ -73,10 +75,13 @@ func genBootstrapOBClusterFlow(m *OBClusterManager) *tasktypes.TaskFlow {
 	}
 }
 
+const postBootstrapFlow tasktypes.FlowName = "maintain obcluster after bootstrap"
+
 func genMaintainOBClusterAfterBootstrapFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: "maintain obcluster after bootstrap",
+			Name:      postBootstrapFlow,
+			OnFailure: tasktypes.FailureRule{Strategy: strategy.RetryFromCurrent},
 			Tasks: []tasktypes.TaskName{
 				tWaitOBZoneRunning,
 				tCreateUsers,
@@ -196,7 +201,8 @@ func genExpandPVCFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genModifyServerTemplateFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: "modify server template",
+			OnFailure: tasktypes.FailureRule{Strategy: strategy.RetryFromCurrent},
+			Name:      "modify server template",
 			Tasks: []tasktypes.TaskName{
 				tModifyServerTemplate,
 				tWaitOBZoneRunning,
@@ -209,7 +215,8 @@ func genModifyServerTemplateFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 func genRollingUpdateOBZonesFlow(_ *OBClusterManager) *tasktypes.TaskFlow {
 	return &tasktypes.TaskFlow{
 		OperationContext: &tasktypes.OperationContext{
-			Name: "rolling update observers",
+			Name:      "rolling update observers",
+			OnFailure: tasktypes.FailureRule{Strategy: strategy.RetryFromCurrent},
 			Tasks: []tasktypes.TaskName{
 				tRollingUpdateOBZones,
 			},

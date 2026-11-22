@@ -60,7 +60,7 @@ func NewAlert(alert *ammodels.GettableAlert) (*Alert, error) {
 			Value: v,
 		})
 	}
-	instance := &oceanbase.OBInstance{}
+	instance := &oceanbase.OBInstance{Type: oceanbase.TypeUnknown}
 	obcluster, exists := alert.Labels[alarmconstant.LabelOBCluster]
 	if exists {
 		instance.OBCluster = obcluster
@@ -75,6 +75,10 @@ func NewAlert(alert *ammodels.GettableAlert) (*Alert, error) {
 	if exists {
 		instance.OBTenant = obtenant
 		instance.Type = oceanbase.TypeOBTenant
+	}
+	if ls, exists := alert.Labels["logservice"]; exists {
+		instance.Type = oceanbase.TypeLogService
+		instance.LogService = alert.Labels["namespace"] + "/" + ls
 	}
 
 	summary, ok := alert.Annotations[alarmconstant.AnnoSummary]

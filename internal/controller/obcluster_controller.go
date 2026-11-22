@@ -35,9 +35,10 @@ import (
 
 // OBClusterReconciler reconciles a OBCluster object
 type OBClusterReconciler struct {
-	Client   client.Client
-	Scheme   *runtime.Scheme
-	Recorder record.EventRecorder
+	Client    client.Client
+	APIReader client.Reader
+	Scheme    *runtime.Scheme
+	Recorder  record.EventRecorder
 }
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
@@ -69,6 +70,7 @@ func (r *OBClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		Ctx:       ctx,
 		OBCluster: obcluster,
 		Client:    r.Client,
+		APIReader: r.APIReader,
 		Logger:    &logger,
 		Recorder:  telemetry.NewRecorder(ctx, r.Recorder),
 	}
@@ -78,6 +80,7 @@ func (r *OBClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *OBClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	r.APIReader = mgr.GetAPIReader()
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.OBCluster{}).
 		Owns(&v1alpha1.OBZone{}).

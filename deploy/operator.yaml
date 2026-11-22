@@ -10262,8 +10262,64 @@ spec:
               clusterId:
                 format: int64
                 type: integer
-              image:
-                type: string
+              logService:
+                properties:
+                  image:
+                    type: string
+                  resource:
+                    properties:
+                      cpu:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                      memory:
+                        anyOf:
+                        - type: integer
+                        - type: string
+                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                        x-kubernetes-int-or-string: true
+                    required:
+                    - memory
+                    type: object
+                  storage:
+                    properties:
+                      logStorage:
+                        properties:
+                          size:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          storageClass:
+                            type: string
+                        required:
+                        - size
+                        type: object
+                      storeStorage:
+                        properties:
+                          size:
+                            anyOf:
+                            - type: integer
+                            - type: string
+                            pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                            x-kubernetes-int-or-string: true
+                          storageClass:
+                            type: string
+                        required:
+                        - size
+                        type: object
+                    required:
+                    - logStorage
+                    - storeStorage
+                    type: object
+                required:
+                - image
+                - resource
+                - storage
+                type: object
               objectStoreUrl:
                 properties:
                   bucketURL:
@@ -10296,58 +10352,9 @@ spec:
                   - value
                   type: object
                 type: array
-              resource:
-                properties:
-                  cpu:
-                    anyOf:
-                    - type: integer
-                    - type: string
-                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                    x-kubernetes-int-or-string: true
-                  memory:
-                    anyOf:
-                    - type: integer
-                    - type: string
-                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                    x-kubernetes-int-or-string: true
-                required:
-                - memory
-                type: object
               serviceAccount:
                 default: default
                 type: string
-              storage:
-                properties:
-                  logStorage:
-                    properties:
-                      size:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                        x-kubernetes-int-or-string: true
-                      storageClass:
-                        type: string
-                    required:
-                    - size
-                    type: object
-                  storeStorage:
-                    properties:
-                      size:
-                        anyOf:
-                        - type: integer
-                        - type: string
-                        pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
-                        x-kubernetes-int-or-string: true
-                      storageClass:
-                        type: string
-                    required:
-                    - size
-                    type: object
-                required:
-                - logStorage
-                - storeStorage
-                type: object
               topology:
                 items:
                   properties:
@@ -11253,6 +11260,7 @@ spec:
                         type: string
                       type: object
                     replica:
+                      minimum: 1
                       type: integer
                     resource:
                       properties:
@@ -11313,18 +11321,18 @@ spec:
                         type: object
                       type: array
                     zone:
+                      minLength: 1
                       type: string
                   required:
                   - replica
                   - zone
                   type: object
+                minItems: 1
                 type: array
             required:
             - clusterId
-            - image
+            - logService
             - objectStoreUrl
-            - resource
-            - storage
             - topology
             type: object
           status:
@@ -13596,6 +13604,7 @@ spec:
                       type: string
                     type: object
                   replica:
+                    minimum: 1
                     type: integer
                   resource:
                     properties:
@@ -13656,6 +13665,7 @@ spec:
                       type: object
                     type: array
                   zone:
+                    minLength: 1
                     type: string
                 required:
                 - replica
@@ -17090,7 +17100,7 @@ spec:
     - jsonPath: .metadata.creationTimestamp
       name: Age
       type: date
-    - jsonPath: .spec.tenantName
+    - jsonPath: .status.tenantName
       name: TenantName
       type: string
     - jsonPath: .status.nextFull
@@ -17720,6 +17730,59 @@ spec:
                   status:
                     description: OBTenantStatus defines the observed state of OBTenant
                     properties:
+                      creation:
+                        description: Creation binds ordinary tenant provisioning and cleanup
+                          to its original resources.
+                        properties:
+                          clusterName:
+                            type: string
+                          clusterUID:
+                            description: |-
+                              UID is a type that holds unique ID values, including UUIDs.  Because we
+                              don't ONLY use UUIDs, this is an alias to string.  Being a type captures
+                              intent and helps make sure that UIDs and names do not get conflated.
+                            type: string
+                          databaseCluster:
+                            type: string
+                          databaseID:
+                            format: int64
+                            type: integer
+                          legacyTenantID:
+                            description: LegacyTenantID is recorded before finalizing a previously
+                              managed, unmarked tenant.
+                            format: int64
+                            type: integer
+                          resources:
+                            additionalProperties:
+                              properties:
+                                borrowed:
+                                  description: Borrowed resources predate ownership tracking
+                                    and must not be dropped.
+                                  type: boolean
+                                poolID:
+                                  format: int64
+                                  type: integer
+                                unitConfigID:
+                                  format: int64
+                                  type: integer
+                              type: object
+                            type: object
+                          tenantName:
+                            type: string
+                          tenantUID:
+                            description: |-
+                              UID is a type that holds unique ID values, including UUIDs.  Because we
+                              don't ONLY use UUIDs, this is an alias to string.  Being a type captures
+                              intent and helps make sure that UIDs and names do not get conflated.
+                            type: string
+                        required:
+                        - clusterName
+                        - clusterUID
+                        - databaseCluster
+                        - databaseID
+                        - tenantName
+                        - tenantUID
+                        type: object
                       credentials:
                         properties:
                           root:
@@ -19015,6 +19078,59 @@ spec:
                   status:
                     description: OBTenantStatus defines the observed state of OBTenant
                     properties:
+                      creation:
+                        description: Creation binds ordinary tenant provisioning and cleanup
+                          to its original resources.
+                        properties:
+                          clusterName:
+                            type: string
+                          clusterUID:
+                            description: |-
+                              UID is a type that holds unique ID values, including UUIDs.  Because we
+                              don't ONLY use UUIDs, this is an alias to string.  Being a type captures
+                              intent and helps make sure that UIDs and names do not get conflated.
+                            type: string
+                          databaseCluster:
+                            type: string
+                          databaseID:
+                            format: int64
+                            type: integer
+                          legacyTenantID:
+                            description: LegacyTenantID is recorded before finalizing a previously
+                              managed, unmarked tenant.
+                            format: int64
+                            type: integer
+                          resources:
+                            additionalProperties:
+                              properties:
+                                borrowed:
+                                  description: Borrowed resources predate ownership tracking
+                                    and must not be dropped.
+                                  type: boolean
+                                poolID:
+                                  format: int64
+                                  type: integer
+                                unitConfigID:
+                                  format: int64
+                                  type: integer
+                              type: object
+                            type: object
+                          tenantName:
+                            type: string
+                          tenantUID:
+                            description: |-
+                              UID is a type that holds unique ID values, including UUIDs.  Because we
+                              don't ONLY use UUIDs, this is an alias to string.  Being a type captures
+                              intent and helps make sure that UIDs and names do not get conflated.
+                            type: string
+                        required:
+                        - clusterName
+                        - clusterUID
+                        - databaseCluster
+                        - databaseID
+                        - tenantName
+                        - tenantUID
+                        type: object
                       credentials:
                         properties:
                           root:
@@ -19576,6 +19692,59 @@ spec:
                   status:
                     description: OBTenantStatus defines the observed state of OBTenant
                     properties:
+                      creation:
+                        description: Creation binds ordinary tenant provisioning and cleanup
+                          to its original resources.
+                        properties:
+                          clusterName:
+                            type: string
+                          clusterUID:
+                            description: |-
+                              UID is a type that holds unique ID values, including UUIDs.  Because we
+                              don't ONLY use UUIDs, this is an alias to string.  Being a type captures
+                              intent and helps make sure that UIDs and names do not get conflated.
+                            type: string
+                          databaseCluster:
+                            type: string
+                          databaseID:
+                            format: int64
+                            type: integer
+                          legacyTenantID:
+                            description: LegacyTenantID is recorded before finalizing a previously
+                              managed, unmarked tenant.
+                            format: int64
+                            type: integer
+                          resources:
+                            additionalProperties:
+                              properties:
+                                borrowed:
+                                  description: Borrowed resources predate ownership tracking
+                                    and must not be dropped.
+                                  type: boolean
+                                poolID:
+                                  format: int64
+                                  type: integer
+                                unitConfigID:
+                                  format: int64
+                                  type: integer
+                              type: object
+                            type: object
+                          tenantName:
+                            type: string
+                          tenantUID:
+                            description: |-
+                              UID is a type that holds unique ID values, including UUIDs.  Because we
+                              don't ONLY use UUIDs, this is an alias to string.  Being a type captures
+                              intent and helps make sure that UIDs and names do not get conflated.
+                            type: string
+                        required:
+                        - clusterName
+                        - clusterUID
+                        - databaseCluster
+                        - databaseID
+                        - tenantName
+                        - tenantUID
+                        type: object
                       credentials:
                         properties:
                           root:
@@ -20505,6 +20674,59 @@ spec:
           status:
             description: OBTenantStatus defines the observed state of OBTenant
             properties:
+              creation:
+                description: Creation binds ordinary tenant provisioning and cleanup
+                  to its original resources.
+                properties:
+                  clusterName:
+                    type: string
+                  clusterUID:
+                    description: |-
+                      UID is a type that holds unique ID values, including UUIDs.  Because we
+                      don't ONLY use UUIDs, this is an alias to string.  Being a type captures
+                      intent and helps make sure that UIDs and names do not get conflated.
+                    type: string
+                  databaseCluster:
+                    type: string
+                  databaseID:
+                    format: int64
+                    type: integer
+                  legacyTenantID:
+                    description: LegacyTenantID is recorded before finalizing a previously
+                      managed, unmarked tenant.
+                    format: int64
+                    type: integer
+                  resources:
+                    additionalProperties:
+                      properties:
+                        borrowed:
+                          description: Borrowed resources predate ownership tracking
+                            and must not be dropped.
+                          type: boolean
+                        poolID:
+                          format: int64
+                          type: integer
+                        unitConfigID:
+                          format: int64
+                          type: integer
+                      type: object
+                    type: object
+                  tenantName:
+                    type: string
+                  tenantUID:
+                    description: |-
+                      UID is a type that holds unique ID values, including UUIDs.  Because we
+                      don't ONLY use UUIDs, this is an alias to string.  Being a type captures
+                      intent and helps make sure that UIDs and names do not get conflated.
+                    type: string
+                required:
+                - clusterName
+                - clusterUID
+                - databaseCluster
+                - databaseID
+                - tenantName
+                - tenantUID
+                type: object
               credentials:
                 properties:
                   root:

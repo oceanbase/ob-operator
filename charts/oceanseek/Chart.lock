@@ -1,0 +1,9 @@
+dependencies:
+- name: oceanbase-dashboard
+  repository: file://../oceanbase-dashboard
+  version: 0.6.6-dev.20261122.1
+- name: oceanbase-minio
+  repository: file://../oceanbase-minio
+  version: 0.2.3
+digest: sha256:fc85445f3bc475bc2c3bd1b3968d39c988c286c416aa01cc258261eddb1211c2
+generated: "2026-11-22T16:30:21.981964749+08:00"

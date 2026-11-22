@@ -18,6 +18,7 @@ import (
 
 	sqlbiz "github.com/oceanbase/ob-operator/internal/dashboard/business/sql"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/sql"
+	"github.com/oceanbase/ob-operator/internal/sql-analyzer/common"
 	httpErr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
@@ -56,6 +57,9 @@ func ListSqlStats(c *gin.Context) (*sql.SqlStatsList, error) {
 	err := c.ShouldBindJSON(filter)
 	if err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	if err := common.ValidateSortColumn(filter.SortByColumn); err != nil {
+		return nil, err
 	}
 	logger.Infof("ListSqlStats filter: %+v", filter)
 	res, err := sqlbiz.ListSqlStats(c, filter)
@@ -106,6 +110,9 @@ func QuerySqlHistoryInfo(c *gin.Context) (*sql.SqlHistoryInfo, error) {
 	param := &sql.SqlHistoryParam{}
 	if err := c.ShouldBindJSON(param); err != nil {
 		return nil, httpErr.NewBadRequest(err.Error())
+	}
+	if err := common.ValidateMetricColumns(param.LatencyColumns); err != nil {
+		return nil, err
 	}
 	return sqlbiz.QuerySqlHistoryInfo(c, param)
 }

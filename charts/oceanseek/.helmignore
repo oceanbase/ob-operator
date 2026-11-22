@@ -1,0 +1,10 @@
+# Native Helm distributions contain Chart resources and documentation only.
+install.sh
+*_test.go
+testdata/
+.oceanseek-install/
+.lakehouse-install/
+.DS_Store
+.git
+oceanseek-*.tgz
+tests/

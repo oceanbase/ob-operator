@@ -76,6 +76,8 @@ func (e *httpErr) Status() int {
 		return http.StatusInternalServerError
 	case ErrNotFound:
 		return http.StatusNotFound
+	case ErrConflict:
+		return http.StatusConflict
 	default:
 		return http.StatusServiceUnavailable
 	}

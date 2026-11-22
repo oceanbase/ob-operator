@@ -1,0 +1,536 @@
+Source checkout and public registries
+------------------------------------
+Install a compatible Operator with the cluster's usual configuration first.
+Set OPERATOR_VERSION, DASHBOARD_VERSION and HELPER_VERSION to the three published
+component versions. From the repository root, with Python 3, PyYAML and Helm:
+
+  python3 scripts/oceanseek/public-image-values.py --operator-version "$OPERATOR_VERSION" --dashboard-version "$DASHBOARD_VERSION" --helper-version "$HELPER_VERSION" | helm upgrade --install oceanseek ./charts/oceanseek -n oceanseek --create-namespace -f - --wait --wait-for-jobs --timeout 35m
+
+This selects quay.io/oceanbase for the OceanBase images. Pass --registry ghcr.io
+or --registry docker.io to select another publication channel. If the component
+workflows publish to a different organization, add --component-namespace ORG.
+The selector covers Observer, LogService, MinIO, mc, OBAgent, readiness,
+Dashboard and Helper. OBProxy, obdiag and third-party images retain their chart
+settings. Override obproxy.image or dashboard.inspection.obdiag.image separately. Use native.readiness.image to
+supply a separately published readiness image for a platform when needed.
+Versioned distribution charts already embed their image lock in values.yaml.
+
+OBProxy SQL entry point (0.6.0 development chart)
+================================================
+The cluster stage installs one OBProxy replica by default. The <release>-sql
+Service uses port 2883 and forwards to OBProxy:2883. Set
+--set obproxy.enabled=false to omit OBProxy: the same Service port then forwards
+directly to Observer:2881. Storage/logservice-only stages do not install OBProxy.
+
+Default settings:
+  sqlService.port: 2883
+  obproxy.enabled: true
+  obproxy.replicas: 1
+  obproxy.image: oceanbase/obproxy-ce:4.3.3.0-5
+  obproxy.memoryLimit: 1536M
+  obproxy.resources.requests: {cpu: "1", memory: 2Gi}
+  obproxy.resources.limits: {cpu: "1", memory: 2Gi}
+
+The memoryLimit is per proxy process and must remain below the container limit.
+The default proxy requests/limits 1 CPU and 2Gi. Its 1536M process budget leaves
+container headroom. Count this in addition to database/monitoring resources.
+obproxy.nodeSelector and obproxy.tolerations control proxy placement separately;
+soft anti-affinity prefers different hosts but still permits single-node trials.
+Two replicas on one host do not protect against host failure. A disruption
+budget permits one voluntary disruption when replicas > 1.
+
+Before OBProxy starts, an init container discovers the per-Observer Service
+addresses advertised by the SERVICE-mode database. It waits for the configured
+Observer count and writes the rootserver list into a shared temporary volume.
+It has namespace-scoped Service-list permission; the proxy process receives no
+Kubernetes API token. A load-balanced Service IP must not be used as a rootserver
+identity: it differs from the database topology and can cause SQL disconnects.
+The internal <release>-observer Service remains available for direct in-cluster
+access. IPv6-only clusters are not validated by this development integration.
+OBProxy then refreshes the database topology. Database and Dashboard passwords
+are unchanged. proxyro credentials are reused from an existing OBCluster; new
+clusters receive a dedicated credential. Proxy admin credentials are generated
+separately. Both survive disabling/re-enabling and uninstall/reinstall. Missing
+retained credentials must be restored, not regenerated.
+
+Changing enabled on an existing release switches the SQL Service backend.
+Schedule this as a connection change and reconnect clients; in-flight sessions
+and transactions are not guaranteed to survive. Keep the same release,
+namespace, SQL port settings and original values. Do not use --reuse-values
+from an older chart without supplying the new obproxy defaults. Check Helm
+NOTES, connect through <release>-sql and run SELECT 1 after deployment.
+TCP readiness probes check the proxy listener, not authenticated SQL routing;
+verify the application tenant and credentials before accepting traffic.
+
+Release packaging must include the selected OBProxy image in the Helm image
+lock and offline inventory; it is not a Compose dependency.
+
+OceanSeek: native Helm deployment
+==========================================
+Use Docker Compose for a quick database/SQL experience on one machine. Use this
+Chart when you already have Kubernetes. Dashboard is enabled by default and is
+installed in the SAME Helm release as the oceanseek. No install.sh is shipped in
+this Helm Chart, and no Helm process runs inside a Kubernetes Job.
+
+部署前：端口清单与冲突处理
+-------------------------------------
+**部署前端口清单（Helm）**
+
+| 用途 | 集群内 Service 端口 | 节点对外端口 |
+| --- | --- | --- |
+| OceanBase SQL | TCP 2883 | `sqlService.nodePort`，默认 0，由 Kubernetes 自动分配 |
+| Dashboard | TCP 80 | `dashboard.service.nodePort`，默认 0，由 Kubernetes 自动分配 |
+
+最新源码默认启用 OBProxy：SQL Service 对客户端仍提供 `sqlService.port`（默认 2883），转发到 OBProxy 的容器端口 2883；设置 `obproxy.enabled=false` 时才直连 Observer 的 2881。不要把后端端口当作 NodePort。
+
+Helm 不沿用 Compose 的 32881/32886。默认 NodePort 从集群配置范围分配（通常为 30000–32767）；安装后查询实际端口，并仅向需要访问的客户端来源放行。集群内组件通信仍需满足现有 Kubernetes 网络策略。
+
+部署前查看已分配的 Service 端口：
+
+```bash
+kubectl get svc -A -o wide
+```
+
+固定 NodePort 时，两项应选择不同且未分配的端口，并处于集群允许范围；同时在目标节点检查宿主机已有服务。NodePort 可由转发规则实现，不能只凭 `ss` 没有监听就判定未占用。通常保留 `nodePort: 0` 即可，Kubernetes 会避开已分配给其他 Service 的 NodePort。
+
+如果配置为 ClusterIP，服务不直接占用节点 NodePort；执行 `kubectl port-forward` 时需在运行该命令的电脑预留本地端口，冲突时修改 `本地端口:Service端口` 的左侧。Kubernetes API、kubelet 和 CNI 的基础网络端口由集群管理员按实际集群配置准备。
+
+Quick install: database and Dashboard
+-------------------------------------
+On an empty Kubernetes cluster, the published Chart registers the CRDs and
+installs cert-manager and the Operator before it starts the oceanseek.
+Run with cluster-level install permissions. All workers need access to the
+locked images. Install from the Helm repository or the exact Chart archive:
+
+  helm upgrade --install oceanseek ./oceanseek-*.tgz --namespace oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
+
+No values file or separate Dashboard installation is needed. The packaged Chart
+already pins this delivery's images and enables Dashboard, its monitoring,
+bundled MinIO, three LogService processes, one Observer and one OBProxy.
+Database + proxy request 10 CPU / 24Gi; add Kubernetes, Dashboard, monitoring,
+object storage and other workloads. Keep >=350Gi free data disk for this bundle. Successful completion with hooks enabled includes the
+database and Dashboard readiness checks. Helm prints access and login commands.
+
+If your StorageClass has another name, append --set storageClass=<actual-name> --set minio.storageClass=<actual-name>.
+To reuse a separately managed Dashboard, append --set dashboard.enabled=false.
+The progress viewer automatically prefers KUBECONFIG, the current user's
+~/.kube/config, then a readable K3s kubeconfig; --kubeconfig always takes precedence.
+If the K3s admin kubeconfig is unreadable, it prints an administrator command to create
+a private copy and never interrupts the Helm installation.
+
+To reuse a compatible installed Operator, append --skip-crds --set skip-operator=true.
+Its served CRDs and admission webhooks must be ready.
+These are first-install defaults; keep existing sizing/custom values on upgrades.
+
+Matching release images
+-----------------------
+Compose and Helm lock their runtime references independently in each channel's
+release manifest and image-lock.json. Compose may use wrapper images while Helm
+uses the corresponding base images, so references and config image IDs can differ
+between channels. The manifest records the upstream component versions and source
+relationships. Use the exact images selected for the chosen channel; never copy
+or retag an image to impersonate another channel's locked build. Helm also includes
+Operator, Dashboard and supporting images; Compose adds its bootstrap runtime.
+Config IDs are not registry manifest digests. Check the delivery's
+release-defaults.yaml or image-values.yaml for its recorded overrides.
+
+The lightweight configuration artifacts do not include image layers. Use the
+matching channel-specific image archive or a registry containing those exact
+builds. On a Docker-based
+worker, import the matching archive with docker load; on containerd/K3s use that
+runtime's import command. Import on every target worker. A local Docker cache is
+not automatically available to a separate containerd runtime. Do not substitute
+an older Helm image archive or retag different binaries as the current version.
+Registry publication/public pull access is not implied by these internal tags.
+For optional acceleration while keeping image names unchanged, see
+registry-mirrors/README.md in the extracted release bundle. Configure the actual
+worker runtime: Docker daemon mirrors do not configure Kubernetes containerd/K3s.
+
+Prerequisites
+-------------
+- For a fresh cluster, the bundled cert-manager 1.21 supports Kubernetes 1.33
+  through 1.36. The Chart's application API floor is Kubernetes 1.27 when
+  reusing a compatible Operator and cert-manager. See release acceptance for
+  the tested environment.
+- Helm 3 and kubectl. The person preparing cluster infrastructure needs
+  administrator access. Dashboard creates cluster-scoped permissions when enabled.
+- A working StorageClass. Set storageClass and minio.storageClass to its actual name.
+- Enough allocatable CPU/memory and disk for the selected profile.
+- Workers can pull all configured images (or have the exact images preloaded).
+- An existing Operator must serve the OceanSeek CRDs and support native storage
+  initialization and service resolution. The readiness hook uses the matched
+  /oceanseek-readiness image shipped with the Chart.
+- Reusing an existing shared Operator does NOT upgrade its image. A successful
+  API/webhook check is not proof that its binary matches this release. Have the
+  cluster owner validate and upgrade it separately, or use a fresh test cluster.
+  Do not change a shared Operator just to install another OceanSeek release.
+
+Check the current context before deployment:
+  kubectl config current-context
+  kubectl get nodes
+  kubectl get storageclass
+
+Single-node experience
+----------------------
+The quick-install command already selects this sizing. values-single-node.yaml
+is an optional explicit copy for customization; image-values.yaml is supplied
+for inspection/overrides, and is already incorporated into the packaged Chart.
+The defaults have one Observer (3 CPU/10Gi), three LogService processes
+(2 CPU/4Gi EACH) and one OBProxy (1 CPU/2Gi): 10 CPU/24Gi total requests.
+Add MinIO, Dashboard, Prometheus, Alertmanager and Kubernetes/system capacity;
+keep >=350Gi free disk. These are per-process budgets, not a whole-host minimum.
+CPU requests from other Kubernetes workloads count against capacity.
+
+On a multi-node K8s cluster, add a hostname selector in the single-node values
+if you want all database Pods on a particular worker, and append
+-f values-single-node.yaml to the command. Without a selector Kubernetes may
+spread Pods across available workers. A single-node experience has no node-level
+high availability.
+
+Three-node experience
+---------------------
+Copy values-three-nodes.yaml and replace worker-1/2/3 with the actual
+kubernetes.io/hostname label values (not assumed public IPs):
+
+  kubectl get nodes -L kubernetes.io/hostname
+  helm upgrade --install oceanseek ./oceanseek-*.tgz \
+    --namespace oceanseek --create-namespace \
+    -f values-three-nodes.yaml \
+    --wait --wait-for-jobs --timeout 35m
+
+All workers must be members of one Kubernetes cluster. Kubernetes schedules one
+Observer and one LogService per worker. Storage, Dashboard and initialization
+run on worker-1 in this example. Budget at least 5 CPU/14Gi per worker for the
+database processes, plus 1 CPU/2Gi wherever OBProxy is scheduled and the
+storage/Dashboard/system workloads on worker-1.
+Provision adequate capacity beyond these requests. This topology still uses
+one bundled MinIO instance; it is an experience setup, not highly available
+object storage. For distributed bundled storage on a fresh release, append
+-f values-minio-ha.yaml after -f values-three-nodes.yaml. See SHARED-INFRA.md
+for disk and placement requirements and for per-volume StorageClass overrides.
+For external storage, set objectStorage.endpoint and minio.enabled=false.
+
+Distributed MinIO uses the write-quorum probe at /minio/health/cluster.
+The r20 custom-deployment checks cover three nodes and replacement of one MinIO
+Pod, not complete host loss, quorum loss, or capacity/stress certification.
+
+No SSH/SCP between workers is performed by Helm. Every worker must be able to
+pull the configured images or have the exact images preloaded by an admin.
+
+Minimum sizing reference (test defaults, production planning)
+-------------------------------------------------------------
+                    Nodes  Host CPU/RAM   Local disk    Component CPU/RAM
+Test ODP + Observer   >=1   4C / 16G      SSD 50GB      ODP 1C/2G, OB 3C/10G
+Test LogService       >=3   2C / 4G       20GB          LS 2C/4G each
+Prod ODP + Observer   >=2   8C / 32G      SSD 256GB     ODP 2C/4G, OB 6C/24G
+Prod LogService       >=3   2C / 4G       100GB         LS 2C/4G each
+
+Helm defaults implement the test component budgets, using Kubernetes Gi for
+memory/storage (the source uses G/GB). The source does not split data and logs;
+the chart allocates Observer 40Gi data + 10Gi logs, and each LogService 10Gi
+store + 10Gi diagnostic logs. Those totals are 50Gi and 20Gi respectively;
+Gi is slightly larger than decimal GB. Runtime/OS/images, proxy logs and object
+storage need extra disk. Host specifications are planning requirements, not
+Kubernetes node provisioning or guaranteed Pod placement.
+
+Production needs at least two Observer nodes/replicas and three LogService
+nodes, with per-component budgets shown above, independently sized persistent
+volumes and object storage. It is not selected by the default or the three-node
+experience example. Compose does not contain OBProxy; SQL connects directly
+to Observer. No proxy resources are allocated by Compose.
+
+These smaller PVC defaults are for FRESH installations. Preserve all existing
+observer.dataSize/logSize and logService.storeSize/logSize values on upgrade;
+Kubernetes/Operator do not support shrinking existing PVCs to this profile.
+
+Common configuration
+--------------------
+Put custom settings in a values file and keep it for upgrades/reinstalls:
+
+  storageClass: local-path
+  observer:
+    resource: {cpu: "3", memory: 10Gi}
+    dataSize: 40Gi
+    logSize: 10Gi
+  logService:
+    resource: {cpu: "2", memory: 4Gi}
+    storeSize: 10Gi
+    logSize: 10Gi
+  minio:
+    size: 100Gi
+
+CPU/memory and disk values are PER PROCESS, not the sum across all replicas.
+Observer memory and volume sizing must meet Operator's checks. Larger memory
+can require larger data volumes. This guide describes first-install sizing;
+changing storage identity or resizing existing state needs a separate planned
+procedure. Use --set-string observer.resource.cpu=3 for a simple override; the
+old installer flags such as --oc/--nodes are not Helm flags.
+
+For external storage use objectStorage.endpoint=<external-url> and minio.enabled=false, endpoint, region,
+logBucket/dataBucket and existingSecret or per-side logExistingSecret and
+dataExistingSecret (keys: access_id/access_key). Buckets are checked read-only
+by default; createBuckets=true explicitly allows bucket creation. External
+credentials/storage are never adopted. LS 1.3 requires virtual-host bucket DNS
+for ordinary DNS endpoints. Same-cluster HTTP Service endpoints can be resolved
+to ClusterIP; HTTPS names are never replaced by IPs. Bundled MinIO uses the
+native Operator resolver without a Helm install/upgrade round trip.
+
+Progress, failure and retry
+---------------------------
+The Chart declares MinIO, initialization Job, LS, OB and Dashboard together.
+Operator waits for successful storage initialization before creating LS zones;
+OB waits for LS. A read-only post-install/post-upgrade hook verifies all database
+Pods and Dashboard before Helm reports success. Helm --wait alone does not
+understand custom-resource readiness; do not use --no-hooks for acceptance.
+
+  kubectl -n oceanseek get pods,jobs,oblogserviceclusters,obclusters
+  kubectl -n oceanseek logs -f job/oceanseek-readiness
+  kubectl -n oceanseek get jobs -l app.kubernetes.io/component=storage-init
+  kubectl -n oceanseek logs job/<storage-init-job-name>
+  kubectl -n oceanseek describe pod <pending-or-failed-pod>
+
+The success hook Job is removed automatically. A failed hook is retained for
+inspection. Storage initialization Job retries transient failures within its
+deadline and is retained until the next Helm revision so Operator can verify
+it. After fixing image access, capacity, storage or credentials, rerun the same
+helm upgrade --install command. It creates a new initialization Job and hook,
+keeps existing data/credentials, and resumes reconciliation. Do not delete a
+namespace or rerun with another release name as a retry mechanism. Avoid
+--atomic/automatic rollback when first diagnosing a stateful failed install:
+retained resources deliberately outlive Helm's cleanup.
+
+Upgrade Operator before starting the OceanSeek installation. Do not roll it out
+while database bootstrap is in progress: the current Operator task executor
+keeps active task handles in memory. If a restart leaves a CR in failed status,
+inspect its events and use the Operator's recovery procedure before retrying
+Helm. A Helm upgrade does not reset failed database CR status. The retry above
+recreates storage initialization; it is not a general database recovery command.
+
+Dashboard and SQL access
+------------------------
+For Dashboard login, run the kubectl port-forward command printed by Helm on
+the computer with your browser, then open http://127.0.0.1:8080. You can also
+use the HTTPS address provided by your administrator. The default account is
+admin. Helm prints the command to retrieve its initial password.
+
+Kubernetes allocates Dashboard and SQL NodePorts when their configured values
+are 0. The SQL client can connect to a reachable node on the allocated SQL
+port. Use kubectl -n oceanseek get svc to inspect both Services. For NAT or
+multiple network interfaces, set access.host to the advertised node IP or DNS
+name. On upgrade, Helm can read the ports from the existing Services.
+
+Override ports with --set dashboard.service.nodePort=31184 and
+--set sqlService.nodePort=30882. Use free ports within your cluster's NodePort
+range (normally 30000-32767), especially for multiple releases on one cluster.
+Existing releases with custom values must explicitly select NodePort to enable it.
+To keep both services internal, use --set dashboard.service.type=ClusterIP
+--set sqlService.type=ClusterIP. Helm then prints local port-forward guidance.
+Dashboard also supports --set dashboard.service.type=LoadBalancer when the
+cluster has a load balancer provider.
+
+Retention and uninstall
+-----------------------
+helm uninstall removes release-managed integration resources and the Dashboard
+Deployment. Database CRs, generated credentials, bundled MinIO
+StatefulSet/Service/PVC and Dashboard data remain. Reinstall with the SAME
+release, namespace and values to reconnect. Helm does not manage Hook resources
+on uninstall. After stopping old Helm operations, use the administrator's
+prepare.sh --revoke-legacy-binding NAMESPACE RELEASE to remove an abandoned
+legacy preparation binding. It checks the exact Hook, role, subject and that
+the old Jobs and Pods are inactive before deleting the binding.
+Explicitly deleting the namespace or database CRs is destructive and bypasses
+this retention; do so only when intentionally removing that experience's data.
+
+Helm history can contain supplied/generated credential values. Protect release
+metadata and kubeconfig access. Do not publish rendered manifests containing
+Secrets or pass passwords in shell command lines. Use existingSecret references
+or --set-file dashboard.adminPassword=/secure/password-file.
+
+Dashboard authentication history migration
+-------------------------------------------
+From 0.5.7, Dashboard's accounts, bootstrap Secret and authorization policy keep
+their existing names and stay outside the ordinary Helm revision manifests.
+Fresh installs seed the objects once. An upgrade with an existing Dashboard
+keeps the live objects and checks that they are complete.
+
+If Dashboard has been enabled in a release from 0.5.6 or older, pause release
+changes before upgrading and make private
+backups of the current authentication resources, Helm history and values.
+For Helm's default Secret storage driver:
+
+  umask 077
+  backup=$(mktemp -d ./oceanseek-auth-backup.XXXXXXXX)
+  kubectl -n oceanseek get secret -l owner=helm,name=oceanseek -o json > "$backup/helm-history.json"
+  kubectl -n oceanseek get secret oceanseek-user-credentials oceanseek-dashboard-bootstrap -o json > "$backup/dashboard-secrets.json"
+  kubectl -n oceanseek get configmap oceanseek-rbac-policy -o json > "$backup/dashboard-policy.json"
+  helm get values oceanseek -n oceanseek --all -o yaml > "$backup/values.yaml"
+
+Use the corresponding backup mechanism for other Helm storage drivers. Check
+that each backup succeeded and keep it in protected storage. Use the migrated
+effective values for the first upgrade. Verify the new revision is deployed,
+the current password works and removed users remain revoked. For the explicit
+rollback boundary, run a second upgrade with the same new Chart and values:
+
+  helm upgrade oceanseek ./oceanseek-*.tgz -n oceanseek \
+    -f migrated-values.yaml --wait --wait-for-jobs --timeout 35m --history-max 1
+  helm history oceanseek -n oceanseek
+
+The second upgrade prunes the older rollback history, retaining the first
+deployed new revision and the new upgrade revision. Confirm that every listed
+revision uses the new Chart before allowing rollbacks. This is an administrator's
+explicit choice and removes old revisions from Helm's live history. Restore
+data and credentials from private backups or recover by a forward upgrade.
+Importing archived pre-migration Helm records into this release would make
+unsafe rollback targets available again.
+
+Storage identities and private registries
+---------------------------------------
+minio.runAsUser/runAsGroup/fsGroup and initialization.runAsUser/runAsGroup/fsGroup
+are independent non-root identities (default 10001). The dedicated default
+avoids common host login IDs such as 1000, whose named ACL can override the PVC
+mode bits. Use IDs assigned by your storage administrator and compatible with
+the volume ACL. For example, approved values may be:
+  minio: {runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001}
+  initialization: {runAsUser: 10001, runAsGroup: 10001, fsGroup: 10001}
+The chart does not chown host paths, rewrite ACLs, or run a privileged repair
+container. fsGroup behavior depends on the volume driver. Existing PVCs must
+already allow the selected identity; changing IDs does not migrate stored data.
+The Job's private /work and /tmp must also be writable. MinIO uses OnDelete
+updates, so plan a Pod restart for an intentional image/identity change.
+
+Set imagePullSecrets to names of existing Secrets in the release namespace.
+The parent references are used by initialization, readiness, Dashboard and
+Operator-managed workload ServiceAccounts. Set minio.imagePullSecrets separately.
+MinIO and Dashboard each have their own nodeSelector and tolerations; parent
+scheduling.* does not automatically place either subchart.
+
+Dashboard privileges and diagnostic images
+------------------------------------------
+Dashboard manages Kubernetes resources with cluster-wide administrative
+permissions. This experience is intended for trusted cluster administrators.
+Its generated users/roles, bootstrap password and PVCs survive upgrades and
+uninstall. Missing retained authentication must be restored, not regenerated.
+The readiness hook only reads namespaced non-secret resources and does not
+inherit Dashboard's administrative ServiceAccount.
+
+Log download additionally requires compatible obdiag/oceanbase-helper images
+on eligible workers and the Observer's Python tarfile/gzip transport support.
+Use the complete image-values.yaml shipped for this build. Native Helm checks
+database/Pod/Dashboard readiness; it does not import images, install local
+clients or certify that diagnostic log contents are valid. Verify a real log
+download when accepting diagnostic capabilities.
+
+Existing staged releases
+------------------------
+Upgrade Operator first to the matching native build, keep the original values
+and render them for review. Use stage=cluster and native.enabled=true. This
+Chart preserves the existing CR bucket URLs and credential identity instead of
+rewriting immutable storage fields to new DNS URLs. The original release name,
+namespace, cluster IDs, buckets, storage Service and PVCs must stay unchanged.
+A fresh install keeps Service DNS in the parent CR; Operator resolves only the
+same-namespace HTTP Service at runtime for LS 1.3 compatibility. External HTTPS
+verification is never weakened, and external Service address drift remains
+blocked by the retained storage identity. Changing placement does not move
+local-path data. Do not use --force, namespace deletion or a new release name
+to work around immutable field checks on an existing database.
+
+Storage selection: see SHARED-INFRA.md for the independent endpoint and minio.enabled controls.
+MinIO subchart storageClass/scheduling/imagePullSecrets must be configured under minio.*.
+
+Legacy MinIO upgrades
+--------------------
+Export helm get values RELEASE -n NAMESPACE --all -o yaml into a protected file.
+Run python3 tools/migrate-minio-values.py previous-values.yaml --output migrated-values.yaml,
+then pass -f migrated-values.yaml to helm upgrade. The installer performs this
+conversion automatically for an installed legacy release. See SHARED-INFRA.md.
+
+Connection output after installation
+------------------------------------
+Helm renders NOTES before newly allocated NodePorts exist; --wait does not render
+NOTES again. For direct final URL/SQL output, use the release package installer:
+  bash install-helm-and-show-access.sh oceanseek CHART.tgz -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
+It prints actual addresses after Helm succeeds and respects access.host from values,
+--kubeconfig and --kube-context. Python 3 is required by this wrapper. Plain Helm
+users can execute the complete lookup commands in NOTES after installation.
+NodePorts remain stable while Services are retained, but may change if recreated.
+
+K3s on SELinux-enforcing systems
+================================
+When preloading a K3s binary with INSTALL_K3S_SKIP_DOWNLOAD=true, install the
+K3s SELinux policy explicitly. The skip-download option can also skip the policy
+RPM. Keep SELinux Enforcing; without the policy, local-path helper Pods may fail
+with "mkdir: Permission denied" and leave PVCs Pending.
+
+For Rocky Linux 9 with the default /var/lib/rancher/k3s data directory, configure
+the official signed repository before the initial K3s installation:
+
+sudo tee /etc/yum.repos.d/rancher-k3s-common.repo >/dev/null <<'REPO'
+[rancher-k3s-common-stable]
+name=Rancher K3s Common stable
+baseurl=https://rpm.rancher.io/k3s/stable/common/centos/9/noarch
+enabled=1
+gpgcheck=1
+repo_gpgcheck=0
+gpgkey=https://rpm.rancher.io/public.key
+REPO
+sudo dnf install -y k3s-selinux
+
+Enable `selinux: true` in /etc/rancher/k3s/config.yaml, preserving other settings.
+If the data directory was created before installing the policy, restore its
+labels with `sudo restorecon -Rv /var/lib/rancher/k3s /usr/local/bin/k3s`, then
+restart K3s in a planned maintenance window. Verify `getenforce` still reports
+Enforcing and `kubectl get pvc -A` shows the requested volumes Bound. Do not
+remove existing PVCs or disable SELinux to bypass this prerequisite. A custom
+K3s data directory needs equivalent policy/label configuration; the default-path
+commands above are not sufficient for it.
+
+Reference: https://docs.k3s.io/installation/airgap
+           https://docs.k3s.io/advanced#selinux-support
+
+MinIO console after installation
+When bundled MinIO is enabled, Helm NOTES prints a kubectl port-forward command
+for its StatefulSet, the localhost console URL, and commands to read rootUser
+and rootPassword from the actual MinIO Secret (including rootExistingSecret).
+If kubectl runs remotely, use the printed SSH tunnel on your browser computer.
+Keep both forwards running. This does not change installation commands or expose
+a public port. External-only storage uses the provider's console credentials.
+
+For MinIO access, SSH authentication uses the remote machine account and usual
+SSH key/password, not the MinIO Secret. Run the tunnel on the browser computer.
+A successful ssh -N normally stays silent and opens no shell; keep it running
+until you finish using the console, then press Ctrl+C. Enter the MinIO Secret
+username/password only in the browser login form.
+
+Dashboard report storage on SELinux hosts
+The Dashboard, log/diagnostic Jobs and report cleanup CronJob share one PVC.
+They use the same dashboard.sharedVolume.seLinuxLevel (default s0), so one
+consumer cannot relabel the volume and deny access to another. SELinux remains
+enabled; s0 is a shared container level, without per-pod MCS category isolation
+for these consumers. Where site policy assigns MCS categories, set this value
+to that approved level (for example s0:c123,c456). All users of an existing shared
+claim must use the same level. Set it to an empty string only if cluster admission
+already supplies consistent labels. Existing report Jobs must finish before
+changing the level; changing it can temporarily interrupt volume access.
+
+External S3 storage initialization diagnostics
+---------------------------------------------
+If Helm reports a timeout, inspect the storage initialization Job before retrying:
+
+  kubectl -n <namespace> get jobs -l app.kubernetes.io/instance=<release>,app.kubernetes.io/component=storage-init
+  kubectl -n <namespace> logs job/<release>-storage-init-<revision> --all-containers=true
+
+Select the Job for the failed Helm revision. Logs identify side=log or side=data,
+the bucket name, and Secret=<namespace>/<name>. Check that Secret's access_id /
+access_key and permissions for the reported bucket; log and data credentials can
+be different. Bundled MinIO initialization uses the root Secret, so diagnostics
+name that Secret instead of the database business-user Secret. Credential values
+and raw storage-client errors are suppressed. A progress line is emitted before
+network access so a deadline still leaves the current bucket/Secret reference.
+If the container never starts, inspect Pod events for missing Secrets, image
+pulls, or scheduling errors. Bucket access can also fail because of DNS, TLS,
+connectivity, or a missing bucket; a failure does not prove the key is wrong.
+
+Helm itself does not include Job logs in its timeout error. The optional
+scripts/oceanseek/install-helm-and-show-access.sh wrapper prints a storage-log
+command on failure, preserving the namespace, kubeconfig, context and Helm exit
+code. Direct Helm users should run the commands above with their install context.

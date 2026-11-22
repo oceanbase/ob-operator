@@ -21,11 +21,9 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/rand"
@@ -40,7 +38,9 @@ import (
 	cmdconst "github.com/oceanbase/ob-operator/internal/const/cmd"
 	obagentconst "github.com/oceanbase/ob-operator/internal/const/obagent"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	clusterstatus "github.com/oceanbase/ob-operator/internal/const/status/obcluster"
 	logserviceclusterstatus "github.com/oceanbase/ob-operator/internal/const/status/oblogservicecluster"
+	serverstatus "github.com/oceanbase/ob-operator/internal/const/status/observer"
 	zonestatus "github.com/oceanbase/ob-operator/internal/const/status/obzone"
 	resourceutils "github.com/oceanbase/ob-operator/internal/resource/utils"
 	"github.com/oceanbase/ob-operator/pkg/helper"
@@ -267,63 +267,11 @@ func waitForLogServiceReady(ctx context.Context, kubeClient client.Client, key t
 	return nil
 }
 
+// Bootstrap remains registered for previously persisted flows and shared storage.
 func Bootstrap(m *OBClusterManager) tasktypes.TaskError {
-	obzoneList, err := m.listOBZones()
+	manager, bootstrapServers, err := m.prepareBootstrap()
 	if err != nil {
-		m.Logger.Error(err, "list obzones failed")
-		return errors.Wrap(err, "list obzones")
-	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Successfully get obzone list", "obzone list", obzoneList)
-	if len(obzoneList.Items) == 0 {
-		return errors.Wrap(err, "no obzone belongs to this cluster")
-	}
-	var manager *operation.OceanbaseOperationManager
-	for i := 0; i < obcfg.GetConfig().Time.GetConnectionMaxRetries; i++ {
-		manager, err = m.getOceanbaseOperationManager()
-		if err != nil || manager == nil {
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Get oceanbase operation manager failed")
-			time.Sleep(time.Second * time.Duration(obcfg.GetConfig().Time.CheckConnectionInterval))
-		} else {
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Successfully got oceanbase operation manager")
-			break
-		}
-	}
-	if err != nil {
-		m.Logger.Error(err, "get oceanbase operation manager failed")
-		return errors.Wrap(err, "get oceanbase operation manager")
-	}
-
-	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
-
-	bootstrapServers := make([]model.BootstrapServerInfo, 0, len(m.OBCluster.Spec.Topology))
-	if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone {
-		m.Logger.Info("Bootstrap as standalone mode")
-		bootstrapServers = append(bootstrapServers, model.BootstrapServerInfo{
-			Zone: m.OBCluster.Spec.Topology[0].Zone,
-			Server: &model.ServerInfo{
-				Ip:   "127.0.0.1",
-				Port: oceanbaseconst.RpcPort,
-			},
-		})
-	} else {
-		connectAddress := manager.Connector.DataSource().GetAddress()
-		for _, zone := range obzoneList.Items {
-			serverIp := zone.Status.OBServerStatus[0].GetConnectAddr()
-			// Notes: If the addr of the db connector is in this obzone, use it as the bootstrap server instead of the first one
-			for _, serverInfo := range zone.Status.OBServerStatus {
-				if serverInfo.Server == connectAddress || serverInfo.ServiceIP == connectAddress {
-					serverIp = serverInfo.GetConnectAddr()
-				}
-			}
-			serverInfo := &model.ServerInfo{
-				Ip:   serverIp,
-				Port: oceanbaseconst.RpcPort,
-			}
-			bootstrapServers = append(bootstrapServers, model.BootstrapServerInfo{
-				Zone:   zone.Spec.Topology.Zone,
-				Server: serverInfo,
-			})
-		}
+		return err
 	}
 
 	if m.OBCluster.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
@@ -342,6 +290,20 @@ func Bootstrap(m *OBClusterManager) tasktypes.TaskError {
 	if err != nil {
 		m.Logger.Error(err, "bootstrap failed")
 	} else {
+		m.Recorder.Event(m.OBCluster, "Bootstrap", "", "Bootstrap successfully")
+	}
+	return err
+}
+
+func DispatchClassicBootstrap(m *OBClusterManager) tasktypes.TaskError {
+	err := m.dispatchClassicBootstrap(func() (bootstrapStatement, error) {
+		manager, seeds, err := m.prepareBootstrap()
+		if err != nil {
+			return nil, err
+		}
+		return manager.PrepareClassicBootstrap(m.Ctx, seeds)
+	}, m.waitForDispatchedBootstrapResult)
+	if err == nil {
 		m.Recorder.Event(m.OBCluster, "Bootstrap", "", "Bootstrap successfully")
 	}
 	return err
@@ -664,33 +626,27 @@ func CheckAndCreateUserSecrets(m *OBClusterManager) tasktypes.TaskError {
 		m.OBCluster.Spec.UserSecrets.Monitor,
 		m.OBCluster.Spec.UserSecrets.ProxyRO,
 	}
+	var masterMonitorSecret *corev1.Secret
 	for _, secret := range secretList {
 		fetchedSec := &corev1.Secret{}
-		err := m.Client.Get(m.Ctx, types.NamespacedName{
-			Namespace: m.OBCluster.Namespace,
-			Name:      secret,
-		}, fetchedSec)
+		err := m.Client.Get(m.Ctx, types.NamespacedName{Namespace: m.OBCluster.Namespace, Name: secret}, fetchedSec)
 		if err != nil {
-			if kubeerrors.IsNotFound(err) {
-				err := m.Client.Create(m.Ctx, &corev1.Secret{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      secret,
-						Namespace: m.OBCluster.Namespace,
-					},
-					StringData: map[string]string{
-						"password": rand.String(16),
-					},
-				})
-				if err != nil {
-					return errors.Wrap(err, "Create secret "+secret)
-				}
+			if !kubeerrors.IsNotFound(err) {
+				return errors.Wrapf(err, "Get secret %s/%s", m.OBCluster.Namespace, secret)
+			}
+			fetchedSec = &corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{Name: secret, Namespace: m.OBCluster.Namespace},
+				Data:       map[string][]byte{"password": []byte(rand.String(16))},
+			}
+			if err := m.Client.Create(m.Ctx, fetchedSec); err != nil {
+				return errors.Wrap(err, "Create secret "+secret)
 			}
 		}
-	}
-	masterMonitorSecret := &corev1.Secret{}
-	err := m.Client.Get(m.Ctx, types.NamespacedName{Namespace: m.OBCluster.Namespace, Name: m.OBCluster.Spec.UserSecrets.Monitor}, masterMonitorSecret)
-	if err != nil {
-		return errors.Wrapf(err, "Failed to get secret %s in namespace %s", m.OBCluster.Namespace, m.OBCluster.Spec.UserSecrets.Monitor)
+		if secret == m.OBCluster.Spec.UserSecrets.Monitor {
+			// Create writes to the API server, while Get may still read a stale
+			// informer cache. Keep the returned Secret for remote-cluster copies.
+			masterMonitorSecret = fetchedSec
+		}
 	}
 	// create secret for monitor in remote K8s cluster if necessary
 	for _, zone := range m.OBCluster.Spec.Topology {
@@ -728,13 +684,13 @@ func CheckAndCreateUserSecrets(m *OBClusterManager) tasktypes.TaskError {
 func CreateOBClusterService(m *OBClusterManager) tasktypes.TaskError {
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist && modeAnnoVal == oceanbaseconst.ModeStandalone {
-		err := m.Client.Create(m.Ctx, &corev1.Service{
+		svc := &corev1.Service{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      m.OBCluster.GetName() + "-standalone-svc",
 				Namespace: m.OBCluster.GetNamespace(),
 				OwnerReferences: []metav1.OwnerReference{{
-					APIVersion: m.OBCluster.APIVersion,
-					Kind:       m.OBCluster.Kind,
+					APIVersion: v1alpha1.GroupVersion.String(),
+					Kind:       "OBCluster",
 					Name:       m.OBCluster.GetName(),
 					UID:        m.OBCluster.GetUID(),
 				}},
@@ -753,7 +709,26 @@ func CreateOBClusterService(m *OBClusterManager) tasktypes.TaskError {
 				},
 				Type: corev1.ServiceTypeNodePort,
 			},
-		})
+		}
+		err := m.Client.Create(m.Ctx, svc)
+		if kubeerrors.IsAlreadyExists(err) {
+			// A controller may restart after the API created the Service but
+			// before its task result was persisted.
+			existing := &corev1.Service{}
+			reader := m.APIReader
+			if reader == nil {
+				reader = m.Client
+			}
+			if getErr := reader.Get(m.Ctx, client.ObjectKeyFromObject(svc), existing); getErr != nil {
+				return getErr
+			}
+			if resourceutils.IsLiveChild(existing, m.OBCluster, "OBCluster") && existing.Spec.Type == corev1.ServiceTypeNodePort &&
+				len(existing.Spec.Selector) == 1 && existing.Spec.Selector[oceanbaseconst.LabelRefOBCluster] == m.OBCluster.Name &&
+				len(existing.Spec.Ports) == 1 && existing.Spec.Ports[0].Port == 2881 && existing.Spec.Ports[0].TargetPort == intstr.FromInt(2881) &&
+				(existing.Spec.Ports[0].Protocol == corev1.ProtocolTCP || existing.Spec.Ports[0].Protocol == "") {
+				return nil
+			}
+		}
 		if err != nil {
 			m.Recorder.Event(m.OBCluster, "Warning", "Create standalone service failed", err.Error())
 			return errors.Wrap(err, "Create service")
@@ -763,124 +738,39 @@ func CreateOBClusterService(m *OBClusterManager) tasktypes.TaskError {
 }
 
 func CheckImageReady(m *OBClusterManager) tasktypes.TaskError {
-	jobName := "image-pull-ready-" + rand.String(8)
-	var ttl int32 = 120
-	var backoffLimit int32 = 32
-	checkImagePullJob := &batchv1.Job{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      jobName,
-			Namespace: m.OBCluster.Namespace,
-			OwnerReferences: []metav1.OwnerReference{{
-				Kind:       m.OBCluster.Kind,
-				APIVersion: m.OBCluster.APIVersion,
-				Name:       m.OBCluster.Name,
-				UID:        m.OBCluster.UID,
-			}},
-		},
-		Spec: batchv1.JobSpec{
-			Template: corev1.PodTemplateSpec{
-				Spec: corev1.PodSpec{
-					Containers: []corev1.Container{{
-						Name:            "helper-check-image-pull-ready",
-						ImagePullPolicy: corev1.PullIfNotPresent,
-						Image:           m.OBCluster.Spec.OBServerTemplate.Image,
-						Command:         []string{"bash", "-c", "/home/admin/oceanbase/bin/oceanbase-helper help"},
-					}},
-					RestartPolicy: corev1.RestartPolicyNever,
-					SchedulerName: resourceutils.GetSchedulerName(m.OBCluster.Spec.OBServerTemplate.PodFields),
-				},
-			},
-			TTLSecondsAfterFinished: &ttl,
-			BackoffLimit:            &backoffLimit,
-		},
-	}
-	err := m.Client.Create(m.Ctx, checkImagePullJob)
-	if err != nil {
-		return errors.Wrap(err, "Create check image pull job")
-	}
-	m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Create check image pull job", "job", jobName)
-
-	imagePullReady := false
-	var checkImagePullReadyMaxTimes = 8000
-	labelSelector := metav1.FormatLabelSelector(checkImagePullJob.Spec.Selector)
-	selector, err := labels.Parse(labelSelector)
-	if err != nil {
-		return errors.Wrap(err, "Parse label selector")
-	}
-outerLoop:
-	for i := 0; i < checkImagePullReadyMaxTimes; i++ {
-		podList := &corev1.PodList{}
-		err = m.Client.List(m.Ctx, podList, &client.ListOptions{
-			LabelSelector: selector,
-		})
-		if err != nil {
-			return errors.Wrap(err, "List pods")
-		}
-		if len(podList.Items) == 0 {
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("No pod found for check image pull job")
-			time.Sleep(time.Second * time.Duration(obcfg.GetConfig().Time.CheckJobInterval))
-			continue
-		}
-		pod := podList.Items[0]
-		switch pod.Status.Phase {
-		case corev1.PodFailed:
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Check image pull job failed")
-			return errors.New("Check image pull job failed")
-		case corev1.PodSucceeded, corev1.PodRunning:
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Check image pull job finished")
-			imagePullReady = true
-			break outerLoop
-		case corev1.PodPending, corev1.PodUnknown:
-			// if every container has pulled its image, break outer loop
-			for _, containerStatus := range pod.Status.ContainerStatuses {
-				if containerStatus.State.Waiting != nil {
-					switch containerStatus.State.Waiting.Reason {
-					case "ErrImagePull", "ImagePullBackOff":
-						m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Wait to pull image", "reason", containerStatus.State.Waiting.Reason, "message", containerStatus.State.Waiting.Message)
-					default:
-						m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Container is waiting", "reason", containerStatus.State.Waiting.Reason, "message", containerStatus.State.Waiting.Message)
-					}
-					time.Sleep(time.Second * time.Duration(obcfg.GetConfig().Time.CheckJobInterval))
-					continue outerLoop
-				} else if containerStatus.State.Running != nil || containerStatus.State.Terminated != nil {
-					m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Container is running or terminated")
-				}
-			}
-			imagePullReady = true
-			break outerLoop
-		}
-	}
-	if !imagePullReady {
-		return errors.New("Image pull not ready")
-	}
-	return nil
+	return m.checkImageReady()
 }
 
 func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 	modeAnnoVal, modeAnnoExist := resourceutils.GetAnnotationField(m.OBCluster, oceanbaseconst.AnnotationsMode)
 	if modeAnnoExist {
-		versionOutput, _, err := resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+		versionOutput, code, err := resourceutils.RunJobWithScheduling(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
 			m.OBCluster.Name+"-get-version",
 			m.OBCluster.Spec.OBServerTemplate.Image,
 			m.OBCluster.Spec.OBServerTemplate.PodFields,
+			resourceutils.BootstrapJobScheduling(m.OBCluster),
 			"/home/admin/oceanbase/bin/oceanbase-helper version",
 		)
 		if err != nil {
-			// Make compatible with legacy version in which there is no `version` command
-			var code int32
+			// Legacy helpers exit 1 for the unknown version subcommand.
+			if code != int32(cmdconst.ExitCodeErr) {
+				return errors.Wrap(err, "get OceanBase version")
+			}
 			switch modeAnnoVal {
 			case oceanbaseconst.ModeStandalone:
-				_, code, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+				_, code, err = resourceutils.RunJobWithScheduling(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
 					m.OBCluster.Name+"-standalone-validate",
 					m.OBCluster.Spec.OBServerTemplate.Image,
 					m.OBCluster.Spec.OBServerTemplate.PodFields,
+					resourceutils.BootstrapJobScheduling(m.OBCluster),
 					"/home/admin/oceanbase/bin/oceanbase-helper standalone validate",
 				)
 			case oceanbaseconst.ModeService:
-				_, code, err = resourceutils.RunJob(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
+				_, code, err = resourceutils.RunJobWithScheduling(m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
 					m.OBCluster.Name+"-service-validate",
 					m.OBCluster.Spec.OBServerTemplate.Image,
 					m.OBCluster.Spec.OBServerTemplate.PodFields,
+					resourceutils.BootstrapJobScheduling(m.OBCluster),
 					"/home/admin/oceanbase/bin/oceanbase-helper service validate",
 				)
 			}
@@ -889,24 +779,13 @@ func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 			}
 			return nil
 		}
-		var version string
-		lines := strings.Split(versionOutput, "\n")
-		if len(lines) == 0 {
-			m.Logger.Info("Get version failed")
-			return nil
-		}
-		if len(lines) > 3 {
-			versionStr := strings.Split(lines[1], " ")
-			semVer := versionStr[len(versionStr)-1]
-			releaseStr := strings.Split(strings.Split(lines[3], " ")[1], "-")[0]
-			version = fmt.Sprintf("%s-%s", semVer[0:len(semVer)-1], releaseStr)
-		} else {
-			version = strings.TrimSpace(lines[0])
+		version, err := helper.ParseVersionOutput(versionOutput)
+		if err != nil {
+			return errors.Wrap(err, "read version for cluster mode check")
 		}
 		currentVersion, err := helper.ParseOceanBaseVersion(version)
 		if err != nil {
-			m.Logger.WithValues("version", version, "err", err.Error()).Info("Failed to parse current version")
-			return nil
+			return errors.Wrap(err, "parse version for cluster mode check")
 		}
 		switch modeAnnoVal {
 		case oceanbaseconst.ModeStandalone:
@@ -924,6 +803,14 @@ func CheckClusterMode(m *OBClusterManager) tasktypes.TaskError {
 			}
 		}
 		m.Logger.Info("Run service mode validate job successfully", "version", version, "mode", modeAnnoVal)
+	}
+	return nil
+}
+
+func checkMigrationVersion(source *model.OBVersion, targetOutput string) error {
+	target := strings.TrimSpace(targetOutput)
+	if source.String() != target {
+		return errors.Errorf("version mismatch source cluster: %s, target cluster: %s", source, target)
 	}
 	return nil
 }
@@ -950,8 +837,8 @@ func CheckMigration(m *OBClusterManager) tasktypes.TaskError {
 		return errors.Wrap(err, "get source oceanbase version")
 	}
 
-	if sourceVersion.String() != targetVersionStr {
-		return errors.Errorf("version mismatch source cluster: %s, target cluster: %s", sourceVersion.String(), targetVersionStr)
+	if err := checkMigrationVersion(sourceVersion, targetVersionStr); err != nil {
+		return err
 	}
 
 	// check obzone matches topology
@@ -1018,10 +905,13 @@ func ModifyServerTemplate(m *OBClusterManager) tasktypes.TaskError {
 }
 
 func WaitOBZoneBootstrapReady(m *OBClusterManager) tasktypes.TaskError {
-	return m.generateWaitOBZoneStatusFunc(zonestatus.BootstrapReady, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
+	return m.waitForBootstrapZones(serverstatus.BootstrapReady)
 }
 
 func WaitOBZoneRunning(m *OBClusterManager) tasktypes.TaskError {
+	if m.OBCluster.Status.Status == clusterstatus.Bootstrapped {
+		return m.waitForBootstrapZones(serverstatus.Running)
+	}
 	return m.generateWaitOBZoneStatusFunc(zonestatus.Running, obcfg.GetConfig().Time.DefaultStateWaitTimeout)()
 }
 
@@ -1030,77 +920,7 @@ func RollingUpdateOBZones(m *OBClusterManager) tasktypes.TaskError {
 }
 
 func CheckEnvironment(m *OBClusterManager) tasktypes.TaskError {
-	volumeName := m.OBCluster.Name + "check-clog-volume-" + rand.String(6)
-	claimName := m.OBCluster.Name + "check-clog-claim-" + rand.String(6)
-	jobName := m.OBCluster.Name + "-check-fs-" + rand.String(6)
-
-	var storageSpec *apitypes.StorageSpec
-	if m.OBCluster.Spec.DeploymentMode == oceanbaseconst.DeploymentModeSharedStorage {
-		storageSpec = m.OBCluster.Spec.OBServerTemplate.Storage.DataStorage
-	} else {
-		storageSpec = m.OBCluster.Spec.OBServerTemplate.Storage.RedoLogStorage
-	}
-	requestsResources := corev1.ResourceList{}
-	// Try fallocate to check if the filesystem meet the requirement.
-	// The checker requires 4Mi space, we set the request to 64Mi for safety.
-	requestsResources["storage"] = storageSpec.Size
-	pvc := &corev1.PersistentVolumeClaim{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      claimName,
-			Namespace: m.OBCluster.Namespace,
-			OwnerReferences: []metav1.OwnerReference{{
-				APIVersion: m.OBCluster.APIVersion,
-				Kind:       m.OBCluster.Kind,
-				Name:       m.OBCluster.Name,
-				UID:        m.OBCluster.UID,
-			}},
-		},
-		Spec: corev1.PersistentVolumeClaimSpec{
-			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
-			Resources: corev1.VolumeResourceRequirements{
-				Requests: requestsResources,
-			},
-			StorageClassName: &storageSpec.StorageClass,
-		},
-	}
-	err := m.Client.Create(m.Ctx, pvc)
-	if err != nil {
-		return errors.Wrap(err, "Create pvc for checking storage")
-	}
-	defer func() {
-		err = m.Client.Delete(m.Ctx, pvc)
-		if err != nil {
-			m.Logger.V(oceanbaseconst.LogLevelDebug).Info("Failed to delete pvc for checking storage", "err", err)
-		}
-	}()
-	// Assemble volumeConfigs
-	volumeConfigs := resourceutils.JobContainerVolumes{
-		Volumes: []corev1.Volume{{
-			Name: volumeName,
-			VolumeSource: corev1.VolumeSource{
-				PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-					ClaimName: claimName,
-				},
-			},
-		}},
-		VolumeMounts: []corev1.VolumeMount{{
-			Name:      volumeName,
-			MountPath: oceanbaseconst.ClogPath,
-		}},
-	}
-	_, exitCode, err := resourceutils.RunJob(
-		m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
-		jobName,
-		m.OBCluster.Spec.OBServerTemplate.Image,
-		m.OBCluster.Spec.OBServerTemplate.PodFields,
-		"/home/admin/oceanbase/bin/oceanbase-helper env-check storage "+oceanbaseconst.ClogPath,
-		volumeConfigs,
-	)
-	// exit code 1 means the image version does not support the env-check command, just ignore it and try
-	if err != nil && exitCode != 1 {
-		return errors.Wrap(err, "Check filesystem")
-	}
-	return nil
+	return m.checkStorageEnvironment()
 }
 
 func AnnotateOBCluster(m *OBClusterManager) tasktypes.TaskError {
@@ -1161,11 +981,12 @@ func OptimizeClusterByScenario(m *OBClusterManager) tasktypes.TaskError {
 	// start a job to read optimize parameters, ignore errors, only proceed with valid outputs and ignore the errors
 	m.Logger.Info("Start to optimize obcluster parameters")
 	jobName := fmt.Sprintf("optimize-cluster-%s-%s", m.OBCluster.Name, rand.String(6))
-	output, code, _ := resourceutils.RunJob(
+	output, code, _ := resourceutils.RunJobWithScheduling(
 		m.Ctx, m.Client, m.Logger, m.OBCluster.Namespace,
 		jobName,
 		m.OBCluster.Spec.OBServerTemplate.Image,
 		m.OBCluster.Spec.OBServerTemplate.PodFields,
+		resourceutils.BootstrapJobScheduling(m.OBCluster),
 		fmt.Sprintf("bin/oceanbase-helper optimize cluster %s", m.OBCluster.Spec.Scenario))
 	if code == int32(cmdconst.ExitCodeOK) || code == int32(cmdconst.ExitCodeIgnorableErr) {
 		optimizeConfig := &helpermodel.OptimizationResponse{}
@@ -1173,18 +994,18 @@ func OptimizeClusterByScenario(m *OBClusterManager) tasktypes.TaskError {
 		if err != nil {
 			m.Logger.Error(err, "Failed to parse optimization config")
 		}
-		conn, err := m.getOceanbaseOperationManager()
-		if err != nil {
-			m.Logger.Error(err, "Get operation manager failed")
+		if len(optimizeConfig.Parameters) == 0 {
+			return nil
 		}
-		// obcluster only need to set parameters
-		for _, parameter := range optimizeConfig.Parameters {
-			m.Logger.Info("Set parameter %s to %s", parameter.Name, converter.ConvertFloat(parameter.Value))
-			err := conn.SetParameter(m.Ctx, parameter.Name, converter.ConvertFloat(parameter.Value), nil)
-			if err != nil {
-				m.Logger.Error(err, "Failed to set parameter")
+		return m.withInitializationClient(tOptimizeClusterByScenario, func(conn *operation.OceanbaseOperationManager, _ string) error {
+			for _, parameter := range optimizeConfig.Parameters {
+				m.Logger.Info("Set parameter %s to %s", parameter.Name, converter.ConvertFloat(parameter.Value))
+				if err := conn.SetParameter(m.Ctx, parameter.Name, converter.ConvertFloat(parameter.Value), nil); err != nil {
+					m.Logger.Error(err, "Failed to set parameter")
+				}
 			}
-		}
+			return nil
+		})
 	}
 	return nil
 }

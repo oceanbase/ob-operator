@@ -1,7 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ .Release.Name }}-cluster-role
+  name: {{ include "oceanbase-dashboard.clusterRoleName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "oceanbase-dashboard.labels" . | nindent 4}}
@@ -36,6 +36,13 @@ rules:
       - persistentvolumeclaims
       - serviceaccounts
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups:
+      - "rbac.authorization.k8s.io"
+    resources:
+      - clusterroles
+    resourceNames:
+      - {{ include "oceanbase-dashboard.clusterRoleName" . }}
+    verbs: ["get"]
   - apiGroups:
       - "rbac.authorization.k8s.io"
     resources:

@@ -21,7 +21,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	kubeerrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/util/retry"
@@ -149,40 +149,125 @@ func (m *OBServerManager) setRecoveryStatus() {
 	}
 }
 
-func (m *OBServerManager) getPVCs() (*corev1.PersistentVolumeClaimList, error) {
+func (m *OBServerManager) getPVCs(pod *corev1.Pod) (*corev1.PersistentVolumeClaimList, error) {
 	pvcs := &corev1.PersistentVolumeClaimList{}
 	err := m.K8sResClient.List(m.Ctx, pvcs, client.InNamespace(m.OBServer.Namespace), client.MatchingLabels{oceanbaseconst.LabelRefUID: string(m.OBServer.UID)})
 	if err != nil {
-		return nil, errors.Wrap(err, "list pvc")
+		return nil, errors.Wrap(err, "list PVCs")
+	}
+
+	// Releases through 2.2.1 copied the observer's labels onto the PVC, so
+	// ref-uid could identify its zone. Look up missing claims by exact name.
+	byName := indexPVCs(pvcs)
+	var missing []string
+	for _, expected := range m.storageClaims(byName) {
+		if byName[expected.name] == nil {
+			missing = append(missing, expected.name)
+		}
+	}
+	if len(missing) == 0 {
+		return pvcs, nil
+	}
+	if _, annotated := m.OBServer.Annotations[oceanbaseconst.AnnotationsSinglePVC]; !annotated {
+		missing = append(missing, m.OBServer.Name)
+	}
+	for _, name := range missing {
+		pvc := &corev1.PersistentVolumeClaim{}
+		if err := m.K8sResClient.Get(m.Ctx, m.generateNamespacedName(name), pvc); err != nil {
+			if kubeerrors.IsNotFound(err) {
+				continue
+			}
+			return nil, errors.Wrapf(err, "get PVC %s", name)
+		}
+		if len(pvc.OwnerReferences) == 0 && pod == nil {
+			pod = &corev1.Pod{}
+			if err := m.K8sResClient.Get(m.Ctx, m.generateNamespacedName(m.OBServer.Name), pod); client.IgnoreNotFound(err) != nil {
+				return nil, errors.Wrap(err, "get observer pod")
+			}
+		}
+		if m.isLegacyObserverClaim(pvc, pod) {
+			pvcs.Items = append(pvcs.Items, *pvc)
+		}
 	}
 	return pvcs, nil
 }
 
+func (m *OBServerManager) isObserverOwner(object metav1.Object) bool {
+	for _, owner := range object.GetOwnerReferences() {
+		if owner.Kind == "OBServer" && owner.Name == m.OBServer.Name && owner.UID == m.OBServer.UID && owner.UID != "" {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *OBServerManager) isLegacyObserverClaim(pvc *corev1.PersistentVolumeClaim, pod *corev1.Pod) bool {
+	if len(pvc.OwnerReferences) > 0 {
+		return m.isObserverOwner(pvc)
+	}
+	// Independent-lifecycle PVCs have no owner. Only use one mounted by
+	// this observer's pod and reject labels identifying a different owner.
+	if pod == nil || !m.isObserverOwner(pod) {
+		return false
+	}
+	if uid := pvc.Labels[oceanbaseconst.LabelRefUID]; uid != "" && uid != m.OBServer.Labels[oceanbaseconst.LabelRefUID] {
+		return false
+	}
+	if ref := pvc.Labels[oceanbaseconst.LabelRefOBServer]; ref != "" && ref != m.OBServer.Name {
+		return false
+	}
+	for _, volume := range pod.Spec.Volumes {
+		if volume.PersistentVolumeClaim != nil && volume.PersistentVolumeClaim.ClaimName == pvc.Name {
+			return true
+		}
+	}
+	return false
+}
+
+type storageClaim struct {
+	name    string
+	storage *apitypes.StorageSpec
+}
+
+func indexPVCs(pvcs *corev1.PersistentVolumeClaimList) map[string]*corev1.PersistentVolumeClaim {
+	byName := make(map[string]*corev1.PersistentVolumeClaim, len(pvcs.Items))
+	for i := range pvcs.Items {
+		pvc := &pvcs.Items[i]
+		byName[pvc.Name] = pvc
+	}
+	return byName
+}
+
+func (m *OBServerManager) storageClaims(existing map[string]*corev1.PersistentVolumeClaim) []storageClaim {
+	name := m.OBServer.Name
+	storage := m.OBServer.Spec.OBServerTemplate.Storage
+	hasRedo := storage.RedoLogStorage != nil && m.OBServer.Annotations[oceanbaseconst.AnnotationsDeploymentMode] != oceanbaseconst.DeploymentModeSharedStorage
+	single, annotated := m.OBServer.Annotations[oceanbaseconst.AnnotationsSinglePVC]
+	// Older resources can identify the single claim by the observer's own name.
+	if single == "true" || (!annotated && existing[name] != nil) {
+		combined := storage.DataStorage.DeepCopy()
+		combined.Size.Add(storage.LogStorage.Size)
+		if hasRedo {
+			combined.Size.Add(storage.RedoLogStorage.Size)
+		}
+		return []storageClaim{{name: name, storage: combined}}
+	}
+
+	claims := []storageClaim{{name: name + "-" + oceanbaseconst.DataVolumeSuffix, storage: storage.DataStorage}}
+	if hasRedo {
+		claims = append(claims, storageClaim{name: name + "-" + oceanbaseconst.ClogVolumeSuffix, storage: storage.RedoLogStorage})
+	}
+	return append(claims, storageClaim{name: name + "-" + oceanbaseconst.LogVolumeSuffix, storage: storage.LogStorage})
+}
+
 func (m *OBServerManager) checkIfStorageExpand(pvcs *corev1.PersistentVolumeClaimList) bool {
-	for _, pvc := range pvcs.Items {
-		switch {
-		case strings.HasSuffix(pvc.Name, oceanbaseconst.DataVolumeSuffix):
-			if pvc.Spec.Resources.Requests.Storage().Cmp(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size) < 0 {
-				return true
-			}
-		case strings.HasSuffix(pvc.Name, oceanbaseconst.ClogVolumeSuffix):
-			if m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil && pvc.Spec.Resources.Requests.Storage().Cmp(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size) < 0 {
-				return true
-			}
-		case strings.HasSuffix(pvc.Name, oceanbaseconst.LogVolumeSuffix):
-			if pvc.Spec.Resources.Requests.Storage().Cmp(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size) < 0 {
-				return true
-			}
-		case pvc.Name == m.OBServer.Name:
-			sum := resource.Quantity{}
-			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.DataStorage.Size)
-			if m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage != nil {
-				sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.RedoLogStorage.Size)
-			}
-			sum.Add(m.OBServer.Spec.OBServerTemplate.Storage.LogStorage.Size)
-			if pvc.Spec.Resources.Requests.Storage().Cmp(sum) < 0 {
-				return true
-			}
+	claims := indexPVCs(pvcs)
+	for _, target := range m.storageClaims(claims) {
+		pvc := claims[target.name]
+		if pvc == nil || pvc.DeletionTimestamp != nil || pvc.Status.Phase != corev1.ClaimBound ||
+			pvc.Spec.Resources.Requests.Storage().Cmp(target.storage.Size) < 0 ||
+			pvc.Status.Capacity.Storage().Cmp(target.storage.Size) < 0 {
+			return true
 		}
 	}
 	return false
@@ -204,32 +289,11 @@ func (m *OBServerManager) checkIfResourceChanged(pod *corev1.Pod) bool {
 }
 
 func (m *OBServerManager) checkIfBackupVolumeMutated(pod *corev1.Pod) bool {
-	addingVolume := m.OBServer.Spec.BackupVolume != nil
-	volumeExist := false
-
-	for _, container := range pod.Spec.Containers {
-		if container.Name == oceanbaseconst.ContainerName {
-			for _, volumeMount := range container.VolumeMounts {
-				if volumeMount.MountPath == oceanbaseconst.BackupPath {
-					volumeExist = true
-					break
-				}
-			}
-		}
-	}
-
-	return addingVolume != volumeExist
+	return (m.OBServer.Spec.BackupVolume != nil) != resourceutils.PodHasBackupVolume(pod)
 }
 
 func (m *OBServerManager) checkIfMonitorMutated(pod *corev1.Pod) bool {
-	addingMonitor := m.OBServer.Spec.MonitorTemplate != nil
-	monitorExist := false
-	for _, container := range pod.Spec.Containers {
-		if container.Name == obagentconst.ContainerName {
-			monitorExist = true
-		}
-	}
-	return addingMonitor != monitorExist
+	return !resourceutils.MonitorMatchesPod(m.OBServer, pod)
 }
 
 func (m *OBServerManager) generatePVCSpec(storageSpec *apitypes.StorageSpec) corev1.PersistentVolumeClaimSpec {
@@ -559,7 +623,10 @@ func (m *OBServerManager) createOBServerContainer(obcluster *v1alpha1.OBCluster)
 		startOBServerCmd,
 	}
 
-	env := make([]corev1.EnvVar, 0)
+	var env []corev1.EnvVar
+	if isSharedStorage {
+		env = append(env, corev1.EnvVar{Name: "TZ", Value: "Asia/Shanghai"})
+	}
 	envLib := corev1.EnvVar{
 		Name:  "LD_LIBRARY_PATH",
 		Value: "/home/admin/oceanbase/lib",

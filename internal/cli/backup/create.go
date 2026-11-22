@@ -112,7 +112,11 @@ func CreateTenantBackupPolicy(ctx context.Context, o *CreateOptions) (*v1alpha1.
 		return nil, err
 	}
 	// Check if backup policy already exists
-	if backupPolicy, _ := clients.GetTenantBackupPolicy(ctx, nn); backupPolicy != nil {
+	existingPolicy, err := clients.GetTenantBackupPolicy(ctx, nn)
+	if err != nil {
+		return nil, err
+	}
+	if existingPolicy != nil {
 		return nil, errors.New("Backup policy already exists")
 	}
 	backupPolicy, err := buildBackupPolicyApiType(nn, tenant.Spec.ClusterName, o)

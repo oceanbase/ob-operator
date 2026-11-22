@@ -73,13 +73,12 @@ check_disk_resources() {
     counter=0
     timeout=100  
     PARAMETERS_ACTIVE='false'
-    ip=`kubectl get pod  -o wide -n $NAMESPACE | grep $OBCLUSTER_NAME-$OB_CLUSTER_ID-zone1 |awk -F' ' '{print $6}'| awk 'NR==1'`
-    echo $ip
-    echo $PASSWORD
+    local observer_pod
+    observer_pod=$(kubectl -n "$NAMESPACE" get observers -l "ref-obcluster=$OBCLUSTER_NAME" -o jsonpath='{.items[0].metadata.name}')
     while true; do
         echo 'check ob disk_resources'
         counter=$((counter+1))
-	disk_resources=`sudo du -h $(kubectl get pv -n $NAMESPACE -o jsonpath="{.items[?(@.metadata.name=='$(kubectl get pv -n $NAMESPACE| grep "$OBCLUSTER_NAME-$OB_CLUSTER_ID-zone1-.*-data-file" | awk '{print $1}' | head -n 1)')].spec.hostPath.path}") | tail -n 1 | awk '{print $1}'`
+        disk_resources=$(kubectl -n "$NAMESPACE" exec "$observer_pod" -c observer -- du -sh /home/admin/data-file | awk '{print $1}')
 	echo "disk_resources $disk_resources"
         if [[ $disk_resources = "11G" ]]
         then

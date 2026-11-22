@@ -60,3 +60,18 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Names of the OceanSeek resources.
+*/}}
+{{- define "oceanbase-cluster.logServiceName" -}}
+{{- default (printf "%s-logservice" .Release.Name) .Values.oceanseek.logService.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{- define "oceanbase-cluster.logServiceSecretName" -}}
+{{- default (printf "%s-logservice-s3" .Release.Name) .Values.oceanseek.logService.existingSecretName }}
+{{- end }}
+
+{{- define "oceanbase-cluster.sharedStorageSecretName" -}}
+{{- default (printf "%s-shared-storage-s3" .Release.Name) .Values.oceanseek.sharedStorage.existingSecretName }}
+{{- end }}

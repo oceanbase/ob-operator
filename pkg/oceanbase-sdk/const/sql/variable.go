@@ -14,5 +14,13 @@ package sql
 
 const (
 	GetGlobalVariable = "select name, coalesce(value, \"\") as value from DBA_OB_SYS_VARIABLES where scope like '%global%' and name = ?"
-	SetGlobalVariable = "set global %s = ?"
+	// Older releases expose the raw stored value (e.g. "1" for autocommit)
+	// separately from the list of variables that are valid at global scope.
+	GetLegacyGlobalVariable = `SELECT sv.name AS name, COALESCE(sv.value, '') AS value
+FROM oceanbase.__all_sys_variable AS sv
+JOIN information_schema.GLOBAL_VARIABLES AS gv ON gv.VARIABLE_NAME = sv.name
+WHERE sv.name = ?`
+	GetTenantConnectWhiteList       = "SELECT value FROM oceanbase.CDB_OB_SYS_VARIABLES WHERE tenant_id = ? AND name = 'ob_tcp_invited_nodes'"
+	GetLegacyTenantConnectWhiteList = "SELECT value FROM oceanbase.__all_virtual_sys_variable WHERE tenant_id = ? AND zone = '' AND name = 'ob_tcp_invited_nodes'"
+	SetGlobalVariable               = "set global %s = ?"
 )

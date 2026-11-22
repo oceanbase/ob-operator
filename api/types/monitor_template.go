@@ -12,7 +12,14 @@ See the Mulan PSL v2 for more details.
 
 package types
 
+import "k8s.io/apimachinery/pkg/api/equality"
+
 type MonitorTemplate struct {
 	Image    string        `json:"image"`
 	Resource *ResourceSpec `json:"resource"`
+}
+
+// Equal compares the desired image and Kubernetes quantities, including absent monitors.
+func (m *MonitorTemplate) Equal(other *MonitorTemplate) bool {
+	return equality.Semantic.DeepEqual(m, other)
 }

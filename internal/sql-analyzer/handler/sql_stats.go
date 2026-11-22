@@ -21,6 +21,7 @@ import (
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/business"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/config"
 	"github.com/oceanbase/ob-operator/internal/sql-analyzer/store"
+	httperr "github.com/oceanbase/ob-operator/pkg/errors"
 	logger "github.com/sirupsen/logrus"
 )
 
@@ -38,7 +39,7 @@ import (
 func QuerySqlStats(c *gin.Context) (*model.SqlStatsResponse, error) {
 	var req model.QuerySqlStatsRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		return nil, err
+		return nil, httperr.NewBadRequest("invalid SQL statistics request")
 	}
 
 	l := HandlerLogger
@@ -68,5 +69,13 @@ func QuerySqlStats(c *gin.Context) (*model.SqlStatsResponse, error) {
 	}
 
 	service := business.NewSqlStatsService(store.GetSqlAuditStore(), conf, l)
-	return service.QuerySqlStats(&req)
+	resp, err := service.QuerySqlStats(&req)
+	if err != nil {
+		if obErr, ok := err.(httperr.ObError); ok && obErr.IsType(httperr.ErrBadRequest) {
+			return nil, err
+		}
+		logHandlerError(c, err)
+		return nil, httperr.NewInternal("failed to query SQL statistics")
+	}
+	return resp, nil
 }

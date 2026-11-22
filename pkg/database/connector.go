@@ -14,6 +14,8 @@ package database
 
 import (
 	"context"
+	"crypto/sha256"
+	"strings"
 	"time"
 
 	// register mysql driver
@@ -24,8 +26,9 @@ import (
 
 // Connector represents a connection pool.
 type Connector struct {
-	ds     DataSource
-	client *Client
+	ds            DataSource
+	client        *Client
+	connectionKey [sha256.Size]byte
 }
 
 // DataSource represents a data source.
@@ -60,16 +63,20 @@ func NewConnector(dataSource DataSource) *Connector {
 }
 
 func (c *Connector) Init() error {
-	db, err := sqlx.Open(c.ds.DriverName(), c.ds.DataSourceName())
+	return c.open(c.ds.DriverName(), c.ds.DataSourceName(), c.ds.GetPassword())
+}
+
+func (c *Connector) open(driverName, dsn, password string) error {
+	db, err := sqlx.Open(driverName, dsn)
 	if err != nil {
-		return errors.Wrapf(err, "Open datasource %s", c.ds.String())
+		return connectionError("open", c.ds.String(), password, err)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*DefaultPingTimeoutSeconds)
 	defer cancel()
 	err = db.PingContext(ctx)
 	if err != nil {
 		_ = db.Close()
-		return errors.Wrapf(err, "Ping datasource %s", c.ds.String())
+		return connectionError("ping", c.ds.String(), password, err)
 	}
 	c.client = &Client{db}
 	c.client.configure()
@@ -94,8 +101,24 @@ func (c *Connector) DataSource() DataSource {
 }
 
 func (c *Connector) Close() error {
-	if c.client.DB != nil {
+	if c.client != nil && c.client.DB != nil {
 		return c.client.DB.Close()
 	}
 	return nil
+}
+
+// Drivers may echo rejected credentials in their diagnostics.
+type redactedDriverError struct{ cause error }
+
+func (e redactedDriverError) Error() string { return "database driver response contains credentials" }
+func (e redactedDriverError) Unwrap() error { return e.cause }
+
+func connectionError(operation, description, password string, err error) error {
+	if password != "" {
+		description = strings.ReplaceAll(description, password, "[redacted]")
+		if strings.Contains(err.Error(), password) {
+			err = redactedDriverError{cause: err}
+		}
+	}
+	return errors.Wrapf(err, "%s datasource %s", operation, description)
 }

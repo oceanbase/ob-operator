@@ -1,0 +1,196 @@
+{
+  "schemaVersion": 1,
+  "releaseVersion": "fixture",
+  "platform": "linux/amd64",
+  "scope": "Synthetic packaging test data. Each digest and release tag belongs only to this fixture.",
+  "excluded_optional": {
+    "sql-analyzer": {
+      "reference": "quay.io/oceanbase/sql-analyzer:0.1.0",
+      "reason": "Optional Dashboard SQL analyzer is not included or validated; only its inactive ConfigMap default may occur."
+    }
+  },
+  "prerequisites": [
+    "Kubernetes with a working StorageClass and cert-manager (prepared separately, not bundled)"
+  ],
+  "images": [
+    {
+      "role": "observer",
+      "reference": "registry.example.invalid/test/oceanseek:1.0.0",
+      "image_id": "sha256:a7ade1a0e1fd8701f8a4867b811b9aaecc0cf24fb89f3a681153f26a1bef2807",
+      "platform": "linux/amd64",
+      "channels": [
+        "compose",
+        "helm"
+      ],
+      "source_reference": "registry.example.invalid/test/oceanseek:1.0.0",
+      "publication": "not-verified"
+    },
+    {
+      "role": "logservice",
+      "reference": "registry.example.invalid/test/logservice:1.0.0",
+      "image_id": "sha256:5cc56dc47b3433b1d6d629a1ae27017f217583f3d88661f9e42d3f2854f76420",
+      "platform": "linux/amd64",
+      "channels": [
+        "compose",
+        "helm"
+      ],
+      "source_reference": "registry.example.invalid/test/logservice:1.0.0",
+      "publication": "not-verified"
+    },
+    {
+      "role": "minio",
+      "reference": "registry.example.invalid/test/minio:1.0.0",
+      "image_id": "sha256:f3fe3d273e5f33219c53712e126d5a3096b787e7461435fccc78fca87e15ce62",
+      "platform": "linux/amd64",
+      "channels": [
+        "compose",
+        "helm"
+      ],
+      "source_reference": "registry.example.invalid/test/minio:1.0.0",
+      "publication": "not-verified"
+    },
+    {
+      "role": "mc",
+      "reference": "registry.example.invalid/test/mc:1.0.0",
+      "image_id": "sha256:af0ec874d2860170538d2bcd058e56704ea9617f875fa12189ceb92de45dc477",
+      "platform": "linux/amd64",
+      "channels": [
+        "compose",
+        "helm"
+      ],
+      "source_reference": "registry.example.invalid/test/mc:1.0.0",
+      "publication": "not-verified"
+    },
+    {
+      "role": "bootstrap",
+      "reference": "registry.example.invalid/test/oceanseek-bootstrap:1.0.0",
+      "image_id": "sha256:50abfbabf26bffbe5108934f92d1e9a4286a57f8e1d7dfadb62de2cc38ee62c5",
+      "platform": "linux/amd64",
+      "channels": [
+        "compose"
+      ],
+      "source_reference": "registry.example.invalid/test/oceanseek-bootstrap:1.0.0",
+      "publication": "not-verified"
+    },
+    {
+      "role": "obagent",
+      "reference": "registry.example.invalid/test/obagent:1.0.0",
+      "image_id": "sha256:97bad9b4a0c2266f0a8c47d342768d7e8df225a918805063df33fdd90b6c4204",
+      "manifest_digest": "sha256:5e2185001dd7c932ae106aa3d70039e0fa8908f4d97010332b792d35a22f0fc3",
+      "platform": "linux/amd64",
+      "channels": [
+        "compose",
+        "helm"
+      ],
+      "source_reference": "registry.example.invalid/test/obagent:1.0.0",
+      "publication": "not-verified"
+    },
+    {
+      "role": "operator",
+      "reference": "registry.example.invalid/test/ob-operator:1.0.0",
+      "image_id": "sha256:c8a19d99451f7af6b9a2676462800a943bc0648d785fb53c36809d6a5444468c",
+      "platform": "linux/amd64",
+      "channels": [
+        "helm"
+      ],
+      "source_reference": "registry.example.invalid/test/ob-operator:1.0.0",
+      "publication": "not-verified"
+    },
+    {
+      "role": "dashboard",
+      "reference": "registry.example.invalid/test/oceanbase-dashboard:1.0.0",
+      "image_id": "sha256:d180ea9f8727233f03411c0fe9810a489736e7295c886641557ff13f53ab1c61",
+      "platform": "linux/amd64",
+      "channels": [
+        "helm"
+      ],
+      "source_reference": "registry.example.invalid/test/oceanbase-dashboard:1.0.0",
+      "publication": "not-verified"
+    },
+    {
+      "role": "obdiag",
+      "reference": "registry.example.invalid/test/obdiag:1.0.0",
+      "image_id": "sha256:568c4d20057ba5561259aa1eba1d2c2fc96f66a6816bf4ad28895c366986f6e1",
+      "platform": "linux/amd64",
+      "channels": [
+        "helm"
+      ],
+      "source_reference": "registry.example.invalid/test/obdiag:1.0.0",
+      "publication": "not-verified",
+      "manifest_digest": "sha256:7fc98633f0aeabde40a15390534f63994503be541c0f186028cbd451a5b3c1a3"
+    },
+    {
+      "role": "oceanbase-helper",
+      "reference": "registry.example.invalid/test/oceanbase-helper:1.0.0",
+      "image_id": "sha256:316d2f493ebed1fa988d3c60b0f265b4aa14921c5fbf2e60f844bc2b90be8ade",
+      "platform": "linux/amd64",
+      "channels": [
+        "helm"
+      ],
+      "source_reference": "registry.example.invalid/test/oceanbase-helper:1.0.0",
+      "publication": "not-verified"
+    },
+    {
+      "role": "utility",
+      "reference": "registry.example.invalid/test/busybox:1.0.0",
+      "image_id": "sha256:c12377cea6326c780f4795e9c30088bcceb100c346db786215af955ded7f0940",
+      "manifest_digest": "sha256:a4da5dd3cb6529868f706be1b1768437ebcfb890d1be97af76623e2f3965e9f6",
+      "platform": "linux/amd64",
+      "channels": [
+        "helm"
+      ],
+      "source_reference": "registry.example.invalid/test/busybox:1.0.0",
+      "publication": "not-verified"
+    },
+    {
+      "role": "prometheus",
+      "reference": "registry.example.invalid/test/prometheus:1.0.0",
+      "image_id": "sha256:7ef16fa88d7b51bbb4a06c320faff9b76eab40cdf1ce77b4dbcd7acb09233150",
+      "platform": "linux/amd64",
+      "channels": [
+        "compose",
+        "helm"
+      ],
+      "source_reference": "registry.example.invalid/test/prometheus:1.0.0",
+      "publication": "not-verified",
+      "manifest_digest": "sha256:aca17d8d37af6d1fe06f34161df0e0c571fb3a970ec1233b9aaadba45fddb695"
+    },
+    {
+      "role": "alertmanager",
+      "reference": "registry.example.invalid/test/alertmanager:1.0.0",
+      "image_id": "sha256:f22b029dc3e86fe6ee07bd2c7e2e60e7747ff6934c74c2350f0ac8c50ce3f8fa",
+      "platform": "linux/amd64",
+      "channels": [
+        "compose",
+        "helm"
+      ],
+      "source_reference": "registry.example.invalid/test/alertmanager:1.0.0",
+      "publication": "not-verified",
+      "manifest_digest": "sha256:1def298e9ce2095912bbbc251bdec99fa7fd54901d6b9357cf0150008b8ccc1a"
+    },
+    {
+      "role": "kube-rbac-proxy",
+      "reference": "registry.example.invalid/test/kube-rbac-proxy:1.0.0",
+      "image_id": "sha256:1614c1506072970656c41dcda612766f75eebe48d6fc49f419e5fe9005093c2d",
+      "platform": "linux/amd64",
+      "channels": [
+        "helm"
+      ],
+      "source_reference": "registry.example.invalid/test/kube-rbac-proxy:1.0.0",
+      "publication": "not-verified",
+      "manifest_digest": "sha256:f920bfe28089ad499d055ba878729e7c49a7af167ecdf7006f7c36b15dedce1c"
+    },
+    {
+      "role": "obproxy",
+      "reference": "registry.example.invalid/test/obproxy-ce:1.0.0",
+      "image_id": "sha256:bff3a9c0f8179f17f26b434c9c6739ea6969401173a60887888a26a9c8e4e610",
+      "platform": "linux/amd64",
+      "channels": [
+        "helm"
+      ],
+      "source_reference": "registry.example.invalid/test/obproxy-ce:1.0.0",
+      "publication": "not-verified",
+      "manifest_digest": "sha256:f059f4f2ae8a1f175bb3958610ebbf1602468a6289cc02bb294dcca6f5d278f4"
+    }
+  ]
+}

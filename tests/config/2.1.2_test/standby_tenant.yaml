@@ -4,7 +4,7 @@ metadata:
   name: ${TENANT_STANDBY}
   namespace: ${NAMESPACE}
 spec:
-  obcluster: ${OBCLUSTER_NAME}
+  obcluster: ${OBCLUSTER_NAME_STANDBY}
   tenantName: ${TENANT_STANDBY}
   unitNum: 1
   charset: utf8mb4

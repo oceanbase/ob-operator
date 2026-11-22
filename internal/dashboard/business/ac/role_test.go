@@ -15,6 +15,7 @@ package ac
 import (
 	"context"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/onsi/ginkgo/v2"
@@ -26,7 +27,7 @@ import (
 
 var _ = Describe("Role", Ordered, ContinueOnFailure, func() {
 	It("Policies to CSV", func() {
-		bts, err := os.ReadFile("rbac_policy.csv")
+		bts, err := os.ReadFile(enforcer.policyPath)
 		Expect(err).To(BeNil())
 		Expect(bts).ToNot(BeNil())
 		csv, err := policiesToCsv()
@@ -42,7 +43,7 @@ var _ = Describe("Role", Ordered, ContinueOnFailure, func() {
 	})
 
 	It("Persist roles", func() {
-		err := persistPolicies(context.Background(), "rbac_policy_persistent.csv")
+		err := persistPolicies(context.Background(), filepath.Join(filepath.Dir(enforcer.policyPath), "persisted.csv"))
 		Expect(err).To(BeNil())
 	})
 

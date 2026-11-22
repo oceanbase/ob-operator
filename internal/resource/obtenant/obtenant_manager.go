@@ -30,6 +30,7 @@ import (
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	apiconst "github.com/oceanbase/ob-operator/api/constants"
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
@@ -49,11 +50,24 @@ import (
 var _ opresource.ResourceManager = &OBTenantManager{}
 
 type OBTenantManager struct {
-	OBTenant *v1alpha1.OBTenant
-	Ctx      context.Context
-	Client   client.Client
-	Recorder telemetry.Recorder
-	Logger   *logr.Logger
+	OBTenant     *v1alpha1.OBTenant
+	Ctx          context.Context
+	Client       client.Client
+	APIReader    client.Reader
+	StatusAtRead v1alpha1.OBTenantStatus
+	Recorder     telemetry.Recorder
+	Logger       *logr.Logger
+}
+
+func tenantRoleFromDatabase(current apitypes.TenantRole, tenant *model.OBTenant) apitypes.TenantRole {
+	if tenant == nil {
+		return current
+	}
+	role := apitypes.TenantRole(strings.ToUpper(tenant.TenantRole))
+	if role == apiconst.TenantRolePrimary || role == apiconst.TenantRoleStandby {
+		return role
+	}
+	return current
 }
 
 func (m *OBTenantManager) GetMeta() metav1.Object {
@@ -84,7 +98,8 @@ func (m *OBTenantManager) GetStatus() string {
 
 func (m *OBTenantManager) InitStatus() {
 	m.OBTenant.Status = v1alpha1.OBTenantStatus{
-		Pools: make([]v1alpha1.ResourcePoolStatus, 0, len(m.OBTenant.Spec.Pools)),
+		Creation: m.OBTenant.Status.Creation,
+		Pools:    make([]v1alpha1.ResourcePoolStatus, 0, len(m.OBTenant.Spec.Pools)),
 	}
 	m.OBTenant.Status.Credentials = m.OBTenant.Spec.Credentials
 	m.OBTenant.Status.TenantRole = m.OBTenant.Spec.TenantRole
@@ -150,7 +165,19 @@ func (m *OBTenantManager) retryUpdateStatus() error {
 		if err != nil {
 			return client.IgnoreNotFound(err)
 		}
+		if m.OBTenant.UID != obtenant.UID || m.OBTenant.Generation != obtenant.Generation ||
+			!m.OBTenant.DeletionTimestamp.Equal(obtenant.DeletionTimestamp) {
+			return errors.New("tenant changed before status update")
+		}
+		// Resource IDs are written by the task worker. Preserve them across status updates.
+		creation := obtenant.Status.Creation
+		observed, current := m.StatusAtRead, obtenant.Status
+		observed.Creation, current.Creation = nil, nil
+		if !reflect.DeepEqual(observed, current) {
+			return errors.New("tenant status advanced before update")
+		}
 		m.OBTenant.Status.DeepCopyInto(&obtenant.Status)
+		obtenant.Status.Creation = creation
 		return m.Client.Status().Update(m.Ctx, obtenant)
 	})
 }
@@ -170,6 +197,9 @@ func (m *OBTenantManager) UpdateStatus() error {
 		m.OBTenant.Status.OperationContext = nil
 		m.OBTenant.Status.Status = tenantstatus.CancelingRestore
 	} else if m.OBTenant.Status.Status != tenantstatus.Running {
+		if m.OBTenant.Status.Status == tenantstatus.RestoreFailed {
+			m.refreshTenantRoleFromDatabase()
+		}
 		m.Logger.V(oceanbaseconst.LogLevelTrace).Info(fmt.Sprintf("OBTenant status is %s (not running), skip compare", m.OBTenant.Status.Status))
 	} else {
 		// build tenant status from DB
@@ -213,6 +243,11 @@ func (m *OBTenantManager) CheckAndUpdateFinalizers() error {
 		finalizerFinished = m.OBTenant.Status.Status == tenantstatus.FinalizerFinished
 	}
 	if finalizerFinished {
+		if obcluster != nil && obcluster.DeletionTimestamp.IsZero() && obcluster.Annotations[m.poolRemovalKey()] != "" {
+			if err := m.finalizePoolRemoval(obcluster); err != nil {
+				return err
+			}
+		}
 		m.Logger.Info("Obtenant Finalizer finished")
 		m.OBTenant.ObjectMeta.Finalizers = make([]string, 0)
 		err := m.Client.Update(m.Ctx, m.OBTenant)
@@ -343,6 +378,14 @@ func (m *OBTenantManager) getObTenant() (*v1alpha1.OBTenant, error) {
 func (m *OBTenantManager) NextStatus() (string, error) {
 	tenantName := m.OBTenant.Spec.TenantName
 
+	// Finish or cancel the recorded removal before evaluating the remaining spec.
+	cluster, err := m.getOBCluster()
+	if err != nil {
+		return "", err
+	}
+	if cluster.Annotations[m.poolRemovalKey()] != "" {
+		return tenantstatus.DeletingResourcePool, nil
+	}
 	// note: change order of state check functions may cause bugs
 	hasModifiedResourcePool := m.hasToAddPool()
 	if hasModifiedResourcePool {
@@ -556,6 +599,7 @@ func (m *OBTenantManager) hasModifiedCharset() bool {
 func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) {
 	tenantName := m.OBTenant.Spec.TenantName
 	tenantCurrentStatus := &v1alpha1.OBTenantStatus{
+		Creation:    m.OBTenant.Status.Creation,
 		Credentials: m.OBTenant.Status.Credentials,
 		TenantRole:  m.OBTenant.Status.TenantRole,
 		Source:      m.OBTenant.Status.Source,
@@ -572,9 +616,9 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 	if err != nil {
 		return nil, errors.Wrap(err, fmt.Sprint("Cannot Get Tenant Failed When Build Tenant Status", tenantName))
 	}
+	tenantCurrentStatus.TenantRole = tenantRoleFromDatabase(tenantCurrentStatus.TenantRole, obtenant)
 
 	poolStatusList, err := m.buildPoolStatusList(obtenant)
-
 	if err != nil {
 		return nil, err
 	}
@@ -582,20 +626,21 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 	tenantCurrentStatus.Pools = poolStatusList
 	tenantCurrentStatus.OperationContext = m.OBTenant.Status.OperationContext
 
-	tenantCurrentStatus.TenantRecordInfo = v1alpha1.TenantRecordInfo{}
+	tenantCurrentStatus.TenantRecordInfo, err = m.poolRecord(poolStatusList)
+	if err != nil {
+		return nil, err
+	}
 	tenantCurrentStatus.TenantRecordInfo.TenantID = int(obtenant.TenantID)
 
-	// TODO: get whitelist from tenant account
-	whitelist, exists := tenantWhiteListMap.Load(obtenant.TenantName)
-	if exists {
-		tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList = whitelist.(string)
-	} else {
-		// try update whitelist after the manager restart
-		tenantWhiteListMap.Store(obtenant.TenantName, tenant.DefaultOBTcpInvitedNodes)
-		tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList = tenant.DefaultOBTcpInvitedNodes
+	con, err := m.getClusterSysClient()
+	if err != nil {
+		return nil, err
+	}
+	tenantCurrentStatus.TenantRecordInfo.ConnectWhiteList, err = con.GetTenantConnectWhiteList(m.Ctx, obtenant.TenantID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "read connection whitelist for tenant %s", tenantName)
 	}
 
-	tenantCurrentStatus.TenantRecordInfo.UnitNumber = poolStatusList[0].UnitNumber
 	charset, err := m.getCharset()
 	if err != nil {
 		return nil, err
@@ -603,14 +648,6 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 	tenantCurrentStatus.TenantRecordInfo.Charset = charset
 	tenantCurrentStatus.TenantRecordInfo.Locality = obtenant.Locality
 	tenantCurrentStatus.TenantRecordInfo.PrimaryZone = obtenant.PrimaryZone
-	poolList := make([]string, 0)
-	zoneList := make([]string, 0)
-	for _, pool := range tenantCurrentStatus.Pools {
-		poolList = append(poolList, m.generatePoolName(pool.ZoneList))
-		zoneList = append(zoneList, pool.ZoneList)
-	}
-	tenantCurrentStatus.TenantRecordInfo.PoolList = strings.Join(poolList, ",")
-	tenantCurrentStatus.TenantRecordInfo.ZoneList = strings.Join(zoneList, ",")
 	tenantCurrentStatus.TenantRecordInfo.Collate = m.OBTenant.Spec.Collate
 
 	// Root password changed
@@ -647,6 +684,58 @@ func (m *OBTenantManager) buildTenantStatus() (*v1alpha1.OBTenantStatus, error) 
 	return tenantCurrentStatus, nil
 }
 
+func (m *OBTenantManager) refreshTenantRoleFromDatabase() {
+	tenantName := m.OBTenant.Spec.TenantName
+	tenantExists, err := m.tenantExist(tenantName)
+	if err != nil {
+		m.Logger.Error(err, "Failed to check tenant before refreshing role", "tenantName", tenantName)
+		return
+	}
+	if !tenantExists {
+		return
+	}
+
+	tenantRecord, err := m.getTenantByName(tenantName)
+	if err != nil {
+		m.Logger.Error(err, "Failed to refresh tenant role from database", "tenantName", tenantName)
+		return
+	}
+	m.OBTenant.Status.TenantRole = tenantRoleFromDatabase(m.OBTenant.Status.TenantRole, tenantRecord)
+}
+
+func (m *OBTenantManager) poolRecord(pools []v1alpha1.ResourcePoolStatus) (v1alpha1.TenantRecordInfo, error) {
+	if len(pools) == 0 {
+		return v1alpha1.TenantRecordInfo{}, fmt.Errorf("no resource pools observed for tenant %q", m.OBTenant.Spec.TenantName)
+	}
+	poolNames := make([]string, 0, len(pools))
+	zones := make([]string, 0, len(pools))
+	for _, pool := range pools {
+		poolNames = append(poolNames, m.generatePoolName(pool.ZoneList))
+		zones = append(zones, pool.ZoneList)
+	}
+	return v1alpha1.TenantRecordInfo{
+		UnitNumber: pools[0].UnitNumber,
+		PoolList:   strings.Join(poolNames, ","),
+		ZoneList:   strings.Join(zones, ","),
+	}, nil
+}
+
+func observedPoolLocality(zone string, active map[string]v1alpha1.LocalityType, configured map[string]*v1alpha1.LocalityType, managed bool) *v1alpha1.LocalityType {
+	if !managed && configured[zone] == nil {
+		return nil
+	}
+	if locality, ok := active[zone]; ok {
+		return &locality
+	}
+	if locality := configured[zone]; locality != nil {
+		// A retained pool has no replica until the database locality contains its zone.
+		return &v1alpha1.LocalityType{Name: locality.Name, Replica: locality.Replica, IsActive: false}
+	}
+	// Locality removal precedes detaching the pool. Keep an assigned, managed
+	// pool visible after a failed or interrupted deletion so it can be retried.
+	return &v1alpha1.LocalityType{}
+}
+
 func (m *OBTenantManager) buildPoolStatusList(obTenant *model.OBTenant) ([]v1alpha1.ResourcePoolStatus, error) {
 	var poolStatusList []v1alpha1.ResourcePoolStatus
 	var locality string
@@ -659,7 +748,7 @@ func (m *OBTenantManager) buildPoolStatusList(obTenant *model.OBTenant) ([]v1alp
 
 	tenantID := obTenant.TenantID
 	priorityMap := m.generateStatusPriorityMap(primaryZone)
-	unitNumMap, err := m.generateStatusUnitNumMap(m.OBTenant.Spec.Pools)
+	unitNumMap, err := m.generateStatusUnitNumMap(tenantID)
 	if err != nil {
 		return poolStatusList, err
 	}
@@ -670,21 +759,12 @@ func (m *OBTenantManager) buildPoolStatusList(obTenant *model.OBTenant) ([]v1alp
 	for _, zoneList := range poolList {
 		var poolCurrentStatus v1alpha1.ResourcePoolStatus
 		poolCurrentStatus.ZoneList = zoneList
-		localityType, exist := statusTypeMap[zoneList]
-		_, specExist := statusTypeMap[zoneList]
-		if exist {
-			poolCurrentStatus.Type = &localityType
-		} else if specExist {
-			poolCurrentStatus.Type = &v1alpha1.LocalityType{
-				Name:     specTypeMap[zoneList].Name,
-				Replica:  specTypeMap[zoneList].Replica,
-				IsActive: false,
-			}
-		} else {
-			m.Logger.Error(errors.Errorf("ZoneList %s does not exists in status or spec", zoneList), "Unexpected zoneList")
+		unitCount, managed := unitNumMap[zoneList]
+		poolCurrentStatus.Type = observedPoolLocality(zoneList, statusTypeMap, specTypeMap, managed)
+		if poolCurrentStatus.Type == nil {
 			continue
 		}
-		poolCurrentStatus.UnitNumber = unitNumMap[zoneList]
+		poolCurrentStatus.UnitNumber = unitCount
 		poolCurrentStatus.Priority = priorityMap[zoneList]
 		poolCurrentStatus.UnitConfig, err = m.buildUnitConfigV4FromDB(zoneList, tenantID)
 		if err != nil {
@@ -823,4 +903,14 @@ func (m *OBTenantManager) buildUnitStatusFromDB(zone string, tenantID int64) ([]
 		}
 	}
 	return unitList, nil
+}
+
+// CanReplayTask resumes work with durable Kubernetes or database identity.
+func (m *OBTenantManager) CanReplayTask(name tasktypes.TaskName) bool {
+	if name == tCreateResourcePoolAndConfig && m.OBTenant != nil {
+		// A legacy provisioning task finishes IF NOT EXISTS setup, before the
+		// CREATE worker validates its detached, borrowed pool and unit IDs.
+		return m.OBTenant.Status.Status == tenantstatus.CreatingTenant && m.OBTenant.Status.Creation == nil
+	}
+	return name == tWatchRestoreJobToFinish || name == tDeletePool
 }

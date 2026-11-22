@@ -27,12 +27,14 @@ import (
 )
 
 type Manager struct {
-	rules []Rule
+	rules         []Rule
+	planOperators []string
 }
 
-func NewManager() *Manager {
+func NewManager(planOperators ...string) *Manager {
 	m := &Manager{
-		rules: []Rule{},
+		rules:         []Rule{},
+		planOperators: planOperators,
 	}
 	m.RegisterRules()
 	return m
@@ -47,7 +49,7 @@ func (m *Manager) RegisterRules() {
 	m.rules = append(m.rules, rules.NewMultiTableJoinRule())
 	m.rules = append(m.rules, rules.NewUpdateDeleteWithoutWhereRule())
 	m.rules = append(m.rules, rules.NewUpdateDeleteMultiTableRule())
-	m.rules = append(m.rules, rules.NewFullScanRule())
+	m.rules = append(m.rules, rules.NewFullScanRule(m.planOperators))
 	m.rules = append(m.rules, rules.NewIndexColumnFuzzyMatchRule())
 	m.rules = append(m.rules, rules.NewFunctionOnIndexedColumnRule())
 }

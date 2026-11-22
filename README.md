@@ -6,6 +6,14 @@
 
 ## Quick Start
 
+For a single-machine oceanseek SQL experience without Kubernetes, use the
+[Docker Compose quickstart](./deploy/compose/oceanseek/README.md).
+For an existing Kubernetes cluster, use the [native Helm Chart](./charts/oceanseek/USAGE.txt),
+with Dashboard enabled by default and single-node/three-node values examples.
+The native Chart does not ship an `install.sh`; install the matching Operator first,
+then deploy the oceanseek with Helm. Both paths require the images supplied with the release.
+The [legacy QA tar guide](./INSTALL.txt) applies only to earlier script-based packages.
+
 This section provides a step-by-step guide on how to use ob-operator to deploy an OceanBase cluster.
 
 ### Prerequisites

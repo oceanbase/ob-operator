@@ -45,7 +45,7 @@ then you can visit the dashboard on http://$YOUR_SERVER_IP:18081
 
 2. Use the following command to get password for default admin user
 
-  > echo $(kubectl get -n default secret oceanbase-dashboard-user-credentials -o jsonpath='{.data.admin}' | base64 -d)
+  > kubectl -n default get secret oceanbase-dashboard-dashboard-bootstrap -o jsonpath='{.data.password}' | base64 --decode
 
 Log in as default account:
 Username: admin
@@ -66,7 +66,7 @@ oceanbase-dashboard-oceanbase-dashboard   1/1     1            1           2m10s
 The default login account created by Dashboard is `admin`. You can get the default account password by executing the second command in the notes above (`echo $(kubectl get ...`).
 
 ```shell
-echo $(kubectl get -n default secret oceanbase-dashboard-user-credentials -o jsonpath='{.data.admin}' | base64 -d)
+kubectl -n default get secret oceanbase-dashboard-dashboard-bootstrap -o jsonpath='{.data.password}' | base64 --decode
 ```
 
 After the installation is complete, you can access the OceanBase Dashboard login page through the following methods.

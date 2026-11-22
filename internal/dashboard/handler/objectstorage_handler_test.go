@@ -1,0 +1,42 @@
+/*
+Copyright (c) 2026 OceanBase
+ob-operator is licensed under Mulan PSL v2.
+You can use this software according to the terms and conditions of the Mulan PSL v2.
+You may obtain a copy of Mulan PSL v2 at:
+         http://license.coscl.org.cn/MulanPSL2
+THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
+EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
+MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
+See the Mulan PSL v2 for more details.
+*/
+
+package handler
+
+import (
+	"net/http/httptest"
+	"strings"
+	"testing"
+
+	"github.com/gin-gonic/gin"
+)
+
+func TestObjectStorageBindRejectsUnknownAndOversizedWithoutEcho(t *testing.T) {
+	for _, body := range []string{`{"password":"DO_NOT_ECHO"}`, `{"bucketURL":"x"} {}`, `{"bucketURL":"DO_NOT_ECHO"`, `{"bucketURL":"` + strings.Repeat("DO_NOT_ECHO", 2000) + `"}`} {
+		c, _ := gin.CreateTestContext(httptest.NewRecorder())
+		c.Request = httptest.NewRequest("POST", "/", strings.NewReader(body))
+		var p struct {
+			BucketURL string `json:"bucketURL"`
+		}
+		if err := bindObjectStorage(c, &p); err == nil || strings.Contains(err.Error(), "DO_NOT_ECHO") {
+			t.Fatal("expected sanitized bind error", err)
+		}
+	}
+}
+
+func TestObjectStorageCredentialsRejectPlaintext(t *testing.T) {
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c.Request = httptest.NewRequest("POST", "/", strings.NewReader(`{"name":"test","encryptedAccessID":"DO_NOT_ECHO","encryptedAccessKey":"plaintext"}`))
+	if _, err := CreateObjectStorageCredentials(c); err == nil || strings.Contains(err.Error(), "DO_NOT_ECHO") {
+		t.Fatal("plaintext credentials must be rejected before Kubernetes access", err)
+	}
+}

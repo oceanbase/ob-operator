@@ -1,0 +1,10 @@
+# Configure only mirrors supplied by your registry administrator.
+mirrors: {}
+# Example structure (replace the reserved example host with your mirror):
+# mirrors:
+#   docker.io:
+#     endpoint: ["https://dockerhub-mirror.example.org"]
+#   quay.io:
+#     endpoint: ["https://quay-mirror.example.org"]
+#   ghcr.io:
+#     endpoint: ["https://ghcr-mirror.example.org"]

@@ -19,6 +19,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	cmdconst "github.com/oceanbase/ob-operator/internal/const/cmd"
 	"github.com/oceanbase/ob-operator/pkg/helper"
 )
 
@@ -33,7 +34,7 @@ var versionCmd = &cobra.Command{
 		ver, err := helper.GetCurrentVersion(DefaultHomePath)
 		if err != nil {
 			cmd.PrintErrf("Version command failed, %v \n", err)
-			os.Exit(1)
+			os.Exit(int(cmdconst.ExitCodeNotExecuted))
 		}
 		cmd.Println(ver)
 	},

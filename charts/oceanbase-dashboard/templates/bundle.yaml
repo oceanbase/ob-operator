@@ -15,13 +15,29 @@ spec:
       app: oceanbase-dashboard-{{ .Release.Name }}
   template:
     metadata:
+      annotations:
+        checksum/dashboard-config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
       labels:
         app: oceanbase-dashboard-{{ .Release.Name }}
     spec:
+      {{- with .Values.sharedVolume.seLinuxLevel }}
+      securityContext:
+        seLinuxOptions:
+          level: {{ . | quote }}
+      {{- end }}
+      automountServiceAccountToken: false
       serviceAccountName: {{ .Release.Name }}-sa
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       initContainers:
         - name: prometheus-storage-owner-init
-          image: busybox:latest
+          image: {{ .Values.utilityImage | quote }}
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "chown -R 65534:65534 /prometheus"]
           volumeMounts:
@@ -29,7 +45,7 @@ spec:
               mountPath: /prometheus/
       containers:
         - name: dashboard
-          image: quay.io/oceanbase/oceanbase-dashboard:{{ .Chart.AppVersion }}
+          image: {{ .Values.image | default (printf "quay.io/oceanbase/oceanbase-dashboard:%s" .Chart.AppVersion) | quote }}
           resources:
             requests:
               cpu: 100m
@@ -39,7 +55,24 @@ spec:
               memory: 4Gi
           ports:
             - containerPort: 8080
+          startupProbe:
+            httpGet:
+              path: /api/v1/info
+              port: 8080
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /api/v1/info
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
           volumeMounts:
+            - name: api-access
+              mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+              readOnly: true
             - name: alertmanager-config-volume
               mountPath: /etc/alertmanager
             - name: prometheus-rules-volume
@@ -52,8 +85,12 @@ spec:
               mountPath: /etc/dashboard/config.yaml
               subPath: config.yaml
           env:
+            - name: REQUIRE_PASSWORD_RESET_ON_FIRST_LOGIN
+              value: {{ .Values.requirePasswordResetOnFirstLogin | quote }}
             - name: SHARED_VOLUME_PVC_NAME
-              value: {{ .Release.Name }}-shared-volume-pvc
+              value: {{ include "oceanbase-dashboard.sharedClaim" . | quote }}
+            - name: SHARED_VOLUME_SELINUX_LEVEL
+              value: {{ .Values.sharedVolume.seLinuxLevel | default "" | quote }}
             - name: SHARED_VOLUME_MOUNT_PATH
               value: /shared-data
             - name: USER_CREDENTIALS_SECRET
@@ -75,7 +112,7 @@ spec:
             - name: SERVICE_ACCOUNT
               value: {{ .Release.Name }}-sa
         - name: prometheus
-          image: quay.io/prometheus/prometheus:v2.51.1
+          image: {{ .Values.prometheus.image | quote }}
           resources:
             requests:
               cpu: 100m
@@ -86,7 +123,17 @@ spec:
           command: ["sh", "-c", "cp /etc/cfg/prometheus/rules/prometheus.rules /etc/prometheus/rules/prometheus.rules && /bin/prometheus --config.file=/etc/prometheus/prometheus.yml --storage.tsdb.path=/prometheus --web.enable-lifecycle"]
           ports:
             - containerPort: 9090
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9090
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
           volumeMounts:
+            - name: api-access
+              mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+              readOnly: true
             - name: prometheus-rules-readonly-volume
               mountPath: /etc/cfg/prometheus/rules
             - name: prometheus-config-volume
@@ -96,11 +143,18 @@ spec:
             - name: prometheus-rules-volume
               mountPath: /etc/prometheus/rules/
         - name: alertmanager
-          image: quay.io/prometheus/alertmanager:v0.27.0
+          image: {{ .Values.alertmanager.image | quote }}
           command: ["sh", "-c", "cp /etc/cfg/alertmanager/alertmanager.yml /etc/alertmanager/alertmanager.yml && /bin/alertmanager --config.file=/etc/alertmanager/alertmanager.yml --storage.path=/alertmanager"]
           ports:
             - name: alertmanager
               containerPort: 9093
+          readinessProbe:
+            httpGet:
+              path: /-/ready
+              port: 9093
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
           resources:
             requests:
               cpu: 500m
@@ -116,6 +170,17 @@ spec:
             - name: alertmanager-config-readonly-volume
               mountPath: /etc/cfg/alertmanager
       volumes:
+        - name: api-access
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  expirationSeconds: 3600
+              - configMap:
+                  name: kube-root-ca.crt
+                  items: [{key: ca.crt, path: ca.crt}]
+              - downwardAPI:
+                  items: [{path: namespace, fieldRef: {apiVersion: v1, fieldPath: metadata.namespace}}]
         - name: prometheus-config-volume
           configMap:
             name: {{ .Release.Name }}-prometheus-server-conf
@@ -125,7 +190,7 @@ spec:
         - name: prometheus-storage-volume
           {{- if .Values.prometheus.persistence.enabled }}
           persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-prometheus-pvc
+            claimName: {{ include "oceanbase-dashboard.prometheusClaim" . }}
           {{- else }}
           emptyDir: {}
           {{- end }}
@@ -144,20 +209,24 @@ spec:
         - name: shared-volume
           {{- if .Values.sharedVolume.persistence.enabled }}
           persistentVolumeClaim:
-            claimName: {{ .Release.Name }}-shared-volume-pvc
+            claimName: {{ include "oceanbase-dashboard.sharedClaim" . }}
           {{- else }}
           emptyDir: {}
           {{- end }}
         - name: config-volume
           configMap:
             name: {{ .Release.Name }}-dashboard-config
-{{- if .Values.prometheus.persistence.enabled }}
+{{- if and .Values.prometheus.persistence.enabled .Values.prometheus.persistence.create (not .Values.prometheus.persistence.existingClaim) }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ .Release.Name }}-prometheus-pvc
   namespace: {{ .Release.Namespace }}
+  {{- if .Values.retainData }}
+  annotations:
+    helm.sh/resource-policy: keep
+  {{- end }}
 spec:
   accessModes:
     - {{ .Values.prometheus.persistence.accessMode }}
@@ -168,13 +237,17 @@ spec:
   storageClassName: {{ .Values.prometheus.persistence.storageClassName }}
   {{- end }}
 {{- end }}
-{{- if .Values.sharedVolume.persistence.enabled }}
+{{- if and .Values.sharedVolume.persistence.enabled .Values.sharedVolume.persistence.create (not .Values.sharedVolume.persistence.existingClaim) }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: {{ .Release.Name }}-shared-volume-pvc
   namespace: {{ .Release.Namespace }}
+  {{- if .Values.retainData }}
+  annotations:
+    helm.sh/resource-policy: keep
+  {{- end }}
 spec:
   accessModes:
     - {{ .Values.sharedVolume.persistence.accessMode }}

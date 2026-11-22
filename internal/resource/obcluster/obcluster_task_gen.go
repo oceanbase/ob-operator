@@ -9,6 +9,7 @@ func init() {
 	taskMap.Register(tCreateOBZone, CreateOBZone)
 	taskMap.Register(tWaitLogServiceReady, WaitLogServiceReady)
 	taskMap.Register(tBootstrap, Bootstrap)
+	taskMap.Register(tDispatchClassicBootstrap, DispatchClassicBootstrap)
 	taskMap.Register(tCreateUsers, CreateUsers)
 	taskMap.Register(tMaintainOBParameter, MaintainOBParameter)
 	taskMap.Register(tValidateUpgradeInfo, ValidateUpgradeInfo)

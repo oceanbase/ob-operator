@@ -1,0 +1,4 @@
+.env
+secrets/
+*.tar
+*.tar.gz
