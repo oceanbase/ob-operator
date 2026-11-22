@@ -9,6 +9,7 @@ import hashlib
 import importlib.util
 import io
 import json
+import re
 from pathlib import Path
 import shlex
 import shutil
@@ -52,15 +53,47 @@ def rendering(lock):
 
 
 class HelmSourceProvenanceTests(unittest.TestCase):
-    def test_exported_source_without_git_executable(self):
+    @classmethod
+    def setUpClass(cls):
         spec = importlib.util.spec_from_file_location('helm_release', HERE / 'build-helm-release.py')
-        builder = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(builder)
+        cls.builder = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.builder)
+
+    def test_exported_source_without_git_executable(self):
         with tempfile.TemporaryDirectory() as source, mock.patch.dict('os.environ', {'PATH': source}):
-            metadata, patch = builder.source_provenance(Path(source), {})
+            metadata, patch = self.builder.source_provenance(Path(source), {})
         self.assertEqual(metadata, {'source_commit': None, 'source_worktree_dirty': None,
                                     'git_metadata_available': False})
         self.assertEqual(patch, '')
+
+    @unittest.skipUnless(shutil.which('helm'), 'Helm CLI required')
+    def test_packaged_chart_preserves_cert_manager_license_and_notices(self):
+        prerequisites = HERE / 'prerequisites'
+        manifest = (prerequisites / 'cert-manager-locked.yaml').read_text()
+        lock = BUILDER.load_lock(HERE / 'testdata/native-images.lock.json')
+        for image in lock['images']:
+            image['manifest_digest'] = image['image_id']  # synthetic packaging fixture
+        for ref, role, digest in sorted(set(re.findall(
+                r'([^"\s=]+/(cert-manager-[a-z0-9]+)@(sha256:[0-9a-f]{64}))', manifest))):
+            lock['images'].append({'role': role, 'reference': ref, 'manifest_digest': digest,
+                                   'image_id': digest, 'platform': lock['platform']})
+        with tempfile.TemporaryDirectory() as tmp:
+            result = self.builder.build_release(HERE.parents[1], lock, Path(tmp) / 'release')
+            with tarfile.open(result['chart']) as chart:
+                prefix = 'oceanseek/licenses/cert-manager/'
+                license_text = chart.extractfile(prefix + 'LICENSE').read()
+                self.assertEqual(hashlib.sha256(license_text).hexdigest(),
+                                 'c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4')
+                notice = chart.extractfile(prefix + 'NOTICE.txt').read().decode()
+                self.assertIn('Copyright 2022 The cert-manager Authors.', notice)
+                self.assertIn('Apache License, Version 2.0', notice)
+                foundation = json.load(chart.extractfile('oceanseek/files/prerequisites/foundation.json'))
+                self.assertIn('licenses/cert-manager/NOTICE.txt', foundation['certManagerNotice'])
+                crds = [name for name in chart.getnames()
+                        if name.startswith('oceanseek/crds/') and name.endswith('.cert-manager.io.yaml')]
+                self.assertTrue(crds)
+                for name in crds:
+                    self.assertIn(b'licenses/cert-manager/NOTICE.txt', chart.extractfile(name).readline())
 
 
 class ReleaseContractTests(unittest.TestCase):

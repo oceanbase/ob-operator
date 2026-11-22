@@ -149,11 +149,28 @@ def write_foundation(chart, cert_manager, operator, operator_crds, roles):
     crds.mkdir()
     for path in operator_crds:
         shutil.copy2(path, crds / path.name)
-    cert_objects = [obj for obj in yaml.safe_load_all(cert_manager.read_bytes()) if obj]
+    license_dir = chart / 'licenses/cert-manager'
+    license_dir.mkdir(parents=True)
+    shutil.copyfile(cert_manager.parent / 'licenses/cert-manager/LICENSE', license_dir / 'LICENSE')
+    manifest = cert_manager.read_text()
+    header = []
+    for line in manifest.splitlines():
+        if line and not line.startswith('#'):
+            break
+        header.append(line.lstrip('# ').rstrip())
+    notice = ('OceanSeek split and reformatted the cert-manager manifest for Helm. '
+              'See licenses/cert-manager/NOTICE.txt and LICENSE in that directory.')
+    (license_dir / 'NOTICE.txt').write_text(
+        'cert-manager Kubernetes manifest\n'
+        'Upstream project: https://github.com/cert-manager/cert-manager\n'
+        'OceanSeek separates the manifest into CRDs and Helm hook resources.\n\n'
+        + ('\n'.join(header).strip() or 'Copyright 2022 The cert-manager Authors.') + '\n')
+    cert_objects = [obj for obj in yaml.safe_load_all(manifest) if obj]
     images = {}
     for obj in cert_objects:
         if obj['kind'] == 'CustomResourceDefinition':
-            native.write_yaml(crds / (obj['metadata']['name'] + '.yaml'), obj)
+            crd = crds / (obj['metadata']['name'] + '.yaml')
+            crd.write_text('# ' + notice + '\n' + yaml.safe_dump(obj, sort_keys=False))
         if obj['kind'] == 'Deployment':
             for container in obj['spec']['template']['spec']['containers']:
                 images[container['name']] = container['image']
@@ -163,6 +180,7 @@ def write_foundation(chart, cert_manager, operator, operator_crds, roles):
     if images != {role: roles[role]['reference'] for role in CERT_MANAGER_ROLES}:
         raise ValueError('Bundled cert-manager images must match the Helm image lock')
     native.write_json(chart / 'files/prerequisites/foundation.json', {
+        'certManagerNotice': notice,
         'certManager': [obj for obj in cert_objects if obj['kind'] != 'CustomResourceDefinition'],
         'operator': [
             {'apiVersion': 'v1', 'kind': 'Namespace', 'metadata': {'name': 'oceanbase-system'}},
