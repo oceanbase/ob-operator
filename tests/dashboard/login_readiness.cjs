@@ -30,8 +30,17 @@ const config = JSON.parse(
       if (u.origin === config.url && /\.(js|css)$/.test(u.pathname))
         assets.push({ path: u.pathname, status: r.status() });
     });
+    // Submit from a fresh browser before the first public-key response arrives.
+    let releasePublicKey;
+    const submitted = new Promise((resolve) => {
+      releasePublicKey = resolve;
+    });
+    await page.route('**/api/v1/info', async (route) => {
+      await submitted;
+      await route.continue();
+    });
     await page.goto(config.url + '/#/login', {
-      waitUntil: 'networkidle',
+      waitUntil: 'domcontentloaded',
       timeout: 60000,
     });
     await page.getByPlaceholder('Username', { exact: true }).fill('admin');
@@ -41,8 +50,20 @@ const config = JSON.parse(
     const login = page.waitForResponse(
       (r) => new URL(r.url()).pathname === '/api/v1/login'
     );
-    await page.locator('button[type=submit]').click();
+    try {
+      await page.locator('button[type=submit]').click();
+    } finally {
+      releasePublicKey();
+    }
     const response = await login;
+    const encryptedPassword = response.request().postDataJSON().password;
+    if (
+      typeof encryptedPassword !== 'string' ||
+      !encryptedPassword ||
+      encryptedPassword === config.password
+    ) {
+      throw Error('Cold login must submit an encrypted password');
+    }
     const loginBody = await response.json();
     if (!loginBody.successful) throw Error('Browser login rejected');
     await page.waitForURL((u) => u.hash !== '#/login', { timeout: 30000 });
