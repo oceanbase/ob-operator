@@ -13,6 +13,6 @@ dependencies:
   condition: dashboard.enabled
 - name: oceanbase-minio
   alias: minio
-  version: 0.2.3
+  version: 0.2.4
   repository: file://../oceanbase-minio
   condition: minio.enabled

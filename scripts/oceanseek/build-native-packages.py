@@ -349,7 +349,7 @@ def compose_env(lock, publication_verified=False):
                    else 'Registry publication is not verified.')
     lines = ['# Generated from release-images.lock.json. ' + publication,
              '# Set IMAGE_REGISTRY only to a registry/namespace containing these exact builds.',
-             'IMAGE_REGISTRY=', '',
+             'IMAGE_REGISTRY=', 'OCEANSEEK_PLATFORM=' + lock['platform'], '',
              '# SQL, obshell Dashboard, Prometheus and Alertmanager are published by default.',
              '# Empty auto-detects the default-route source IP; set this for multi-NIC/NAT hosts.',
              'HOST_ACCESS_IP=',
@@ -419,7 +419,7 @@ def copy_chart(source, target):
 def clean_compose_env():
     # Build-time host overrides must not silently change the release contents.
     return {key: value for key, value in os.environ.items()
-            if key not in ENV_ROLES and key not in ('IMAGE_REGISTRY', 'OCEANBASE_IMAGE_REGISTRY') and not key.startswith('COMPOSE_')}
+            if key not in ENV_ROLES and key not in ('IMAGE_REGISTRY', 'OCEANBASE_IMAGE_REGISTRY', 'OCEANSEEK_PLATFORM') and not key.startswith('COMPOSE_')}
 
 
 def write_standalone_compose(source, target, lock):
@@ -443,6 +443,7 @@ def write_standalone_compose(source, target, lock):
         roles = validate_lock(lock)
     configs = document.setdefault('configs', {})
     for name, service in document['services'].items():
+        service['platform'] = lock['platform']
         service['image'] = roles[SERVICE_ROLES[name]]['reference']
         retained = []
         for mount in service.get('volumes', []):
