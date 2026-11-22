@@ -112,12 +112,10 @@ func writePrivate(path string, data []byte) error {
 	}
 	defer os.Remove(file.Name())
 	if _, err = file.Write(data); err != nil {
-		file.Close()
-		return err
+		return errors.Join(err, file.Close())
 	}
 	if err = file.Sync(); err != nil {
-		file.Close()
-		return err
+		return errors.Join(err, file.Close())
 	}
 	if err = file.Close(); err != nil {
 		return err

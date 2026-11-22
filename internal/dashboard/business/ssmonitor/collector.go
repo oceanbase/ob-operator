@@ -59,7 +59,7 @@ type emitter struct {
 
 func (e *emitter) emit(name, kind string, labels map[string]string, value float64) {
 	if !e.typed[name] {
-		fmt.Fprintf(&e.Buffer, "# TYPE %s %s\n", name, kind)
+		_, _ = fmt.Fprintf(&e.Buffer, "# TYPE %s %s\n", name, kind)
 		e.typed[name] = true
 	}
 	keys := make([]string, 0, len(labels))
@@ -71,7 +71,7 @@ func (e *emitter) emit(name, kind string, labels map[string]string, value float6
 	for _, k := range keys {
 		parts = append(parts, k+"="+strconv.Quote(labels[k]))
 	}
-	fmt.Fprintf(&e.Buffer, "%s{%s} %g\n", name, strings.Join(parts, ","), value)
+	_, _ = fmt.Fprintf(&e.Buffer, "%s{%s} %g\n", name, strings.Join(parts, ","), value)
 }
 func labelsWith(base map[string]string, key, value string) map[string]string {
 	m := make(map[string]string, len(base)+1)
@@ -274,8 +274,8 @@ func queryStats(ctx context.Context, s *ls.Service, c *ob.OBCluster) ([]sample, 
 		db := sql.OpenDB(connector)
 		db.SetMaxOpenConns(1)
 		samples, err := readStats(ctx, db, query)
-		db.Close()
-		if err == nil {
+		closeErr := db.Close()
+		if err == nil && closeErr == nil {
 			return samples, nil
 		}
 		if ctx.Err() != nil {

@@ -36,13 +36,11 @@ func databaseTerminalCommand(term *response.OBConnection) ([]string, *os.File, e
 			return nil, nil, err
 		}
 		if err := os.Remove(file.Name()); err != nil {
-			file.Close()
-			return nil, nil, err
+			return nil, nil, errors.Join(err, file.Close())
 		}
 		escape := strings.NewReplacer(`\`, `\\`, `"`, `\"`, "\n", `\n`, "\r", `\r`, "\t", `\t`, "\b", `\b`)
 		if _, err := fmt.Fprintf(file, "[client]\npassword=\"%s\"\n", escape.Replace(term.Password)); err != nil {
-			file.Close()
-			return nil, nil, err
+			return nil, nil, errors.Join(err, file.Close())
 		}
 		options = file
 		command = append(command, fmt.Sprintf("--defaults-extra-file=/proc/%d/fd/%d", os.Getpid(), file.Fd()))
