@@ -12,9 +12,9 @@ import { createClusterReportWrap } from '@/services/reportRequest/clusterReportR
 import { strTrim } from '@/utils/helper';
 import BackUp from './BackUp';
 import BasicInfo from './BasicInfo';
-import OceanSeekReview from './OceanSeekReview';
 import Monitor from './Monitor';
 import Observer from './Observer';
+import OceanSeekReview from './OceanSeekReview';
 import Parameters from './Parameters';
 import SharedStorage, { StorageArchitecture } from './SharedStorage';
 import Topo from './Topo';
