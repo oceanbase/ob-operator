@@ -1,21 +1,8 @@
-# 湖库 SS / LogService 测试交接
-
-2026 年 9 月功能验收基线为 `fd0f9362`（已有 LogService / oceanbase.ai CRD 和控制器）。本文记录当时的功能验收范围。
-
-## 包含的改动
-
-- Operator：LogService 日志 PVC namespace、异步任务快照与失败恢复修复；SS Zone 对象存储属性的 ADD/DROP 兼容处理。
-- Dashboard：LogService 创建、列表、详情、已有 Zone 内副本扩缩容、引用中的删除保护。
-- 湖库入口、四步创建向导、内嵌创建/关联 LogService、计算与缓存展示；OB 数据对象存储和 LS 日志对象存储分开配置。
-- Endpoint / Bucket / Region / 前缀与高级 URL 双向切换、同命名空间 Secret 引用/创建、只读 HeadBucket 检查及独立权限控制。
-- LS、对象存储、缓存专项采集、图表和告警；修复时间轴、无效事件时间、告警深链接、SS 向导初始白屏及静态资源缓存问题。
-- 创建阶段要求 LS 初始节点总数为 3；SS 缓存盘至少 50 GiB，普通模式的 30 GiB 最小配置不变。均有前后端校验。
+# OceanSeek 共享存储与 LogService 回归测试
 
 ## 环境要求与构建
 
-已验证组合为 OceanBase AI 4.6.2.0、LogService 1.3.0、S3 兼容 MinIO。镜像及其访问权限需由测试环境提供；本分支不包含数据库商业镜像、对象存储账号、真实 kubeconfig 或运行日志。
-
-需要 Go 1.25、Node.js 18+ / Yarn 1，以及可运行对应镜像的 Kubernetes、可用 StorageClass、已安装的本分支 CRD / Operator。用独立命名空间、独立数据/日志 Bucket 或不重叠前缀做验收，不对已有业务集群做破坏性测试。
+准备 Go 1.25、Node.js 18+ 和 Yarn 1。页面验收需要 Kubernetes、可用的 StorageClass、待测版本的 CRD 和 Operator，以及 OceanBase、LogService 和 S3 兼容对象存储。每次验收使用独立的命名空间，并为数据和日志分配独立的 Bucket 或不重叠的前缀。
 
 从仓库根目录构建 UI 与两个后端（二进制构建示例为 linux/amd64）：
 
@@ -31,7 +18,7 @@ CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/manager ./cmd/operator
 
 需要构建镜像时使用已有的 `build/Dockerfile.dashboard` 和 `build/Dockerfile.operator`，分别打自己的测试标签，不覆盖正式镜像。以上快速二进制编译不注入发布版本元数据；正式构建流程见 `make/dashboard.mk` / `make/build.mk`。
 
-部署时同时使用本分支 `charts/oceanbase-dashboard` 的 Prometheus 采集配置与告警规则，不能只更换 UI。独立 Dashboard Chart 可通过 `image` 指定已验证的湖库镜像；湖库 Chart 0.2.0 默认集成 Dashboard，对应字段为 `dashboard.image`，可用 `dashboard.enabled=false` 关闭。测试包应按 `image-lock.json` 指定实际交付镜像，不能只 checkout 分支就认为已部署新代码。使用独立登录凭据：湖库 Chart 自动生成初始密码并保留升级后的账号与角色；独立 Chart 应显式传入密码。本文不提供对现有环境直接执行的升级/删除命令。
+页面验收使用同一版本的 Dashboard 前后端，以及 `charts/oceanbase-dashboard` 中的 Prometheus 采集配置和告警规则。独立 Dashboard Chart 通过 `image` 指定镜像，OceanSeek Chart 通过 `dashboard.image` 指定镜像。使用发布包时，按包内的 `image-lock.json` 核对实际部署的镜像。
 
 ## 可重复的定向测试
 
@@ -87,19 +74,3 @@ helm template dashboard-qa charts/oceanbase-dashboard |
 | 普通模式回归 | 原有创建、列表、详情、告警正常，最小 data 仍为 30 GiB |
 
 每个写操作均记录页面结果、HTTP 状态、CR 状态及 Pods/PVC 终态。不能只以请求 200 或 Pod Ready 代替完整业务就绪。测试完成后，仅按明确的命名空间和资源名清理自建资源，保留所需证据；不要强制删除 finalizer。
-
-## 已验收范围和已知限制
-
-2026-09-21 已完成真实登录后的向导、LS 创建和 3→4→3、SS 50 GiB 创建至 running、关联删除保护及专项图表验收；前端回归 25/25、构建通过，定向 Go 测试通过。现场最终镜像发布检查 33/33、补充状态检查 5/5 通过。
-
-边界需保留：最后一次页面创建使用新 UI 和上一版后端；最终后端增加的缓存下限由 Go 测试覆盖。最终整包重启后未再次完成登录后的全流程验收，测试同学仍应按上表在本分支独立构建部署后复测。
-
-- LS 仅支持已有 Zone 内副本扩缩容；不开放在线加减 Zone、换镜像或调整 CPU/内存/磁盘。
-- SS 数据存储位置、LS 关联为创建时配置，不支持在线迁移 Bucket、切换 LS、凭据轮换或 SS 镜像升级。
-- 当前表单支持已验证 S3 子集；不声称支持所有 OSS 供应商、STS 或所有数据库版本。
-- HeadBucket 只验证 Dashboard 后端对此 Bucket 的本次访问，不证明对象读写/删除、前缀权限或所有数据库节点的连通性。
-- 压测、节点故障注入、多供应商对象存储兼容和完整业务 SQL 读写不在本轮页面验收范围内。
-- 全量 TypeScript 检查仍有 486 项既有错误；全量 OceanBase business Ginkgo 有两项既有失败（affinity operator 空值/In、usage 13/6）。不将定向测试等同于全仓库测试通过。
-- Dashboard Pod 重启可能使现有登录失效，需要正常重新登录，不应重置账号来绕过。
-
-现场日志、截图、一次性主机脚本与已发布二进制仅在测试环境保留，不随分支提交；单元测试中的地址和密钥均为示例或哨兵值。

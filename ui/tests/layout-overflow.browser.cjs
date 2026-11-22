@@ -9,7 +9,7 @@ const less = require('less');
 const root = path.resolve(__dirname, '..');
 const output =
   process.env.OUTPUT_DIR ||
-  path.resolve(root, '../testreports/dima-dashboard-layout/browser');
+  path.resolve(root, '../testreports/dashboard-layout/browser');
 const mocks = {
   '@umijs/max': `import React from 'react';
     export const history={push:(p)=>{window.history.pushState({},'',p);window.dispatchEvent(new Event('popstate'));}};
