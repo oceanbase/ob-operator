@@ -1,5 +1,7 @@
 import { getAppInfo } from '@/services';
+import { intl } from '@/utils/intl';
 import { useModel } from '@umijs/max';
+import { message } from 'antd';
 import JSEncrypt from 'jsencrypt';
 import { useEffect } from 'react';
 
@@ -27,3 +29,20 @@ export const encryptText = (
   encrypt.setPublicKey(publicKey);
   return encrypt.encrypt(text);
 };
+
+
+// A new login or password-reset page can be submitted before its first request completes.
+export async function encryptPassword(value: string): Promise<string | undefined> {
+  const { data } = await getAppInfo();
+  const encrypted = data?.publicKey && encryptText(value, data.publicKey);
+  if (!encrypted) {
+    message.error(
+      intl.formatMessage({
+        id: 'dashboard.password.EncryptionFailed',
+        defaultMessage: '密码加密失败，请重试',
+      }),
+    );
+    return;
+  }
+  return encrypted;
+}

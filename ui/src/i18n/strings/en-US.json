@@ -104,7 +104,7 @@
   "dashboard.Layouts.BasicLayout.PersonalSettings": "Personal Settings",
   "dashboard.Layouts.BasicLayout.ChangePassword": "Change password",
   "dashboard.Layouts.BasicLayout.LogOut": "Log out",
-  "dashboard.pages.Login.EncryptionFailed": "Could not encrypt the password. Please try again.",
+  "dashboard.password.EncryptionFailed": "Could not encrypt the password. Please try again.",
   "dashboard.pages.Login.Login": "Login",
   "dashboard.pages.Overview.EventsTable.ClusterName": "Cluster name",
   "dashboard.pages.Overview.EventsTable.Status": "Status",

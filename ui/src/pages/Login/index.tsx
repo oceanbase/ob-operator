@@ -1,13 +1,12 @@
 import { intl } from '@/utils/intl';
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { useModel, useNavigate } from '@umijs/max';
-import { Button, Form, Input, message } from 'antd';
+import { Button, Form, Input } from 'antd';
 import React, { useState } from 'react';
 
 import { user } from '@/api';
 import logoSrc from '@/assets/oceanbase_logo.svg';
-import { encryptText } from '@/hook/usePublicKey';
-import { getAppInfo } from '@/services';
+import { encryptPassword } from '@/hook/usePublicKey';
 import styles from './index.less';
 
 const Login: React.FC = () => {
@@ -18,15 +17,8 @@ const Login: React.FC = () => {
   const onFinish = async (values: API.User) => {
     setLoading(true);
     try {
-      const { data } = await getAppInfo();
-      const password = data?.publicKey && encryptText(values.password, data.publicKey);
-      if (!password) {
-        message.error(intl.formatMessage({
-          id: 'dashboard.pages.Login.EncryptionFailed',
-          defaultMessage: '密码加密失败，请重试',
-        }));
-        return;
-      }
+      const password = await encryptPassword(values.password);
+      if (!password) return;
       const res = await user.login({ ...values, password });
       if (res.successful) {
         // Navigation must wait for account information and permissions, even
