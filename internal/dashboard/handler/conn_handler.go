@@ -321,6 +321,14 @@ func ConnectDatabase(c *gin.Context) (*response.OBConnection, error) {
 		rowsNum = uint16(i)
 	}
 
+	cmdArgs, options, err := databaseTerminalCommand(term)
+	if err != nil {
+		return nil, httpErr.NewInternal("cannot prepare database terminal credentials")
+	}
+	if options != nil {
+		defer options.Close()
+	}
+
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		return nil, httpErr.NewInternal(err.Error())
@@ -335,7 +343,6 @@ func ConnectDatabase(c *gin.Context) (*response.OBConnection, error) {
 	wsOut := newWsWrapper(conn, cancel)
 	wsIn := newWsWrapper(conn, cancel)
 
-	cmdArgs := databaseTerminalCommand(term)
 	sizeQueue := k8s.NewResizeQueue()
 	sizeQueue.SetSize(colsNum, rowsNum)
 

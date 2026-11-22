@@ -1,4 +1,4 @@
-package lakehouse_test
+package oceanseek_test
 
 import (
 	"bytes"
@@ -200,7 +200,7 @@ func renderWithDiscovery(t *testing.T, kubeconfig string, values map[string]inte
 	if err := os.WriteFile(file, data, 0600); err != nil {
 		t.Fatal(err)
 	}
-	args := []string{"template", "qa", ".", "-n", "qa-ns", "-f", file,
+	args := []string{"template", "qa", ".", "-n", "qa-ns", "-f", "testdata/release-images.yaml", "-f", file,
 		"--set", "stage=cluster", "--dry-run=server", "--kubeconfig", kubeconfig}
 	// helm template uses explicit capabilities even with server-side lookup.
 	if oceanbaseAPI {

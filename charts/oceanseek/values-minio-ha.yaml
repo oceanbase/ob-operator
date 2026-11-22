@@ -10,4 +10,4 @@ minio:
     drivesPerNode: 1
     driveSize: 100Gi
   # Optional: select a pool of at least three workers with a common label.
-  # nodeSelector: {lakehouse-minio: "true"}
+  # nodeSelector: {oceanseek-minio: "true"}

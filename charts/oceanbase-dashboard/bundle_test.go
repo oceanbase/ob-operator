@@ -2,6 +2,7 @@ package dashboard_test
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -20,14 +21,18 @@ import (
 
 type dashboardManifest = map[string]interface{}
 
-func renderDashboard(t *testing.T, namespace string, args ...string) []dashboardManifest {
-	t.Helper()
+func dashboardTemplate(namespace string, args ...string) ([]byte, error) {
 	helm := os.Getenv("HELM_BINARY")
 	if helm == "" {
 		helm = "helm"
 	}
 	cmd := append([]string{"template", "qa", ".", "-n", namespace}, args...)
-	output, err := exec.Command(helm, cmd...).CombinedOutput()
+	return exec.Command(helm, cmd...).CombinedOutput()
+}
+
+func renderDashboard(t *testing.T, namespace string, args ...string) []dashboardManifest {
+	t.Helper()
+	output, err := dashboardTemplate(namespace, args...)
 	if err != nil {
 		t.Fatalf("helm template: %v\n%s", err, output)
 	}
@@ -256,6 +261,8 @@ func TestRetainedAccountsAndRBACSurviveUpgrade(t *testing.T) {
 			fmt.Fprint(w, `{"kind":"APIGroupList","apiVersion":"v1","groups":[]}`)
 		case "/api/v1":
 			fmt.Fprint(w, `{"kind":"APIResourceList","apiVersion":"v1","groupVersion":"v1","resources":[{"name":"configmaps","kind":"ConfigMap","namespaced":true,"verbs":["get"]},{"name":"secrets","kind":"Secret","namespaced":true,"verbs":["get"]}]}`)
+		case "/api/v1/namespaces/qa-partial/secrets/qa-dashboard-bootstrap":
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{"apiVersion": "v1", "kind": "Secret", "metadata": map[string]string{"name": "qa-dashboard-bootstrap", "namespace": "qa-partial"}, "data": map[string]string{"password": encode("superseded")}})
 		case "/api/v1/namespaces/qa-ns/secrets/qa-user-credentials":
 			_ = json.NewEncoder(w).Encode(map[string]interface{}{"apiVersion": "v1", "kind": "Secret", "metadata": map[string]string{"name": "qa-user-credentials", "namespace": "qa-ns"}, "data": accounts})
 		case "/api/v1/namespaces/qa-ns/configmaps/qa-rbac-policy":
@@ -291,6 +298,10 @@ func TestRetainedAccountsAndRBACSurviveUpgrade(t *testing.T) {
 	if dashboardField(cm, "metadata", "annotations", "helm.sh/resource-policy") != "keep" {
 		t.Fatal("authorization state is not retained")
 	}
+	output, err := dashboardTemplate("qa-partial", "--dry-run=server", "--kubeconfig", kubeconfig)
+	if err == nil || !strings.Contains(string(output), "restore Dashboard account Secret qa-user-credentials") {
+		t.Fatal("a surviving bootstrap password must not recreate lost accounts")
+	}
 }
 
 func TestMonitoringSidecarsGateReadiness(t *testing.T) {
@@ -318,14 +329,14 @@ func TestMonitoringSidecarsGateReadiness(t *testing.T) {
 
 func TestDashboardSchedulingAndNodePort(t *testing.T) {
 	docs := renderDashboard(t, "qa-ns", "--set-string", "nodeSelector.kubernetes\\.io/hostname=worker-a",
-		"--set-string", "tolerations[0].key=dedicated,tolerations[0].operator=Equal,tolerations[0].value=lakehouse,tolerations[0].effect=NoSchedule",
+		"--set-string", "tolerations[0].key=dedicated,tolerations[0].operator=Equal,tolerations[0].value=oceanseek,tolerations[0].effect=NoSchedule",
 		"--set", "service.type=NodePort,service.nodePort=32101")
 	deployment := dashboardObject(t, docs, "Deployment", "oceanbase-dashboard-qa")
 	if dashboardField(deployment, "spec", "template", "spec", "nodeSelector", "kubernetes.io/hostname") != "worker-a" {
 		t.Fatal("Dashboard must follow the selected worker")
 	}
 	tolerations := dashboardField(deployment, "spec", "template", "spec", "tolerations").([]interface{})
-	want := map[string]interface{}{"key": "dedicated", "operator": "Equal", "value": "lakehouse", "effect": "NoSchedule"}
+	want := map[string]interface{}{"key": "dedicated", "operator": "Equal", "value": "oceanseek", "effect": "NoSchedule"}
 	if len(tolerations) != 1 || !reflect.DeepEqual(tolerations[0], want) {
 		t.Fatalf("unexpected tolerations: %v", tolerations)
 	}
@@ -387,11 +398,11 @@ func TestNotesDescribeActualCredentialOwnership(t *testing.T) {
 			t.Fatal("access command ignored configured service port")
 		}
 		if initialize == "true" {
-			if !strings.Contains(text, "standalone chart default") || !strings.Contains(text, "use the current password") {
+			if !strings.Contains(text, "qa-dashboard-bootstrap") || !strings.Contains(text, "use the current password") {
 				t.Fatal("standalone password guidance incomplete")
 			}
 		} else {
-			if strings.Contains(text, "standalone chart default") || !strings.Contains(text, "provided-users") || !strings.Contains(text, "identity-ns") || !strings.Contains(text, "qa-dashboard-bootstrap") {
+			if !strings.Contains(text, "provided-users") || !strings.Contains(text, "identity-ns") || !strings.Contains(text, "qa-dashboard-bootstrap") {
 				t.Fatal("parent/external credential guidance incorrect")
 			}
 		}
@@ -428,5 +439,53 @@ func TestUtilityAndMonitoringImagesArePinnedAndOverridable(t *testing.T) {
 				t.Fatalf("cleanup image=%v, want %s", got, tc.utility)
 			}
 		})
+	}
+}
+
+func TestFreshDashboardGeneratesIndependentInitialPasswords(t *testing.T) {
+	var previous string
+	for i := 0; i < 2; i++ {
+		docs := renderDashboard(t, "qa-ns")
+		bootstrap := dashboardObject(t, docs, "Secret", "qa-dashboard-bootstrap")
+		password := dashboardField(bootstrap, "data", "password").(string)
+		raw, err := base64.StdEncoding.DecodeString(password)
+		if err != nil || len(raw) != 32 || password == previous {
+			t.Fatal("expected an independent random initial password")
+		}
+		accounts := dashboardObject(t, docs, "Secret", "qa-user-credentials")
+		admin, err := base64.StdEncoding.DecodeString(dashboardField(accounts, "data", "admin").(string))
+		if err != nil || !strings.HasPrefix(string(admin), fmt.Sprintf("%x <|:SEP:|>", sha256.Sum256(raw))) {
+			t.Fatal("generated bootstrap credential does not match the account record")
+		}
+		previous = password
+	}
+}
+
+func TestOnlyDashboardAndPrometheusReceiveAPITokens(t *testing.T) {
+	docs := renderDashboard(t, "qa-ns")
+	deployment := dashboardObject(t, docs, "Deployment", "oceanbase-dashboard-qa")
+	pod := dashboardField(deployment, "spec", "template", "spec").(dashboardManifest)
+	if pod["automountServiceAccountToken"] != false {
+		t.Fatal("Dashboard Pod must select API token mounts explicitly")
+	}
+	for _, group := range []string{"containers", "initContainers"} {
+		for _, raw := range pod[group].([]interface{}) {
+			container := raw.(dashboardManifest)
+			hasToken := false
+			for _, rawMount := range container["volumeMounts"].([]interface{}) {
+				mount := rawMount.(dashboardManifest)
+				if mount["name"] == "api-access" && mount["mountPath"] == "/var/run/secrets/kubernetes.io/serviceaccount" && mount["readOnly"] == true {
+					hasToken = true
+				}
+			}
+			want := container["name"] == "dashboard" || container["name"] == "prometheus"
+			if hasToken != want {
+				t.Errorf("unexpected API token mount on %s", container["name"])
+			}
+		}
+	}
+	cleanup := dashboardObject(t, docs, "CronJob", "qa-cleanup")
+	if dashboardField(cleanup, "spec", "jobTemplate", "spec", "template", "spec", "automountServiceAccountToken") != false {
+		t.Fatal("cleanup CronJob does not need Kubernetes API credentials")
 	}
 }

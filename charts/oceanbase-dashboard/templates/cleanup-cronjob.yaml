@@ -17,6 +17,7 @@ spec:
             seLinuxOptions:
               level: {{ . | quote }}
           {{- end }}
+          automountServiceAccountToken: false
           serviceAccountName: {{ .Release.Name }}-sa
           restartPolicy: OnFailure
           containers:

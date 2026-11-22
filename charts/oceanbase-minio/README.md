@@ -1,9 +1,9 @@
 # Optional MinIO application chart
 
 A single-node MinIO StatefulSet, Service, PVC and retained root credentials.
-This chart does not install the MinIO Operator or manage lakehouse business users.
+This chart does not install the MinIO Operator or manage oceanseek business users.
 
-The lakehouse parent aliases this dependency as `minio` and uses
+The oceanseek parent aliases this dependency as `minio` and uses
 `condition: minio.enabled`. The parent independently selects its storage endpoint:
 a nonempty `objectStorage.endpoint` always wins, even when this dependency is enabled.
 

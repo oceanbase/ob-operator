@@ -8,22 +8,7 @@ import unittest
 
 
 SCRIPT = Path(__file__).resolve().parents[1] / "configure-docker.py"
-MIRRORS = [
-    "https://mirror.ccs.tencentyun.com",
-    "https://registry.docker-cn.com",
-    "https://docker.mirrors.ustc.edu.cn",
-    "https://hub-mirror.c.163.com",
-    "https://docker.1panel.live",
-    "https://docker.1ms.run",
-    "https://dytt.online",
-    "https://lispy.org",
-    "https://docker.xiaogenban1993.com",
-    "https://docker.yomansunter.com",
-    "https://666860.xyz",
-    "https://a.ussh.net",
-    "https://hub.rat.dev",
-    "https://docker.m.daocloud.io",
-]
+MIRROR = "https://registry-mirror.example.org"
 
 
 class ConfigureDockerTests(unittest.TestCase):
@@ -39,13 +24,13 @@ class ConfigureDockerTests(unittest.TestCase):
         )
 
     def test_preview_does_not_write_existing_or_missing_config(self):
-        result = self.run_helper()
+        result = self.run_helper("--mirror", MIRROR)
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(json.loads(result.stdout)["registry-mirrors"], MIRRORS)
+        self.assertEqual(json.loads(result.stdout)["registry-mirrors"], [MIRROR])
         self.assertEqual(list(self.path.parent.iterdir()), [])
         original = '{ "data-root": "/custom/docker" }\n'
         self.path.write_text(original)
-        result = self.run_helper()
+        result = self.run_helper("--mirror", MIRROR)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.path.read_text(), original)
         self.assertEqual(list(self.path.parent.iterdir()), [self.path])
@@ -60,20 +45,20 @@ class ConfigureDockerTests(unittest.TestCase):
         }) + "\n"
         self.path.write_text(original)
         self.path.chmod(0o640)
-        result = self.run_helper("--apply")
+        result = self.run_helper("--apply", "--mirror", MIRROR)
         self.assertEqual(result.returncode, 0, result.stderr)
         config = json.loads(self.path.read_text())
         expected = json.loads(original)
-        expected["registry-mirrors"].extend(MIRRORS)
+        expected["registry-mirrors"].append(MIRROR)
         self.assertEqual(config, expected)
         self.assertEqual(stat.S_IMODE(self.path.stat().st_mode), 0o640)
         backups = list(self.path.parent.glob("daemon.json.backup-*"))
         self.assertEqual(len(backups), 1)
         self.assertEqual(backups[0].read_text(), original)
-        self.assertEqual(self.run_helper("--apply").returncode, 0)
+        self.assertEqual(self.run_helper("--apply", "--mirror", MIRROR).returncode, 0)
         self.assertEqual(len(list(self.path.parent.glob("daemon.json.backup-*"))), 1)
 
-    def test_custom_mirrors_replace_sample_and_deduplicate(self):
+    def test_custom_mirrors_are_deduplicated(self):
         self.path.write_text('{"registry-mirrors":["https://company.example/"]}')
         result = self.run_helper("--apply", "--mirror", "https://company.example",
                                  "--mirror", "https://second.example/")
@@ -82,15 +67,22 @@ class ConfigureDockerTests(unittest.TestCase):
                          ["https://company.example/", "https://second.example"])
 
     def test_new_config_has_defaults_and_no_backup(self):
-        result = self.run_helper("--apply")
+        result = self.run_helper("--apply", "--mirror", MIRROR)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(json.loads(self.path.read_text()), {
-            "registry-mirrors": MIRRORS,
+            "registry-mirrors": [MIRROR],
             "max-concurrent-downloads": 10,
             "max-concurrent-uploads": 5,
         })
-        self.assertEqual(json.loads(self.path.read_text()), json.loads(
-            SCRIPT.with_name("docker-daemon.json").read_text()))
+        self.assertEqual(json.loads(SCRIPT.with_name("docker-daemon.json").read_text())["registry-mirrors"], [])
+        self.assertEqual(list(self.path.parent.iterdir()), [self.path])
+
+    def test_missing_mirror_leaves_existing_config_untouched(self):
+        original = '{"data-root":"/custom/docker"}'
+        self.path.write_text(original)
+        result = self.run_helper("--apply")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.path.read_text(), original)
         self.assertEqual(list(self.path.parent.iterdir()), [self.path])
 
     def test_invalid_config_leaves_original_untouched(self):
@@ -99,7 +91,7 @@ class ConfigureDockerTests(unittest.TestCase):
                         '{"max-concurrent-uploads":0}', '{"debug":true,"debug":false}'):
             with self.subTest(content=content):
                 self.path.write_text(content)
-                result = self.run_helper("--apply")
+                result = self.run_helper("--apply", "--mirror", MIRROR)
                 self.assertNotEqual(result.returncode, 0)
                 self.assertEqual(self.path.read_text(), content)
                 self.assertEqual(list(self.path.parent.iterdir()), [self.path])
@@ -108,7 +100,7 @@ class ConfigureDockerTests(unittest.TestCase):
         target = self.path.parent / "original.json"
         target.write_text("{}")
         self.path.symlink_to(target)
-        result = self.run_helper("--apply")
+        result = self.run_helper("--apply", "--mirror", MIRROR)
         self.assertNotEqual(result.returncode, 0)
         self.assertTrue(self.path.is_symlink())
         self.assertEqual(target.read_text(), "{}")

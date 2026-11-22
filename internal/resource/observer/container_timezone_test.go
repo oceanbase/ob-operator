@@ -31,7 +31,7 @@ func TestObserverContainerTimeZone(t *testing.T) {
 	}
 	for _, tc := range []struct{ name, mode, want string }{
 		{"classic inherits the image time zone", "", ""},
-		{"shared storage uses the lakehouse time zone", oceanbaseconst.DeploymentModeSharedStorage, "Asia/Shanghai"},
+		{"shared storage uses the oceanseek time zone", oceanbaseconst.DeploymentModeSharedStorage, "Asia/Shanghai"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cluster := &v1alpha1.OBCluster{}

@@ -1,4 +1,4 @@
-package lakehouse_test
+package oceanseek_test
 
 import (
 	"bytes"
@@ -29,7 +29,7 @@ func render(t *testing.T, values map[string]interface{}) ([]manifest, string, er
 	if err := os.WriteFile(file, data, 0600); err != nil {
 		t.Fatal(err)
 	}
-	output, err := exec.Command(helm, "template", "qa", ".", "-n", "qa-ns", "-f", file).CombinedOutput()
+	output, err := exec.Command(helm, "template", "qa", ".", "-n", "qa-ns", "-f", "testdata/release-images.yaml", "-f", file).CombinedOutput()
 	if err != nil {
 		return nil, string(output), err
 	}

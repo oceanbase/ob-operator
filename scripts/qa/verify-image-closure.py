@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build-time QA bundle gate. Requires PyYAML; never pulls or runs an image.
 
-Pass the image lock and ALL rendered manifests (Operator, lakehouse stage=cluster,
+Pass the image lock and ALL rendered manifests (Operator, oceanseek stage=cluster,
 Dashboard, cert-manager). --bundle validates the self-contained archive manifest
 and internal checksums. Explicit archive/sidecar arguments support older bundles.
 ConfigMap inspection images are included; optional SQL analyzer is not.

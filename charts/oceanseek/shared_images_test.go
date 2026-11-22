@@ -1,4 +1,4 @@
-package lakehouse_test
+package oceanseek_test
 
 import (
 	"encoding/json"
@@ -20,7 +20,7 @@ func TestSharedDatabaseImagesMatchCompose(t *testing.T) {
 	if err := os.WriteFile(envFile, nil, 0600); err != nil {
 		t.Fatal(err)
 	}
-	cmd := exec.Command("docker", "compose", "--env-file", envFile, "-f", "../../deploy/compose/lakehouse/compose.yaml", "config", "--format", "json")
+	cmd := exec.Command("docker", "compose", "--env-file", envFile, "-f", "../../deploy/compose/oceanseek/compose.yaml", "config", "--format", "json")
 	for _, entry := range os.Environ() {
 		key := strings.SplitN(entry, "=", 2)[0]
 		if key == "PATH" || key == "HOME" || key == "DOCKER_CONFIG" || key == "DOCKER_CLI_PLUGIN_EXTRA_DIRS" {

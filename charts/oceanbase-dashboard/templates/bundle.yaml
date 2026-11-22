@@ -25,6 +25,7 @@ spec:
         seLinuxOptions:
           level: {{ . | quote }}
       {{- end }}
+      automountServiceAccountToken: false
       serviceAccountName: {{ .Release.Name }}-sa
       {{- with .Values.nodeSelector }}
       nodeSelector:
@@ -69,6 +70,9 @@ spec:
             timeoutSeconds: 3
             failureThreshold: 3
           volumeMounts:
+            - name: api-access
+              mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+              readOnly: true
             - name: alertmanager-config-volume
               mountPath: /etc/alertmanager
             - name: prometheus-rules-volume
@@ -127,6 +131,9 @@ spec:
             timeoutSeconds: 3
             failureThreshold: 3
           volumeMounts:
+            - name: api-access
+              mountPath: /var/run/secrets/kubernetes.io/serviceaccount
+              readOnly: true
             - name: prometheus-rules-readonly-volume
               mountPath: /etc/cfg/prometheus/rules
             - name: prometheus-config-volume
@@ -163,6 +170,17 @@ spec:
             - name: alertmanager-config-readonly-volume
               mountPath: /etc/cfg/alertmanager
       volumes:
+        - name: api-access
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: token
+                  expirationSeconds: 3600
+              - configMap:
+                  name: kube-root-ca.crt
+                  items: [{key: ca.crt, path: ca.crt}]
+              - downwardAPI:
+                  items: [{path: namespace, fieldRef: {apiVersion: v1, fieldPath: metadata.namespace}}]
         - name: prometheus-config-volume
           configMap:
             name: {{ .Release.Name }}-prometheus-server-conf

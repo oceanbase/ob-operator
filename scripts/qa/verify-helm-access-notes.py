@@ -52,16 +52,17 @@ def main():
         run('kubectl', 'create', 'namespace', ns)
         try:
             first = render('first-install-auto-port')
-            assert 'not available while Helm renders' in first
+            assert 'Check the allocated Dashboard NodePort' in first
+            assert 'Open http://127.0.0.1:8080' in first
             assert "NODE_HOST='qa.example.test'" in first
             assert 'get svc oceanbase-dashboard-notes' in first
             assert first.count('AGPL-3.0') == 1
             ipv6 = render('first-install-ipv6', host='2001:db8::1')
-            assert "NODE_HOST='2001:db8::1'" in ipv6 and 'NODE_URL_HOST="[$NODE_HOST]"' in ipv6
+            assert "NODE_HOST='2001:db8::1'" in ipv6
             unsafe = render('host-shell-quoting', host="a'$(false)")
             assert "NODE_HOST='a'\"'\"'$(false)'" in unsafe
             explicit = render('explicit-port-ipv6', host='2001:db8::1', port=31183)
-            assert 'Dashboard URL: http://[2001:db8::1]:31183/' in explicit
+            assert 'NodePort endpoint: [2001:db8::1]:31183' in explicit and 'http://[2001:db8::1]' not in explicit
             service = {'apiVersion': 'v1', 'kind': 'Service',
                        'metadata': {'name': 'oceanbase-dashboard-notes', 'namespace': ns},
                        'spec': {'type': 'NodePort', 'ports': [{'port': 80, 'name': 'http'}]}}
@@ -69,10 +70,10 @@ def main():
             actual = json.loads(run('kubectl', '-n', ns, 'get', 'svc',
                                     'oceanbase-dashboard-notes', '-o', 'json'))['spec']['ports'][0]['nodePort']
             existing = render('existing-service-auto-port')
-            assert 'Dashboard URL: http://qa.example.test:%s/' % actual in existing
-            assert 'Dashboard URL: http://qa.example.test:31184/' in render('explicit-overrides-existing', port=31184)
+            assert 'NodePort endpoint: qa.example.test:%s' % actual in existing
+            assert 'NodePort endpoint: qa.example.test:31184' in render('explicit-overrides-existing', port=31184)
             assert 'port-forward svc/oceanbase-dashboard-notes' in render('cluster-ip', kind='ClusterIP')
-            assert '<EXTERNAL-IP-or-hostname>' in render('load-balancer', kind='LoadBalancer')
+            assert 'Dashboard LoadBalancer address' in render('load-balancer', kind='LoadBalancer')
             assert 'Dashboard is disabled' in render('dashboard-disabled', enabled=False)
             external = render('external-storage-no-minio', endpoint='https://s3.example.test', minio=False)
             assert external.count('AGPL-3.0') == 1 and 'no bundled MinIO server' in external

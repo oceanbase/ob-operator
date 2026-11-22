@@ -128,8 +128,12 @@
             "resources"
           ],
           "properties": {
+            "executable": {
+              "type": "string",
+              "pattern": "^/[^\\s]+$"
+            },
             "image": {
-              "$ref": "#/definitions/image"
+              "oneOf": [{"const": ""}, {"$ref": "#/definitions/image"}]
             },
             "imagePullPolicy": {
               "$ref": "#/definitions/pullPolicy"
@@ -186,7 +190,7 @@
           "type": "boolean"
         },
         "image": {
-          "$ref": "#/definitions/image"
+          "oneOf": [{"const": ""}, {"$ref": "#/definitions/image"}]
         },
         "utilityImage": {
           "$ref": "#/definitions/image"

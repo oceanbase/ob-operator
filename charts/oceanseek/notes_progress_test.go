@@ -1,4 +1,4 @@
-package lakehouse_test
+package oceanseek_test
 
 import (
 	"bytes"
@@ -85,8 +85,8 @@ func TestDashboardNotesMatchAccessType(t *testing.T) {
 		enabled                             bool
 	}{
 		{"clusterIP", "ClusterIP", "8080:8088", "<reachable-node-IP>", true},
-		{"nodePort", "NodePort", "http://192.0.2.10:31183/", "port-forward svc/", true},
-		{"loadBalancer", "LoadBalancer", "http://<EXTERNAL-IP-or-hostname>:8088", "port-forward svc/", true},
+		{"nodePort", "NodePort", "NodePort endpoint: 192.0.2.10:31183", "http://192.0.2.10:", true},
+		{"loadBalancer", "LoadBalancer", "Dashboard LoadBalancer address", "http://<EXTERNAL-IP", true},
 		{"disabled", "ClusterIP", "Dashboard is disabled", "get secret qa-dashboard-bootstrap", false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -115,6 +115,8 @@ func TestDashboardNotesMatchAccessType(t *testing.T) {
 					strings.Index(output, "OceanBase Operator Dashboard") < 0 ||
 					strings.Index(output, "OceanBase Operator Dashboard") > strings.Index(output, "Installation verification") ||
 					!strings.Contains(output, "Username: admin") ||
+					!strings.Contains(output, "port-forward svc/oceanbase-dashboard-qa 8080:8088") ||
+					!strings.Contains(output, "Open http://127.0.0.1:8080") ||
 					!strings.Contains(output, "separate from the database root@sys account") ||
 					!strings.Contains(output, "kubectl -n qa-ns get secret qa-dashboard-bootstrap") {
 					t.Fatal("access and account guidance must come before diagnostics")

@@ -6,7 +6,7 @@ ob-operator 是满足 Kubernetes Operator 扩展范式的自动化工具，可�
 
 ## 快速上手
 
-单机体验湖库 SQL，使用 [Docker Compose 快速上手](./deploy/compose/lakehouse/README.md)，无需 Kubernetes。
+单机体验湖库 SQL，使用 [Docker Compose 快速上手](./deploy/compose/oceanseek/README.md)，无需 Kubernetes。
 已有 Kubernetes 集群，使用[原生 Helm Chart](./charts/oceanseek/USAGE.txt)，
 Dashboard 默认一起安装，并提供单节点和三节点 values 示例。
 原生 Chart 不附带 `install.sh`：先安装匹配版本的 Operator，再执行 Helm 命令安装湖库。

@@ -1,4 +1,4 @@
-{{- if .Values.lakehouse.enabled }}
+{{- if .Values.oceanseek.enabled }}
 apiVersion: oceanbase.oceanbase.com/v1alpha1
 kind: OBLogServiceCluster
 metadata:
@@ -9,23 +9,23 @@ metadata:
   annotations:
   {{- toYaml .Values.annotations | nindent 4 }}
 spec:
-  clusterId: {{ .Values.lakehouse.logService.clusterId }}
+  clusterId: {{ .Values.oceanseek.logService.clusterId }}
   logService:
-    image: {{ .Values.lakehouse.logService.image | quote }}
+    image: {{ .Values.oceanseek.logService.image | quote }}
     resource:
-      cpu: {{ .Values.lakehouse.logService.resource.cpu }}
-      memory: {{ .Values.lakehouse.logService.resource.memory }}
+      cpu: {{ .Values.oceanseek.logService.resource.cpu }}
+      memory: {{ .Values.oceanseek.logService.resource.memory }}
     storage:
       storeStorage:
-        storageClass: {{ .Values.lakehouse.logService.storageClass }}
-        size: {{ .Values.lakehouse.logService.storeStorageSize }}
+        storageClass: {{ .Values.oceanseek.logService.storageClass }}
+        size: {{ .Values.oceanseek.logService.storeStorageSize }}
       logStorage:
-        storageClass: {{ .Values.lakehouse.logService.storageClass }}
-        size: {{ .Values.lakehouse.logService.logStorageSize }}
+        storageClass: {{ .Values.oceanseek.logService.storageClass }}
+        size: {{ .Values.oceanseek.logService.logStorageSize }}
   topology:
-  {{- toYaml .Values.lakehouse.logService.topology | nindent 4 }}
+  {{- toYaml .Values.oceanseek.logService.topology | nindent 4 }}
   objectStoreUrl:
-    bucketURL: {{ .Values.lakehouse.logService.bucketURL | quote }}
+    bucketURL: {{ .Values.oceanseek.logService.bucketURL | quote }}
     secretRef:
       name: {{ include "oceanbase-cluster.logServiceSecretName" . }}
 {{- end }}

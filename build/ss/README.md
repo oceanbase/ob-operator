@@ -159,8 +159,8 @@ OBCluster 的删除，再删除 LogService。此行为来自控制器，与镜�
 
 ## Compose 内置运行脚本的派生镜像
 
-需要将启动脚本内置到 `/opt/lakehouse/` 时，使用 `Dockerfile.compose-runtime`。
-准备独立构建上下文，将已审定版本的脚本置于 `lakehouse/`，并将
+需要将启动脚本内置到 `/opt/oceanseek/` 时，使用 `Dockerfile.compose-runtime`。
+准备独立构建上下文，将已审定版本的脚本置于 `oceanseek/`，并将
 `OBSERVER_DIGEST_REFERENCE` 设为已发布的 `仓库地址@sha256:摘要`，然后执行：
 
 ```bash

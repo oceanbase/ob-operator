@@ -67,38 +67,18 @@ uname -m 应为 x86_64；ARM64/aarch64 不能直接运行本 amd64 包。kubectl
 
 2. 打开 Dashboard
 -----------------
-安装成功直接打印 Dashboard 访问说明、用户名 admin、初始密码文件位置（0600）。
-NodePort 模式下，默认 ./install.sh 自动选择对外地址，优先级为：本次显式指定的
---dashboard-host、已保存的显式地址、Kubernetes Node ExternalIP、节点直接配置的
-公网 IP、阿里云 ECS 元数据中的公网 IP/EIP。元数据仅在确认安装器运行于目标
-Worker 时读取；不会使用第三方公网 IP 查询服务，也不会把管理机的公网 IP 当成
-目标 Worker 的地址。
-在浏览器可达的网络内打开 Dashboard 地址，读取密码文件，首次登录按页面提示修改密码。
-密码不打印在安装日志中；已修改密码的账号继续使用当前密码，不会被升级重置。
-数据库会出现在 Dashboard 中，无需额外安装或注册。
+安装成功后，摘要显示用户名 admin、初始密码文件的位置（权限 0600）和 kubectl
+端口转发命令。在运行浏览器且已配置该集群 kubectl 访问权限的电脑上执行此命令，
+再打开 http://127.0.0.1:18080/#/login。若管理员已配置受信的 HTTPS 入口，也可使用该入口。
+首次登录时读取初始密码，按页面提示改密。数据库会显示在 Dashboard 中。
 
-如果无法发现对外地址，摘要会显示 unavailable，并将私网地址明确标为内部地址；
-不会把私网地址当作已可从外网访问的 Dashboard 链接。可指定公网 IP、域名，或
-浏览器所在网络可达的节点地址：
-  ./install.sh --dashboard-host 服务器公网IP
+NodePort 模式同时显示节点端口，以便管理员配置网络和 HTTPS 入口。可通过
+--dashboard-host 指定节点 IP 或域名。显式地址按集群、命名空间和 release 保存，
+自动发现的地址在每次查询时刷新。ClusterIP 模式同样支持使用本机端口转发登录。
 
-访问摘要成功生成后，显式指定的地址按 Kubernetes 集群、namespace、release
-隔离保存，后续续跑和 --show-access 会自动复用；再次指定 --dashboard-host
-可更新地址。自动发现的 IP 不保存，下次会重新发现，避免服务器公网 IP 变化后
-仍展示过期地址。
-
-默认新装使用 Kubernetes 自动分配的 NodePort。网络安全组/防火墙需要允许浏览器
-访问该端口；自动发现地址不代表外网防火墙已经放行。安装器继续通过节点内部地址
-探活，成功摘要只显示该检查的通过状态，不会再把探活 URL 与浏览器访问 URL 并列。
-不会自动修改云安全组。已有 release 的 Service 类型和自定义 values 保留；若需要
-改为直接节点访问，可在同一安装命令中显式添加 --access nodeport。也支持
---access clusterip，其地址仅在集群网络内可达，不会因 --dashboard-host 变成外网服务。
-
-重新查看访问说明（不会重建数据库）：
+重新查看访问说明或更新 NodePort 主机地址：
   ./install.sh --show-access
-
-更新访问地址（不会重建数据库）：
-  ./install.sh --show-access --dashboard-host 新的公网IP或域名
+  ./install.sh --show-access --dashboard-host 节点域名
 
 3. 预检查、续跑、自定义
 -----------------------
@@ -203,7 +183,7 @@ Operator/cert-manager 中断并留下不完整组件，需要先修复该前置�
 K3s/containerd、Docker 自动识别；非 K3s 的 containerd 需明确 --containerd-address
 和 --cri-endpoint，两个参数指向同一本机 Unix socket，不推测运行时。
 
-受保护的续跑 values、ACCESS.txt 和初始密码保存在包内 .lakehouse-install/ 下。
+受保护的续跑 values、ACCESS.txt 和初始密码保存在包内 .oceanseek-install/ 下。
 不同 Kubernetes 集群、namespace、release 分开保存；不要把此目录提交到 Git
 或共享给无关人员。Helm 的详细日志位于安装输出显示的私有临时目录。
 
@@ -299,9 +279,8 @@ SSH 失败：从第一台用同一用户、端口、密钥和目标地址确认�
 仍留有后台子进程；不要在另一个终端立即启动第二次安装。可用 jobs -l 查看当前
 Shell 中的暂停任务，fg 恢复对应任务后使用 Ctrl+C 退出。
 
-Dashboard 无法打开：用 ./install.sh --show-access 查看当前地址，确认浏览器能访问
-该节点及 NodePort，安全组/防火墙已放行；必要时用 --dashboard-host 指定可达地址。
-地址发现和节点内 HTTP 探活不等于浏览器到公网的链路已放行。
+Dashboard 无法打开：运行 ./install.sh --show-access 核对命名空间与 Service 端口。
+确认 kubectl 端口转发仍在浏览器所在电脑上运行。使用 HTTPS 入口时，请检查证书及代理配置。
 
 Dashboard 密码不对：初始密码文件只对应首次登录。首次改密后继续使用自己设置的
 密码；--show-access 和重跑安装不会把当前账号重置为初始密码。

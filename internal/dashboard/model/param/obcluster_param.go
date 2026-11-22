@@ -103,6 +103,9 @@ func (p *CreateOBClusterParam) ValidateStorageMode() error {
 	if p.SharedStorageInfo == nil || strings.TrimSpace(p.SharedStorageInfo.BucketURL) == "" || strings.TrimSpace(p.SharedStorageInfo.SecretRef.Name) == "" {
 		return fmt.Errorf("sharedStorageInfo.bucketURL and secretRef.name are required for shared_storage deploymentMode")
 	}
+	if _, safe := common.PublicBucketURL(p.SharedStorageInfo.BucketURL); !safe {
+		return fmt.Errorf("sharedStorageInfo.bucketURL contains unsupported options or inline credentials. Supply credentials through secretRef")
+	}
 	if p.OBServer.Storage.RedoLog != nil {
 		return fmt.Errorf("observer.storage.redoLog must be omitted for shared_storage deploymentMode")
 	}

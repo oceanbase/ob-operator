@@ -10,18 +10,18 @@ metadata:
 spec:
   clusterName: {{ .Values.clusterName | default .Release.Name | quote }}
   clusterId: {{ .Values.clusterId | default (nospace (cat "1" (randNumeric 7))) }}
-  {{- if .Values.lakehouse.enabled }}
+  {{- if .Values.oceanseek.enabled }}
   deploymentMode: shared_storage
   logServiceRef:
     name: {{ include "oceanbase-cluster.logServiceName" . }}
   sharedStorageInfo:
-    bucketURL: {{ .Values.lakehouse.sharedStorage.bucketURL | quote }}
+    bucketURL: {{ .Values.oceanseek.sharedStorage.bucketURL | quote }}
     secretRef:
       name: {{ include "oceanbase-cluster.sharedStorageSecretName" . }}
-    {{- with .Values.lakehouse.sharedStorage.maxIOPS }}
+    {{- with .Values.oceanseek.sharedStorage.maxIOPS }}
     maxIOPS: {{ . | quote }}
     {{- end }}
-    {{- with .Values.lakehouse.sharedStorage.maxBandwidth }}
+    {{- with .Values.oceanseek.sharedStorage.maxBandwidth }}
     maxBandwidth: {{ . | quote }}
     {{- end }}
   {{- end }}
@@ -33,8 +33,8 @@ spec:
   topology: 
     {{- toYaml .Values.topology | nindent 4 }}
   observer:
-    {{- if .Values.lakehouse.enabled }}
-    image: {{ .Values.lakehouse.observerImage | quote }}
+    {{- if .Values.oceanseek.enabled }}
+    image: {{ .Values.oceanseek.observerImage | quote }}
     {{- else }}
     image: {{ .Values.observerImage | default (printf "oceanbase/oceanbase-cloud-native:%s" .Chart.AppVersion) | quote }}
     {{- end }}
@@ -43,7 +43,7 @@ spec:
       {{- toYaml .resource | nindent 6 }}
     storage:
      {{- range $key, $size := .storages }}
-     {{- if and $.Values.lakehouse.enabled (eq $key "redoLogStorage") }}{{- else }}
+     {{- if and $.Values.oceanseek.enabled (eq $key "redoLogStorage") }}{{- else }}
       {{ $key }}:
         storageClass: {{ $.Values.storageClass }}
         size: {{ $size }}

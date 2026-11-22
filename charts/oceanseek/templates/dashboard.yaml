@@ -1,4 +1,6 @@
 {{- if .Values.dashboard.enabled -}}
+{{- $_ := required "Set dashboard.image to the released Dashboard image (see USAGE.txt)" .Values.dashboard.image -}}
+{{- $_ := required "Set dashboard.inspection.oceanbaseHelper.image to the released Helper image (see USAGE.txt)" .Values.dashboard.inspection.oceanbaseHelper.image -}}
 apiVersion: v1
 kind: ServiceAccount
 metadata:

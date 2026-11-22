@@ -1,4 +1,4 @@
-package lakehouse_test
+package oceanseek_test
 
 import (
 	appsv1 "k8s.io/api/apps/v1"
@@ -40,7 +40,7 @@ func TestDistributedMinioWaitsForOwnDNSBeforeStarting(t *testing.T) {
 			if resolve {
 				yes = "yes"
 			}
-			cmd.Env = append(os.Environ(), "PATH="+dir+":"+os.Getenv("PATH"), "DNS_STATE="+filepath.Join(dir, "dns"), "STARTED="+started, "RESOLVE="+yes, "LAKEHOUSE_POD_IP=192.0.2.2", "LAKEHOUSE_PEER_HOST=qa-minio-0.qa-minio-peer.qa.svc", "LAKEHOUSE_ENDPOINTS=http://qa-minio-{0...2}.qa-minio-peer.qa.svc:9000/data")
+			cmd.Env = append(os.Environ(), "PATH="+dir+":"+os.Getenv("PATH"), "DNS_STATE="+filepath.Join(dir, "dns"), "STARTED="+started, "RESOLVE="+yes, "OCEANSEEK_POD_IP=192.0.2.2", "OCEANSEEK_PEER_HOST=qa-minio-0.qa-minio-peer.qa.svc", "OCEANSEEK_ENDPOINTS=http://qa-minio-{0...2}.qa-minio-peer.qa.svc:9000/data")
 			out, err := cmd.CombinedOutput()
 			if resolve {
 				data, readErr := os.ReadFile(started)

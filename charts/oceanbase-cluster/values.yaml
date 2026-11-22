@@ -36,7 +36,7 @@ parameters:
 # Lakebase/shared-storage deployment. When enabled, the chart creates an
 # OBLogServiceCluster and configures the OBCluster with independent log-service
 # and shared-data buckets.
-lakehouse:
+oceanseek:
   enabled: false
   # Required when enabled. Use an OceanBase AI image compatible with your
   # Operator and OBLogService versions.
@@ -63,15 +63,15 @@ lakehouse:
       - zone: zone3
         replica: 1
     # The URL must contain the scheme, bucket, endpoint, and region, for example:
-    # s3://lakehouse-logservice?host=http://<minio-service-ip>:9000&s3_region=us-east-1
+    # s3://oceanseek-logservice?host=http://<minio-service-ip>:9000&s3_region=us-east-1
     bucketURL: ""
-    # Leave empty to generate a Secret from lakehouse.credentials.
+    # Leave empty to generate a Secret from oceanseek.credentials.
     existingSecretName: ""
 
   sharedStorage:
-    # Use a different bucket from lakehouse.logService.bucketURL.
+    # Use a different bucket from oceanseek.logService.bucketURL.
     bucketURL: ""
-    # Leave empty to generate a Secret from lakehouse.credentials.
+    # Leave empty to generate a Secret from oceanseek.credentials.
     existingSecretName: ""
     maxIOPS: ""
     maxBandwidth: ""

@@ -1,4 +1,4 @@
-package lakehouse_test
+package oceanseek_test
 
 import (
 	"encoding/json"
@@ -69,7 +69,7 @@ case "$*" in
 esac
 `)
 	cmd := exec.Command("bash", "install.sh", "qa", "qa-ns")
-	cmd.Env = append(os.Environ(), "LC_ALL=C", "PATH="+dir+string(os.PathListSeparator)+os.Getenv("PATH"), "CASE_DIR="+dir, "TMPDIR="+dir, "BASH_ENV="+filepath.Join(dir, "clock.sh"), "LAKEHOUSE_TIMEOUT=100", "LAKEHOUSE_MANAGED_ACCESS=1")
+	cmd.Env = append(os.Environ(), "LC_ALL=C", "PATH="+dir+string(os.PathListSeparator)+os.Getenv("PATH"), "CASE_DIR="+dir, "TMPDIR="+dir, "BASH_ENV="+filepath.Join(dir, "clock.sh"), "OCEANSEEK_TIMEOUT=100", "OCEANSEEK_MANAGED_ACCESS=1")
 	cmd.Env = append(cmd.Env, env...)
 	output, err := cmd.CombinedOutput()
 	calls, readErr := os.ReadFile(filepath.Join(dir, "calls"))
@@ -133,7 +133,7 @@ func TestShellProgressPollingAndFailureFallback(t *testing.T) {
 		waits int
 	}{
 		{"plain-heartbeat", []string{"MOCK_PENDING_READS=9"}, "Pod snapshot age=0s", 2},
-		{"live-checks", []string{"MOCK_PENDING_READS=3", "LAKEHOUSE_LIVE_PROGRESS=1"}, "Pod snapshot age=", 3},
+		{"live-checks", []string{"MOCK_PENDING_READS=3", "OCEANSEEK_LIVE_PROGRESS=1"}, "Pod snapshot age=", 3},
 		{"pod-failure", []string{"MOCK_POD_FAILURE=1"}, "Pod details unavailable", 1},
 		{"pod-failure-after-snapshot", []string{"MOCK_POD_FAILURE_AFTER=2"}, "Pod details unavailable", 2},
 		{"event-failure", []string{"MOCK_EVENT_FAILURE=1"}, "podsReady=0/2", 1},
@@ -161,7 +161,7 @@ func TestShellProgressPollingAndFailureFallback(t *testing.T) {
 }
 
 func TestShellProgressWarningsRecurOnlyAfterRecovery(t *testing.T) {
-	out, _, code := runShellProgress(t, []string{progressCreatingPods, progressReadyPods, progressCreatingPods}, "", "MOCK_PENDING_READS=6", "LAKEHOUSE_LIVE_PROGRESS=1")
+	out, _, code := runShellProgress(t, []string{progressCreatingPods, progressReadyPods, progressCreatingPods}, "", "MOCK_PENDING_READS=6", "OCEANSEEK_LIVE_PROGRESS=1")
 	if code != 0 || strings.Count(out, "[warning] Inspect Pods:") != 2 {
 		t.Fatalf("warning must be reissued once when the issue returns after recovery: %d\n%s", code, out)
 	}
@@ -184,7 +184,7 @@ func TestShellProgressDoesNotHideResourceFailureOrExceedDeadline(t *testing.T) {
 	if code != 1 || !strings.Contains(out, "entered failed status") || strings.Contains(out, "OceanSeek ready:") {
 		t.Fatalf("optional progress hid the real resource failure: %d\n%s", code, out)
 	}
-	out, calls, code := runShellProgress(t, []string{progressCreatingPods}, "", "LAKEHOUSE_TIMEOUT=1")
+	out, calls, code := runShellProgress(t, []string{progressCreatingPods}, "", "OCEANSEEK_TIMEOUT=1")
 	if code != 1 || !strings.Contains(out, "Timed out waiting") || strings.Contains(calls, "get pods -l ") {
 		t.Fatalf("optional progress must skip insufficient remaining budget: %d\n%s\n%s", code, out, calls)
 	}
