@@ -35,8 +35,12 @@ const config = JSON.parse(
     const submitted = new Promise((resolve) => {
       releasePublicKey = resolve;
     });
+    let releaseResetKey;
+    const resetSubmitted = new Promise((resolve) => {
+      releaseResetKey = resolve;
+    });
     await page.route('**/api/v1/info', async (route) => {
-      await submitted;
+      await (new URL(page.url()).hash === '#/reset' ? resetSubmitted : submitted);
       await route.continue();
     });
     await page.goto(config.url + '/#/login', {
@@ -67,7 +71,6 @@ const config = JSON.parse(
     const loginBody = await response.json();
     if (!loginBody.successful) throw Error('Browser login rejected');
     await page.waitForURL((u) => u.hash !== '#/login', { timeout: 30000 });
-    await page.waitForLoadState('networkidle');
     if (loginBody.data.needReset) {
       await page.waitForURL((u) => u.hash === '#/reset', { timeout: 30000 });
       await page
@@ -78,7 +81,18 @@ const config = JSON.parse(
         'Qa!9' + require('crypto').randomBytes(16).toString('hex');
       await page.locator('input[type=password]').nth(0).fill(rotated);
       await page.locator('input[type=password]').nth(1).fill(rotated);
-      await page.locator('button[type=submit]').click();
+      const reset = page.waitForResponse(
+        (r) => new URL(r.url()).pathname === '/api/v1/ac/password'
+      );
+      try {
+        await page.locator('button[type=submit]').click();
+      } finally {
+        releaseResetKey();
+      }
+      const resetResponse = await reset;
+      const encrypted = resetResponse.request().postDataJSON().password;
+      if (typeof encrypted !== 'string' || !encrypted || encrypted === rotated)
+        throw Error('First-login reset must submit an encrypted password');
       await page.waitForURL((u) => u.hash === '#/overview', { timeout: 30000 });
       config.password = rotated;
       fs.writeFileSync(
@@ -87,6 +101,9 @@ const config = JSON.parse(
         { mode: 0o600 }
       );
       console.log('PASS mandatory initial password reset');
+    } else {
+      releaseResetKey();
+      await page.waitForURL((u) => u.hash === '#/overview', { timeout: 30000 });
     }
     const screenshots = root + '/browser-default-evidence';
     fs.mkdirSync(screenshots, { recursive: true, mode: 0o700 });
