@@ -19,10 +19,11 @@ import (
 	"time"
 
 	"github.com/go-logr/logr"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/oceanbase/ob-operator/pkg/task"
 	taskstatus "github.com/oceanbase/ob-operator/pkg/task/const/status"
 	tt "github.com/oceanbase/ob-operator/pkg/task/types"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type recoveryManager struct {

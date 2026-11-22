@@ -290,15 +290,15 @@ func logServiceProcessRunning(procRoot string, pid int) (bool, error) {
 		return false, err
 	}
 	stat := string(data)
-	open, close := strings.IndexByte(stat, '('), strings.LastIndexByte(stat, ')')
-	if open < 0 || close <= open {
+	openParen, closeParen := strings.IndexByte(stat, '('), strings.LastIndexByte(stat, ')')
+	if openParen < 0 || closeParen <= openParen {
 		return false, errors.New("invalid process stat")
 	}
-	fields := strings.Fields(stat[close+1:])
+	fields := strings.Fields(stat[closeParen+1:])
 	if len(fields) == 0 {
 		return false, errors.New("missing process state in stat")
 	}
-	return stat[open+1:close] == "oblogservice" && fields[0] != "Z" && fields[0] != "X", nil
+	return stat[openParen+1:closeParen] == "oblogservice" && fields[0] != "Z" && fields[0] != "X", nil
 }
 
 func getEnvOrDefault(key, defaultVal string) string {

@@ -469,7 +469,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 	} else {
 		progress("[skip] Compatible Operator and admission webhooks are already ready.")
 	}
-	dashboardEnabled := pfGet(complete, "dashboard", "enabled") == true
+	dashboardEnabled := pfBool(complete, "dashboard", "enabled")
 	if dashboardEnabled {
 		progress("[4/5] Installing oceanseek resources and Dashboard")
 	} else {

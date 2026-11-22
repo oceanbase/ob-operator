@@ -10,6 +10,7 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
+// Package router registers the Dashboard HTTP API and serves the web frontend.
 package router
 
 import (

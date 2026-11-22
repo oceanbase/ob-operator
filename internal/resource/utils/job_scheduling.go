@@ -49,8 +49,14 @@ func ApplyJobScheduling(pod *corev1.PodSpec, scheduling *JobScheduling) {
 		return
 	}
 	// Deep-copy mutable fields: Jobs must never alias or mutate the source CR.
-	copy := (&corev1.PodSpec{NodeSelector: scheduling.NodeSelector, Affinity: scheduling.Affinity, Tolerations: scheduling.Tolerations}).DeepCopy()
-	pod.NodeSelector, pod.Affinity, pod.Tolerations = copy.NodeSelector, copy.Affinity, copy.Tolerations
+	placement := (&corev1.PodSpec{
+		NodeSelector: scheduling.NodeSelector,
+		Affinity:     scheduling.Affinity,
+		Tolerations:  scheduling.Tolerations,
+	}).DeepCopy()
+	pod.NodeSelector = placement.NodeSelector
+	pod.Affinity = placement.Affinity
+	pod.Tolerations = placement.Tolerations
 	// Kubernetes ServiceAccount admission supplies imagePullSecrets from this
 	// same workload account; do not copy credential contents or use manager SA.
 	pod.ServiceAccountName = scheduling.ServiceAccountName

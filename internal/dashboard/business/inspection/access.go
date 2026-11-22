@@ -10,6 +10,7 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
+// Package inspection manages inspection policies, jobs, and reports for OceanBase clusters.
 package inspection
 
 import (

@@ -27,7 +27,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	v4 "github.com/aws/aws-sdk-go/aws/signer/v4"
+	"github.com/aws/aws-sdk-go/aws/signer/v4"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -285,7 +285,7 @@ func bucketCheckURL(loc *Location) (string, error) {
 	hostname := strings.ToLower(strings.TrimSuffix(endpoint.Hostname(), "."))
 	bucket := strings.ToLower(loc.Bucket)
 	if endpoint.Scheme == "https" && strings.Contains(bucket, ".") && (strings.HasSuffix(hostname, ".myhuaweicloud.com") || strings.HasSuffix(hostname, ".myhuaweicloud.eu")) {
-		return "", errors.New("Huawei OBS HTTPS checks do not support bucket names containing periods")
+		return "", errors.New("bucket names containing periods are unsupported for Huawei OBS HTTPS checks")
 	}
 	alreadyVirtualHosted := strings.HasPrefix(hostname, bucket+".")
 	virtualHosted := alreadyVirtualHosted

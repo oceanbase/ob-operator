@@ -102,9 +102,7 @@ func Query(ctx context.Context, baseURL, kind, namespace, name string, minutes i
 	var wg sync.WaitGroup
 	sem := make(chan struct{}, 4)
 	for i, chart := range catalog {
-		wg.Add(1)
-		go func(i int, chart Chart) {
-			defer wg.Done()
+		wg.Go(func() {
 			select {
 			case sem <- struct{}{}:
 				defer func() { <-sem }()
@@ -149,7 +147,7 @@ func Query(ctx context.Context, baseURL, kind, namespace, name string, minutes i
 			}
 			series.Available = len(series.Points) > 0 && series.Points[len(series.Points)-1].Time >= float64(end-step*2-60)
 			out[i] = series
-		}(i, chart)
+		})
 	}
 	wg.Wait()
 	return out, nil

@@ -10,6 +10,7 @@ MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
 See the Mulan PSL v2 for more details.
 */
 
+// Command oceanseek-installer installs OceanSeek on Kubernetes with Helm.
 package main
 
 import (

@@ -168,7 +168,7 @@ func configureThreeNodes(ctx context.Context, run RunCommand, values, defaults, 
 		// The root entry owns placement of the auxiliary components too. Refuse
 		// adoption of a different Chart layout instead of moving its PVCs.
 		if pfString(pfGet(complete, "scheduling", "nodeSelector", corev1.LabelHostname)) != hosts[0] ||
-			(pfGet(complete, "dashboard", "enabled") == true && pfString(pfGet(complete, "dashboard", "nodeSelector", corev1.LabelHostname)) != hosts[0]) {
+			(pfBool(complete, "dashboard", "enabled") && pfString(pfGet(complete, "dashboard", "nodeSelector", corev1.LabelHostname)) != hosts[0]) {
 			return nil, errors.New("saved storage and Dashboard placement must remain on the first worker; use the original Chart workflow for other layouts")
 		}
 		return values, nil

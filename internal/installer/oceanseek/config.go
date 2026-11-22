@@ -154,7 +154,7 @@ func validateConfiguredImages(bundle string, values map[string]any) error {
 		refs[item.Role] = item.Reference
 	}
 	paths := map[string][]string{"observer": {"observer", "image"}, "logservice": {"logService", "image"}}
-	if pfGet(values, "dashboard", "enabled") == true {
+	if pfBool(values, "dashboard", "enabled") {
 		paths["dashboard"] = []string{"dashboard", "image"}
 		paths["obdiag"] = []string{"dashboard", "inspection", "obdiag", "image"}
 		paths["oceanbase-helper"] = []string{"dashboard", "inspection", "oceanbaseHelper", "image"}

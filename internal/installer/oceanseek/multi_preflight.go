@@ -191,7 +191,7 @@ func pfMultiPlacement(opts PreflightOptions, nodes []corev1.Node) (multiPlacemen
 	if mode != "bundled" && mode != "external" {
 		return p, errors.New("objectStorage.mode must be bundled or external")
 	}
-	createBuckets := pfGet(opts.Values, "objectStorage", "createBuckets") == true
+	createBuckets := pfBool(opts.Values, "objectStorage", "createBuckets")
 	if mode == "bundled" || createBuckets {
 		if global["kubernetes.io/hostname"] != p.nodes[0].Labels["kubernetes.io/hostname"] || !pfMatches(p.nodes[0], []map[string]string{global}) || !pfTolerates(p.nodes[0], tolerations) {
 			return p, errors.New("storage and initialization placement must match the first requested node and its taints")
@@ -213,7 +213,7 @@ func pfMultiPlacement(opts PreflightOptions, nodes []corev1.Node) (multiPlacemen
 		d.add(resources)
 		p.demand[p.first] = d
 	}
-	if pfGet(opts.Values, "dashboard", "enabled") == true {
+	if pfBool(opts.Values, "dashboard", "enabled") {
 		selector, err := pfSelector(pfGet(opts.Values, "dashboard", "nodeSelector"))
 		if err != nil {
 			return p, err
@@ -295,7 +295,7 @@ func pfMultiStorage(opts PreflightOptions, p multiPlacement, pods []pfPod, claim
 		}
 		targets[name] = p.first
 	}
-	if pfGet(opts.Values, "dashboard", "enabled") == true {
+	if pfBool(opts.Values, "dashboard", "enabled") {
 		for field, suffix := range map[string]string{"prometheus": "prometheus-pvc", "sharedVolume": "shared-volume-pvc"} {
 			name := pfString(pfGet(opts.Values, "dashboard", field, "persistence", "existingClaim"))
 			if name != "" {

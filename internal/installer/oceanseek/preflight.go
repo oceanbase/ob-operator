@@ -200,23 +200,29 @@ func CheckCluster(ctx context.Context, run RunCommand, opts PreflightOptions) (P
 		} else if missing && !opts.PrepareOperator {
 			problems = append(problems, errors.New("SS-capable ob-operator is not installed; enable preparation or install the matching package prerequisites"))
 		} else if missing {
-			if result.NodeCount != 1 {
-				problems = append(problems, errors.New("automatic Operator preparation supports only a single-node cluster; install a compatible Operator before using this multi-node cluster"))
-			}
-			// Conservative allowance for the bundled controller and cert-manager.
-			// Their actual requests are checked again after preparation.
-			result.RequiredCPUMilli += 500
-			result.RequiredMemoryBytes += 1024 * 1024 * 1024
-			if result.NodeName != "" && (result.RequiredCPUMilli > result.AvailableCPUMilli || result.RequiredMemoryBytes > result.AvailableMemoryBytes) {
-				problems = append(problems, errors.New("insufficient remaining capacity including the 0.50 CPU cores / 1.0 GiB memory prerequisite preparation allowance"))
-			}
-			result.Warnings = append(result.Warnings, "Operator preparation is required; rerun preflight after it becomes ready before installing the oceanseek")
+			problems = append(problems, pfPlanOperatorPreparation(&result)...)
 		}
 	}
 	if ctx.Err() != nil {
 		problems = append(problems, ctx.Err())
 	}
 	return result, errors.Join(problems...)
+}
+
+func pfPlanOperatorPreparation(result *PreflightResult) []error {
+	var problems []error
+	if result.NodeCount != 1 {
+		problems = append(problems, errors.New("automatic Operator preparation supports only a single-node cluster; install a compatible Operator before using this multi-node cluster"))
+	}
+	// Conservative allowance for the bundled controller and cert-manager.
+	// Their actual requests are checked again after preparation.
+	result.RequiredCPUMilli += 500
+	result.RequiredMemoryBytes += 1024 * 1024 * 1024
+	if result.NodeName != "" && (result.RequiredCPUMilli > result.AvailableCPUMilli || result.RequiredMemoryBytes > result.AvailableMemoryBytes) {
+		problems = append(problems, errors.New("insufficient remaining capacity including the 0.50 CPU cores / 1.0 GiB memory prerequisite preparation allowance"))
+	}
+	result.Warnings = append(result.Warnings, "Operator preparation is required; rerun preflight after it becomes ready before installing the oceanseek")
+	return problems
 }
 
 var pfVersionRE = regexp.MustCompile(`^v?([0-9]+)\.([0-9]+)(?:\.[0-9]+)?(?:[-+].*)?$`)
@@ -246,6 +252,11 @@ func pfGet(v map[string]any, path ...string) any {
 	return current
 }
 
+func pfBool(values map[string]any, path ...string) bool {
+	value, ok := pfGet(values, path...).(bool)
+	return ok && value
+}
+
 func pfString(v any) string {
 	if v == nil {
 		return ""
@@ -272,7 +283,7 @@ func pfStorageClass(values map[string]any, classes []storagev1.StorageClass) (st
 	if !known[name] {
 		return "", fmt.Errorf("StorageClass %q does not exist", name)
 	}
-	if pfGet(values, "dashboard", "enabled") != true {
+	if !pfBool(values, "dashboard", "enabled") {
 		return name, nil
 	}
 	for _, field := range []string{"prometheus", "sharedVolume"} {
@@ -398,7 +409,7 @@ func pfDemand(values map[string]any) (pfResources, []map[string]string, []corev1
 	if mode != "bundled" && mode != "external" {
 		return demand, nil, nil, errors.New("objectStorage.mode must be bundled or external")
 	}
-	createBuckets := pfGet(values, "objectStorage", "createBuckets") == true
+	createBuckets := pfBool(values, "objectStorage", "createBuckets")
 	if mode == "bundled" || createBuckets {
 		r, err := pfQuantities(pfMap(pfGet(values, "initialization", "resources", "requests")), "initialization.resources.requests")
 		if err != nil {
@@ -406,7 +417,7 @@ func pfDemand(values map[string]any) (pfResources, []map[string]string, []corev1
 		}
 		demand.add(r) // A retry/upgrade also creates this storage-init Job.
 	}
-	if pfGet(values, "dashboard", "enabled") == true {
+	if pfBool(values, "dashboard", "enabled") {
 		selector, err := pfSelector(pfGet(values, "dashboard", "nodeSelector"))
 		if err != nil {
 			return demand, nil, nil, err
@@ -543,7 +554,7 @@ func pfCheckCapacity(opts PreflightOptions, nodes []corev1.Node, pods []pfPod, c
 			suppliedClaims[name] = false
 		}
 	}
-	if pfGet(opts.Values, "dashboard", "enabled") == true {
+	if pfBool(opts.Values, "dashboard", "enabled") {
 		for field, suffix := range map[string]string{"prometheus": "prometheus-pvc", "sharedVolume": "shared-volume-pvc"} {
 			if name := pfString(pfGet(opts.Values, "dashboard", field, "persistence", "existingClaim")); name != "" {
 				suppliedClaims[name] = false
@@ -660,7 +671,7 @@ func pfCheckCapacity(opts PreflightOptions, nodes []corev1.Node, pods []pfPod, c
 		return fmt.Errorf("single-worker installation requires one Ready, schedulable node matching all zone selectors/tolerations (found %d); select a node or use the advanced Chart workflow", len(eligible))
 	}
 	node := eligible[0]
-	if pfGet(opts.Values, "dashboard", "enabled") == true {
+	if pfBool(opts.Values, "dashboard", "enabled") {
 		var dashboardTolerations []corev1.Toleration
 		if raw := pfGet(opts.Values, "dashboard", "tolerations"); raw != nil {
 			data, _ := json.Marshal(raw)
