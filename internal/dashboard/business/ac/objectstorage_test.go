@@ -13,9 +13,10 @@ See the Mulan PSL v2 for more details.
 package ac
 
 import (
+	"testing"
+
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
-	"testing"
 )
 
 // A local, adapter-free enforcer: tests never write the real policy ConfigMap.

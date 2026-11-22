@@ -22,6 +22,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"testing"
@@ -248,9 +249,10 @@ func TestResourceOptionsOverrideAllValuesFilesRegardlessOfFlagPosition(t *testin
 			resourceTestWrite(t, first, "observer:\n  resource: {cpu: '1', memory: 8Gi}\n  dataSize: 11Gi\n  logSize: 12Gi\nlogService:\n  resource: {cpu: '1', memory: 3Gi}\n  storeSize: 13Gi\n  logSize: 14Gi\nminio: {size: 15Gi}\n")
 			resourceTestWrite(t, last, "observer:\n  resource: {cpu: '3', memory: 12Gi}\n  dataSize: 61Gi\n  logSize: 21Gi\nlogService:\n  resource: {cpu: '1', memory: 5Gi}\n  storeSize: 22Gi\n  logSize: 11Gi\nminio: {size: 101Gi}\n")
 			files := []string{"-f", first, "--values", last}
-			args := append(files, resourceIntegrationArgs()...)
+			options := resourceIntegrationArgs()
+			args := slices.Concat(files, options)
 			if cliFirst {
-				args = append(resourceIntegrationArgs(), files...)
+				args = slices.Concat(options, files)
 			}
 			out, err := f.run(t, args...)
 			if err != nil {

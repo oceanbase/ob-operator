@@ -15,7 +15,7 @@ package ssmonitor
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io"
 	"math"
 	"net/http"
@@ -86,10 +86,10 @@ type queryResponse struct {
 // quoted to keep requests scoped to the RBAC-authorized Kubernetes identity.
 func Query(ctx context.Context, baseURL, kind, namespace, name string, minutes int) ([]Series, error) {
 	if kind != "logservice" && kind != "obcluster" {
-		return nil, fmt.Errorf("unsupported monitoring scope")
+		return nil, errors.New("unsupported monitoring scope")
 	}
 	if minutes != 15 && minutes != 60 && minutes != 360 && minutes != 1440 {
-		return nil, fmt.Errorf("range must be 15, 60, 360 or 1440 minutes")
+		return nil, errors.New("range must be 15, 60, 360 or 1440 minutes")
 	}
 	filter := "namespace=" + strconv.Quote(namespace) + "," + kind + "=" + strconv.Quote(name)
 	catalog := Catalog(kind)

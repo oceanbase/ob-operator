@@ -24,36 +24,35 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func readValues(path string) (map[string]interface{}, error) {
+func readValues(path string) (map[string]any, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	var values map[string]interface{}
+	var values map[string]any
 	if err = yaml.UnmarshalStrict(data, &values); err != nil {
 		return nil, fmt.Errorf("invalid values file %s (check YAML types, indentation and duplicate keys)", path)
 	}
 	if values == nil {
-		values = map[string]interface{}{}
+		values = map[string]any{}
 	}
 	return values, nil
 }
 
 // mergeValues follows Helm's map merge and list replacement semantics. Nulls
 // remove inherited values; the caller never modifies its input maps.
-func mergeValues(base, overlay map[string]interface{}) map[string]interface{} {
-	out := map[string]interface{}{}
+func mergeValues(base, overlay map[string]any) map[string]any {
+	out := map[string]any{}
 	for key, value := range base {
-		if m, ok := value.(map[string]interface{}); ok {
+		if m, ok := value.(map[string]any); ok {
 			out[key] = mergeValues(m, nil)
 		} else {
 			out[key] = value
 		}
 	}
 	for key, value := range overlay {
-		if m, ok := value.(map[string]interface{}); ok {
-			old, _ := out[key].(map[string]interface{})
-			out[key] = mergeValues(old, m)
+		if m, ok := value.(map[string]any); ok {
+			out[key] = mergeValues(pfMap(out[key]), m)
 		} else {
 			out[key] = value
 		}
@@ -61,11 +60,11 @@ func mergeValues(base, overlay map[string]interface{}) map[string]interface{} {
 	return out
 }
 
-func setValue(v map[string]interface{}, value interface{}, path ...string) {
+func setValue(v map[string]any, value any, path ...string) {
 	for _, key := range path[:len(path)-1] {
-		next, ok := v[key].(map[string]interface{})
+		next, ok := v[key].(map[string]any)
 		if !ok {
-			next = map[string]interface{}{}
+			next = map[string]any{}
 			v[key] = next
 		}
 		v = next
@@ -73,7 +72,7 @@ func setValue(v map[string]interface{}, value interface{}, path ...string) {
 	v[path[len(path)-1]] = value
 }
 
-func defaultValues(bundle string) (map[string]interface{}, error) {
+func defaultValues(bundle string) (map[string]any, error) {
 	child, err := readValues(filepath.Join(bundle, "charts/oceanbase-dashboard/values.yaml"))
 	if err != nil {
 		return nil, err
@@ -82,10 +81,10 @@ func defaultValues(bundle string) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return mergeValues(map[string]interface{}{"dashboard": child}, parent), nil
+	return mergeValues(map[string]any{"dashboard": child}, parent), nil
 }
 
-func initialValues(bundle string) (map[string]interface{}, error) {
+func initialValues(bundle string) (map[string]any, error) {
 	values, err := readValues(filepath.Join(bundle, "values/quickstart.yaml"))
 	if err != nil {
 		return nil, err
@@ -129,8 +128,8 @@ func writePrivate(path string, data []byte) error {
 // Preserve the effective database/storage configuration even when it originally
 // came from a chart default. New integration defaults remain available for keys
 // which did not exist in the installed release.
-func retainConfiguration(effective, user map[string]interface{}) map[string]interface{} {
-	kept := map[string]interface{}{}
+func retainConfiguration(effective, user map[string]any) map[string]any {
+	kept := map[string]any{}
 	for _, key := range []string{"storageClass", "imagePullSecrets", "objectStorage", "minio", "initialization", "logService", "observer", "scheduling", "dashboard"} {
 		if value, ok := effective[key]; ok {
 			kept[key] = value
@@ -139,7 +138,7 @@ func retainConfiguration(effective, user map[string]interface{}) map[string]inte
 	return mergeValues(kept, user)
 }
 
-func validateConfiguredImages(bundle string, values map[string]interface{}) error {
+func validateConfiguredImages(bundle string, values map[string]any) error {
 	data, err := os.ReadFile(filepath.Join(bundle, "image-lock.json"))
 	if err != nil {
 		return err
@@ -155,7 +154,7 @@ func validateConfiguredImages(bundle string, values map[string]interface{}) erro
 		refs[item.Role] = item.Reference
 	}
 	paths := map[string][]string{"observer": {"observer", "image"}, "logservice": {"logService", "image"}}
-	if enabled, _ := pfGet(values, "dashboard", "enabled").(bool); enabled {
+	if pfGet(values, "dashboard", "enabled") == true {
 		paths["dashboard"] = []string{"dashboard", "image"}
 		paths["obdiag"] = []string{"dashboard", "inspection", "obdiag", "image"}
 		paths["oceanbase-helper"] = []string{"dashboard", "inspection", "oceanbaseHelper", "image"}

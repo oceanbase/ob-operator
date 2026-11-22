@@ -14,13 +14,15 @@ package handler
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
-	ls "github.com/oceanbase/ob-operator/internal/dashboard/business/logservice"
-	"github.com/oceanbase/ob-operator/internal/dashboard/business/ssmonitor"
-	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 	"net"
 	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
+
+	ls "github.com/oceanbase/ob-operator/internal/dashboard/business/logservice"
+	"github.com/oceanbase/ob-operator/internal/dashboard/business/ssmonitor"
+	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
 // Prometheus is a sidecar and calls the loopback interface. Do not trust

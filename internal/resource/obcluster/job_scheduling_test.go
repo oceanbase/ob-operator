@@ -19,9 +19,6 @@ import (
 	"testing"
 
 	"github.com/go-logr/logr"
-	apitypes "github.com/oceanbase/ob-operator/api/types"
-	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
-	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -29,6 +26,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
+	oceanbaseconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
 
 // Creation is intercepted before any Job polling/log access. No cluster config

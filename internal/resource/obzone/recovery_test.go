@@ -13,9 +13,10 @@ See the Mulan PSL v2 for more details.
 package obzone
 
 import (
+	"testing"
+
 	"github.com/oceanbase/ob-operator/pkg/coordinator"
 	tt "github.com/oceanbase/ob-operator/pkg/task/types"
-	"testing"
 )
 
 func TestReadinessReplayPolicy(t *testing.T) {

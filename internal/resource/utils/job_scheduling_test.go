@@ -18,11 +18,12 @@ import (
 	"testing"
 
 	"github.com/go-logr/logr"
-	apitypes "github.com/oceanbase/ob-operator/api/types"
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 )
 
 func TestBootstrapJobSchedulingCopiesOnlyOneTargetZone(t *testing.T) {

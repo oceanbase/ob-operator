@@ -19,6 +19,7 @@ import (
 	"io"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -174,9 +175,10 @@ func TestResourceAliasesOverrideValuesFilesInTheRunPath(t *testing.T) {
 			for _, alias := range resourceAliasContract {
 				aliases = append(aliases, "-"+alias.short, alias.input)
 			}
-			args := append([]string{"-f", path}, aliases...)
+			files := []string{"-f", path}
+			args := slices.Concat(files, aliases)
 			if aliasFirst {
-				args = append(aliases, "-f", path)
+				args = slices.Concat(aliases, files)
 			}
 			output, err := f.run(t, args...)
 			if err != nil {

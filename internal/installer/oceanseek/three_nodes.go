@@ -59,12 +59,12 @@ func parseSSHHosts(entries []string) (map[string]string, error) {
 
 // threeHostnames recognizes the simple three-worker layout in saved Helm values.
 // No local-only marker is required, so a fresh extracted tar can resume it too.
-func threeHostnames(values map[string]interface{}) ([]string, bool) {
+func threeHostnames(values map[string]any) ([]string, bool) {
 	var hosts []string
 	global := pfString(pfGet(values, "scheduling", "nodeSelector", corev1.LabelHostname))
 	for _, component := range []string{"logService", "observer"} {
-		entries, _ := pfGet(values, component, "topology").([]interface{})
-		if len(entries) != 3 {
+		entries, ok := pfGet(values, component, "topology").([]any)
+		if !ok || len(entries) != 3 {
 			return nil, false
 		}
 		current := make([]string, 0, 3)
@@ -89,7 +89,7 @@ func threeHostnames(values map[string]interface{}) ([]string, bool) {
 	return hosts, true
 }
 
-func inferThreeNodes(ctx context.Context, run RunCommand, values map[string]interface{}) ([]string, error) {
+func inferThreeNodes(ctx context.Context, run RunCommand, values map[string]any) ([]string, error) {
 	hosts, ok := threeHostnames(values)
 	if !ok {
 		return nil, nil
@@ -114,8 +114,8 @@ func inferThreeNodes(ctx context.Context, run RunCommand, values map[string]inte
 	return names, nil
 }
 
-func placementValues(values map[string]interface{}) map[string]interface{} {
-	placement := map[string]interface{}{"scheduling": values["scheduling"]}
+func placementValues(values map[string]any) map[string]any {
+	placement := map[string]any{"scheduling": values["scheduling"]}
 	for _, component := range []string{"observer", "logService"} {
 		placement[component] = pfGet(values, component, "topology")
 	}
@@ -124,7 +124,7 @@ func placementValues(values map[string]interface{}) map[string]interface{} {
 	return placement
 }
 
-func configureThreeNodes(ctx context.Context, run RunCommand, values, defaults, retainedValues map[string]interface{}, names []string, retained bool) (map[string]interface{}, error) {
+func configureThreeNodes(ctx context.Context, run RunCommand, values, defaults, retainedValues map[string]any, names []string, retained bool) (map[string]any, error) {
 	if len(names) != 3 {
 		return nil, errors.New("three-worker installation requires exactly three nodes")
 	}
@@ -180,11 +180,11 @@ func configureThreeNodes(ctx context.Context, run RunCommand, values, defaults, 
 		setValue(out, mergeValues(pfMap(pfGet(complete, "scheduling", "nodeSelector")), nil), "dashboard", "nodeSelector")
 	}
 	for _, component := range []string{"logService", "observer"} {
-		entries, _ := pfGet(complete, component, "topology").([]interface{})
-		if len(entries) != 1 && len(entries) != 3 {
+		entries, ok := pfGet(complete, component, "topology").([]any)
+		if !ok || len(entries) != 1 && len(entries) != 3 {
 			return nil, fmt.Errorf("--nodes supports one or three template zones for %s; use the advanced Chart for other topologies", component)
 		}
-		topology := make([]interface{}, 3)
+		topology := make([]any, 3)
 		for i, host := range hosts {
 			source := entries[0]
 			if len(entries) == 3 {

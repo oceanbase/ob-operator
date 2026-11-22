@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package oceanseek
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -36,7 +37,7 @@ func installerKubeconfig(explicit, environment, k3s string) (string, error) {
 		defer file.Close()
 		st, err := file.Stat()
 		if err != nil || !st.Mode().IsRegular() {
-			return "", fmt.Errorf("--kubeconfig must name a readable regular file")
+			return "", errors.New("--kubeconfig must name a readable regular file")
 		}
 		return path, nil
 	}

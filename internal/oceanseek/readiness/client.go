@@ -41,7 +41,7 @@ type APIClient struct {
 func InClusterClient() (*APIClient, error) {
 	host, port := os.Getenv("KUBERNETES_SERVICE_HOST"), os.Getenv("KUBERNETES_SERVICE_PORT")
 	if host == "" || port == "" {
-		return nil, errors.New("Kubernetes service address is unavailable")
+		return nil, errors.New("missing Kubernetes service address")
 	}
 	const dir = "/var/run/secrets/kubernetes.io/serviceaccount/"
 	ca, err := os.ReadFile(dir + "ca.crt")
@@ -50,7 +50,7 @@ func InClusterClient() (*APIClient, error) {
 	}
 	pool := x509.NewCertPool()
 	if !pool.AppendCertsFromPEM(ca) {
-		return nil, errors.New("Kubernetes CA is invalid")
+		return nil, errors.New("invalid Kubernetes CA")
 	}
 	transport := &http.Transport{TLSClientConfig: &tls.Config{RootCAs: pool, MinVersion: tls.VersionTLS12}, DialContext: (&net.Dialer{Timeout: 10 * time.Second}).DialContext, ResponseHeaderTimeout: 10 * time.Second}
 	return &APIClient{BaseURL: "https://" + net.JoinHostPort(host, port), TokenFile: dir + "token", Client: &http.Client{Transport: transport, Timeout: 15 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}}, nil
@@ -75,7 +75,7 @@ func (c *APIClient) Get(ctx context.Context, path string, out any) error {
 	req.Header.Set("Accept", "application/json")
 	response, err := c.Client.Do(req)
 	if err != nil {
-		return errors.New("Kubernetes request failed")
+		return errors.New("failed to send Kubernetes request")
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {

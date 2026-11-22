@@ -44,8 +44,12 @@ func TestReviewPartialCertManagerBlocksOperatorInstallation(t *testing.T) {
 		return nil, errors.New("unexpected mock command")
 	}
 	err := prepareOperator(context.Background(), run, options{bundle: t.TempDir()}, PreflightResult{NodeCount: 1}, func(string) {})
-	if err == nil || !(strings.Contains(strings.ToLower(err.Error()), "partial") || strings.Contains(strings.ToLower(err.Error()), "incomplete")) || mutated {
+	if err == nil || mutated {
 		t.Fatalf("partial existing cert-manager must be rejected before mutation: mutated=%v error=%v", mutated, err)
+	}
+	message := strings.ToLower(err.Error())
+	if !strings.Contains(message, "partial") && !strings.Contains(message, "incomplete") {
+		t.Fatalf("error did not identify the partial installation: %v", err)
 	}
 }
 

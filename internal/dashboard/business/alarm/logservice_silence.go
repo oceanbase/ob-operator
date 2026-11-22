@@ -13,9 +13,11 @@ See the Mulan PSL v2 for more details.
 package alarm
 
 import (
-	"github.com/oceanbase/ob-operator/pkg/errors"
-	"k8s.io/apimachinery/pkg/util/validation"
 	"strings"
+
+	"k8s.io/apimachinery/pkg/util/validation"
+
+	"github.com/oceanbase/ob-operator/pkg/errors"
 )
 
 func logServiceSilenceIdentity(value string) (string, string, error) {

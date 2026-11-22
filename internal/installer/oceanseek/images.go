@@ -210,7 +210,7 @@ func readImageDelivery(bundle string) (imageLock, archiveManifest, error) {
 	var manifest archiveManifest
 	for _, file := range []struct {
 		path string
-		to   interface{}
+		to   any
 	}{{"image-lock.json", &lock}, {"images/archives.json", &manifest}} {
 		data, err := os.ReadFile(filepath.Join(bundle, filepath.FromSlash(file.path)))
 		if err != nil {
@@ -332,7 +332,7 @@ func selectImageRuntime(opts ImageOptions) (imageRuntime, error) {
 			address = "/var/run/docker.sock"
 		}
 		if !filepath.IsAbs(address) {
-			return runtime, errors.New("Docker image preparation requires an absolute local Unix socket; remote/TCP endpoints are not supported")
+			return runtime, errors.New("preparing Docker images requires an absolute local Unix socket; remote/TCP endpoints are not supported")
 		}
 		runtime.address = "unix://" + address
 	}
@@ -372,6 +372,8 @@ func (runtime imageRuntime) check(ctx context.Context, run RunCommand, timeout t
 		if err == nil {
 			_, err = runImageCommand(ctx, run, timeout, "crictl", "--runtime-endpoint", runtime.cri, "--image-endpoint", runtime.cri, "version")
 		}
+	default:
+		return fmt.Errorf("unsupported image runtime %q", runtime.name)
 	}
 	if err != nil {
 		return fmt.Errorf("cannot access selected local %s runtime; check installed tools, daemon/socket and permissions: %w", runtime.name, err)
@@ -392,6 +394,8 @@ func (runtime imageRuntime) inspect(ctx context.Context, run RunCommand, timeout
 		output, err = runImageCommand(ctx, run, timeout, "k3s", "crictl", "inspecti", reference)
 	case "containerd":
 		output, err = runImageCommand(ctx, run, timeout, "crictl", "--runtime-endpoint", runtime.cri, "--image-endpoint", runtime.cri, "inspecti", reference)
+	default:
+		return "", fmt.Errorf("unsupported image runtime %q", runtime.name)
 	}
 	if err != nil {
 		return "", err
@@ -452,6 +456,8 @@ func (runtime imageRuntime) importPreparedArchive(ctx context.Context, run RunCo
 		_, err = runImageCommand(ctx, run, timeout, "k3s", "ctr", "images", "import", path)
 	case "containerd":
 		_, err = runImageCommand(ctx, run, timeout, "ctr", "--address", runtime.address, "--namespace", "k8s.io", "images", "import", path)
+	default:
+		return fmt.Errorf("unsupported image runtime %q", runtime.name)
 	}
 	return err
 }

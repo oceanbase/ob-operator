@@ -50,53 +50,60 @@ type config struct {
 }
 
 func main() {
+	if err := runCommand(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func runCommand() error {
 	mode := flag.String("mode", "bootstrap", "credentials, show-password, bootstrap, check, smoke-write or smoke-read")
 	flag.Parse()
 	if *mode == "credentials" {
 		if err := initCredentials(envOrDefault(os.Getenv, "CREDENTIALS_DIR", "/run/secrets")); err != nil {
-			log.Fatal(err)
+			return err
 		}
 		log.Print("Credentials ready; existing passwords are preserved")
-		return
+		return nil
 	}
 	if *mode == "show-password" {
 		password, err := readCredential(envOrDefault(os.Getenv, "ROOT_PASSWORD_FILE", "/run/secrets/ob_root_password"))
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
-		fmt.Println(password)
-		return
+		_, err = fmt.Println(password)
+		return err
 	}
 	cfg, err := loadConfig(os.Getenv)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	password, err := readCredential(cfg.RootPasswordFile)
 	if err != nil {
-		log.Fatalf("read root password: %v", err)
+		return fmt.Errorf("read root password: %w", err)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.Timeout)
 	defer cancel()
 	if err := run(ctx, cfg, *mode, password, func(pass string) (*sql.DB, error) {
 		return openDatabase(cfg, pass)
 	}); err != nil {
-		log.Fatal(err)
+		return err
 	}
 	if *mode == "bootstrap" {
 		monitorPassword, err := readCredential(envOrDefault(os.Getenv, "MONITOR_PASSWORD_FILE", "/run/secrets/ob_monitor_password"))
 		if err != nil {
-			log.Fatalf("read monitor password: %v", err)
+			return fmt.Errorf("read monitor password: %w", err)
 		}
 		db, err := openDatabase(cfg, password)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		defer db.Close()
 		if err := ensureMonitorUser(ctx, db, monitorPassword); err != nil {
-			log.Fatal(err)
+			return err
 		}
 		log.Print("OBAgent monitor user ready")
 	}
+	return nil
 }
 
 func openDatabase(cfg config, password string) (*sql.DB, error) {
@@ -153,10 +160,8 @@ func run(ctx context.Context, cfg config, mode, password string, open func(strin
 			if !cfg.AllowLegacyEmptyRoot {
 				return errors.New("existing database has an empty root password; set ALLOW_LEGACY_EMPTY_ROOT=true to migrate it explicitly")
 			}
-		} else {
-			if err := bootstrapCluster(ctx, cfg, initialDB); err != nil {
-				return err
-			}
+		} else if err := bootstrapCluster(ctx, cfg, initialDB); err != nil {
+			return err
 		}
 		if _, err := initialDB.ExecContext(ctx, "ALTER USER root IDENTIFIED BY ?", password); err != nil {
 			return errors.New("failed to initialize root password")
@@ -176,15 +181,14 @@ func run(ctx context.Context, cfg config, mode, password string, open func(strin
 	if err := waitForCluster(ctx, db, cfg.RetryInterval); err != nil {
 		return err
 	}
-	switch mode {
-	case "smoke-write":
+	if mode == "smoke-write" {
 		for _, statement := range []string{"CREATE DATABASE IF NOT EXISTS compose_smoke", "CREATE TABLE IF NOT EXISTS compose_smoke.t (id BIGINT PRIMARY KEY, value VARCHAR(64))", "REPLACE INTO compose_smoke.t VALUES (1, 'oceanseek-compose')"} {
 			if _, err := db.ExecContext(ctx, statement); err != nil {
 				return fmt.Errorf("smoke write: %w", err)
 			}
 		}
-		fallthrough
-	case "smoke-read":
+	}
+	if mode == "smoke-write" || mode == "smoke-read" {
 		var value string
 		if err := db.QueryRowContext(ctx, "SELECT value FROM compose_smoke.t WHERE id=1").Scan(&value); err != nil {
 			return fmt.Errorf("smoke read: %w", err)

@@ -19,9 +19,6 @@ import (
 	"io"
 	"strings"
 
-	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
-	jobmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/job"
-	k8sclient "github.com/oceanbase/ob-operator/pkg/k8s/client"
 	"github.com/pkg/errors"
 	logger "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
@@ -29,6 +26,10 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+
+	bizconst "github.com/oceanbase/ob-operator/internal/dashboard/business/constant"
+	jobmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/job"
+	k8sclient "github.com/oceanbase/ob-operator/pkg/k8s/client"
 )
 
 func GetJob(ctx context.Context, namespace, name string) (*jobmodel.Job, error) {

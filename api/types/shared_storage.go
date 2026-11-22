@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package types
 
 import (
-	"fmt"
+	"errors"
 	"net/url"
 	"strings"
 
@@ -35,7 +35,7 @@ type LogServiceReference struct {
 // URLs may contain sensitive query parameters supplied by existing clients.
 func ValidateSharedStorageBucketURL(raw string) error {
 	invalid := func() error {
-		return fmt.Errorf("bucketURL must contain a supported storage scheme, bucket and one valid host endpoint")
+		return errors.New("bucketURL must contain a supported storage scheme, bucket and one valid host endpoint")
 	}
 	u, err := url.Parse(raw)
 	if err != nil || (u.Scheme != "s3" && u.Scheme != "oss" && u.Scheme != "cos") || u.Host == "" || u.User != nil || u.Fragment != "" || strings.ContainsAny(u.Host, ": ") {

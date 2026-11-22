@@ -13,10 +13,11 @@ See the Mulan PSL v2 for more details.
 package handler
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/gin-gonic/gin"
 )
 
 func TestObjectStorageBindRejectsUnknownAndOversizedWithoutEcho(t *testing.T) {

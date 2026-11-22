@@ -59,7 +59,7 @@ func (c *testConnection) Prepare(string) (driver.Stmt, error) {
 func (c *testConnection) Close() error              { return nil }
 func (c *testConnection) Begin() (driver.Tx, error) { return nil, errors.New("unexpected transaction") }
 func (c *testConnection) Ping(context.Context) error {
-	if c.password != c.state.password && !(c.state.acceptInitialPassword && !c.state.ready) {
+	if c.password != c.state.password && (c.state.ready || !c.state.acceptInitialPassword) {
 		return &mysql.MySQLError{Number: 1045, Message: "access denied"}
 	}
 	return nil

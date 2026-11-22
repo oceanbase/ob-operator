@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package oceanseek
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"math"
@@ -101,7 +102,7 @@ func normalizeResourceOption(option resourceOption, value string) (string, error
 	return value, nil
 }
 
-func (overrides resourceOverrides) apply(values map[string]interface{}) map[string]interface{} {
+func (overrides resourceOverrides) apply(values map[string]any) map[string]any {
 	result := mergeValues(values, nil)
 	for _, option := range resourceOptions {
 		if value, supplied := overrides[option.name]; supplied {
@@ -114,7 +115,7 @@ func (overrides resourceOverrides) apply(values map[string]interface{}) map[stri
 // Equivalent quantities can have different textual forms. In particular MinIO
 // size participates in the chart's storage-identity hash, so replays must retain
 // the installed representation, not merely an equal number of bytes.
-func (overrides resourceOverrides) reuseInstalled(values, installed map[string]interface{}) map[string]interface{} {
+func (overrides resourceOverrides) reuseInstalled(values, installed map[string]any) map[string]any {
 	result := mergeValues(values, nil)
 	for _, option := range resourceOptions {
 		if _, supplied := overrides[option.name]; supplied {
@@ -124,13 +125,13 @@ func (overrides resourceOverrides) reuseInstalled(values, installed map[string]i
 	return result
 }
 
-func (overrides resourceOverrides) validateContext(values, installed map[string]interface{}, existing bool) error {
+func (overrides resourceOverrides) validateContext(values, installed map[string]any, existing bool) error {
 	if _, supplied := overrides["minio-size"]; supplied {
 		if pfString(pfGet(values, "objectStorage", "mode")) != "bundled" {
-			return fmt.Errorf("--minio-size applies only to bundled object storage; external storage capacity is managed separately")
+			return errors.New("--minio-size applies only to bundled object storage; external storage capacity is managed separately")
 		}
 		if pfString(pfGet(values, "minio", "existingClaim")) != "" {
-			return fmt.Errorf("--minio-size cannot resize an existingClaim; manage that PVC separately")
+			return errors.New("--minio-size cannot resize an existingClaim; manage that PVC separately")
 		}
 	}
 	if !existing {

@@ -15,12 +15,13 @@ package alarm
 import (
 	"context"
 	"encoding/json"
-	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/silence"
-	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
 	"io"
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm/silence"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
 )
 
 func TestLogServiceSilenceIdentity(t *testing.T) {

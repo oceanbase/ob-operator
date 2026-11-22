@@ -22,7 +22,7 @@ jobs:
       - name: Prepare the PR diff
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: git diff --no-ext-diff --no-textconv "$BASE_SHA" HEAD -- '*.go' > "$RUNNER_TEMP/golangci-pr.patch"
+        run: git diff --no-ext-diff --no-textconv "$BASE_SHA" HEAD > "$RUNNER_TEMP/golangci-pr.patch"
       - uses: actions/setup-go@v4
         with:
           go-version: "1.25"

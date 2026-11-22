@@ -13,8 +13,9 @@ See the Mulan PSL v2 for more details.
 package response
 
 import (
-	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/common"
 )
 
 func NewK8sEvent(event corev1.Event) K8sEvent {

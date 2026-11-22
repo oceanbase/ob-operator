@@ -13,9 +13,10 @@ See the Mulan PSL v2 for more details.
 package silence
 
 import (
+	"testing"
+
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/alarm"
 	"github.com/oceanbase/ob-operator/internal/dashboard/model/oceanbase"
-	"testing"
 )
 
 func TestLogServiceSilenceRoundtrip(t *testing.T) {

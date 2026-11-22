@@ -70,10 +70,10 @@ func showAccessWithDiscovery(ctx context.Context, run RunCommand, o options, res
 		} `json:"spec"`
 	}
 	if err := getJSON(ctx, run, &svc, "-n", o.namespace, "get", "service", "oceanbase-dashboard-"+o.release, "-o", "json"); err != nil {
-		return fmt.Errorf("Dashboard service unavailable: %w", err)
+		return fmt.Errorf("cannot read Dashboard service: %w", err)
 	}
 	if len(svc.Spec.Ports) == 0 {
-		return errors.New("Dashboard Service has no ports")
+		return errors.New("the Dashboard Service has no ports")
 	}
 	if result.NodeInternalIP == "" {
 		var pods struct {
@@ -87,7 +87,7 @@ func showAccessWithDiscovery(ctx context.Context, run RunCommand, o options, res
 			return err
 		}
 		if len(pods.Items) == 0 || pods.Items[0].Spec.NodeName == "" {
-			return errors.New("Dashboard Pod has no assigned node")
+			return errors.New("the Dashboard Pod has no assigned node")
 		}
 		var node struct {
 			Status struct {
@@ -116,7 +116,7 @@ func showAccessWithDiscovery(ctx context.Context, run RunCommand, o options, res
 		port = svc.Spec.Ports[0].Port
 	}
 	if verifyHost == "" || port == 0 {
-		return errors.New("Dashboard address is not yet allocated")
+		return errors.New("the Dashboard address is not yet allocated")
 	}
 	verifiedURL := "http://" + net.JoinHostPort(verifyHost, strconv.Itoa(int(port)))
 	client := &http.Client{Timeout: 10 * time.Second, Transport: &http.Transport{Proxy: nil}, CheckRedirect: func(_ *http.Request, _ []*http.Request) error { return http.ErrUseLastResponse }}
@@ -127,12 +127,12 @@ func showAccessWithDiscovery(ctx context.Context, run RunCommand, o options, res
 		}
 		resp, err := client.Do(req)
 		if err != nil {
-			return fmt.Errorf("Dashboard is deployed but HTTP check of %s failed; rerun --show-access after checking node networking: %w", verifiedURL, err)
+			return fmt.Errorf("the Dashboard is deployed but HTTP check of %s failed; rerun --show-access after checking node networking: %w", verifiedURL, err)
 		}
 		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 1<<20))
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
-			return fmt.Errorf("Dashboard HTTP readiness failed: %s returned %d", path, resp.StatusCode)
+			return fmt.Errorf("the Dashboard HTTP readiness check failed: %s returned %d", path, resp.StatusCode)
 		}
 	}
 	var host, source string
@@ -151,7 +151,7 @@ func showAccessWithDiscovery(ctx context.Context, run RunCommand, o options, res
 	}
 	password, err := base64.StdEncoding.DecodeString(secret.Data["password"])
 	if err != nil || len(password) == 0 {
-		return errors.New("Dashboard bootstrap password is missing or malformed")
+		return errors.New("the Dashboard bootstrap password is missing or malformed")
 	}
 	passwordPath := filepath.Join(stateDir, "dashboard-initial-password")
 	if err = writePrivate(passwordPath, password); err != nil {
@@ -183,8 +183,8 @@ func showAccessWithDiscovery(ctx context.Context, run RunCommand, o options, res
 	if err = writePrivate(filepath.Join(stateDir, "ACCESS.txt"), []byte(summary)); err != nil {
 		return err
 	}
-	fmt.Fprint(out, summary)
-	return nil
+	_, err = io.WriteString(out, summary)
+	return err
 }
 
 func prepareOperator(ctx context.Context, run RunCommand, o options, result PreflightResult, progress Progress) error {
@@ -239,7 +239,7 @@ func prepareOperator(ctx context.Context, run RunCommand, o options, result Pref
 	}
 	if certCount == 0 {
 		var deployments struct {
-			Items []interface{} `json:"items"`
+			Items []any `json:"items"`
 		}
 		if err := getJSON(ctx, run, &deployments, "-n", "cert-manager", "get", "deployments", "-o", "json"); err != nil {
 			return err
@@ -260,8 +260,5 @@ func prepareOperator(ctx context.Context, run RunCommand, o options, result Pref
 			return err
 		}
 	}
-	if err := action("Installing bundled ob-operator", "helm", "install", "ob-operator", filepath.Join(o.bundle, "charts/ob-operator"), "--namespace", "oceanbase-system", "--create-namespace", "--wait", "--timeout", "240s"); err != nil {
-		return err
-	}
-	return nil
+	return action("Installing bundled ob-operator", "helm", "install", "ob-operator", filepath.Join(o.bundle, "charts/ob-operator"), "--namespace", "oceanbase-system", "--create-namespace", "--wait", "--timeout", "240s")
 }

@@ -13,9 +13,10 @@ See the Mulan PSL v2 for more details.
 package router
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gin-gonic/gin"
 )
 
 func TestSSRoutesRequireLoginAndCollectorRejectsRemoteAccess(t *testing.T) {

@@ -165,13 +165,13 @@ func bounded(ctx context.Context, run RunCommand, name string, args ...string) (
 	defer cancel()
 	return run(c, name, args...)
 }
-func getJSON(ctx context.Context, run RunCommand, dst interface{}, args ...string) error {
+func getJSON(ctx context.Context, run RunCommand, dst any, args ...string) error {
 	raw, err := bounded(ctx, run, "kubectl", append([]string{"--request-timeout=20s"}, args...)...)
 	if err != nil {
-		return fmt.Errorf("Kubernetes read failed: %w", err)
+		return fmt.Errorf("cannot read from Kubernetes: %w", err)
 	}
 	if err = json.Unmarshal(raw, dst); err != nil {
-		return errors.New("Kubernetes returned invalid JSON")
+		return errors.New("invalid JSON response from Kubernetes")
 	}
 	return nil
 }
@@ -208,7 +208,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 			return fmt.Errorf("install prerequisite %s before running this command", tool)
 		}
 	}
-	progress := func(s string) { fmt.Fprintln(out, s) }
+	progress := func(s string) { _, _ = fmt.Fprintln(out, s) }
 	var console *consoleProgress
 	liveProgress := !o.showAccess && liveProgressEnabled(out, o.progressMode)
 	if !o.showAccess {
@@ -283,7 +283,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 		return errors.New("invalid Helm release list")
 	}
 	existing := len(releases) > 0
-	var values map[string]interface{}
+	var values map[string]any
 	retained := existing
 	if existing {
 		raw, err = bounded(ctx, execute, "helm", "get", "values", o.release, "-n", o.namespace, "-o", "json")
@@ -297,7 +297,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 		if readErr != nil {
 			return fmt.Errorf("cannot read effective installed values: %w", readErr)
 		}
-		var effective map[string]interface{}
+		var effective map[string]any
 		if err = json.Unmarshal(effectiveRaw, &effective); err != nil {
 			return errors.New("invalid effective installed values")
 		}
@@ -314,7 +314,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 		}
 	}
 	if values == nil {
-		values = map[string]interface{}{}
+		values = map[string]any{}
 	}
 	installedValues := values
 	for _, path := range o.files {
@@ -469,7 +469,7 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 	} else {
 		progress("[skip] Compatible Operator and admission webhooks are already ready.")
 	}
-	dashboardEnabled, _ := pfGet(complete, "dashboard", "enabled").(bool)
+	dashboardEnabled := pfGet(complete, "dashboard", "enabled") == true
 	if dashboardEnabled {
 		progress("[4/5] Installing oceanseek resources and Dashboard")
 	} else {
@@ -491,8 +491,8 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 		progress("[5/5] Dashboard access checks skipped: Dashboard is disabled by configuration.")
 		progress("[skip] Dashboard is disabled by configuration.")
 		console.Finish(nil)
-		fmt.Fprintln(out, "Installation complete. Dashboard is disabled by configuration.")
-		return nil
+		_, err = fmt.Fprintln(out, "Installation complete. Dashboard is disabled by configuration.")
+		return err
 	}
 	progress("[5/5] Verifying log download support and Dashboard access")
 	diagnosticCtx, diagnosticCancel := context.WithTimeout(ctx, 15*time.Minute)
@@ -510,8 +510,8 @@ func runWithCacheDirectory(ctx context.Context, args []string, out, stderr io.Wr
 		return err
 	}
 	console.Finish(nil)
-	fmt.Fprint(out, accessSummary.String())
-	return nil
+	_, err = io.WriteString(out, accessSummary.String())
+	return err
 }
 
 func checkLocalWorker(result PreflightResult) error {

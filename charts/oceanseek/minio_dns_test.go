@@ -13,12 +13,13 @@ See the Mulan PSL v2 for more details.
 package oceanseek_test
 
 import (
-	appsv1 "k8s.io/api/apps/v1"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	appsv1 "k8s.io/api/apps/v1"
 )
 
 func TestDistributedMinioWaitsForOwnDNSBeforeStarting(t *testing.T) {

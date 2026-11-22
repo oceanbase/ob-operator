@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -126,7 +127,7 @@ func (c *consoleProgress) Println(message string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if !c.interactive {
-		fmt.Fprintln(c.out, message)
+		_, _ = fmt.Fprintln(c.out, message)
 		return
 	}
 	for _, line := range strings.Split(message, "\n") {
@@ -210,7 +211,7 @@ func (c *consoleProgress) Finish(err error) {
 			if err != nil {
 				// The full error is printed outside the bounded frame. It is
 				// never truncated, even on a narrow terminal.
-				fmt.Fprintln(c.out, "Error: "+consoleSafeText(err.Error()))
+				_, _ = fmt.Fprintln(c.out, "Error: "+consoleSafeText(err.Error()))
 			}
 		}
 	})
@@ -226,7 +227,7 @@ func (c *consoleProgress) finishStageLocked(stage *consoleStage, status string, 
 func (c *consoleProgress) lineLocked(raw string) {
 	line := consoleSafeText(strings.TrimSuffix(raw, "\r"))
 	if c.finished || !c.interactive {
-		fmt.Fprintln(c.out, line)
+		_, _ = fmt.Fprintln(c.out, line)
 		return
 	}
 	now := c.now()
@@ -274,38 +275,37 @@ func (c *consoleProgress) lineLocked(raw string) {
 			message = numbered[3]
 		}
 		name, _, _ := strings.Cut(message, ":")
-		switch name {
-		case "Preflight", "Storage", "LogService", "OceanBase", "Observer Pods", "Dashboard":
-			if c.parent != nil {
-				var stage *consoleStage
-				for _, candidate := range c.children[c.parent.step] {
-					if candidate.label == name {
-						stage = candidate
-					}
-				}
-				if stage == nil {
-					stage = &consoleStage{label: name, status: "pending"}
-					c.children[c.parent.step] = append(c.children[c.parent.step], stage)
-				}
-				if prefix == "[stage] " {
-					c.finishStageLocked(c.active, "done", now)
-					// Entering a child does not complete its parent.
-					c.parent.status, c.parent.ended = "running", time.Time{}
-					stage.status, stage.started, stage.ended = "running", now, time.Time{}
-					c.limit, c.warning, c.lastCheck, c.podChecked = "", "", time.Time{}, time.Time{}
-				} else if prefix == "[skip] " {
-					stage.status = "skipped"
-					stage.ended = now
-				} else {
-					stage.status = "done"
-					stage.ended = now
-					c.lastCheck = now
-				}
-				c.active, c.detail = stage, message
-				c.renderLocked(now)
-				return
+		if c.parent == nil || !slices.Contains([]string{"Preflight", "Storage", "LogService", "OceanBase", "Observer Pods", "Dashboard"}, name) {
+			continue
+		}
+		var stage *consoleStage
+		for _, candidate := range c.children[c.parent.step] {
+			if candidate.label == name {
+				stage = candidate
 			}
 		}
+		if stage == nil {
+			stage = &consoleStage{label: name, status: "pending"}
+			c.children[c.parent.step] = append(c.children[c.parent.step], stage)
+		}
+		switch prefix {
+		case "[stage] ":
+			c.finishStageLocked(c.active, "done", now)
+			// Entering a child does not complete its parent.
+			c.parent.status, c.parent.ended = "running", time.Time{}
+			stage.status, stage.started, stage.ended = "running", now, time.Time{}
+			c.limit, c.warning, c.lastCheck, c.podChecked = "", "", time.Time{}, time.Time{}
+		case "[skip] ":
+			stage.status = "skipped"
+			stage.ended = now
+		default:
+			stage.status = "done"
+			stage.ended = now
+			c.lastCheck = now
+		}
+		c.active, c.detail = stage, message
+		c.renderLocked(now)
+		return
 	}
 	if strings.HasPrefix(line, "[wait] ") || strings.HasPrefix(line, "[ready] ") || strings.HasPrefix(line, "[done] ") || strings.HasPrefix(line, "[checked] ") || strings.HasPrefix(line, "[skip] ") {
 		c.detail = strings.TrimSpace(line[strings.IndexByte(line, ']')+1:])
@@ -348,12 +348,12 @@ func (c *consoleProgress) lineLocked(raw string) {
 
 func (c *consoleProgress) persistentLocked(line string) {
 	c.clearLocked()
-	fmt.Fprintln(c.out, line)
+	_, _ = fmt.Fprintln(c.out, line)
 }
 
 func (c *consoleProgress) clearLocked() {
 	for i := 0; i < c.rendered; i++ {
-		io.WriteString(c.out, "\x1b[1A\r\x1b[2K")
+		_, _ = io.WriteString(c.out, "\x1b[1A\r\x1b[2K")
 	}
 	c.rendered = 0
 }
@@ -408,14 +408,14 @@ func (c *consoleProgress) renderLocked(now time.Time) {
 		// The current snapshot is retained and subsequent events stay plain.
 		c.clearLocked()
 		for _, line := range lines {
-			fmt.Fprintln(c.out, line)
+			_, _ = fmt.Fprintln(c.out, line)
 		}
 		c.interactive = false
 		return
 	}
 	c.clearLocked()
 	for _, line := range lines {
-		fmt.Fprintln(c.out, consoleFrameLine(line, width-1))
+		_, _ = fmt.Fprintln(c.out, consoleFrameLine(line, width-1))
 	}
 	c.rendered = len(lines)
 }

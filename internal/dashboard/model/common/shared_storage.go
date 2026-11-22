@@ -18,9 +18,10 @@ import (
 	"regexp"
 	"strings"
 
-	apitypes "github.com/oceanbase/ob-operator/api/types"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
+
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 )
 
 // ObjectReference deliberately contains no Secret data.

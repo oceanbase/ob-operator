@@ -13,6 +13,7 @@ See the Mulan PSL v2 for more details.
 package oceanseek
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 	"regexp"
@@ -28,7 +29,7 @@ var quickstartSizePattern = regexp.MustCompile(`^([1-9][0-9]*)(Mi|Gi|Ti)$`)
 // validateQuickstartSizing checks the bundled Operator defaults for a new CLI
 // sizing request. It does not discover a separately configured Operator's limits
 // or change any parameter, resource request, or disk size supplied by the user.
-func validateQuickstartSizing(values map[string]interface{}) error {
+func validateQuickstartSizing(values map[string]any) error {
 	observerMemory, err := quickstartSize(values, "observer", "resource", "memory")
 	if err != nil {
 		return err
@@ -75,7 +76,7 @@ func validateQuickstartSizing(values map[string]interface{}) error {
 	return err
 }
 
-func quickstartSize(values map[string]interface{}, path ...string) (resource.Quantity, error) {
+func quickstartSize(values map[string]any, path ...string) (resource.Quantity, error) {
 	field := strings.Join(path, ".")
 	raw, ok := pfGet(values, path...).(string)
 	parts := quickstartSizePattern.FindStringSubmatch(raw)
@@ -94,16 +95,16 @@ func quickstartSize(values map[string]interface{}, path ...string) (resource.Qua
 	return *resource.NewQuantity(amount.Int64(), resource.BinarySI), nil
 }
 
-func quickstartMemoryLimit(values map[string]interface{}, component string, memory resource.Quantity, defaultLimit bool) (resource.Quantity, error) {
-	var limitValue interface{}
+func quickstartMemoryLimit(values map[string]any, component string, memory resource.Quantity, defaultLimit bool) (resource.Quantity, error) {
+	var limitValue any
 	explicit := false
 	if raw := pfGet(values, component, "parameters"); raw != nil {
-		parameters, ok := raw.([]interface{})
+		parameters, ok := raw.([]any)
 		if !ok {
 			return resource.Quantity{}, fmt.Errorf("quickstart sizing: %s.parameters must be a parameter list in complete values", component)
 		}
 		for i, rawParameter := range parameters {
-			parameter, ok := rawParameter.(map[string]interface{})
+			parameter, ok := rawParameter.(map[string]any)
 			if !ok {
 				return resource.Quantity{}, fmt.Errorf("quickstart sizing: %s.parameters[%d] must be a parameter object", component, i)
 			}
@@ -138,7 +139,7 @@ func quickstartMemoryLimit(values map[string]interface{}, component string, memo
 	amount.Quo(amount, big.NewInt(100*oceanbaseconst.MegaConverter))
 	limit, err := resource.ParseQuantity(amount.String() + "M")
 	if err != nil || limit.Sign() <= 0 {
-		return resource.Quantity{}, fmt.Errorf("quickstart sizing: cannot derive observer memory_limit from the bundled Operator defaults")
+		return resource.Quantity{}, errors.New("quickstart sizing: cannot derive observer memory_limit from the bundled Operator defaults")
 	}
 	return limit, nil
 }

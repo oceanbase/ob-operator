@@ -15,18 +15,20 @@ package oblogservicezone
 import (
 	"context"
 	"errors"
+	"reflect"
+	"testing"
+
 	"github.com/go-logr/logr"
-	apitypes "github.com/oceanbase/ob-operator/api/types"
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	oc "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"reflect"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-	"testing"
+
+	apitypes "github.com/oceanbase/ob-operator/api/types"
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	oc "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
 
 type captureZoneJobClient struct {

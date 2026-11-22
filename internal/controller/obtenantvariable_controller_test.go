@@ -22,14 +22,13 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/record"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	apitypes "github.com/oceanbase/ob-operator/api/types"
 	oceanbasev1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
-	"k8s.io/client-go/tools/record"
 )
 
 var _ = Describe("OBTenantVariable Controller", func() {

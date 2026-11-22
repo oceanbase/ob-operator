@@ -19,6 +19,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -29,13 +30,14 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	ob "github.com/oceanbase/ob-operator/api/v1alpha1"
-	obconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
-	ls "github.com/oceanbase/ob-operator/internal/dashboard/business/logservice"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	ob "github.com/oceanbase/ob-operator/api/v1alpha1"
+	obconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	ls "github.com/oceanbase/ob-operator/internal/dashboard/business/logservice"
 )
 
 // IDs verified against OceanBase AI 4.6.2 GV$SYSSTAT. Names, not generic OB
@@ -218,7 +220,7 @@ func queryRegistry(ctx context.Context, s *ls.Service, ns, name string) (map[str
 			} `json:"data"`
 		}
 		err = json.NewDecoder(io.LimitReader(resp.Body, 2<<20)).Decode(&result)
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		if err != nil || resp.StatusCode != 200 || result.Message != "" || result.Data.Nodes == nil {
 			continue
 		}
@@ -230,17 +232,17 @@ func queryRegistry(ctx context.Context, s *ls.Service, ns, name string) (map[str
 		}
 		return active, nil
 	}
-	return nil, fmt.Errorf("LS registry unavailable")
+	return nil, errors.New("LS registry unavailable")
 }
 
 func queryStats(ctx context.Context, s *ls.Service, c *ob.OBCluster) ([]sample, error) {
 	secret, err := s.Core.CoreV1().Secrets(c.Namespace).Get(ctx, c.Spec.UserSecrets.Root, metav1.GetOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("database credentials unavailable")
+		return nil, errors.New("database credentials unavailable")
 	}
 	password, ok := secret.Data["password"]
 	if !ok {
-		return nil, fmt.Errorf("database credential key unavailable")
+		return nil, errors.New("database credential key unavailable")
 	}
 	servers, err := s.Dynamic.Resource(schema.GroupVersionResource{Group: ls.OBGVR.Group, Version: ls.OBGVR.Version, Resource: "observers"}).Namespace(c.Namespace).List(ctx, metav1.ListOptions{LabelSelector: obconst.LabelRefOBCluster + "=" + c.Name})
 	if err != nil {
@@ -280,7 +282,7 @@ func queryStats(ctx context.Context, s *ls.Service, c *ob.OBCluster) ([]sample, 
 			break
 		}
 	}
-	return nil, fmt.Errorf("SS system statistics are unavailable")
+	return nil, errors.New("SS system statistics are unavailable")
 }
 func readStats(ctx context.Context, db *sql.DB, query string) ([]sample, error) {
 	ctx, cancel := context.WithTimeout(ctx, 6*time.Second)
@@ -302,7 +304,7 @@ func readStats(ctx context.Context, db *sql.DB, query string) ([]sample, error) 
 		return nil, err
 	}
 	if len(out) == 0 {
-		return nil, fmt.Errorf("SS statistic IDs not supported")
+		return nil, errors.New("SS statistic IDs not supported")
 	}
 	return out, nil
 }

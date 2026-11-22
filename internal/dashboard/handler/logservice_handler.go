@@ -14,11 +14,13 @@ package handler
 
 import (
 	"encoding/json"
-	"github.com/gin-gonic/gin"
-	biz "github.com/oceanbase/ob-operator/internal/dashboard/business/logservice"
-	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 	"io"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
+
+	biz "github.com/oceanbase/ob-operator/internal/dashboard/business/logservice"
+	oberr "github.com/oceanbase/ob-operator/pkg/errors"
 )
 
 func bindLogService(c *gin.Context, p any) error {

@@ -38,7 +38,7 @@ import (
 type PreflightOptions struct {
 	Release, Namespace, NodeName string
 	NodeNames                    []string
-	Values                       map[string]interface{}
+	Values                       map[string]any
 	Existing, PrepareOperator    bool
 }
 
@@ -64,7 +64,7 @@ func CheckCluster(ctx context.Context, run RunCommand, opts PreflightOptions) (P
 	if run == nil || opts.Release == "" || opts.Namespace == "" || opts.Values == nil {
 		return result, errors.New("preflight requires a command runner, release, namespace and complete values")
 	}
-	read := func(tool string, out interface{}, args ...string) bool {
+	read := func(tool string, out any, args ...string) bool {
 		child, cancel := context.WithTimeout(ctx, pfCommandTimeout)
 		defer cancel()
 		if tool == "kubectl" {
@@ -94,11 +94,11 @@ func CheckCluster(ctx context.Context, run RunCommand, opts PreflightOptions) (P
 	if read("kubectl", &version, "version", "-o", "json") {
 		result.KubernetesVersion = version.ServerVersion.GitVersion
 		if !pfVersionAtLeast(result.KubernetesVersion, 1, 27) {
-			problems = append(problems, fmt.Errorf("Kubernetes >=1.27 is required; found %q", result.KubernetesVersion))
+			problems = append(problems, fmt.Errorf("requires Kubernetes >=1.27; found %q", result.KubernetesVersion))
 		}
 	}
 	if read("helm", &result.HelmVersion, "version", "--template", "{{.Version}}") && !pfVersionAtLeast(result.HelmVersion, 3, 12) {
-		problems = append(problems, fmt.Errorf("Helm >=3.12 is required; found %q", result.HelmVersion))
+		problems = append(problems, fmt.Errorf("requires Helm >=3.12; found %q", result.HelmVersion))
 	}
 	var classes storagev1.StorageClassList
 	if read("kubectl", &classes, "get", "storageclasses", "-o", "json") {
@@ -231,27 +231,29 @@ func pfVersionAtLeast(v string, major, minor int) bool {
 	return a > major || a == major && b >= minor
 }
 
-func pfMap(v interface{}) map[string]interface{} {
-	m, _ := v.(map[string]interface{})
-	return m
+func pfMap(v any) map[string]any {
+	if m, ok := v.(map[string]any); ok {
+		return m
+	}
+	return nil
 }
 
-func pfGet(v map[string]interface{}, path ...string) interface{} {
-	var current interface{} = v
+func pfGet(v map[string]any, path ...string) any {
+	var current any = v
 	for _, key := range path {
 		current = pfMap(current)[key]
 	}
 	return current
 }
 
-func pfString(v interface{}) string {
+func pfString(v any) string {
 	if v == nil {
 		return ""
 	}
 	return fmt.Sprint(v)
 }
 
-func pfStorageClass(values map[string]interface{}, classes []storagev1.StorageClass) (string, error) {
+func pfStorageClass(values map[string]any, classes []storagev1.StorageClass) (string, error) {
 	name := pfString(values["storageClass"])
 	known := map[string]bool{}
 	var defaults []string
@@ -270,13 +272,13 @@ func pfStorageClass(values map[string]interface{}, classes []storagev1.StorageCl
 	if !known[name] {
 		return "", fmt.Errorf("StorageClass %q does not exist", name)
 	}
-	if enabled, _ := pfGet(values, "dashboard", "enabled").(bool); !enabled {
+	if pfGet(values, "dashboard", "enabled") != true {
 		return name, nil
 	}
 	for _, field := range []string{"prometheus", "sharedVolume"} {
 		other := pfString(pfGet(values, "dashboard", field, "persistence", "storageClassName"))
 		if other != "" && !known[other] {
-			return "", fmt.Errorf("Dashboard %s StorageClass %q does not exist", field, other)
+			return "", fmt.Errorf("the Dashboard %s StorageClass %q does not exist", field, other)
 		}
 	}
 	return name, nil
@@ -297,7 +299,7 @@ func (r *pfResources) add(other pfResources) {
 	}
 }
 
-func pfQuantities(v map[string]interface{}, field string) (pfResources, error) {
+func pfQuantities(v map[string]any, field string) (pfResources, error) {
 	var result pfResources
 	for _, key := range []string{"cpu", "memory"} {
 		q, err := resource.ParseQuantity(pfString(v[key]))
@@ -319,12 +321,12 @@ func pfQuantities(v map[string]interface{}, field string) (pfResources, error) {
 	return result, nil
 }
 
-func pfSelector(v interface{}) (map[string]string, error) {
+func pfSelector(v any) (map[string]string, error) {
 	out := map[string]string{}
 	if v == nil {
 		return out, nil
 	}
-	m, ok := v.(map[string]interface{})
+	m, ok := v.(map[string]any)
 	if !ok {
 		return nil, errors.New("nodeSelector must be a string map")
 	}
@@ -338,7 +340,7 @@ func pfSelector(v interface{}) (map[string]string, error) {
 	return out, nil
 }
 
-func pfDemand(values map[string]interface{}) (pfResources, []map[string]string, []corev1.Toleration, error) {
+func pfDemand(values map[string]any) (pfResources, []map[string]string, []corev1.Toleration, error) {
 	var demand pfResources
 	global, err := pfSelector(pfGet(values, "scheduling", "nodeSelector"))
 	if err != nil {
@@ -357,7 +359,7 @@ func pfDemand(values map[string]interface{}) (pfResources, []map[string]string, 
 		if err != nil {
 			return demand, nil, nil, err
 		}
-		topology, ok := pfGet(values, component, "topology").([]interface{})
+		topology, ok := pfGet(values, component, "topology").([]any)
 		if !ok || len(topology) == 0 {
 			return demand, nil, nil, fmt.Errorf("%s.topology must be present in complete values", component)
 		}
@@ -396,7 +398,7 @@ func pfDemand(values map[string]interface{}) (pfResources, []map[string]string, 
 	if mode != "bundled" && mode != "external" {
 		return demand, nil, nil, errors.New("objectStorage.mode must be bundled or external")
 	}
-	createBuckets, _ := pfGet(values, "objectStorage", "createBuckets").(bool)
+	createBuckets := pfGet(values, "objectStorage", "createBuckets") == true
 	if mode == "bundled" || createBuckets {
 		r, err := pfQuantities(pfMap(pfGet(values, "initialization", "resources", "requests")), "initialization.resources.requests")
 		if err != nil {
@@ -404,7 +406,7 @@ func pfDemand(values map[string]interface{}) (pfResources, []map[string]string, 
 		}
 		demand.add(r) // A retry/upgrade also creates this storage-init Job.
 	}
-	if enabled, _ := pfGet(values, "dashboard", "enabled").(bool); enabled {
+	if pfGet(values, "dashboard", "enabled") == true {
 		selector, err := pfSelector(pfGet(values, "dashboard", "nodeSelector"))
 		if err != nil {
 			return demand, nil, nil, err
@@ -541,7 +543,7 @@ func pfCheckCapacity(opts PreflightOptions, nodes []corev1.Node, pods []pfPod, c
 			suppliedClaims[name] = false
 		}
 	}
-	if enabled, _ := pfGet(opts.Values, "dashboard", "enabled").(bool); enabled {
+	if pfGet(opts.Values, "dashboard", "enabled") == true {
 		for field, suffix := range map[string]string{"prometheus": "prometheus-pvc", "sharedVolume": "shared-volume-pvc"} {
 			if name := pfString(pfGet(opts.Values, "dashboard", field, "persistence", "existingClaim")); name != "" {
 				suppliedClaims[name] = false
@@ -658,7 +660,7 @@ func pfCheckCapacity(opts PreflightOptions, nodes []corev1.Node, pods []pfPod, c
 		return fmt.Errorf("single-worker installation requires one Ready, schedulable node matching all zone selectors/tolerations (found %d); select a node or use the advanced Chart workflow", len(eligible))
 	}
 	node := eligible[0]
-	if enabled, _ := pfGet(opts.Values, "dashboard", "enabled").(bool); enabled {
+	if pfGet(opts.Values, "dashboard", "enabled") == true {
 		var dashboardTolerations []corev1.Toleration
 		if raw := pfGet(opts.Values, "dashboard", "tolerations"); raw != nil {
 			data, _ := json.Marshal(raw)

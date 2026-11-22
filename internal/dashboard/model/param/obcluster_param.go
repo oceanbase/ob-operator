@@ -13,7 +13,7 @@ See the Mulan PSL v2 for more details.
 package param
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
@@ -83,45 +83,45 @@ type CreateOBClusterParam struct {
 // omit deploymentMode; they retain the normal deployment behavior.
 func (p *CreateOBClusterParam) ValidateStorageMode() error {
 	if p.DeploymentMode != "" && p.DeploymentMode != "normal" && p.DeploymentMode != "shared_storage" {
-		return fmt.Errorf("deploymentMode must be normal or shared_storage")
+		return errors.New("deploymentMode must be normal or shared_storage")
 	}
 	if p.OBServer == nil || p.OBServer.Storage == nil {
-		return fmt.Errorf("observer.storage is required")
+		return errors.New("observer.storage is required")
 	}
 	if p.DeploymentMode != "shared_storage" {
 		if p.SharedStorageInfo != nil || p.LogServiceRef != nil {
-			return fmt.Errorf("sharedStorageInfo and logServiceRef require shared_storage deploymentMode")
+			return errors.New("sharedStorageInfo and logServiceRef require shared_storage deploymentMode")
 		}
 		if p.OBServer.Storage.RedoLog == nil {
-			return fmt.Errorf("observer.storage.redoLog is required for normal deploymentMode")
+			return errors.New("observer.storage.redoLog is required for normal deploymentMode")
 		}
 		return nil
 	}
 	if p.LogServiceRef == nil || strings.TrimSpace(p.LogServiceRef.Name) == "" {
-		return fmt.Errorf("logServiceRef.name is required for shared_storage deploymentMode")
+		return errors.New("logServiceRef.name is required for shared_storage deploymentMode")
 	}
 	if p.SharedStorageInfo == nil || strings.TrimSpace(p.SharedStorageInfo.BucketURL) == "" || strings.TrimSpace(p.SharedStorageInfo.SecretRef.Name) == "" {
-		return fmt.Errorf("sharedStorageInfo.bucketURL and secretRef.name are required for shared_storage deploymentMode")
+		return errors.New("sharedStorageInfo.bucketURL and secretRef.name are required for shared_storage deploymentMode")
 	}
 	if _, safe := common.PublicBucketURL(p.SharedStorageInfo.BucketURL); !safe {
-		return fmt.Errorf("sharedStorageInfo.bucketURL contains unsupported options or inline credentials. Supply credentials through secretRef")
+		return errors.New("sharedStorageInfo.bucketURL contains unsupported options or inline credentials. Supply credentials through secretRef")
 	}
 	if p.OBServer.Storage.RedoLog != nil {
-		return fmt.Errorf("observer.storage.redoLog must be omitted for shared_storage deploymentMode")
+		return errors.New("observer.storage.redoLog must be omitted for shared_storage deploymentMode")
 	}
 	// The 30 GiB normal preset initializes only 6 GiB of cache, which fails
 	// SS startup (system cache allocation plus reserved space). Use the
 	// conservative minimum verified with oceanbase-ai 4.6.2.0.
 	if p.OBServer.Storage.Data.SizeGB < 50 {
-		return fmt.Errorf("shared_storage requires at least 50 GiB of local data cache in this Dashboard")
+		return errors.New("shared_storage requires at least 50 GiB of local data cache in this Dashboard")
 	}
 	seen := make(map[string]bool)
 	if len(p.Topology) == 0 {
-		return fmt.Errorf("topology must contain at least one zone")
+		return errors.New("topology must contain at least one zone")
 	}
 	for _, zone := range p.Topology {
 		if strings.TrimSpace(zone.Zone) == "" || seen[zone.Zone] || zone.Replicas < 1 {
-			return fmt.Errorf("topology must contain unique non-empty zones with replicas >= 1")
+			return errors.New("topology must contain unique non-empty zones with replicas >= 1")
 		}
 		seen[zone.Zone] = true
 	}

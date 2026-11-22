@@ -13,8 +13,9 @@ See the Mulan PSL v2 for more details.
 package utils
 
 import (
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
 )
 
 // JobScheduling is internal placement for cluster preflight Jobs, not a new CRD

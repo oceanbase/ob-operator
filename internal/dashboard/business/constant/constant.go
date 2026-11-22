@@ -36,11 +36,7 @@ const (
 
 // ServiceAccountName returns the service account configured by the deployment.
 func ServiceAccountName() string {
-	return serviceAccountName(os.Getenv("SERVICE_ACCOUNT"))
-}
-
-func serviceAccountName(configuredName string) string {
-	if name := strings.TrimSpace(configuredName); name != "" {
+	if name := strings.TrimSpace(os.Getenv("SERVICE_ACCOUNT")); name != "" {
 		return name
 	}
 	return defaultServiceAccountName

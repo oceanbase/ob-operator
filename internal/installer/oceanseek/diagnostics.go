@@ -48,10 +48,10 @@ done; exit 1`
 
 // verifyObserverDiagnostics checks every Ready Observer running the configured
 // image. It does not collect logs, create jobs, or modify database Pod files.
-func verifyObserverDiagnostics(ctx context.Context, run RunCommand, namespace, release string, values map[string]interface{}, interval time.Duration) error {
+func verifyObserverDiagnostics(ctx context.Context, run RunCommand, namespace, release string, values map[string]any, interval time.Duration) error {
 	image := pfString(pfGet(values, "observer", "image"))
 	expected := 0
-	zones, _ := pfGet(values, "observer", "topology").([]interface{})
+	zones, ok := pfGet(values, "observer", "topology").([]any)
 	for _, zone := range zones {
 		n, err := strconv.Atoi(pfString(pfMap(zone)["replica"]))
 		if err != nil || n < 1 || n > 100 {
@@ -59,7 +59,7 @@ func verifyObserverDiagnostics(ctx context.Context, run RunCommand, namespace, r
 		}
 		expected += n
 	}
-	if expected == 0 || image == "" || interval <= 0 {
+	if !ok || expected == 0 || image == "" || interval <= 0 {
 		return errors.New("cannot verify diagnostics: missing Observer image/topology or invalid interval")
 	}
 	for {
@@ -86,7 +86,7 @@ func verifyObserverDiagnostics(ctx context.Context, run RunCommand, namespace, r
 			for _, pod := range pods.Items {
 				_, err := bounded(ctx, run, "kubectl", "--request-timeout=20s", "-n", namespace, "exec", pod.Name, "-c", "observer", "--", "/bin/sh", "-c", observerDiagnosticProbeShell, "observer-diagnostic-probe", observerDiagnosticPythonProbe, "/usr/libexec/platform-python", "python3")
 				if err != nil {
-					return fmt.Errorf("Observer %s cannot execute the Python >=3.6 in-memory archive/transfer probe required by log download (/usr/libexec/platform-python or python3); retain the installed Observer image and check diagnostic compatibility: %w", pod.Name, err)
+					return fmt.Errorf("the Observer %s cannot execute the Python >=3.6 in-memory archive/transfer probe required by log download (/usr/libexec/platform-python or python3); retain the installed Observer image and check diagnostic compatibility: %w", pod.Name, err)
 				}
 			}
 			return nil

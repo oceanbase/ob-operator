@@ -22,10 +22,12 @@ func TestServiceAccountNameMatchesDeploymentEnvironment(t *testing.T) {
 }
 
 func TestServiceAccountNameFallback(t *testing.T) {
-	if got := serviceAccountName("  "); got != defaultServiceAccountName {
-		t.Fatalf("serviceAccountName() = %q, want fallback %q", got, defaultServiceAccountName)
+	t.Setenv("SERVICE_ACCOUNT", "  ")
+	if got := ServiceAccountName(); got != defaultServiceAccountName {
+		t.Fatalf("ServiceAccountName() = %q, want fallback %q", got, defaultServiceAccountName)
 	}
-	if got := serviceAccountName("  dashboard-qa-sa  "); got != "dashboard-qa-sa" {
-		t.Fatalf("serviceAccountName() = %q, want trimmed deployment value", got)
+	t.Setenv("SERVICE_ACCOUNT", "  dashboard-qa-sa  ")
+	if got := ServiceAccountName(); got != "dashboard-qa-sa" {
+		t.Fatalf("ServiceAccountName() = %q, want trimmed deployment value", got)
 	}
 }

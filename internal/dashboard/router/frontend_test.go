@@ -44,7 +44,8 @@ func TestFrontendRevalidatesEntryAndAssets(t *testing.T) {
 				if got := res.Header().Get("Cache-Control"); got != "no-cache, must-revalidate" {
 					t.Fatalf("unexpected cache control: %q", got)
 				}
-				if res.Code != http.StatusOK && !(path == "/index.html" && res.Code == http.StatusMovedPermanently) {
+				indexRedirect := path == "/index.html" && res.Code == http.StatusMovedPermanently
+				if res.Code != http.StatusOK && !indexRedirect {
 					t.Fatalf("unexpected HTTP status: %d", res.Code)
 				}
 				if modified := res.Header().Get("Last-Modified"); modified != "" {

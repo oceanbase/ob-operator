@@ -32,7 +32,7 @@ type multiPlacement struct {
 	first       string
 }
 
-func pfMultiTolerations(raw interface{}, field string) ([]corev1.Toleration, error) {
+func pfMultiTolerations(raw any, field string) ([]corev1.Toleration, error) {
 	var out []corev1.Toleration
 	if raw == nil {
 		return out, nil
@@ -51,7 +51,7 @@ func pfMultiTolerations(raw interface{}, field string) ([]corev1.Toleration, err
 // exponent, unlike the decimal ID in Operator resource names. Normalize only
 // this identity field, preserving exact zone matching and the Chart's integer
 // range (which is exactly representable as float64).
-func pfClusterIDName(raw interface{}) (string, error) {
+func pfClusterIDName(raw any) (string, error) {
 	data, err := json.Marshal(raw)
 	var id float64
 	if err != nil || json.Unmarshal(data, &id) != nil || id < 1 || id > 2147483647 || id != float64(int64(id)) {
@@ -137,7 +137,7 @@ func pfMultiPlacement(opts PreflightOptions, nodes []corev1.Node) (multiPlacemen
 		if err != nil {
 			return p, err
 		}
-		topology, ok := pfGet(opts.Values, component, "topology").([]interface{})
+		topology, ok := pfGet(opts.Values, component, "topology").([]any)
 		if !ok || len(topology) != 3 {
 			return p, fmt.Errorf("three-node installation requires three %s zones", component)
 		}
@@ -191,7 +191,7 @@ func pfMultiPlacement(opts PreflightOptions, nodes []corev1.Node) (multiPlacemen
 	if mode != "bundled" && mode != "external" {
 		return p, errors.New("objectStorage.mode must be bundled or external")
 	}
-	createBuckets, _ := pfGet(opts.Values, "objectStorage", "createBuckets").(bool)
+	createBuckets := pfGet(opts.Values, "objectStorage", "createBuckets") == true
 	if mode == "bundled" || createBuckets {
 		if global["kubernetes.io/hostname"] != p.nodes[0].Labels["kubernetes.io/hostname"] || !pfMatches(p.nodes[0], []map[string]string{global}) || !pfTolerates(p.nodes[0], tolerations) {
 			return p, errors.New("storage and initialization placement must match the first requested node and its taints")
@@ -213,7 +213,7 @@ func pfMultiPlacement(opts PreflightOptions, nodes []corev1.Node) (multiPlacemen
 		d.add(resources)
 		p.demand[p.first] = d
 	}
-	if enabled, _ := pfGet(opts.Values, "dashboard", "enabled").(bool); enabled {
+	if pfGet(opts.Values, "dashboard", "enabled") == true {
 		selector, err := pfSelector(pfGet(opts.Values, "dashboard", "nodeSelector"))
 		if err != nil {
 			return p, err
@@ -223,7 +223,7 @@ func pfMultiPlacement(opts PreflightOptions, nodes []corev1.Node) (multiPlacemen
 			return p, err
 		}
 		if selector["kubernetes.io/hostname"] != p.nodes[0].Labels["kubernetes.io/hostname"] || !pfMatches(p.nodes[0], []map[string]string{selector}) || !pfTolerates(p.nodes[0], dashboardTolerations) {
-			return p, errors.New("Dashboard placement must match the first requested node and its taints")
+			return p, errors.New("the Dashboard placement must match the first requested node and its taints")
 		}
 		d := p.demand[p.first]
 		d.add(pfResources{700, 2*500*1024*1024 + 500000000})
@@ -295,7 +295,7 @@ func pfMultiStorage(opts PreflightOptions, p multiPlacement, pods []pfPod, claim
 		}
 		targets[name] = p.first
 	}
-	if enabled, _ := pfGet(opts.Values, "dashboard", "enabled").(bool); enabled {
+	if pfGet(opts.Values, "dashboard", "enabled") == true {
 		for field, suffix := range map[string]string{"prometheus": "prometheus-pvc", "sharedVolume": "shared-volume-pvc"} {
 			name := pfString(pfGet(opts.Values, "dashboard", field, "persistence", "existingClaim"))
 			if name != "" {

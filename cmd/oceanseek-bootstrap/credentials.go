@@ -64,7 +64,7 @@ func initCredentials(dir string) error {
 		}
 		// Version 2 adds a least-privilege OBAgent password. It is the only
 		// credential that may be added to an existing version-1 volume.
-		if version > 0 && !(version == 1 && name == "ob_monitor_password") {
+		if version > 0 && (version != 1 || name != "ob_monitor_password") {
 			return fmt.Errorf("%s is missing from initialized credentials; restore the credentials volume from backup", name)
 		}
 		var random [24]byte

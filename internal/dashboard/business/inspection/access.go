@@ -17,10 +17,6 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/oceanbase/ob-operator/api/v1alpha1"
-	insconst "github.com/oceanbase/ob-operator/internal/dashboard/business/inspection/constant"
-	"github.com/oceanbase/ob-operator/internal/dashboard/config"
-	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -28,6 +24,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/oceanbase/ob-operator/api/v1alpha1"
+	insconst "github.com/oceanbase/ob-operator/internal/dashboard/business/inspection/constant"
+	"github.com/oceanbase/ob-operator/internal/dashboard/config"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 )
 
 func inspectionClusterRoleName(cfg *config.Config) string {

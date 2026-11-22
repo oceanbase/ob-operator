@@ -16,9 +16,10 @@ import (
 	"strings"
 	"testing"
 
-	jobmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/job"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+
+	jobmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/job"
 )
 
 func TestResolveJobStatusReportsFailedCreate(t *testing.T) {

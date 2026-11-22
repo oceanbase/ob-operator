@@ -22,6 +22,7 @@ import (
 	"io"
 	"net/url"
 	"regexp"
+	"slices"
 	"strings"
 	"time"
 )
@@ -113,14 +114,16 @@ func Wait(parent context.Context, reader Reader, o Options, output io.Writer) er
 			detail = "Kubernetes API temporarily unavailable; retrying"
 		}
 		if ready {
-			fmt.Fprintf(output, "OceanSeek ready: LogService and OceanBase running; all database Pods ready%s (%s)\n", dashboardSummary(o), time.Since(started).Round(time.Second))
-			return nil
+			_, err = fmt.Fprintf(output, "OceanSeek ready: LogService and OceanBase running; all database Pods ready%s (%s)\n", dashboardSummary(o), time.Since(started).Round(time.Second))
+			return err
 		}
 		if strings.HasPrefix(detail, "Storage initialization failed") {
 			return errors.New(detail)
 		}
 		if detail != last || time.Since(lastPrinted) >= 30*time.Second {
-			fmt.Fprintf(output, "Waiting: %s (%s elapsed)\n", detail, time.Since(started).Round(time.Second))
+			if _, err := fmt.Fprintf(output, "Waiting: %s (%s elapsed)\n", detail, time.Since(started).Round(time.Second)); err != nil {
+				return err
+			}
 			lastPrinted = time.Now()
 		}
 		last = detail
@@ -211,11 +214,8 @@ func snapshot(ctx context.Context, r Reader, o Options) (string, bool, error) {
 				}
 			}
 			for _, c := range append(p.Status.InitContainerStatuses, p.Status.ContainerStatuses...) {
-				if c.State.Waiting != nil {
-					switch c.State.Waiting.Reason {
-					case "ImagePullBackOff", "ErrImagePull", "CrashLoopBackOff", "CreateContainerConfigError":
-						reason = c.State.Waiting.Reason
-					}
+				if c.State.Waiting != nil && slices.Contains([]string{"ImagePullBackOff", "ErrImagePull", "CrashLoopBackOff", "CreateContainerConfigError"}, c.State.Waiting.Reason) {
+					reason = c.State.Waiting.Reason
 				}
 			}
 		}
@@ -260,7 +260,7 @@ func DecodeJSON(body io.Reader, out any) error {
 		return err
 	}
 	if len(data) > 8<<20 {
-		return errors.New("Kubernetes API reply exceeds 8 MiB")
+		return errors.New("response from Kubernetes API exceeds 8 MiB")
 	}
 	return json.Unmarshal(data, out)
 }

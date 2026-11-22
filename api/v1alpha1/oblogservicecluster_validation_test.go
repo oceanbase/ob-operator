@@ -18,9 +18,10 @@ import (
 	"strings"
 	"testing"
 
-	apitypes "github.com/oceanbase/ob-operator/api/types"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"sigs.k8s.io/yaml"
+
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 )
 
 func TestLogServiceUpdateTopology(t *testing.T) {

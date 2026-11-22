@@ -22,6 +22,7 @@ import (
 	"time"
 )
 
+//revive:disable-next-line:unsecure-url-scheme Alibaba Cloud instance metadata uses HTTP at this fixed address.
 const alibabaMetadataURL = "http://100.100.100.200"
 
 // discoverDashboardHost only advertises addresses assigned to the target worker.

@@ -26,6 +26,10 @@ import (
 )
 
 func main() {
+	os.Exit(run())
+}
+
+func run() int {
 	var o readiness.Options
 	var proxySeedsFile string
 	flag.StringVar(&proxySeedsFile, "obproxy-rslist-file", "", "Write advertised Observer Service addresses for OBProxy bootstrap")
@@ -43,24 +47,25 @@ func main() {
 	}
 	if err := o.Validate(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		os.Exit(2)
+		return 2
 	}
 	client, err := readiness.InClusterClient()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		return 1
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	if proxySeedsFile != "" {
 		if err := readiness.WriteProxySeeds(ctx, client, o, proxySeedsFile); err != nil {
 			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
+			return 1
 		}
-		return
+		return 0
 	}
 	if err := readiness.Wait(ctx, client, o, os.Stdout); err != nil {
 		fmt.Fprintln(os.Stderr, "Readiness check failed:", err)
-		os.Exit(1)
+		return 1
 	}
+	return 0
 }

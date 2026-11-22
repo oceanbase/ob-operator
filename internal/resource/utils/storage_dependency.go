@@ -14,6 +14,7 @@ package utils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -42,7 +43,7 @@ func WaitForStorageInitialization(ctx context.Context, reader client.Reader, obj
 		return nil
 	}
 	if timeout <= 0 || interval <= 0 {
-		return fmt.Errorf("storage initialization requires positive timeout and interval")
+		return errors.New("storage initialization requires positive timeout and interval")
 	}
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -91,30 +92,30 @@ func ResolveStorageServiceURL(ctx context.Context, reader client.Reader, obj met
 	}
 	bucket, err := url.Parse(bucketURL)
 	if err != nil {
-		return "", fmt.Errorf("invalid storage bucket URL")
+		return "", errors.New("invalid storage bucket URL")
 	}
 	query, err := url.ParseQuery(bucket.RawQuery)
 	if err != nil {
-		return "", fmt.Errorf("invalid storage bucket query")
+		return "", errors.New("invalid storage bucket query")
 	}
 	hosts := query["host"]
 	if len(hosts) != 1 {
-		return "", fmt.Errorf("storage bucket URL requires exactly one host parameter")
+		return "", errors.New("storage bucket URL requires exactly one host parameter")
 	}
 	endpoint, err := url.Parse(hosts[0])
 	if err != nil || endpoint.Hostname() == "" || endpoint.User != nil {
-		return "", fmt.Errorf("invalid storage endpoint")
+		return "", errors.New("invalid storage endpoint")
 	}
 	if endpoint.Scheme != "http" {
 		return bucketURL, nil
 	}
 	host := strings.TrimSuffix(strings.ToLower(endpoint.Hostname()), ".")
-	parts := strings.Split(host, ".")
-	if !(len(parts) == 3 && parts[2] == "svc" || len(parts) == 5 && strings.Join(parts[2:], ".") == "svc.cluster.local") {
+	parts := strings.SplitN(host, ".", 3)
+	if len(parts) != 3 || (parts[2] != "svc" && parts[2] != "svc.cluster.local") {
 		return bucketURL, nil
 	}
 	if parts[1] != obj.GetNamespace() {
-		return "", fmt.Errorf("storage Service must be in the database namespace")
+		return "", errors.New("storage Service must be in the database namespace")
 	}
 	service := &corev1.Service{}
 	if err := reader.Get(ctx, types.NamespacedName{Namespace: obj.GetNamespace(), Name: parts[0]}, service); err != nil {

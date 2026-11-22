@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -73,6 +74,28 @@ func TestWaitReady(t *testing.T) {
 		}
 	}
 }
+
+func TestWaitReportsOutputFailure(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		reader *fakeReader
+	}{
+		{"ready", readyReader()},
+		{"waiting", &fakeReader{}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			in, out := io.Pipe()
+			defer out.Close()
+			if err := in.Close(); err != nil {
+				t.Fatal(err)
+			}
+			if err := Wait(context.Background(), tc.reader, options(), out); !errors.Is(err, io.ErrClosedPipe) {
+				t.Fatalf("expected a closed output error, got %v", err)
+			}
+		})
+	}
+}
+
 func TestSnapshotRequiresRuntimeReadiness(t *testing.T) {
 	cases := []struct{ name, path, body, want string }{
 		{"storage pending", "/apis/batch/v1/namespaces/qa/jobs/ob-storage-init-1", `{"status":{}}`, "Storage initialization"},

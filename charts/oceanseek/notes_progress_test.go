@@ -56,10 +56,8 @@ func TestManualHelmNotesReflectStage(t *testing.T) {
 						t.Fatalf("native readiness guidance missing %q:\n%s", want, output)
 					}
 				}
-			} else {
-				if !strings.Contains(output, "Verify runtime readiness") {
-					t.Fatal("legacy staged mode must not assert readiness", output)
-				}
+			} else if !strings.Contains(output, "Verify runtime readiness") {
+				t.Fatal("legacy staged mode must not assert readiness", output)
 			}
 			if stage == "cluster" && (!strings.Contains(output, "mysql -h 192.0.2.10 -P 30881") || strings.Contains(output, "127.0.0.1")) {
 				t.Fatal("SQL must print the real node address", output)
@@ -121,11 +119,12 @@ func TestDashboardNotesMatchAccessType(t *testing.T) {
 				t.Fatalf("wrong guidance for %s:\n%s", tc.name, output)
 			}
 			if tc.enabled {
+				dashboardStart := strings.Index(output, "OceanBase Operator Dashboard")
+				verificationStart := strings.Index(output, "Installation verification")
 				if !strings.HasPrefix(strings.TrimSpace(output), "OceanSeek deployment access") ||
 					!strings.Contains(output, "Helm release: qa") ||
 					!strings.Contains(output, "Namespace: qa-ns") ||
-					strings.Index(output, "OceanBase Operator Dashboard") < 0 ||
-					strings.Index(output, "OceanBase Operator Dashboard") > strings.Index(output, "Installation verification") ||
+					dashboardStart < 0 || dashboardStart > verificationStart ||
 					!strings.Contains(output, "Username: admin") ||
 					!strings.Contains(output, "port-forward svc/oceanbase-dashboard-qa 8080:8088") ||
 					!strings.Contains(output, "Open http://127.0.0.1:8080") ||
@@ -151,7 +150,11 @@ func notesTemplate(t *testing.T) *template.Template {
 		t.Fatal(err)
 	}
 	source := string(helpers)
-	source = source[strings.Index(source, "{{/* Presentation address only:"):]
+	start := strings.Index(source, "{{/* Presentation address only:")
+	if start < 0 {
+		t.Fatal("missing presentation address helpers")
+	}
+	source = source[start:]
 	// The standalone fixture only executes presentation helpers; resource lookup
 	// helpers below them require the complete Helm function environment.
 	if end := strings.Index(source, "{{/* Preserve the webhook-generated account identity"); end >= 0 {

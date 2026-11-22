@@ -44,5 +44,5 @@ func K8sEventTiming(event corev1.Event) (first, last metav1.Time, count int32) {
 	if count <= 0 {
 		count = 1 // An existing, non-series event represents one occurrence.
 	}
-	return
+	return first, last, count
 }

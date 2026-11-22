@@ -41,7 +41,7 @@ var metricExprConfig map[string]string
 const (
 	// Keep this aligned with the dashboard Prometheus global scrape interval.
 	prometheusScrapeIntervalSeconds int64 = 5
-	minimumRateSamples                    = 4
+	minimumRateSamples              int64 = 4
 )
 
 func init() {

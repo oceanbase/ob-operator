@@ -16,7 +16,7 @@ package objectstorage
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net"
 	"net/http"
 	"net/url"
@@ -201,11 +201,11 @@ func safeHTTPClient() *http.Client {
 			}
 			ips, err := net.DefaultResolver.LookupIPAddr(ctx, host)
 			if err != nil || len(ips) == 0 {
-				return nil, fmt.Errorf("endpoint DNS resolution failed")
+				return nil, errors.New("endpoint DNS resolution failed")
 			}
 			for _, ip := range ips {
 				if !allowedIP(ip.IP) {
-					return nil, fmt.Errorf("endpoint address is not permitted")
+					return nil, errors.New("endpoint address is not permitted")
 				}
 			}
 			// Dial the validated IP, never resolve a hostname again after checking.
@@ -280,12 +280,12 @@ func checkBucket(ctx context.Context, loc *Location, id, key string, client *htt
 func bucketCheckURL(loc *Location) (string, error) {
 	endpoint, err := url.Parse(loc.Endpoint)
 	if err != nil || endpoint.Hostname() == "" {
-		return "", fmt.Errorf("invalid endpoint")
+		return "", errors.New("invalid endpoint")
 	}
 	hostname := strings.ToLower(strings.TrimSuffix(endpoint.Hostname(), "."))
 	bucket := strings.ToLower(loc.Bucket)
 	if endpoint.Scheme == "https" && strings.Contains(bucket, ".") && (strings.HasSuffix(hostname, ".myhuaweicloud.com") || strings.HasSuffix(hostname, ".myhuaweicloud.eu")) {
-		return "", fmt.Errorf("Huawei OBS HTTPS checks do not support bucket names containing periods")
+		return "", errors.New("Huawei OBS HTTPS checks do not support bucket names containing periods")
 	}
 	alreadyVirtualHosted := strings.HasPrefix(hostname, bucket+".")
 	virtualHosted := alreadyVirtualHosted

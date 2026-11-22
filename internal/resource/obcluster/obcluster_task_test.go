@@ -15,17 +15,17 @@ package obcluster
 import (
 	"context"
 	"fmt"
-	apitypes "github.com/oceanbase/ob-operator/api/types"
-	corev1 "k8s.io/api/core/v1"
 	"strings"
 	"testing"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	apitypes "github.com/oceanbase/ob-operator/api/types"
 	v1alpha1 "github.com/oceanbase/ob-operator/api/v1alpha1"
 	logserviceclusterstatus "github.com/oceanbase/ob-operator/internal/const/status/oblogservicecluster"
 )

@@ -18,10 +18,6 @@ import (
 	"strings"
 	"testing"
 
-	insconst "github.com/oceanbase/ob-operator/internal/dashboard/business/inspection/constant"
-	"github.com/oceanbase/ob-operator/internal/dashboard/config"
-	insmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/inspection"
-	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 	batchv1 "k8s.io/api/batch/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -29,6 +25,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/fake"
 	kubetesting "k8s.io/client-go/testing"
+
+	insconst "github.com/oceanbase/ob-operator/internal/dashboard/business/inspection/constant"
+	"github.com/oceanbase/ob-operator/internal/dashboard/config"
+	insmodel "github.com/oceanbase/ob-operator/internal/dashboard/model/inspection"
+	"github.com/oceanbase/ob-operator/internal/dashboard/model/response"
 )
 
 func inspectionMeta() *response.OBClusterMetaBasic {

@@ -14,9 +14,8 @@ package logservice
 
 import (
 	"context"
-	api "github.com/oceanbase/ob-operator/api/types"
-	ob "github.com/oceanbase/ob-operator/api/v1alpha1"
-	obconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
+	"testing"
+
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -25,7 +24,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	kubefake "k8s.io/client-go/kubernetes/fake"
-	"testing"
+
+	api "github.com/oceanbase/ob-operator/api/types"
+	ob "github.com/oceanbase/ob-operator/api/v1alpha1"
+	obconst "github.com/oceanbase/ob-operator/internal/const/oceanbase"
 )
 
 func validCreate() *CreateRequest {
