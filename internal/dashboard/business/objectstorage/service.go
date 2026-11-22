@@ -27,7 +27,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/signer/v4"
+	signerv4 "github.com/aws/aws-sdk-go/aws/signer/v4"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -250,7 +250,7 @@ func checkBucket(ctx context.Context, loc *Location, id, key string, client *htt
 	if err != nil {
 		return nil, oberr.NewBadRequest("Invalid endpoint")
 	}
-	_, err = v4.NewSigner(credentials.NewStaticCredentials(id, key, "")).Sign(req, nil, "s3", loc.Region, time.Now())
+	_, err = signerv4.NewSigner(credentials.NewStaticCredentials(id, key, "")).Sign(req, nil, "s3", loc.Region, time.Now())
 	if err != nil {
 		return nil, oberr.NewInternal("Cannot sign bucket check")
 	}
