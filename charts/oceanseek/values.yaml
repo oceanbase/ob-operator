@@ -2,8 +2,8 @@
 # helm upgrade --install oceanseek ./oceanseek -n oceanseek --create-namespace \
 #   --wait --wait-for-jobs --timeout 35m
 # Defaults match values-single-node.yaml: 1 Observer, 3 LogService processes,
-# 1 OBProxy, bundled MinIO and Dashboard. Database + proxy request 10 CPU / 24Gi;
-# add Kubernetes, monitoring and storage overhead, and >=350Gi free disk.
+# 2 OBProxy replicas, bundled MinIO and Dashboard. Database and proxy request
+# 11 CPU / 26Gi plus Kubernetes, monitoring and storage overhead. Allow >=350Gi free disk.
 # The complete graph is declarative; Operator reconciles storage -> LS -> OB.
 stage: cluster
 native:
@@ -36,7 +36,7 @@ obproxy:
   enabled: true
   image: quay.io/oceanbase/obproxy-ce:4.3.3.0-5
   imagePullPolicy: IfNotPresent
-  replicas: 1
+  replicas: 2
   # Keep the proxy process budget below its container memory limit.
   memoryLimit: 1536M
   resources:

@@ -1,6 +1,6 @@
 # Optional explicit copy of the default single-node experience sizing.
 # No values file is needed for the default install. Database + proxy request
-# 10 CPU / 24Gi; add Kubernetes, Dashboard, monitoring and storage overhead.
+# 11 CPU / 26Gi plus Kubernetes, Dashboard, monitoring and storage overhead.
 # Use a working local-path StorageClass with >=350Gi free disk.
 # Set image values to the published/pinned images supplied with your release.
 storageClass: local-path
