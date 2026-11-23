@@ -30,9 +30,10 @@ export const encryptText = (
   return encrypt.encrypt(text);
 };
 
-
 // A new login or password-reset page can be submitted before its first request completes.
-export async function encryptPassword(value: string): Promise<string | undefined> {
+export async function encryptPassword(
+  value: string,
+): Promise<string | undefined> {
   const { data } = await getAppInfo();
   const encrypted = data?.publicKey && encryptText(value, data.publicKey);
   if (!encrypted) {
