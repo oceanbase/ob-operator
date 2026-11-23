@@ -3,7 +3,7 @@ Install from the public Helm repository
 On a fresh Kubernetes 1.33–1.36 cluster with a working local-path StorageClass,
 cluster administrator permissions and access to the release images, run:
 
-  helm upgrade --install oceanseek oceanseek --repo https://oceanbase.github.io/ob-operator/ --version 1.0.1 -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
+  helm upgrade --install oceanseek oceanseek --repo https://oceanbase.github.io/ob-operator/ --version 1.0.0 -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
 
 The package registers the CRDs, starts cert-manager, then starts the ob-operator
 subchart in oceanbase-system. Each webhook must be ready before the next stage.
@@ -350,7 +350,7 @@ cluster has a load balancer provider.
 
 Retention and uninstall
 -----------------------
-From chart 1.0.1, helm uninstall stops the database. Its pre-delete Job
+Uninstalling this chart stops the database. Its pre-delete Job
 deletes the release's OBCluster, waits for it to disappear, then deletes
 its OBLogServiceCluster. Keep the Operator and its webhooks available.
 LogService node PVCs are owned by the nodes and can be garbage-collected.
@@ -358,8 +358,10 @@ Back up the instance before uninstalling. Generated credentials, bundled MinIO
 StatefulSet/Service/PVC and Dashboard data are retained. Reinstalling the
 release does not restore the deleted database.
 
-Helm uses the hooks stored in the installed revision. Upgrade an existing
-1.0.0 release to the new chart first. Skipping hooks with --no-hooks preserves
+Helm uses the hooks stored in the installed revision. For a release installed
+from a package without the pre-delete hook, upgrade using the updated chart
+archive and the original values first, even if the version number matches.
+Skipping hooks with --no-hooks preserves
 the two cluster resources. If the hook fails, inspect the <release>-uninstall
 Job and Operator events, resolve the cause, then retry helm uninstall.
 
