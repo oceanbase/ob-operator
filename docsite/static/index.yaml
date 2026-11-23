@@ -344,27 +344,4 @@ entries:
     urls:
     - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-dashboard-0.1.0/oceanbase-dashboard-0.1.0.tgz
     version: 0.1.0
-  oceanseek:
-  - apiVersion: v2
-    appVersion: 4.6.3.0
-    created: "2026-11-22T11:58:05.782502842Z"
-    dependencies:
-    - alias: dashboard
-      condition: dashboard.enabled
-      name: oceanbase-dashboard
-      repository: file://../oceanbase-dashboard
-      version: 0.6.6-dev.20261122.1
-    - alias: minio
-      condition: minio.enabled
-      name: oceanbase-minio
-      repository: file://../oceanbase-minio
-      version: 0.2.3
-    description: OceanSeek with Dashboard and optional bundled MinIO
-    digest: a142ddf9402ed0190d3b53a210d2fcf497bdc310144e7adde0237d85e709b148
-    kubeVersion: '>=1.27.0-0'
-    name: oceanseek
-    type: application
-    urls:
-    - https://github.com/oceanbase/ob-operator/releases/download/oceanseek-0.6.0-dev.20261122.1/oceanseek-0.6.0-dev.20261122.1.tgz
-    version: 0.6.0-dev.20261122.1
 generated: "2026-11-22T11:58:05.782585325Z"
