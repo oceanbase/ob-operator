@@ -357,7 +357,7 @@ entries:
   oceanseek:
   - apiVersion: v2
     appVersion: 4.6.3.0-482026112114.el7
-    created: "2026-11-23T06:03:56.479222745Z"
+    created: "2026-11-23T08:31:56.305179283Z"
     dependencies:
     - alias: dashboard
       condition: dashboard.enabled
@@ -369,11 +369,10 @@ entries:
       repository: file://../minio
       version: 0.1.0
     description: OceanSeek with Dashboard and optional bundled MinIO
-    digest: 145b6f55ddcca67fee2e95b5b463663e6db9ad6a798f8578505079224fde5195
-    kubeVersion: '>=1.27.0-0'
+    digest: 3677387d377d3a8e66fa3a4eb3899c1ca084eabfcb729784c252f82a15b7d261
     name: oceanseek
     type: application
     urls:
     - https://github.com/oceanbase/ob-operator/releases/download/oceanseek-0.1.0/oceanseek-0.1.0.tgz
     version: 0.1.0
-generated: "2026-11-23T06:03:56.479365386Z"
+generated: "2026-11-23T08:31:56.305242427Z"
