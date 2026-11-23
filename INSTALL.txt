@@ -8,7 +8,7 @@ Alertmanager 默认随湖库安装在同一个 Helm release 中，不需要单�
 
 1. 准备
 -------
-在目标 Kubernetes Worker 上执行。需要 Linux amd64、Kubernetes >=1.27、Helm >=3.12、
+在目标 Kubernetes Worker 上执行。需要 Linux amd64、Helm >=3.12、
 kubectl、jq、可用的默认 StorageClass，以及管理员 kubeconfig。推荐独立 8 核、32GiB
 以上内存的体验机；脚本根据已占用资源计算能否安装，磁盘还需容纳镜像和PVC。
 本包不安装操作系统或 Kubernetes，不会修改已有共享 Operator。

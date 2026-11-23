@@ -93,9 +93,6 @@ func CheckCluster(ctx context.Context, run RunCommand, opts PreflightOptions) (P
 	}
 	if read("kubectl", &version, "version", "-o", "json") {
 		result.KubernetesVersion = version.ServerVersion.GitVersion
-		if !pfVersionAtLeast(result.KubernetesVersion, 1, 27) {
-			problems = append(problems, fmt.Errorf("requires Kubernetes >=1.27; found %q", result.KubernetesVersion))
-		}
 	}
 	if read("helm", &result.HelmVersion, "version", "--template", "{{.Version}}") && !pfVersionAtLeast(result.HelmVersion, 3, 12) {
 		problems = append(problems, fmt.Errorf("requires Helm >=3.12; found %q", result.HelmVersion))
