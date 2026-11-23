@@ -32,7 +32,7 @@ CERT_MANAGER_ROLES = {'cert-manager-controller', 'cert-manager-cainjector',
 REQUIRED_ROLES = native.HELM_ROLES | CERT_MANAGER_ROLES
 PROFILE = Path('scripts/oceanseek/release-profiles/single-command.yaml')
 INPUT_PATHS = [Path('charts') / name for name in
-               ('oceanseek', 'oceanbase-dashboard', 'oceanbase-minio')]
+               ('oceanseek', 'oceanbase-dashboard', 'minio')]
 INPUT_PATHS += [Path('scripts/oceanseek/prerequisites'),
                 Path('scripts/oceanseek/images/minio-rejoin'), PROFILE]
 INPUT_PATHS += [Path('scripts/oceanseek') / name for name in

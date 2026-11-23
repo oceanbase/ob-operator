@@ -26,7 +26,7 @@ spec:
         ossAccessSecret: "${OSS_ACCESS}"
       bakEncryptionSecret: "${BACK_ENCRYPTION_SERECT}"
       until:
-        unlimited: true
+        timestamp: "${OSS_UNTIL_TIMESTAMP}"
       replayEnabled: true
       replayLogUntil:
         timestamp: "${OSS_REPLOY_LOG_UNTIL}"

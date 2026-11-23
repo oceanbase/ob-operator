@@ -4,6 +4,7 @@ Install a compatible Operator with the cluster's usual configuration first.
 Set OPERATOR_VERSION, DASHBOARD_VERSION and HELPER_VERSION to the three published
 component versions. From the repository root, with Python 3, PyYAML and Helm:
 
+  helm dependency build charts/oceanseek
   python3 scripts/oceanseek/public-image-values.py --operator-version "$OPERATOR_VERSION" --dashboard-version "$DASHBOARD_VERSION" --helper-version "$HELPER_VERSION" | helm upgrade --install oceanseek ./charts/oceanseek -n oceanseek --create-namespace -f - --wait --wait-for-jobs --timeout 35m
 
 This selects quay.io/oceanbase for the OceanBase images. Pass --registry ghcr.io
@@ -15,8 +16,8 @@ settings. Override obproxy.image or dashboard.inspection.obdiag.image separately
 supply a separately published readiness image for a platform when needed.
 Versioned distribution charts already embed their image lock in values.yaml.
 
-OBProxy SQL entry point (0.6.0 development chart)
-================================================
+OBProxy SQL entry point
+=======================
 The cluster stage installs one OBProxy replica by default. The <release>-sql
 Service uses port 2883 and forwards to OBProxy:2883. Set
 --set obproxy.enabled=false to omit OBProxy: the same Service port then forwards

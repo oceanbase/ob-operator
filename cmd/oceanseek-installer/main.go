@@ -25,7 +25,7 @@ import (
 
 func main() {
 	if err := run(); err != nil {
-		fmt.Fprintln(os.Stderr, "Installation stopped:", err)
+		_, _ = fmt.Fprintln(os.Stderr, "Installation stopped:", err)
 		os.Exit(1)
 	}
 }

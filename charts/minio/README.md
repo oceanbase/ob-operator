@@ -3,8 +3,7 @@
 A single-node MinIO StatefulSet, Service, PVC and retained root credentials.
 This chart does not install the MinIO Operator or manage oceanseek business users.
 
-The oceanseek parent aliases this dependency as `minio` and uses
-`condition: minio.enabled`. The parent independently selects its storage endpoint:
+The oceanseek parent enables this chart when `minio.enabled` is true. The parent independently selects its storage endpoint:
 a nonempty `objectStorage.endpoint` always wins, even when this dependency is enabled.
 
 All values are local to this chart. Configure `storageClass`, `region`, `nodeSelector`,

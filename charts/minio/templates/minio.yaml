@@ -178,13 +178,13 @@ spec:
           readinessProbe:
             httpGet: {path: {{ ternary "/minio/health/cluster" "/minio/health/ready" $distributed }}, port: s3}
             periodSeconds: 5
-            {{- if $distributed }}
             timeoutSeconds: 5
-            {{- end }}
           livenessProbe:
             httpGet: {path: /minio/health/live, port: s3}
             initialDelaySeconds: 30
             periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
           securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, capabilities: {drop: [ALL]}}
           resources: {{ toYaml .Values.resources | nindent 12 }}
           volumeMounts:

@@ -39,24 +39,27 @@ check_monitoring() {
   docker compose exec -T obagent curl -fsS http://127.0.0.1:8088/metrics/stat >/dev/null
   docker compose exec -T obagent curl -fsS http://127.0.0.1:8088/metrics/ob/basic >/dev/null
   docker compose exec -T alertmanager wget -qO- http://127.0.0.1:9093/-/ready >/dev/null
-  local endpoint expected response
+  # The Observer registers these addresses asynchronously after both services
+  # become ready. During that window obshell can return HTTP 500 for a GET.
+  local endpoint expected response deadline
   for endpoint in prometheus alertmanager; do
     if [[ "${endpoint}" == prometheus ]]; then
       expected='http://prometheus:9090/'
     else
       expected='http://alertmanager:9093'
     fi
-    response="$(docker compose exec -T observer curl -fsS \
+    deadline=$((SECONDS + timeout_seconds))
+    until response="$(docker compose exec -T observer curl -fsS --max-time 5 \
       --unix-socket /home/admin/oceanbase/run/obshell.sock \
-      "http://localhost/api/v1/system/external/${endpoint}")"
-    grep -Fq '"successful":true' <<<"${response}" || {
-      echo "obshell ${endpoint} registration was not successful: ${response}" >&2
-      return 1
-    }
-    grep -Fq "\"data\":\"${expected}\"" <<<"${response}" || {
-      echo "obshell ${endpoint} address is not ${expected}: ${response}" >&2
-      return 1
-    }
+      "http://localhost/api/v1/system/external/${endpoint}" 2>/dev/null)" &&
+      grep -Fq '"successful":true' <<<"${response}" &&
+      grep -Fq "\"data\":\"${expected}\"" <<<"${response}"; do
+      if (( SECONDS >= deadline )); then
+        echo "obshell did not register ${endpoint} at ${expected}" >&2
+        return 1
+      fi
+      sleep 2
+    done
   done
   wait_for_scrapes 0
 }

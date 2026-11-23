@@ -347,6 +347,17 @@ class ReleaseContractTests(unittest.TestCase):
             with tarfile.open(target, 'r:gz') as archive:
                 self.assertEqual({item.mtime for item in archive}, {946684800})
 
+    def test_arm64_compose_delivery_uses_locked_platform(self):
+        self.lock['platform'] = 'linux/arm64'
+        for image in self.lock['images']:
+            image['platform'] = 'linux/arm64'
+        self.assertIn('OCEANSEEK_PLATFORM=linux/arm64', BUILDER.compose_env(self.lock).splitlines())
+        with tempfile.TemporaryDirectory() as root:
+            target = Path(root) / 'compose.yaml'
+            BUILDER.write_standalone_compose(HERE.parents[1], target, self.lock)
+            services = yaml.safe_load(target.read_text())['services']
+            self.assertEqual({s['platform'] for s in services.values()}, {'linux/arm64'})
+
     def test_standalone_compose_avoids_swarm_only_config_modes(self):
         with tempfile.TemporaryDirectory() as root:
             target = Path(root) / 'compose.yaml'

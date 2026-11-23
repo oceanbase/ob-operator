@@ -104,6 +104,7 @@
   "dashboard.Layouts.BasicLayout.PersonalSettings": "个人设置",
   "dashboard.Layouts.BasicLayout.ChangePassword": "修改密码",
   "dashboard.Layouts.BasicLayout.LogOut": "退出登录",
+  "dashboard.password.EncryptionFailed": "密码加密失败，请重试",
   "dashboard.pages.Login.Login": "登录",
   "dashboard.pages.Overview.EventsTable.ClusterName": "集群名",
   "dashboard.pages.Overview.EventsTable.Status": "状态",

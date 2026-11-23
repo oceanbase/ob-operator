@@ -46,25 +46,25 @@ func run() int {
 		o.StorageJob = o.Release + "-storage-init"
 	}
 	if err := o.Validate(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		_, _ = fmt.Fprintln(os.Stderr, err)
 		return 2
 	}
 	client, err := readiness.InClusterClient()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		_, _ = fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	if proxySeedsFile != "" {
 		if err := readiness.WriteProxySeeds(ctx, client, o, proxySeedsFile); err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			_, _ = fmt.Fprintln(os.Stderr, err)
 			return 1
 		}
 		return 0
 	}
 	if err := readiness.Wait(ctx, client, o, os.Stdout); err != nil {
-		fmt.Fprintln(os.Stderr, "Readiness check failed:", err)
+		_, _ = fmt.Fprintln(os.Stderr, "Readiness check failed:", err)
 		return 1
 	}
 	return 0

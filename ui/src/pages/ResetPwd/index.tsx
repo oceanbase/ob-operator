@@ -1,9 +1,10 @@
 import { access } from '@/api';
 import logoSrc from '@/assets/oceanbase_logo.svg';
-import { encryptText, usePublicKey } from '@/hook/usePublicKey';
+import { encryptPassword } from '@/hook/usePublicKey';
 import { intl } from '@/utils/intl';
 import { useModel, useNavigate } from '@umijs/max';
 import { Alert, Button, Form, Input } from 'antd';
+import { useState } from 'react';
 
 import styles from './index.less';
 
@@ -13,17 +14,22 @@ interface FormData {
 }
 
 export default function ResetPwd() {
-  const publicKey = usePublicKey();
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { refresh } = useModel('@@initialState');
   const onFinish = async (values: FormData) => {
-    values.password = encryptText(values.password, publicKey) as string;
-    const res = await access.resetPassword({ password: values.password });
-    if (res.successful) {
-      // Fetch the authoritative account state after the password change;
-      // the initial state may still be loading on a direct /reset visit.
-      await refresh();
-      navigate('/overview');
+    setLoading(true);
+    try {
+      const password = await encryptPassword(values.password);
+      if (!password) return;
+      const res = await access.resetPassword({ password });
+      if (res.successful) {
+        // Direct visits to /reset may still be loading account state.
+        await refresh();
+        navigate('/overview');
+      }
+    } finally {
+      setLoading(false);
     }
   };
   return (
@@ -104,7 +110,12 @@ export default function ResetPwd() {
         </Form.Item>
 
         <Form.Item style={{ display: 'flex', justifyContent: 'center' }}>
-          <Button style={{ width: 270 }} type="primary" htmlType="submit">
+          <Button
+            style={{ width: 270 }}
+            type="primary"
+            htmlType="submit"
+            loading={loading}
+          >
             {intl.formatMessage({
               id: 'src.pages.ResetPwd.471AB584',
               defaultMessage: '确定',

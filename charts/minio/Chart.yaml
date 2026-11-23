@@ -1,6 +1,6 @@
 apiVersion: v2
-name: oceanbase-minio
+name: minio
 description: Optional standalone or distributed MinIO storage for OceanSeek
 type: application
-version: 0.2.3
+version: 0.1.0
 appVersion: "RELEASE.2025-10-15T17-29-55Z"

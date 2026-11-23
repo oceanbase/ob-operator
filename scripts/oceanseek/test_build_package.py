@@ -126,7 +126,7 @@ class BuildPackageTest(unittest.TestCase):
         source = self.root / "source"
         source.mkdir()
         if charts:
-            for name in ("oceanseek", "oceanbase-dashboard", "oceanbase-minio", "ob-operator"):
+            for name in ("oceanseek", "oceanbase-dashboard", "minio", "ob-operator"):
                 shutil.copytree(REPO / "charts" / name, source / "charts" / name)
         for name in ("install.sh", "INSTALL.txt", "LICENSE"):
             shutil.copyfile(REPO / name, source / name)

@@ -30,8 +30,8 @@ const (
 const (
 	DefaultNamespace    = "default"
 	DefaultStorageClass = "local-path"
-	DefaultImage        = "oceanbasedev/oceanbase-cn:4.1.0.1-test"
-	UpgradeImage        = "oceanbasedev/oceanbase-cn:4.2.0.0-test"
+	DefaultImage        = "oceanbase/oceanbase-cloud-native:4.2.1.7-107000162024060611"
+	UpgradeImage        = "oceanbase/oceanbase-cloud-native:4.3.1.0-100000032024051615"
 )
 
 func newOBCluster(name string, zoneNum int, serverNum int) *v1alpha1.OBCluster {

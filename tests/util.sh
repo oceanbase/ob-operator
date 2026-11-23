@@ -69,6 +69,37 @@ clean_nfs_test_directory() {
     ssh -- "$USER_NAME@$NFS_SERVER" "cd -P -- '$quoted' && dir=\$(pwd -P) && [ -n \"\$dir\" ] && [ \"\$dir\" != / ] && sudo rm -rf -- ./*"
 }
 
+wait_for_recoverable_nfs_backup() {
+    local namespace=$1 cluster=$2 tenant=$3 password=$4 data_path=$5 archive_path=$6
+    local ip expected eligible deadline=$((SECONDS + 600))
+    ip=$(kubectl -n "$namespace" get pods -l "ref-obcluster=$cluster" \
+        --field-selector=status.phase=Running -o jsonpath='{.items[0].status.podIP}') || return 1
+    expected=$(printf '%s\tfile:///ob-backup/%s\tfile:///ob-backup/%s' "$tenant" "$data_path" "$archive_path")
+    # FULL can finish before archived logs cover its earliest restore SCN.
+    local query="SELECT DISTINCT t.TENANT_NAME, b.PATH, a.PATH
+        FROM CDB_OB_BACKUP_SET_FILES b
+        JOIN CDB_OB_ARCHIVELOG a ON a.TENANT_ID = b.TENANT_ID
+        JOIN DBA_OB_TENANTS t ON t.TENANT_ID = b.TENANT_ID
+        WHERE b.BACKUP_TYPE = 'FULL' AND b.STATUS = 'SUCCESS' AND b.FILE_STATUS = 'AVAILABLE'
+          AND b.PATH LIKE 'file://%' AND a.PATH LIKE 'file://%'
+          AND b.BACKUP_SET_ID = (SELECT MAX(s.BACKUP_SET_ID) FROM CDB_OB_BACKUP_SET_FILES s
+              WHERE s.TENANT_ID = b.TENANT_ID AND s.PATH = b.PATH AND s.BACKUP_TYPE = 'FULL'
+                AND s.STATUS = 'SUCCESS' AND s.FILE_STATUS = 'AVAILABLE')
+          AND a.START_SCN <= b.START_REPLAY_SCN AND a.CHECKPOINT_SCN >= b.MIN_RESTORE_SCN"
+    echo "Waiting for a recoverable NFS backup of $tenant"
+    while (( SECONDS < deadline )); do
+        eligible=$(MYSQL_PWD="$password" mysql --connect-timeout=5 -h "$ip" -P 2881 -u root@sys \
+            --batch --raw --skip-column-names -Doceanbase -e "$query") || return 1
+        if grep -Fqx -- "$expected" <<< "$eligible"; then
+            echo "Archived logs cover a completed NFS backup of $tenant"
+            return 0
+        fi
+        sleep 3
+    done
+    echo "No recoverable FULL for $tenant at $data_path with archive $archive_path" >&2
+    return 1
+}
+
 get_tenant_role() {
     local host=$1 password=$2 tenant=$3
     MYSQL_PWD="$password" mysql -h "$host" -P 2881 -uroot -Doceanbase --batch --skip-column-names \

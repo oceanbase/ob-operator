@@ -92,16 +92,13 @@ func replacePrivateFile(path string, contents []byte) error {
 	}
 	defer os.Remove(tmp.Name())
 	if err := tmp.Chmod(0600); err != nil {
-		tmp.Close()
-		return err
+		return errors.Join(err, tmp.Close())
 	}
 	if _, err := tmp.Write(contents); err != nil {
-		tmp.Close()
-		return err
+		return errors.Join(err, tmp.Close())
 	}
 	if err := tmp.Sync(); err != nil {
-		tmp.Close()
-		return err
+		return errors.Join(err, tmp.Close())
 	}
 	if err := tmp.Close(); err != nil {
 		return err
@@ -116,12 +113,10 @@ func writePrivateFile(path string, contents []byte) error {
 	}
 	defer os.Remove(tmp.Name())
 	if _, err := tmp.Write(contents); err != nil {
-		tmp.Close()
-		return err
+		return errors.Join(err, tmp.Close())
 	}
 	if err := tmp.Sync(); err != nil {
-		tmp.Close()
-		return err
+		return errors.Join(err, tmp.Close())
 	}
 	if err := tmp.Close(); err != nil {
 		return err

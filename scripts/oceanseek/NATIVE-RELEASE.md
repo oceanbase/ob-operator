@@ -219,6 +219,7 @@ Run the local regressions:
 
 ```bash
 python3 -m unittest discover -s scripts/oceanseek -p test_native_packages.py -v
+helm dependency build charts/oceanseek
 go test -count=1 ./charts/oceanseek \
   -run '^TestSharedDatabaseImagesMatchCompose$'
 ```
