@@ -10,7 +10,7 @@ For a single-machine oceanseek SQL experience without Kubernetes, use the
 [Docker Compose quickstart](./deploy/compose/oceanseek/README.md).
 For an existing Kubernetes cluster, use the [native Helm Chart](./charts/oceanseek/USAGE.txt),
 with Dashboard enabled by default and single-node/three-node values examples.
-Starting with OceanSeek Chart 0.1.1, the published package installs cert-manager and ob-operator
+Starting with OceanSeek Chart 1.0.0, the published package installs cert-manager and ob-operator
 on a supported fresh cluster and waits for their webhooks before deploying OceanSeek. Both paths require the images supplied with the release.
 The [legacy QA tar guide](./INSTALL.txt) applies only to earlier script-based packages.
 

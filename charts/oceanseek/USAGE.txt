@@ -3,7 +3,7 @@ Install from the public Helm repository
 On a fresh Kubernetes 1.33–1.36 cluster with a working local-path StorageClass,
 cluster administrator permissions and access to the release images, run:
 
-  helm upgrade --install oceanseek oceanseek --repo https://oceanbase.github.io/ob-operator/ --version 0.1.1 -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
+  helm upgrade --install oceanseek oceanseek --repo https://oceanbase.github.io/ob-operator/ --version 1.0.0 -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
 
 The package registers the CRDs, starts cert-manager, then starts the ob-operator
 subchart in oceanbase-system. Each webhook must be ready before the next stage.

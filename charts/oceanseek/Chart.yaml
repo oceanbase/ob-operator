@@ -2,7 +2,7 @@ apiVersion: v2
 name: oceanseek
 description: OceanSeek with Dashboard and optional bundled MinIO
 type: application
-version: 0.1.1
+version: 1.0.0
 appVersion: "4.6.3.0-482026112114.el7"
 dependencies:
 - name: ob-operator
