@@ -202,7 +202,7 @@ func TestZoneNodeSelectorsDistributeWithoutLeakingToOtherZones(t *testing.T) {
 				t.Fatalf("render: %v\n%s", err, output)
 			}
 			locations := schedulingLocations(t, docs)
-			wantCount := 9
+			wantCount := 10 // MinIO, three Jobs and six database zones.
 			if mode == "external" {
 				wantCount--
 			}
