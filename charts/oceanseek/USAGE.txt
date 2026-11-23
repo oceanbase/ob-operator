@@ -1,3 +1,8 @@
+Install from a local Chart package
+----------------------------------
+Set CHART to your downloaded .tgz file. Helm uses the packaged dependencies:
+  helm upgrade --install oceanseek "$CHART" -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
+
 Install from the public Helm repository
 ---------------------------------------
 On a fresh Kubernetes 1.33–1.36 cluster with a working local-path StorageClass,
@@ -328,16 +333,19 @@ recreates storage initialization; it is not a general database recovery command.
 
 Dashboard and SQL access
 ------------------------
-For Dashboard login, run the kubectl port-forward command printed by Helm on
-the computer with your browser, then open http://127.0.0.1:8080. You can also
-use the HTTPS address provided by your administrator. The default account is
-admin. Helm prints the command to retrieve its initial password.
+The default Dashboard NodePort uses the same host as the SQL command. Open the
+Dashboard URL printed by Helm in your browser. On first installation, run the
+command in NOTES to print the URL with the allocated Dashboard port. Sign in as
+admin using the Dashboard password. Helm prints the command to read it.
+For a ClusterIP Dashboard, use the port-forward command in NOTES.
 
 Kubernetes allocates Dashboard and SQL NodePorts when their configured values
 are 0. The SQL client can connect to a reachable node on the allocated SQL
 port. Use kubectl -n oceanseek get svc to inspect both Services. For NAT or
-multiple network interfaces, set access.host to the advertised node IP or DNS
-name. On upgrade, Helm can read the ports from the existing Services.
+multiple network interfaces, set access.host to a node IP or DNS name reachable
+from the SQL client. Helm NOTES prefers an ExternalIP from a Ready node, then
+a Ready node's InternalIP. access.host overrides both. The advertised address
+must route to the SQL NodePort.
 
 Override ports with --set dashboard.service.nodePort=31184 and
 --set sqlService.nodePort=30882. Use free ports within your cluster's NodePort
@@ -480,7 +488,9 @@ NOTES again. For direct final URL/SQL output, use the release package installer:
   bash install-helm-and-show-access.sh oceanseek CHART.tgz -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
 It prints actual addresses after Helm succeeds and respects access.host from values,
 --kubeconfig and --kube-context. Python 3 is required by this wrapper. Plain Helm
-users can execute the complete lookup commands in NOTES after installation.
+users can run the mysql command at the top of NOTES. For a new, automatically
+allocated SQL NodePort, the command reads the port with kubectl when you run it.
+For a configured or existing SQL NodePort, Helm prints the port number directly.
 NodePorts remain stable while Services are retained, but may change if recreated.
 
 K3s on SELinux-enforcing systems

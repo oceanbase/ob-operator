@@ -1,66 +1,82 @@
-{{- $host := "" -}}
-{{- if or (and .Values.dashboard.enabled (eq .Values.dashboard.service.type "NodePort")) (eq .Values.sqlService.type "NodePort") -}}
-{{- $host = include "oceanseek.accessHost" . -}}
-{{- end -}}
 OceanSeek deployment access
   Helm release: {{ .Release.Name }}
   Namespace: {{ .Release.Namespace }}
+Use the same kubeconfig and context for kubectl as for this Helm release.
+
+Database SQL access
+{{- if eq .Values.stage "cluster" }}
+{{- $host := "" }}
+{{- if eq .Values.sqlService.type "NodePort" }}
+{{- $host = include "oceanseek.accessHost" (dict "host" .Values.access.host "namespace" .Release.Namespace "service" (printf "%s-sql" .Release.Name)) }}
+{{- end }}
+{{- if $host }}
+{{- $port := int (include "oceanseek.sqlNodePort" .) }}
+{{- if $port }}
+  mysql -h '{{ replace "'" "'\"'\"'" $host }}' -P {{ $port }} -u 'root@sys' --protocol=TCP -p
+{{- else }}
+Run on a computer with kubectl access to this cluster:
+  SQL_PORT="$(kubectl -n {{ .Release.Namespace }} get svc {{ .Release.Name }}-sql -o jsonpath='{.spec.ports[0].nodePort}')" && test -n "$SQL_PORT" && mysql -h '{{ replace "'" "'\"'\"'" $host }}' -P "$SQL_PORT" -u 'root@sys' --protocol=TCP -p
+{{- end }}
+{{- else }}
+{{- if eq .Values.sqlService.type "NodePort" }}
+No suitable Ready node address was found. Set access.host for NodePort access, or use the local connection below.
+{{- end }}
+Inside Kubernetes:
+  mysql -h {{ .Release.Name }}-sql.{{ .Release.Namespace }}.svc -P {{ .Values.sqlService.port }} -u 'root@sys' -p
+For local access, keep the port-forward running and connect from another terminal:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }}-sql 2883:{{ .Values.sqlService.port }}
+  mysql -h 127.0.0.1 -P 2883 -u 'root@sys' -p
+{{- end }}
+{{- else }}
+SQL access becomes available after stage=cluster.
+{{- end }}
+Read the root@sys password in a trusted terminal and enter it at the mysql password prompt:
+  kubectl -n {{ .Release.Namespace }} get secret {{ if .Values.observer.rootExistingSecret }}{{ .Values.observer.rootExistingSecret }}{{ else }}{{ .Release.Name }}-db-root{{ end }} -o jsonpath='{.data.password}' | base64 --decode; echo
+Direct ALTER USER changes do not synchronize the Kubernetes Secret.
+
+{{ if .Values.obproxy.enabled }}SQL traffic goes through OBProxy ({{ .Values.obproxy.replicas }} replicas).
+Disable it with --set obproxy.enabled=false to connect directly to Observer.
+Changing this switch changes the SQL Service backend; reconnect clients afterwards.
+{{ else }}SQL traffic connects directly to Observer (obproxy.enabled=false).
+{{ end }}
 
 {{ if .Values.dashboard.enabled }}
 OceanBase Operator Dashboard
-  Username: admin
-  This account is separate from the database root@sys account below.
-Retrieve the INITIAL password in a trusted terminal; do not share its output.
-After changing it in Dashboard, use the new password instead:
-  kubectl -n {{ .Release.Namespace }} get secret {{ .Release.Name }}-dashboard-bootstrap -o jsonpath='{.data.password}' | base64 --decode; echo
-On the computer running your browser, start:
-  kubectl -n {{ .Release.Namespace }} port-forward svc/oceanbase-dashboard-{{ .Release.Name }} 8080:{{ .Values.dashboard.service.port }}
-Open http://127.0.0.1:8080 or use the trusted HTTPS address configured by your administrator.
-{{ if eq .Values.dashboard.service.type "NodePort" }}{{ $dashboardPort := int (include "oceanseek.dashboardNodePort" .) -}}
-{{ if and $host (gt $dashboardPort 0) }}  NodePort endpoint: {{ include "oceanseek.urlHost" $host }}:{{ $dashboardPort }}
-{{ else }}Check the allocated Dashboard NodePort:
-  kubectl -n {{ .Release.Namespace }} get svc oceanbase-dashboard-{{ .Release.Name }}
-{{ end }}{{ else if eq .Values.dashboard.service.type "LoadBalancer" }}Check the Dashboard LoadBalancer address:
+{{- if eq .Values.dashboard.service.type "NodePort" }}
+{{- $host := include "oceanseek.accessHost" (dict "host" .Values.access.host "namespace" .Release.Namespace "service" (printf "oceanbase-dashboard-%s" .Release.Name)) }}
+{{- if $host }}
+{{- $urlHost := include "oceanseek.urlHost" $host }}
+{{- $port := int (include "oceanseek.dashboardNodePort" .) }}
+{{- if $port }}
+  Dashboard URL: http://{{ $urlHost }}:{{ $port }}/#/login
+{{- else }}
+Run this command to print the Dashboard URL:
+  DASHBOARD_PORT="$(kubectl -n {{ .Release.Namespace }} get svc oceanbase-dashboard-{{ .Release.Name }} -o jsonpath='{.spec.ports[0].nodePort}')" && test -n "$DASHBOARD_PORT" && printf 'http://%s:%s/#/login\n' '{{ replace "'" "'\"'\"'" $urlHost }}' "$DASHBOARD_PORT"
+{{- end }}
+{{- else }}
+No suitable Ready node address was found. Set access.host to a reachable node IP or DNS name.
+{{- end }}
+{{- else if eq .Values.dashboard.service.type "LoadBalancer" }}
+Check the Dashboard LoadBalancer address:
   kubectl -n {{ .Release.Namespace }} get svc oceanbase-dashboard-{{ .Release.Name }} --watch
-{{ end }}
+Open http://<load-balancer-address>:{{ .Values.dashboard.service.port }}/#/login once the external address is assigned. Enclose an IPv6 address in brackets.
+{{- else }}
+On the computer running your browser, keep this command running:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/oceanbase-dashboard-{{ .Release.Name }} 8080:{{ .Values.dashboard.service.port }}
+Open http://127.0.0.1:8080/#/login
+{{- end }}
+{{- if ne .Values.dashboard.service.type "ClusterIP" }}
+Use HTTP on a trusted network. For remote access over an untrusted network, use your HTTPS endpoint.
+{{- end }}
+  Username: admin
+Read the initial Dashboard password in a trusted terminal:
+  kubectl -n {{ .Release.Namespace }} get secret {{ .Release.Name }}-dashboard-bootstrap -o jsonpath='{.data.password}' | base64 --decode; echo
+If you changed the Dashboard password, use your current password.
 {{ else }}
 Dashboard is disabled (dashboard.enabled=false); its monitoring stack is not installed.
 Use your existing Dashboard URL. Its administrator must grant visibility to namespace
 {{ .Release.Namespace }} and verify monitoring discovery for this database.
 {{ end }}
-
-Database SQL access
-{{ if .Values.obproxy.enabled }}SQL traffic goes through OBProxy ({{ .Values.obproxy.replicas }} replicas).
-Disable it with --set obproxy.enabled=false to connect directly to Observer.
-Changing this switch changes the SQL Service backend; reconnect clients afterwards.
-{{ else }}SQL traffic connects directly to Observer (obproxy.enabled=false).
-{{ end }}Retrieve the root@sys password in a trusted terminal; do not share its output:
-  kubectl -n {{ .Release.Namespace }} get secret {{ if .Values.observer.rootExistingSecret }}{{ .Values.observer.rootExistingSecret }}{{ else }}{{ .Release.Name }}-db-root{{ end }} -o jsonpath='{.data.password}' | base64 --decode; echo
-{{ if eq .Values.stage "cluster" }}
-{{ if eq .Values.sqlService.type "NodePort" }}
-{{ if and $host (gt (int (include "oceanseek.sqlNodePort" .)) 0) }}
-Connect using a MySQL-compatible client:
-  mysql -h {{ $host }} -P {{ include "oceanseek.sqlNodePort" . }} -u 'root@sys' -p
-{{ else }}
-Kubernetes assigns the SQL NodePort after Helm renders these notes. Run:
-{{ if $host }}  NODE_HOST={{ printf "'%s'" (replace "'" "'\"'\"'" $host) }}
-{{ else }}  NODE_HOST="$(kubectl get nodes -o wide --no-headers | awk '$2 ~ /^Ready/ {print $6; exit}')"
-{{ end }}
-  SQL_PORT="$(kubectl -n {{ .Release.Namespace }} get svc {{ .Release.Name }}-sql -o jsonpath='{.spec.ports[0].nodePort}')"
-  test -n "$NODE_HOST" && test -n "$SQL_PORT" && printf "mysql -h %s -P %s -u 'root@sys' -p\n" "$NODE_HOST" "$SQL_PORT"
-If the printed node address is not reachable from your SQL client, replace
-NODE_HOST with a reachable node IP or DNS name and repeat the printf command.
-{{ end }}
-{{ else }}
-SQL is available inside Kubernetes at {{ .Release.Name }}-sql.{{ .Release.Namespace }}.svc:{{ .Values.sqlService.port }}.
-For local access, keep this command running:
-  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }}-sql 2883:{{ .Values.sqlService.port }}
-  mysql -h 127.0.0.1 -P 2883 -u 'root@sys' -p
-{{ end }}
-{{ else }}
-SQL access becomes available after stage=cluster.
-{{ end }}
-Direct ALTER USER changes do not synchronize the Kubernetes Secret.
 
 Object storage access
 {{ if .Values.minio.enabled }}

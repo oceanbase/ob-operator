@@ -21,7 +21,7 @@ storageClass: local-path
 imagePullSecrets: []
 
 access:
-  # Empty discovers a Ready node InternalIP (ExternalIP fallback) for printed URLs.
+  # Empty prefers a Ready node ExternalIP, falling back to a Ready node InternalIP.
   # Set a reachable IP/DNS name for NAT, multiple NICs or restricted node-list RBAC.
   host: ""
 sqlService:

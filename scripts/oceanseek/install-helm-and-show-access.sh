@@ -52,38 +52,48 @@ for ((i=0; i<${#kubectl_args[@]}; i++)); do
   option=${kubectl_args[i]}; option=${option/--context/--kube-context}; helm_context+=("$option")
 done
 configured_host=$(helm get values "$release" -n "$namespace" "${helm_context[@]}" -o json | python3 -c 'import json,sys; print(((json.load(sys.stdin) or {}).get("access") or {}).get("host", ""))')
-if [[ -n ${OCEANSEEK_ACCESS_HOST:-} ]]; then
-  node_host=$OCEANSEEK_ACCESS_HOST
-elif [[ -n $configured_host ]]; then
-  node_host=$configured_host
-else
-  nodes=$(kubectl get nodes -o wide --no-headers)
-  node_host=$(awk '$2 ~ /^Ready/ {print $6; exit}' <<< "$nodes")
-fi
-if [[ -z $node_host || $node_host == '<none>' ]]; then
-  echo 'Helm succeeded, but no Ready node address was found. Set OCEANSEEK_ACCESS_HOST and rerun this access check.' >&2
-  exit 1
-fi
-if [[ ! $node_host =~ ^[A-Za-z0-9._:-]+$ ]]; then
+configured_host=${OCEANSEEK_ACCESS_HOST:-$configured_host}
+if [[ -n $configured_host && ! $configured_host =~ ^[A-Za-z0-9._:-]+$ ]]; then
   echo 'Helm succeeded, but the node address contains unsupported characters.' >&2
   exit 1
 fi
-url_host=$node_host
-if [[ $url_host == *:* ]]; then url_host="[$url_host]"; fi
+
+node_address_for() {
+  if [[ -n $configured_host ]]; then
+    printf '%s' "$configured_host"
+    return
+  fi
+  local families
+  families=$(kubectl -n "$namespace" get service "$1" -o 'jsonpath={.spec.ipFamilies[*]}') || return
+  kubectl get nodes -o json | python3 -c '
+import json, sys
+families = sys.argv[1].split()
+nodes = json.load(sys.stdin)["items"]
+addresses = [a for node in nodes
+             if any(c["type"] == "Ready" and c["status"] == "True" for c in node["status"].get("conditions", []))
+             for a in node["status"].get("addresses", [])]
+for kind in ("ExternalIP", "InternalIP"):
+    for address in addresses:
+        family = "IPv6" if ":" in address["address"] else "IPv4"
+        if address["type"] == kind and (not families or family in families):
+            print(address["address"])
+            sys.exit(0)
+sys.exit("No suitable Ready node address was found. Set access.host to a reachable node IP or DNS name.")
+' "$families"
+}
 
 dashboard_service="oceanbase-dashboard-$release"
 if kubectl -n "$namespace" get service "$dashboard_service" >/dev/null 2>&1; then
   dashboard_type=$(kubectl -n "$namespace" get service "$dashboard_service" -o jsonpath='{.spec.type}')
   service_port=$(kubectl -n "$namespace" get service "$dashboard_service" -o jsonpath='{.spec.ports[0].port}')
   if [[ -z $service_port ]]; then echo 'Dashboard Service port is unavailable.' >&2; exit 1; fi
-  printf '\nOn the computer running your browser, start:\n  kubectl'
-  printf ' %q' "${kubectl_args[@]}" -n "$namespace" port-forward "svc/$dashboard_service" "8080:$service_port"
-  printf '\nOpen http://127.0.0.1:8080 or use the trusted HTTPS address configured by your administrator.\n'
   case $dashboard_type in
     NodePort)
+      url_host=$(node_address_for "$dashboard_service")
+      if [[ $url_host == *:* ]]; then url_host="[$url_host]"; fi
       dashboard_port=$(kubectl -n "$namespace" get service "$dashboard_service" -o jsonpath='{.spec.ports[0].nodePort}')
       if [[ -z $dashboard_port ]]; then echo 'Dashboard NodePort is not allocated.' >&2; exit 1; fi
-      printf 'Dashboard NodePort endpoint: %s:%s\n' "$url_host" "$dashboard_port"
+      printf 'Dashboard URL: http://%s:%s/#/login\n' "$url_host" "$dashboard_port"
       ;;
     LoadBalancer)
       dashboard_address=$(kubectl -n "$namespace" get service "$dashboard_service" -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
@@ -91,10 +101,16 @@ if kubectl -n "$namespace" get service "$dashboard_service" >/dev/null 2>&1; the
         dashboard_address=$(kubectl -n "$namespace" get service "$dashboard_service" -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
       fi
       if [[ -n $dashboard_address ]]; then
-        printf 'Dashboard LoadBalancer address: %s (service port %s)\n' "$dashboard_address" "$service_port"
+        if [[ $dashboard_address == *:* ]]; then dashboard_address="[$dashboard_address]"; fi
+        printf 'Dashboard URL: http://%s:%s/#/login\n' "$dashboard_address" "$service_port"
       else
         echo 'Dashboard LoadBalancer address is still pending.'
       fi
+      ;;
+    *)
+      printf '\nOn the computer running your browser, start:\n  kubectl'
+      printf ' %q' "${kubectl_args[@]}" -n "$namespace" port-forward "svc/$dashboard_service" "8080:$service_port"
+      printf '\nOpen http://127.0.0.1:8080/#/login\n'
       ;;
   esac
 else
@@ -105,9 +121,10 @@ sql_service="$release-sql"
 if kubectl -n "$namespace" get service "$sql_service" >/dev/null 2>&1; then
   sql_type=$(kubectl -n "$namespace" get service "$sql_service" -o jsonpath='{.spec.type}')
   if [[ $sql_type == NodePort ]]; then
+    node_host=$(node_address_for "$sql_service")
     sql_port=$(kubectl -n "$namespace" get service "$sql_service" -o jsonpath='{.spec.ports[0].nodePort}')
     if [[ -z $sql_port ]]; then echo 'SQL NodePort is not allocated.' >&2; exit 1; fi
-    printf "SQL command: mysql -h '%s' -P %s -u 'root@sys' -p\n" "$node_host" "$sql_port"
+    printf "SQL command: mysql -h '%s' -P %s -u 'root@sys' --protocol=TCP -p\n" "$node_host" "$sql_port"
   else
     sql_port=$(kubectl -n "$namespace" get service "$sql_service" -o jsonpath='{.spec.ports[0].port}')
     if [[ -z $sql_port ]]; then echo 'SQL Service port is unavailable.' >&2; exit 1; fi

@@ -250,25 +250,29 @@ resolves its same-namespace Service at runtime without mutating this manifest. *
 
 {{/* Presentation address only: never put a discovered node IP into Service specs. */}}
 {{- define "oceanseek.accessHost" -}}
-{{- if .Values.access.host -}}
-{{- .Values.access.host -}}
+{{- if .host -}}
+{{- .host -}}
 {{- else -}}
-{{- $host := "" -}}
+{{- $service := lookup "v1" "Service" .namespace .service -}}
+{{- $families := dig "spec" "ipFamilies" (list) ($service | default (dict)) -}}
+{{- $external := "" -}}
+{{- $internal := "" -}}
 {{- range (lookup "v1" "Node" "" "").items -}}
   {{- $ready := false -}}
   {{- range .status.conditions -}}
     {{- if and (eq .type "Ready") (eq .status "True") -}}{{- $ready = true -}}{{- end -}}
   {{- end -}}
-  {{- if and $ready (not $host) -}}
-    {{- $internal := "" -}}{{- $external := "" -}}
+  {{- if $ready -}}
     {{- range .status.addresses -}}
-      {{- if eq .type "InternalIP" -}}{{- $internal = .address -}}{{- end -}}
-      {{- if eq .type "ExternalIP" -}}{{- $external = .address -}}{{- end -}}
+      {{- $family := ternary "IPv6" "IPv4" (contains ":" .address) -}}
+      {{- if or (not $families) (has $family $families) -}}
+      {{- if and (not $external) (eq .type "ExternalIP") -}}{{- $external = .address -}}{{- end -}}
+      {{- if and (not $internal) (eq .type "InternalIP") -}}{{- $internal = .address -}}{{- end -}}
+      {{- end -}}
     {{- end -}}
-    {{- $host = default $external $internal -}}
   {{- end -}}
 {{- end -}}
-{{- $host -}}
+{{- default $internal $external -}}
 {{- end -}}
 {{- end -}}
 {{- define "oceanseek.urlHost" -}}
