@@ -14,12 +14,6 @@
     "imagePullSecrets"
   ],
   "properties": {
-    "imagePrePull": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["enabled"],
-      "properties": {"enabled": {"type": "boolean"}}
-    },
     "operator": {
       "type": "object",
       "properties": {

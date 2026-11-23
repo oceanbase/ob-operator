@@ -37,7 +37,6 @@ SERVICE_ROLES = {'observer': 'observer', 'minio': 'minio', 'minio-init': 'mc',
                  'logservice-bootstrap': 'logservice',
                  **{'logservice-%d' % i: 'logservice' for i in (1, 2, 3)}}
 CONTAINER_ROLES = {'discover-observers': 'operator', 'obproxy': 'obproxy', 'manager': 'operator', 'kube-rbac-proxy': 'kube-rbac-proxy',
-                   'observer-prepull': 'observer', 'logservice-prepull': 'logservice',
                    'dashboard': 'dashboard', 'prometheus': 'prometheus',
                    'alertmanager': 'alertmanager', 'minio': 'minio',
                    'initialize': 'mc', 'readiness': 'operator',

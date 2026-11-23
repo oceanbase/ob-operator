@@ -19,8 +19,6 @@ native:
       limits: {cpu: 100m, memory: 128Mi}
 storageClass: local-path
 imagePullSecrets: []
-imagePrePull:
-  enabled: true
 
 access:
   # Empty discovers a Ready node InternalIP (ExternalIP fallback) for printed URLs.
