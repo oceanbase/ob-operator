@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../default
+# export-charts replaces these image markers with Helm values after Kustomize renders YAML.
+patches:
+- patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: oceanbase-controller-manager
+      namespace: oceanbase-system
+    spec:
+      template:
+        spec:
+          containers:
+          - name: manager
+            image: HELM_OPERATOR_IMAGE
+          - name: kube-rbac-proxy
+            image: HELM_KUBE_RBAC_PROXY_IMAGE

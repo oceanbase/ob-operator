@@ -31,4 +31,10 @@ export-operator: manifests kustomize ## Export operator manifests
 
 .PHONY: export-charts
 export-charts: export-operator ## Export ob-operator helm chart
-	sed -e 's/oceanbase-system/{{ .Release.Namespace }}/g' deploy/operator.yaml | sed -e 's/value: ob-operator/value: {{ .Values.reporter }}/g' | sed '1,/---/d' > charts/ob-operator/templates/operator.yaml
+	$(KUSTOMIZE) build config/helm | sed \
+		-e '1,/---/d' \
+		-e 's/oceanbase-system/{{ .Release.Namespace }}/g' \
+		-e 's/value: ob-operator/value: {{ .Values.reporter }}/g' \
+		-e 's#image: HELM_OPERATOR_IMAGE$$#image: {{ .Values.image | quote }}#' \
+		-e 's#image: HELM_KUBE_RBAC_PROXY_IMAGE$$#image: {{ .Values.kubeRbacProxyImage | default "oceanbase/kube-rbac-proxy:v0.13.1" | quote }}#' \
+		> charts/ob-operator/templates/operator.yaml
