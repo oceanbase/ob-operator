@@ -31,6 +31,15 @@ settings. Override obproxy.image or dashboard.inspection.obdiag.image separately
 supply a separately published readiness image for a platform when needed.
 Versioned distribution charts already embed their image lock in values.yaml.
 
+The cluster stage requests the LogService and Observer images in separate Jobs
+as soon as Helm creates the application workloads. Each image gets one Job
+per distinct zone node selector. On single-node installs or with per-zone
+hostname selectors, the database Pods reuse those nodes' image caches.
+A selector matching multiple nodes warms one scheduler-selected node per Job.
+Nodes control concurrent pulls through the kubelet setting serializeImagePulls.
+The logservice stage pre-pulls only LogService. The storage stage skips both.
+Set imagePrePull.enabled=false to disable pre-pulling.
+
 OBProxy SQL entry point
 =======================
 The cluster stage installs one OBProxy replica by default. The <release>-sql

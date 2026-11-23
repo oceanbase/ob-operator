@@ -1,0 +1,53 @@
+{{- if and .Values.imagePrePull.enabled (ne .Values.stage "storage") }}
+{{- $roles := list "logService" }}
+{{- if eq .Values.stage "cluster" }}{{- $roles = append $roles "observer" }}{{- end }}
+{{- range $role := $roles }}
+{{- $component := index $.Values $role }}
+{{- $seen := dict }}
+{{- range $index, $zone := $component.topology }}
+{{- $placement := include "oceanseek.zoneScheduling" (dict "root" $ "zone" $zone) | trim }}
+{{- if not (hasKey $seen $placement) }}
+{{- $_ := set $seen $placement true }}
+{{- $name := printf "%s-pull-%s-%d-%d" $.Release.Name ($role | lower) $index $.Release.Revision }}
+{{- if gt (len $name) 63 }}{{- $name = printf "%s-%s" (trunc 52 $name | trimSuffix "-") (sha256sum $name | trunc 10) }}{{- end }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "oceanseek.labels" $ | nindent 4 }}
+    app.kubernetes.io/component: image-prepull
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: {{ $.Release.Name | quote }}
+        app.kubernetes.io/component: image-prepull
+    spec:
+      serviceAccountName: {{ $.Release.Name }}-workload
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      {{- with $placement }}{{ . | nindent 6 }}{{- end }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: {{ $role | lower }}-prepull
+          image: {{ $component.image | quote }}
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/true"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 5m, memory: 8Mi}
+            limits: {cpu: 50m, memory: 32Mi}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

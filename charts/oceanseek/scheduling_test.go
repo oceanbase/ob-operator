@@ -80,7 +80,7 @@ func TestSchedulingDefaultDoesNotRestrictPlacement(t *testing.T) {
 	for _, mode := range []string{"bundled", "external"} {
 		t.Run(mode, func(t *testing.T) {
 			storage := map[string]interface{}{"mode": mode}
-			want := 7 // MinIO + init + readiness + three LS zones + one OB zone.
+			want := 9 // MinIO, init, readiness, two image pulls and four zones.
 			if mode == "external" {
 				storage["endpoint"] = "http://192.0.2.10:9000"
 				storage["existingSecret"] = "external-storage"
@@ -137,7 +137,7 @@ func TestSchedulingPropagatesToEveryPodAndZone(t *testing.T) {
 				t.Fatalf("render scheduled %s: %v\n%s", mode, err, output)
 			}
 			locations := schedulingLocations(t, docs)
-			want := 8 // MinIO + init + readiness + three LS zones + two OB zones.
+			want := 10 // MinIO, init, readiness, two image pulls and five zones.
 			if mode == "external" {
 				want-- // Existing MinIO is not managed or scheduled by this chart.
 			}
@@ -202,7 +202,7 @@ func TestZoneNodeSelectorsDistributeWithoutLeakingToOtherZones(t *testing.T) {
 				t.Fatalf("render: %v\n%s", err, output)
 			}
 			locations := schedulingLocations(t, docs)
-			wantCount := 9
+			wantCount := 15 // Six zone placements and six corresponding image pulls.
 			if mode == "external" {
 				wantCount--
 			}
@@ -212,10 +212,10 @@ func TestZoneNodeSelectorsDistributeWithoutLeakingToOtherZones(t *testing.T) {
 			for _, location := range locations {
 				want := map[string]string{"example.com/pool": "qa", "kubernetes.io/hostname": "worker-3"}
 				switch location.name {
-				case "ls/zone1", "ob/zone1":
+				case "ls/zone1", "ob/zone1", "qa-pull-logservice-0-1", "qa-pull-observer-0-1":
 					want["kubernetes.io/hostname"] = "worker-1"
 					want["example.com/zone"] = "01"
-				case "ls/zone2", "ob/zone2":
+				case "ls/zone2", "ob/zone2", "qa-pull-logservice-1-1", "qa-pull-observer-1-1":
 					want["kubernetes.io/hostname"] = "worker-2"
 				}
 				if !reflect.DeepEqual(location.nodeSelector, want) || !reflect.DeepEqual(location.tolerations, tolerations) {
@@ -234,6 +234,47 @@ func TestZoneNodeSelectorRequiresStringValues(t *testing.T) {
 			}}}); err == nil {
 				t.Fatalf("%s accepted invalid selector value %v", component, value)
 			}
+		}
+	}
+}
+
+func TestImagePrePullUsesStageImagesAndWorkloadAccount(t *testing.T) {
+	for _, tc := range []struct {
+		stage   string
+		enabled bool
+		images  map[string]string
+	}{
+		{"storage", true, nil},
+		{"logservice", true, map[string]string{"logservice-prepull": "test/log:v1"}},
+		{"cluster", true, map[string]string{"logservice-prepull": "test/log:v1", "observer-prepull": "test/observer:v2"}},
+		{"cluster", false, nil},
+	} {
+		docs, output, err := render(t, map[string]interface{}{
+			"stage": tc.stage, "imagePrePull": map[string]bool{"enabled": tc.enabled},
+			"logService": map[string]string{"image": "test/log:v1"},
+			"observer":   map[string]string{"image": "test/observer:v2"},
+		})
+		if err != nil {
+			t.Fatal(err, output)
+		}
+		for _, doc := range docs {
+			if doc["kind"] != "Job" || field(doc, "metadata", "labels", "app.kubernetes.io/component") != "image-prepull" {
+				continue
+			}
+			var job batchv1.Job
+			decodeScheduledObject(t, doc, &job)
+			pod := job.Spec.Template.Spec
+			if len(pod.Containers) != 1 || pod.ServiceAccountName != "qa-workload" || pod.AutomountServiceAccountToken == nil || *pod.AutomountServiceAccountToken {
+				t.Fatalf("%s: unexpected image pull pod identity or container count", job.Name)
+			}
+			c := pod.Containers[0]
+			if c.Image != tc.images[c.Name] || c.ImagePullPolicy != corev1.PullIfNotPresent || !reflect.DeepEqual(c.Command, []string{"/bin/true"}) {
+				t.Fatalf("%s: unexpected image pull container: %+v", job.Name, c)
+			}
+			delete(tc.images, c.Name)
+		}
+		if len(tc.images) > 0 {
+			t.Fatalf("stage %s, enabled %t: missing image pulls %v", tc.stage, tc.enabled, tc.images)
 		}
 	}
 }

@@ -117,7 +117,7 @@ func TestStagesAndRetention(t *testing.T) {
 					}
 				}
 			}
-			if counts["StatefulSet"] != 1 || counts["PersistentVolumeClaim"] != 1 || counts["Secret"] != 3 || counts["Job"] != 1 {
+			if counts["StatefulSet"] != 1 || counts["PersistentVolumeClaim"] != 1 || counts["Secret"] != 3 {
 				t.Fatalf("unexpected infrastructure: %v", counts)
 			}
 			wantLS, wantOB := 0, 0
@@ -134,7 +134,7 @@ func TestStagesAndRetention(t *testing.T) {
 					t.Fatal("Observer must use business credentials")
 				}
 			}
-			if counts["OBLogServiceCluster"] != wantLS || counts["OBCluster"] != wantOB {
+			if counts["OBLogServiceCluster"] != wantLS || counts["OBCluster"] != wantOB || counts["Job"] != 1+wantLS+wantOB {
 				t.Fatalf("incorrect stage ordering: %v", counts)
 			}
 			sts := find(t, docs, "StatefulSet", "qa-minio")
