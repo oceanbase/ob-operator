@@ -344,17 +344,6 @@ entries:
     urls:
     - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-dashboard-0.1.0/oceanbase-dashboard-0.1.0.tgz
     version: 0.1.0
-  oceanbase-minio:
-  - apiVersion: v2
-    appVersion: RELEASE.2025-10-15T17-29-55Z
-    created: "2026-11-22T11:58:05.647570905Z"
-    description: Optional standalone or distributed MinIO storage for OceanSeek
-    digest: de60e6c68e3ce564110381fdb7d47cfa6274032889ed4a3fd50823c669bb871d
-    name: oceanbase-minio
-    type: application
-    urls:
-    - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-minio-0.2.3/oceanbase-minio-0.2.3.tgz
-    version: 0.2.3
   oceanseek:
   - apiVersion: v2
     appVersion: 4.6.3.0
