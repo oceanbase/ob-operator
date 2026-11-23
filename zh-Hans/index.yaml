@@ -357,6 +357,31 @@ entries:
   oceanseek:
   - apiVersion: v2
     appVersion: 4.6.3.0-482026112114.el7
+    created: "2026-11-23T12:52:45.721450581Z"
+    dependencies:
+    - alias: operator
+      condition: operator.enabled
+      name: ob-operator
+      repository: file://../ob-operator
+      version: 2.4.0
+    - alias: dashboard
+      condition: dashboard.enabled
+      name: oceanbase-dashboard
+      repository: file://../oceanbase-dashboard
+      version: 0.7.0
+    - condition: minio.enabled
+      name: minio
+      repository: file://../minio
+      version: 0.1.0
+    description: OceanSeek with Dashboard and optional bundled MinIO
+    digest: f9dfd07d648b732f99d63b6599f94939b55dab29b9cbcbd07395fcef375bb5ca
+    name: oceanseek
+    type: application
+    urls:
+    - https://github.com/oceanbase/ob-operator/releases/download/oceanseek-1.0.0/oceanseek-1.0.0.tgz
+    version: 1.0.0
+  - apiVersion: v2
+    appVersion: 4.6.3.0-482026112114.el7
     created: "2026-11-23T08:31:56.305179283Z"
     dependencies:
     - alias: dashboard
@@ -375,4 +400,4 @@ entries:
     urls:
     - https://github.com/oceanbase/ob-operator/releases/download/oceanseek-0.1.0/oceanseek-0.1.0.tgz
     version: 0.1.0
-generated: "2026-11-23T08:31:56.305242427Z"
+generated: "2026-11-23T12:52:45.721549406Z"
