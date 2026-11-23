@@ -116,8 +116,8 @@ func TestDefaultSizingMatchesSingleNodeProfile(t *testing.T) {
 		cpu += int64(*proxy.Spec.Replicas) * container.Resources.Requests.Cpu().MilliValue()
 		memory += int64(*proxy.Spec.Replicas) * container.Resources.Requests.Memory().Value()
 	}
-	if cpu != 10000 || memory != resource.NewQuantity(24<<30, resource.BinarySI).Value() {
-		t.Fatalf("test-profile database + proxy budget must be 10 CPU/24Gi: %dm CPU, %d bytes memory", cpu, memory)
+	if cpu != 11000 || memory != resource.NewQuantity(26<<30, resource.BinarySI).Value() {
+		t.Fatalf("default database + proxy budget must be 11 CPU/26Gi: %dm CPU, %d bytes memory", cpu, memory)
 	}
 	for _, tc := range []struct {
 		kind, name, section, data string

@@ -1,4 +1,4 @@
-{{- if and .Values.prerequisites.enabled (not (index .Values "skip-operator")) }}
+{{- if and .Values.prerequisites.enabled .Values.operator.enabled (not (index .Values "skip-operator")) }}
 {{- $foundation := .Files.Get "files/prerequisites/foundation.json" | fromJson }}
 {{- if not $foundation.certManager }}
 {{- fail "The bundled prerequisites are missing from this Chart. Use the published Chart or set skip-operator=true for a cluster with an Operator." }}
@@ -8,7 +8,8 @@
 {{- fail "The bundled cert-manager supports Kubernetes 1.33 through 1.36. On another Kubernetes version, reuse a compatible Operator with --skip-crds --set skip-operator=true." }}
 {{- end }}
 {{- $kindOrder := dict "Namespace" 0 "ServiceAccount" 1 "ClusterRole" 2 "Role" 2 "ClusterRoleBinding" 3 "RoleBinding" 3 "Service" 4 "Issuer" 5 "Certificate" 6 "Deployment" 7 "MutatingWebhookConfiguration" 8 "ValidatingWebhookConfiguration" 8 }}
-{{- range $component := list (dict "objects" $foundation.certManager "weight" -150) (dict "objects" $foundation.operator "weight" -120) }}
+{{- $operator := include "ob-operator.sharedResources" .Subcharts.operator | fromJsonArray }}
+{{- range $component := list (dict "objects" $foundation.certManager "weight" -150) (dict "objects" $operator "weight" -120) }}
 {{- range $object := $component.objects }}
 {{- $meta := $object.metadata }}
 {{- $namespace := default "" $meta.namespace }}

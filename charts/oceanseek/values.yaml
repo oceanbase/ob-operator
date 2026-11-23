@@ -1,9 +1,9 @@
-# Source installs require a compatible Operator and the image inputs in USAGE.txt.
+# See USAGE.txt for installation from a release or source checkout.
 # helm upgrade --install oceanseek ./oceanseek -n oceanseek --create-namespace \
 #   --wait --wait-for-jobs --timeout 35m
 # Defaults match values-single-node.yaml: 1 Observer, 3 LogService processes,
-# 1 OBProxy, bundled MinIO and Dashboard. Database + proxy request 10 CPU / 24Gi;
-# add Kubernetes, monitoring and storage overhead, and >=350Gi free disk.
+# 2 OBProxy replicas, bundled MinIO and Dashboard. Database and proxy request
+# 11 CPU / 26Gi plus Kubernetes, monitoring and storage overhead. Allow >=350Gi free disk.
 # The complete graph is declarative; Operator reconciles storage -> LS -> OB.
 stage: cluster
 native:
@@ -11,8 +11,7 @@ native:
   readiness:
     # Shared by the readiness Job and OBProxy discovery init container.
     executable: /oceanseek-readiness
-    # Filled by the release lock or supplied for a source install.
-    image: ""
+    image: quay.io/oceanbase/oceanbase-helper:2.4.0
     imagePullPolicy: IfNotPresent
     timeoutSeconds: 1800
     resources:
@@ -35,9 +34,9 @@ sqlService:
 # SQL clients use the same sqlService address with or without OBProxy.
 obproxy:
   enabled: true
-  image: oceanbase/obproxy-ce:4.3.3.0-5
+  image: quay.io/oceanbase/obproxy-ce:4.3.3.0-5
   imagePullPolicy: IfNotPresent
-  replicas: 1
+  replicas: 2
   # Keep the proxy process budget below its container memory limit.
   memoryLimit: 1536M
   resources:
@@ -50,11 +49,14 @@ obproxy:
 # Set enabled=false if an existing shared Dashboard already manages this cluster.
 dashboard:
   enabled: true
-  # Filled independently from the Operator and Helper versions by the release lock.
-  image: ""
+  image: quay.io/oceanbase/oceanbase-dashboard:0.7.0
+  # Prometheus BusyBox (glibc), pinned to its multi-architecture image index.
+  utilityImage: quay.io/prometheus/busybox@sha256:c78ea71d5da0a24559fdc3a5eb49c04223e28dd6c6570c754395326f66d50728
   inspection:
+    obdiag:
+      image: quay.io/oceanbase/obdiag:5.0.2-12026102116
     oceanbaseHelper:
-      image: ""
+      image: quay.io/oceanbase/oceanbase-helper:2.4.0
   # Utilities/monitoring can be mirrored using utilityImage, prometheus.image
   # and alertmanager.image. The release image-values file pins all of them,
   # including inspection.obdiag.image and inspection.oceanbaseHelper.image.
@@ -209,9 +211,14 @@ observer:
 # and does not protect against deleting the namespace or explicit kubectl delete.
 
 # The published Chart enables and supplies its bundled prerequisite payload.
+operator:
+  enabled: true
+  sharedBootstrap: true
+  kubeRbacProxyImage: quay.io/brancz/kube-rbac-proxy:v0.13.1
+
 prerequisites:
   enabled: false
-  image: ""
+  image: quay.io/oceanbase/oceanbase-helper:2.4.0
   timeoutSeconds: 1800
 
 # Reuse a compatible shared Operator. Pair with Helm --skip-crds.

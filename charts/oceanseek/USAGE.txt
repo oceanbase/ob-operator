@@ -1,7 +1,22 @@
+Install from the public Helm repository
+---------------------------------------
+On a fresh Kubernetes 1.33–1.36 cluster with a working local-path StorageClass,
+cluster administrator permissions and access to the release images, run:
+
+  helm upgrade --install oceanseek oceanseek --repo https://oceanbase.github.io/ob-operator/ --version 1.0.0 -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
+
+The package registers the CRDs, starts cert-manager, then starts the ob-operator
+subchart in oceanbase-system. Each webhook must be ready before the next stage.
+To use an existing compatible Operator and cert-manager, append
+--skip-crds --set operator.enabled=false (skip-operator=true is also supported).
+
 Source checkout and public registries
 ------------------------------------
-Install a compatible Operator with the cluster's usual configuration first.
-Set OPERATOR_VERSION, DASHBOARD_VERSION and HELPER_VERSION to the three published
+To build the same fresh-cluster package from a disposable checkout, run
+python3 scripts/oceanseek/build-helm-release.py --prepare-repository-chart,
+then helm dependency build charts/oceanseek and helm package charts/oceanseek.
+For source installs without that preparation, use an existing compatible Operator.
+The default images match this release. To override them, set OPERATOR_VERSION, DASHBOARD_VERSION and HELPER_VERSION to the three published
 component versions. From the repository root, with Python 3, PyYAML and Helm:
 
   helm dependency build charts/oceanseek
@@ -18,7 +33,7 @@ Versioned distribution charts already embed their image lock in values.yaml.
 
 OBProxy SQL entry point
 =======================
-The cluster stage installs one OBProxy replica by default. The <release>-sql
+The cluster stage installs two OBProxy replicas by default. The <release>-sql
 Service uses port 2883 and forwards to OBProxy:2883. Set
 --set obproxy.enabled=false to omit OBProxy: the same Service port then forwards
 directly to Observer:2881. Storage/logservice-only stages do not install OBProxy.
@@ -26,15 +41,16 @@ directly to Observer:2881. Storage/logservice-only stages do not install OBProxy
 Default settings:
   sqlService.port: 2883
   obproxy.enabled: true
-  obproxy.replicas: 1
-  obproxy.image: oceanbase/obproxy-ce:4.3.3.0-5
+  obproxy.replicas: 2
+  obproxy.image: quay.io/oceanbase/obproxy-ce:4.3.3.0-5
   obproxy.memoryLimit: 1536M
   obproxy.resources.requests: {cpu: "1", memory: 2Gi}
   obproxy.resources.limits: {cpu: "1", memory: 2Gi}
 
 The memoryLimit is per proxy process and must remain below the container limit.
-The default proxy requests/limits 1 CPU and 2Gi. Its 1536M process budget leaves
-container headroom. Count this in addition to database/monitoring resources.
+Each proxy replica requests and is limited to 1 CPU and 2Gi. Its 1536M process
+budget leaves container headroom. Count each replica in addition to database
+and monitoring resources.
 obproxy.nodeSelector and obproxy.tolerations control proxy placement separately;
 soft anti-affinity prefers different hosts but still permits single-node trials.
 Two replicas on one host do not protect against host failure. A disruption
@@ -107,10 +123,12 @@ locked images. Install from the Helm repository or the exact Chart archive:
 
 No values file or separate Dashboard installation is needed. The packaged Chart
 already pins this delivery's images and enables Dashboard, its monitoring,
-bundled MinIO, three LogService processes, one Observer and one OBProxy.
-Database + proxy request 10 CPU / 24Gi; add Kubernetes, Dashboard, monitoring,
-object storage and other workloads. Keep >=350Gi free data disk for this bundle. Successful completion with hooks enabled includes the
-database and Dashboard readiness checks. Helm prints access and login commands.
+bundled MinIO, three LogService processes, one Observer and two OBProxy replicas.
+The database and both proxies request 11 CPU and 26Gi in total. Allow additional
+capacity for Kubernetes, Dashboard, monitoring, object storage and other workloads.
+Keep >=350Gi free data disk for this bundle. Successful completion with hooks
+enabled includes the database and Dashboard readiness checks. Helm prints access
+and login commands.
 
 If your StorageClass has another name, append --set storageClass=<actual-name> --set minio.storageClass=<actual-name>.
 To reuse a separately managed Dashboard, append --set dashboard.enabled=false.
@@ -158,8 +176,10 @@ Prerequisites
 - Enough allocatable CPU/memory and disk for the selected profile.
 - Workers can pull all configured images (or have the exact images preloaded).
 - An existing Operator must serve the OceanSeek CRDs and support native storage
-  initialization and service resolution. The readiness hook uses the matched
-  /oceanseek-readiness image shipped with the Chart.
+  initialization and service resolution. The readiness hook and OBProxy discovery
+  run /oceanseek-readiness from the OceanBase Helper image. For an offline
+  install, preload the updated Helper on every eligible node and set
+  native.readiness.imagePullPolicy=IfNotPresent.
 - Reusing an existing shared Operator does NOT upgrade its image. A successful
   API/webhook check is not proof that its binary matches this release. Have the
   cluster owner validate and upgrade it separately, or use a fresh test cluster.
@@ -176,7 +196,7 @@ The quick-install command already selects this sizing. values-single-node.yaml
 is an optional explicit copy for customization; image-values.yaml is supplied
 for inspection/overrides, and is already incorporated into the packaged Chart.
 The defaults have one Observer (3 CPU/10Gi), three LogService processes
-(2 CPU/4Gi EACH) and one OBProxy (1 CPU/2Gi): 10 CPU/24Gi total requests.
+(2 CPU/4Gi each) and two OBProxy replicas (1 CPU/2Gi each), totaling 11 CPU/26Gi.
 Add MinIO, Dashboard, Prometheus, Alertmanager and Kubernetes/system capacity;
 keep >=350Gi free disk. These are per-process budgets, not a whole-host minimum.
 CPU requests from other Kubernetes workloads count against capacity.
@@ -201,8 +221,8 @@ kubernetes.io/hostname label values (not assumed public IPs):
 All workers must be members of one Kubernetes cluster. Kubernetes schedules one
 Observer and one LogService per worker. Storage, Dashboard and initialization
 run on worker-1 in this example. Budget at least 5 CPU/14Gi per worker for the
-database processes, plus 1 CPU/2Gi wherever OBProxy is scheduled and the
-storage/Dashboard/system workloads on worker-1.
+database processes, plus 1 CPU/2Gi for each OBProxy replica scheduled there.
+Allow additional capacity for storage/Dashboard/system workloads on worker-1.
 Provision adequate capacity beyond these requests. This topology still uses
 one bundled MinIO instance; it is an experience setup, not highly available
 object storage. For distributed bundled storage on a fresh release, append

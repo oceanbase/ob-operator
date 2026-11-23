@@ -60,3 +60,17 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/* Render the shared controller in the namespace used by its conversion webhooks.
+   Helm registers the CRDs from crds/ before applying these resources. */}}
+{{- define "ob-operator.sharedResources" -}}
+{{- $namespace := "oceanbase-system" }}
+{{- $objects := list (dict "apiVersion" "v1" "kind" "Namespace" "metadata" (dict "name" $namespace)) }}
+{{- $context := dict "Values" .Values "Release" (dict "Namespace" $namespace) }}
+{{- range $document := splitList "\n---\n" (include "ob-operator.manifests" $context) }}
+{{- if not (hasPrefix "apiVersion: apiextensions.k8s.io/" $document) }}
+{{- $objects = append $objects ($document | fromYaml) }}
+{{- end }}
+{{- end }}
+{{- toJson $objects }}
+{{- end }}

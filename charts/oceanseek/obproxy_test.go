@@ -48,7 +48,7 @@ func TestOBProxyDefaultAndOptOut(t *testing.T) {
 			}
 			var deploy appsv1.Deployment
 			decodeScheduledObject(t, find(t, docs, "Deployment", "qa-obproxy"), &deploy)
-			if *deploy.Spec.Replicas != 1 || deploy.Spec.Template.Spec.AutomountServiceAccountToken == nil || *deploy.Spec.Template.Spec.AutomountServiceAccountToken {
+			if *deploy.Spec.Replicas != 2 || deploy.Spec.Template.Spec.AutomountServiceAccountToken == nil || *deploy.Spec.Template.Spec.AutomountServiceAccountToken {
 				t.Fatal(deploy.Spec)
 			}
 			c := deploy.Spec.Template.Spec.Containers[0]
@@ -74,10 +74,9 @@ func TestOBProxyDefaultAndOptOut(t *testing.T) {
 			if deploy.Spec.Template.Spec.Affinity.PodAntiAffinity == nil {
 				t.Fatal("missing node spreading")
 			}
-			for _, doc := range docs {
-				if doc["kind"] == "PodDisruptionBudget" && field(doc, "metadata", "name") == "qa-obproxy" {
-					t.Fatal("default single proxy must not block voluntary maintenance")
-				}
+			budget := find(t, docs, "PodDisruptionBudget", "qa-obproxy")
+			if field(budget, "spec", "maxUnavailable") != 1 {
+				t.Fatal("default OBProxy budget must allow one unavailable replica")
 			}
 			for _, name := range []string{"qa-proxyro", "qa-proxysys"} {
 				secret := find(t, docs, "Secret", name)

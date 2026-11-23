@@ -14,6 +14,7 @@ from pathlib import Path
 import shlex
 import shutil
 import subprocess
+import sys
 import tarfile
 import tempfile
 import unittest
@@ -89,11 +90,56 @@ class HelmSourceProvenanceTests(unittest.TestCase):
                 self.assertIn('Apache License, Version 2.0', notice)
                 foundation = json.load(chart.extractfile('oceanseek/files/prerequisites/foundation.json'))
                 self.assertIn('licenses/cert-manager/NOTICE.txt', foundation['certManagerNotice'])
+                self.assertNotIn('operator', foundation)
+                self.assertIn('oceanseek/charts/ob-operator/Chart.yaml', chart.getnames())
+                self.assertIn('oceanseek/crds/obclusters.oceanbase.oceanbase.com.yaml', chart.getnames())
                 crds = [name for name in chart.getnames()
                         if name.startswith('oceanseek/crds/') and name.endswith('.cert-manager.io.yaml')]
                 self.assertTrue(crds)
                 for name in crds:
                     self.assertIn(b'licenses/cert-manager/NOTICE.txt', chart.extractfile(name).readline())
+
+    @unittest.skipUnless(shutil.which('helm'), 'Helm CLI required')
+    def test_repository_package_bootstraps_operator_and_cert_manager(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = HERE.parents[1]
+            shutil.copytree(source / 'charts', root / 'charts')
+            prerequisites = Path('scripts/oceanseek/prerequisites')
+            shutil.copytree(source / prerequisites, root / prerequisites)
+            BUILDER.run([sys.executable, HERE / 'build-helm-release.py',
+                         '--source', root, '--prepare-repository-chart'])
+            parent = root / 'charts/oceanseek'
+            BUILDER.run(['helm', 'dependency', 'build', parent])
+            BUILDER.run(['helm', 'package', parent, '--destination', root])
+            package, = root.glob('oceanseek-*.tgz')
+            render = ['helm', 'template', 'sample', package, '-n', 'sample']
+            objects = [obj for obj in yaml.safe_load_all(BUILDER.run(render + ['--include-crds'])) if obj]
+            resources = {(o['kind'], o['metadata'].get('namespace'), o['metadata']['name']): o for o in objects}
+            self.assertEqual(len(resources), len(objects))
+            for name in ('issuers.cert-manager.io', 'obclusters.oceanbase.oceanbase.com'):
+                self.assertIn(('CustomResourceDefinition', None, name), resources)
+            cert = resources['Deployment', 'cert-manager', 'cert-manager-webhook']
+            operator = resources['Deployment', 'oceanbase-system', 'oceanbase-controller-manager']
+            self.assertLess(int(cert['metadata']['annotations']['helm.sh/hook-weight']),
+                            int(operator['metadata']['annotations']['helm.sh/hook-weight']))
+            self.assertIn(('Certificate', 'oceanbase-system', 'oceanbase-serving-cert'), resources)
+            self.assertIn(('OBCluster', 'sample', 'sample-ob'), resources)
+            self.assertIn(('Deployment', 'sample', 'oceanbase-dashboard-sample'), resources)
+            job = resources['Job', 'sample', 'sample-readiness']
+            proxy = resources['Deployment', 'sample', 'sample-obproxy']
+            readiness = job['spec']['template']['spec']['containers'][0]
+            discovery = proxy['spec']['template']['spec']['initContainers'][0]
+            for container in (readiness, discovery):
+                self.assertEqual(container['image'], 'quay.io/oceanbase/oceanbase-helper:2.4.0')
+                self.assertEqual(container['imagePullPolicy'], 'IfNotPresent')
+                self.assertEqual(container['command'], ['/oceanseek-readiness'])
+            for flag in ('operator.enabled=false', 'skip-operator=true'):
+                reused = list(yaml.safe_load_all(BUILDER.run(render + ['--set', flag])))
+                names = {obj['metadata']['name'] for obj in reused if obj}
+                self.assertNotIn('cert-manager-webhook', names)
+                self.assertNotIn('oceanbase-controller-manager', names)
+                self.assertIn('sample-ob', names)
 
 
 class ReleaseContractTests(unittest.TestCase):
@@ -121,6 +167,15 @@ class ReleaseContractTests(unittest.TestCase):
         result = BUILDER.verify_metadata(self.lock, metadata(self.lock))
         self.assertFalse(result['archive_config_bytes_verified'])
         self.assertFalse(result['registry_pull_verified'])
+
+    def test_readiness_uses_locked_helper_by_default(self):
+        helper = BUILDER.validate_lock(self.lock)['oceanbase-helper']['reference']
+        self.assertEqual(BUILDER.image_values(self.lock)['native']['readiness']['image'], helper)
+        for name in ('discover-observers', 'readiness'):
+            self.assertEqual(BUILDER.CONTAINER_ROLES[name], 'oceanbase-helper')
+        refs = {role: image['reference'] for role, image in BUILDER.validate_lock(self.lock).items()}
+        refs['oceanbase-helper'] = 'localhost/oceanseek/oceanbase-helper:2.4.0'
+        self.assertEqual(BUILDER.image_values_from_refs(refs)['native']['readiness']['imagePullPolicy'], 'IfNotPresent')
 
     def test_separate_arm_readiness_is_used_by_both_helm_consumers(self):
         self.lock['platform'] = 'linux/arm64'
@@ -177,7 +232,8 @@ class ReleaseContractTests(unittest.TestCase):
                     '--component-namespace', 'example', '--operator-version', '1.2.3',
                     '--dashboard-version', '4.5.6', '--helper-version', '7.8.9']
             values = json.loads(subprocess.check_output(args))
-            self.assertEqual(values['native']['readiness']['image'], registry + '/example/ob-operator:1.2.3')
+            self.assertEqual(values['operator']['image'], registry + '/example/ob-operator:1.2.3')
+            self.assertEqual(values['native']['readiness']['image'], registry + '/example/oceanbase-helper:7.8.9')
             self.assertEqual(values['dashboard']['image'], registry + '/example/oceanbase-dashboard:4.5.6')
             self.assertEqual(values['prerequisites']['image'], registry + '/example/oceanbase-helper:7.8.9')
             self.assertEqual(values['dashboard']['inspection']['oceanbaseHelper']['image'], values['prerequisites']['image'])

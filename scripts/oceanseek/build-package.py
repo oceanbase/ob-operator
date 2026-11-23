@@ -310,8 +310,9 @@ def patch_charts(source, package, images, timestamp):
     parent_meta = yaml.safe_load((parent / "Chart.yaml").read_text())
     child_meta = yaml.safe_load((dashboard / "Chart.yaml").read_text())
     dependencies = parent_meta.get("dependencies", [])
-    expected = {"oceanbase-dashboard", "minio"}
-    if {d.get("name") for d in dependencies} != expected or len(dependencies) != len(expected):
+    required = {"oceanbase-dashboard", "minio"}
+    names = {d.get("name") for d in dependencies}
+    if names not in (required, required | {"ob-operator"}) or len(dependencies) != len(names):
         raise ValueError("Unexpected oceanseek dependency; offline dependency requires review")
     (parent / "charts").mkdir(exist_ok=True)
     for dependency in dependencies:

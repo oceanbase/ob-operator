@@ -36,10 +36,10 @@ SERVICE_ROLES = {'observer': 'observer', 'minio': 'minio', 'minio-init': 'mc',
                  'alertmanager': 'alertmanager',
                  'logservice-bootstrap': 'logservice',
                  **{'logservice-%d' % i: 'logservice' for i in (1, 2, 3)}}
-CONTAINER_ROLES = {'discover-observers': 'operator', 'obproxy': 'obproxy', 'manager': 'operator', 'kube-rbac-proxy': 'kube-rbac-proxy',
+CONTAINER_ROLES = {'discover-observers': 'oceanbase-helper', 'obproxy': 'obproxy', 'manager': 'operator', 'kube-rbac-proxy': 'kube-rbac-proxy',
                    'dashboard': 'dashboard', 'prometheus': 'prometheus',
                    'alertmanager': 'alertmanager', 'minio': 'minio',
-                   'initialize': 'mc', 'readiness': 'operator',
+                   'initialize': 'mc', 'readiness': 'oceanbase-helper',
                    'prometheus-storage-owner-init': 'utility', 'cleanup': 'utility'}
 ENV_ROLES = {'OBSERVER_IMAGE': 'observer', 'LOGSERVICE_IMAGE': 'logservice',
              'BOOTSTRAP_IMAGE': 'bootstrap', 'MINIO_IMAGE': 'minio', 'MINIO_MC_IMAGE': 'mc',
@@ -321,7 +321,11 @@ def image_values(lock):
 
 def image_values_from_refs(r):
     """Apply one explicit role-to-values mapping in every Helm delivery builder."""
-    return {'native': {'enabled': True, 'readiness': {'image': r.get('readiness', r['operator'])}},
+    readiness = {'image': r.get('readiness', r['oceanbase-helper'])}
+    # localhost/oceanseek aliases identify preloaded images in offline locks.
+    if readiness['image'].startswith('localhost/oceanseek/'):
+        readiness['imagePullPolicy'] = 'IfNotPresent'
+    return {'native': {'enabled': True, 'readiness': readiness},
             'prerequisites': {'image': r['oceanbase-helper']},
             'obproxy': {'image': r['obproxy']}, 'monitor': {'image': r['obagent']},
             'observer': {'image': r['observer']}, 'logService': {'image': r['logservice']},
@@ -575,7 +579,11 @@ def build(args):
         write_yaml(op / 'values.yaml', merge(yaml.safe_load((op / 'values.yaml').read_text()),
                                             operator_values))
         (parent / 'charts').mkdir(exist_ok=True)
-        for name in ('oceanbase-dashboard', 'minio'):
+        parent_meta = yaml.safe_load((parent / 'Chart.yaml').read_text())
+        for dependency in parent_meta['dependencies']:
+            name = dependency['name']
+            if name not in ('oceanbase-dashboard', 'minio', 'ob-operator'):
+                raise ValueError('Unknown OceanSeek dependency: ' + name)
             child = temp / name
             child_version = yaml.safe_load((child / 'Chart.yaml').read_text())['version']
             tar_tree(child, parent / 'charts' / ('%s-%s.tgz' % (name, child_version)), timestamp)

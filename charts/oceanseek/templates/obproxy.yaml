@@ -121,7 +121,7 @@ spec:
       automountServiceAccountToken: false
       initContainers:
         - name: discover-observers
-          image: {{ required "Set native.readiness.image to the released Operator or readiness image (see USAGE.txt)" .Values.native.readiness.image | quote }}
+          image: {{ required "Set native.readiness.image to the released Helper or readiness image (see USAGE.txt)" .Values.native.readiness.image | quote }}
           imagePullPolicy: {{ .Values.native.readiness.imagePullPolicy }}
           command: [{{ .Values.native.readiness.executable | quote }}]
           args:

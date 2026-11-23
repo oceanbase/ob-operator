@@ -32,7 +32,7 @@ CERT_MANAGER_ROLES = {'cert-manager-controller', 'cert-manager-cainjector',
 REQUIRED_ROLES = native.HELM_ROLES | CERT_MANAGER_ROLES
 PROFILE = Path('scripts/oceanseek/release-profiles/single-command.yaml')
 INPUT_PATHS = [Path('charts') / name for name in
-               ('oceanseek', 'oceanbase-dashboard', 'minio')]
+               ('oceanseek', 'oceanbase-dashboard', 'minio', 'ob-operator')]
 INPUT_PATHS += [Path('scripts/oceanseek/prerequisites'),
                 Path('scripts/oceanseek/images/minio-rejoin'), PROFILE]
 INPUT_PATHS += [Path('scripts/oceanseek') / name for name in
@@ -116,41 +116,17 @@ def source_provenance(source, used_files):
             'git_metadata_available': True}, patch
 
 
-def rewrite_payload_images(path, wanted):
-    """Map declared workload container names, retaining all other source bytes."""
-    text = path.read_text()
-    seen = set()
-    for document in yaml.safe_load_all(text):
-        if not isinstance(document, dict) or document.get('kind') != 'Deployment':
-            continue
-        deployment = document['metadata']['name']
-        containers = document['spec']['template']['spec']['containers']
-        for container in containers:
-            key = (deployment, container['name'])
-            if key not in wanted:
-                raise ValueError('Unmapped prerequisite workload container: ' + repr(key))
-            old = container['image']
-            new = wanted[key]
-            # Existing manifests use plain YAML image scalars. Parse first so
-            # absent/renamed containers cannot silently keep an old image.
-            original = 'image: ' + old
-            if text.count(original) != 1:
-                raise ValueError('Expected one plain image scalar in ' + str(path))
-            text = text.replace(original, 'image: ' + new, 1)
-            seen.add(key)
-    if seen != set(wanted):
-        raise ValueError('Missing prerequisite containers: ' + repr(set(wanted) - seen))
-    return text
-
-
-def write_foundation(chart, cert_manager, operator, operator_crds, roles):
+def write_foundation(chart, cert_manager, operator_chart, roles=None):
     """Separate CRD registration from the ordered Helm hooks that use those APIs."""
     crds = chart / 'crds'
-    crds.mkdir()
-    for path in operator_crds:
-        shutil.copy2(path, crds / path.name)
+    crds.mkdir(exist_ok=True)
+    # Helm must register these APIs before it builds the OceanSeek custom resources.
+    rendered = native.run(['helm', 'template', 'ob-operator', operator_chart, '-n', 'oceanbase-system'])
+    for obj in yaml.safe_load_all(rendered):
+        if obj and obj['kind'] == 'CustomResourceDefinition':
+            (crds / (obj['metadata']['name'] + '.yaml')).write_text(yaml.safe_dump(obj, sort_keys=False))
     license_dir = chart / 'licenses/cert-manager'
-    license_dir.mkdir(parents=True)
+    license_dir.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(cert_manager.parent / 'licenses/cert-manager/LICENSE', license_dir / 'LICENSE')
     manifest = cert_manager.read_text()
     header = []
@@ -177,15 +153,14 @@ def write_foundation(chart, cert_manager, operator, operator_crds, roles):
                 for arg in container.get('args', []):
                     if arg.startswith('--acme-http01-solver-image='):
                         images['cert-manager-acmesolver'] = arg.split('=', 1)[1]
-    if images != {role: roles[role]['reference'] for role in CERT_MANAGER_ROLES}:
+    if roles is not None and images != {role: roles[role]['reference'] for role in CERT_MANAGER_ROLES}:
         raise ValueError('Bundled cert-manager images must match the Helm image lock')
+    payload = chart / 'files/prerequisites'
+    payload.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(cert_manager.parent / 'wait-ready.py', payload / 'wait-ready.py')
     native.write_json(chart / 'files/prerequisites/foundation.json', {
         'certManagerNotice': notice,
         'certManager': [obj for obj in cert_objects if obj['kind'] != 'CustomResourceDefinition'],
-        'operator': [
-            {'apiVersion': 'v1', 'kind': 'Namespace', 'metadata': {'name': 'oceanbase-system'}},
-            *[obj for obj in yaml.safe_load_all(operator) if obj],
-        ],
     })
 
 
@@ -213,23 +188,17 @@ def assemble_chart(snapshot, lock, destination):
             raise ValueError('Source dependency name/version differs from Chart.yaml')
         native.tar_tree(child, charts / ('%s-%s.tgz' % (child_meta['name'], child_meta['version'])))
     prerequisites = snapshot / 'scripts/oceanseek/prerequisites'
-    payload = destination / 'files/prerequisites'
-    payload.mkdir(parents=True)
-    operator = rewrite_payload_images(prerequisites / 'manifests/operator.yaml', {
-        ('oceanbase-controller-manager', 'manager'): roles['operator']['reference'],
-        ('oceanbase-controller-manager', 'kube-rbac-proxy'): roles['kube-rbac-proxy']['reference'],
-    })
     profile = yaml.safe_load((snapshot / PROFILE).read_text())
     if profile.get('schemaVersion') != 1 or profile.get('name') != 'single-command':
         raise ValueError('Unknown single-command profile')
     image_values = native.image_values_from_refs({r: i['reference'] for r, i in roles.items()})
     overlay = native.merge(copy.deepcopy(profile['values']), image_values)
+    overlay['operator'] = {'image': roles['operator']['reference'],
+                           'kubeRbacProxyImage': roles['kube-rbac-proxy']['reference']}
     cert_manager = prerequisites / 'cert-manager-locked.yaml'
     if not cert_manager.is_file():
         raise ValueError('Provide the pinned --cert-manager-manifest for the one-command Chart')
-    operator_crds = sorted((prerequisites / 'crds').glob('*.oceanbase.com.yaml'))
-    write_foundation(destination, cert_manager, operator, operator_crds, roles)
-    shutil.copy2(prerequisites / 'wait-ready.py', payload / 'wait-ready.py')
+    write_foundation(destination, cert_manager, snapshot / 'charts/ob-operator', roles)
     overlay['prerequisites']['image'] = roles['oceanbase-helper']['reference']
     values = native.merge(yaml.safe_load((destination / 'values.yaml').read_text()), overlay)
     native.write_yaml(destination / 'values.yaml', values)
@@ -358,12 +327,25 @@ def build_release(source, lock, output, release_version=None, allow_existing_out
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--source', type=Path, default=HERE.parent.parent)
-    parser.add_argument('--lock', type=Path, required=True)
-    parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--prepare-repository-chart', action='store_true',
+                        help='Assemble shared prerequisites in the checkout before helm packaging')
+    parser.add_argument('--lock', type=Path)
+    parser.add_argument('--output', type=Path)
     parser.add_argument('--release-version', help='Delivery label only; Chart version always comes from source Chart.yaml')
     parser.add_argument('--public-release', action='store_true', help='Require public registry references in distributed images')
     parser.add_argument('--cert-manager-manifest', type=Path, help='Pinned cert-manager YAML to bundle in the chart')
     args = parser.parse_args()
+    if args.prepare_repository_chart:
+        chart = args.source / 'charts/oceanseek'
+        cert = args.source / 'scripts/oceanseek/prerequisites/cert-manager-locked.yaml'
+        write_foundation(chart, cert, args.source / 'charts/ob-operator')
+        defaults = chart / 'values.yaml'
+        values = yaml.safe_load(defaults.read_text())
+        values['prerequisites']['enabled'] = True
+        native.write_yaml(defaults, values)
+        return
+    if not args.lock or not args.output:
+        parser.error('--lock and --output are required for a locked release')
     result = build_release(args.source, json.loads(args.lock.read_text()), args.output, args.release_version,
                            cert_manager=args.cert_manager_manifest, public_release=args.public_release,
                            input_lock_sha256=native.sha256(args.lock))
