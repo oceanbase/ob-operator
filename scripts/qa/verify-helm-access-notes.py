@@ -2,7 +2,7 @@
 """Exercise packaged NOTES with real Helm lookup on a disposable test cluster.
 
 Run only on an authorized test machine. Creates and deletes its own namespace;
-no database workloads are needed for the address/licensing branch regression.
+no database workloads are needed for the access notes regression.
 """
 import argparse
 import copy
@@ -55,6 +55,16 @@ def main():
         run('kubectl', 'create', 'namespace', ns)
         try:
             first = render('first-install-auto-port')
+            assert len(first.strip().splitlines()) == 10
+            # Compare the complete install and saved NOTES, including the fallback
+            # on a fresh release before Kubernetes assigns its Service ports.
+            installed = run('helm', 'install', 'notes', str(chart), '-n', ns)
+            assert installed.split('NOTES:', 1)[1].strip() == first.strip()
+            saved = run('helm', 'get', 'notes', 'notes', '-n', ns)
+            assert saved.split('NOTES:', 1)[-1].strip() == first.strip()
+            run('helm', 'uninstall', 'notes', '-n', ns)
+            checks.append('complete-install-and-saved-notes')
+
             def dashboard_command(notes):
                 return next(line.strip() for line in notes.splitlines() if line.strip().startswith('DASHBOARD_PORT='))
 
@@ -71,7 +81,6 @@ def main():
             assert f"mysql -h notes-sql.{ns}.svc -P 2883 -u 'root@sys' -p" in internal
             assert "mysql -h 127.0.0.1 -P 2883 -u 'root@sys' -p" in internal
             assert 'get svc oceanbase-dashboard-notes' in first
-            assert first.count('AGPL-3.0') == 1
             ipv6 = render('first-install-ipv6', host='2001:db8::1')
             assert "mysql -h '2001:db8::1' -P" in ipv6
             unsafe = render('host-shell-quoting', host="a'$(false)")
@@ -104,9 +113,9 @@ def main():
             assert 'Dashboard LoadBalancer address' in render('load-balancer', kind='LoadBalancer')
             assert 'Dashboard is disabled' in render('dashboard-disabled', enabled=False)
             external = render('external-storage-no-minio', endpoint='https://s3.example.test', minio=False)
-            assert external.count('AGPL-3.0') == 1 and 'no bundled MinIO server' in external
+            assert external == existing
             separate = render('external-storage-with-minio', endpoint='https://s3.example.test')
-            assert separate.count('AGPL-3.0') == 1 and 'separately enabled MinIO server' in separate
+            assert separate == existing
         finally:
             run('kubectl', 'delete', 'namespace', ns, '--wait=false')
     print(json.dumps({'status': 'PASS', 'checks': checks}, indent=2))

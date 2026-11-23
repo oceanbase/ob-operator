@@ -336,7 +336,11 @@ Dashboard and SQL access
 The default Dashboard NodePort uses the same host as the SQL command. Open the
 Dashboard URL printed by Helm in your browser. On first installation, run the
 command in NOTES to print the URL with the allocated Dashboard port. Sign in as
-admin using the Dashboard password. Helm prints the command to read it.
+admin using the Dashboard password. Helm prints the command to read the initial
+password. If you changed it, use the current one. Read passwords in a trusted
+terminal using the same kubeconfig and context as Helm. Changing root@sys with
+ALTER USER does not update the Kubernetes Secret. Use an HTTPS endpoint for
+Dashboard access across untrusted networks.
 For a ClusterIP Dashboard, use the port-forward command in NOTES.
 
 Kubernetes allocates Dashboard and SQL NodePorts when their configured values
@@ -527,18 +531,31 @@ Reference: https://docs.k3s.io/installation/airgap
            https://docs.k3s.io/advanced#selinux-support
 
 MinIO console after installation
-When bundled MinIO is enabled, Helm NOTES prints a kubectl port-forward command
-for its StatefulSet, the localhost console URL, and commands to read rootUser
-and rootPassword from the actual MinIO Secret (including rootExistingSecret).
-If kubectl runs remotely, use the printed SSH tunnel on your browser computer.
-Keep both forwards running. This does not change installation commands or expose
-a public port. External-only storage uses the provider's console credentials.
+-------------------------------
+For bundled MinIO, set the release and namespace to match your Helm install:
 
-For MinIO access, SSH authentication uses the remote machine account and usual
-SSH key/password, not the MinIO Secret. Run the tunnel on the browser computer.
-A successful ssh -N normally stays silent and opens no shell; keep it running
-until you finish using the console, then press Ctrl+C. Enter the MinIO Secret
-username/password only in the browser login form.
+  RELEASE=oceanseek
+  NAMESPACE=oceanseek
+  kubectl -n "$NAMESPACE" port-forward "statefulset/$RELEASE-minio" 39001:9001
+
+Keep this running and open http://127.0.0.1:39001/ on the same computer. If
+kubectl runs on a remote server, also run this on the browser computer using
+your SSH machine account and keep the tunnel open:
+
+  ssh -o ExitOnForwardFailure=yes -N -L 39001:127.0.0.1:39001 <user>@<remote-server>
+
+In a second trusted terminal, set RELEASE and NAMESPACE as above. Set SECRET
+to minio.rootExistingSecret if configured, or use the generated name below.
+Read the username and password and enter them in the MinIO console:
+
+  SECRET=${RELEASE}-minio-root
+  kubectl -n "$NAMESPACE" get secret "$SECRET" -o jsonpath='{.data.rootUser}' | base64 --decode; echo
+  kubectl -n "$NAMESPACE" get secret "$SECRET" -o jsonpath='{.data.rootPassword}' | base64 --decode; echo
+
+The S3 API uses port 9000 and the console uses port 9001. If the database uses
+external storage, use the provider's console and its login credentials. Bundled
+MinIO, when enabled, has its own login. MinIO and the mc initialization client
+are distributed under AGPL-3.0.
 
 Dashboard report storage on SELinux hosts
 The Dashboard, log/diagnostic Jobs and report cleanup CronJob share one PVC.
