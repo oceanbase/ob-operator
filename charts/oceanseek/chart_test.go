@@ -19,10 +19,12 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
 	"gopkg.in/yaml.v3"
+	rbacv1 "k8s.io/api/rbac/v1"
 )
 
 type manifest map[string]interface{}
@@ -97,6 +99,9 @@ func TestStagesAndRetention(t *testing.T) {
 			counts := map[string]int{}
 			for _, doc := range docs {
 				kind := doc["kind"].(string)
+				if field(doc, "metadata", "annotations", "helm.sh/hook") == "pre-delete" {
+					continue
+				}
 				counts[kind]++
 				if field(doc, "metadata", "namespace") != "qa-ns" {
 					t.Fatalf("wrong namespace: %v", doc["metadata"])
@@ -148,6 +153,29 @@ func TestStagesAndRetention(t *testing.T) {
 				t.Fatal("MinIO must not open public ports")
 			}
 		})
+	}
+}
+
+func TestUninstallHookIsLimitedToReleaseClusters(t *testing.T) {
+	docs, output, err := render(t, nil)
+	if err != nil {
+		t.Fatalf("render: %v\n%s", err, output)
+	}
+	for _, kind := range []string{"ServiceAccount", "Role", "RoleBinding", "Job"} {
+		obj := find(t, docs, kind, "qa-uninstall")
+		if field(obj, "metadata", "annotations", "helm.sh/hook") != "pre-delete" ||
+			field(obj, "metadata", "annotations", "helm.sh/hook-delete-policy") != "before-hook-creation,hook-succeeded" {
+			t.Fatalf("unexpected uninstall hook on %s: %v", kind, obj["metadata"])
+		}
+	}
+	var role rbacv1.Role
+	decodeScheduledObject(t, find(t, docs, "Role", "qa-uninstall"), &role)
+	want := []rbacv1.PolicyRule{
+		{APIGroups: []string{"oceanbase.oceanbase.com"}, Resources: []string{"obclusters"}, ResourceNames: []string{"qa-ob"}, Verbs: []string{"get", "delete"}},
+		{APIGroups: []string{"oceanbase.oceanbase.com"}, Resources: []string{"oblogserviceclusters"}, ResourceNames: []string{"qa-ls"}, Verbs: []string{"get", "delete"}},
+	}
+	if !reflect.DeepEqual(role.Rules, want) {
+		t.Fatalf("unexpected uninstall permissions: %+v", role.Rules)
 	}
 }
 

@@ -1,3 +1,8 @@
+Install from a local Chart package
+----------------------------------
+Set CHART to your downloaded .tgz file. Helm uses the packaged dependencies:
+  helm upgrade --install oceanseek "$CHART" -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
+
 Install from the public Helm repository
 ---------------------------------------
 On a fresh Kubernetes 1.33–1.36 cluster with a working local-path StorageClass,
@@ -316,8 +321,8 @@ it. After fixing image access, capacity, storage or credentials, rerun the same
 helm upgrade --install command. It creates a new initialization Job and hook,
 keeps existing data/credentials, and resumes reconciliation. Do not delete a
 namespace or rerun with another release name as a retry mechanism. Avoid
---atomic/automatic rollback when first diagnosing a stateful failed install:
-retained resources deliberately outlive Helm's cleanup.
+--atomic when diagnosing a failed install. Its automatic uninstall can run
+the delete hook and remove the database and LogService.
 
 Upgrade Operator before starting the OceanSeek installation. Do not roll it out
 while database bootstrap is in progress: the current Operator task executor
@@ -328,16 +333,19 @@ recreates storage initialization; it is not a general database recovery command.
 
 Dashboard and SQL access
 ------------------------
-For Dashboard login, run the kubectl port-forward command printed by Helm on
-the computer with your browser, then open http://127.0.0.1:8080. You can also
-use the HTTPS address provided by your administrator. The default account is
-admin. Helm prints the command to retrieve its initial password.
+The default Dashboard NodePort uses the same host as the SQL command. Open the
+Dashboard URL printed by Helm in your browser. On first installation, run the
+command in NOTES to print the URL with the allocated Dashboard port. Sign in as
+admin using the Dashboard password. Helm prints the command to read it.
+For a ClusterIP Dashboard, use the port-forward command in NOTES.
 
 Kubernetes allocates Dashboard and SQL NodePorts when their configured values
 are 0. The SQL client can connect to a reachable node on the allocated SQL
 port. Use kubectl -n oceanseek get svc to inspect both Services. For NAT or
-multiple network interfaces, set access.host to the advertised node IP or DNS
-name. On upgrade, Helm can read the ports from the existing Services.
+multiple network interfaces, set access.host to a node IP or DNS name reachable
+from the SQL client. Helm NOTES prefers an ExternalIP from a Ready node, then
+a Ready node's InternalIP. access.host overrides both. The advertised address
+must route to the SQL NodePort.
 
 Override ports with --set dashboard.service.nodePort=31184 and
 --set sqlService.nodePort=30882. Use free ports within your cluster's NodePort
@@ -350,16 +358,25 @@ cluster has a load balancer provider.
 
 Retention and uninstall
 -----------------------
-helm uninstall removes release-managed integration resources and the Dashboard
-Deployment. Database CRs, generated credentials, bundled MinIO
-StatefulSet/Service/PVC and Dashboard data remain. Reinstall with the SAME
-release, namespace and values to reconnect. Helm does not manage Hook resources
-on uninstall. After stopping old Helm operations, use the administrator's
+Uninstalling this chart stops the database. Its pre-delete Job
+deletes the release's OBCluster, waits for it to disappear, then deletes
+its OBLogServiceCluster. Keep the Operator and its webhooks available.
+LogService node PVCs are owned by the nodes and can be garbage-collected.
+Back up the instance before uninstalling. Generated credentials, bundled MinIO
+StatefulSet/Service/PVC and Dashboard data are retained. Reinstalling the
+release does not restore the deleted database.
+
+Helm uses the hooks stored in the installed revision. For a release installed
+from a package without the pre-delete hook, upgrade using the updated chart
+archive and the original values first, even if the version number matches.
+Skipping hooks with --no-hooks preserves
+the two cluster resources. If the hook fails, inspect the <release>-uninstall
+Job and Operator events, resolve the cause, then retry helm uninstall.
+
+After stopping old Helm operations, use the administrator's
 prepare.sh --revoke-legacy-binding NAMESPACE RELEASE to remove an abandoned
 legacy preparation binding. It checks the exact Hook, role, subject and that
 the old Jobs and Pods are inactive before deleting the binding.
-Explicitly deleting the namespace or database CRs is destructive and bypasses
-this retention; do so only when intentionally removing that experience's data.
 
 Helm history can contain supplied/generated credential values. Protect release
 metadata and kubeconfig access. Do not publish rendered manifests containing
@@ -471,7 +488,9 @@ NOTES again. For direct final URL/SQL output, use the release package installer:
   bash install-helm-and-show-access.sh oceanseek CHART.tgz -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
 It prints actual addresses after Helm succeeds and respects access.host from values,
 --kubeconfig and --kube-context. Python 3 is required by this wrapper. Plain Helm
-users can execute the complete lookup commands in NOTES after installation.
+users can run the mysql command at the top of NOTES. For a new, automatically
+allocated SQL NodePort, the command reads the port with kubectl when you run it.
+For a configured or existing SQL NodePort, Helm prints the port number directly.
 NodePorts remain stable while Services are retained, but may change if recreated.
 
 K3s on SELinux-enforcing systems

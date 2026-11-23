@@ -3,7 +3,7 @@ name: oceanseek
 description: OceanSeek with Dashboard and optional bundled MinIO
 type: application
 version: 1.0.0
-appVersion: "4.6.3.0-482026112114.el7"
+appVersion: "4.6.3.0-482026112114"
 dependencies:
 - name: ob-operator
   alias: operator

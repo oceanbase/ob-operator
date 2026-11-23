@@ -80,7 +80,7 @@ func TestSchedulingDefaultDoesNotRestrictPlacement(t *testing.T) {
 	for _, mode := range []string{"bundled", "external"} {
 		t.Run(mode, func(t *testing.T) {
 			storage := map[string]interface{}{"mode": mode}
-			want := 7 // MinIO + init + readiness + three LS zones + one OB zone.
+			want := 8 // MinIO + init + readiness + uninstall + three LS zones + one OB zone.
 			if mode == "external" {
 				storage["endpoint"] = "http://192.0.2.10:9000"
 				storage["existingSecret"] = "external-storage"
@@ -137,7 +137,7 @@ func TestSchedulingPropagatesToEveryPodAndZone(t *testing.T) {
 				t.Fatalf("render scheduled %s: %v\n%s", mode, err, output)
 			}
 			locations := schedulingLocations(t, docs)
-			want := 8 // MinIO + init + readiness + three LS zones + two OB zones.
+			want := 9 // MinIO + init + readiness + uninstall + three LS zones + two OB zones.
 			if mode == "external" {
 				want-- // Existing MinIO is not managed or scheduled by this chart.
 			}
@@ -202,7 +202,7 @@ func TestZoneNodeSelectorsDistributeWithoutLeakingToOtherZones(t *testing.T) {
 				t.Fatalf("render: %v\n%s", err, output)
 			}
 			locations := schedulingLocations(t, docs)
-			wantCount := 9
+			wantCount := 10 // MinIO, three Jobs and six database zones.
 			if mode == "external" {
 				wantCount--
 			}

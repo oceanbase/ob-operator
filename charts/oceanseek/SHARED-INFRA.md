@@ -32,7 +32,7 @@ Use separate release and namespace names, bucket names and appropriate cluster I
 Do not use these switches to migrate storage or remove components from an existing
 installation. Existing values and storage identities must be kept on upgrades.
 Uninstall does not remove shared Operator, external S3 or a separately managed Dashboard.
-Retained database CRs/PVCs/secrets follow the package retention policy; it is not a data wipe.
+Uninstall deletes the release's OBCluster and LogService. Back up the database first.
 See build-validation.json for the delivery's tested environments, results and limitations.
 Functional acceptance with cached images does not establish cold-download performance.
 
@@ -58,10 +58,8 @@ The profile sets native.readiness.timeoutSeconds=3600. It does not change the
 storage initialization deadline. Helm timeout applies to its
 individual stages; an external driver must allow their cumulative duration.
 If an interrupted CLI leaves pending-install, do not edit Helm Secrets or delete
-the namespace. Inspect initialization and preserve evidence first. Recovery on
-a test instance can use controlled uninstall --keep-history and same-name,
-same-namespace reinstall after checking retained state. Never assume uninstall
-is a general-purpose recovery procedure for arbitrary production data.
+the namespace. Inspect initialization and preserve evidence first. Uninstalling with
+--keep-history still runs the hook that deletes both cluster resources.
 
 ## Storage selection and optional MinIO deployment
 

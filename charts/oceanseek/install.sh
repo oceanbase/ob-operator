@@ -165,7 +165,7 @@ if jq -e --arg name "$release" '.[] | select(.name == $name)' <<<"$releases" >/d
   echo 'Reusing installed user values; explicit values flags take precedence.'
 fi
 helm_args+=("${user_args[@]}")
-# Helm uninstall retains CRs. Reinstall must not temporarily drop to storage stage.
+# Resume the current stage when CRs survive an interrupted install or an older uninstall.
 retained_cluster=$(run_bounded "$request_timeout" 'read retained OBCluster' kubectl -n "$namespace" get "obcluster/$release-ob" --ignore-not-found -o name --request-timeout="${request_timeout}s")
 retained_logservice=$(run_bounded "$request_timeout" 'read retained LogService' kubectl -n "$namespace" get "oblogservicecluster/$release-ls" --ignore-not-found -o name --request-timeout="${request_timeout}s")
 if [[ -n $retained_cluster ]]; then stage=cluster

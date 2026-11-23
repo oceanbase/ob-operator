@@ -14,14 +14,12 @@ package oceanseek_test
 
 import (
 	"bytes"
-	"fmt"
 	"os"
-	"reflect"
-	"strconv"
 	"strings"
 	"testing"
 	"text/template"
 
+	sprig "github.com/go-task/slim-sprig"
 	"gopkg.in/yaml.v3"
 )
 
@@ -59,7 +57,7 @@ func TestManualHelmNotesReflectStage(t *testing.T) {
 			} else if !strings.Contains(output, "Verify runtime readiness") {
 				t.Fatal("legacy staged mode must not assert readiness", output)
 			}
-			if stage == "cluster" && (!strings.Contains(output, "mysql -h 192.0.2.10 -P 30881") || strings.Contains(output, "127.0.0.1")) {
+			if stage == "cluster" && (!strings.Contains(output, "mysql -h '192.0.2.10' -P 30881") || strings.Contains(output, "127.0.0.1")) {
 				t.Fatal("SQL must print the real node address", output)
 			}
 
@@ -94,8 +92,8 @@ func TestDashboardNotesMatchAccessType(t *testing.T) {
 		name, serviceType, expected, absent string
 		enabled                             bool
 	}{
-		{"clusterIP", "ClusterIP", "8080:8088", "<reachable-node-IP>", true},
-		{"nodePort", "NodePort", "NodePort endpoint: 192.0.2.10:31183", "http://192.0.2.10:", true},
+		{"clusterIP", "ClusterIP", "kubectl -n qa-ns port-forward svc/oceanbase-dashboard-qa 8080:8088", "http://192.0.2.10:", true},
+		{"nodePort", "NodePort", "Dashboard URL: http://192.0.2.10:31183/#/login", "port-forward svc/oceanbase-dashboard-", true},
 		{"loadBalancer", "LoadBalancer", "Dashboard LoadBalancer address", "http://<EXTERNAL-IP", true},
 		{"disabled", "ClusterIP", "Dashboard is disabled", "get secret qa-dashboard-bootstrap", false},
 	} {
@@ -126,14 +124,11 @@ func TestDashboardNotesMatchAccessType(t *testing.T) {
 					!strings.Contains(output, "Namespace: qa-ns") ||
 					dashboardStart < 0 || dashboardStart > verificationStart ||
 					!strings.Contains(output, "Username: admin") ||
-					!strings.Contains(output, "port-forward svc/oceanbase-dashboard-qa 8080:8088") ||
-					!strings.Contains(output, "Open http://127.0.0.1:8080") ||
-					!strings.Contains(output, "separate from the database root@sys account") ||
 					!strings.Contains(output, "kubectl -n qa-ns get secret qa-dashboard-bootstrap") {
 					t.Fatal("access and account guidance must come before diagnostics")
 				}
 			}
-			for _, want := range []string{"kubectl -n qa-ns get secret existing-root-secret", "logs -f job/qa-readiness", "Namespace deletion", "SAME release, namespace and values", "Bundled object storage uses MinIO and mc"} {
+			for _, want := range []string{"kubectl -n qa-ns get secret existing-root-secret", "logs -f job/qa-readiness", "Namespace deletion", "Uninstall deletes OBCluster", "qa-ob, then OBLogServiceCluster qa-ls", "Bundled object storage uses MinIO and mc"} {
 				if !strings.Contains(output, want) {
 					t.Fatalf("missing diagnostic/retention guidance %q", want)
 				}
@@ -161,16 +156,7 @@ func notesTemplate(t *testing.T) *template.Template {
 		source = source[:end]
 	}
 	var tpl *template.Template
-	tpl = template.New("NOTES").Funcs(template.FuncMap{
-		"contains": func(sub, text string) bool { return strings.Contains(text, sub) },
-		"replace":  func(old, new, text string) string { return strings.ReplaceAll(text, old, new) },
-		"int":      func(value interface{}) int { n, _ := strconv.Atoi(fmt.Sprint(value)); return n },
-		"default": func(fallback, value interface{}) interface{} {
-			if value == nil || reflect.ValueOf(value).IsZero() {
-				return fallback
-			}
-			return value
-		},
+	tpl = template.New("NOTES").Funcs(sprig.TxtFuncMap()).Funcs(template.FuncMap{
 		"lookup": func(_, _, _, _ string) map[string]interface{} {
 			return map[string]interface{}{"items": []interface{}{
 				map[string]interface{}{"status": map[string]interface{}{"conditions": []interface{}{map[string]string{"type": "Ready", "status": "True"}}, "addresses": []interface{}{map[string]string{"type": "InternalIP", "address": "192.0.2.10"}}}},
@@ -188,11 +174,47 @@ func notesTemplate(t *testing.T) *template.Template {
 	return tpl
 }
 
+func TestAccessHostPrefersReadyExternalIP(t *testing.T) {
+	node := func(ready, kind, address string) map[string]interface{} {
+		return map[string]interface{}{"status": map[string]interface{}{
+			"conditions": []map[string]string{{"type": "Ready", "status": ready}},
+			"addresses":  []map[string]string{{"type": kind, "address": address}},
+		}}
+	}
+	nodes := []map[string]interface{}{
+		node("False", "ExternalIP", "192.0.2.1"),
+		node("True", "InternalIP", "10.0.0.2"),
+		node("True", "ExternalIP", "2001:db8::3"),
+	}
+	for _, tc := range []struct {
+		count    int
+		families []string
+		want     string
+	}{{1, nil, ""}, {2, nil, "10.0.0.2"}, {3, nil, "2001:db8::3"}, {3, []string{"IPv4"}, "10.0.0.2"}, {2, []string{"IPv6"}, ""}} {
+		tpl := notesTemplate(t).Funcs(template.FuncMap{
+			"lookup": func(_, kind, _, _ string) map[string]interface{} {
+				if kind == "Service" {
+					return map[string]interface{}{"spec": map[string]interface{}{"ipFamilies": tc.families}}
+				}
+				return map[string]interface{}{"items": nodes[:tc.count]}
+			},
+		})
+		var out bytes.Buffer
+		data := map[string]string{"namespace": "test", "service": "test-sql", "host": ""}
+		if err := tpl.ExecuteTemplate(&out, "oceanseek.accessHost", data); err != nil {
+			t.Fatal(err)
+		}
+		if got := out.String(); got != tc.want {
+			t.Errorf("with %d nodes, host = %q, want %q", tc.count, got, tc.want)
+		}
+	}
+}
+
 func TestAccessHostOverrideAndIPv6(t *testing.T) {
 	for _, tc := range []struct{ host, want string }{{"", "192.0.2.10"}, {"db.example.com", "db.example.com"}, {"2001:db8::1", "2001:db8::1"}} {
 		tpl := notesTemplate(t)
 		var out bytes.Buffer
-		if err := tpl.ExecuteTemplate(&out, "oceanseek.accessHost", map[string]interface{}{"Values": map[string]interface{}{"access": map[string]string{"host": tc.host}}}); err != nil {
+		if err := tpl.ExecuteTemplate(&out, "oceanseek.accessHost", map[string]string{"namespace": "test", "service": "test-sql", "host": tc.host}); err != nil {
 			t.Fatal(err)
 		}
 		if out.String() != tc.want {
