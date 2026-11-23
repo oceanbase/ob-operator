@@ -133,7 +133,7 @@ func TestDashboardNotesMatchAccessType(t *testing.T) {
 					t.Fatal("access and account guidance must come before diagnostics")
 				}
 			}
-			for _, want := range []string{"kubectl -n qa-ns get secret existing-root-secret", "logs -f job/qa-readiness", "Namespace deletion", "SAME release, namespace and values", "Bundled object storage uses MinIO and mc"} {
+			for _, want := range []string{"kubectl -n qa-ns get secret existing-root-secret", "logs -f job/qa-readiness", "Namespace deletion", "Uninstall deletes OBCluster", "qa-ob, then OBLogServiceCluster qa-ls", "Bundled object storage uses MinIO and mc"} {
 				if !strings.Contains(output, want) {
 					t.Fatalf("missing diagnostic/retention guidance %q", want)
 				}

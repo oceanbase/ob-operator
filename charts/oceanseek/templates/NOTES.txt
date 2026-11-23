@@ -112,6 +112,7 @@ Back up the database before helm uninstall. Uninstall deletes OBCluster
 {{ .Release.Name }}-ob, then OBLogServiceCluster {{ .Release.Name }}-ls. Their workloads
 stop and LogService node PVCs can be garbage-collected. Credentials, bundled MinIO
 StatefulSet/Service/PVC and Dashboard accounts and data PVCs are retained.
+Namespace deletion also removes retained namespaced resources.
 External storage and user-provided Secrets/PVCs are never owned by this chart.
 
 {{ if .Values.objectStorage.endpoint }}{{ if .Values.minio.enabled }}External object storage is configured and used. The separately enabled MinIO server
