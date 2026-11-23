@@ -163,9 +163,14 @@ func pfTestRunner(t *testing.T, fixture map[string]interface{}) RunCommand {
 }
 
 func TestCheckClusterReady(t *testing.T) {
-	got, err := CheckCluster(context.Background(), pfTestRunner(t, pfTestFixture()), pfTestOpts())
+	fixture := pfTestFixture()
+	fixture["kubectl version -o json"] = map[string]interface{}{"serverVersion": map[string]string{"gitVersion": "v1.26.9"}}
+	got, err := CheckCluster(context.Background(), pfTestRunner(t, fixture), pfTestOpts())
 	if err != nil {
 		t.Fatal(err)
+	}
+	if got.KubernetesVersion != "v1.26.9" {
+		t.Fatalf("unexpected Kubernetes version: %q", got.KubernetesVersion)
 	}
 	if got.NodeName != "worker-1" || got.RequiredCPUMilli != 5850 || got.AvailableCPUMilli != 8000 || got.OperatorMissing {
 		t.Fatalf("unexpected result: %+v", got)
@@ -177,12 +182,11 @@ func TestCheckClusterReady(t *testing.T) {
 
 func TestCheckClusterCollectsVersionStorageAndOperatorProblems(t *testing.T) {
 	fixture := pfTestFixture()
-	fixture["kubectl version -o json"] = map[string]interface{}{"serverVersion": map[string]string{"gitVersion": "v1.26.9"}}
 	fixture["helm version --template {{.Version}}"] = "v3.11.4"
 	fixture["kubectl get storageclasses -o json"] = storagev1.StorageClassList{}
 	fixture["kubectl get endpoints --all-namespaces -o json"] = corev1.EndpointsList{}
 	_, err := CheckCluster(context.Background(), pfTestRunner(t, fixture), pfTestOpts())
-	for _, part := range []string{"Kubernetes >=1.27", "Helm >=3.12", "StorageClass", "admission webhooks"} {
+	for _, part := range []string{"Helm >=3.12", "StorageClass", "admission webhooks"} {
 		if err == nil || !strings.Contains(err.Error(), part) {
 			t.Fatalf("missing %s in %v", part, err)
 		}
@@ -426,14 +430,14 @@ func TestLargeQuantitiesCannotOverflowIntoCapacitySuccess(t *testing.T) {
 	}
 }
 
-func TestVersionParsing(t *testing.T) {
-	for _, v := range []string{"v1.27.0", "v1.34.12+k3s1", "1.28.2"} {
-		if !pfVersionAtLeast(v, 1, 27) {
+func TestHelmVersionParsing(t *testing.T) {
+	for _, v := range []string{"v3.12.0", "v3.13.1+build", "3.14.2"} {
+		if !pfVersionAtLeast(v, 3, 12) {
 			t.Fatal(v)
 		}
 	}
-	for _, v := range []string{"v1.26.9", "", "garbage", "v1.x.0"} {
-		if pfVersionAtLeast(v, 1, 27) {
+	for _, v := range []string{"v3.11.9", "", "garbage", "v3.x.0"} {
+		if pfVersionAtLeast(v, 3, 12) {
 			t.Fatal(v)
 		}
 	}

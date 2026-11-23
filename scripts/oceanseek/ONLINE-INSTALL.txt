@@ -7,7 +7,7 @@ OceanBase 湖库在线测试包体验指南
 
 1. 准备和下载
 -------------
-目标为 Linux x86_64 / amd64 Worker；已有 Kubernetes >=1.27、管理员配置和可用
+目标为 Linux x86_64 / amd64 Worker；已有 Kubernetes 集群、管理员配置和可用
 默认 StorageClass。推荐 8 核、32GiB 以上内存，磁盘需容纳下载缓存、运行时镜像
 和 PVC，并预留单个归档临时解压的空间（导入后删除）。安装不自动部署 Kubernetes、
 不改系统 PATH、不自动 sudo。请使用发布方提供的镜像归档地址。

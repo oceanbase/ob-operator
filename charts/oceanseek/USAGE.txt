@@ -150,9 +150,8 @@ worker runtime: Docker daemon mirrors do not configure Kubernetes containerd/K3s
 Prerequisites
 -------------
 - For a fresh cluster, the bundled cert-manager 1.21 supports Kubernetes 1.33
-  through 1.36. The Chart's application API floor is Kubernetes 1.27 when
-  reusing a compatible Operator and cert-manager. See release acceptance for
-  the tested environment.
+  through 1.36. On other Kubernetes versions, reuse a compatible Operator
+  and cert-manager. See release acceptance for the tested environment.
 - Helm 3 and kubectl. The person preparing cluster infrastructure needs
   administrator access. Dashboard creates cluster-scoped permissions when enabled.
 - A working StorageClass. Set storageClass and minio.storageClass to its actual name.
