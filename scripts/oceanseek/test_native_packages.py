@@ -132,7 +132,7 @@ class HelmSourceProvenanceTests(unittest.TestCase):
             discovery = proxy['spec']['template']['spec']['initContainers'][0]
             for container in (readiness, discovery):
                 self.assertEqual(container['image'], 'quay.io/oceanbase/oceanbase-helper:2.4.0')
-                self.assertEqual(container['imagePullPolicy'], 'Always')
+                self.assertEqual(container['imagePullPolicy'], 'IfNotPresent')
                 self.assertEqual(container['command'], ['/oceanseek-readiness'])
             for flag in ('operator.enabled=false', 'skip-operator=true'):
                 reused = list(yaml.safe_load_all(BUILDER.run(render + ['--set', flag])))

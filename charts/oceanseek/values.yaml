@@ -12,8 +12,7 @@ native:
     # Shared by the readiness Job and OBProxy discovery init container.
     executable: /oceanseek-readiness
     image: quay.io/oceanbase/oceanbase-helper:2.4.0
-    # Refresh the tag on nodes that cached Helper before it included this executable.
-    imagePullPolicy: Always
+    imagePullPolicy: IfNotPresent
     timeoutSeconds: 1800
     resources:
       requests: {cpu: 25m, memory: 32Mi}
