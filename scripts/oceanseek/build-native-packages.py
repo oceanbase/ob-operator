@@ -39,7 +39,7 @@ SERVICE_ROLES = {'observer': 'observer', 'minio': 'minio', 'minio-init': 'mc',
 CONTAINER_ROLES = {'discover-observers': 'oceanbase-helper', 'obproxy': 'obproxy', 'manager': 'operator', 'kube-rbac-proxy': 'kube-rbac-proxy',
                    'dashboard': 'dashboard', 'prometheus': 'prometheus',
                    'alertmanager': 'alertmanager', 'minio': 'minio',
-                   'initialize': 'mc', 'readiness': 'oceanbase-helper',
+                   'initialize': 'mc', 'readiness': 'oceanbase-helper', 'uninstall': 'oceanbase-helper',
                    'prometheus-storage-owner-init': 'utility', 'cleanup': 'utility'}
 ENV_ROLES = {'OBSERVER_IMAGE': 'observer', 'LOGSERVICE_IMAGE': 'logservice',
              'BOOTSTRAP_IMAGE': 'bootstrap', 'MINIO_IMAGE': 'minio', 'MINIO_MC_IMAGE': 'mc',
