@@ -4,6 +4,7 @@ Install a compatible Operator with the cluster's usual configuration first.
 Set OPERATOR_VERSION, DASHBOARD_VERSION and HELPER_VERSION to the three published
 component versions. From the repository root, with Python 3, PyYAML and Helm:
 
+  helm dependency build charts/oceanseek
   python3 scripts/oceanseek/public-image-values.py --operator-version "$OPERATOR_VERSION" --dashboard-version "$DASHBOARD_VERSION" --helper-version "$HELPER_VERSION" | helm upgrade --install oceanseek ./charts/oceanseek -n oceanseek --create-namespace -f - --wait --wait-for-jobs --timeout 35m
 
 This selects quay.io/oceanbase for the OceanBase images. Pass --registry ghcr.io
