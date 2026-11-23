@@ -1,0 +1,79 @@
+{{- $name := printf "%s-uninstall" .Release.Name }}
+{{- $hook := dict "helm.sh/hook" "pre-delete" "helm.sh/hook-delete-policy" "before-hook-creation,hook-succeeded" }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  annotations: {{ $hook | toYaml | nindent 4 }}
+{{- with .Values.imagePullSecrets }}
+imagePullSecrets: {{ toYaml . | nindent 2 }}
+{{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  annotations: {{ $hook | toYaml | nindent 4 }}
+rules:
+  - apiGroups: [oceanbase.oceanbase.com]
+    resources: [obclusters]
+    resourceNames: [{{ printf "%s-ob" .Release.Name | quote }}]
+    verbs: [get, delete]
+  - apiGroups: [oceanbase.oceanbase.com]
+    resources: [oblogserviceclusters]
+    resourceNames: [{{ printf "%s-ls" .Release.Name | quote }}]
+    verbs: [get, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  annotations: {{ $hook | toYaml | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $name }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ $name }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    {{- $hook | toYaml | nindent 4 }}
+    helm.sh/hook-weight: "1"
+spec:
+  backoffLimit: 1
+  activeDeadlineSeconds: {{ .Values.native.readiness.timeoutSeconds }}
+  template:
+    spec:
+      {{- include "oceanseek.scheduling" . | nindent 6 }}
+      restartPolicy: Never
+      serviceAccountName: {{ $name }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        runAsGroup: 65534
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: uninstall
+          image: {{ default .Values.native.readiness.image .Values.prerequisites.image | quote }}
+          imagePullPolicy: {{ .Values.native.readiness.imagePullPolicy }}
+          command: [python3, -u, -c]
+          args:
+            - |
+              {{- .Files.Get "files/delete-clusters.py" | nindent 14 }}
+            - {{ .Release.Namespace | quote }}
+            - {{ .Release.Name | quote }}
+          resources: {{ toYaml .Values.native.readiness.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}

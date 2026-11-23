@@ -3,7 +3,7 @@ Install from the public Helm repository
 On a fresh Kubernetes 1.33–1.36 cluster with a working local-path StorageClass,
 cluster administrator permissions and access to the release images, run:
 
-  helm upgrade --install oceanseek oceanseek --repo https://oceanbase.github.io/ob-operator/ --version 1.0.0 -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
+  helm upgrade --install oceanseek oceanseek --repo https://oceanbase.github.io/ob-operator/ --version 1.0.1 -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
 
 The package registers the CRDs, starts cert-manager, then starts the ob-operator
 subchart in oceanbase-system. Each webhook must be ready before the next stage.
@@ -316,8 +316,8 @@ it. After fixing image access, capacity, storage or credentials, rerun the same
 helm upgrade --install command. It creates a new initialization Job and hook,
 keeps existing data/credentials, and resumes reconciliation. Do not delete a
 namespace or rerun with another release name as a retry mechanism. Avoid
---atomic/automatic rollback when first diagnosing a stateful failed install:
-retained resources deliberately outlive Helm's cleanup.
+--atomic when diagnosing a failed install. Its automatic uninstall can run
+the delete hook and remove the database and LogService.
 
 Upgrade Operator before starting the OceanSeek installation. Do not roll it out
 while database bootstrap is in progress: the current Operator task executor
@@ -350,16 +350,23 @@ cluster has a load balancer provider.
 
 Retention and uninstall
 -----------------------
-helm uninstall removes release-managed integration resources and the Dashboard
-Deployment. Database CRs, generated credentials, bundled MinIO
-StatefulSet/Service/PVC and Dashboard data remain. Reinstall with the SAME
-release, namespace and values to reconnect. Helm does not manage Hook resources
-on uninstall. After stopping old Helm operations, use the administrator's
+From chart 1.0.1, helm uninstall stops the database. Its pre-delete Job
+deletes the release's OBCluster, waits for it to disappear, then deletes
+its OBLogServiceCluster. Keep the Operator and its webhooks available.
+LogService node PVCs are owned by the nodes and can be garbage-collected.
+Back up the instance before uninstalling. Generated credentials, bundled MinIO
+StatefulSet/Service/PVC and Dashboard data are retained. Reinstalling the
+release does not restore the deleted database.
+
+Helm uses the hooks stored in the installed revision. Upgrade an existing
+1.0.0 release to the new chart first. Skipping hooks with --no-hooks preserves
+the two cluster resources. If the hook fails, inspect the <release>-uninstall
+Job and Operator events, resolve the cause, then retry helm uninstall.
+
+After stopping old Helm operations, use the administrator's
 prepare.sh --revoke-legacy-binding NAMESPACE RELEASE to remove an abandoned
 legacy preparation binding. It checks the exact Hook, role, subject and that
 the old Jobs and Pods are inactive before deleting the binding.
-Explicitly deleting the namespace or database CRs is destructive and bypasses
-this retention; do so only when intentionally removing that experience's data.
 
 Helm history can contain supplied/generated credential values. Protect release
 metadata and kubeconfig access. Do not publish rendered manifests containing

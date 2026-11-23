@@ -5,6 +5,7 @@ metadata:
   name: {{ .Release.Name }}-ob
   namespace: {{ .Release.Namespace }}
   annotations:
+    {{/* The pre-delete hook removes the two CRs in dependency order. */}}
     helm.sh/resource-policy: keep
     {{- if and .Values.native.enabled (eq (include "oceanseek.storageMode" .) "bundled") }}
     oceanbase.oceanbase.com/resolve-storage-service: "true"

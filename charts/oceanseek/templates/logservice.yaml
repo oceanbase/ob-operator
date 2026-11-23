@@ -5,6 +5,7 @@ metadata:
   name: {{ .Release.Name }}-ls
   namespace: {{ .Release.Namespace }}
   annotations:
+    {{/* The pre-delete hook removes the two CRs in dependency order. */}}
     helm.sh/resource-policy: keep
     {{- if .Values.native.enabled }}
     oceanbase.oceanbase.com/storage-init-job: {{ printf "%s-storage-init-%d" .Release.Name .Release.Revision | quote }}

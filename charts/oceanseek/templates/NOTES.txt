@@ -108,10 +108,10 @@ If OBCluster or OBLogServiceCluster has status failed, a Helm retry does not
 reset it. Inspect events and follow the Operator recovery procedure in USAGE.txt:
   kubectl -n {{ .Release.Namespace }} get events --sort-by=.lastTimestamp
 
-DATA PROTECTION: uninstall intentionally retains database CRs, credentials and
-bundled MinIO StatefulSet/Service/PVC, plus Dashboard accounts and data PVCs.
-Namespace deletion or explicit Kubernetes deletion is NOT protected. Keep backups.
-Reinstall with the SAME release, namespace and values to reconnect retained data.
+Back up the database before helm uninstall. Uninstall deletes OBCluster
+{{ .Release.Name }}-ob, then OBLogServiceCluster {{ .Release.Name }}-ls. Their workloads
+stop and LogService node PVCs can be garbage-collected. Credentials, bundled MinIO
+StatefulSet/Service/PVC and Dashboard accounts and data PVCs are retained.
 External storage and user-provided Secrets/PVCs are never owned by this chart.
 
 {{ if .Values.objectStorage.endpoint }}{{ if .Values.minio.enabled }}External object storage is configured and used. The separately enabled MinIO server

@@ -309,6 +309,7 @@ SQL分析器镜像仍需另行准备。
 诊断升级不要求重启Observer。Dashboard更新期间页面可能短暂不可用；安装入口仍会
 检查现有Observer是否具备日志采集所需能力，缺少时明确报错。
 
-不要通过删 namespace、PVC、CR 或 helm --force/--atomic 处理安装失败。卸载默认
-保留数据库CR、凭据和存储，并不回收磁盘，也不代替备份。已有镜像/身份不兼容时
+不要通过删 namespace、PVC、CR 或 helm --force/--atomic 处理安装失败。Chart 1.0.1
+起，helm uninstall 会先删除本 release 的 OBCluster，再删除 OBLogServiceCluster。
+卸载前请备份数据库。LogService 节点 PVC 可能随节点回收，凭据和内置 MinIO 会保留。已有镜像/身份不兼容时
 应明确迁移，不会在后台重建数据库。更多配置见 charts/oceanseek/USAGE.txt。

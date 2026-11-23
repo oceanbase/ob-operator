@@ -206,9 +206,8 @@ observer:
     - {name: system_memory, value: 1G}
     - {name: __min_full_resource_pool_memory, value: "2147483648"}
 
-# Unconditional retention protects database CRs, credentials, MinIO workload,
-# Service and PVC on helm uninstall/failed-install cleanup. It is NOT a backup
-# and does not protect against deleting the namespace or explicit kubectl delete.
+# The uninstall hook deletes the release's OBCluster and OBLogServiceCluster.
+# Credentials, bundled MinIO workload, Service and PVC are retained.
 
 # The published Chart enables and supplies its bundled prerequisite payload.
 operator:
