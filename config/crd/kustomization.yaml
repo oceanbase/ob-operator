@@ -20,37 +20,37 @@ resources:
 - bases/oceanbase.oceanbase.com_oblogservicenodes.yaml
 #+kubebuilder:scaffold:crdkustomizeresource
 
-patches:
+patchesStrategicMerge:
 # [WEBHOOK] To enable webhook, uncomment all the sections with [WEBHOOK] prefix.
 # patches here are for enabling the conversion webhook for each CRD
-- path: patches/webhook_in_obclusters.yaml
-# - path: patches/webhook_in_obzones.yaml
-# - path: patches/webhook_in_observers.yaml
-# - path: patches/webhook_in_obparameters.yaml
-- path: patches/webhook_in_obtenants.yaml
-# - path: patches/webhook_in_obtenantbackups.yaml
-# - path: patches/webhook_in_obtenantrestores.yaml
-- path: patches/webhook_in_obtenantbackuppolicies.yaml
-- path: patches/webhook_in_obtenantoperations.yaml
-- path: patches/webhook_in_obresourcerescues.yaml
-- path: patches/webhook_in_obclusteroperations.yaml
-- path: patches/webhook_in_k8sclusters.yaml
+- patches/webhook_in_obclusters.yaml
+# - patches/webhook_in_obzones.yaml
+# - patches/webhook_in_observers.yaml
+# - patches/webhook_in_obparameters.yaml
+- patches/webhook_in_obtenants.yaml
+# - patches/webhook_in_obtenantbackups.yaml
+# - patches/webhook_in_obtenantrestores.yaml
+- patches/webhook_in_obtenantbackuppolicies.yaml
+- patches/webhook_in_obtenantoperations.yaml
+- patches/webhook_in_obresourcerescues.yaml
+- patches/webhook_in_obclusteroperations.yaml
+- patches/webhook_in_k8sclusters.yaml
 #+kubebuilder:scaffold:crdkustomizewebhookpatch
 
 # [CERTMANAGER] To enable cert-manager, uncomment all the sections with [CERTMANAGER] prefix.
 # patches here are for enabling the CA injection for each CRD
-- path: patches/cainjection_in_obclusters.yaml
-# - path: patches/cainjection_in_obzones.yaml
-# - path: patches/cainjection_in_observers.yaml
-# - path: patches/cainjection_in_obparameters.yaml
-- path: patches/cainjection_in_obtenants.yaml
-# - path: patches/cainjection_in_obtenantbackups.yaml
-# - path: patches/cainjection_in_obtenantrestores.yaml
-- path: patches/cainjection_in_obtenantbackuppolicies.yaml
-- path: patches/cainjection_in_obtenantoperations.yaml
-- path: patches/cainjection_in_obresourcerescues.yaml
-- path: patches/cainjection_in_obclusteroperations.yaml
-- path: patches/cainjection_in_k8sclusters.yaml
+- patches/cainjection_in_obclusters.yaml
+# - patches/cainjection_in_obzones.yaml
+# - patches/cainjection_in_observers.yaml
+# - patches/cainjection_in_obparameters.yaml
+- patches/cainjection_in_obtenants.yaml
+# - patches/cainjection_in_obtenantbackups.yaml
+# - patches/cainjection_in_obtenantrestores.yaml
+- patches/cainjection_in_obtenantbackuppolicies.yaml
+- patches/cainjection_in_obtenantoperations.yaml
+- patches/cainjection_in_obresourcerescues.yaml
+- patches/cainjection_in_obclusteroperations.yaml
+- patches/cainjection_in_k8sclusters.yaml
 #+kubebuilder:scaffold:crdkustomizecainjectionpatch
 
 # the following config is for teaching kustomize how to do kustomization for CRDs.
