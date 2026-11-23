@@ -43,33 +43,16 @@ func TestManualHelmNotesReflectStage(t *testing.T) {
 			if strings.Contains(output, "install.sh") {
 				t.Fatal("native Helm distribution must not ask users to invoke an installer")
 			}
-			if native && stage == "cluster" {
-				for _, want := range []string{
-					"Installation verification",
-					"logs -f job/qa-readiness",
-					"A successful readiness Job is removed automatically",
-					"NotFound is expected",
-				} {
-					if !strings.Contains(output, want) {
-						t.Fatalf("native readiness guidance missing %q:\n%s", want, output)
-					}
-				}
-			} else if !strings.Contains(output, "Verify runtime readiness") {
-				t.Fatal("legacy staged mode must not assert readiness", output)
+			wantCheck := !native || stage != "cluster"
+			if strings.Contains(output, "Verify runtime readiness") != wantCheck {
+				t.Fatalf("unexpected readiness guidance for native=%v stage=%s:\n%s", native, stage, output)
 			}
-			if stage == "cluster" && (!strings.Contains(output, "mysql -h '192.0.2.10' -P 30881") || strings.Contains(output, "127.0.0.1")) {
-				t.Fatal("SQL must print the real node address", output)
-			}
-
-			for _, want := range []string{
-				"a Helm retry does not",
-				"follow the Operator recovery procedure",
-				"External object storage is configured; no bundled MinIO server is deployed",
-				"The storage initialization Job uses mc (AGPL-3.0) to verify buckets",
-			} {
-				if !strings.Contains(output, want) {
-					t.Fatalf("recovery or storage guidance missing %q:\n%s", want, output)
+			if stage == "cluster" {
+				if !strings.Contains(output, "mysql -h '192.0.2.10' -P 30881") || strings.Contains(output, "127.0.0.1") {
+					t.Fatal("SQL must print the real node address", output)
 				}
+			} else if !strings.Contains(output, "SQL access becomes available after stage=cluster") || strings.Contains(output, "mysql -h") {
+				t.Fatal("partial stages must defer SQL access", output)
 			}
 		}
 	}
@@ -117,21 +100,12 @@ func TestDashboardNotesMatchAccessType(t *testing.T) {
 				t.Fatalf("wrong guidance for %s:\n%s", tc.name, output)
 			}
 			if tc.enabled {
-				dashboardStart := strings.Index(output, "OceanBase Operator Dashboard")
-				verificationStart := strings.Index(output, "Installation verification")
-				if !strings.HasPrefix(strings.TrimSpace(output), "OceanSeek deployment access") ||
-					!strings.Contains(output, "Helm release: qa") ||
-					!strings.Contains(output, "Namespace: qa-ns") ||
-					dashboardStart < 0 || dashboardStart > verificationStart ||
-					!strings.Contains(output, "Username: admin") ||
-					!strings.Contains(output, "kubectl -n qa-ns get secret qa-dashboard-bootstrap") {
-					t.Fatal("access and account guidance must come before diagnostics")
+				if !strings.Contains(output, "Username: admin") || !strings.Contains(output, "kubectl -n qa-ns get secret qa-dashboard-bootstrap") {
+					t.Fatal("missing Dashboard credentials", output)
 				}
 			}
-			for _, want := range []string{"kubectl -n qa-ns get secret existing-root-secret", "logs -f job/qa-readiness", "Namespace deletion", "Uninstall deletes OBCluster", "qa-ob, then OBLogServiceCluster qa-ls", "Bundled object storage uses MinIO and mc"} {
-				if !strings.Contains(output, want) {
-					t.Fatalf("missing diagnostic/retention guidance %q", want)
-				}
+			if !strings.Contains(output, "kubectl -n qa-ns get secret existing-root-secret") {
+				t.Fatal("missing configured SQL credential", output)
 			}
 		})
 	}
@@ -230,8 +204,13 @@ func TestAccessHostOverrideAndIPv6(t *testing.T) {
 	}
 }
 
-func TestMinioAccessNotes(t *testing.T) {
+// Protect the complete success output, including blank lines and section order.
+func TestCompactInstallNotes(t *testing.T) {
 	source, err := os.ReadFile("templates/NOTES.txt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	notes, err := notesTemplate(t).Parse(string(source))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -239,46 +218,29 @@ func TestMinioAccessNotes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, tc := range []struct {
-		name, secret, endpoint string
-		enabled                bool
-	}{
-		{"bundled", "", "", true},
-		{"existing-secret", "my-minio-root", "", true},
-		{"external-with-minio", "", "https://s3.example.test", true},
-		{"external-only", "", "https://s3.example.test", false},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			var values map[string]interface{}
-			if err := yaml.Unmarshal(defaults, &values); err != nil {
-				t.Fatal(err)
-			}
-			values["minio"] = map[string]interface{}{"enabled": tc.enabled, "rootExistingSecret": tc.secret}
-			values["objectStorage"] = map[string]interface{}{"endpoint": tc.endpoint}
-			tpl, err := notesTemplate(t).Parse(string(source))
-			if err != nil {
-				t.Fatal(err)
-			}
-			var out bytes.Buffer
-			if err := tpl.Execute(&out, map[string]interface{}{"Release": map[string]string{"Name": "qa", "Namespace": "qa-ns"}, "Values": values}); err != nil {
-				t.Fatal(err)
-			}
-			text := out.String()
-			if !tc.enabled {
-				if strings.Contains(text, "rootPassword") || strings.Contains(text, "39001:9001") {
-					t.Fatal("external storage must not print bundled credentials")
-				}
-				return
-			}
-			secret := tc.secret
-			if secret == "" {
-				secret = "qa-minio-root"
-			}
-			for _, want := range []string{"port-forward statefulset/qa-minio 39001:9001", "http://127.0.0.1:39001/", "get secret " + secret + " -o jsonpath='{.data.rootUser}'", "get secret " + secret + " -o jsonpath='{.data.rootPassword}'"} {
-				if !strings.Contains(text, want) {
-					t.Fatalf("missing %s", want)
-				}
-			}
-		})
+	var values map[string]interface{}
+	if err := yaml.Unmarshal(defaults, &values); err != nil {
+		t.Fatal(err)
+	}
+	values["sqlService"].(map[string]interface{})["nodePort"] = 31783
+	values["dashboard"].(map[string]interface{})["service"].(map[string]interface{})["nodePort"] = 32578
+	var out bytes.Buffer
+	if err := notes.Execute(&out, map[string]interface{}{
+		"Release": map[string]string{"Name": "qa", "Namespace": "qa-ns"}, "Values": values,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	const want = `Database SQL access
+  mysql -h '192.0.2.10' -P 31783 -u 'root@sys' --protocol=TCP -p
+Root password (in a trusted terminal):
+  kubectl -n qa-ns get secret qa-db-root -o jsonpath='{.data.password}' | base64 --decode; echo
+
+OceanBase Operator Dashboard
+  Dashboard URL: http://192.0.2.10:32578/#/login
+  Username: admin
+Initial Dashboard password (in a trusted terminal):
+  kubectl -n qa-ns get secret qa-dashboard-bootstrap -o jsonpath='{.data.password}' | base64 --decode; echo`
+	if got := strings.TrimSpace(out.String()); got != want {
+		t.Fatalf("expected compact access notes:\n%s\ngot:\n%s", want, got)
 	}
 }
