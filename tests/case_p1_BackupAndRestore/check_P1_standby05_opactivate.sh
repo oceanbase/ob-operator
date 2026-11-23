@@ -200,12 +200,18 @@ validate() {
     check_resource_running
     if [[ $RESOURCE_RUNNING == 'false' ]]; then
         echo "case failed"
+        return 1
     else
         check_in_obcluster
 	run "obtenant_basic_1_1_1.yaml"
 	check_obtenant_running
 	run "backup_policy_1.yaml"
 	check_backup_running
+        if ! wait_for_recoverable_nfs_backup "$NAMESPACE" "$OBCLUSTER_NAME" "$OBTENANT_NAME" "$PASSWORD" \
+                "$DATA_BACKUP_CUSTOM" "$LOG_ARCHIVE_CUSTOM"; then
+            echo "case failed"
+            return 1
+        fi
 	run "standby_01.yaml"
 	check_restore_running
 	run "tenant_op_activate.yaml"
@@ -214,6 +220,7 @@ validate() {
 	cleanoperation
         if [[ $OPERATION_RUNNING == 'false' || $RESTORE_DB_RUNNING == 'false' ]]; then
             echo "case failed"
+            return 1
 	    #cleanup
 	    #prepare
         else
