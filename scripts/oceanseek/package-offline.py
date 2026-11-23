@@ -279,7 +279,8 @@ def export(args, selected):
                     'gzip -dc images.tar.gz | sudo k3s ctr images import -\n'
                     'cd deployment\n# Check the Kubernetes and storage prerequisites in USAGE.txt.\n'
                     'helm upgrade --install oceanseek ./' + chart + ' -n oceanseek --create-namespace ' +
-                    ' '.join(value_args) + ' --wait --wait-for-jobs --timeout 35m\n')
+                    ' '.join(value_args + ['--set', 'native.readiness.imagePullPolicy=IfNotPresent']) +
+                    ' --wait --wait-for-jobs --timeout 35m\n')
     loader = '#!/bin/sh\nset -eu\ncd -- "$(dirname -- "$0")"\nsha256sum -c SHA256SUMS\n'
     if selected['channel'] == 'compose':
         loader += 'gzip -dc images.tar.gz | "${DOCKER_BIN:-docker}" load\n'

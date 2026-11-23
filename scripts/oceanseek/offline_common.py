@@ -584,7 +584,8 @@ def export(args, selected):
                     'gzip -dc images.tar.gz | sudo k3s ctr images import -\n'
                     'cd deployment\n# Check the Kubernetes and storage prerequisites in USAGE.txt.\n'
                     'helm upgrade --install oceanseek ./' + chart + ' -n oceanseek --create-namespace ' +
-                    ' '.join(value_args) + ' --wait --wait-for-jobs --timeout 35m\n')
+                    ' '.join(value_args + ['--set', 'native.readiness.imagePullPolicy=IfNotPresent']) +
+                    ' --wait --wait-for-jobs --timeout 35m\n')
     (output / 'INSTALL.txt').write_text('Verify first: sha256sum -c SHA256SUMS\n\n' + commands +
                                       '\nNo cluster installation was performed by the packaging tool.\n')
     checks = [sha256(p) + '  ' + p.relative_to(output).as_posix()
@@ -741,7 +742,8 @@ def helm_installation_text(selected, value_args):
                '-n', settings['namespace'], '--create-namespace']
     if settings['skip_crds']:
         command.append('--skip-crds')
-    command += value_args + ['--wait', '--wait-for-jobs', '--timeout', '35m']
+    command += value_args + ['--set', 'native.readiness.imagePullPolicy=IfNotPresent',
+                             '--wait', '--wait-for-jobs', '--timeout', '35m']
     return (instructions + '\nDeploy using the planned release, namespace and values.\n'
             '  ' + shlex.join(command) + '\n')
 

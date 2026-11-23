@@ -48,8 +48,10 @@ The online release lock pins the exact images used by both deployment channels.
 
 Operator, Dashboard and Helper are built by the existing `release-operator.yml`,
 `release-dashboard.yml` and `release-helper.yml` tag workflows in ob-operator.
-They keep their independent version inputs. The multi-platform Operator includes
-`/oceanseek-readiness` for amd64 and arm64. A dedicated readiness image, when
+They keep their independent version inputs. The multi-platform Helper includes
+`/oceanseek-readiness` for amd64 and arm64. When using the rebuilt Helper
+`2.4.0`, record its new platform manifest digest and config ID in the lock.
+A dedicated readiness image, when
 supplied, must carry that executable. Push an `oceanseek-bootstrap-X.Y.Z` tag on the approved commit of
 `codex/oceanseek-compose` to run `oceanseek-compose.yml`. It builds
 `oceanseek-bootstrap` for both architectures and publishes the version to Quay,

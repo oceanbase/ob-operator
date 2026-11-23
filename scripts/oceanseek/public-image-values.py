@@ -36,8 +36,8 @@ def main():
     publisher = args.registry + '/' + args.component_namespace
     operator = publisher + '/ob-operator:' + args.operator_version
     overrides['operator'] = {'image': operator}
-    overrides['native'] = {'readiness': {'image': operator}}
     helper = publisher + '/oceanbase-helper:' + args.helper_version
+    overrides['native'] = {'readiness': {'image': helper}}
     overrides['prerequisites'] = {'image': helper}
     overrides['dashboard'] = {
         'image': publisher + '/oceanbase-dashboard:' + args.dashboard_version,

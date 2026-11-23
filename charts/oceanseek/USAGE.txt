@@ -176,8 +176,10 @@ Prerequisites
 - Enough allocatable CPU/memory and disk for the selected profile.
 - Workers can pull all configured images (or have the exact images preloaded).
 - An existing Operator must serve the OceanSeek CRDs and support native storage
-  initialization and service resolution. The readiness hook uses the matched
-  /oceanseek-readiness image shipped with the Chart.
+  initialization and service resolution. The readiness hook and OBProxy discovery
+  run /oceanseek-readiness from the OceanBase Helper image. For an offline
+  install, preload the updated Helper on every eligible node and set
+  native.readiness.imagePullPolicy=IfNotPresent.
 - Reusing an existing shared Operator does NOT upgrade its image. A successful
   API/webhook check is not proof that its binary matches this release. Have the
   cluster owner validate and upgrade it separately, or use a fresh test cluster.
