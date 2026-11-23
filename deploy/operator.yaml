@@ -17731,8 +17731,8 @@ spec:
                     description: OBTenantStatus defines the observed state of OBTenant
                     properties:
                       creation:
-                        description: Creation binds ordinary tenant provisioning and cleanup
-                          to its original resources.
+                        description: Creation binds ordinary tenant provisioning and
+                          cleanup to its original resources.
                         properties:
                           clusterName:
                             type: string
@@ -17748,16 +17748,16 @@ spec:
                             format: int64
                             type: integer
                           legacyTenantID:
-                            description: LegacyTenantID is recorded before finalizing a previously
-                              managed, unmarked tenant.
+                            description: LegacyTenantID is recorded before finalizing
+                              a previously managed, unmarked tenant.
                             format: int64
                             type: integer
                           resources:
                             additionalProperties:
                               properties:
                                 borrowed:
-                                  description: Borrowed resources predate ownership tracking
-                                    and must not be dropped.
+                                  description: Borrowed resources predate ownership
+                                    tracking and must not be dropped.
                                   type: boolean
                                 poolID:
                                   format: int64
@@ -19079,8 +19079,8 @@ spec:
                     description: OBTenantStatus defines the observed state of OBTenant
                     properties:
                       creation:
-                        description: Creation binds ordinary tenant provisioning and cleanup
-                          to its original resources.
+                        description: Creation binds ordinary tenant provisioning and
+                          cleanup to its original resources.
                         properties:
                           clusterName:
                             type: string
@@ -19096,16 +19096,16 @@ spec:
                             format: int64
                             type: integer
                           legacyTenantID:
-                            description: LegacyTenantID is recorded before finalizing a previously
-                              managed, unmarked tenant.
+                            description: LegacyTenantID is recorded before finalizing
+                              a previously managed, unmarked tenant.
                             format: int64
                             type: integer
                           resources:
                             additionalProperties:
                               properties:
                                 borrowed:
-                                  description: Borrowed resources predate ownership tracking
-                                    and must not be dropped.
+                                  description: Borrowed resources predate ownership
+                                    tracking and must not be dropped.
                                   type: boolean
                                 poolID:
                                   format: int64
@@ -19693,8 +19693,8 @@ spec:
                     description: OBTenantStatus defines the observed state of OBTenant
                     properties:
                       creation:
-                        description: Creation binds ordinary tenant provisioning and cleanup
-                          to its original resources.
+                        description: Creation binds ordinary tenant provisioning and
+                          cleanup to its original resources.
                         properties:
                           clusterName:
                             type: string
@@ -19710,16 +19710,16 @@ spec:
                             format: int64
                             type: integer
                           legacyTenantID:
-                            description: LegacyTenantID is recorded before finalizing a previously
-                              managed, unmarked tenant.
+                            description: LegacyTenantID is recorded before finalizing
+                              a previously managed, unmarked tenant.
                             format: int64
                             type: integer
                           resources:
                             additionalProperties:
                               properties:
                                 borrowed:
-                                  description: Borrowed resources predate ownership tracking
-                                    and must not be dropped.
+                                  description: Borrowed resources predate ownership
+                                    tracking and must not be dropped.
                                   type: boolean
                                 poolID:
                                   format: int64
@@ -25110,7 +25110,7 @@ spec:
         env:
         - name: TELEMETRY_REPORTER
           value: ob-operator
-        image: quay.io/oceanbase/ob-operator:2.3.4
+        image: quay.io/oceanbase/ob-operator:2.4.0
         livenessProbe:
           httpGet:
             path: /healthz

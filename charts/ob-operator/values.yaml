@@ -6,6 +6,6 @@ reporter: "ob-operator"
 
 # Override with the published native-oceanseek build for declarative oceanseek
 # installation. Existing operator deployments keep their default version.
-image: quay.io/oceanbase/ob-operator:2.3.4
+image: quay.io/oceanbase/ob-operator:2.4.0
 kubeRbacProxyImage: oceanbase/kube-rbac-proxy:v0.13.1
 
