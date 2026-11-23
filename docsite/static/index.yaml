@@ -1,5 +1,16 @@
 apiVersion: v1
 entries:
+  minio:
+  - apiVersion: v2
+    appVersion: RELEASE.2025-10-15T17-29-55Z
+    created: "2026-11-23T03:33:37.724206426Z"
+    description: Optional standalone or distributed MinIO storage for OceanSeek
+    digest: 420ab0dca39b05058173ead1e926baa145308df7c98f4b8510fc5dca618ba91e
+    name: minio
+    type: application
+    urls:
+    - https://github.com/oceanbase/ob-operator/releases/download/minio-0.1.0/minio-0.1.0.tgz
+    version: 0.1.0
   ob-operator:
   - apiVersion: v2
     appVersion: 2.3.4
@@ -226,6 +237,16 @@ entries:
   oceanbase-dashboard:
   - apiVersion: v2
     appVersion: 0.6.1
+    created: "2026-11-23T03:33:37.973595778Z"
+    description: A Helm chart for OceanBase dashboard
+    digest: bcffcdc861b54a117dd38d0b5052c97044ca53fbd25862316685f1318ebb297f
+    name: oceanbase-dashboard
+    type: application
+    urls:
+    - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-dashboard-0.6.2/oceanbase-dashboard-0.6.2.tgz
+    version: 0.6.2
+  - apiVersion: v2
+    appVersion: 0.6.1
     created: "2026-06-11T07:53:45.93795435Z"
     description: A Helm chart for OceanBase dashboard
     digest: b6aec779201b6076662accaa973104ee5297fb5c2adadcc28d16256f5d827f09
@@ -334,4 +355,26 @@ entries:
     urls:
     - https://github.com/oceanbase/ob-operator/releases/download/oceanbase-dashboard-0.1.0/oceanbase-dashboard-0.1.0.tgz
     version: 0.1.0
-generated: "2026-06-11T07:53:45.938056989Z"
+  oceanseek:
+  - apiVersion: v2
+    appVersion: 4.6.3.0-482026112114.el7
+    created: "2026-11-23T03:33:38.188662271Z"
+    dependencies:
+    - alias: dashboard
+      condition: dashboard.enabled
+      name: oceanbase-dashboard
+      repository: file://../oceanbase-dashboard
+      version: 0.6.2
+    - condition: minio.enabled
+      name: minio
+      repository: file://../minio
+      version: 0.1.0
+    description: OceanSeek with Dashboard and optional bundled MinIO
+    digest: a5dad742251a2d68da5d3956efea9a77e592401d673fef2b680ceab57fe04cd0
+    kubeVersion: '>=1.27.0-0'
+    name: oceanseek
+    type: application
+    urls:
+    - https://github.com/oceanbase/ob-operator/releases/download/oceanseek-0.1.0/oceanseek-0.1.0.tgz
+    version: 0.1.0
+generated: "2026-11-23T03:33:38.188743732Z"
