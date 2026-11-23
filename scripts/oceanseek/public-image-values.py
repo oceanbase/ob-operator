@@ -34,7 +34,9 @@ def main():
         overrides[key] = {'image': args.registry + '/' + repo}
 
     publisher = args.registry + '/' + args.component_namespace
-    overrides['native'] = {'readiness': {'image': publisher + '/ob-operator:' + args.operator_version}}
+    operator = publisher + '/ob-operator:' + args.operator_version
+    overrides['operator'] = {'image': operator}
+    overrides['native'] = {'readiness': {'image': operator}}
     helper = publisher + '/oceanbase-helper:' + args.helper_version
     overrides['prerequisites'] = {'image': helper}
     overrides['dashboard'] = {

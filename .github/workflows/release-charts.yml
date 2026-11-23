@@ -26,6 +26,20 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Assemble OceanSeek CRDs and shared components
+        run: |
+          python3 -m pip install 'PyYAML==6.0.3'
+          python3 scripts/oceanseek/build-helm-release.py --prepare-repository-chart
+          helm dependency build charts/oceanseek
+
       - name: Run chart-releaser
         uses: powerfooI/chart-releaser-action@v1.6.2
         env:

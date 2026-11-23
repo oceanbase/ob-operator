@@ -9,3 +9,5 @@ reporter: "ob-operator"
 image: quay.io/oceanbase/ob-operator:2.4.0
 kubeRbacProxyImage: oceanbase/kube-rbac-proxy:v0.13.1
 
+# OceanSeek renders shared resources as ordered hooks in oceanbase-system.
+sharedBootstrap: false

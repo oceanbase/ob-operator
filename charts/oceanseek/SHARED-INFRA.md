@@ -1,7 +1,7 @@
 # Install another OceanSeek, sharing existing infrastructure
 
 Independent controls:
-- skip-operator=true: reuse the cluster's Operator and cert-manager. Pass
+- operator.enabled=false (also supported as skip-operator=true): reuse the cluster's Operator and cert-manager. Pass
   Helm --skip-crds to skip the cluster-wide CRD installation phase. An
   existing Operator must serve the required CRDs and admission webhooks.
 - minio.enabled=false: do not deploy the optional MinIO subchart.

@@ -575,7 +575,11 @@ def build(args):
         write_yaml(op / 'values.yaml', merge(yaml.safe_load((op / 'values.yaml').read_text()),
                                             operator_values))
         (parent / 'charts').mkdir(exist_ok=True)
-        for name in ('oceanbase-dashboard', 'minio'):
+        parent_meta = yaml.safe_load((parent / 'Chart.yaml').read_text())
+        for dependency in parent_meta['dependencies']:
+            name = dependency['name']
+            if name not in ('oceanbase-dashboard', 'minio', 'ob-operator'):
+                raise ValueError('Unknown OceanSeek dependency: ' + name)
             child = temp / name
             child_version = yaml.safe_load((child / 'Chart.yaml').read_text())['version']
             tar_tree(child, parent / 'charts' / ('%s-%s.tgz' % (name, child_version)), timestamp)

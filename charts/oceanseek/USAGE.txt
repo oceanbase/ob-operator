@@ -1,7 +1,22 @@
+Install from the public Helm repository
+---------------------------------------
+On a fresh Kubernetes 1.33–1.36 cluster with a working local-path StorageClass,
+cluster administrator permissions and access to the release images, run:
+
+  helm upgrade --install oceanseek oceanseek --repo https://oceanbase.github.io/ob-operator/ --version 0.1.1 -n oceanseek --create-namespace --wait --wait-for-jobs --timeout 35m
+
+The package registers the CRDs, starts cert-manager, then starts the ob-operator
+subchart in oceanbase-system. Each webhook must be ready before the next stage.
+To use an existing compatible Operator and cert-manager, append
+--skip-crds --set operator.enabled=false (skip-operator=true is also supported).
+
 Source checkout and public registries
 ------------------------------------
-Install a compatible Operator with the cluster's usual configuration first.
-Set OPERATOR_VERSION, DASHBOARD_VERSION and HELPER_VERSION to the three published
+To build the same fresh-cluster package from a disposable checkout, run
+python3 scripts/oceanseek/build-helm-release.py --prepare-repository-chart,
+then helm dependency build charts/oceanseek and helm package charts/oceanseek.
+For source installs without that preparation, use an existing compatible Operator.
+The default images match this release. To override them, set OPERATOR_VERSION, DASHBOARD_VERSION and HELPER_VERSION to the three published
 component versions. From the repository root, with Python 3, PyYAML and Helm:
 
   helm dependency build charts/oceanseek
@@ -27,7 +42,7 @@ Default settings:
   sqlService.port: 2883
   obproxy.enabled: true
   obproxy.replicas: 1
-  obproxy.image: oceanbase/obproxy-ce:4.3.3.0-5
+  obproxy.image: quay.io/oceanbase/obproxy-ce:4.3.3.0-5
   obproxy.memoryLimit: 1536M
   obproxy.resources.requests: {cpu: "1", memory: 2Gi}
   obproxy.resources.limits: {cpu: "1", memory: 2Gi}

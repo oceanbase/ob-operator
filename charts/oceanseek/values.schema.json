@@ -14,6 +14,13 @@
     "imagePullSecrets"
   ],
   "properties": {
+    "operator": {
+      "type": "object",
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "sharedBootstrap": {"const": true}
+      }
+    },
     "obproxy": {
       "type": "object",
       "additionalProperties": false,
