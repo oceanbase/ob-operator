@@ -88,7 +88,7 @@ def source_identity(source, export=None):
             elif not item.isdir():
                 raise ValueError("Unsupported source archive member: " + str(relative))
     required = [source / n for n in ("install.sh", "INSTALL.txt", "LICENSE")]
-    for chart in ("oceanseek", "oceanbase-dashboard", "oceanbase-minio", "ob-operator"):
+    for chart in ("oceanseek", "oceanbase-dashboard", "minio", "ob-operator"):
         required.extend(p for p in (source / "charts" / chart).rglob("*") if p.is_file())
     for path in required:
         if path.relative_to(source).as_posix() not in seen:
@@ -266,9 +266,9 @@ def copy_chart(source, destination):
 def patch_charts(source, package, images, timestamp):
     charts = package / "charts"
     charts.mkdir()
-    for name in ("oceanseek", "oceanbase-dashboard", "oceanbase-minio", "ob-operator"):
+    for name in ("oceanseek", "oceanbase-dashboard", "minio", "ob-operator"):
         copy_chart(source / "charts" / name, charts / name)
-    minio_values_path = charts / "oceanbase-minio/values.yaml"
+    minio_values_path = charts / "minio/values.yaml"
     minio_values = yaml.safe_load(minio_values_path.read_text())
     minio_values["image"] = images["minio"]["reference"]
     write_yaml(minio_values_path, minio_values)
@@ -310,7 +310,7 @@ def patch_charts(source, package, images, timestamp):
     parent_meta = yaml.safe_load((parent / "Chart.yaml").read_text())
     child_meta = yaml.safe_load((dashboard / "Chart.yaml").read_text())
     dependencies = parent_meta.get("dependencies", [])
-    expected = {"oceanbase-dashboard", "oceanbase-minio"}
+    expected = {"oceanbase-dashboard", "minio"}
     if {d.get("name") for d in dependencies} != expected or len(dependencies) != len(expected):
         raise ValueError("Unexpected oceanseek dependency; offline dependency requires review")
     (parent / "charts").mkdir(exist_ok=True)
@@ -322,7 +322,7 @@ def patch_charts(source, package, images, timestamp):
             raise ValueError("Dependency identity/version mismatch: " + name)
         tar_tree(child, parent / "charts" / (name + "-" + str(metadata["version"]) + ".tgz"), name, timestamp, compressed=True)
     changes = []
-    for name in ("oceanseek", "oceanbase-dashboard", "oceanbase-minio", "ob-operator"):
+    for name in ("oceanseek", "oceanbase-dashboard", "minio", "ob-operator"):
         for path in sorted((charts / name).rglob("*")):
             if not path.is_file() or path.suffix == ".tgz":
                 continue
@@ -403,7 +403,7 @@ def rendered_images(text):
 def validate_charts(package, lock):
     charts = package / "charts"
     results = []
-    for name in ("oceanseek", "oceanbase-dashboard", "oceanbase-minio", "ob-operator"):
+    for name in ("oceanseek", "oceanbase-dashboard", "minio", "ob-operator"):
         run(["helm", "lint", "--strict", str(charts / name)])
         results.append("PASS strict lint " + name)
     references = set()

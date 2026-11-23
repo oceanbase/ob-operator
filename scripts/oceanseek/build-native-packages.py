@@ -567,7 +567,7 @@ def build(args):
     write_yaml(helm / 'operator-values.yaml', operator_values)
     with tempfile.TemporaryDirectory(prefix='oceanseek-release-charts-') as temp:
         temp = Path(temp)
-        for name in ('oceanbase-dashboard', 'oceanbase-minio', 'oceanseek', 'ob-operator'):
+        for name in ('oceanbase-dashboard', 'minio', 'oceanseek', 'ob-operator'):
             copy_chart(source / 'charts' / name, temp / name)
         parent = temp / 'oceanseek'
         write_yaml(parent / 'values.yaml', merge(yaml.safe_load((parent / 'values.yaml').read_text()), values))
@@ -575,7 +575,7 @@ def build(args):
         write_yaml(op / 'values.yaml', merge(yaml.safe_load((op / 'values.yaml').read_text()),
                                             operator_values))
         (parent / 'charts').mkdir(exist_ok=True)
-        for name in ('oceanbase-dashboard', 'oceanbase-minio'):
+        for name in ('oceanbase-dashboard', 'minio'):
             child = temp / name
             child_version = yaml.safe_load((child / 'Chart.yaml').read_text())['version']
             tar_tree(child, parent / 'charts' / ('%s-%s.tgz' % (name, child_version)), timestamp)

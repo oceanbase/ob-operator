@@ -5,7 +5,7 @@ on:
     paths:
       - 'charts/oceanseek/**'
       - 'charts/oceanbase-dashboard/**'
-      - 'charts/oceanbase-minio/**'
+      - 'charts/minio/**'
       - 'charts/ob-operator/**'
       - 'deploy/compose/oceanseek/**'
       - 'deploy/registry-mirrors/**'
@@ -21,7 +21,7 @@ on:
     paths:
       - 'charts/oceanseek/**'
       - 'charts/oceanbase-dashboard/**'
-      - 'charts/oceanbase-minio/**'
+      - 'charts/minio/**'
       - 'charts/ob-operator/**'
       - 'deploy/compose/oceanseek/**'
       - 'deploy/registry-mirrors/**'

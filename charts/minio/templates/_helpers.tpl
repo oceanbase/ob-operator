@@ -1,5 +1,5 @@
 {{- define "obminio.labels" -}}
-app.kubernetes.io/name: oceanbase-minio
+app.kubernetes.io/name: minio
 app.kubernetes.io/instance: {{ .Release.Name }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
