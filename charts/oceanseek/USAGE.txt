@@ -15,8 +15,8 @@ settings. Override obproxy.image or dashboard.inspection.obdiag.image separately
 supply a separately published readiness image for a platform when needed.
 Versioned distribution charts already embed their image lock in values.yaml.
 
-OBProxy SQL entry point (0.6.0 development chart)
-================================================
+OBProxy SQL entry point
+=======================
 The cluster stage installs one OBProxy replica by default. The <release>-sql
 Service uses port 2883 and forwards to OBProxy:2883. Set
 --set obproxy.enabled=false to omit OBProxy: the same Service port then forwards
