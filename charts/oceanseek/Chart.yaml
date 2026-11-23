@@ -7,7 +7,7 @@ appVersion: "4.6.3.0-482026112114.el7"
 dependencies:
 - name: ob-operator
   alias: operator
-  version: 2.4.1
+  version: 2.4.0
   repository: file://../ob-operator
   condition: operator.enabled
 - name: oceanbase-dashboard

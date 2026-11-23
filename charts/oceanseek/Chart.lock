@@ -1,12 +1,12 @@
 dependencies:
 - name: ob-operator
   repository: file://../ob-operator
-  version: 2.4.1
+  version: 2.4.0
 - name: oceanbase-dashboard
   repository: file://../oceanbase-dashboard
   version: 0.7.0
 - name: minio
   repository: file://../minio
   version: 0.1.0
-digest: sha256:237f4b387f1837a96dd6d02b8d3ebd1eaf2734644cf72cb2cb41c8433db3cce9
-generated: "2026-11-23T17:53:39.832607307+08:00"
+digest: sha256:71a0b7ec9540f105755f83145e5cb96f16eae46e822f5726f0d96aea383cceff
+generated: "2026-11-23T20:34:37.756186436+08:00"
